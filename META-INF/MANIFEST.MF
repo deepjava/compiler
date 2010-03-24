@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: CFG_Modified
-Bundle-SymbolicName: Deep
-Bundle-Version: 1.0.0.qualifier
+Bundle-Name: DevPlugIn4deep
+Bundle-SymbolicName: deep
+Bundle-Version: 0.0.0
 Bundle-Activator: cfg_modified.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
