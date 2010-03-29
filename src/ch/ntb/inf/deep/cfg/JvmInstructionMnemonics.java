@@ -1,7 +1,7 @@
 package ch.ntb.inf.deep.cfg;
 
-interface JvmInstructionMnemonics extends JvmInstructionOpcs {
-	String[] bcMnemonics = {
+public interface JvmInstructionMnemonics extends JvmInstructionOpcs {
+	public static String[] bcMnemonics = {
 			"nop",
 
 			"aconst_null",
