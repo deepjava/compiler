@@ -28,12 +28,12 @@ public class Call extends SSAInstruction {
 	}
 
 	@Override
-	SSAValue[] getOperands() {
+	public SSAValue[] getOperands() {
 		return operands;
 	}
 
 	@Override
-	void setOperands(SSAValue[] operands) {
+	public void setOperands(SSAValue[] operands) {
 		this.operands = operands;
 	}
 	

@@ -10,12 +10,12 @@ public class NoOpnd extends SSAInstruction {
 	}
 
 	@Override
-	SSAValue[] getOperands() {
+	public SSAValue[] getOperands() {
 		return null;
 	}
 
 	@Override
-	void setOperands(SSAValue[] operands) {
+	public void setOperands(SSAValue[] operands) {
 		//return immediately
 	}
 	@Override

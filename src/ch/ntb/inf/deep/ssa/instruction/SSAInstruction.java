@@ -17,8 +17,8 @@ public abstract class SSAInstruction implements JvmInstructionMnemonics {
 	public SSAValue getResult(){
 		return result;
 	}
-	abstract void setOperands(SSAValue[] operands);
-	abstract SSAValue[] getOperands();
+	public abstract void setOperands(SSAValue[] operands);
+	public abstract SSAValue[] getOperands();
 	public String toString(){
 		return "SSAInstruction";
 	}
