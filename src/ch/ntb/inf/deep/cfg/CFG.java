@@ -3,10 +3,13 @@ package ch.ntb.inf.deep.cfg;
 import org.eclipse.jdt.core.util.ICodeAttribute;
 import org.eclipse.jdt.core.util.IMethodInfo;
 
+import ch.ntb.inf.deep.ssa.SSANode;
+
 
 /**
  * Builder for the CFG of a java method. Reads the bytecode instructions and
  * builds the CFG.
+ * 
  * 
  * @author buesser 23.2.2010, graf
  */
@@ -80,7 +83,7 @@ public class CFG implements JvmInstructionMnemonics {
 		this.method = method;
 
 		ICodeAttribute codeAttr = method.getCodeAttribute();
-		CFGNode startNode = new CFGNode();
+		CFGNode startNode = new SSANode();
 		rootNode = startNode;
 		code = codeAttr.getBytecodes();
 
@@ -202,7 +205,7 @@ public class CFG implements JvmInstructionMnemonics {
 		CFGNode srcNode = cfg.getNode(bca);
 		if (bca != srcNode.lastBCA) { // if last instruction, no splitting
 			// split after branch
-			CFGNode newNode = new CFGNode();
+			CFGNode newNode = new SSANode();
 			newNode.lastBCA = srcNode.lastBCA;
 			int len;
 

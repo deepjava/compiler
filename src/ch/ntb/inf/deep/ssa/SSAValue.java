@@ -17,5 +17,9 @@ public class SSAValue {
 	 */
 	public int reg = -1;
 	public int memorySlot = -1;
-
+	
+	public SSAValue(){
+		
+	}
+	//TODO add Methods
 }

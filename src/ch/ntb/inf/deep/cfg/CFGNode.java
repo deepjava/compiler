@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.cfg;
 /**
  * Node in the CFG-Tree with first and last bytecode address (bca).
  * 
+ * 
  * @author buesser, graf
  */
 public class CFGNode {
@@ -54,7 +55,7 @@ public class CFGNode {
 	/**
 	 * counter for successors and predecessors.
 	 */
-	int nofSuccessors, nofPredecessors;
+	public int nofSuccessors, nofPredecessors;
 
 	/**
 	 * Constructor for a new, empty CFG-Node.
