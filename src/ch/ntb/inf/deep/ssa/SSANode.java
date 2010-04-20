@@ -100,7 +100,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		// Populate
 		if (!traversed) {
 			traversed = true;
-
+			this.traversCode(ssa);
 		}
 
 	}
