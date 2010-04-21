@@ -321,21 +321,21 @@ interface JvmInstructionOpcs {
 			0xF0000100 + (1<<bcapReturn) | bCareturn, // return ref
 			0x00000100 + (1<<bcapReturn) | bCreturn, // return
 
-			0x80000300 + bCgetstatic,
-			0x80000300 + bCputstatic,
-			0x80000300 + bCgetfield,
-			0x80000300 + bCputfield,
+			0x80000300 + (1<<bcapSSAnotImpl)| bCgetstatic,
+			0x80000300 + (1<<bcapSSAnotImpl)| bCputstatic,
+			0x80000300 + (1<<bcapSSAnotImpl)| bCgetfield,
+			0x80000300 + (1<<bcapSSAnotImpl)| bCputfield,
 
-			0x80000300 + (1<<bcapCall) | bCinvokevirtual, // pop objRef & arguments, push result
-			0x80000300 + (1<<bcapCall) | bCinvokespecial, // pop objRef & arguments, push result
-			0x80000300 + (1<<bcapCall) | bCinvokestatic, // pop arguments, push result
-			0x80000500 + (1<<bcapCall) | bCinvokeinterface,
+			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokevirtual, // pop objRef & arguments, push result
+			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokespecial, // pop objRef & arguments, push result
+			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokestatic, // pop arguments, push result
+			0x80000500 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokeinterface,
 
 			bCxxxunusedxxx,
 
-			0x10000300 + (1<<bcapCall) | (1<<bcapNew) | bCnew, // create new object
+			0x10000300 + (1<<bcapSSAnotImpl)|(1<<bcapCall) | (1<<bcapNew) | bCnew, // create new object
 			0x00000200 + (1<<bcapCall) | (1<<bcapNew) | bCnewarray, // create new array of standard type
-			0x00000300 + (1<<bcapCall) | (1<<bcapNew) | bCanewarray, // create new array of referenc
+			0x00000300 + (1<<bcapSSAnotImpl)|(1<<bcapCall) | (1<<bcapNew) | bCanewarray, // create new array of referenc
 
 			0x00000100 + bCarraylength,
 			

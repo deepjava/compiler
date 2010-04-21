@@ -2,10 +2,13 @@ package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
+import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
 import ch.ntb.inf.deep.ssa.instruction.Monadic;
+import ch.ntb.inf.deep.ssa.instruction.MonadicString;
 import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
+import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
 
 public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		SSAInstructionOpcs {
@@ -102,9 +105,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	}
 
 	public void traversCode(SSA ssa) {
-		SSAValue value1, value2, result;
-		int val;
+		SSAValue value1, value2, value3, value4, result;
+		int val, val1;
 		SSAInstruction instr;
+		boolean wide = false;
 		locals = entrySet.clone();// Don't change the entryset
 		// Determine top of the Stack
 		for (topStackframe = maxStack; topStackframe >= 0
@@ -287,27 +291,57 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				break;
 			case bCiload:
 				bca++;
-				val = (ssa.cfg.code[bca] & 0xff);//get index
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
 				load(val, SSAValue.t_integer);
 				break;
 			case bClload:
 				bca++;
-				val = (ssa.cfg.code[bca] & 0xff);//get index
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
 				load(val, SSAValue.t_long);
 				break;
 			case bCfload:
 				bca++;
-				val = (ssa.cfg.code[bca] & 0xff);//get index
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
 				load(val, SSAValue.t_float);
 				break;
 			case bCdload:
 				bca++;
-				val = (ssa.cfg.code[bca] & 0xff);//get index
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
 				load(val, SSAValue.t_double);
 				break;
 			case bCaload:
 				bca++;
-				val = (ssa.cfg.code[bca] & 0xff);//get index
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
 				load(val, SSAValue.t_object);
 				break;
 			case bCiload_0:
@@ -371,327 +405,1227 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				load(3, SSAValue.t_object);
 				break;
 			case bCiaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCaaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_object;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCbaload:
+				// TODO Remember the result type isn't set here (it could be
+				// boolean or byte)
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCcaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_char;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCsaload:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_short;
+				instr = new Dyadic(sCload_fromArray, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCistore:
+				bca++;
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
+				locals[maxStack + val] = popFromStack();
 				break;
 			case bClstore:
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
+				locals[maxStack + val] = popFromStack();
 				break;
 			case bCfstore:
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
+				locals[maxStack + val] = popFromStack();
 				break;
 			case bCdstore:
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
+				locals[maxStack + val] = popFromStack();
 				break;
 			case bCastore:
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
+					wide = false;
+				} else {
+					val = (ssa.cfg.code[bca] & 0xff);// get index
+				}
+				locals[maxStack + val] = popFromStack();
 				break;
 			case bCistore_0:
+				locals[maxStack] = popFromStack();
 				break;
 			case bCistore_1:
+				locals[maxStack + 1] = popFromStack();
 				break;
 			case bCistore_2:
+				locals[maxStack + 2] = popFromStack();
 				break;
 			case bCistore_3:
+				locals[maxStack + 3] = popFromStack();
 				break;
 			case bClstore_0:
+				locals[maxStack] = popFromStack();
 				break;
 			case bClstore_1:
+				locals[maxStack + 1] = popFromStack();
 				break;
 			case bClstore_2:
+				locals[maxStack + 2] = popFromStack();
 				break;
 			case bClstore_3:
+				locals[maxStack + 3] = popFromStack();
 				break;
 			case bCfstore_0:
+				locals[maxStack] = popFromStack();
 				break;
 			case bCfstore_1:
+				locals[maxStack + 1] = popFromStack();
 				break;
 			case bCfstore_2:
+				locals[maxStack + 2] = popFromStack();
 				break;
 			case bCfstore_3:
+				locals[maxStack + 3] = popFromStack();
 				break;
 			case bCdstore_0:
+				locals[maxStack] = popFromStack();
 				break;
 			case bCdstore_1:
+				locals[maxStack + 1] = popFromStack();
 				break;
 			case bCdstore_2:
+				locals[maxStack + 2] = popFromStack();
 				break;
 			case bCdstore_3:
+				locals[maxStack + 3] = popFromStack();
 				break;
 			case bCastore_0:
+				locals[maxStack] = popFromStack();
 				break;
 			case bCastore_1:
+				locals[maxStack + 1] = popFromStack();
 				break;
 			case bCastore_2:
+				locals[maxStack + 2] = popFromStack();
 				break;
 			case bCastore_3:
+				locals[maxStack + 3] = popFromStack();
 				break;
 			case bCiastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bClastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCfastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCdastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCaastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_object;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCbastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				// TODO Remember the result type isn't set here (could be
+				// boolean or byte)
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCcastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_char;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCsastore:
+				value3 = popFromStack();
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_short;
+				instr = new StoreToArray(sCstore_toArray, value1, value2,
+						value3);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCpop:
+				popFromStack();
 				break;
 			case bCpop2:
+				value1 = popFromStack();
+				if (!((value1.type == SSAValue.t_long) || (value1.type == SSAValue.t_double))) {// false
+																								// if
+																								// value1
+																								// is
+																								// a
+																								// value
+																								// of
+																								// a
+																								// category
+																								// 2
+																								// computational
+																								// type
+					popFromStack();
+				}
 				break;
 			case bCdup:
+				value1 = popFromStack();
+				pushToStack(value1);
+				pushToStack(value1);
 				break;
 			case bCdup_x1:
+				value1 = popFromStack();
+				value2 = popFromStack();
+				pushToStack(value1);
+				pushToStack(value2);
+				pushToStack(value1);
 				break;
 			case bCdup_x2:
+				value1 = popFromStack();
+				value2 = popFromStack();
+				if ((value2.type == SSAValue.t_long)
+						|| (value2.type == SSAValue.t_double)) {// true if
+																// value2 is a
+																// value of a
+																// category 2
+																// computational
+																// type
+					pushToStack(value1);
+					pushToStack(value2);
+					pushToStack(value1);
+				} else {
+					value3 = popFromStack();
+					pushToStack(value1);
+					pushToStack(value3);
+					pushToStack(value2);
+					pushToStack(value1);
+				}
 				break;
 			case bCdup2:
+				value1 = popFromStack();
+				if ((value1.type == SSAValue.t_long)
+						|| (value1.type == SSAValue.t_double)) {// true if
+																// value1 is a
+																// value of a
+																// category 2
+																// computational
+																// type
+					pushToStack(value1);
+					pushToStack(value1);
+				} else {
+					value2 = popFromStack();
+					pushToStack(value2);
+					pushToStack(value1);
+					pushToStack(value2);
+					pushToStack(value1);
+				}
 				break;
 			case bCdup2_x1:
+				value1 = popFromStack();
+				value2 = popFromStack();
+				if ((value1.type == SSAValue.t_long)
+						|| (value1.type == SSAValue.t_double)) {// true if
+																// value1 is a
+																// value of a
+																// category 2
+																// computational
+																// type
+					pushToStack(value1);
+					pushToStack(value2);
+					pushToStack(value1);
+				} else {
+					value3 = popFromStack();
+					pushToStack(value2);
+					pushToStack(value1);
+					pushToStack(value3);
+					pushToStack(value2);
+					pushToStack(value1);
+				}
 				break;
 			case bCdup2_x2:
+				value1 = popFromStack();
+				value2 = popFromStack();
+				if ((value1.type == SSAValue.t_long)
+						|| (value1.type == SSAValue.t_double)) {// true if
+																// value1 is a
+																// value of a
+																// category 2
+																// computational
+																// type
+					if ((value2.type == SSAValue.t_long)
+							|| (value2.type == SSAValue.t_double)) {// true if
+																	// value2 is
+																	// a value
+																	// of a
+																	// category
+																	// 2
+																	// computational
+																	// type
+						// Form4 (the java virtual Machine Specification second
+						// edition, Tim Lindholm, Frank Yellin, page 223)
+						pushToStack(value1);
+						pushToStack(value2);
+						pushToStack(value1);
+					} else {
+						// Form 2 (the java virtual Machine Specification second
+						// edition, Tim Lindholm, Frank Yellin, page 223)
+						value3 = popFromStack();
+						pushToStack(value1);
+						pushToStack(value3);
+						pushToStack(value2);
+						pushToStack(value1);
+					}
+				} else {
+					value3 = popFromStack();
+					if ((value3.type == SSAValue.t_long)
+							|| (value3.type == SSAValue.t_double)) {// true if
+																	// value3 is
+																	// a value
+																	// of a
+																	// category
+																	// 2
+																	// computational
+																	// type
+						// Form 3 (the java virtual Machine Specification second
+						// edition, Tim Lindholm, Frank Yellin, page 223)
+						pushToStack(value2);
+						pushToStack(value1);
+						pushToStack(value3);
+						pushToStack(value2);
+						pushToStack(value1);
+					} else {
+						// Form 1 (the java virtual Machine Specification second
+						// edition, Tim Lindholm, Frank Yellin, page 223)
+						value4 = popFromStack();
+						pushToStack(value2);
+						pushToStack(value1);
+						pushToStack(value4);
+						pushToStack(value3);
+						pushToStack(value2);
+						pushToStack(value1);
+					}
+				}
 				break;
 			case bCswap:
+				value1 = popFromStack();
+				value2 = popFromStack();
+				pushToStack(value1);
+				pushToStack(value2);
 				break;
 			case bCiadd:
-				value2 = popFromstack();
-				value1 = popFromstack();
+				value2 = popFromStack();
+				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.t_integer;
 				instr = new Dyadic(sCadd, value1, value2);
+				instr.setResult(result);
 				addInstruction(instr);
 				pushToStack(result);
 				break;
 			case bCladd:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCadd, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfadd:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Dyadic(sCadd, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdadd:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Dyadic(sCadd, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCisub:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCsub, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClsub:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCsub, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfsub:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Dyadic(sCsub, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdsub:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Dyadic(sCsub, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCimul:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCmul, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClmul:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCmul, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfmul:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Dyadic(sCmul, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdmul:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Dyadic(sCmul, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCidiv:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCdiv, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCldiv:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCdiv, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfdiv:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Dyadic(sCdiv, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCddiv:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Dyadic(sCdiv, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCirem:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCrem, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClrem:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCrem, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfrem:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Dyadic(sCrem, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdrem:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Dyadic(sCrem, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCineg:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Monadic(sCneg, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClneg:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Monadic(sCneg, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfneg:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Monadic(sCneg, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdneg:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Monadic(sCneg, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCishl:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCshl, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClshl:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCshl, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCishr:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCshr, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClshr:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCshr, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiushr:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCushr, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClushr:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCushr, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiand:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCand, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCland:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCand, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCior:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCor, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClor:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCor, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCixor:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCxor, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClxor:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Dyadic(sCxor, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiinc:
+				// TODO is that right??
+				bca++;
+				if (wide) {
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get
+																						// index
+					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																						// const
+					wide = false;
+				} else {
+					val = ssa.cfg.code[bca++] & 0xff;// get index
+					val1 = ssa.cfg.code[bca] & 0xff;// get const
+				}
+
+				load(val, SSAValue.t_integer);
+				value1 = popFromStack();
+
+				value2 = new SSAValue();
+				value2.type = SSAValue.t_integer;
+				value2.constant = val1;
+
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+
+				instr = new Dyadic(sCadd, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+
+				locals[maxStack + val] = result;
 				break;
 			case bCi2l:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Monadic(sCconv_int, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCi2f:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Monadic(sCconv_int, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCi2d:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Monadic(sCconv_int, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCl2i:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Monadic(sCconv_long, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCl2f:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Monadic(sCconv_long, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCl2d:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Monadic(sCconv_long, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCf2i:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Monadic(sCconv_float, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCf2l:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Monadic(sCconv_float, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCf2d:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				instr = new Monadic(sCconv_float, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCd2i:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Monadic(sCconv_double, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCd2l:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				instr = new Monadic(sCconv_double, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCd2f:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				instr = new Monadic(sCconv_double, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCi2b:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_byte;
+				instr = new Monadic(sCconv_int, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCi2c:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_char;
+				instr = new Monadic(sCconv_int, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCi2s:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_short;
+				instr = new Monadic(sCconv_int, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClcmp:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCcmpl, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfcmpl:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCcmpl, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfcmpg:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCcmpg, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdcmpl:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCcmpl, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdcmpg:
+				value2 = popFromStack();
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCcmpg, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCifeq:
-				break;
 			case bCifne:
-				break;
 			case bCiflt:
-				break;
 			case bCifge:
-				break;
 			case bCifgt:
-				break;
 			case bCifle:
+				popFromStack();
+				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCif_icmpeq:
-				break;
 			case bCif_icmpne:
-				break;
 			case bCif_icmplt:
-				break;
 			case bCif_icmpge:
-				break;
 			case bCif_icmpgt:
-				break;
 			case bCif_icmple:
-				break;
 			case bCif_acmpeq:
-				break;
 			case bCif_acmpne:
+				popFromStack();
+				popFromStack();
+				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto:
+				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCjsr:
+				//TODO I think it isn't necessary to push the adress onto the stack
+				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCret:
+				if (wide) {
+					bca = bca+2; //step over indexbyte1 and indexbyte2
+					wide = false;
+				} else {
+					bca++;//step over index
+				}
 				break;
 			case bCtableswitch:
+				popFromStack();
+				//Step over whole bytecode instruction
+				bca++;
+				//pad bytes
+				while((bca & 0x03) != 0){
+					bca++;
+				}
+				//default jump adress
+				bca = bca+4;
+				//we need the low and high
+				int low1 = (ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
+				int high1 =(ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
+				int nofPair1 = high1-low1+1;
+				
+				//jump offsets
+				bca = bca + 4*nofPair1 - 1;
 				break;
 			case bClookupswitch:
+				popFromStack();
+				//Step over whole bytecode instruction
+				bca++;
+				//pad bytes
+				while((bca & 0x03) != 0){
+					bca++;
+				}
+				//default jump adress
+				bca = bca+4;
+				//npairs
+				int nofPair2 = (ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
+				//jump offsets
+				bca = bca + 8*nofPair2 - 1;
 				break;
 			case bCireturn:
+				//discard Stack
+				while(topStackframe >= 0){
+					locals[topStackframe]= null;
+					topStackframe--;
+				}
 				break;
 			case bClreturn:
+				//discard Stack
+				while(topStackframe >= 0){
+					locals[topStackframe]= null;
+					topStackframe--;
+				}
 				break;
 			case bCfreturn:
+				//discard Stack
+				while(topStackframe >= 0){
+					locals[topStackframe]= null;
+					topStackframe--;
+				}
 				break;
 			case bCdreturn:
+				//discard Stack
+				while(topStackframe >= 0){
+					locals[topStackframe]= null;
+					topStackframe--;
+				}
 				break;
 			case bCareturn:
+				//discard Stack
+				while(topStackframe >= 0){
+					locals[topStackframe]= null;
+					topStackframe--;
+				}
 				break;
 			case bCreturn:
+				//discard Stack
+				while(topStackframe >= 0){
+					locals[topStackframe]= null;
+					topStackframe--;
+				}
 				break;
 			case bCgetstatic:
+				//TODO access into Constant pool
 				break;
 			case bCputstatic:
+				//TODO access into Constant pool
 				break;
 			case bCgetfield:
+				//TODO access into Constant pool
 				break;
 			case bCputfield:
+				//TODO access into Constant pool
 				break;
 			case bCinvokevirtual:
+				//TODO access into Constant pool
 				break;
 			case bCinvokespecial:
+				//TODO access into Constant pool
 				break;
 			case bCinvokestatic:
+				//TODO access into Constant pool
 				break;
 			case bCinvokeinterface:
+				//TODO access into Constant pool
 				break;
 			case bCnew:
+				//TODO access into Constant pool
 				break;
 			case bCnewarray:
+				bca++;
+				val = ssa.cfg.code[bca] & 0xff;//atype
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = val+10;
+				SSAValue[] operand = {value1};
+				instr = new Call(sCnew, operand);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCanewarray:
+				//TODO access into Constant pool
 				break;
 			case bCarraylength:
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new MonadicString(sCalength, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCathrow:
+				//TODO ??
+				value1 = popFromStack();
+				//clear stack
+				while(topStackframe >=0){
+					locals[topStackframe]=null;
+					topStackframe--;
+				}
+				pushToStack(value1);
 				break;
 			case bCcheckcast:
+				//TODO access into Constant pool
 				break;
 			case bCinstanceof:
+				//TODO access into Constant pool
 				break;
 			case bCmonitorenter:
+				//TODO ??
 				break;
 			case bCmonitorexit:
+				//TODO ??
 				break;
 			case bCwide:
+				wide = true;
 				break;
 			case bCmultianewarray:
 				break;
 			case bCifnull:
-				break;
 			case bCifnonnull:
+				popFromStack();
+				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto_w:
+				bca = bca+4; //step over branchbyte1 and branchbyte2...
 				break;
 			case bCjsr_w:
+				//TODO I think it isn't necessary to push the adress onto the stack
+				bca = bca+4; //step over branchbyte1 and branchbyte2...
 				break;
 			case bCbreakpoint:
+				// do nothing
 				break;
 			default:
-				break;
-
+				// do nothing
 			}
 		}
 	}
@@ -705,7 +1639,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 	}
 
-	private SSAValue popFromstack() {
+	private SSAValue popFromStack() {
 		SSAValue val;
 		if (topStackframe < 0) {
 			throw new IndexOutOfBoundsException("Empty Stack");
@@ -732,19 +1666,19 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 	private void load(int index, int type) {
 		SSAValue result = locals[maxStack + index];
-		
-		if(result == null){//Local isn't initialized
+
+		if (result == null) {// Local isn't initialized
 			result = new SSAValue();
 			result.type = type;
 			Local operand = new Local(index);
 			SSAInstruction instr = new Monadic(sCload_var, operand);
 			instr.setResult(result);
 			addInstruction(instr);
-			locals[maxStack + index]= result;
+			locals[maxStack + index] = result;
 		}
-	
+
 		pushToStack(result);
-		
+
 	}
 
 }
