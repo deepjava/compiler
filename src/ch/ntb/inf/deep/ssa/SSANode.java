@@ -2,6 +2,9 @@ package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
+import ch.ntb.inf.deep.ssa.instruction.Dyadic;
+import ch.ntb.inf.deep.ssa.instruction.Monadic;
+import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class SSANode extends CFGNode implements JvmInstructionMnemonics,
@@ -9,7 +12,11 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	boolean traversed;
 	public int nofInstr;
 	public int nofPhiFunc;
+	private int maxLocals;
+	private int maxStack;
+	private int topStackframe;
 	public SSAValue exitSet[];
+	private SSAValue locals[];
 	public SSAValue entrySet[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
@@ -21,6 +28,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		traversed = false;
 		nofInstr = 0;
 		nofPhiFunc = 0;
+		maxLocals = 0;
+		maxStack = 0;
 
 	}
 
@@ -36,8 +45,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 */
 	public void mergeAndPopulateStateArray(SSA ssa) {
 
-		int maxLocals = ssa.cfg.method.getCodeAttribute().getMaxLocals();
-		int maxStack = ssa.cfg.method.getCodeAttribute().getMaxStack();
+		maxLocals = ssa.cfg.method.getCodeAttribute().getMaxLocals();
+		maxStack = ssa.cfg.method.getCodeAttribute().getMaxStack();
 
 		// chek all predecessors have statearray set
 		if (!isLoopHeader()) {
@@ -52,24 +61,11 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			entrySet = new SSAValue[maxStack + maxLocals];
 			exitSet = new SSAValue[maxStack + maxLocals];
 
-			// empty stackpart
-			for (int i = maxStack; i < maxStack + maxLocals; i++) {
-				SSAValue val = new Local(i - maxStack);
-				entrySet[i] = val;
-				exitSet[i] = val;
-			}
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
 			if (this.equals(predecessors[0])) {// equal by "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
 				exitSet = new SSAValue[maxStack + maxLocals];
-
-				// empty stackpart
-				for (int i = maxStack; i < maxStack + maxLocals; i++) {
-					SSAValue val = new Local(i - maxStack);
-					entrySet[i] = val;
-					exitSet[i] = val;
-				}
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
 			}
@@ -106,6 +102,14 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	}
 
 	public void traversCode(SSA ssa) {
+		SSAValue value1, value2, result;
+		int val;
+		SSAInstruction instr;
+		locals = entrySet.clone();// Don't change the entryset
+		// Determine top of the Stack
+		for (topStackframe = maxStack; topStackframe >= 0
+				&& locals[topStackframe] == null; topStackframe--)
+			;
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
 			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];
@@ -114,94 +118,257 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCnop:
 				break;
 			case bCaconst_null:
+				result = new SSAValue();
+				result.type = SSAValue.t_object;
+				result.constant = null;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_m1:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = -1;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_0:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = 0;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_1:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = 1;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_2:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = 2;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_3:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = 3;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_4:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = 4;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiconst_5:
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = 5;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClconst_0:
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				result.constant = 0;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bClconst_1:
+				result = new SSAValue();
+				result.type = SSAValue.t_long;
+				result.constant = 1;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfconst_0:
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				result.constant = 0.0f;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfconst_1:
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				result.constant = 1.0f;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCfconst_2:
+				result = new SSAValue();
+				result.type = SSAValue.t_float;
+				result.constant = 2.0f;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdconst_0:
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				result.constant = 0.0;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCdconst_1:
+				result = new SSAValue();
+				result.type = SSAValue.t_double;
+				result.constant = 1.0;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCbipush:
+				// get byte from Bytecode
+				bca++;
+				val = ssa.cfg.code[bca];// sign-extended
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = val;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCsipush:
+				// get short from Bytecode
+				bca++;
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];// sign-extended
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				result.constant = val;
+				instr = new NoOpnd(sCload_const);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCldc:
+				// TODO How to access the Runtime Constantpool?
 				break;
 			case bCldc_w:
+				// TODO How to access the Runtime Constantpool?
 				break;
 			case bCldc2_w:
+				// TODO How to access the Runtime Constantpool?
 				break;
 			case bCiload:
+				bca++;
+				val = (ssa.cfg.code[bca] & 0xff);//get index
+				load(val, SSAValue.t_integer);
 				break;
 			case bClload:
+				bca++;
+				val = (ssa.cfg.code[bca] & 0xff);//get index
+				load(val, SSAValue.t_long);
 				break;
 			case bCfload:
+				bca++;
+				val = (ssa.cfg.code[bca] & 0xff);//get index
+				load(val, SSAValue.t_float);
 				break;
 			case bCdload:
+				bca++;
+				val = (ssa.cfg.code[bca] & 0xff);//get index
+				load(val, SSAValue.t_double);
 				break;
 			case bCaload:
+				bca++;
+				val = (ssa.cfg.code[bca] & 0xff);//get index
+				load(val, SSAValue.t_object);
 				break;
 			case bCiload_0:
+				load(0, SSAValue.t_integer);
 				break;
 			case bCiload_1:
+				load(1, SSAValue.t_integer);
 				break;
 			case bCiload_2:
+				load(2, SSAValue.t_integer);
 				break;
 			case bCiload_3:
+				load(3, SSAValue.t_integer);
 				break;
 			case bClload_0:
+				load(0, SSAValue.t_long);
 				break;
 			case bClload_1:
+				load(1, SSAValue.t_long);
 				break;
 			case bClload_2:
+				load(2, SSAValue.t_long);
 				break;
 			case bClload_3:
+				load(3, SSAValue.t_long);
 				break;
 			case bCfload_0:
+				load(0, SSAValue.t_float);
 				break;
 			case bCfload_1:
+				load(1, SSAValue.t_float);
 				break;
 			case bCfload_2:
+				load(2, SSAValue.t_float);
 				break;
 			case bCfload_3:
+				load(3, SSAValue.t_float);
 				break;
 			case bCdload_0:
+				load(0, SSAValue.t_double);
 				break;
 			case bCdload_1:
+				load(1, SSAValue.t_double);
 				break;
 			case bCdload_2:
+				load(2, SSAValue.t_double);
 				break;
 			case bCdload_3:
+				load(3, SSAValue.t_double);
 				break;
 			case bCaload_0:
+				load(0, SSAValue.t_object);
 				break;
 			case bCaload_1:
+				load(1, SSAValue.t_object);
 				break;
 			case bCaload_2:
+				load(2, SSAValue.t_object);
 				break;
 			case bCaload_3:
+				load(3, SSAValue.t_object);
 				break;
 			case bCiaload:
 				break;
@@ -304,6 +471,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCswap:
 				break;
 			case bCiadd:
+				value2 = popFromstack();
+				value1 = popFromstack();
+				result = new SSAValue();
+				result.type = SSAValue.t_integer;
+				instr = new Dyadic(sCadd, value1, value2);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCladd:
 				break;
@@ -520,6 +694,57 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 			}
 		}
+	}
+
+	private void pushToStack(SSAValue value) {
+		if (topStackframe + 1 >= maxStack) {
+			throw new IndexOutOfBoundsException("Stack overflow");
+		}
+		locals[topStackframe + 1] = value;
+		topStackframe++;
+
+	}
+
+	private SSAValue popFromstack() {
+		SSAValue val;
+		if (topStackframe < 0) {
+			throw new IndexOutOfBoundsException("Empty Stack");
+		}
+		val = locals[topStackframe];
+		locals[topStackframe] = null;
+		topStackframe--;
+		return val;
+
+	}
+
+	private void addInstruction(SSAInstruction instr) {
+		int len = instructions.length;
+		if (nofInstr == len) {
+			SSAInstruction[] newArray = new SSAInstruction[2 * len];
+			for (int k = 0; k < len; k++)
+				newArray[k] = instructions[k];
+			instructions = newArray;
+
+		}
+		instructions[nofInstr] = instr;
+		nofInstr++;
+	}
+
+	private void load(int index, int type) {
+		SSAValue result = locals[maxStack + index];
+		
+		if(result == null){//Local isn't initialized
+			result = new SSAValue();
+			result.type = type;
+			Local operand = new Local(index);
+			SSAInstruction instr = new Monadic(sCload_var, operand);
+			instr.setResult(result);
+			addInstruction(instr);
+			locals[maxStack + index]= result;
+		}
+	
+		pushToStack(result);
+		
 	}
 
 }

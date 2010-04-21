@@ -3,7 +3,7 @@ package ch.ntb.inf.deep.ssa;
 /**
  * @author  millischer
  */
-public class SSAValue {
+public class SSAValue implements SSAValueType {
 	public int type;
 	public SSAValue reference;
 	public Object constant;

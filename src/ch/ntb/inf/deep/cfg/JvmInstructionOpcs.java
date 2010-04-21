@@ -118,9 +118,9 @@ interface JvmInstructionOpcs {
 			0x10000200 + bCbipush, // push immediate byte 
 			0x10000300 + bCsipush, // push immediate short 
 
-			0x10000200 + bCldc, // push int or float from RCP (1 byte index)
-			0x10000300 + bCldc_w, // push int or float from RCP (wide: 2 bytes index)
-			0x20000300 + bCldc2_w, // push long or double from RCP (wide index)
+			0x10000200 + (1<<bcapSSAnotImpl)| bCldc, // push int or float from RCP (1 byte index)
+			0x10000300 + (1<<bcapSSAnotImpl)| bCldc_w, // push int or float from RCP (wide: 2 bytes index)
+			0x20000300 + (1<<bcapSSAnotImpl)| bCldc2_w, // push long or double from RCP (wide index)
 
 			0x10000200 + bCiload, // push int from local local var[[imm]
 			0x20000200 + bClload, // push long from ..

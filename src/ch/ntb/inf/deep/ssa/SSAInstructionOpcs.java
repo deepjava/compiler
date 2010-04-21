@@ -6,14 +6,15 @@ interface SSAInstructionOpcs {
 	sCrem = 6, sCneg = 7, sCshl = 8, sCshr = 9, sCushr = 10,
 	sCand = 11, sCor = 12, sCxor = 13, sCintCast = 14, sClongCast = 15,
 	sCfloatCast = 16, sCdoubleCast = 17, sCcmp = 18, sCreturn = 19, sCcall = 20,
-	sCnew = 21, sCinstanceof = 22;
+	sCnew = 21, sCinstanceof = 22, sCload_var = 23;
 	
 	int[] scAttrTab = {
 			/*Format:	0xuuuu'uucc,
 					u	unused
 					cc	operation code (opc)
 			*/
-			0x00000000 + sCload_const,	//load constant
+			0x00000000 + sCload_const,	//load 
+			0x00000000 + sCload_var,
 			
 			0x00000000 + sCadd, 		//arithmetic expression
 			0x00000000 + sCsub,
