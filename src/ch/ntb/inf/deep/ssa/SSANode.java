@@ -20,7 +20,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	public int nofPhiFunc;
 	private int maxLocals;
 	private int maxStack;
-	private int topStackframe;
+	private int stackpointer;
 	public SSAValue exitSet[];
 	private SSAValue locals[];
 	public SSAValue entrySet[];
@@ -114,10 +114,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		boolean wide = false;
 		locals = entrySet.clone();// Don't change the entryset
 		// Determine top of the Stack
-		for (topStackframe = maxStack; topStackframe >= 0 && locals[topStackframe] == null; topStackframe--);
+		for (stackpointer = maxStack; stackpointer >= 0 && locals[stackpointer] == null; stackpointer--);
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
-			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];
+			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xFF];
 			assert ((entry & (1 << bcapSSAnotImpl)) == 0) : "bytecode instruction not implemented";
 			switch (ssa.cfg.code[bca] & 0xff) {
 			case bCnop:
@@ -1483,44 +1483,44 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				break;
 			case bCireturn:
 				//discard Stack
-				while(topStackframe >= 0){
-					locals[topStackframe]= null;
-					topStackframe--;
+				while(stackpointer >= 0){
+					locals[stackpointer]= null;
+					stackpointer--;
 				}
 				break;
 			case bClreturn:
 				//discard Stack
-				while(topStackframe >= 0){
-					locals[topStackframe]= null;
-					topStackframe--;
+				while(stackpointer >= 0){
+					locals[stackpointer]= null;
+					stackpointer--;
 				}
 				break;
 			case bCfreturn:
 				//discard Stack
-				while(topStackframe >= 0){
-					locals[topStackframe]= null;
-					topStackframe--;
+				while(stackpointer >= 0){
+					locals[stackpointer]= null;
+					stackpointer--;
 				}
 				break;
 			case bCdreturn:
 				//discard Stack
-				while(topStackframe >= 0){
-					locals[topStackframe]= null;
-					topStackframe--;
+				while(stackpointer >= 0){
+					locals[stackpointer]= null;
+					stackpointer--;
 				}
 				break;
 			case bCareturn:
 				//discard Stack
-				while(topStackframe >= 0){
-					locals[topStackframe]= null;
-					topStackframe--;
+				while(stackpointer >= 0){
+					locals[stackpointer]= null;
+					stackpointer--;
 				}
 				break;
 			case bCreturn:
 				//discard Stack
-				while(topStackframe >= 0){
-					locals[topStackframe]= null;
-					topStackframe--;
+				while(stackpointer >= 0){
+					locals[stackpointer]= null;
+					stackpointer--;
 				}
 				break;
 			case bCgetstatic:
@@ -1578,9 +1578,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				//TODO ??
 				value1 = popFromStack();
 				//clear stack
-				while(topStackframe >=0){
-					locals[topStackframe]=null;
-					topStackframe--;
+				while(stackpointer >=0){
+					locals[stackpointer]=null;
+					stackpointer--;
 				}
 				pushToStack(value1);
 				break;
@@ -1623,22 +1623,22 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	}
 
 	private void pushToStack(SSAValue value) {
-		if (topStackframe + 1 >= maxStack) {
+		if (stackpointer + 1 >= maxStack) {
 			throw new IndexOutOfBoundsException("Stack overflow");
 		}
-		locals[topStackframe + 1] = value;
-		topStackframe++;
+		locals[stackpointer + 1] = value;
+		stackpointer++;
 
 	}
 
 	private SSAValue popFromStack() {
 		SSAValue val;
-		if (topStackframe < 0) {
+		if (stackpointer < 0) {
 			throw new IndexOutOfBoundsException("Empty Stack");
 		}
-		val = locals[topStackframe];
-		locals[topStackframe] = null;
-		topStackframe--;
+		val = locals[stackpointer];
+		locals[stackpointer] = null;
+		stackpointer--;
 		return val;
 
 	}
