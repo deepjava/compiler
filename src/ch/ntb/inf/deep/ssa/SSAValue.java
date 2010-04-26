@@ -1,7 +1,7 @@
 package ch.ntb.inf.deep.ssa;
 
 /**
- * @author  millischer
+ * @author   millischer
  */
 public class SSAValue implements SSAValueType {
 	public int type;
