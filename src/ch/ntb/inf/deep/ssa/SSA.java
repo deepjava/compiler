@@ -3,6 +3,9 @@ package ch.ntb.inf.deep.ssa;
 import ch.ntb.inf.deep.cfg.CFG;
 
 
+/**
+ * @author  millischer
+ */
 public class SSA {
 	protected CFG cfg;
 	int nofLoopheaders;
