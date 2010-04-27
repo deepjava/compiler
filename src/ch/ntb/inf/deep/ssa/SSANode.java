@@ -4,9 +4,11 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
+import ch.ntb.inf.deep.ssa.instruction.DyadicRef;
 import ch.ntb.inf.deep.ssa.instruction.Monadic;
-import ch.ntb.inf.deep.ssa.instruction.MonadicString;
+import ch.ntb.inf.deep.ssa.instruction.MonadicRef;
 import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
+import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
 
@@ -117,7 +119,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		for (stackpointer = maxStack; stackpointer >= 0 && locals[stackpointer] == null; stackpointer--);
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
-			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xFF];
+			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];
 			assert ((entry & (1 << bcapSSAnotImpl)) == 0) : "bytecode instruction not implemented";
 			switch (ssa.cfg.code[bca] & 0xff) {
 			case bCnop:
@@ -282,13 +284,43 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				pushToStack(result);
 				break;
 			case bCldc:
-				// TODO How to access the Runtime Constantpool?
+				bca++;
+				val = ssa.cfg.code[bca];
+				result = new SSAValue();
+				//We didn't now which kind of type it is. It could be int, float or a literal string.
+				value1 = new SSAValue();
+				value1.type = SSAValue.tRef;
+				value1.constant = val;
+				instr = new Monadic(sCloadConst, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCldc_w:
-				// TODO How to access the Runtime Constantpool?
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				//We didn't now which kind of type it is. It could be int, float or a literal string.
+				value1 = new SSAValue();
+				value1.type = SSAValue.tRef;
+				value1.constant = val;
+				instr = new Monadic(sCloadConst, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCldc2_w:
-				// TODO How to access the Runtime Constantpool?
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				//We didn't now which kind of type it is. It could be long or double.
+				value1 = new SSAValue();
+				value1.type = SSAValue.tRef;
+				value1.constant = val;
+				instr = new Monadic(sCloadConst, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCiload:
 				bca++;
@@ -451,8 +483,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				pushToStack(result);
 				break;
 			case bCbaload:
-				// TODO Remember the result type isn't set here (it could be
-				// boolean or byte)
+				// Remember the result type isn't set here (it could be boolean or byte)
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
@@ -652,8 +683,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				// TODO Remember the result type isn't set here (could be
-				// boolean or byte)
+				//Remember the result type isn't set here (could be boolean or byte)
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.setResult(result);
@@ -1200,7 +1230,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				pushToStack(result);
 				break;
 			case bCiinc:
-				// TODO is that right??
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get index
@@ -1437,7 +1466,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCjsr:
-				//TODO I think it isn't necessary to push the adress onto the stack
+				// I think it isn't necessary to push the address onto the stack
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCret:
@@ -1456,7 +1485,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				while((bca & 0x03) != 0){
 					bca++;
 				}
-				//default jump adress
+				//default jump address
 				bca = bca+4;
 				//we need the low and high
 				int low1 = (ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
@@ -1524,31 +1553,72 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bCgetstatic:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				//We didn't know which kind of type it is. We have only a ref to a field
+				instr = new NoOpndRef(sCloadConst, val);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCputstatic:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				result.type = SSAValue.tVoid;
+				value1 = popFromStack();
+				instr = new MonadicRef(sCstoreToField, val, value1);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCgetfield:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				//We didn't now which kind of type it is. We have only a ref to a field
+				value1 = popFromStack();
+				instr = new MonadicRef(sCloadConst, val, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCputfield:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				result.type = SSAValue.tVoid;
+				value2 = popFromStack();
+				value1 = popFromStack();
+				instr = new DyadicRef(sCstoreToField, val, value1, value2);
+				instr.setResult(result);
+				addInstruction(instr);
 				break;
 			case bCinvokevirtual:
-				//TODO access into Constant pool
+				//TODO access into Constant pool to determine how many arguments are to pop from stack
+				bca = bca+2;
 				break;
 			case bCinvokespecial:
-				//TODO access into Constant pool
+				//TODO access into Constant pool to determine how many arguments are to pop from stack
+				bca = bca+2;
 				break;
 			case bCinvokestatic:
-				//TODO access into Constant pool
+				//TODO access into Constant pool to determine how many arguments are to pop from stack
+				bca = bca+2;
 				break;
 			case bCinvokeinterface:
-				//TODO access into Constant pool
+				//TODO access into Constant pool to determine how many arguments are to pop from stack
+				bca = bca+4;
 				break;
 			case bCnew:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				result.type = SSAValue.tRef;
+				instr = new Call(sCnew, val);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCnewarray:
 				bca++;
@@ -1563,38 +1633,65 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				pushToStack(result);
 				break;
 			case bCanewarray:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				result = new SSAValue();
+				result.type = SSAValue.tAref;
+				value1 = popFromStack();
+				SSAValue[] opnd = {value1};
+				instr = new Call(sCnew, val, opnd);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCarraylength:
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				instr = new MonadicString(sCalength, value1);
+				instr = new MonadicRef(sCalength, value1);
 				instr.setResult(result);
 				addInstruction(instr);
 				pushToStack(result);
 				break;
 			case bCathrow:
-				//TODO ??
 				value1 = popFromStack();
+				result = value1;
+				instr = new Monadic(sCthrow, value1);
+				instr.setResult(result);
+				addInstruction(instr);
 				//clear stack
 				while(stackpointer >=0){
 					locals[stackpointer]=null;
 					stackpointer--;
 				}
-				pushToStack(value1);
+				pushToStack(result);
 				break;
 			case bCcheckcast:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				value1 = popFromStack();
+				result = value1;				
+				instr = new MonadicRef(sCthrow, val, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCinstanceof:
-				//TODO access into Constant pool
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				value1 = popFromStack();
+				result = new SSAValue();
+				result.type = SSAValue.tInteger;
+				instr = new MonadicRef(sCinstanceof, val, value1);
+				instr.setResult(result);
+				addInstruction(instr);
+				pushToStack(result);
 				break;
 			case bCmonitorenter:
-				//TODO ??
+				popFromStack();
 				break;
 			case bCmonitorexit:
-				//TODO ??
+				popFromStack();
 				break;
 			case bCwide:
 				wide = true;
@@ -1610,7 +1707,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca = bca+4; //step over branchbyte1 and branchbyte2...
 				break;
 			case bCjsr_w:
-				//TODO I think it isn't necessary to push the adress onto the stack
+				//I think it isn't necessary to push the adress onto the stack
 				bca = bca+4; //step over branchbyte1 and branchbyte2...
 				break;
 			case bCbreakpoint:

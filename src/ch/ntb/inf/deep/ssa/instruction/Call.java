@@ -4,15 +4,15 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Call extends SSAInstruction {
 	
-	String symRef;
+	int ref;
 
 	public Call(int opCode) {
 		bytecodeIndex = opCode;
 	}
 	
-	public Call(int opCode, String symRef){
+	public Call(int opCode, int ref){
 		bytecodeIndex = opCode;
-		this.symRef = symRef;
+		this.ref = ref;
 	}
 	
 	
@@ -21,9 +21,9 @@ public class Call extends SSAInstruction {
 		this.operands = operands;
 	}
 	
-	public Call(int opCode, String symRef, SSAValue[] operands){
+	public Call(int opCode, int ref, SSAValue[] operands){
 		bytecodeIndex = opCode;
-		this.symRef = symRef;
+		this.ref = ref;
 		this.operands = operands;
 	}
 
@@ -37,17 +37,17 @@ public class Call extends SSAInstruction {
 		this.operands = operands;
 	}
 	
-	public void setStringArg(String symRef){
-		this.symRef = symRef;
+	public void setArg(int ref){
+		this.ref = ref;
 	}
 	
-	public String getStringArg(){
-		return symRef;
+	public int getArg(){
+		return ref;
 	}
 	
 	@Override
 	public String toString() {
-		String r = result+" = "+ bcMnemonics[bytecodeIndex]+" " + symRef+ " (";
+		String r = result+" = "+ bcMnemonics[bytecodeIndex]+" " + ref+ " (";
 		for (int i=0;i<operands.length;i++){
 			r= r+ operands[i];
 		}

@@ -118,9 +118,9 @@ interface JvmInstructionOpcs {
 			0x10000200 + bCbipush, // push immediate byte 
 			0x10000300 + bCsipush, // push immediate short 
 
-			0x10000200 + (1<<bcapSSAnotImpl)| bCldc, // push int or float from RCP (1 byte index)
-			0x10000300 + (1<<bcapSSAnotImpl)| bCldc_w, // push int or float from RCP (wide: 2 bytes index)
-			0x20000300 + (1<<bcapSSAnotImpl)| bCldc2_w, // push long or double from RCP (wide index)
+			0x10000200 + bCldc, // push int or float from RCP (1 byte index)
+			0x10000300 + bCldc_w, // push int or float from RCP (wide: 2 bytes index)
+			0x20000300 + bCldc2_w, // push long or double from RCP (wide index)
 
 			0x10000200 + bCiload, // push int from local local var[[imm]
 			0x20000200 + bClload, // push long from ..
@@ -321,10 +321,10 @@ interface JvmInstructionOpcs {
 			0xF0000100 + (1<<bcapReturn) | bCareturn, // return ref
 			0x00000100 + (1<<bcapReturn) | bCreturn, // return
 
-			0x80000300 + (1<<bcapSSAnotImpl)| bCgetstatic,
-			0x80000300 + (1<<bcapSSAnotImpl)| bCputstatic,
-			0x80000300 + (1<<bcapSSAnotImpl)| bCgetfield,
-			0x80000300 + (1<<bcapSSAnotImpl)| bCputfield,
+			0x80000300 + bCgetstatic,
+			0x80000300 + bCputstatic,
+			0x80000300 + bCgetfield,
+			0x80000300 + bCputfield,
 
 			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokevirtual, // pop objRef & arguments, push result
 			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokespecial, // pop objRef & arguments, push result
@@ -333,9 +333,9 @@ interface JvmInstructionOpcs {
 
 			bCxxxunusedxxx,
 
-			0x10000300 + (1<<bcapSSAnotImpl)|(1<<bcapCall) | (1<<bcapNew) | bCnew, // create new object
+			0x10000300 + (1<<bcapCall) | (1<<bcapNew) | bCnew, // create new object
 			0x00000200 + (1<<bcapCall) | (1<<bcapNew) | bCnewarray, // create new array of standard type
-			0x00000300 + (1<<bcapSSAnotImpl)|(1<<bcapCall) | (1<<bcapNew) | bCanewarray, // create new array of referenc
+			0x00000300 + (1<<bcapCall) | (1<<bcapNew) | bCanewarray, // create new array of referenc
 
 			0x00000100 + bCarraylength,
 			
