@@ -51,7 +51,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 * @param maxLocals
 	 * @param maxStack
 	 */
-	public void mergeAndPopulateStateArray(SSA ssa) {
+	public void mergeAndDetermineStateArray(SSA ssa) {
 
 		maxLocals = ssa.cfg.method.getCodeAttribute().getMaxLocals();
 		maxStack = ssa.cfg.method.getCodeAttribute().getMaxStack();
@@ -80,7 +80,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		} else if (nofPredecessors >= 2) {
 			// multiple predecessors --> merge necessary
 			if (isLoopHeader()) {
-				// if true --> generate PhiFunctions for lacals
+				// if true --> generate PhiFunctions for locals
 				if (nofInstr == 0) {
 					// First Visit -->insert PhiFunction with 1 parameter
 					// TODO First Visit force PhiFunction

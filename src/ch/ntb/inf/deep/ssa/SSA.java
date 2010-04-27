@@ -6,6 +6,7 @@ import ch.ntb.inf.deep.cfg.CFG;
 /**
  * @author  millischer
  */
+
 public class SSA {
 	protected CFG cfg;
 	int nofLoopheaders;
@@ -18,36 +19,24 @@ public class SSA {
 		nofLoopheaders = 0;
 		
 		
-		populateStateArray();
+		determineStateArray();
 	}
 	
-	public void populateStateArray(){
+	public void determineStateArray(){
+		//Array of exist SSANodes
+		SSANode[] nodes = (SSANode[])cfg.getNodes();
 		
-		
-		
-		SSANode a = new SSANode();
-		a.mergeAndPopulateStateArray(this);
-		/*
-		for (SSANode ssaNode : todo) {
-
-			// add Loop-Header to be processed twice
-			if (ssaNode.isLoopHeader() && !ssaNode.visited) {
-				todo.add(ssaNode);
+		for(int i = 0;i < nodes.length;i++){
+			//mark loopheaders for traverse a second time 
+			if(nodes[i].isLoopHeader()){
+				loopHeaders[nofLoopheaders]= nodes[i];
+				nofLoopheaders++;
 			}
-
-			// First: merge State-Arrays of Parent Nodes
-			ssaNode.mergeStateArrays(maxStack, maxLocals);
-
-			// Second: process block and update state-array
-			if (!(ssaNode.visited)) {
-				ssaNode.visited = true;
-				ssaNode.populateStateArray(maxStack, maxLocals);
-			}
+			nodes[i].mergeAndDetermineStateArray(this);
 		}
-				
-		*/
 		
-		
+		for(int i = 0;i < nofLoopheaders;i++){
+			loopHeaders[i].mergeAndDetermineStateArray(this);
+		}		
 	}
-
 }
