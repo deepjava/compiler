@@ -14,12 +14,12 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * @author buesser 23.2.2010, graf
  */
 public class CFG implements JvmInstructionMnemonics {
-	private static final boolean debug = false;
+	private static final boolean debug = true;
 
 	/**
 	 * Start-node of the CFG.
 	 */
-	private final CFGNode rootNode;
+	public final SSANode rootNode;
 
 	/**
 	 * Method for which the CFG is build. Used in the toString-Methods, SSA and
@@ -84,7 +84,7 @@ public class CFG implements JvmInstructionMnemonics {
 
 		ICodeAttribute codeAttr = method.getCodeAttribute();
 		CFGNode startNode = new SSANode();
-		rootNode = startNode;
+		rootNode = (SSANode)startNode;
 		code = codeAttr.getBytecodes();
 
 		int len;
@@ -232,7 +232,7 @@ public class CFG implements JvmInstructionMnemonics {
 			srcNode.next = newNode;
 			newNode.successors = srcNode.successors;
 			newNode.nofSuccessors = srcNode.nofSuccessors;
-			srcNode.successors = new CFGNode[CFGNode.nofLinks];
+			srcNode.successors = new SSANode[CFGNode.nofLinks];
 			srcNode.nofSuccessors = 0;
 			entry = bcAttrTab[code[bca] & 0xff];
 			if ((entry & (1 << bcapCondBranch)) != 0) { // no link if
@@ -254,7 +254,7 @@ public class CFG implements JvmInstructionMnemonics {
 		if (branchAddr != targNode.firstBCA) { // if first instruction, no
 			// splitting
 			// split before target address
-			CFGNode newTargNode = new CFGNode();
+			CFGNode newTargNode = new SSANode();
 			newTargNode.lastBCA = targNode.lastBCA;
 			newTargNode.firstBCA = branchAddr;
 			targNode.lastBCA = findLastBcaInNode(cfg, targNode, branchAddr);
@@ -262,7 +262,7 @@ public class CFG implements JvmInstructionMnemonics {
 			targNode.next = newTargNode;
 			newTargNode.successors = targNode.successors;
 			newTargNode.nofSuccessors = targNode.nofSuccessors;
-			targNode.successors = new CFGNode[CFGNode.nofLinks];
+			targNode.successors = new SSANode[CFGNode.nofLinks];
 			targNode.nofSuccessors = 0;
 			entry = bcAttrTab[code[targNode.lastBCA] & 0xff];
 			if ((entry & ((1 << bcapUncondBranch) | (1 << bcapReturn) | (1 << bcapSwitch))) == 0) {
@@ -365,13 +365,13 @@ public class CFG implements JvmInstructionMnemonics {
 	 * @return list of ordered cfg nodes
 	 */
 	public final CFGNode[] getNodes() {
-		CFGNode[] nodes = new CFGNode[getNumberOfNodes()];
+		SSANode[] nodes = new SSANode[getNumberOfNodes()];
 
 		int i = 0;
-		CFGNode current = rootNode;
+		SSANode current = rootNode;
 		while (current != null) {
 			nodes[i] = current;
-			current = current.next;
+			current = (SSANode)current.next;
 			i = i + 1;
 		}
 		return nodes;
