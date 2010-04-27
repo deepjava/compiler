@@ -18,7 +18,7 @@ public class TestCFG {
 	static public IClassFileReader cfr;
 
     /**
-	 * Array of CFGs for every method
+	 * Array of CFGs of all methods
 	 */
 	static public CFG[] cfg;
 
@@ -44,11 +44,11 @@ public class TestCFG {
 	 *  
 	 * @param cfgNo
 	 *            number of the CFG
-	 * @param noOfNodes
+	 * @param nofNodes
 	 *            number of nodes
 	 */
-	static public CFGNode[] getAndTestNodes(int cfgNo, int noOfNodes) {
-		assertEquals("number of nodes not as expected", noOfNodes, cfg[cfgNo].getNumberOfNodes());
+	static public CFGNode[] getAndTestNodes(int cfgNo, int nofNodes) {
+		assertEquals("number of nodes not as expected", nofNodes, cfg[cfgNo].getNumberOfNodes());
 		
 		CFGNode[] nodes = cfg[cfgNo].getNodes();
 		return nodes;

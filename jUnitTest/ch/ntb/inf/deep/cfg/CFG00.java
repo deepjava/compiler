@@ -18,8 +18,8 @@ public class CFG00 extends TestCFG {
 
 
     @Test
-	public void testClassConstructor() {
-    	// class constructor
+	public void testConstructor() {
+    	// constructor
 		CFGNode[] nodes = getAndTestNodes(0, 1);
 		testNode(nodes[0], 0, 4, false, null, new int[] {}, new int[] {});
 	}

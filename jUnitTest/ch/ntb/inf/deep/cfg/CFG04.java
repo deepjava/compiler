@@ -1,7 +1,7 @@
 package ch.ntb.inf.deep.cfg;
 
 
-import org.junit.Before;
+import org.junit.*;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
@@ -9,8 +9,8 @@ import ch.ntb.inf.deep.testClasses.T04Loops;
 
 public class CFG04 extends TestCFG {
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         createCFG(T04Loops.class);
     }
 
