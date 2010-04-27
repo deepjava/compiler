@@ -9,6 +9,7 @@ import ch.ntb.inf.deep.ssa.instruction.Monadic;
 import ch.ntb.inf.deep.ssa.instruction.MonadicRef;
 import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
+import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
 
@@ -80,13 +81,41 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		} else if (nofPredecessors >= 2) {
 			// multiple predecessors --> merge necessary
 			if (isLoopHeader()) {
-				// if true --> generate PhiFunctions for locals
+				// if true --> generate PhiFunctions for all locals
+				//if we have redundant Phi Functions, we eliminiate it later 
 				if (nofInstr == 0) {
-					// First Visit -->insert PhiFunction with 1 parameter
-					// TODO First Visit force PhiFunction
+					// First Visit -->insert PhiFunction with 1 parameter					
+					assert (((SSANode)predecessors[0]).exitSet != null) : "Predecessor.exitSet isn't set!";
+					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
+					exitSet = new SSAValue[maxStack + maxLocals];
+					
+					for(int i = 0; i < maxStack+maxLocals;i++){
+						SSAValue param1 = entrySet[i];
+						if(param1 != null){//stack could be empty
+							if(i >= maxStack){
+								//TODO Generating Loads for Parameters
+							}
+							SSAValue result = new SSAValue();
+							result.type = SSAValue.tPhiFunc;
+							PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
+							phi.setResult(result);
+							phi.addOperand(param1,0);//predecessors[0]
+							entrySet[i]=result;
+							addPhiFunction(phi);
+						}
+					}					
 				} else {
-					// TODO Second Visit -->insert second param in PhiFunction
-
+					for (int i=1; i < nofPredecessors; i++){//skip the first already processed predecessor  
+						for (int j = 0; j < maxStack+maxLocals; j++){
+							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
+							if(param != null){//stack could be empty
+								if (j >=maxStack){
+									//TODO Generating Loads for Parameters
+								}
+								phiFunctions[j].addOperand(param, i);
+							}
+						}
+					}
 				}
 			} else {
 				// it isn't a loopheader
@@ -101,7 +130,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 			}
 		}
-		// Populate
+		// fill Instruction Array
 		if (!traversed) {
 			traversed = true;
 			this.traversCode(ssa);
@@ -120,7 +149,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
 			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];
-			assert ((entry & (1 << bcapSSAnotImpl)) == 0) : "bytecode instruction not implemented";
+			assert ((entry & (1 << bcapSSAnotImpl)) == 0) : "SSA instruction not implemented";
 			switch (ssa.cfg.code[bca] & 0xff) {
 			case bCnop:
 				break;
@@ -1753,6 +1782,19 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		nofInstr++;
 	}
 
+	private void addPhiFunction(PhiFunction func) {
+		int len = phiFunctions.length;
+		if (nofPhiFunc == len) {
+			PhiFunction[] newArray = new PhiFunction[2 * len];
+			for (int k = 0; k < len; k++)
+				newArray[k] = phiFunctions[k];
+			instructions = newArray;
+
+		}
+		phiFunctions[nofPhiFunc] = func;
+		nofPhiFunc++;
+	}
+	
 	private void load(int index, int type) {
 		SSAValue result = locals[maxStack + index];
 
