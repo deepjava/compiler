@@ -106,13 +106,15 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					}					
 				} else {
 					for (int i=1; i < nofPredecessors; i++){//skip the first already processed predecessor  
+						int phiIndex = 0; 
 						for (int j = 0; j < maxStack+maxLocals; j++){
 							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
 							if(param != null){//stack could be empty
 								if (j >=maxStack){
 									//TODO Generating Loads for Parameters
 								}
-								phiFunctions[j].addOperand(param, i);
+								phiFunctions[phiIndex].addOperand(param, i);
+								phiIndex++;
 							}
 						}
 					}
@@ -121,11 +123,55 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				// it isn't a loopheader
 				for (int i = 0; i < nofPredecessors; i++) {
 					if (entrySet == null) {
-						// First Visit -->Creat Locals
+						// First predecessor -->Creat Locals
 						entrySet = ((SSANode) predecessors[i]).exitSet.clone();
 					} else {
-						// Second Visit --> merge
-						// TODO merge an if necessary create new SSANode
+						// all other predecessors --> merge
+						SSAValue[] predExitSet = ((SSANode) predecessors[i]).exitSet.clone();
+						for (int j = 0; j < maxStack+maxLocals; j++){
+							if (predExitSet[j] == null){
+								entrySet[j] = predExitSet[j]; //Why? 
+							}
+							else if(!(entrySet[j].equals(predExitSet[j]))){
+								if (j >= maxStack){
+									//TODO Generating Loads for Parameters for entrySet[j]
+									//TODO Generating Loads for Parameters for predExitSet[j]
+								}
+								if(entrySet[j].type == SSAValue.tPhiFunc){
+									PhiFunction func = null;
+									//func == null if the phifunction are created by the predecessor
+									for (int y = 0; y < nofPhiFunc; y++){
+										if (entrySet[j].equals(phiFunctions[y].getResult())){
+											func = phiFunctions[y];
+											break;
+										}
+									}
+									if(func == null){
+										SSAValue result = new SSAValue();
+										result.type = SSAValue.tPhiFunc;
+										PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
+										phi.setResult(result);
+										phi.addOperand(entrySet[j], 0);
+										phi.addOperand(predExitSet[j], i);
+										entrySet[j]= result;
+										addPhiFunction(phi);
+									}
+									else{//Phifunction are created in this node
+										func.addOperand(entrySet[j], i);
+									}									
+								}
+								else{//creat phifunction
+									SSAValue result = new SSAValue();
+									result.type = SSAValue.tPhiFunc;
+									PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
+									phi.setResult(result);
+									phi.addOperand(entrySet[j], 0);
+									phi.addOperand(predExitSet[j], i);
+									entrySet[j]= result;
+									addPhiFunction(phi);
+								}
+							}
+						}
 					}
 				}
 			}
@@ -145,7 +191,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		boolean wide = false;
 		locals = entrySet.clone();// Don't change the entryset
 		// Determine top of the Stack
-		for (stackpointer = maxStack; stackpointer >= 0 && locals[stackpointer] == null; stackpointer--);
+		for (stackpointer = maxStack-1; stackpointer >= 0 && locals[stackpointer] == null; stackpointer--);
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
 			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];

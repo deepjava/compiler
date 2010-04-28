@@ -31,7 +31,10 @@ public class PhiFunction extends SSAInstruction {
 			}
 			operands = newArray;
 		}
-		operands[nofOperands] = operand;
+		if(operands.length >= pos){
+			throw new ArrayIndexOutOfBoundsException();
+		}
+		operands[pos] = operand;
 		nofOperands++;
 	}
 	@Override
