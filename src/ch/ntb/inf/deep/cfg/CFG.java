@@ -14,12 +14,12 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * @author buesser 23.2.2010, graf
  */
 public class CFG implements JvmInstructionMnemonics {
-	private static final boolean debug = true;
+	private static final boolean debug = false;
 
 	/**
 	 * Start-node of the CFG.
 	 */
-	public final SSANode rootNode;
+	public final CFGNode rootNode;
 
 	/**
 	 * Method for which the CFG is build. Used in the toString-Methods, SSA and
@@ -59,7 +59,7 @@ public class CFG implements JvmInstructionMnemonics {
 	 * @return cfg-node at the corresponding bytecode address, null if no such
 	 *         node exists.
 	 */
-	public final CFGNode getNode(final int bca) {
+	private final CFGNode getNode(final int bca) {
 		CFGNode node = rootNode;
 		if (bca < 0)
 			return null;
@@ -84,7 +84,7 @@ public class CFG implements JvmInstructionMnemonics {
 
 		ICodeAttribute codeAttr = method.getCodeAttribute();
 		CFGNode startNode = new SSANode();
-		rootNode = (SSANode)startNode;
+		rootNode = startNode;
 		code = codeAttr.getBytecodes();
 
 		int len;
@@ -360,25 +360,7 @@ public class CFG implements JvmInstructionMnemonics {
 	}
 
 	/**
-	 * Returns a list of CFG-Nodes ordered by the BCA of the first Instruction.
-	 * 
-	 * @return list of ordered cfg nodes
-	 */
-	public final CFGNode[] getNodes() {
-		SSANode[] nodes = new SSANode[getNumberOfNodes()];
-
-		int i = 0;
-		SSANode current = rootNode;
-		while (current != null) {
-			nodes[i] = current;
-			current = (SSANode)current.next;
-			i = i + 1;
-		}
-		return nodes;
-	}
-
-	/**
-	 * Does mark target nodes of backward branches (headers of loops like
+	 * Marks target nodes of backward branches (headers of loops like
 	 * while...do, do...while and for...).
 	 */
 	private static void markLoopHeaders(CFGNode b) {
@@ -397,13 +379,14 @@ public class CFG implements JvmInstructionMnemonics {
 	 * Enters all the predecessors for all nodes of a cfg
 	 */
 	private static void enterPredecessors(CFG cfg) {
-		CFGNode[] nodes = cfg.getNodes();
-		for (CFGNode node : nodes) {
+		CFGNode node = cfg.rootNode;
+		while (node != null) {
 			for (int i = 0; i < node.nofSuccessors; i++) {
 				CFGNode b = node.successors[i];
 				b.addPredecessor(node);
 				b.ref = b.nofPredecessors;
 			}
+			node = node.next;
 		}
 	}
 
@@ -457,27 +440,30 @@ public class CFG implements JvmInstructionMnemonics {
 	private String cfgToString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CFG of method " + new String(method.getName()) + "\n");
-		CFGNode[] nodes = this.getNodes();
-		for (int i = 0; i < nodes.length; i++) {
-			sb.append("\tnodeNr:" + i + " from " + nodes[i].firstBCA + " to "
-					+ nodes[i].lastBCA + "\t");
-			if (nodes[i].isLoopHeader())
+		int i = 0;
+		CFGNode node = this.rootNode;
+		while (node != null) {
+			sb.append("\tnodeNr:" + i + " from " + node.firstBCA + " to "
+					+ node.lastBCA + "\t");
+			if (node.isLoopHeader())
 				sb.append("is loop header");
-			sb.append(nodes[i].visited);
+			sb.append(node.visited);
 			sb.append("\n\t\tpredecessor: ");
-			for (int k = 0; (k < nodes[i].predecessors.length)
-					&& (nodes[i].predecessors[k] != null); k++) {
-				sb.append(nodes[i].predecessors[k].toString());
+			for (int k = 0; (k < node.predecessors.length)
+					&& (node.predecessors[k] != null); k++) {
+				sb.append(node.predecessors[k].toString());
 				sb.append("\t");
 			}
 			sb.append("\n");
 			sb.append("\t\tsuccessor: ");
-			for (int k = 0; (k < nodes[i].successors.length)
-					&& (nodes[i].successors[k] != null); k++) {
-				sb.append(nodes[i].successors[k].toString());
+			for (int k = 0; (k < node.successors.length)
+					&& (node.successors[k] != null); k++) {
+				sb.append(node.successors[k].toString());
 				sb.append("\t");
 			}
 			sb.append("\n");
+			node = node.next;
+			i++;
 		}
 		return sb.toString();
 	}

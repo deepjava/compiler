@@ -50,7 +50,9 @@ public class TestCFG {
 	static public CFGNode[] getAndTestNodes(int cfgNo, int nofNodes) {
 		assertEquals("number of nodes not as expected", nofNodes, cfg[cfgNo].getNumberOfNodes());
 		
-		CFGNode[] nodes = cfg[cfgNo].getNodes();
+		CFGNode[] nodes = new CFGNode[nofNodes];
+		CFGNode node = cfg[cfgNo].rootNode;
+		for (int i = 0; i < nofNodes; i++) { nodes[i] = node; node = node.next; }
 		return nodes;
 	}
 

@@ -63,7 +63,9 @@ public class TestSSA {
 	public static SSANode[] getAndTestNodes(int ssaNo, int nofNodes) {
 		assertEquals("number of nodes not as expected", nofNodes, ssa[ssaNo].cfg.getNumberOfNodes());
 		
-		SSANode[] nodes = (SSANode[]) ssa[ssaNo].cfg.getNodes();
+		SSANode[] nodes = new SSANode[nofNodes];
+		SSANode node = (SSANode)(ssa[ssaNo].cfg.rootNode);
+		for (int i = 0; i < nofNodes; i++) { nodes[i] = node; node = (SSANode)node.next; }
 		return nodes;
 	}
 
