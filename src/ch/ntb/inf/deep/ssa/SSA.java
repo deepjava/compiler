@@ -8,7 +8,7 @@ import ch.ntb.inf.deep.cfg.CFG;
  */
 
 public class SSA {
-	protected CFG cfg;
+	public CFG cfg;
 	int nofLoopheaders;
 	SSANode loopHeaders[];
 	
@@ -22,17 +22,17 @@ public class SSA {
 		determineStateArray();
 	}
 	
+
 	public void determineStateArray(){
-		//Array of exist SSANodes
-		SSANode[] nodes = (SSANode[])cfg.getNodes();
-		
-		for(int i = 0;i < nodes.length;i++){
+		SSANode node = (SSANode)this.cfg.rootNode;
+		while (node != null) {
 			//mark loopheaders for traverse a second time 
-			if(nodes[i].isLoopHeader()){
-				loopHeaders[nofLoopheaders]= nodes[i];
+			if(node.isLoopHeader()){
+				loopHeaders[nofLoopheaders]= node;
 				nofLoopheaders++;
 			}
-			nodes[i].mergeAndDetermineStateArray(this);
+			node.mergeAndDetermineStateArray(this);
+			node = (SSANode)node.next;
 		}
 		
 		for(int i = 0;i < nofLoopheaders;i++){

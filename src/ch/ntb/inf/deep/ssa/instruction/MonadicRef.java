@@ -35,7 +35,7 @@ public class MonadicRef extends Monadic {
 	
 	@Override
 	public String toString(){
-		return result+" = "+ bcMnemonics[bytecodeIndex]+" "+ref+" ("+operands[0]+")";
+		return result+" = "+ bcMnemonics[ssaOpcode]+" "+ref+" ("+operands[0]+")";
 	}
 	
 

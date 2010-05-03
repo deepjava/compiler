@@ -33,7 +33,7 @@ public class DyadicRef extends Dyadic {
 
 	@Override
 	public String toString() {
-		return result + " = " + bcMnemonics[bytecodeIndex] + " " + ref+ " (" + operands[0] + ", " + operands[1] + ")";
+		return result + " = " + bcMnemonics[ssaOpcode] + " " + ref+ " (" + operands[0] + ", " + operands[1] + ")";
 	}
 
 }

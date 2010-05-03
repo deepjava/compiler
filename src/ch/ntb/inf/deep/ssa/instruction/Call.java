@@ -7,22 +7,22 @@ public class Call extends SSAInstruction {
 	int ref;
 
 	public Call(int opCode) {
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 	}
 	
 	public Call(int opCode, int ref){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 		this.ref = ref;
 	}
 	
 	
 	public Call(int opCode,SSAValue[] operands){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 		this.operands = operands;
 	}
 	
 	public Call(int opCode, int ref, SSAValue[] operands){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 		this.ref = ref;
 		this.operands = operands;
 	}
@@ -47,7 +47,7 @@ public class Call extends SSAInstruction {
 	
 	@Override
 	public String toString() {
-		String r = result+" = "+ bcMnemonics[bytecodeIndex]+" " + ref+ " (";
+		String r = result+" = "+ bcMnemonics[ssaOpcode]+" " + ref+ " (";
 		for (int i=0;i<operands.length;i++){
 			r= r+ operands[i];
 		}

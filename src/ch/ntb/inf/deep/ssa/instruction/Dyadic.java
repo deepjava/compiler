@@ -5,12 +5,12 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class Dyadic extends SSAInstruction {
 	
 	public Dyadic(int opCode, SSAValue operand1, SSAValue operand2){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 		operands = new SSAValue[]{operand1,operand2};
 	}
 
 	public Dyadic(int opCode){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 	}
 	
 	@Override
@@ -29,7 +29,7 @@ public class Dyadic extends SSAInstruction {
 
 	@Override
 	public String toString() {
-		return result+" = "+ bcMnemonics[bytecodeIndex] + "(" + operands[0] + ", " + operands[1]
+		return result+" = "+ bcMnemonics[ssaOpcode] + "(" + operands[0] + ", " + operands[1]
 				+ ")";
 	}
 

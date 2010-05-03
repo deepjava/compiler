@@ -5,12 +5,12 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class Monadic extends SSAInstruction {
 
 	public Monadic(int opCode,SSAValue operand){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 		operands = new SSAValue[]{operand};
 	}
 	
 	public Monadic(int opCode){
-		bytecodeIndex = opCode;
+		ssaOpcode = opCode;
 	}
 	
 	@Override
@@ -30,7 +30,7 @@ public class Monadic extends SSAInstruction {
 
 	@Override
 	public String toString(){
-		return result+" = "+ bcMnemonics[bytecodeIndex]+"("+operands[0]+")";
+		return result+" = "+ bcMnemonics[ssaOpcode]+"("+operands[0]+")";
 		}
 	
 

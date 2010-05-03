@@ -22,7 +22,7 @@ public class NoOpndRef extends NoOpnd {
 	
 	@Override
 	public String toString(){
-		return result+" = "+ bcMnemonics[bytecodeIndex]+" "+ref;
+		return result+" = "+ bcMnemonics[ssaOpcode]+" "+ref;
 	}
 
 }

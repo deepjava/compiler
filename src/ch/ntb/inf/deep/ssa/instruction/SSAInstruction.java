@@ -9,7 +9,7 @@ import ch.ntb.inf.deep.cfg.*;
 public abstract class SSAInstruction implements JvmInstructionMnemonics {
 	protected SSAValue[] operands;
 	protected SSAValue result;
-	protected int bytecodeIndex;
+	public int ssaOpcode;
 	
 	public void setResult(SSAValue result){
 		this.result = result;

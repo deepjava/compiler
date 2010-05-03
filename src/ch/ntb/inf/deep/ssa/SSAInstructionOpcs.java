@@ -1,6 +1,6 @@
 package ch.ntb.inf.deep.ssa;
 
-interface SSAInstructionOpcs {
+public interface SSAInstructionOpcs {
 	short // operation codes of SSA instructions (SSA codes)
 	sCloadConst = 1,sCadd = 2, sCsub = 3, sCmul = 4, sCdiv = 5,
 	sCrem = 6, sCneg = 7, sCshl = 8, sCshr = 9, sCushr = 10,

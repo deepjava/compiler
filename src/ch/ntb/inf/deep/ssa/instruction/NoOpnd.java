@@ -6,7 +6,7 @@ public class NoOpnd extends SSAInstruction {
 	
 	
 	public NoOpnd(int opcode){
-		bytecodeIndex = opcode;		
+		ssaOpcode = opcode;		
 	}
 
 	@Override
@@ -20,7 +20,7 @@ public class NoOpnd extends SSAInstruction {
 	}
 	@Override
 	public String toString(){
-		return result+" = "+ bcMnemonics[bytecodeIndex];
+		return result+" = "+ bcMnemonics[ssaOpcode];
 	}
 
 }
