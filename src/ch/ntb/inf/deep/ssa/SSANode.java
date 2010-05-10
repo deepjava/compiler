@@ -1857,5 +1857,46 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		pushToStack(result);
 
 	}
+	
+	private SSAValue generateLoadParameter(SSANode idom, int index, int maxStack){
+		
+		
+		SSAValue result = new SSAValue();
+		
+		
+		return result;
+	}
+	
+	public SSANode insertNode(SSANode base, SSANode predecessor){
+		int index = -1;
+		// check if base follows predecessor immediate an save index
+		for(int i = 0; i < base.predecessors.length; i++ ){
+			if (base.predecessors[i].equals(predecessor)){
+				index = i;
+				break;
+			}
+		}
+		if (index >= 0){
+			SSANode node = new SSANode();
+			
+			node.addPredecessor(predecessor);
+			node.addSuccessor(base);
+			
+			node.idom = base.idom;
+			node.entrySet = predecessor.exitSet.clone();
+			node.exitSet = base.entrySet.clone();
+			
+			base.predecessors[index] = node;
+			
+			while (!predecessor)
+			
+			
+		}
+		
+		
+		
+		
+		return node;
+	}
 
 }
