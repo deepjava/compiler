@@ -51,6 +51,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 * 
 	 * @param maxLocals
 	 * @param maxStack
+	 * @throws Exception 
 	 */
 	public void mergeAndDetermineStateArray(SSA ssa) {
 
@@ -61,7 +62,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (!isLoopHeader()) {
 			for (int i = 0; predecessors[i] != null; i++) {
 				if (((SSANode) predecessors[i]).exitSet == null) {
-					// TODO throw empty exitSet Exception
+					assert false : "Empty Exitset";
 				}
 			}
 		}
@@ -91,10 +92,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					
 					for(int i = 0; i < maxStack+maxLocals;i++){
 						SSAValue param1 = entrySet[i];
+						if(i >= maxStack && param1 == null){
+							param1 = generateLoadParameter((SSANode)predecessors[0], i);
+						}
 						if(param1 != null){//stack could be empty
-							if(i >= maxStack){
-								//TODO Generating Loads for Parameters
-							}
 							SSAValue result = new SSAValue();
 							result.type = SSAValue.tPhiFunc;
 							PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
@@ -109,10 +110,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						int phiIndex = 0; 
 						for (int j = 0; j < maxStack+maxLocals; j++){
 							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
+							if(i >= maxStack && param == null){
+								param = generateLoadParameter((SSANode)predecessors[0], j);
+							}
 							if(param != null){//stack could be empty
-								if (j >=maxStack){
-									//TODO Generating Loads for Parameters
-								}
 								phiFunctions[phiIndex].addOperand(param, i);
 								phiIndex++;
 							}
@@ -133,9 +134,11 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 								entrySet[j] = predExitSet[j]; //Why? 
 							}
 							else if(!(entrySet[j].equals(predExitSet[j]))){
-								if (j >= maxStack){
-									//TODO Generating Loads for Parameters for entrySet[j]
-									//TODO Generating Loads for Parameters for predExitSet[j]
+								if(j >= maxStack && entrySet[j] == null){
+									entrySet[j] = generateLoadParameter((SSANode) predecessors[i], i);
+								}
+								if(j >= maxStack && predExitSet[j] == null){
+									predExitSet[j] = generateLoadParameter((SSANode) predecessors[i], i);
 								}
 								if(entrySet[j].type == SSAValue.tPhiFunc){
 									PhiFunction func = null;
@@ -1858,17 +1861,37 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 	}
 	
-	private SSAValue generateLoadParameter(SSANode idom, int index, int maxStack){
-		
+	private SSAValue generateLoadParameter(SSANode predecessor, int index){
+		boolean needsNewNode = false;
+		SSANode node = predecessor;
+		for(int i = 0; i < this.predecessors.length;i++){
+			if(!this.predecessors[i].equals(predecessor) && !needsNewNode){
+				needsNewNode = this.idom.equals(predecessor)&& !(this.equals(this.predecessors[i].idom)); //TODO braucht es die dritte bedingung von Thomas?
+			}
+		}
+		if (needsNewNode){
+			node = insertNode(this, predecessor);
+		}
 		
 		SSAValue result = new SSAValue();
-		
+		SSAValue param = new SSAValue();
+		param.constant = index-maxStack;
+		SSAInstruction instr = new Monadic(sCloadParam, param);
+		instr.setResult(result);
+		node.addInstruction(instr);
+		node.exitSet[index]= result;
 		
 		return result;
 	}
-	
+	/**
+	 * 
+	 * @param base SSANode that immediate follow of predecessor
+	 * @param predecessor SSANode that is immediate for the base node
+	 * @return on success the inserted SSANode, otherwise null 
+	 */
 	public SSANode insertNode(SSANode base, SSANode predecessor){
 		int index = -1;
+		SSANode node = null;
 		// check if base follows predecessor immediate an save index
 		for(int i = 0; i < base.predecessors.length; i++ ){
 			if (base.predecessors[i].equals(predecessor)){
@@ -1877,24 +1900,23 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			}
 		}
 		if (index >= 0){
-			SSANode node = new SSANode();
-			
-			node.addPredecessor(predecessor);
-			node.addSuccessor(base);
-			
+			node = new SSANode();
+						
 			node.idom = base.idom;
 			node.entrySet = predecessor.exitSet.clone();
 			node.exitSet = base.entrySet.clone();
 			
+			node.addSuccessor(base);
 			base.predecessors[index] = node;
 			
-			while (!predecessor)
-			
-			
-		}
-		
-		
-		
+			node.addPredecessor(predecessor);
+			for(int i = 0;i < predecessor.successors.length;i++){
+				if (predecessor.successors[i].equals(base)){
+					predecessor.successors[i]=node;
+					break;
+				}
+			}			
+		}		
 		
 		return node;
 	}

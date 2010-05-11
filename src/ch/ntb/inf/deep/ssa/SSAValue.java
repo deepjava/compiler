@@ -21,5 +21,5 @@ public class SSAValue implements SSAValueType {
 	public SSAValue(){
 		
 	}
-	//TODO add Methods
+
 }
