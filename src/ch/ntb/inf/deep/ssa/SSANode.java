@@ -1818,7 +1818,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 	}
 
-	private void addInstruction(SSAInstruction instr) {
+	public void addInstruction(SSAInstruction instr) {
 		int len = instructions.length;
 		if (nofInstr == len) {
 			SSAInstruction[] newArray = new SSAInstruction[2 * len];
