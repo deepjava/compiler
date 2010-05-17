@@ -12,6 +12,7 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
+import java.util.Set;
 
 /**
  * @author  millischer
@@ -29,7 +30,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	public SSAValue entrySet[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
-
+	public Set<SSAValue> live;
+	
 	public SSANode() {
 		super();
 		instructions = new SSAInstruction[4];
@@ -99,7 +101,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 							SSAValue result = new SSAValue();
 							result.type = SSAValue.tPhiFunc;
 							PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
-							phi.setResult(result);
+							phi.result = result;
 							phi.addOperand(param1,0);//predecessors[0]
 							entrySet[i]=result;
 							addPhiFunction(phi);
@@ -144,7 +146,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 									PhiFunction func = null;
 									//func == null if the phifunction are created by the predecessor
 									for (int y = 0; y < nofPhiFunc; y++){
-										if (entrySet[j].equals(phiFunctions[y].getResult())){
+										if (entrySet[j].equals(phiFunctions[y].result)){
 											func = phiFunctions[y];
 											break;
 										}
@@ -153,7 +155,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
 										PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
-										phi.setResult(result);
+										phi.result = result;
 										phi.addOperand(entrySet[j], 0);
 										phi.addOperand(predExitSet[j], i);
 										entrySet[j]= result;
@@ -167,7 +169,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 									SSAValue result = new SSAValue();
 									result.type = SSAValue.tPhiFunc;
 									PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
-									phi.setResult(result);
+									phi.result = result;
 									phi.addOperand(entrySet[j], 0);
 									phi.addOperand(predExitSet[j], i);
 									entrySet[j]= result;
@@ -207,7 +209,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tObject;
 				result.constant = null;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -216,7 +218,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = -1;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -225,7 +227,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = 0;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -234,7 +236,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = 1;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -243,7 +245,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = 2;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -252,7 +254,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = 3;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -261,7 +263,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = 4;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -270,7 +272,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = 5;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -279,7 +281,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tLong;
 				result.constant = 0;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -288,7 +290,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tLong;
 				result.constant = 1;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -297,7 +299,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tFloat;
 				result.constant = 0.0f;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -306,7 +308,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tFloat;
 				result.constant = 1.0f;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -315,7 +317,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tFloat;
 				result.constant = 2.0f;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -324,7 +326,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tDouble;
 				result.constant = 0.0;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -333,7 +335,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tDouble;
 				result.constant = 1.0;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -345,7 +347,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = val;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -357,7 +359,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				result.constant = val;
 				instr = new NoOpnd(sCloadConst);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -370,7 +372,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1.type = SSAValue.tRef;
 				value1.constant = val;
 				instr = new Monadic(sCloadConst, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -383,7 +385,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1.type = SSAValue.tRef;
 				value1.constant = val;
 				instr = new Monadic(sCloadConst, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -396,7 +398,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1.type = SSAValue.tRef;
 				value1.constant = val;
 				instr = new Monadic(sCloadConst, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -516,7 +518,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -526,7 +528,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -536,7 +538,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -546,7 +548,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -556,7 +558,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tObject;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -566,7 +568,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1 = popFromStack();
 				result = new SSAValue();
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -576,7 +578,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tChar;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -586,7 +588,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tShort;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -709,7 +711,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bClastore:
@@ -720,7 +722,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tLong;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCfastore:
@@ -731,7 +733,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tFloat;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCdastore:
@@ -742,7 +744,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tDouble;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCaastore:
@@ -753,7 +755,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tObject;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCbastore:
@@ -764,7 +766,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				//Remember the result type isn't set here (could be boolean or byte)
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCcastore:
@@ -775,7 +777,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tChar;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCsastore:
@@ -786,7 +788,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tShort;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCpop:
@@ -957,7 +959,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCadd, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -967,7 +969,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCadd, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -977,7 +979,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCadd, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -987,7 +989,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCadd, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -997,7 +999,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCsub, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1007,7 +1009,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCsub, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1017,7 +1019,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCsub, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1027,7 +1029,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCsub, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1037,7 +1039,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCmul, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1047,7 +1049,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCmul, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1057,7 +1059,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCmul, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1067,7 +1069,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCmul, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1077,7 +1079,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCdiv, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1087,7 +1089,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCdiv, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1097,7 +1099,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCdiv, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1107,7 +1109,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCdiv, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1117,7 +1119,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCrem, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1127,7 +1129,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCrem, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1137,7 +1139,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCrem, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1147,7 +1149,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCrem, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1156,7 +1158,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCneg, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1165,7 +1167,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCneg, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1174,7 +1176,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCneg, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1183,7 +1185,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCneg, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1193,7 +1195,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCshl, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1203,7 +1205,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCshl, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1213,7 +1215,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCshr, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1223,7 +1225,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCshr, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1233,7 +1235,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCushr, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1243,7 +1245,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCushr, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1253,7 +1255,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCand, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1263,7 +1265,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCand, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1273,7 +1275,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCor, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1283,7 +1285,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCor, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1293,7 +1295,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCxor, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1303,7 +1305,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCxor, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1329,7 +1331,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tInteger;
 
 				instr = new Dyadic(sCadd, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 
 				locals[maxStack + val] = result;
@@ -1339,7 +1341,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCconvInt, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1348,7 +1350,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCconvInt, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1357,7 +1359,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCconvInt, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1366,7 +1368,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCconvLong, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1375,7 +1377,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCconvLong, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1384,7 +1386,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCconvLong, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1393,7 +1395,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCconvFloat, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1402,7 +1404,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCconvFloat, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1411,7 +1413,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCconvFloat, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1420,7 +1422,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCconvDouble, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1429,7 +1431,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCconvDouble, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1438,7 +1440,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCconvDouble, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1447,7 +1449,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tByte;
 				instr = new Monadic(sCconvInt, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1456,7 +1458,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tChar;
 				instr = new Monadic(sCconvInt, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1465,7 +1467,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tShort;
 				instr = new Monadic(sCconvInt, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1475,7 +1477,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpl, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1485,7 +1487,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpl, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1495,7 +1497,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpg, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1505,7 +1507,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpl, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1515,7 +1517,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpg, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1636,7 +1638,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				//We didn't know which kind of type it is. We have only a ref to a field
 				instr = new NoOpndRef(sCloadConst, val);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1647,7 +1649,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tVoid;
 				value1 = popFromStack();
 				instr = new MonadicRef(sCstoreToField, val, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCgetfield:
@@ -1657,7 +1659,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				//We didn't now which kind of type it is. We have only a ref to a field
 				value1 = popFromStack();
 				instr = new MonadicRef(sCloadConst, val, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1669,7 +1671,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				instr = new DyadicRef(sCstoreToField, val, value1, value2);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				break;
 			case bCinvokevirtual:
@@ -1694,7 +1696,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tRef;
 				instr = new Call(sCnew, val);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1706,7 +1708,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = val+10;
 				SSAValue[] operand = {value1};
 				instr = new Call(sCnew, operand);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1718,7 +1720,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1 = popFromStack();
 				SSAValue[] opnd = {value1};
 				instr = new Call(sCnew, val, opnd);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1727,7 +1729,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new MonadicRef(sCalength, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1735,7 +1737,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1 = popFromStack();
 				result = value1;
 				instr = new Monadic(sCthrow, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				//clear stack
 				while(stackpointer >=0){
@@ -1750,7 +1752,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1 = popFromStack();
 				result = value1;				
 				instr = new MonadicRef(sCthrow, val, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1761,7 +1763,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				instr = new MonadicRef(sCinstanceof, val, value1);
-				instr.setResult(result);
+				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1852,7 +1854,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			result.type = type;
 			Local operand = new Local(index);
 			SSAInstruction instr = new Monadic(sCloadVar, operand);
-			instr.setResult(result);
+			instr.result = result;
 			addInstruction(instr);
 			locals[maxStack + index] = result;
 		}
@@ -1877,7 +1879,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		SSAValue param = new SSAValue();
 		param.constant = index-maxStack;
 		SSAInstruction instr = new Monadic(sCloadParam, param);
-		instr.setResult(result);
+		instr.result = result;
 		node.addInstruction(instr);
 		node.exitSet[index]= result;
 		
