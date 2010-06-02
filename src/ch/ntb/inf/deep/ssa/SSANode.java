@@ -1872,7 +1872,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			}
 		}
 		if (needsNewNode){
-			node = insertNode(this, predecessor);
+			node = this.insertNode(predecessor);
 		}
 		
 		SSAValue result = new SSAValue();
@@ -1891,12 +1891,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 * @param predecessor SSANode that is immediate for the base node
 	 * @return on success the inserted SSANode, otherwise null 
 	 */
-	public SSANode insertNode(SSANode base, SSANode predecessor){
+	public SSANode insertNode(SSANode predecessor){
 		int index = -1;
 		SSANode node = null;
 		// check if base follows predecessor immediate an save index
-		for(int i = 0; i < base.predecessors.length; i++ ){
-			if (base.predecessors[i].equals(predecessor)){
+		for(int i = 0; i < this.predecessors.length; i++ ){
+			if (this.predecessors[i].equals(predecessor)){
 				index = i;
 				break;
 			}
@@ -1904,16 +1904,16 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (index >= 0){
 			node = new SSANode();
 						
-			node.idom = base.idom;
+			node.idom = this.idom;
 			node.entrySet = predecessor.exitSet.clone();
-			node.exitSet = base.entrySet.clone();
+			node.exitSet = this.entrySet.clone();
 			
-			node.addSuccessor(base);
-			base.predecessors[index] = node;
+			node.addSuccessor(this);
+			this.predecessors[index] = node;
 			
 			node.addPredecessor(predecessor);
 			for(int i = 0;i < predecessor.successors.length;i++){
-				if (predecessor.successors[i].equals(base)){
+				if (predecessor.successors[i].equals(this)){
 					predecessor.successors[i]=node;
 					break;
 				}
