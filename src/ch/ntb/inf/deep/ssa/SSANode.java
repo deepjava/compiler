@@ -12,7 +12,6 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
-import java.util.Set;
 
 /**
  * @author  millischer
@@ -30,7 +29,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	public SSAValue entrySet[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
-	public Set<SSAValue> live;
 	
 	public SSANode() {
 		super();
@@ -45,31 +43,26 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	}
 
 	/**
-	 * First it merges the state-arrays of the predecessors-nodes of this node.
-	 * Creates Phi-Functions if there is more then one predecessor.
-	 * 
-	 * Second iterates over all the Bytecode Instructions and calls the
-	 * corresponding Method
-	 * 
-	 * @param maxLocals
-	 * @param maxStack
-	 * @throws Exception 
+	 * The state arrays of the predecessors nodes of this node are merged into the new entry set.
+	 * phi-functions are created, if there is more then one predecessor.
+	 * iterates over all the bytecode instructions, emits SSA instructions and 
+	 * modifies the state array
 	 */
 	public void mergeAndDetermineStateArray(SSA ssa) {
 
 		maxLocals = ssa.cfg.method.getCodeAttribute().getMaxLocals();
 		maxStack = ssa.cfg.method.getCodeAttribute().getMaxStack();
 
-		// chek all predecessors have statearray set
+		// check if all predecessors have their state array set
 		if (!isLoopHeader()) {
 			for (int i = 0; predecessors[i] != null; i++) {
 				if (((SSANode) predecessors[i]).exitSet == null) {
-					assert false : "Empty Exitset";
+					assert false : "exit set of predecessor is empty";
 				}
 			}
 		}
 		if (nofPredecessors == 0) {
-			// point the entry and exitset on localvariables(uninitialized)
+			// create new entry and exit sets, locals are uninitialized
 			entrySet = new SSAValue[maxStack + maxLocals];
 			exitSet = new SSAValue[maxStack + maxLocals];
 
@@ -84,10 +77,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		} else if (nofPredecessors >= 2) {
 			// multiple predecessors --> merge necessary
 			if (isLoopHeader()) {
-				// if true --> generate PhiFunctions for all locals
-				//if we have redundant Phi Functions, we eliminiate it later 
+				// if true --> generate phi functions for all locals
+				// if we have redundant phi functions, we eliminate it later 
 				if (nofInstr == 0) {
-					// First Visit -->insert PhiFunction with 1 parameter					
+					// first visit --> insert phi function with 1 parameter					
 					assert (((SSANode)predecessors[0]).exitSet != null) : "Predecessor.exitSet isn't set!";
 					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
 					exitSet = new SSAValue[maxStack + maxLocals];
@@ -123,10 +116,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					}
 				}
 			} else {
-				// it isn't a loopheader
+				// it isn't a loop header
 				for (int i = 0; i < nofPredecessors; i++) {
 					if (entrySet == null) {
-						// First predecessor -->Creat Locals
+						// first predecessor --> create locals
 						entrySet = ((SSANode) predecessors[i]).exitSet.clone();
 					} else {
 						// all other predecessors --> merge
@@ -144,7 +137,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 								}
 								if(entrySet[j].type == SSAValue.tPhiFunc){
 									PhiFunction func = null;
-									//func == null if the phifunction are created by the predecessor
+									//func == null if the phi functions are created by the predecessor
 									for (int y = 0; y < nofPhiFunc; y++){
 										if (entrySet[j].equals(phiFunctions[y].result)){
 											func = phiFunctions[y];
@@ -161,11 +154,11 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 										entrySet[j]= result;
 										addPhiFunction(phi);
 									}
-									else{//Phifunction are created in this node
+									else{//phi functions are created in this node
 										func.addOperand(entrySet[j], i);
 									}									
 								}
-								else{//creat phifunction
+								else{// create phi function
 									SSAValue result = new SSAValue();
 									result.type = SSAValue.tPhiFunc;
 									PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
@@ -181,7 +174,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 			}
 		}
-		// fill Instruction Array
+		// fill instruction array
 		if (!traversed) {
 			traversed = true;
 			this.traversCode(ssa);
@@ -194,8 +187,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		int val, val1;
 		SSAInstruction instr;
 		boolean wide = false;
-		locals = entrySet.clone();// Don't change the entryset
-		// Determine top of the Stack
+		locals = entrySet.clone();// Don't change the entry set
+		// determine top of the stack
 		for (stackpointer = maxStack-1; stackpointer >= 0 && locals[stackpointer] == null; stackpointer--);
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
@@ -1849,7 +1842,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	private void load(int index, int type) {
 		SSAValue result = locals[maxStack + index];
 
-		if (result == null) {// Local isn't initialized
+		if (result == null) {// local isn't initialized
 			result = new SSAValue();
 			result.type = type;
 			Local operand = new Local(index);

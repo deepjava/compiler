@@ -5,21 +5,15 @@ package ch.ntb.inf.deep.ssa;
  */
 public class SSAValue implements SSAValueType {
 	public int type;
-	public SSAValue reference;
+//	public SSAValue reference;
 	public Object constant;
-	/**
-	 * Instruction Number for the Register-Allocation.
-	 */
-	public int n = -1;
-
-	/**
-	 * Register or Memory-Slot Number.
-	 */
-	public int reg = -1;
+	public int n = -1;	// each ssa-instruction is numbered for the register allocation 
+	public int end;	// indicates the end number of the live range for this value
+	public SSAValue join = this;	// representative, used for joining values during register allocation
+	public int reg = -1;	// register or memory slot number
 	public int memorySlot = -1;
 	
 	public SSAValue(){
-		
 	}
 
 }
