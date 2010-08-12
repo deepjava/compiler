@@ -1790,6 +1790,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				// do nothing
 			}
 		}
+		//copy locals to the exitSet
+		exitSet = locals.clone();
 	}
 
 	private void pushToStack(SSAValue value) {
