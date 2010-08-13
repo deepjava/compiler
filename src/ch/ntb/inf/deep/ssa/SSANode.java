@@ -114,6 +114,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 							}
 						}
 					}
+					//second visit, merge is finished
+					//eliminate redundant PhiFunctions
+					eliminateRedundantPhiFunc();
 				}
 			} else {
 				// it isn't a loop header
@@ -172,6 +175,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						}
 					}
 				}
+				//isn't a loop header and merge is finished.
+				//eliminate redundant phiFunctins
+				eliminateRedundantPhiFunc();
 			}
 		}
 		// fill instruction array
@@ -1917,11 +1923,71 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		
 		return node;
 	}
-	
+	/**
+	 * Eliminate phi functions that was unnecessarily generated.
+	 * There are tow Cases in which a phi function becomes redundant.<p>
+	 * <b>Case 1:</b><br>
+	 * Phi functions of the form
+	 * <pre>  x = [y,x,x,...,x]</pre>
+	 * can be replaced by y.<p>
+	 * <b>Case 2:</b><br>
+	 * Phi functions of the form
+	 * <pre>  x = [x,x,...,x]</pre>
+	 * can be replaced by x.<p>
+	 */
+	public void eliminateRedundantPhiFunc(){
+		SSAValue tempRes;
+		SSAValue[] tempOperands;
+		boolean redundant, diffAlreadyOccured;
+		int count = 0;
+		PhiFunction[] temp = new PhiFunction[nofPhiFunc];
+		//Traverse phiFunctions  
+		for (int i = 0; i < nofPhiFunc; i++){
+			redundant = true;
+			diffAlreadyOccured = false;
+			tempRes = phiFunctions[i].result;
+			tempOperands = phiFunctions[i].getOperands();
+			//Compare result with operands. compare pointers
+			for(int j = 0;j < tempOperands.length; j++){
+				if(tempRes == tempOperands[j]){
+					if(diffAlreadyOccured){
+						redundant= false;
+						break;
+					}
+					diffAlreadyOccured = true;
+				}
+			}
+			if(!redundant){
+				temp[count]=phiFunctions[i];
+				count++;
+			}			
+		}
+		phiFunctions = temp;
+		nofPhiFunc = count;		
+	}
+	/**
+	 * Prints out the SSANode readable.<p>
+	 * <b>Example:</b><p>
+	 * <pre>
+	 * SSANode 0:
+      EntrySet {[ , ], [ ,  ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+         Dyadic[sCadd] ( Integer, Integer )
+         Dyadic[sCadd] ( Integer, Integer )
+         Monadic[sCloadVar] ( Void )
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+	 * </pre>
+	 *  
+	 * @param level defines how much to indent
+	 * @param nodeNr the Number of the node in this SSA
+	 */
 	public void print(int level, int nodeNr) {
 		
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.println("SSANode"+ nodeNr +":");
+		System.out.println("SSANode "+ nodeNr +":");
 		
 		//Print EntrySet with Stack and Locals
 		for (int i = 0; i < (level+1)*3; i++)System.out.print(" ");
@@ -1941,12 +2007,16 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			if(entrySet[entrySet.length-1] != null){
 				System.out.println(entrySet[entrySet.length-1].toString()+" ]}");
 			}else{
-				System.out.println(" ]}");
+				System.out.println("]}");
 			}
 		}else{
 			System.out.println("}");
 		}
 		
+		//Print Phifunctions
+		for (int i = 0; i < nofPhiFunc; i++){
+			phiFunctions[i].print(level+2);
+		}
 		//Print Instructions
 		for (int i = 0; i < nofInstr; i++){
 			instructions[i].print(level+2);
@@ -1972,7 +2042,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			if(exitSet[exitSet.length-1] != null){
 				System.out.println(exitSet[exitSet.length-1].toString()+" ]}");
 			}else{
-				System.out.println(" ]}");
+				System.out.println("]}");
 			}
 		}else{
 			System.out.println("}");
