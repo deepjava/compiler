@@ -49,7 +49,10 @@ public class TestSSA {
 	public static void createSSA(Class<?> clazz) {
 		TestCFG.createCFG(clazz);
 		ssa = new SSA[TestCFG.cfg.length];
-		for (int i = 0; i < TestCFG.cfg.length; i++) ssa[i] = new SSA(TestCFG.cfg[i]);
+		for (int i = 0; i < TestCFG.cfg.length; i++){
+			ssa[i] = new SSA(TestCFG.cfg[i]);
+			ssa[i].print(0, i);
+		}
 	}
 
 	/**
