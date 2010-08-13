@@ -47,7 +47,7 @@ public class Call extends SSAInstruction {
 	
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level; i++)System.out.print("\t");
+		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print("Call["+ scMnemonics[ssaOpcode]+"] (");
 		for (int i=0;i<operands.length-1;i++){
 			System.out.print(operands[i].typeName()+", ");

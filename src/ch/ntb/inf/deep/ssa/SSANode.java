@@ -1920,26 +1920,63 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	
 	public void print(int level, int nodeNr) {
 		
-		for (int i = 0; i < level; i++)System.out.print("\t");
+		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.println("SSANode"+ nodeNr +":");
 		
-		for (int i = 0; i < level+1; i++)System.out.print("\t");
+		//Print EntrySet with Stack and Locals
+		for (int i = 0; i < (level+1)*3; i++)System.out.print(" ");
 		System.out.print("EntrySet {");
+		if(entrySet.length > 0 ) System.out.print("[ ");
 		for (int i = 0; i < entrySet.length-1; i++){
-			System.out.print(entrySet[i].toString()+", ");
+			
+			if(entrySet[i] != null)	System.out.print(entrySet[i].toString());
+			
+			if(i == maxStack-1){
+				System.out.print("], [ ");
+			}else{
+				System.out.print(", ");
+			}			
 		}
-		System.out.println(entrySet[entrySet.length-1].toString()+"}");
+		if(entrySet.length > 0){
+			if(entrySet[entrySet.length-1] != null){
+				System.out.println(entrySet[entrySet.length-1].toString()+" ]}");
+			}else{
+				System.out.println(" ]}");
+			}
+		}else{
+			System.out.println("}");
+		}
 		
+		//Print Instructions
 		for (int i = 0; i < nofInstr; i++){
 			instructions[i].print(level+2);
 		}
 		
-		for (int i = 0; i < level+1; i++)System.out.print("\t");
+		//Print ExitSet with Stack an Locals
+		for (int i = 0; i < (level+1)*3; i++)System.out.print(" ");
 		System.out.print("ExitSet {");
+		if(exitSet.length > 0 ) System.out.print("[ ");
+		
 		for (int i = 0; i < exitSet.length-1; i++){
-			System.out.print(exitSet[i].toString()+", ");
+					
+			if(exitSet[i] != null) System.out.print(exitSet[i].toString());
+			
+			if(i == maxStack-1){
+				System.out.print("], [ ");
+			}else{
+				System.out.print(", ");
+			}			
+			
 		}
-		System.out.println(exitSet[exitSet.length-1].toString()+"}");
+		if(exitSet.length > 0){
+			if(exitSet[exitSet.length-1] != null){
+				System.out.println(exitSet[exitSet.length-1].toString()+" ]}");
+			}else{
+				System.out.println(" ]}");
+			}
+		}else{
+			System.out.println("}");
+		}
 		
 
 	}

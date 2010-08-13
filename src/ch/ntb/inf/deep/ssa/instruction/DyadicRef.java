@@ -33,7 +33,7 @@ public class DyadicRef extends Dyadic {
 
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level; i++)System.out.print("\t");
+		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.println("DyadicRef["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].typeName() + ", " + operands[1].typeName() + " )");
 	}
 }
