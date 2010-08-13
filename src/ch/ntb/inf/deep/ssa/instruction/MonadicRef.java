@@ -34,8 +34,9 @@ public class MonadicRef extends Monadic {
 	}
 	
 	@Override
-	public String toString(){
-		return result+" = "+ bcMnemonics[ssaOpcode]+" "+ref+" ("+operands[0]+")";
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("MonadicRef["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].typeName() + " )");
 	}
 	
 

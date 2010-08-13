@@ -19,8 +19,8 @@ public class NoOpnd extends SSAInstruction {
 		//return immediately
 	}
 	@Override
-	public String toString(){
-		return result+" = "+ bcMnemonics[ssaOpcode];
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("NoOpnd["+ scMnemonics[ssaOpcode]+"]");
 	}
-
 }

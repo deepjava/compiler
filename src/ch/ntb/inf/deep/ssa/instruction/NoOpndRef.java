@@ -21,8 +21,9 @@ public class NoOpndRef extends NoOpnd {
 	}
 	
 	@Override
-	public String toString(){
-		return result+" = "+ bcMnemonics[ssaOpcode]+" "+ref;
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
 	}
 
 }

@@ -29,9 +29,10 @@ public class Monadic extends SSAInstruction {
 	}
 
 	@Override
-	public String toString(){
-		return result+" = "+ bcMnemonics[ssaOpcode]+"("+operands[0]+")";
-		}
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("Monadic["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].typeName() + " )");
+	}
 	
 
 }

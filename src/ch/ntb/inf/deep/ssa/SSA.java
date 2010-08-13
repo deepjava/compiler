@@ -39,4 +39,20 @@ public class SSA {
 			loopHeaders[i].mergeAndDetermineStateArray(this);
 		}		
 	}
+	public void print(int level, int SSANr){
+		int count = 0;
+		SSANode node = (SSANode)this.cfg.rootNode;
+		
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("SSA"+ SSANr +":");
+		
+		while(node != null){
+			node.print(level+1, count);
+			System.out.println("");
+			node = (SSANode)node.next;
+			count++;
+		}
+		
+		
+	}
 }

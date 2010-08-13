@@ -1917,5 +1917,30 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		
 		return node;
 	}
+	
+	public void print(int level, int nodeNr) {
+		
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("SSANode"+ nodeNr +":");
+		
+		for (int i = 0; i < level+1; i++)System.out.print("\t");
+		System.out.print("EntrySet {");
+		for (int i = 0; i < entrySet.length-1; i++){
+			System.out.print(entrySet[i].toString()+", ");
+		}
+		System.out.println(entrySet[entrySet.length-1].toString()+"}");
+		
+		for (int i = 0; i < nofInstr; i++){
+			instructions[i].print(level+2);
+		}
+		
+		for (int i = 0; i < level+1; i++)System.out.print("\t");
+		System.out.print("ExitSet {");
+		for (int i = 0; i < exitSet.length-1; i++){
+			System.out.print(exitSet[i].toString()+", ");
+		}
+		System.out.println(exitSet[exitSet.length-1].toString()+"}");
+		
 
+	}
 }

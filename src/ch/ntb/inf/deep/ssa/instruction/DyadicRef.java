@@ -32,8 +32,8 @@ public class DyadicRef extends Dyadic {
 	}
 
 	@Override
-	public String toString() {
-		return result + " = " + bcMnemonics[ssaOpcode] + " " + ref+ " (" + operands[0] + ", " + operands[1] + ")";
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.println("DyadicRef["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].typeName() + ", " + operands[1].typeName() + " )");
 	}
-
 }

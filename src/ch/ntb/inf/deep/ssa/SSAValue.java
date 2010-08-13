@@ -15,5 +15,61 @@ public class SSAValue implements SSAValueType {
 	
 	public SSAValue(){
 	}
-
+	
+	public String typeName(){
+		return svNames[type];
+	}
+	
+	@Override
+	public String toString(){
+		String r = svNames[type];
+		
+		switch(type){
+		case 0://void
+			break;
+		case 1://""
+			break;
+		case 2://ref
+			break;
+		case 3://Object
+			break;
+		case 4://Boolean
+		case 5://Char
+		case 6://Float
+		case 7://Double
+		case 8://Byte
+		case 9://Short
+		case 10://Integer
+		case 11://Long
+			r = r + " (" + constant + ")"  ;
+			break;
+		case 12://Aref
+			break;
+		case 13://Aobject
+			break;
+		case 14://Aboolean
+			break;
+		case 15://Achar
+			break;
+		case 16://Afloat
+			break;
+		case 17://Adouble
+			break;
+		case 18://Abyte
+			break;
+		case 19://Ashort
+			break;
+		case 20://Ainteger
+			break;
+		case 21://Along
+			break;
+		case 22://PhiFunc
+			break;
+		default:
+			break;		
+		
+		}		
+		return r;
+	}
+	
 }

@@ -46,13 +46,13 @@ public class Call extends SSAInstruction {
 	}
 	
 	@Override
-	public String toString() {
-		String r = result+" = "+ bcMnemonics[ssaOpcode]+" " + ref+ " (";
-		for (int i=0;i<operands.length;i++){
-			r= r+ operands[i];
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.print("Call["+ scMnemonics[ssaOpcode]+"] (");
+		for (int i=0;i<operands.length-1;i++){
+			System.out.print(operands[i].typeName()+", ");
 		}
-		r = r+ ")";
-		return r;
+		System.out.println(operands[operands.length-1].typeName()+ ")");
 	}
 
 }

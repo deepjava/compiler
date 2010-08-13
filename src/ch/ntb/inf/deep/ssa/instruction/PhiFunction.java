@@ -7,6 +7,7 @@ public class PhiFunction extends SSAInstruction {
 	
 
 	public PhiFunction(int opCode, int nofOperands) {
+		this.ssaOpcode = opCode;
 		this.nofOperands = nofOperands;
 		operands = new SSAValue[nofOperands];
 	}
@@ -38,7 +39,12 @@ public class PhiFunction extends SSAInstruction {
 		nofOperands++;
 	}
 	@Override
-	public String toString(){
-		return "PhiFunction";
+	public void print(int level) {
+		for (int i = 0; i < level; i++)System.out.print("\t");
+		System.out.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] (");
+		for (int i=0;i<operands.length-1;i++){
+			System.out.print(operands[i].typeName()+", ");
+		}
+		System.out.println(operands[operands.length-1].typeName()+")");		
 	}
 }
