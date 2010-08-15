@@ -1938,29 +1938,42 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	public void eliminateRedundantPhiFunc(){
 		SSAValue tempRes;
 		SSAValue[] tempOperands;
+		int indexOfDiff;
 		boolean redundant, diffAlreadyOccured;
 		int count = 0;
 		PhiFunction[] temp = new PhiFunction[nofPhiFunc];
 		//Traverse phiFunctions  
 		for (int i = 0; i < nofPhiFunc; i++){
+			indexOfDiff = 0;
 			redundant = true;
 			diffAlreadyOccured = false;
 			tempRes = phiFunctions[i].result;
 			tempOperands = phiFunctions[i].getOperands();
-			//Compare result with operands. compare pointers
+			//Compare result with operands.
+			//determine if the function is redundant
 			for(int j = 0;j < tempOperands.length; j++){
-				if(tempRes == tempOperands[j]){
+				if(!tempRes.equals(tempOperands[j])){
 					if(diffAlreadyOccured){
 						redundant= false;
 						break;
 					}
 					diffAlreadyOccured = true;
+					indexOfDiff = j;
 				}
 			}
-			if(!redundant){
+			if(redundant){
+				//Search the result in the entrySet
+				for(int j = 0; j < entrySet.length; j++){
+					if (tempRes.equals(entrySet[j])){
+						//replace the result with the Operand
+						entrySet[j]=tempOperands[indexOfDiff];
+						break;
+					}
+				}
+			}else{
 				temp[count]=phiFunctions[i];
 				count++;
-			}			
+			}
 		}
 		phiFunctions = temp;
 		nofPhiFunc = count;		
