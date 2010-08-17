@@ -6,10 +6,10 @@ public class PhiFunction extends SSAInstruction {
 	private int nofOperands;
 	
 
-	public PhiFunction(int opCode, int nofOperands) {
+	public PhiFunction(int opCode) {
 		this.ssaOpcode = opCode;
-		this.nofOperands = nofOperands;
-		operands = new SSAValue[nofOperands];
+		operands = new SSAValue[2];
+		nofOperands = 0;
 	}
 
 	@Override
@@ -23,7 +23,7 @@ public class PhiFunction extends SSAInstruction {
 		nofOperands = operands.length;
 
 	}
-	public void addOperand(SSAValue operand, int pos) {
+	public void addOperand(SSAValue operand) {
 		int len = operands.length;
 		if (len == nofOperands) {
 			SSAValue[] newArray = new SSAValue[2 * len];
@@ -32,19 +32,16 @@ public class PhiFunction extends SSAInstruction {
 			}
 			operands = newArray;
 		}
-		if(operands.length >= pos){
-			throw new ArrayIndexOutOfBoundsException();
-		}
-		operands[pos] = operand;
-		nofOperands++;
+		operands[nofOperands++] = operand;
+		
 	}
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] (");
-		for (int i=0;i<operands.length-1;i++){
+		for (int i=0;i<nofOperands-1;i++){
 			System.out.print(operands[i].typeName()+", ");
 		}
-		System.out.println(operands[operands.length-1].typeName()+")");		
+		System.out.println(operands[nofOperands-1].typeName()+")");		
 	}
 }
