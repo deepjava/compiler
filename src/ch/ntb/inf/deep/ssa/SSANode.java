@@ -131,8 +131,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						// all other predecessors --> merge
 						SSAValue[] predExitSet = ((SSANode) predecessors[i]).exitSet.clone();
 						for (int j = 0; j < maxStack+maxLocals; j++){
-							if (predExitSet[j] == null){
-								entrySet[j] = predExitSet[j]; //Why? 
+							if (entrySet[j] == null){
+								entrySet[j] = predExitSet[j];  
 							}
 							else if(!(entrySet[j].equals(predExitSet[j]))){
 								if(j >= maxStack && entrySet[j] == null){
@@ -161,7 +161,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 										addPhiFunction(phi);
 									}
 									else{//phi functions are created in this node
-										func.addOperand(entrySet[j]);
+										func.addOperand(predExitSet[j]);
 									}									
 								}
 								else{// create phi function
