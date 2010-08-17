@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.cfg;
 import org.eclipse.jdt.core.util.ICodeAttribute;
 import org.eclipse.jdt.core.util.IMethodInfo;
 
+import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.ssa.SSANode;
 
 
@@ -25,7 +26,7 @@ public class CFG implements JvmInstructionMnemonics {
 	 * Method for which the CFG is build. Used in the toString-Methods, SSA and
 	 * Linker.
 	 */
-	public final IMethodInfo method;
+	public final Method method;
 
 	/**
 	 * Contains the code
@@ -79,23 +80,21 @@ public class CFG implements JvmInstructionMnemonics {
 	 * @param method
 	 *            Method for which the CFG is build
 	 */
-	public CFG(final IMethodInfo method) {
+	public CFG(final Method method) {
 		this.method = method;
 
-		ICodeAttribute codeAttr = method.getCodeAttribute();
 		CFGNode startNode = new SSANode();
 		rootNode = startNode;
-		code = codeAttr.getBytecodes();
+		code = method.code;
 
-		int len;
-		if (codeAttr != null) {
-			len = (int) codeAttr.getCodeLength();
-		} else {
-			len = 0;
-		}
+		int len = code.length;
+//		if (codeAttr != null) {
+//			len = (int) codeAttr.getCodeLength();
+//		} else {
+//			len = 0;
+//		}
 		if (debug) {
-			System.out
-					.println("code of method " + new String(method.getName()));
+			System.out.println("code of method "+method.name);			
 			for (int i = 0; i < len; i++) {
 				System.out.print((code[i] & 0xff) + "  ");
 				if ((i % 8) == 7)
@@ -439,7 +438,7 @@ public class CFG implements JvmInstructionMnemonics {
 
 	private String cfgToString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("CFG of method " + new String(method.getName()) + "\n");
+		sb.append("CFG of method " + method.name + "\n");
 		int i = 0;
 		CFGNode node = this.rootNode;
 		while (node != null) {

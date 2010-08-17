@@ -2,20 +2,17 @@ package ch.ntb.inf.deep.cfg;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import helpers.Helpers;
 
-import org.eclipse.jdt.core.ToolFactory;
-import org.eclipse.jdt.core.util.IClassFileReader;
-import org.eclipse.jdt.core.util.IMethodInfo;
+import java.util.Vector;
 
-import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.Method;
 
 public class TestCFG {
 	/**
 	 * Class file reader
 	 */
-	static public IClassFileReader cfr;
+	//static public IClassFileReader cfr;
 
     /**
 	 * Array of CFGs of all methods
@@ -29,13 +26,24 @@ public class TestCFG {
 	 * @param clazz
 	 *            Java class object
 	 */
-	static public void createCFG(Class<?> clazz) {
+	static public void createCFG(Class clazz) {
+		//cfr = ToolFactory.createDefaultClassFileReader(Helpers.getFilenameFromClass(clazz), IClassFileReader.ALL);		
+		//IMethodInfo[] mi = cfr.getMethodInfos();
+		
 		// create CFG
-		cfr = ToolFactory.createDefaultClassFileReader(Helpers.getFilenameFromClass(clazz), IClassFileReader.ALL);
-		IMethodInfo[] mi = cfr.getMethodInfos();
-		cfg = new CFG[mi.length];
-		for (int i = 0; i < cfg.length; i++) {
-			cfg[i] = new CFG(mi[i]);
+		Method m1,m2;
+		
+		int count = 0;	
+		m1 =(Method) clazz.methods;
+		m2 = m1;
+		while (m2 != null){
+			count++;
+			m2 = (Method)m2.next;
+		}
+		cfg = new CFG[count];
+		for (int i = 0; i < count; i++) {
+			cfg[i] = new CFG(m1);
+			m1 = (Method)m1.next;
 		}
 	}
 

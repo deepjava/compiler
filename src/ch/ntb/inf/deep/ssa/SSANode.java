@@ -2,6 +2,9 @@ package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
+import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
 import ch.ntb.inf.deep.ssa.instruction.DyadicRef;
@@ -50,8 +53,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 */
 	public void mergeAndDetermineStateArray(SSA ssa) {
 
-		maxLocals = ssa.cfg.method.getCodeAttribute().getMaxLocals();
-		maxStack = ssa.cfg.method.getCodeAttribute().getMaxStack();
+		maxLocals = ssa.cfg.method.getMaxLocals();
+		maxStack = ssa.cfg.method.getMaxStckSlots();
 
 		// check if all predecessors have their state array set
 		if (!isLoopHeader()) {
@@ -190,7 +193,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 	public void traversCode(SSA ssa) {
 		SSAValue value1, value2, value3, value4, result;
+		SSAValue[] operands;
 		int val, val1;
+		Item cpEntry;
+		DataItem field;
 		SSAInstruction instr;
 		boolean wide = false;
 		locals = entrySet.clone();// Don't change the entry set
@@ -1635,7 +1641,73 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca++;
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				//We didn't know which kind of type it is. We have only a ref to a field
+				//determine the type of the field
+				field =(DataItem) ssa.cfg.method.owner.constPool[val];
+				if(field.name.charAt(0) == '['){
+					switch(field.type.name.charAt(0)){
+					case 'B':
+						result.type = SSAValue.tAbyte;
+					break;
+					case 'C':
+						result.type = SSAValue.tAchar;
+					break;
+					case 'D':
+						result.type = SSAValue.tAdouble;
+					break;
+					case 'F':
+						result.type = SSAValue.tAfloat;
+					break;
+					case 'I':
+						result.type = SSAValue.tAinteger;
+					break;
+					case 'J':
+						result.type = SSAValue.tAlong;
+					break;
+					case 'S':
+						result.type = SSAValue.tAshort;
+					break;
+					case 'Z':
+						result.type = SSAValue.tAboolean;
+					break;
+					case 'L':
+						result.type = SSAValue.tAobject;
+					break;
+					default:
+						result.type = SSAValue.tAref;
+					}					
+				}else{
+					switch(field.name.charAt(0)){
+					case 'B':
+						result.type = SSAValue.tByte;
+					break;
+					case 'C':
+						result.type = SSAValue.tChar;
+					break;
+					case 'D':
+						result.type = SSAValue.tDouble;
+					break;
+					case 'F':
+						result.type = SSAValue.tFloat;
+					break;
+					case 'I':
+						result.type = SSAValue.tInteger;
+					break;
+					case 'J':
+						result.type = SSAValue.tLong;
+					break;
+					case 'S':
+						result.type = SSAValue.tShort;
+					break;
+					case 'Z':
+						result.type = SSAValue.tBoolean;
+					break;
+					case 'L':
+						result.type = SSAValue.tObject;
+					break;
+					default:
+						result.type = SSAValue.tVoid;
+					}					
+				}
 				instr = new NoOpndRef(sCloadConst, val);
 				instr.result = result;
 				addInstruction(instr);
@@ -1655,7 +1727,73 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca++;
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				//We didn't now which kind of type it is. We have only a ref to a field
+				//determine the type of the field
+				field =(DataItem) ssa.cfg.method.owner.constPool[val];
+				if(field.name.charAt(0) == '['){
+					switch(field.type.name.charAt(0)){
+					case 'B':
+						result.type = SSAValue.tAbyte;
+					break;
+					case 'C':
+						result.type = SSAValue.tAchar;
+					break;
+					case 'D':
+						result.type = SSAValue.tAdouble;
+					break;
+					case 'F':
+						result.type = SSAValue.tAfloat;
+					break;
+					case 'I':
+						result.type = SSAValue.tAinteger;
+					break;
+					case 'J':
+						result.type = SSAValue.tAlong;
+					break;
+					case 'S':
+						result.type = SSAValue.tAshort;
+					break;
+					case 'Z':
+						result.type = SSAValue.tAboolean;
+					break;
+					case 'L':
+						result.type = SSAValue.tAobject;
+					break;
+					default:
+						result.type = SSAValue.tAref;
+					}					
+				}else{
+					switch(field.name.charAt(0)){
+					case 'B':
+						result.type = SSAValue.tByte;
+					break;
+					case 'C':
+						result.type = SSAValue.tChar;
+					break;
+					case 'D':
+						result.type = SSAValue.tDouble;
+					break;
+					case 'F':
+						result.type = SSAValue.tFloat;
+					break;
+					case 'I':
+						result.type = SSAValue.tInteger;
+					break;
+					case 'J':
+						result.type = SSAValue.tLong;
+					break;
+					case 'S':
+						result.type = SSAValue.tShort;
+					break;
+					case 'Z':
+						result.type = SSAValue.tBoolean;
+					break;
+					case 'L':
+						result.type = SSAValue.tObject;
+					break;
+					default:
+						result.type = SSAValue.tVoid;
+					}					
+				}
 				value1 = popFromStack();
 				instr = new MonadicRef(sCloadConst, val, value1);
 				instr.result = result;
@@ -1674,20 +1812,61 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				addInstruction(instr);
 				break;
 			case bCinvokevirtual:
-				//TODO access into Constant pool to determine how many arguments are to pop from stack
-				bca = bca+2;
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];//index into cp
+				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
+				operands = new SSAValue[val1+1];//objectref + nargs
+				for(int i = 0; i < operands.length; i++){
+					operands[i]= popFromStack();
+				}
+				result = new SSAValue();
+				result.type = SSAValue.tVoid;
+				instr = new Call(sCcall, val, operands);
+				instr.result = result;
+				addInstruction(instr);
 				break;
 			case bCinvokespecial:
-				//TODO access into Constant pool to determine how many arguments are to pop from stack
-				bca = bca+2;
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
+				operands = new SSAValue[val1+1];//objectref + nargs
+				for(int i = 0; i < operands.length; i++){
+					operands[i]= popFromStack();
+				}
+				result = new SSAValue();
+				result.type = SSAValue.tVoid;
+				instr = new Call(sCcall, val, operands);
+				instr.result = result;
+				addInstruction(instr);
 				break;
 			case bCinvokestatic:
-				//TODO access into Constant pool to determine how many arguments are to pop from stack
-				bca = bca+2;
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
+				operands = new SSAValue[val1];//nargs
+				for(int i = 0; i < operands.length; i++){
+					operands[i]= popFromStack();
+				}
+				result = new SSAValue();
+				result.type = SSAValue.tVoid;
+				instr = new Call(sCcall, val, operands);
+				instr.result = result;
+				addInstruction(instr);
 				break;
 			case bCinvokeinterface:
-				//TODO access into Constant pool to determine how many arguments are to pop from stack
-				bca = bca+4;
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				bca = bca+2;//step over count and zero byte
+				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
+				operands = new SSAValue[val1+1];//objectref + nargs
+				for(int i = 0; i < operands.length; i++){
+					operands[i]= popFromStack();
+				}
+				result = new SSAValue();
+				result.type = SSAValue.tVoid;
+				instr = new Call(sCcall, val, operands);
+				instr.result = result;
+				addInstruction(instr);
 				break;
 			case bCnew:
 				bca++;
@@ -1753,7 +1932,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				instr = new MonadicRef(sCthrow, val, value1);
 				instr.result = result;
 				addInstruction(instr);
-				pushToStack(result);
 				break;
 			case bCinstanceof:
 				bca++;
@@ -1776,6 +1954,18 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				wide = true;
 				break;
 			case bCmultianewarray:
+				bca++;
+				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca++];
+				val1 = ssa.cfg.code[bca];
+				result = new SSAValue();
+				result.type = SSAValue.tAref;
+				operands = new SSAValue[val1];
+				for(int i = 0; i < operands.length; i++){
+					operands[i] = popFromStack();
+				}
+				instr = new Call(sCnew, val,operands);
+				instr.result = result;
+				pushToStack(result);
 				break;
 			case bCifnull:
 			case bCifnonnull:
@@ -1935,7 +2125,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 * <pre>  x = [x,x,...,x]</pre>
 	 * can be replaced by x.<p>
 	 */
-	public void eliminateRedundantPhiFunc(){
+	private void eliminateRedundantPhiFunc(){
 		SSAValue tempRes;
 		SSAValue[] tempOperands;
 		int indexOfDiff;
@@ -2060,7 +2250,5 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		}else{
 			System.out.println("}");
 		}
-		
-
 	}
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.TestCFG;
+import ch.ntb.inf.deep.classItems.Class;
 
 public class TestSSA {
 
@@ -46,11 +47,12 @@ public class TestSSA {
 	 * @param clazz
 	 *            Java class object
 	 */
-	public static void createSSA(Class<?> clazz) {
+	public static void createSSA(Class clazz) {
 		TestCFG.createCFG(clazz);
 		ssa = new SSA[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
 			ssa[i] = new SSA(TestCFG.cfg[i]);
+			System.out.println();
 			ssa[i].print(0, i);
 		}
 	}

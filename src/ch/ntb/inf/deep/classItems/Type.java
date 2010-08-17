@@ -16,8 +16,8 @@ public class Type extends Item {
 	static Type[] wellKnownTypes;;
 	static HString hsNumber, hsString;
 
-	static Class[] rootClasses;
-	static int nofRootClasses = 0;
+	public static Class[] rootClasses;
+	public static int nofRootClasses = 0;
 
 	static Class classList, classListTail;
 	static int nofClasses = 0;

@@ -8,14 +8,14 @@ public class Method extends Item {
 	//--- instance fields
 	HString methDescriptor;
 
-	Class owner;
-	byte[] code;
+	public Class owner;
+	public byte[] code;
 	ExceptionTabEntry[] exceptionTab;
 	LocalVar[] localVars;
 	int[] lineNrTab; // entry: (startPc<<16) | lineNr
 
-	byte nofParams;
-	int maxStackSlots, maxLocals;
+	public byte nofParams;
+	public int maxStackSlots, maxLocals;
 
 	//--- constructors
 	public Method(HString name, Type returnType, HString methDescriptor){
@@ -42,8 +42,22 @@ public class Method extends Item {
 	void preProcessCode(){
 		// TODO
 	}
+	
+	public byte[] getCode(){
+		return code;
+	}
 
-
+	public Class getOwner(){
+		return owner;
+	}
+	
+	public int getMaxLocals(){
+		return maxLocals;
+	}
+	
+	public int getMaxStckSlots(){
+		return maxStackSlots;
+	}
 
 	//--- debug primitives
 	public void printItemCategory(){

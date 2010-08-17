@@ -10,8 +10,8 @@ import ch.ntb.inf.deep.strings.StringTable;
 
 public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	//--- instance fields
-	Item[] constPool; // reduced constant pool
-	Item methods;
+	public Item[] constPool; // reduced constant pool
+	public Item methods;
 	Item fields;
 	Class[] imports;
 	Class[] interfaces;
@@ -22,7 +22,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 
 	//--- instance methods
 
-	Class(HString registeredCpClassName){
+	public Class(HString registeredCpClassName){
 		super(registeredCpClassName, null);
 		name = registeredCpClassName;
 		category = tcRef;

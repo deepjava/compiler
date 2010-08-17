@@ -1,11 +1,13 @@
 package ch.ntb.inf.deep.cfg;
 
+import java.io.IOException;
+
 import org.junit.*;
-import org.junit.Test;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
-import ch.ntb.inf.deep.testClasses.T06Operators;
-
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.Type;
 
 /**
  * - create and test CFG<br>
@@ -14,7 +16,16 @@ public class CFG06 extends TestCFG {
 
 	@BeforeClass
 	public static void setUp() {
-		createCFG(T06Operators.class);
+    	String[] rootClassNames = new String[]{"ch/ntb/inf/deep/testClasses/T06Operators"};
+		try {
+			Class.buildSystem(rootClassNames, (1<<IClassFileConsts.atxCode)|(1<<IClassFileConsts.atxLocalVariableTable)|(1<<IClassFileConsts.atxLineNumberTable)|(1<<IClassFileConsts.atxExceptions));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(Type.nofRootClasses > 0){
+			createCFG(Type.rootClasses[0]);
+		}
 	}
 
 	@Test
