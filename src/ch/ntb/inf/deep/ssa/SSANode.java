@@ -58,7 +58,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 		// check if all predecessors have their state array set
 		if (!isLoopHeader()) {
-			for (int i = 0; predecessors[i] != null; i++) {
+			for (int i = 0; i < nofPredecessors && predecessors[i] != null; i++) {
 				if (((SSANode) predecessors[i]).exitSet == null) {
 					assert false : "exit set of predecessor is empty";
 				}
@@ -96,9 +96,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						if(param1 != null){//stack could be empty
 							SSAValue result = new SSAValue();
 							result.type = SSAValue.tPhiFunc;
-							PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
+							PhiFunction phi = new PhiFunction(sCPhiFunc);
 							phi.result = result;
-							phi.addOperand(param1,0);//predecessors[0]
+							phi.addOperand(param1);//predecessors[0]
 							entrySet[i]=result;
 							addPhiFunction(phi);
 						}
@@ -112,7 +112,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 								param = generateLoadParameter((SSANode)predecessors[0], j);
 							}
 							if(param != null){//stack could be empty
-								phiFunctions[phiIndex].addOperand(param, i);
+								phiFunctions[phiIndex].addOperand(param);
 								phiIndex++;
 							}
 						}
@@ -153,24 +153,24 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 									if(func == null){
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
-										PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
+										PhiFunction phi = new PhiFunction(sCPhiFunc);
 										phi.result = result;
-										phi.addOperand(entrySet[j], 0);
-										phi.addOperand(predExitSet[j], i);
+										phi.addOperand(entrySet[j]);
+										phi.addOperand(predExitSet[j]);
 										entrySet[j]= result;
 										addPhiFunction(phi);
 									}
 									else{//phi functions are created in this node
-										func.addOperand(entrySet[j], i);
+										func.addOperand(entrySet[j]);
 									}									
 								}
 								else{// create phi function
 									SSAValue result = new SSAValue();
 									result.type = SSAValue.tPhiFunc;
-									PhiFunction phi = new PhiFunction(sCPhiFunc, nofPredecessors);
+									PhiFunction phi = new PhiFunction(sCPhiFunc);
 									phi.result = result;
-									phi.addOperand(entrySet[j], 0);
-									phi.addOperand(predExitSet[j], i);
+									phi.addOperand(entrySet[j]);
+									phi.addOperand(predExitSet[j]);
 									entrySet[j]= result;
 									addPhiFunction(phi);
 								}
