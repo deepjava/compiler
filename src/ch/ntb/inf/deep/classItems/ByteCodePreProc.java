@@ -97,7 +97,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 						int high = getInt(byteCode, addr+8);
 						instrLength = ((high-low) + 4) * 4 + addr - instrAddr;
 					}else{// opc == bClookupswitch
-						int nofPairs = getInt(byteCode, addr+4);
+						int nofPairs = getInt(byteCode, addr);//+4 is wrong
 						instrLength = (nofPairs * 2 + 2) * 4	 + (addr - instrAddr);
 					}
 				}else{// (opc != bCtableswitch & opc != bClookupswitch)
