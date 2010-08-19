@@ -445,7 +445,7 @@ public class CFG implements JvmInstructionMnemonics {
 			sb.append("\tnodeNr:" + i + " from " + node.firstBCA + " to "
 					+ node.lastBCA + "\t");
 			if (node.isLoopHeader())
-				sb.append("is loop header");
+				sb.append("is loop header ");
 			sb.append(node.visited);
 			sb.append("\n\t\tpredecessor: ");
 			for (int k = 0; (k < node.predecessors.length)
