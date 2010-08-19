@@ -1,0 +1,28 @@
+Testdokument für die Testklasse T00EmptyClass
+
+Sinn und Zweck:
+Dies ist eine leere Klasse, welche nur den default Klassenkonstruktor erzeugt.
+Es soll getestet werden, dass der CFG und die SSA für diesen korrekt gebildet werden.
+
+
+Bytecode:
+public void <init>()
+//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+	0 aload_0 [this]
+	1 invokespecial java/lang/Object(): void
+	4 return 
+	
+
+CFG: 
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         Monadic[sCloadVar] ( Void )
+         Call[sCcall] (Object)
+      ExitSet {[ ], [ Object ]}
