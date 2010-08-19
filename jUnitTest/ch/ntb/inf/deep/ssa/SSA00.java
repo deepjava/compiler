@@ -29,8 +29,7 @@ public class SSA00 extends TestSSA {
     @Test
 	public void testConstructor() {
     	// constructor
-		SSANode[] nodes = getAndTestNodes(0, 1);
-//		SSAValue exitSet[] = new SSAValue[] 
-//		testNode(nodes[0], 2, 0, new SSAValue[] {}, {});
+		SSANode[] node = getAndTestSSA(0,1,0);
+		testNode(node[0], 2, 0, 2);
 	}
 }

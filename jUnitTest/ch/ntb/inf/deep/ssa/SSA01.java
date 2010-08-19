@@ -27,26 +27,38 @@ public class SSA01 extends TestSSA {
 
  	@Test
 	public void emptyMethodStatic() {
-		SSANode[] nodes = getAndTestNodes(1, 1);
-//		testNode(nodes[0], 0, 0, false, null, new int[] {}, new int[] {});
+		SSANode[] nodes = getAndTestSSA(1, 1, 0);
+		testNode(nodes[0],0,0,0);
  	}
 	
 	@Test
 	public void emptyMethod() {
-		SSANode[] nodes = getAndTestNodes(2, 1);
-//		testNode(nodes[0], 0, 0, false, null, new int[] {}, new int[] {});
+		SSANode[] nodes = getAndTestSSA(2, 1, 0);
+		testNode(nodes[0],0,0,1);
  	}
 
 	@Test
 	public void assignment1() {
-		SSANode[] nodes = getAndTestNodes(3, 1);
-//		testNode(nodes[0], 0, 2, false, null, new int[] {}, new int[] {});
+		SSANode[] nodes = getAndTestSSA(3, 1,0);
+		testNode(nodes[0],1,0,2);
  	}
 	
 	@Test
 	public void simple1() {
-		SSANode[] nodes = getAndTestNodes(4, 1);
-//		testNode(nodes[0], 0, 15, false, null, new int[] {}, new int[] {});
+		SSANode[] nodes = getAndTestSSA(4, 1,0);
+		testNode(nodes[0],10,0,4);
+ 	}
+	
+	@Test
+	public void simple2() {
+		SSANode[] nodes = getAndTestSSA(5, 1,0);
+		testNode(nodes[0],4,0,4);
+ 	}
+	
+	@Test
+	public void simple3() {
+		SSANode[] nodes = getAndTestSSA(6, 1,0);
+		testNode(nodes[0],4,0,4);
  	}
 
 }
