@@ -82,7 +82,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			if (isLoopHeader()) {
 				// if true --> generate phi functions for all locals
 				// if we have redundant phi functions, we eliminate it later 
-				if (nofInstr == 0) {
+				if (!traversed) {
 					// first visit --> insert phi function with 1 parameter					
 					assert (((SSANode)predecessors[0]).exitSet != null) : "Predecessor.exitSet isn't set!";
 					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
@@ -2030,7 +2030,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			PhiFunction[] newArray = new PhiFunction[2 * len];
 			for (int k = 0; k < len; k++)
 				newArray[k] = phiFunctions[k];
-			instructions = newArray;
+			phiFunctions = newArray;
 
 		}
 		phiFunctions[nofPhiFunc] = func;
