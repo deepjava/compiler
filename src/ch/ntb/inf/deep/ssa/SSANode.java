@@ -1331,6 +1331,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = new SSAValue();
 				value2.type = SSAValue.tInteger;
 				value2.constant = val1;
+				instr = new NoOpnd(sCloadConst);
+				instr.result = value2;
+				addInstruction(instr);
 
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
