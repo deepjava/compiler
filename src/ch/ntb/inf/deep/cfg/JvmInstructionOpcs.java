@@ -326,10 +326,10 @@ interface JvmInstructionOpcs {
 			0x80000300 + bCgetfield,
 			0x80000300 + bCputfield,
 
-			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokevirtual, // pop objRef & arguments, push result
-			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokespecial, // pop objRef & arguments, push result
-			0x80000300 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokestatic, // pop arguments, push result
-			0x80000500 + (1<<bcapSSAnotImpl)| (1<<bcapCall) | bCinvokeinterface,
+			0x80000300 + (1<<bcapCall) | bCinvokevirtual, // pop objRef & arguments, push result
+			0x80000300 + (1<<bcapCall) | bCinvokespecial, // pop objRef & arguments, push result
+			0x80000300 + (1<<bcapCall) | bCinvokestatic, // pop arguments, push result
+			0x80000500 + (1<<bcapCall) | bCinvokeinterface,
 
 			bCxxxunusedxxx,
 
@@ -344,8 +344,8 @@ interface JvmInstructionOpcs {
 			0x00000300 + bCcheckcast,
 			0x00000300 + bCinstanceof,
 
-			0xF0000100 + (1<<bcapCFGnotImpl) | bCmonitorenter,
-			0xF0000100 + (1<<bcapCFGnotImpl) | bCmonitorexit,
+			0xF0000100 + (1<<bcapSSAnotImpl) | (1<<bcapCFGnotImpl) | bCmonitorenter,
+			0xF0000100 + (1<<bcapSSAnotImpl) | (1<<bcapCFGnotImpl) | bCmonitorexit,
 
 			0x00000000 + bCwide,
 
