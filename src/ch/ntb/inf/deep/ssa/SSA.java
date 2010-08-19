@@ -24,9 +24,7 @@ public class SSA {
 		determineStateArray();
 	}
 
-	public void determineStateArray() {
-		
-		
+	public void determineStateArray() {		
 		// visit all
 		for (int i = 0; i < nofSortedNodes; i++) {
 			//reset traversed for next use
@@ -42,7 +40,6 @@ public class SSA {
 	}
 
 	private void sortNodes(SSANode rootNode) {
-
 		if (rootNode.traversed) {// if its already processed
 			return;
 		}
