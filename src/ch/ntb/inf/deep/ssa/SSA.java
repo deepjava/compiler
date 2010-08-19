@@ -8,8 +8,8 @@ import ch.ntb.inf.deep.cfg.CFG;
 
 public class SSA {
 	public CFG cfg;
-	int nofLoopheaders;
-	SSANode loopHeaders[];
+	public int nofLoopheaders;
+	private SSANode loopHeaders[];
 	private SSANode sortedNodes[];
 	private int nofSortedNodes;
 
@@ -64,7 +64,25 @@ public class SSA {
 			sortNodes((SSANode) rootNode.successors[i]);
 		}
 	}
-
+	public SSANode[] getNodes(){
+		SSANode current = (SSANode) this.cfg.rootNode;
+		SSANode[] nodes = new SSANode[this.getNofNodes()];
+		for(int i = 0; i < nodes.length; i++){
+			nodes[i] = current;
+			current = (SSANode)current.next;
+		}
+		return nodes;		
+	}
+	
+	public int getNofNodes(){
+		int count = 0;
+		SSANode current = (SSANode)this.cfg.rootNode;
+		while(current != null){
+			count++;
+			current = (SSANode)current.next;
+		}
+		return count;
+	}
 	/**
 	 * Prints out the SSA readable.
 	 * <p>
