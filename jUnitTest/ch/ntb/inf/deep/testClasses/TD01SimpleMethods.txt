@@ -1,0 +1,176 @@
+Testdokument für die Testklasse T01SimpleMethods
+
+Sinn und Zweck:
+Diese Klasse definiert verschiedene einfache Methoden. 
+Es soll getestet werden, dass der CFG und die SSA für statische und instanz Methoden 
+mit oder ohne Parameter richtig gebildet werden.
+
+Bytecode:
+
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		0 aload_0 [this]
+		1 invokespecial java/lang/Object(): void
+		4 return  
+		
+public static void emptyMethodStatic()
+	//nofStackSlots=0, nofLocalSlots=0, codeLen=1 
+		0 return
+		
+public void emptyMethod()
+	//nofStackSlots=0, nofLocalSlots=1, codeLen=1 
+		0 return
+		
+public static void assignment1()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=3 
+		0 iconst_1
+		1 istore_0 [x]
+		2 return
+		
+public static void simple1(int)
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=16 
+		0 iconst_0
+		1 istore_1 [x]
+		2 iinc x, 1
+		5 iinc x, 3
+		8 iinc x, -1
+		11 iload_0 [y]
+		12 iconst_1
+		13 iadd
+		14 istore_1 [x]
+		15 return
+		
+public static void simple2()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=13 
+		0 iconst_1
+		1 istore_0 [a]
+		2 iconst_2
+		3 istore_1 [b]
+		4 iconst_3
+		5 istore_0 [a]
+		6 iload_1 [b]
+		7 istore_0 [a]
+		8 iload_0 [a]
+		9 iload_1 [b]
+		10 iadd
+		11 istore_0 [a]
+		12 return
+		
+public static void simple3()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=13 
+		0 iconst_1
+		1 istore_0 [x]
+		2 iconst_2
+		3 istore_1 [y]
+		4 iload_0 [x]
+		5 iload_1 [y]
+		6 iadd
+		7 istore_0 [x]
+		8 iload_0 [x]
+		9 iload_0 [x]
+		10 iadd
+		11 istore_1 [y]
+		12 return
+		
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method emptyMethodStatic
+	nodeNr:0 from 0 to 0	visited: false
+		predecessor: 
+		successor: 
+
+method emptyMethod
+	nodeNr:0 from 0 to 0	visited: false
+		predecessor: 
+		successor: 
+
+method assignment1
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: 
+
+method simple1
+	nodeNr:0 from 0 to 15	visited: false
+		predecessor: 
+		successor: 
+
+method simple2
+	nodeNr:0 from 0 to 12	visited: false
+		predecessor: 
+		successor: 
+
+method simple3
+	nodeNr:0 from 0 to 12	visited: false
+		predecessor: 
+		successor: 
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         Monadic[sCloadVar] ( Void )
+         Call[sCcall] (Object)
+      ExitSet {[ ], [ Object ]}
+
+
+Method: emptyMethodStatic
+   SSANode 0:
+      EntrySet {}
+      ExitSet {}
+
+
+Method: emptyMethod
+   SSANode 0:
+      EntrySet {[ ]}
+      ExitSet {[ ]}
+
+
+Method: assignment1
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ ], [ Integer (1) ]}
+
+
+Method: simple1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+         Monadic[sCloadVar] ( Void )
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+    
+    
+Method: simple2
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (null), Integer (2) ]}
+
+
+Method: simple3
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+
+
+		
