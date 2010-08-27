@@ -33,7 +33,7 @@ public interface SSAInstructionMnemonics extends SSAInstructionOpcs {
 		"sCstoreToField",
 		"sCthrow",
 		"sCPhiFunc",
-		"sCloadParam",
+		"sCloadLocal",
 		"sCRegMove"		
 	};
 
