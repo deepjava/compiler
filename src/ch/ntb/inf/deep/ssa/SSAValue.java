@@ -5,7 +5,7 @@ package ch.ntb.inf.deep.ssa;
  */
 public class SSAValue implements SSAValueType {
 	public int type;
-	public SSAValue reference;
+	public int index = -1;	// index into state array	
 	public Object constant;
 	public int n = -1;	// each ssa-instruction is numbered for the register allocation 
 	public int end;	// indicates the end number of the live range for this value
