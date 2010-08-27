@@ -28,7 +28,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	private int maxStack;
 	private int stackpointer;
 	public SSAValue exitSet[];
-	private SSAValue locals[];
 	public SSAValue entrySet[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
@@ -67,13 +66,11 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (nofPredecessors == 0) {
 			// create new entry and exit sets, locals are uninitialized
 			entrySet = new SSAValue[maxStack + maxLocals];
-			exitSet = new SSAValue[maxStack + maxLocals];
 
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
 			if (this.equals(predecessors[0])) {// equal by "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
-				exitSet = new SSAValue[maxStack + maxLocals];
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
 			}
@@ -86,7 +83,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					// first visit --> insert phi function with 1 parameter					
 					assert (((SSANode)predecessors[0]).exitSet != null) : "Predecessor.exitSet isn't set!";
 					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
-					exitSet = new SSAValue[maxStack + maxLocals];
 					
 					for(int i = 0; i < maxStack+maxLocals;i++){
 						SSAValue param1 = entrySet[i];
@@ -96,6 +92,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						if(param1 != null){//stack could be empty
 							SSAValue result = new SSAValue();
 							result.type = SSAValue.tPhiFunc;
+							result.index = i;
 							PhiFunction phi = new PhiFunction(sCPhiFunc);
 							phi.result = result;
 							phi.addOperand(param1);//predecessors[0]
@@ -153,6 +150,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 									if(func == null){
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
+										result.index = j;
 										PhiFunction phi = new PhiFunction(sCPhiFunc);
 										phi.result = result;
 										phi.addOperand(entrySet[j]);
@@ -167,6 +165,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 								else{// create phi function
 									SSAValue result = new SSAValue();
 									result.type = SSAValue.tPhiFunc;
+									result.index = j;
 									PhiFunction phi = new PhiFunction(sCPhiFunc);
 									phi.result = result;
 									phi.addOperand(entrySet[j]);
@@ -199,9 +198,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		DataItem field;
 		SSAInstruction instr;
 		boolean wide = false;
-		locals = entrySet.clone();// Don't change the entry set
+		exitSet = entrySet.clone();// Don't change the entry set
 		// determine top of the stack
-		for (stackpointer = maxStack-1; stackpointer >= 0 && locals[stackpointer] == null; stackpointer--);
+		for (stackpointer = maxStack-1; stackpointer >= 0 && exitSet[stackpointer] == null; stackpointer--);
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
 			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];
@@ -606,7 +605,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				locals[maxStack + val] = popFromStack();
+				exitSet[maxStack + val] = popFromStack();
+				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bClstore:
 				if (wide) {
@@ -616,7 +616,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				locals[maxStack + val] = popFromStack();
+				exitSet[maxStack + val] = popFromStack();
+				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCfstore:
 				if (wide) {
@@ -626,7 +627,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				locals[maxStack + val] = popFromStack();
+				exitSet[maxStack + val] = popFromStack();
+				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCdstore:
 				if (wide) {
@@ -636,7 +638,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				locals[maxStack + val] = popFromStack();
+				exitSet[maxStack + val] = popFromStack();
+				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCastore:
 				if (wide) {
@@ -646,67 +649,88 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				locals[maxStack + val] = popFromStack();
+				exitSet[maxStack + val] = popFromStack();
+				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCistore_0:
-				locals[maxStack] = popFromStack();
+				exitSet[maxStack] = popFromStack();
+				exitSet[maxStack].index = maxStack;
 				break;
 			case bCistore_1:
-				locals[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCistore_2:
-				locals[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCistore_3:
-				locals[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bClstore_0:
-				locals[maxStack] = popFromStack();
+				exitSet[maxStack] = popFromStack();
+				exitSet[maxStack].index = maxStack;
 				break;
 			case bClstore_1:
-				locals[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bClstore_2:
-				locals[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bClstore_3:
-				locals[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCfstore_0:
-				locals[maxStack] = popFromStack();
+				exitSet[maxStack] = popFromStack();
+				exitSet[maxStack].index = maxStack;
 				break;
 			case bCfstore_1:
-				locals[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCfstore_2:
-				locals[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCfstore_3:
-				locals[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCdstore_0:
-				locals[maxStack] = popFromStack();
+				exitSet[maxStack] = popFromStack();
+				exitSet[maxStack].index = maxStack;
 				break;
 			case bCdstore_1:
-				locals[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCdstore_2:
-				locals[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCdstore_3:
-				locals[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCastore_0:
-				locals[maxStack] = popFromStack();
+				exitSet[maxStack] = popFromStack();
+				exitSet[maxStack].index = maxStack;
 				break;
 			case bCastore_1:
-				locals[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1] = popFromStack();
+				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCastore_2:
-				locals[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2] = popFromStack();
+				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCastore_3:
-				locals[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3] = popFromStack();
+				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCiastore:
 				value3 = popFromStack();
@@ -1342,7 +1366,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				instr.result = result;
 				addInstruction(instr);
 
-				locals[maxStack + val] = result;
+				exitSet[maxStack + val] = result;
+				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCi2l:
 				value1 = popFromStack();
@@ -1601,42 +1626,42 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCireturn:
 				//discard Stack
 				while(stackpointer >= 0){
-					locals[stackpointer]= null;
+					exitSet[stackpointer]= null;
 					stackpointer--;
 				}
 				break;
 			case bClreturn:
 				//discard Stack
 				while(stackpointer >= 0){
-					locals[stackpointer]= null;
+					exitSet[stackpointer]= null;
 					stackpointer--;
 				}
 				break;
 			case bCfreturn:
 				//discard Stack
 				while(stackpointer >= 0){
-					locals[stackpointer]= null;
+					exitSet[stackpointer]= null;
 					stackpointer--;
 				}
 				break;
 			case bCdreturn:
 				//discard Stack
 				while(stackpointer >= 0){
-					locals[stackpointer]= null;
+					exitSet[stackpointer]= null;
 					stackpointer--;
 				}
 				break;
 			case bCareturn:
 				//discard Stack
 				while(stackpointer >= 0){
-					locals[stackpointer]= null;
+					exitSet[stackpointer]= null;
 					stackpointer--;
 				}
 				break;
 			case bCreturn:
 				//discard Stack
 				while(stackpointer >= 0){
-					locals[stackpointer]= null;
+					exitSet[stackpointer]= null;
 					stackpointer--;
 				}
 				break;
@@ -1922,7 +1947,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				addInstruction(instr);
 				//clear stack
 				while(stackpointer >=0){
-					locals[stackpointer]=null;
+					exitSet[stackpointer]=null;
 					stackpointer--;
 				}
 				pushToStack(result);
@@ -1989,15 +2014,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				// do nothing
 			}
 		}
-		//copy locals to the exitSet
-		exitSet = locals.clone();
 	}
 
 	private void pushToStack(SSAValue value) {
 		if (stackpointer + 1 >= maxStack) {
 			throw new IndexOutOfBoundsException("Stack overflow");
 		}
-		locals[stackpointer + 1] = value;
+		exitSet[stackpointer + 1] = value;
 		stackpointer++;
 
 	}
@@ -2007,8 +2030,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (stackpointer < 0) {
 			throw new IndexOutOfBoundsException("Empty Stack");
 		}
-		val = locals[stackpointer];
-		locals[stackpointer] = null;
+		val = exitSet[stackpointer];
+		exitSet[stackpointer] = null;
 		stackpointer--;
 		return val;
 
@@ -2041,16 +2064,16 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	}
 	
 	private void load(int index, int type) {
-		SSAValue result = locals[maxStack + index];
+		SSAValue result = exitSet[maxStack + index];
 
 		if (result == null) {// local isn't initialized
 			result = new SSAValue();
 			result.type = type;
-			Local operand = new Local(index);
-			SSAInstruction instr = new Monadic(sCloadVar, operand);
+			result.index = maxStack + index;
+			SSAInstruction instr = new NoOpnd(sCloadLocal);
 			instr.result = result;
 			addInstruction(instr);
-			locals[maxStack + index] = result;
+			exitSet[maxStack + index] = result;
 		}
 
 		pushToStack(result);
@@ -2070,9 +2093,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		}
 		
 		SSAValue result = new SSAValue();
-		SSAValue param = new SSAValue();
-		param.constant = index-maxStack;
-		SSAInstruction instr = new Monadic(sCloadParam, param);
+		result.index = index;
+		SSAInstruction instr = new NoOpnd(sCloadLocal);
 		instr.result = result;
 		node.addInstruction(instr);
 		node.exitSet[index]= result;
@@ -2228,7 +2250,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			instructions[i].print(level+2);
 		}
 		
-		//Print ExitSet with Stack an Locals
+		//Print ExitSet with Stack and Locals
 		for (int i = 0; i < (level+1)*3; i++)System.out.print(" ");
 		System.out.print("ExitSet {");
 		if(exitSet.length > 0 ) System.out.print("[ ");
