@@ -29,6 +29,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	private int stackpointer;
 	public SSAValue exitSet[];
 	public SSAValue entrySet[];
+	private boolean isParam[];
+	private int paramType[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
 	
@@ -66,13 +68,20 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (nofPredecessors == 0) {
 			// create new entry and exit sets, locals are uninitialized
 			entrySet = new SSAValue[maxStack + maxLocals];
+			isParam = new boolean[maxStack + maxLocals];
+			paramType = new int[maxStack + maxLocals];
+			determineParam(ssa);
 
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
 			if (this.equals(predecessors[0])) {// equal by "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
+				isParam = new boolean[maxStack + maxLocals];
+				paramType = new int[maxStack + maxLocals];
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
+				isParam = ((SSANode) predecessors[0]).isParam.clone();
+				paramType = ((SSANode) predecessors[0]).paramType.clone();
 			}
 		} else if (nofPredecessors >= 2) {
 			// multiple predecessors --> merge necessary
@@ -81,36 +90,43 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				// if we have redundant phi functions, we eliminate it later 
 				if (!traversed) {
 					// first visit --> insert phi function with 1 parameter					
-					assert (((SSANode)predecessors[0]).exitSet != null) : "Predecessor.exitSet isn't set!";
+
+					//swap on the index 0 a predecessor thats already processed
+					for(int i = 0;i < nofPredecessors; i++){
+						if(((SSANode)predecessors[i]).exitSet != null){
+							SSANode temp = (SSANode)predecessors[i];
+							predecessors[i] = predecessors[0];
+							predecessors[0] = temp;							
+						}
+					}
+					
 					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
+					isParam = ((SSANode) predecessors[0]).isParam.clone();
+					paramType = ((SSANode) predecessors[0]).paramType.clone();
 					
 					for(int i = 0; i < maxStack+maxLocals;i++){
-						SSAValue param1 = entrySet[i];
-						if(i >= maxStack && param1 == null){
-							param1 = generateLoadParameter((SSANode)predecessors[0], i);
-						}
-						if(param1 != null){//stack could be empty
-							SSAValue result = new SSAValue();
-							result.type = SSAValue.tPhiFunc;
-							result.index = i;
-							PhiFunction phi = new PhiFunction(sCPhiFunc);
-							phi.result = result;
-							phi.addOperand(param1);//predecessors[0]
+						SSAValue result = new SSAValue();
+						result.type = SSAValue.tPhiFunc;
+						result.index = i;
+						PhiFunction phi = new PhiFunction(sCPhiFunc);
+						phi.result = result;
+						phi.addOperand(entrySet[i]);
+						addPhiFunction(phi);
+						if(i >= maxStack || entrySet[i] != null){//Stack will be set when it is necessary;
 							entrySet[i]=result;
-							addPhiFunction(phi);
 						}
 					}					
 				} else {
 					for (int i=1; i < nofPredecessors; i++){//skip the first already processed predecessor  
-						int phiIndex = 0; 
 						for (int j = 0; j < maxStack+maxLocals; j++){
 							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
-							if(i >= maxStack && param == null){
-								param = generateLoadParameter((SSANode)predecessors[0], j);
+							
+							//Check if it need a loadParam innstruction
+							if(param == null && isParam[j] &&  phiFunctions[j].nofOperands == 0){
+								param = generateLoadParameter((SSANode)idom, j, ssa);
 							}
 							if(param != null){//stack could be empty
-								phiFunctions[phiIndex].addOperand(param);
-								phiIndex++;
+								phiFunctions[j].addOperand(param);
 							}
 						}
 					}
@@ -124,55 +140,153 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					if (entrySet == null) {
 						// first predecessor --> create locals
 						entrySet = ((SSANode) predecessors[i]).exitSet.clone();
+						isParam = ((SSANode) predecessors[i]).isParam.clone();
+						paramType = ((SSANode) predecessors[i]).paramType.clone();
 					} else {
 						// all other predecessors --> merge
-						SSAValue[] predExitSet = ((SSANode) predecessors[i]).exitSet.clone();
 						for (int j = 0; j < maxStack+maxLocals; j++){
-							if (entrySet[j] == null){
-								entrySet[j] = predExitSet[j];  
-							}
-							else if(!(entrySet[j].equals(predExitSet[j]))){
-								if(j >= maxStack && entrySet[j] == null){
-									entrySet[j] = generateLoadParameter((SSANode) predecessors[i], i);
-								}
-								if(j >= maxStack && predExitSet[j] == null){
-									predExitSet[j] = generateLoadParameter((SSANode) predecessors[i], i);
-								}
-								if(entrySet[j].type == SSAValue.tPhiFunc){
-									PhiFunction func = null;
-									//func == null if the phi functions are created by the predecessor
-									for (int y = 0; y < nofPhiFunc; y++){
-										if (entrySet[j].equals(phiFunctions[y].result)){
-											func = phiFunctions[y];
-											break;
-										}
-									}
-									if(func == null){
+							if (entrySet[j] != null ||((SSANode) predecessors[i]).exitSet[j] != null ){//if both null, do nothing
+								if(entrySet[j] == null){//predecessor is set
+									if(isParam[j]){
+										//create phi function
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
 										result.index = j;
 										PhiFunction phi = new PhiFunction(sCPhiFunc);
 										phi.result = result;
-										phi.addOperand(entrySet[j]);
-										phi.addOperand(predExitSet[j]);
 										entrySet[j]= result;
+										//generate for all already proceed predecessors a loadParameter 
+										//and add their results to the phi function
+										for (int x = 0; x < i;x++ ){
+											phi.addOperand(generateLoadParameter((SSANode)predecessors[x], j, ssa));
+										}
+										phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 										addPhiFunction(phi);
 									}
-									else{//phi functions are created in this node
-										func.addOperand(predExitSet[j]);
-									}									
+								}else{//entrySet[j] != null
+									if(!(entrySet[j].equals(((SSANode) predecessors[i]).exitSet[j]))){//if both equals, do nothing
+										if(((SSANode) predecessors[i]).exitSet[j] == null){
+											if(isParam[j]){
+												if(entrySet[j].type == SSAValue.tPhiFunc){
+													PhiFunction func = null;
+													//func == null if the phi functions are created by the predecessor
+													for (int y = 0; y < nofPhiFunc; y++){
+														if (entrySet[j].equals(phiFunctions[y].result)){
+															func = phiFunctions[y];
+															break;
+														}
+													}
+													if(func == null){
+														SSAValue result = new SSAValue();
+														result.type = SSAValue.tPhiFunc;
+														result.index = j;
+														PhiFunction phi = new PhiFunction(sCPhiFunc);
+														phi.result = result;
+														phi.addOperand(entrySet[j]);
+														phi.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
+														entrySet[j]= result;
+														addPhiFunction(phi);
+													}
+													else{//phi functions are created in this node
+														func.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
+													}
+												}else{//entrySet[j] != SSAValue.tPhiFunc
+													SSAValue result = new SSAValue();
+													result.type = SSAValue.tPhiFunc;
+													result.index = j;
+													PhiFunction phi = new PhiFunction(sCPhiFunc);
+													phi.result = result;
+													phi.addOperand(entrySet[j]);
+													phi.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
+													entrySet[j]= result;
+													addPhiFunction(phi);
+												}
+											}else{
+												entrySet[j] = null;
+											}
+										}else{//entrySet[j] != null  && ((SSANode) predecessors[i]).exitSet[j] != null
+											if(entrySet[j].type == SSAValue.tPhiFunc){
+												PhiFunction func = null;
+												//func == null if the phi functions are created by the predecessor
+												for (int y = 0; y < nofPhiFunc; y++){
+													if (entrySet[j].equals(phiFunctions[y].result)){
+														func = phiFunctions[y];
+														break;
+													}
+												}
+												if(func == null){
+													SSAValue result = new SSAValue();
+													result.type = SSAValue.tPhiFunc;
+													result.index = j;
+													PhiFunction phi = new PhiFunction(sCPhiFunc);
+													phi.result = result;
+													phi.addOperand(entrySet[j]);
+													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													entrySet[j]= result;
+													addPhiFunction(phi);
+												}
+												else{//phi functions are created in this node
+													func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+												}
+											}else{//entrySet[j] != SSAValue.tPhiFunc
+												SSAValue result = new SSAValue();
+												result.type = SSAValue.tPhiFunc;
+												result.index = j;
+												PhiFunction phi = new PhiFunction(sCPhiFunc);
+												phi.result = result;
+												phi.addOperand(entrySet[j]);
+												phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+												entrySet[j]= result;
+												addPhiFunction(phi);
+											}
+										}
+									}
+									
 								}
-								else{// create phi function
-									SSAValue result = new SSAValue();
-									result.type = SSAValue.tPhiFunc;
-									result.index = j;
-									PhiFunction phi = new PhiFunction(sCPhiFunc);
-									phi.result = result;
-									phi.addOperand(entrySet[j]);
-									phi.addOperand(predExitSet[j]);
-									entrySet[j]= result;
-									addPhiFunction(phi);
-								}
+//								entrySet[j] = predExitSet[j];  
+//							}
+//							else if(!(entrySet[j].equals(predExitSet[j]))){
+//								if(j >= maxStack && entrySet[j] == null){
+//									entrySet[j] = generateLoadParameter((SSANode) predecessors[i], i);
+//								}
+//								if(j >= maxStack && predExitSet[j] == null){
+//									predExitSet[j] = generateLoadParameter((SSANode) predecessors[i], i);
+//								}
+//								if(entrySet[j].type == SSAValue.tPhiFunc){
+//									PhiFunction func = null;
+//									//func == null if the phi functions are created by the predecessor
+//									for (int y = 0; y < nofPhiFunc; y++){
+//										if (entrySet[j].equals(phiFunctions[y].result)){
+//											func = phiFunctions[y];
+//											break;
+//										}
+//									}
+//									if(func == null){
+//										SSAValue result = new SSAValue();
+//										result.type = SSAValue.tPhiFunc;
+//										result.index = j;
+//										PhiFunction phi = new PhiFunction(sCPhiFunc);
+//										phi.result = result;
+//										phi.addOperand(entrySet[j]);
+//										phi.addOperand(predExitSet[j]);
+//										entrySet[j]= result;
+//										addPhiFunction(phi);
+//									}
+//									else{//phi functions are created in this node
+//										func.addOperand(predExitSet[j]);
+//									}									
+//								}
+//								else{// create phi function
+//									SSAValue result = new SSAValue();
+//									result.type = SSAValue.tPhiFunc;
+//									result.index = j;
+//									PhiFunction phi = new PhiFunction(sCPhiFunc);
+//									phi.result = result;
+//									phi.addOperand(entrySet[j]);
+//									phi.addOperand(predExitSet[j]);
+//									entrySet[j]= result;
+//									addPhiFunction(phi);
+//								}
 							}
 						}
 					}
@@ -2080,20 +2194,21 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 
 	}
 	
-	private SSAValue generateLoadParameter(SSANode predecessor, int index){
+	private SSAValue generateLoadParameter(SSANode predecessor, int index, SSA ssa){
 		boolean needsNewNode = false;
 		SSANode node = predecessor;
-		for(int i = 0; i < this.predecessors.length;i++){
+		for(int i = 0; i < this.nofPredecessors;i++){
 			if(!this.predecessors[i].equals(predecessor) && !needsNewNode){
 				needsNewNode = this.idom.equals(predecessor)&& !(this.equals(this.predecessors[i].idom)); //TODO braucht es die dritte bedingung von Thomas?
 			}
 		}
 		if (needsNewNode){
-			node = this.insertNode(predecessor);
+			node = this.insertNode(predecessor, ssa);
 		}
 		
 		SSAValue result = new SSAValue();
 		result.index = index;
+		result.type = paramType[index];
 		SSAInstruction instr = new NoOpnd(sCloadLocal);
 		instr.result = result;
 		node.addInstruction(instr);
@@ -2107,12 +2222,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	 * @param predecessor SSANode that is immediate for the base node
 	 * @return on success the inserted SSANode, otherwise null 
 	 */
-	public SSANode insertNode(SSANode predecessor){
+	public SSANode insertNode(SSANode predecessor, SSA ssa){
 		int index = -1;
 		SSANode node = null;
 		// check if base follows predecessor immediate an save index
-		for(int i = 0; i < this.predecessors.length; i++ ){
-			if (this.predecessors[i].equals(predecessor)){
+		for(int i = 0; i < nofPredecessors; i++ ){
+			if (predecessors[i].equals(predecessor)){
 				index = i;
 				break;
 			}
@@ -2120,12 +2235,18 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (index >= 0){
 			node = new SSANode();
 						
-			node.idom = this.idom;
+			node.firstBCA = -1;
+			node.lastBCA = -1;
+			node.maxLocals = this.maxLocals;
+			node.maxStack = this.maxStack;
+			node.idom = idom;
 			node.entrySet = predecessor.exitSet.clone();
-			node.exitSet = this.entrySet.clone();
+			node.exitSet = node.entrySet.clone();
+			node.isParam = isParam.clone();
+			node.paramType = paramType.clone();
 			
 			node.addSuccessor(this);
-			this.predecessors[index] = node;
+			predecessors[index] = node;
 			
 			node.addPredecessor(predecessor);
 			for(int i = 0;i < predecessor.successors.length;i++){
@@ -2134,7 +2255,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					break;
 				}
 			}			
-		}		
+		}
+		//append the node to ssa
+		SSANode lastNode = (SSANode)ssa.cfg.rootNode;
+		while(lastNode.next != null){
+			lastNode = (SSANode)lastNode.next;
+		}
+		lastNode.next = node;
 		
 		return node;
 	}
@@ -2193,6 +2320,84 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		phiFunctions = temp;
 		nofPhiFunc = count;		
 	}
+	
+	private void determineParam(SSA ssa){
+		int index;
+		int flags = ssa.cfg.method.accAndPorpFlags;
+		String descriptor = ssa.cfg.method.methDescriptor.toString();
+		
+		if((flags & 0x0008) != 0){//method is static
+			index = maxStack;
+		}else{//method isn't static
+			index = maxStack+1;
+		}
+		
+		char ch = descriptor.charAt(1);
+		for(int i = 1;ch != ')'; i++){//travers only between (....);
+			isParam[index] = true;
+			if(ch == '['){
+				while(ch == '['){
+					i++;
+					ch = descriptor.charAt(i);
+				}
+				paramType[index++] = decodeFieldType(ch)+10;//+10 is for Arrays
+				
+			}else{				
+				paramType[index] = decodeFieldType(ch);
+				if(paramType[index]== SSAValue.tLong || paramType[index] == SSAValue.tDouble){
+					index +=2;
+				}else{
+					index++;
+				}
+			}
+			if(ch == 'L'){
+				while(ch != ';'){
+					i++;
+					ch = descriptor.charAt(i);
+				}
+			}
+			ch = descriptor.charAt(i+1);
+		}		
+	}
+	
+	private int decodeFieldType(char character){
+		int type;;
+		switch(character){
+		case 'B':
+			type = SSAValue.tByte;
+			break;
+		case 'C':
+			type = SSAValue.tChar;
+			break;
+		case 'D':
+			type = SSAValue.tDouble;
+			break;
+		case 'F':
+			type = SSAValue.tFloat;
+			break;
+		case 'I':
+			type = SSAValue.tInteger;
+			break;
+		case 'J':
+			type = SSAValue.tLong;
+			break;
+		case 'L':
+			type = SSAValue.tObject;
+			break;
+		case 'S':
+			type = SSAValue.tShort;
+			break;
+		case 'Z':
+			type = SSAValue.tBoolean;
+			break;
+		default:
+			type = SSAValue.tVoid;
+			break;
+		}
+		return type;
+	}
+	
+	
 	/**
 	 * Prints out the SSANode readable.<p>
 	 * <b>Example:</b><p>
