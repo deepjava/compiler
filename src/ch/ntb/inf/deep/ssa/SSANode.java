@@ -110,7 +110,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.index = i - maxStack;
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
 						phi.result = result;
-						phi.addOperand(entrySet[i]);
+						if(entrySet[i] != null){
+							phi.addOperand(entrySet[i]);
+						}
 						addPhiFunction(phi);
 						if(i >= maxStack || entrySet[i] != null){//Stack will be set when it is necessary;
 							entrySet[i]=result;
@@ -121,10 +123,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						for (int j = 0; j < maxStack+maxLocals; j++){
 							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
 							
-							//Check if it need a loadParam innstruction
-							if(param == null && isParam[j] &&  phiFunctions[j].nofOperands == 0){
-								param = generateLoadParameter((SSANode)idom, j, ssa);
-							}
+							//Check if it need a loadParam instruction
+							if(isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)){
+								param = generateLoadParameter((SSANode)idom, j, ssa);			
+							}							
 							if(param != null){//stack could be empty
 								phiFunctions[j].addOperand(param);
 							}
@@ -2153,7 +2155,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		SSANode node = predecessor;
 		for(int i = 0; i < this.nofPredecessors;i++){
 			if(!this.predecessors[i].equals(predecessor) && !needsNewNode){
-				needsNewNode = this.idom.equals(predecessor)&& !(this.equals(this.predecessors[i].idom)); //TODO braucht es die dritte bedingung von Thomas?
+				needsNewNode = this.idom.equals(predecessor)&& !(this.equals(this.predecessors[i].idom)) && !isLoopHeader(); 
 			}
 		}
 		if (needsNewNode){
@@ -2262,7 +2264,16 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				for(int j = 0; j < entrySet.length; j++){
 					if (tempRes.equals(entrySet[j])){
 						//replace the result with the Operand
-						entrySet[j]=tempOperands[indexOfDiff];
+						//entrySet[j]=tempOperands[indexOfDiff];
+						//subst the result 
+						entrySet[j].type = tempOperands[indexOfDiff].type;
+						entrySet[j].index = tempOperands[indexOfDiff].index;
+						entrySet[j].constant = tempOperands[indexOfDiff].constant;
+						entrySet[j].n = tempOperands[indexOfDiff].n;
+						entrySet[j].end= tempOperands[indexOfDiff].end;	
+						entrySet[j].join = tempOperands[indexOfDiff].join;	
+						entrySet[j].reg = tempOperands[indexOfDiff].reg;	
+						entrySet[j].memorySlot = tempOperands[indexOfDiff].memorySlot;
 						break;
 					}
 				}
