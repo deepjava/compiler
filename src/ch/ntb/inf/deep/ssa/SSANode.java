@@ -107,7 +107,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					for(int i = 0; i < maxStack+maxLocals;i++){
 						SSAValue result = new SSAValue();
 						result.type = SSAValue.tPhiFunc;
-						result.index = i;
+						result.index = i - maxStack;
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
 						phi.result = result;
 						phi.addOperand(entrySet[i]);
@@ -151,7 +151,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 										//create phi function
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
-										result.index = j;
+										result.index = j - maxStack;
 										PhiFunction phi = new PhiFunction(sCPhiFunc);
 										phi.result = result;
 										entrySet[j]= result;
@@ -179,7 +179,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 													if(func == null){
 														SSAValue result = new SSAValue();
 														result.type = SSAValue.tPhiFunc;
-														result.index = j;
+														result.index = j - maxStack;
 														PhiFunction phi = new PhiFunction(sCPhiFunc);
 														phi.result = result;
 														phi.addOperand(entrySet[j]);
@@ -193,7 +193,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 												}else{//entrySet[j] != SSAValue.tPhiFunc
 													SSAValue result = new SSAValue();
 													result.type = SSAValue.tPhiFunc;
-													result.index = j;
+													result.index = j - maxStack;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
@@ -217,7 +217,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 												if(func == null){
 													SSAValue result = new SSAValue();
 													result.type = SSAValue.tPhiFunc;
-													result.index = j;
+													result.index = j - maxStack;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
@@ -231,7 +231,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 											}else{//entrySet[j] != SSAValue.tPhiFunc
 												SSAValue result = new SSAValue();
 												result.type = SSAValue.tPhiFunc;
-												result.index = j;
+												result.index = j - maxStack;
 												PhiFunction phi = new PhiFunction(sCPhiFunc);
 												phi.result = result;
 												phi.addOperand(entrySet[j]);
@@ -241,52 +241,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 											}
 										}
 									}
-									
 								}
-//								entrySet[j] = predExitSet[j];  
-//							}
-//							else if(!(entrySet[j].equals(predExitSet[j]))){
-//								if(j >= maxStack && entrySet[j] == null){
-//									entrySet[j] = generateLoadParameter((SSANode) predecessors[i], i);
-//								}
-//								if(j >= maxStack && predExitSet[j] == null){
-//									predExitSet[j] = generateLoadParameter((SSANode) predecessors[i], i);
-//								}
-//								if(entrySet[j].type == SSAValue.tPhiFunc){
-//									PhiFunction func = null;
-//									//func == null if the phi functions are created by the predecessor
-//									for (int y = 0; y < nofPhiFunc; y++){
-//										if (entrySet[j].equals(phiFunctions[y].result)){
-//											func = phiFunctions[y];
-//											break;
-//										}
-//									}
-//									if(func == null){
-//										SSAValue result = new SSAValue();
-//										result.type = SSAValue.tPhiFunc;
-//										result.index = j;
-//										PhiFunction phi = new PhiFunction(sCPhiFunc);
-//										phi.result = result;
-//										phi.addOperand(entrySet[j]);
-//										phi.addOperand(predExitSet[j]);
-//										entrySet[j]= result;
-//										addPhiFunction(phi);
-//									}
-//									else{//phi functions are created in this node
-//										func.addOperand(predExitSet[j]);
-//									}									
-//								}
-//								else{// create phi function
-//									SSAValue result = new SSAValue();
-//									result.type = SSAValue.tPhiFunc;
-//									result.index = j;
-//									PhiFunction phi = new PhiFunction(sCPhiFunc);
-//									phi.result = result;
-//									phi.addOperand(entrySet[j]);
-//									phi.addOperand(predExitSet[j]);
-//									entrySet[j]= result;
-//									addPhiFunction(phi);
-//								}
 							}
 						}
 					}
@@ -308,7 +263,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		SSAValue value1, value2, value3, value4, result;
 		SSAValue[] operands;
 		int val, val1;
-		Item cpEntry;
 		DataItem field;
 		SSAInstruction instr;
 		boolean wide = false;
@@ -720,7 +674,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				exitSet[maxStack + val] = popFromStack();
-				exitSet[maxStack + val].index = maxStack + val;
+				exitSet[maxStack + val].index = val;
 				break;
 			case bClstore:
 				if (wide) {
@@ -731,7 +685,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				exitSet[maxStack + val] = popFromStack();
-				exitSet[maxStack + val].index = maxStack + val;
+				exitSet[maxStack + val].index = val;
 				break;
 			case bCfstore:
 				if (wide) {
@@ -742,7 +696,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				exitSet[maxStack + val] = popFromStack();
-				exitSet[maxStack + val].index = maxStack + val;
+				exitSet[maxStack + val].index = val;
 				break;
 			case bCdstore:
 				if (wide) {
@@ -753,7 +707,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				exitSet[maxStack + val] = popFromStack();
-				exitSet[maxStack + val].index = maxStack + val;
+				exitSet[maxStack + val].index = val;
 				break;
 			case bCastore:
 				if (wide) {
@@ -764,87 +718,87 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				exitSet[maxStack + val] = popFromStack();
-				exitSet[maxStack + val].index = maxStack + val;
+				exitSet[maxStack + val].index = val;
 				break;
 			case bCistore_0:
 				exitSet[maxStack] = popFromStack();
-				exitSet[maxStack].index = maxStack;
+				exitSet[maxStack].index = 0;
 				break;
 			case bCistore_1:
 				exitSet[maxStack + 1] = popFromStack();
-				exitSet[maxStack + 1].index = maxStack + 1;
+				exitSet[maxStack + 1].index = 1;
 				break;
 			case bCistore_2:
 				exitSet[maxStack + 2] = popFromStack();
-				exitSet[maxStack + 2].index = maxStack + 2;
+				exitSet[maxStack + 2].index = 2;
 				break;
 			case bCistore_3:
 				exitSet[maxStack + 3] = popFromStack();
-				exitSet[maxStack + 3].index = maxStack + 3;
+				exitSet[maxStack + 3].index = 3;
 				break;
 			case bClstore_0:
 				exitSet[maxStack] = popFromStack();
-				exitSet[maxStack].index = maxStack;
+				exitSet[maxStack].index = 0;
 				break;
 			case bClstore_1:
 				exitSet[maxStack + 1] = popFromStack();
-				exitSet[maxStack + 1].index = maxStack + 1;
+				exitSet[maxStack + 1].index = 1;
 				break;
 			case bClstore_2:
 				exitSet[maxStack + 2] = popFromStack();
-				exitSet[maxStack + 2].index = maxStack + 2;
+				exitSet[maxStack + 2].index = 2;
 				break;
 			case bClstore_3:
 				exitSet[maxStack + 3] = popFromStack();
-				exitSet[maxStack + 3].index = maxStack + 3;
+				exitSet[maxStack + 3].index = 3;
 				break;
 			case bCfstore_0:
 				exitSet[maxStack] = popFromStack();
-				exitSet[maxStack].index = maxStack;
+				exitSet[maxStack].index = 0;
 				break;
 			case bCfstore_1:
 				exitSet[maxStack + 1] = popFromStack();
-				exitSet[maxStack + 1].index = maxStack + 1;
+				exitSet[maxStack + 1].index = 1;
 				break;
 			case bCfstore_2:
 				exitSet[maxStack + 2] = popFromStack();
-				exitSet[maxStack + 2].index = maxStack + 2;
+				exitSet[maxStack + 2].index = 2;
 				break;
 			case bCfstore_3:
 				exitSet[maxStack + 3] = popFromStack();
-				exitSet[maxStack + 3].index = maxStack + 3;
+				exitSet[maxStack + 3].index = 3;
 				break;
 			case bCdstore_0:
 				exitSet[maxStack] = popFromStack();
-				exitSet[maxStack].index = maxStack;
+				exitSet[maxStack].index = 0;
 				break;
 			case bCdstore_1:
 				exitSet[maxStack + 1] = popFromStack();
-				exitSet[maxStack + 1].index = maxStack + 1;
+				exitSet[maxStack + 1].index =  1;
 				break;
 			case bCdstore_2:
 				exitSet[maxStack + 2] = popFromStack();
-				exitSet[maxStack + 2].index = maxStack + 2;
+				exitSet[maxStack + 2].index = 2;
 				break;
 			case bCdstore_3:
 				exitSet[maxStack + 3] = popFromStack();
-				exitSet[maxStack + 3].index = maxStack + 3;
+				exitSet[maxStack + 3].index = 3;
 				break;
 			case bCastore_0:
 				exitSet[maxStack] = popFromStack();
-				exitSet[maxStack].index = maxStack;
+				exitSet[maxStack].index = 0;
 				break;
 			case bCastore_1:
 				exitSet[maxStack + 1] = popFromStack();
-				exitSet[maxStack + 1].index = maxStack + 1;
+				exitSet[maxStack + 1].index = 1;
 				break;
 			case bCastore_2:
 				exitSet[maxStack + 2] = popFromStack();
-				exitSet[maxStack + 2].index = maxStack + 2;
+				exitSet[maxStack + 2].index = 2;
 				break;
 			case bCastore_3:
 				exitSet[maxStack + 3] = popFromStack();
-				exitSet[maxStack + 3].index = maxStack + 3;
+				exitSet[maxStack + 3].index = 3;
 				break;
 			case bCiastore:
 				value3 = popFromStack();
@@ -1481,7 +1435,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				addInstruction(instr);
 
 				exitSet[maxStack + val] = result;
-				exitSet[maxStack + val].index = maxStack + val;
+				exitSet[maxStack + val].index = val;
 				break;
 			case bCi2l:
 				value1 = popFromStack();
@@ -2183,7 +2137,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (result == null) {// local isn't initialized
 			result = new SSAValue();
 			result.type = type;
-			result.index = maxStack + index;
+			result.index = index;
 			SSAInstruction instr = new NoOpnd(sCloadLocal);
 			instr.result = result;
 			addInstruction(instr);
@@ -2207,7 +2161,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		}
 		
 		SSAValue result = new SSAValue();
-		result.index = index;
+		result.index = index - maxStack;
 		result.type = paramType[index];
 		SSAInstruction instr = new NoOpnd(sCloadLocal);
 		instr.result = result;
