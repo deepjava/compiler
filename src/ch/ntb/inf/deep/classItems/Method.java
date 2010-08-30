@@ -6,7 +6,7 @@ import ch.ntb.inf.deep.strings.HString;
 public class Method extends Item {
 
 	//--- instance fields
-	HString methDescriptor;
+	public HString methDescriptor;
 
 	public Class owner;
 	public byte[] code;
