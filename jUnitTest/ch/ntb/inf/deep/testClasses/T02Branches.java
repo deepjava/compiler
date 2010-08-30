@@ -59,4 +59,11 @@ public class T02Branches {
 		a = b;
 		a++;
 	}
+	
+	public int if5(int n, int m){//example from mössenböck for loadParameter
+		if(n < 0){
+			n = 0; m = 0;
+		}
+		return n + m;
+	}
 }
