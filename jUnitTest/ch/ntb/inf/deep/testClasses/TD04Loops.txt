@@ -1,0 +1,608 @@
+Testdokument für die Testklasse T04Loops
+
+Sinn und Zweck:
+Diese Klasse definiert verschiedene Methoden welche verschiedene Schleifen mit oder ohne Abbruchbedingungen benutzt. Ebenso geschachtelte Schleifen.
+Es soll getestet werden, dass der CFG und die SSA richtig gebildet werden und die Loopheaders korrekt identifiziert sind.
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+public static void doWhile1()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=16 
+		  0 iconst_0
+		  1 istore_0 [i]
+		  2 iinc i, 1
+		  5 iload_0 [i]
+		  6 bipush 10
+		  8 if_icmplt 2
+		 11 iload_0 [i]
+		 12 iconst_1
+		 13 iadd
+		 14 istore_1 [j]
+		 15 return
+
+public static void doWhileIf1()
+	//nofStackSlots=2, nofLocalSlots=4, codeLen=55 
+		  0 iconst_0
+		  1 istore_0 [j]
+		  2 bipush -6
+		  4 istore_1 [i]
+		  5 iinc j, 1
+		  8 iload_1 [i]
+		  9 iload_0 [j]
+		 10 iadd
+		 11 istore_1 [i]
+		 12 iload_1 [i]
+		 13 bipush 10
+		 15 if_icmpge 22
+		 18 iconst_1
+		 19 goto 23
+		 22 iconst_0
+		 23 istore_2 [b]
+		 24 iload_0 [j]
+		 25 iconst_5
+		 26 if_icmpge 33
+		 29 iconst_1
+		 30 goto 34
+		 33 iconst_0
+		 34 istore_3 [c]
+		 35 iload_2 [b]
+		 36 ifeq 43
+		 39 iload_3 [c]
+		 40 ifne 5
+		 43 iload_2 [b]
+		 44 ifeq 52
+		 47 iconst_m1
+		 48 istore_0 [j]
+		 49 goto 54
+		 52 iconst_1
+		 53 istore_0 [j]
+		 54 return
+
+public static int while1()
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=16 
+		  0 iconst_0
+		  1 istore_0 [i]
+		  2 goto 8
+		  5 iinc i, 1
+		  8 iload_0 [i]
+		  9 bipush 10
+		 11 if_icmplt 5
+		 14 iload_0 [i]
+		 15 ireturn
+
+public static void whileTrue()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=10 
+		  0 bipush 10
+		  2 istore_0 [a]
+		  3 iload_0 [a]
+		  4 iconst_1
+		  5 iadd
+		  6 istore_1 
+		  7 goto 3
+
+public static void whileTrueBreak()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=10 
+		  0 bipush 10
+		  2 istore_0 [a]
+		  3 iload_0 [a]
+		  4 iconst_1
+		  5 iadd
+		  6 istore_1 [b]
+		  7 iload_0 [a]
+		  8 istore_1 [b]
+		  9 return
+
+public static int whileMultiCond()
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=20 
+		  0 iconst_0
+		  1 istore_0 [i]
+		  2 goto 8
+		  5 iinc i, 1
+		  8 iload_0 [i]
+		  9 bipush 10
+		 11 if_icmpge 18
+		 14 iload_0 [i]
+		 15 ifge 5
+		 18 iload_0 [i]
+		 19 ireturn
+		 
+public static void for1()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=20 
+		  0 iconst_0
+		  1 istore_0 [a]
+		  2 iconst_0
+		  3 istore_1 [i]
+		  4 goto 13
+		  7 iinc a, 1
+		 10 iinc i, 1
+		 13 iload_1 [i]
+		 14 bipush 10
+		 16 if_icmplt 7
+		 19 return
+
+public int forWhile(int)
+	//nofStackSlots=2, nofLocalSlots=3, codeLen=23 
+		  0 iconst_0
+		  1 istore_2 [i]
+		  2 goto 16
+		  5 iinc x, -1
+		  8 iload_1 [x]
+		  9 iconst_4
+		 10 if_icmpgt 5
+		 13 iinc i, 1
+		 16 iload_2 [i]
+		 17 iload_1 [x]
+		 18 if_icmplt 8
+		 21 iload_1 [x]
+		 22 ireturn
+
+public void forIfWhile()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=33 
+
+		  0 iconst_0
+		  1 istore_1 [i]
+		  2 goto 26
+		  5 iload_1 [i]
+		  6 bipush 50
+		  8 if_icmple 23
+		 11 goto 17
+		 14 iinc i, 1
+		 17 iload_1 [i]
+		 18 bipush 75
+		 20 if_icmplt 14
+		 23 iinc i, 1
+		 26 iload_1 [i]
+		 27 bipush 100
+		 29 if_icmplt 5
+		 32 return
+
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method doWhile1
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor: 
+		successor: CFG-Node [2:8]	
+	nodeNr:1 from 2 to 8	is loop header visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [2:8]	
+		successor: CFG-Node [11:15]	CFG-Node [2:8]	
+	nodeNr:2 from 11 to 15	visited: false
+		predecessor: CFG-Node [2:8]	
+		successor: 
+
+method doWhileIf1
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: CFG-Node [5:15]	
+	nodeNr:1 from 5 to 15	is loop header visited: false
+		predecessor: CFG-Node [0:4]	CFG-Node [39:40]	
+		successor: CFG-Node [18:19]	CFG-Node [22:22]	
+	nodeNr:2 from 18 to 19	visited: false
+		predecessor: CFG-Node [5:15]	
+		successor: CFG-Node [23:26]	
+	nodeNr:3 from 22 to 22	visited: false
+		predecessor: CFG-Node [5:15]	
+		successor: CFG-Node [23:26]	
+	nodeNr:4 from 23 to 26	visited: false
+		predecessor: CFG-Node [18:19]	CFG-Node [22:22]	
+		successor: CFG-Node [29:30]	CFG-Node [33:33]	
+	nodeNr:5 from 29 to 30	visited: false
+		predecessor: CFG-Node [23:26]	
+		successor: CFG-Node [34:36]	
+	nodeNr:6 from 33 to 33	visited: false
+		predecessor: CFG-Node [23:26]	
+		successor: CFG-Node [34:36]	
+	nodeNr:7 from 34 to 36	visited: false
+		predecessor: CFG-Node [29:30]	CFG-Node [33:33]	
+		successor: CFG-Node [39:40]	CFG-Node [43:44]	
+	nodeNr:8 from 39 to 40	visited: false
+		predecessor: CFG-Node [34:36]	
+		successor: CFG-Node [43:44]	CFG-Node [5:15]	
+	nodeNr:9 from 43 to 44	visited: false
+		predecessor: CFG-Node [34:36]	CFG-Node [39:40]	
+		successor: CFG-Node [47:49]	CFG-Node [52:53]	
+	nodeNr:10 from 47 to 49	visited: false
+		predecessor: CFG-Node [43:44]	
+		successor: CFG-Node [54:54]	
+	nodeNr:11 from 52 to 53	visited: false
+		predecessor: CFG-Node [43:44]	
+		successor: CFG-Node [54:54]	
+	nodeNr:12 from 54 to 54	visited: false
+		predecessor: CFG-Node [47:49]	CFG-Node [52:53]	
+		successor: 
+
+method while1
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [8:11]	
+	nodeNr:1 from 5 to 5	visited: false
+		predecessor: CFG-Node [8:11]	
+		successor: CFG-Node [8:11]	
+	nodeNr:2 from 8 to 11	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [5:5]	
+		successor: CFG-Node [14:15]	CFG-Node [5:5]	
+	nodeNr:3 from 14 to 15	visited: false
+		predecessor: CFG-Node [8:11]	
+		successor: 
+
+method whileTrue
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [3:7]	
+	nodeNr:1 from 3 to 7	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [3:7]	
+		successor: CFG-Node [3:7]	
+
+method whileTrueBreak
+	nodeNr:0 from 0 to 9	visited: false
+		predecessor: 
+		successor: 
+
+method whileMultiCond
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [8:11]	
+	nodeNr:1 from 5 to 5	visited: false
+		predecessor: CFG-Node [14:15]	
+		successor: CFG-Node [8:11]	
+	nodeNr:2 from 8 to 11	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [5:5]	
+		successor: CFG-Node [14:15]	CFG-Node [18:19]	
+	nodeNr:3 from 14 to 15	visited: false
+		predecessor: CFG-Node [8:11]	
+		successor: CFG-Node [18:19]	CFG-Node [5:5]	
+	nodeNr:4 from 18 to 19	visited: false
+		predecessor: CFG-Node [8:11]	CFG-Node [14:15]	
+		successor: 
+
+method for1
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: CFG-Node [13:16]	
+	nodeNr:1 from 7 to 10	visited: false
+		predecessor: CFG-Node [13:16]	
+		successor: CFG-Node [13:16]	
+	nodeNr:2 from 13 to 16	is loop header visited: false
+		predecessor: CFG-Node [0:4]	CFG-Node [7:10]	
+		successor: CFG-Node [19:19]	CFG-Node [7:10]	
+	nodeNr:3 from 19 to 19	visited: false
+		predecessor: CFG-Node [13:16]	
+		successor: 
+
+method forWhile
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [16:18]	
+	nodeNr:1 from 5 to 5	visited: false
+		predecessor: CFG-Node [8:10]	
+		successor: CFG-Node [8:10]	
+	nodeNr:2 from 8 to 10	is loop header visited: false
+		predecessor: CFG-Node [5:5]	CFG-Node [16:18]	
+		successor: CFG-Node [13:13]	CFG-Node [5:5]	
+	nodeNr:3 from 13 to 13	visited: false
+		predecessor: CFG-Node [8:10]	
+		successor: CFG-Node [16:18]	
+	nodeNr:4 from 16 to 18	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [13:13]	
+		successor: CFG-Node [21:22]	CFG-Node [8:10]	
+	nodeNr:5 from 21 to 22	visited: false
+		predecessor: CFG-Node [16:18]	
+		successor: 
+
+method forIfWhile
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [26:29]	
+	nodeNr:1 from 5 to 8	visited: false
+		predecessor: CFG-Node [26:29]	
+		successor: CFG-Node [11:11]	CFG-Node [23:23]	
+	nodeNr:2 from 11 to 11	visited: false
+		predecessor: CFG-Node [5:8]	
+		successor: CFG-Node [17:20]	
+	nodeNr:3 from 14 to 14	visited: false
+		predecessor: CFG-Node [17:20]	
+		successor: CFG-Node [17:20]	
+	nodeNr:4 from 17 to 20	is loop header visited: false
+		predecessor: CFG-Node [11:11]	CFG-Node [14:14]	
+		successor: CFG-Node [23:23]	CFG-Node [14:14]	
+	nodeNr:5 from 23 to 23	visited: false
+		predecessor: CFG-Node [5:8]	CFG-Node [17:20]	
+		successor: CFG-Node [26:29]	
+	nodeNr:6 from 26 to 29	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [23:23]	
+		successor: CFG-Node [32:32]	CFG-Node [5:8]	
+	nodeNr:7 from 32 to 32	visited: false
+		predecessor: CFG-Node [26:29]	
+		successor: 
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         NoOpnd[sCloadLocal]
+         Call[sCcall] (Object)
+      ExitSet {[ ], [ Object ]}
+
+
+Method: doWhile1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (0), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (null), Phi-Function ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Integer (null), Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+
+
+Method: doWhileIf1
+   SSANode 0:
+      EntrySet {[ , ], [ , , , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (0), Integer (-6), , ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+         Dyadic[sCadd] ( Phi-Function, Integer )
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ Integer (1), ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ Integer (0), ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 4:
+      EntrySet {[ Phi-Function, ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ Integer (1), ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ Integer (0), ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 7:
+      EntrySet {[ Phi-Function, ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+      ExitSet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+      ExitSet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+      ExitSet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 10:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (-1), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 11:
+      EntrySet {[ , ], [ Integer (null), Integer (null), Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (1), Integer (null), Phi-Function, Phi-Function ]}
+
+   SSANode 12:
+      EntrySet {[ , ], [ Phi-Function, Integer (null), Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+      ExitSet {[ , ], [ Phi-Function, Integer (null), Phi-Function, Phi-Function ]}
+
+
+Method: while1
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Integer (null) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function ]}
+
+
+Method: whileTrue
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (10), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Integer (10), Integer (null) ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (10), Integer (null) ]}
+
+
+Method: whileTrueBreak
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Integer, Integer )
+      ExitSet {[ , ], [ Integer (10), Integer (10) ]}
+
+
+Method: whileMultiCond
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Integer (null) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function ]}
+
+
+Method: for1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (0), Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+
+Method: forWhile
+   SSANode 0:
+      EntrySet {[ , ], [ , , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadLocal]
+      ExitSet {[ , ], [ , Integer (null), Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Phi-Function, Integer (null), Phi-Function ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Phi-Function, Phi-Function, Integer (null) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ Phi-Function, Integer (null), Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+      ExitSet {[ , ], [ Phi-Function, Integer (null), Phi-Function ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ Phi-Function, Integer (null), Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function, Integer (null), Phi-Function ]}
+
+
+Method: forIfWhile
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ , Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Phi-Function, Integer (null) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Phi-Function, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Phi-Function, Phi-Function)
+         PhiFunction[sCPhiFunc] (Phi-Function, Phi-Function)
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , ], [ Phi-Function, Integer (null) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ Phi-Function, Phi-Function ]}
+      ExitSet {[ , ], [ Phi-Function, Phi-Function ]}
+
+
