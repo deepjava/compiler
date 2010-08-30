@@ -27,7 +27,52 @@ public class SSA02 extends TestSSA {
 	
 	@Test
 	public void testConstructor() {
-
+		SSANode[] nodes = getAndTestSSA(0, 1, 0);
+		testNode(nodes[0], 2, 0, 2);
+	}
+	
+	@Test
+	public void testIf1(){
+		SSANode[] nodes = getAndTestSSA(1, 4, 0);
+		testNode(nodes[0], 1, 0, 4);//1 Instruction because load parameter for first use
+		testNode(nodes[1], 2, 0, 4);
+		testNode(nodes[2], 2, 0, 4);
+		testNode(nodes[3], 0, 1, 4);
+	}
+	
+	@Test
+	public void testIf2(){
+		SSANode[] nodes = getAndTestSSA(2, 4, 0);
+		testNode(nodes[0], 2, 0, 4);
+		testNode(nodes[1], 1, 0, 4);
+		testNode(nodes[2], 1, 0, 4);
+		testNode(nodes[3], 2, 1, 4);
 	}
 
+	@Test
+	public void testIf3(){
+		SSANode[] nodes = getAndTestSSA(3, 6, 0);
+		testNode(nodes[0], 2, 0, 7);
+		testNode(nodes[1], 1, 0, 7);
+		testNode(nodes[2], 3, 0, 7);
+		testNode(nodes[3], 3, 0, 7);
+		testNode(nodes[4], 5, 0, 7);
+		testNode(nodes[5], 0, 2, 7);
+	}
+	
+	@Test
+	public void testIf4(){
+		SSANode[] nodes = getAndTestSSA(4, 4, 0);
+		testNode(nodes[0], 3, 0, 5);
+		testNode(nodes[1], 1, 0, 5);
+		testNode(nodes[2], 1, 0, 5);
+		testNode(nodes[3], 2, 1, 5);
+	}
+	
+	@Test
+	public void testIf5(){
+		SSANode[] nodes = getAndTestSSA(5, 4, 0);
+	}
+	
+	
 }
