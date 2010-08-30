@@ -61,5 +61,32 @@ public class T04Loops {
 		}
 		return i;
 	}
+	
+	public static void for1(){
+		int a = 0;
+		for(int i=0; i < 10; i++){
+			a++;
+		}
+	}
+	
+	public int forWhile(int x){
+		for(int i = 0; i < x; i++){
+			while(x > 4){
+				x--;
+			}
+		}
+		return x;
+	}
+	
+	public void forIfWhile(){
+		for(int i = 0; i < 100; i++){
+			if(i > 50){
+				while(i < 75){
+					i++;
+				}
+			}
+			
+		}
+	}
 
 }
