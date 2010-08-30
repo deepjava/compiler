@@ -63,8 +63,11 @@ public class TestSSA {
 	 * @param node
 	 *            node to check
 	 * @param nofSSAInstructions
-	 *            number of ssa-instructions in this node
+	 *            expected number of ssa-instructions in this node
 	 * @param nofPhiFunctions
+	 * 			  expected number of phi functions in this node
+	 * @param localsLength
+	 * 			  expected length of the state array
 	 */
 	
 	public static void testNode(SSANode node, int nofSSAInstructions, int nofPhiFunctions, int localsLength) {
@@ -78,9 +81,11 @@ public class TestSSA {
 	 * Tests nof nodes and nof loopheaders in a ssa
 	 *  
 	 * @param ssaNo
-	 *            number of the SSA
+	 *            number of the SSA to check
 	 * @param nofNodes
-	 *            number of nodes
+	 *            expected number of nodes in this ssa
+	 * @param nofLoopheaders
+	 * 			  expected number of loop headers in this ssa
 	 */
 	public static SSANode[] getAndTestSSA(int ssaNo, int nofNodes, int nofLoopheaders) {
 		assertEquals("number of nodes not as expected", nofNodes, ssa[ssaNo].getNofNodes());
