@@ -44,6 +44,7 @@ public class TestCFG {
 		for (int i = 0; i < count; i++) {
 			cfg[i] = new CFG(m1);
 			m1 = (Method)m1.next;
+			//cfg[i].printToLog();
 		}
 	}
 
