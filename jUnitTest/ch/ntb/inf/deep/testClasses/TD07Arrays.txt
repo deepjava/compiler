@@ -1,0 +1,206 @@
+Testdokument für die Testklasse T07Arrays
+
+Sinn und Zweck:
+Diese Klasse benutzt Methoden in denen verschiedene Arrays erzeugt und benutzt werden. 
+Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden.
+Und das handling stimmt.
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+public static void emptyIntArray()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 iconst_5
+		  1 newarray int
+		  3 astore_0 [a]
+		  4 return
+
+public static int intArray(int)
+	//nofStackSlots=4, nofLocalSlots=3, codeLen=28 
+		  0 iconst_5
+		  1 newarray int
+		  3 astore_1 [b]
+		  4 iconst_0
+		  5 istore_2 [i]
+		  6 goto 18		  
+		  9 aload_1 [b]
+		 10 iload_2 [i]
+		 11 iload_2 [i]
+		 12 iload_0 [start]
+		 13 iadd
+		 14 iastore
+		 15 iinc i, 1		 
+		 18 iload_2 [i]
+		 19 aload_1 [b]
+		 20 arraylength
+		 21 if_icmplt 9		 
+		 24 aload_1 [b]
+		 25 iconst_2
+		 26 iaload
+		 27 ireturn
+
+public static Ljava/lang/String; stringArray()
+	//nofStackSlots=4, nofLocalSlots=1, codeLen=34 
+		  0 iconst_5
+		  1 anewarray java/lang/String
+		  4 dup
+		  5 iconst_0
+		  6 ldc This
+		  8 aastore
+		  9 dup
+		 10 iconst_1
+		 11 ldc is
+		 13 aastore
+		 14 dup
+		 15 iconst_2
+		 16 ldc a
+		 18 aastore
+		 19 dup
+		 20 iconst_3
+		 21 ldc test
+		 23 aastore
+		 24 dup
+		 25 iconst_4
+		 26 ldc string
+		 28 aastore
+		 29 astore_0 [strings]
+		 30 aload_0 [strings]
+		 31 iconst_0
+		 32 aaload
+		 33 areturn
+
+public static void objectArray()
+	//nofStackSlots=4, nofLocalSlots=1, codeLen=16 
+		  0 iconst_3
+		  1 anewarray java/lang/Object
+		  4 astore_0 [objs]
+		  5 aload_0 [objs]
+		  6 iconst_0
+		  7 new java/lang/Object
+		 10 dup
+		 11 invokespecial java/lang/Object(): void
+		 14 aastore
+		 15 return
+
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method emptyIntArray
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method intArray
+	nodeNr:0 from 0 to 6	visited: false
+		predecessor: 
+		successor: CFG-Node [18:21]	
+	nodeNr:1 from 9 to 15	visited: false
+		predecessor: CFG-Node [18:21]	
+		successor: CFG-Node [18:21]	
+	nodeNr:2 from 18 to 21	is loop header visited: false
+		predecessor: CFG-Node [0:6]	CFG-Node [9:15]	
+		successor: CFG-Node [24:27]	CFG-Node [9:15]	
+	nodeNr:3 from 24 to 27	visited: false
+		predecessor: CFG-Node [18:21]	
+		successor: 
+
+method stringArray
+	nodeNr:0 from 0 to 33	visited: false
+		predecessor: 
+		successor: 
+
+method objectArray
+	nodeNr:0 from 0 to 15	visited: false
+		predecessor: 
+		successor: 
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         NoOpnd[sCloadLocal]
+         Call[sCcall] (Object)
+      ExitSet {[ ], [ Object ]}
+
+
+Method: emptyIntArray
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         NoOpnd[sCloadConst]
+         Call[sCnew] (Integer)
+      ExitSet {[ ], [ Integer-Array ]}
+
+
+Method: intArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , ]}
+         NoOpnd[sCloadConst]
+         Call[sCnew] (Integer)
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadLocal]
+      ExitSet {[ , , , ], [ Integer (null), Integer-Array, Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ , , , ], [ Integer (null), Integer-Array, Phi-Function ]}
+         Dyadic[sCadd] ( Phi-Function, Integer )
+         StoreToArray[sCstoreToArray] ( Integer-Array, Phi-Function, Integer )
+         NoOpnd[sCloadConst]
+         Dyadic[sCadd] ( Phi-Function, Integer )
+      ExitSet {[ , , , ], [ Integer (null), Integer-Array, Integer (null) ]}
+
+   SSANode 2:
+      EntrySet {[ , , , ], [ Integer (null), Integer-Array, Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         MonadicRef[sCalength] ( Integer-Array )
+      ExitSet {[ , , , ], [ Integer (null), Integer-Array, Phi-Function ]}
+
+   SSANode 3:
+      EntrySet {[ , , , ], [ Integer (null), Integer-Array, Phi-Function ]}
+         NoOpnd[sCloadConst]
+         Dyadic[sCloadFromArray] ( Integer-Array, Integer )
+      ExitSet {[ , , , ], [ Integer (null), Integer-Array, Phi-Function ]}
+
+
+Method: stringArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ ]}
+         NoOpnd[sCloadConst]
+         Call[sCnew] (Integer)
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         StoreToArray[sCstoreToArray] ( Array-Ref, Integer, Object )
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         StoreToArray[sCstoreToArray] ( Array-Ref, Integer, Object )
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         StoreToArray[sCstoreToArray] ( Array-Ref, Integer, Object )
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         StoreToArray[sCstoreToArray] ( Array-Ref, Integer, Object )
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         StoreToArray[sCstoreToArray] ( Array-Ref, Integer, Object )
+         NoOpnd[sCloadConst]
+         Dyadic[sCloadFromArray] ( Array-Ref, Integer )
+      ExitSet {[ , , , ], [ Array-Ref ]}
+
+
+Method: objectArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ ]}
+         NoOpnd[sCloadConst]
+         Call[sCnew] (Integer)
+         NoOpnd[sCloadConst]
+         Call[sCnew] (Object)
+         Call[sCcall] (Ref)
+         StoreToArray[sCstoreToArray] ( Array-Ref, Integer, Ref )
+      ExitSet {[ , , , ], [ Array-Ref ]}
