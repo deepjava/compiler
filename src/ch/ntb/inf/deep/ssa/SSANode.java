@@ -4,9 +4,11 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.DataItem;
-import ch.ntb.inf.deep.classItems.Item;
+//import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StringLiteral;
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
 import ch.ntb.inf.deep.ssa.instruction.DyadicRef;
@@ -2017,9 +2019,24 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCnew:
 				bca++;
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				value1 = new SSAValue();
 				result = new SSAValue();
+				if(ssa.cfg.method.owner.constPool[val] instanceof Class){
+					Class clazz = (Class)ssa.cfg.method.owner.constPool[val];
+					value1.type = SSAValue.tObject;
+					value1.constant = clazz.name;
+				}else{
+					if(ssa.cfg.method.owner.constPool[val] instanceof Type){//it is a Array of objects
+						Type type = (Type)ssa.cfg.method.owner.constPool[val];
+						result.type = SSAValue.tAobject;
+						result.constant = type.type.name;
+					}else{
+						assert false : "Unknown Parametertype for new";
+						break;
+					}
+				}				
 				result.type = SSAValue.tRef;
-				instr = new Call(sCnew, val);
+				instr = new Call(sCnew, new SSAValue[]{value1});
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
