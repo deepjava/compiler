@@ -1,0 +1,196 @@
+Testdokument für die Testklasse T05Returns
+
+Sinn und Zweck:
+Diese Klasse benutzt Methoden, welche an verschiedenen Stellen enden.
+Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden.
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+public static int multipleReturns1(boolean)
+	//nofStackSlots=1, nofLocalSlots=2, codeLen=15
+		  0 iconst_0
+		  1 istore_1 [x]
+		  2 iload_0 [a]
+		  3 ifeq 10	  
+		  6 iconst_1
+		  7 istore_1 [x]
+		  8 iload_1 [x]
+		  9 ireturn
+		 10 bipush 22
+		 12 istore_1 [x]
+		 13 iload_1 [x]
+		 14 ireturn
+
+public static int multipleReturns1()
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=41 
+		  0 bipush 22
+		  2 istore_0 [x]
+		  3 iload_0 [x]
+		  4 iconst_1
+		  5 if_icmpne 10		  
+		  8 iconst_1
+		  9 ireturn		  
+		 10 iload_0 [x]
+		 11 iconst_3
+		 12 if_icmpne 17		 
+		 15 iconst_3
+		 16 ireturn		 
+		 17 iload_0 [x]
+		 18 iconst_5
+		 19 if_icmpne 24		 
+		 22 iconst_5
+		 23 ireturn		 
+		 24 iload_0 [x]
+		 25 iconst_2
+		 26 if_icmpne 31		 
+		 29 iconst_2
+		 30 ireturn		 
+		 31 iload_0 [x]
+		 32 iconst_4
+		 33 if_icmpne 38		 
+		 36 iconst_4
+		 37 ireturn		 
+		 38 bipush 100
+		 40 ireturn
+		 
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method multipleReturns1
+	nodeNr:0 from 0 to 3	visited: false
+		predecessor: 
+		successor: CFG-Node [6:9]	CFG-Node [10:14]	
+	nodeNr:1 from 6 to 9	visited: false
+		predecessor: CFG-Node [0:3]	
+		successor: 
+	nodeNr:2 from 10 to 14	visited: false
+		predecessor: CFG-Node [0:3]	
+		successor: 
+
+method multipleReturns1
+	nodeNr:0 from 0 to 5	visited: false
+		predecessor: 
+		successor: CFG-Node [8:9]	CFG-Node [10:12]	
+	nodeNr:1 from 8 to 9	visited: false
+		predecessor: CFG-Node [0:5]	
+		successor: 
+	nodeNr:2 from 10 to 12	visited: false
+		predecessor: CFG-Node [0:5]	
+		successor: CFG-Node [15:16]	CFG-Node [17:19]	
+	nodeNr:3 from 15 to 16	visited: false
+		predecessor: CFG-Node [10:12]	
+		successor: 
+	nodeNr:4 from 17 to 19	visited: false
+		predecessor: CFG-Node [10:12]	
+		successor: CFG-Node [22:23]	CFG-Node [24:26]	
+	nodeNr:5 from 22 to 23	visited: false
+		predecessor: CFG-Node [17:19]	
+		successor: 
+	nodeNr:6 from 24 to 26	visited: false
+		predecessor: CFG-Node [17:19]	
+		successor: CFG-Node [29:30]	CFG-Node [31:33]	
+	nodeNr:7 from 29 to 30	visited: false
+		predecessor: CFG-Node [24:26]	
+		successor: 
+	nodeNr:8 from 31 to 33	visited: false
+		predecessor: CFG-Node [24:26]	
+		successor: CFG-Node [36:37]	CFG-Node [38:40]	
+	nodeNr:9 from 36 to 37	visited: false
+		predecessor: CFG-Node [31:33]	
+		successor: 
+	nodeNr:10 from 38 to 40	visited: false
+		predecessor: CFG-Node [31:33]	
+		successor: 
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         NoOpnd[sCloadLocal]
+         Call[sCcall] (Object)
+      ExitSet {[ ], [ Object ]}
+
+
+Method: multipleReturns1
+   SSANode 0:
+      EntrySet {[ ], [ , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadLocal]
+      ExitSet {[ ], [ Integer (null), Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ Integer (null), Integer (0) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ ], [ Integer (null), Integer (1) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ Integer (null), Integer (0) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ ], [ Integer (null), Integer (22) ]}
+
+
+Method: multipleReturns1
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
+
+   SSANode 10:
+      EntrySet {[ , ], [ Integer (22) ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (22) ]}
