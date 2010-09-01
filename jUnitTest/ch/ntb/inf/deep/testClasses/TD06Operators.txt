@@ -1,8 +1,8 @@
-Testdokument für die Testklasse T05Returns
+Testdokument für die Testklasse T06Operators
 
 Sinn und Zweck:
 Diese Klasse benutzt Methoden in denen verschiedene Bedingungsoperatoren verwendet werden. 
-Diese Operatoren können einen nicht leeren Stack am ende eines SSANodes verurschen.
+Diese Operatoren können einen nicht leeren Stack am ende eines SSANodes verursachen.
 Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden.
 
 Bytecode:
