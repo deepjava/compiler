@@ -3,7 +3,7 @@ package ch.ntb.inf.deep.classItems;
 import ch.ntb.inf.deep.strings.HString;
 
 public class StringLiteral extends DataItem {
-	HString string;
+	public HString string;
 	
 	StringLiteral(HString name, HString string){
 		super(name, Type.wellKnownTypes[txString]);
