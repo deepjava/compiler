@@ -2,9 +2,11 @@ package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
+import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
 import ch.ntb.inf.deep.ssa.instruction.DyadicRef;
@@ -441,11 +443,28 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca++;
 				val = ssa.cfg.code[bca];
 				result = new SSAValue();
-				//We didn't now which kind of type it is. It could be int, float or a literal string.
-				value1 = new SSAValue();
-				value1.type = SSAValue.tRef;
-				value1.constant = val;
-				instr = new Monadic(sCloadConst, value1);
+				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
+					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
+					if(constant.name.equals("I")){//is a int
+						result.type = SSAValue.tInteger;
+						result.constant = constant.valueL;
+					}else{
+						if(constant.name.equals("F")){ //is a float
+							result.type = SSAValue.tFloat;
+							result.constant = Float.intBitsToFloat(constant.valueL);
+						}
+					}
+				}else{
+					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
+						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
+						result.type = SSAValue.tObject;
+						result.constant = literal.string;
+					}else{
+						assert false : "Unknown Constant type";
+						break;
+					}
+				}				
+				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -454,11 +473,28 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca++;
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				//We didn't now which kind of type it is. It could be int, float or a literal string.
-				value1 = new SSAValue();
-				value1.type = SSAValue.tRef;
-				value1.constant = val;
-				instr = new Monadic(sCloadConst, value1);
+				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
+					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
+					if(constant.name.equals("I")){//is a int
+						result.type = SSAValue.tInteger;
+						result.constant = constant.valueL;
+					}else{
+						if(constant.name.equals("F")){ //is a float
+							result.type = SSAValue.tFloat;
+							result.constant = Float.intBitsToFloat(constant.valueL);
+						}
+					}
+				}else{
+					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
+						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
+						result.type = SSAValue.tObject;
+						result.constant = literal.string;
+					}else{
+						assert false : "Unknown Constant type";
+						break;
+					}
+				}				
+				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -467,11 +503,23 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca++;
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				//We didn't now which kind of type it is. It could be long or double.
-				value1 = new SSAValue();
-				value1.type = SSAValue.tRef;
-				value1.constant = val;
-				instr = new Monadic(sCloadConst, value1);
+				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
+					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
+					long temp = constant.valueH << 32 | constant.valueL;
+					if(constant.name.equals("D")){//is a Double
+						result.type = SSAValue.tDouble;
+						result.constant = Double.longBitsToDouble(temp);
+					}else{
+						if(constant.name.equals("J")){ //is a Long
+							result.type = SSAValue.tLong;
+							result.constant = temp;
+						}
+					}
+				}else{
+					assert false : "Unknown Constant type";
+					break;
+				}				
+				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
