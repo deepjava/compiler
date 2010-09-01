@@ -1,0 +1,327 @@
+Testdokument für die Testklasse T05Returns
+
+Sinn und Zweck:
+Diese Klasse benutzt Methoden in denen verschiedene Bedingungsoperatoren verwendet werden. 
+Diese Operatoren können einen nicht leeren Stack am ende eines SSANodes verurschen.
+Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden.
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+public static boolean ConditionalOperator1()
+	//nofStackSlots=1, nofLocalSlots=5, codeLen=57
+		  0 iconst_0
+		  1 istore_2 [a]
+		  2 iconst_1
+		  3 istore_3 [b]
+		  4 iconst_0
+		  5 istore [c]
+		  7 bipush 101
+		  9 istore_0 [mark]
+		 10 iload_2 [a]
+		 11 ifeq 18		 
+		 14 iload_3 [b]
+		 15 goto 20		 
+		 18 iload [c]		 
+		 20 istore_1 [bRes]
+		 21 bipush 102
+		 23 istore_0 [mark]
+		 24 iload_2 [a]
+		 25 ifeq 41		 
+		 28 iload_3 [b]
+		 29 ifeq 37		 
+		 32 iload [c]
+		 34 goto 51		 
+		 37 iload_2 [a]
+		 38 goto 51		 
+		 41 iload [c]
+		 43 ifeq 50		 
+		 46 iload_2 [a]
+		 47 goto 51		 
+		 50 iload_3 [b]		 
+		 51 istore_1 [bRes]
+		 52 bipush 103
+		 54 istore_0 [mark]
+		 55 iload_1 [bRes]
+		 56 ireturn
+
+public static boolean ConditionalOperator2()
+	//nofStackSlots=2, nofLocalSlots=9, codeLen=93
+		  0 iconst_0
+		  1 istore_1 [bRes]
+		  2 iconst_0
+		  3 istore_2 [a]
+		  4 iconst_1
+		  5 istore_3 [b]
+		  6 iconst_0
+		  7 istore [c]
+		  9 iconst_1
+		 10 istore [d]
+		 12 iconst_2
+		 13 istore [e]
+		 15 iconst_3
+		 16 istore [f]
+		 18 bipush 101
+		 20 istore_0 [mark]
+		 21 iload [d]
+		 23 iload [e]
+		 25 if_icmpge 33		 
+		 28 iload [d]
+		 30 goto 35		 
+		 33 iload [f]		 
+		 35 istore [iRes]
+		 37 bipush 102
+		 39 istore_0 [mark]
+		 40 iload [d]
+		 42 iload [e]
+		 44 if_icmpge 61		 
+		 47 iload_2 [a]
+		 48 ifeq 56		 
+		 51 iload [d]
+		 53 goto 74		 
+		 56 iload [e]
+		 58 goto 74		 
+		 61 iload_3 [b]
+		 62 iload [c]
+		 64 if_icmpeq 72		 
+		 67 iload [e]
+		 69 goto 74		 
+		 72 iload [f]		 
+		 74 istore [iRes]
+		 76 bipush 103
+		 78 istore_0 [mark]
+		 79 iload_0 [mark]
+		 80 iload [iRes]
+		 82 if_icmple 91		 
+		 85 iload_1 [bRes]
+		 86 ifeq 91		 
+		 89 iconst_1
+		 90 ireturn		 
+		 91 iconst_0
+		 92 ireturn
+		 
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method ConditionalOperator1
+	nodeNr:0 from 0 to 11	visited: false
+		predecessor: 
+		successor: CFG-Node [14:15]	CFG-Node [18:18]	
+	nodeNr:1 from 14 to 15	visited: false
+		predecessor: CFG-Node [0:11]	
+		successor: CFG-Node [20:25]	
+	nodeNr:2 from 18 to 18	visited: false
+		predecessor: CFG-Node [0:11]	
+		successor: CFG-Node [20:25]	
+	nodeNr:3 from 20 to 25	visited: false
+		predecessor: CFG-Node [14:15]	CFG-Node [18:18]	
+		successor: CFG-Node [28:29]	CFG-Node [41:43]	
+	nodeNr:4 from 28 to 29	visited: false
+		predecessor: CFG-Node [20:25]	
+		successor: CFG-Node [32:34]	CFG-Node [37:38]	
+	nodeNr:5 from 32 to 34	visited: false
+		predecessor: CFG-Node [28:29]	
+		successor: CFG-Node [51:56]	
+	nodeNr:6 from 37 to 38	visited: false
+		predecessor: CFG-Node [28:29]	
+		successor: CFG-Node [51:56]	
+	nodeNr:7 from 41 to 43	visited: false
+		predecessor: CFG-Node [20:25]	
+		successor: CFG-Node [46:47]	CFG-Node [50:50]	
+	nodeNr:8 from 46 to 47	visited: false
+		predecessor: CFG-Node [41:43]	
+		successor: CFG-Node [51:56]	
+	nodeNr:9 from 50 to 50	visited: false
+		predecessor: CFG-Node [41:43]	
+		successor: CFG-Node [51:56]	
+	nodeNr:10 from 51 to 56	visited: false
+		predecessor: CFG-Node [32:34]	CFG-Node [37:38]	CFG-Node [46:47]	CFG-Node [50:50]	
+		successor: 
+
+method ConditionalOperator2
+	nodeNr:0 from 0 to 25	visited: false
+		predecessor: 
+		successor: CFG-Node [28:30]	CFG-Node [33:33]	
+	nodeNr:1 from 28 to 30	visited: false
+		predecessor: CFG-Node [0:25]	
+		successor: CFG-Node [35:44]	
+	nodeNr:2 from 33 to 33	visited: false
+		predecessor: CFG-Node [0:25]	
+		successor: CFG-Node [35:44]	
+	nodeNr:3 from 35 to 44	visited: false
+		predecessor: CFG-Node [28:30]	CFG-Node [33:33]	
+		successor: CFG-Node [47:48]	CFG-Node [61:64]	
+	nodeNr:4 from 47 to 48	visited: false
+		predecessor: CFG-Node [35:44]	
+		successor: CFG-Node [51:53]	CFG-Node [56:58]	
+	nodeNr:5 from 51 to 53	visited: false
+		predecessor: CFG-Node [47:48]	
+		successor: CFG-Node [74:82]	
+	nodeNr:6 from 56 to 58	visited: false
+		predecessor: CFG-Node [47:48]	
+		successor: CFG-Node [74:82]	
+	nodeNr:7 from 61 to 64	visited: false
+		predecessor: CFG-Node [35:44]	
+		successor: CFG-Node [67:69]	CFG-Node [72:72]	
+	nodeNr:8 from 67 to 69	visited: false
+		predecessor: CFG-Node [61:64]	
+		successor: CFG-Node [74:82]	
+	nodeNr:9 from 72 to 72	visited: false
+		predecessor: CFG-Node [61:64]	
+		successor: CFG-Node [74:82]	
+	nodeNr:10 from 74 to 82	visited: false
+		predecessor: CFG-Node [51:53]	CFG-Node [56:58]	CFG-Node [67:69]	CFG-Node [72:72]	
+		successor: CFG-Node [85:86]	CFG-Node [91:92]	
+	nodeNr:11 from 85 to 86	visited: false
+		predecessor: CFG-Node [74:82]	
+		successor: CFG-Node [89:90]	CFG-Node [91:92]	
+	nodeNr:12 from 89 to 90	visited: false
+		predecessor: CFG-Node [85:86]	
+		successor: 
+	nodeNr:13 from 91 to 92	visited: false
+		predecessor: CFG-Node [74:82]	CFG-Node [85:86]	
+		successor: 
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         NoOpnd[sCloadLocal]
+         Call[sCcall] (Object)
+      ExitSet {[ ], [ Object ]}
+
+
+Method: ConditionalOperator1
+   SSANode 0:
+      EntrySet {[ ], [ , , , , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+      ExitSet {[ ], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ Integer (1)], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ Integer (0)], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 3:
+      EntrySet {[ Phi-Function], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 4:
+      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 5:
+      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ Integer (0)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 6:
+      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ Integer (0)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 7:
+      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 8:
+      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ Integer (0)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 9:
+      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      ExitSet {[ Integer (1)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+   SSANode 10:
+      EntrySet {[ Phi-Function], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer, Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ ], [ Integer (103), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+
+
+Method: ConditionalOperator2
+   SSANode 0:
+      EntrySet {[ , ], [ , , , , , , , , ]}
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+      ExitSet {[ Integer (1), ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+      ExitSet {[ Integer (3), ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+
+   SSANode 3:
+      EntrySet {[ Phi-Function, ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ Integer (1), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ Integer (2), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ Integer (2), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ Integer (3), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 10:
+      EntrySet {[ Phi-Function, ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+         PhiFunction[sCPhiFunc] (Integer, Integer, Integer, Integer)
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 11:
+      EntrySet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 12:
+      EntrySet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+
+   SSANode 13:
+      EntrySet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+         NoOpnd[sCloadConst]
+      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+		 
+		 
