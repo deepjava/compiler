@@ -432,7 +432,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCsipush:
 				// get short from Bytecode
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];// sign-extended
+				short sval =(short) (((ssa.cfg.code[bca++] & 0xff) << 8) | (ssa.cfg.code[bca] & 0xff));
+				val = sval;// sign-extended to int
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				result.constant = val;
@@ -447,13 +448,15 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
 					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					if(constant.name.equals("I")){//is a int
+					if(constant.type.name.charAt(0)== 'I'){//is a int
 						result.type = SSAValue.tInteger;
-						result.constant = constant.valueL;
+						result.constant = constant.valueH;
 					}else{
-						if(constant.name.equals("F")){ //is a float
+						if(constant.type.name.charAt(0)== 'F'){ //is a float
 							result.type = SSAValue.tFloat;
-							result.constant = Float.intBitsToFloat(constant.valueL);
+							result.constant = Float.intBitsToFloat(constant.valueH);
+						}else{
+							assert false : "Wrong Constant type";
 						}
 					}
 				}else{
@@ -462,7 +465,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tObject;
 						result.constant = literal.string;
 					}else{
-						assert false : "Unknown Constant type";
+						assert false : "Wrong DataItem type";
 						break;
 					}
 				}				
@@ -477,13 +480,15 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
 					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					if(constant.name.equals("I")){//is a int
+					if(constant.type.name.charAt(0)== 'I'){//is a int
 						result.type = SSAValue.tInteger;
-						result.constant = constant.valueL;
+						result.constant = constant.valueH;
 					}else{
-						if(constant.name.equals("F")){ //is a float
+						if(constant.type.name.charAt(0)== 'F'){ //is a float
 							result.type = SSAValue.tFloat;
-							result.constant = Float.intBitsToFloat(constant.valueL);
+							result.constant = Float.intBitsToFloat(constant.valueH);
+						}else{
+							assert false : "Wrong Constant type";
 						}
 					}
 				}else{
@@ -492,7 +497,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tObject;
 						result.constant = literal.string;
 					}else{
-						assert false : "Unknown Constant type";
+						assert false : "Wrong DataItem type";
 						break;
 					}
 				}				
@@ -507,18 +512,20 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
 					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					long temp = constant.valueH << 32 | constant.valueL;
-					if(constant.name.equals("D")){//is a Double
+					long temp = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);;
+					if(constant.type.name.charAt(0)== 'D'){//is a Double
 						result.type = SSAValue.tDouble;
 						result.constant = Double.longBitsToDouble(temp);
 					}else{
-						if(constant.name.equals("J")){ //is a Long
+						if(constant.type.name.charAt(0)== 'J'){ //is a Long
 							result.type = SSAValue.tLong;
 							result.constant = temp;
+						}else{
+							assert false : "Wrong Constant type";
 						}
 					}
 				}else{
-					assert false : "Unknown Constant type";
+					assert false : "Wrong DataItem type";
 					break;
 				}				
 				instr = new NoOpnd(sCloadConst);
