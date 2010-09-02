@@ -736,6 +736,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				exitSet[maxStack + val].index = val;
 				break;
 			case bClstore:
+				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
 																					// index
@@ -747,6 +748,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				exitSet[maxStack + val].index = val;
 				break;
 			case bCfstore:
+				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
 																					// index
@@ -758,6 +760,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				exitSet[maxStack + val].index = val;
 				break;
 			case bCdstore:
+				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
 																					// index
@@ -769,6 +772,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				exitSet[maxStack + val].index = val;
 				break;
 			case bCastore:
+				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
 																					// index
