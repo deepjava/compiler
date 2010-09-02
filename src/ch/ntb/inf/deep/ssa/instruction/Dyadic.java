@@ -30,7 +30,8 @@ public class Dyadic extends SSAInstruction {
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.println("Dyadic["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].typeName() + ", " + operands[1].typeName() + " )");
+		System.out.print(result.n + ": ");
+		System.out.println("Dyadic["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].n + ", " + operands[1].n + " )");
 
 	}
 	

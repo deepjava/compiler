@@ -41,7 +41,8 @@ public class SSAValue implements SSAValueType {
 		case 9://Short
 		case 10://Integer
 		case 11://Long
-			r = r + " (" + constant + ")"  ;
+//			r = r + " (" + constant + ")"  ;
+			r = n + " (" + r + ")";
 			break;
 		case 12://Aref
 			break;
@@ -64,6 +65,7 @@ public class SSAValue implements SSAValueType {
 		case 21://Along
 			break;
 		case 22://PhiFunc
+			r = r + "(" + n + ")";
 			break;
 		default:
 			break;		

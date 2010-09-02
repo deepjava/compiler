@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFG;
+import ch.ntb.inf.deep.cgPPC.RegAllocator;
 
 /**
  * @author millischer
@@ -115,6 +116,8 @@ public class SSA {
 		for (int i = 0; i < level; i++)
 			System.out.print("\t");
 		System.out.println("SSA for Method: " + cfg.method.name);
+		
+		RegAllocator.renumberInstructions(cfg);
 
 		while (node != null) {
 			node.print(level + 1, count);

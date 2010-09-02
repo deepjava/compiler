@@ -49,16 +49,17 @@ public class PhiFunction extends SSAInstruction {
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
+		System.out.print(result.n + ": ");
 		System.out.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] (");
 		for (int i=0;i<nofOperands-1;i++){
 			if(operands[i] != null){
-				System.out.print(operands[i].typeName()+", ");
+				System.out.print(operands[i].n+", ");
 			}else{
 				System.out.print("null, ");
 			}
 		}
 		if(operands[nofOperands-1] != null){
-			System.out.println(operands[nofOperands-1].typeName()+")");
+			System.out.println(operands[nofOperands-1].n+")");
 		}else{
 			System.out.println("null)");
 		}	
