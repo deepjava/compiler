@@ -1,29 +1,36 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.strings.HString;
+
 public class NoOpndRef extends NoOpnd {
-	int ref;
+	HString fieldName;
 
 	public NoOpndRef(int opcode){
 		super(opcode);
 	}
 	
-	public NoOpndRef(int opcode, int ref) {
+	public NoOpndRef(int opcode, HString fieldName) {
 		super(opcode);
-		this.ref = ref;
+		this.fieldName = fieldName;
 	}
 	
-	public void setArg(int ref){
-		this.ref=ref;
+	public void setArg(HString fieldName){
+		this.fieldName = fieldName;
 	}
 
-	public int getArg(){
-		return ref;
+	public HString getArg(){
+		return fieldName;
 	}
 	
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.println("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
+		System.out.print("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
+		if(fieldName != null){
+			System.out.println("(" + fieldName + ")");
+		}else{
+			System.out.println();
+		}
 	}
 
 }
