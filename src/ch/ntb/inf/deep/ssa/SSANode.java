@@ -2,12 +2,11 @@ package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
+import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.DataItem;
-//import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StringLiteral;
-import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
@@ -19,6 +18,7 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
+import ch.ntb.inf.deep.strings.HString;
 
 /**
  * @author  millischer
@@ -28,6 +28,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	boolean traversed;
 	public int nofInstr;
 	public int nofPhiFunc;
+	public int nofDeletedPhiFunc; //its used for junit tests
 	private int maxLocals;
 	private int maxStack;
 	private int stackpointer;
@@ -45,6 +46,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		traversed = false;
 		nofInstr = 0;
 		nofPhiFunc = 0;
+		nofDeletedPhiFunc = 0;
 		maxLocals = 0;
 		maxStack = 0;
 
@@ -1801,6 +1803,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				result = new SSAValue();
 				//determine the type of the field
+				if(!(ssa.cfg.method.owner.constPool[val] instanceof DataItem)){
+					assert false : "Constantpool entry isn't a DataItem. Used in getstatic";
+				}
 				field =(DataItem) ssa.cfg.method.owner.constPool[val];
 				if(field.name.charAt(0) == '['){
 					switch(field.type.name.charAt(0)){
@@ -1867,7 +1872,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tVoid;
 					}					
 				}
-				instr = new NoOpndRef(sCloadConst, val);
+				instr = new NoOpndRef(sCloadConst, field.name);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -1878,7 +1883,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				value1 = popFromStack();
-				instr = new MonadicRef(sCstoreToField, val, value1);
+				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
+					instr = new MonadicRef(sCstoreToField, null,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a DataItem. Used in putstatic";
+				}
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -1954,7 +1964,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					}					
 				}
 				value1 = popFromStack();
-				instr = new MonadicRef(sCloadConst, val, value1);
+				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
+					instr = new MonadicRef(sCloadConst, null,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a DataItem. Used in getfield";
+				}
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -1966,7 +1981,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tVoid;
 				value2 = popFromStack();
 				value1 = popFromStack();
-				instr = new DyadicRef(sCstoreToField, val, value1, value2);
+				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
+					instr = new DyadicRef(sCstoreToField,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1, value2);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a DataItem. Used in putfield";
+				}
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -1979,10 +1999,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = SSAValue.tVoid;
-				instr = new Call(sCcall, val, operands);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
+				if(result.type != SSAValue.tVoid){
+					pushToStack(result);
+				}
 				break;
 			case bCinvokespecial:
 				bca++;
@@ -1993,10 +2016,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = SSAValue.tVoid;
-				instr = new Call(sCcall, val, operands);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
+				if(result.type != SSAValue.tVoid){
+					pushToStack(result);
+				}
 				break;
 			case bCinvokestatic:
 				bca++;
@@ -2007,10 +2033,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = SSAValue.tVoid;
-				instr = new Call(sCcall, val, operands);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
+				if(result.type != SSAValue.tVoid){
+					pushToStack(result);
+				}
 				break;
 			case bCinvokeinterface:
 				bca++;
@@ -2022,10 +2051,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = SSAValue.tVoid;
-				instr = new Call(sCcall, val, operands);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
+				if(result.type != SSAValue.tVoid){
+					pushToStack(result);
+				}
 				break;
 			case bCnew:
 				bca++;
@@ -2071,7 +2103,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = SSAValue.tAref;
 				value1 = popFromStack();
 				SSAValue[] opnd = {value1};
-				instr = new Call(sCnew, val, opnd);
+				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
+					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, opnd);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a class, array or interface type. Used in anewarray";
+				}
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -2102,8 +2139,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca++;
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				value1 = popFromStack();
-				result = value1;				
-				instr = new MonadicRef(sCthrow, val, value1);
+				result = value1;
+				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
+					instr = new MonadicRef(sCthrow, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, value1);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a class, array or interface type. Used in checkcast";
+				}
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -2113,7 +2155,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				instr = new MonadicRef(sCinstanceof, val, value1);
+				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
+					instr = new MonadicRef(sCinstanceof, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, value1);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a class, array or interface type. Used in instanceof";
+				}
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -2137,7 +2184,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				for(int i = 0; i < operands.length; i++){
 					operands[i] = popFromStack();
 				}
-				instr = new Call(sCnew, val,operands);
+				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
+					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, operands);
+				}else{
+					instr = null;
+					assert false : "Constantpool entry isn't a class, array or interface type. Used in multianewarray";
+				}
 				instr.result = result;
 				pushToStack(result);
 				break;
@@ -2336,26 +2388,16 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 			}
 			if(redundant){
-				//Search the result in the entrySet
-				for(int j = 0; j < entrySet.length; j++){
-					if (tempRes.equals(entrySet[j])){
-						//replace the result with the Operand
-						//entrySet[j]=tempOperands[indexOfDiff];
-						//subst the result 
-						entrySet[j].type = tempOperands[indexOfDiff].type;
-						entrySet[j].index = tempOperands[indexOfDiff].index;
-						entrySet[j].constant = tempOperands[indexOfDiff].constant;
-						entrySet[j].n = tempOperands[indexOfDiff].n;
-						entrySet[j].end= tempOperands[indexOfDiff].end;	
-						entrySet[j].join = tempOperands[indexOfDiff].join;	
-						entrySet[j].reg = tempOperands[indexOfDiff].reg;	
-						entrySet[j].memorySlot = tempOperands[indexOfDiff].memorySlot;
-						break;
-					}
+				//if the Phifunc has no parameter so delete it real
+				if(phiFunctions[i].nofOperands > 0){
+					//delete it virtually an set the operand for replacement 
+					phiFunctions[i].deleted = true;
+					phiFunctions[i].setOperands(new SSAValue[]{tempOperands[indexOfDiff]});
+					nofDeletedPhiFunc++;
+					temp[count++]= phiFunctions[i];
 				}
 			}else{
-				temp[count]=phiFunctions[i];
-				count++;
+				temp[count++]= phiFunctions[i];
 			}
 		}
 		phiFunctions = temp;
@@ -2438,6 +2480,25 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		return type;
 	}
 	
+	private int decodeReturnDesc(HString methodDescriptor){
+		int type, i;
+		char ch = methodDescriptor.charAt(0);
+		for(i = 0; ch != ')'; i++){//travers  (....) we need only the Returnvalue;
+			ch = methodDescriptor.charAt(i);
+		}
+		ch = methodDescriptor.charAt(i++);
+		if(ch == '['){
+			while(ch == '['){
+				i++;
+				ch = methodDescriptor.charAt(i);
+			}
+			type = decodeFieldType(ch)+10;//+10 is for Arrays
+		
+		}else{
+			type = decodeFieldType(ch);
+		}
+		return type;		
+	}
 	
 	/**
 	 * Prints out the SSANode readable.<p>
