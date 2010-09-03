@@ -4,6 +4,7 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class PhiFunction extends SSAInstruction {
 	public int nofOperands;
+	public boolean deleted = false;
 	
 
 	public PhiFunction(int opCode) {
