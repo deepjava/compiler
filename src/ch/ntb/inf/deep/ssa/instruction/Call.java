@@ -1,18 +1,21 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
 import ch.ntb.inf.deep.ssa.SSAValue;
+import ch.ntb.inf.deep.strings.HString;
 
 public class Call extends SSAInstruction {
 	
-	int ref;
+	HString methodName;
+	HString className;
 
 	public Call(int opCode) {
 		ssaOpcode = opCode;
 	}
 	
-	public Call(int opCode, int ref){
+	public Call(int opCode, HString className , HString methodName){
 		ssaOpcode = opCode;
-		this.ref = ref;
+		this.methodName = methodName;
+		this.className = className;
 	}
 	
 	
@@ -21,9 +24,10 @@ public class Call extends SSAInstruction {
 		this.operands = operands;
 	}
 	
-	public Call(int opCode, int ref, SSAValue[] operands){
+	public Call(int opCode, HString className , HString methodName, SSAValue[] operands){
 		ssaOpcode = opCode;
-		this.ref = ref;
+		this.methodName = methodName;
+		this.className = className;
 		this.operands = operands;
 	}
 
@@ -37,12 +41,17 @@ public class Call extends SSAInstruction {
 		this.operands = operands;
 	}
 	
-	public void setArg(int ref){
-		this.ref = ref;
+	public void setArgs(HString className , HString methodName){
+		this.methodName = methodName;
+		this.className = className;
 	}
 	
-	public int getArg(){
-		return ref;
+	/**
+	 * returns the ClassName at HString[0] and MethodeNamen at HString[1];
+	 * @return HString[]
+	 */
+	public HString[] getArgs(){
+		return new HString[]{this.className, this.methodName};
 	}
 	
 	@Override
@@ -52,7 +61,11 @@ public class Call extends SSAInstruction {
 		for (int i=0;i<operands.length-1;i++){
 			System.out.print(operands[i].typeName()+", ");
 		}
-		System.out.println(operands[operands.length-1].typeName()+ ")");
+		if(operands.length > 0){
+			System.out.println(operands[operands.length-1].typeName()+ ")");
+		}else{
+			System.out.println(")");
+		}
 	}
 
 }
