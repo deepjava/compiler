@@ -1,34 +1,35 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
 import ch.ntb.inf.deep.ssa.SSAValue;
+import ch.ntb.inf.deep.strings.HString;
 
 public class DyadicRef extends Dyadic {
-	int ref;
+	HString fieldName;
 
 	public DyadicRef(int opCode) {
 		super(opCode);
 	}
 
-	public DyadicRef(int opCode, int ref) {
+	public DyadicRef(int opCode, HString fieldName) {
 		super(opCode);
-		this.ref = ref;
+		this.fieldName = fieldName;
 	}
 
 	public DyadicRef(int opCode, SSAValue operand1,	SSAValue operand2) {
 		super(opCode, operand1, operand2);
 	}
 
-	public DyadicRef(int opCode, int ref, SSAValue operand1, SSAValue operand2) {
+	public DyadicRef(int opCode, HString fieldName, SSAValue operand1, SSAValue operand2) {
 		super(opCode, operand1, operand2);
-		this.ref = ref;
+		this.fieldName = fieldName;
 	}
 
-	public void setArg(int ref) {
-		this.ref = ref;
+	public void setArg(HString fieldName) {
+		this.fieldName = fieldName;
 	}
 
-	public int getArg() {
-		return ref;
+	public HString getArg() {
+		return fieldName;
 	}
 
 	@Override
