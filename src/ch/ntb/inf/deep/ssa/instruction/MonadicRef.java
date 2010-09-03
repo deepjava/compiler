@@ -1,36 +1,41 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
 import ch.ntb.inf.deep.ssa.SSAValue;
+import ch.ntb.inf.deep.strings.HString;
 
 public class MonadicRef extends Monadic {
 	
-	int ref;
+	HString className;
+	HString fieldName;
 	
 	
 	public MonadicRef(int opCode) {
 		super(opCode);		
 	}
 	
-	public MonadicRef(int opCode, int ref){
+	public MonadicRef(int opCode, HString className, HString fieldName){
 		super(opCode);
-		this.ref = ref;
+		this.className = className;
+		this.fieldName = fieldName;
 	}
 	
 	public MonadicRef(int opCode, SSAValue operand){
 		super(opCode,operand);
 	}
 	
-	public MonadicRef(int opCode, int ref, SSAValue operand){
+	public MonadicRef(int opCode, HString className, HString fieldName, SSAValue operand){
 		super(opCode,operand);
-		this.ref = ref;
+		this.className = className;
+		this.fieldName = fieldName;
 	}
 	
-	public void setArg(int ref){
-		this.ref =ref;
+	public void setArgs(HString className, HString fieldName){
+		this.className = className;
+		this.fieldName = fieldName;
 	}
 	
-	public int getArg(){
-		return ref;
+	public HString[] getArgs(){
+		return new HString[]{className, fieldName};
 	}
 	
 	@Override
