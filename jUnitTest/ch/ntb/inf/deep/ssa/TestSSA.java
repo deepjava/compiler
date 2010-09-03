@@ -53,7 +53,7 @@ public class TestSSA {
 		for (int i = 0; i < TestCFG.cfg.length; i++){
 			ssa[i] = new SSA(TestCFG.cfg[i]);
 			System.out.println();
-			//ssa[i].print(0, i);
+			ssa[i].print(0, i);
 		}
 	}
 
@@ -72,7 +72,7 @@ public class TestSSA {
 	
 	public static void testNode(SSANode node, int nofSSAInstructions, int nofPhiFunctions, int localsLength) {
 		assertEquals("nof SSA instructions not as expected", nofSSAInstructions, node.nofInstr);
-		assertEquals("nof phi functions not as expected", nofPhiFunctions, node.nofPhiFunc);
+		assertEquals("nof phi functions not as expected", nofPhiFunctions, node.nofPhiFunc - node.nofDeletedPhiFunc);
 		assertEquals("length of EntrySet not as expected", localsLength, node.entrySet.length);
 		assertEquals("length of ExitySet not as expected", localsLength, node.exitSet.length);
 	}
