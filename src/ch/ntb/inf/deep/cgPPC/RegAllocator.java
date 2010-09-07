@@ -34,10 +34,6 @@ public class RegAllocator implements SSAInstructionOpcs {
 	// total number of SSA Instructions for the cfg of a method
 	private static int nofSSAInstructions;
 
-	/**
-	 * Max number of used Registers for this Method
-	 */
-	private int maxRegistersUsed = 0;
 	
 	private static int volRegs;
 	private static int nonVolRegs;
@@ -49,10 +45,10 @@ public class RegAllocator implements SSAInstructionOpcs {
 		volRegs = 0x00001ffc;
 		nonVolRegs = 0xffffe000;
 		
-		generateMoves(cfg); 	// generate moves for phi functions
+//		generateMoves(cfg); 	// generate moves for phi functions
 		renumberInstructions(cfg);	// renumber all SSAInstructions 
 		buildIntervals(cfg);	// compute live intervals
-		joinIntervals(cfg);
+//		joinIntervals(cfg);
 		assignRegisters(cfg);
 
 		// Save used Registers and Memory-Slots in SSA-Graph
@@ -108,7 +104,7 @@ public class RegAllocator implements SSAInstructionOpcs {
 				b.phiFunctions[i].result.n = counter++;
 			}
 			for (int i = 0; i < b.nofInstr; i++) {
-				b.instructions[i].result.n = counter++;
+				b.instructions[i].result.n = counter++;	
 			}
 			b = (SSANode) b.next;
 		}
@@ -120,6 +116,12 @@ public class RegAllocator implements SSAInstructionOpcs {
 	private static void buildIntervals(CFG cfg) {
 		SSANode b = (SSANode) cfg.rootNode;
 		while (b != null) {
+			for (int i = 0; i < b.nofPhiFunc; i++) {
+				SSAInstruction phi = b.phiFunctions[i];
+				SSAValue[] opds = phi.getOperands();
+				phi.result.index = opds[0].index;
+			}
+
 			// for all instructions i in b do
 			for (int i = 0; i < b.nofInstr; i++) {
 				SSAInstruction instr = b.instructions[i];
@@ -188,12 +190,18 @@ public class RegAllocator implements SSAInstructionOpcs {
 	private static void assignRegisters(CFG cfg) {
 		SSANode b = (SSANode) cfg.rootNode;
 		while (b != null) {
+			for (int i = 0; i < b.nofPhiFunc; i++) {
+				SSAInstruction phi = b.phiFunctions[i];
+				phi.result.reg = 31 - phi.result.index;
+			}
 			for (int i = 0; i < b.nofInstr; i++) {
 				SSAInstruction instr = b.instructions[i];
-				if (instr.result.index < 0) { 
-					instr.result.reg = reserveVolatile();
-				}  else {	// is a local variable
-					instr.result.reg = 31 - instr.result.index;
+				if (instr.ssaOpcode != sCBranch) {	// branch instruction has no result
+					if (instr.result.index < 0) { 
+						instr.result.reg = reserveVolatile();
+					}  else {	// is a local variable
+						instr.result.reg = 31 - instr.result.index;
+					}
 				}
 			}
 			b = (SSANode) b.next;

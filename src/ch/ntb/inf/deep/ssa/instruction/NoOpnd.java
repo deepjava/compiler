@@ -22,6 +22,8 @@ public class NoOpnd extends SSAInstruction {
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
-		System.out.println("NoOpnd["+ scMnemonics[ssaOpcode]+"] "+result.constant);
+		System.out.print("NoOpnd["+ scMnemonics[ssaOpcode]+"] " + result.constant);
+		System.out.print(",   end=" + result.end + ", reg=" + result.reg + ", state array index=" + result.index );
+		System.out.println();
 	}
 }

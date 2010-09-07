@@ -18,6 +18,7 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
+import ch.ntb.inf.deep.ssa.instruction.Branch;
 import ch.ntb.inf.deep.strings.HString;
 
 /**
@@ -38,6 +39,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	private int paramType[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
+	public int codeStartAddr, codeEndAddr;
 	
 	public SSANode() {
 		super();
@@ -1693,7 +1695,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCifge:
 			case bCifgt:
 			case bCifle:
-				popFromStack();
+				value1 = popFromStack();
+				instr = new Branch(sCBranch, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCif_icmpeq:
@@ -1704,11 +1709,18 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCif_icmple:
 			case bCif_acmpeq:
 			case bCif_acmpne:
-				popFromStack();
-				popFromStack();
+				value1 = popFromStack();
+				value2 = popFromStack();
+				instr = new Branch(sCBranch, value1, value2);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto:
+//				val = (short) (ssa.cfg.code[bca + 1] & 0xff << 8 | ssa.cfg.code[bca + 2]);
+				instr = new Branch(sCBranch);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCjsr:
