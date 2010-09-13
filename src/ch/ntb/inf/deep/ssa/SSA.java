@@ -1,7 +1,6 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
 
 /**
  * @author millischer
@@ -23,6 +22,7 @@ public class SSA {
 
 		sortNodes((SSANode)cfg.rootNode);
 		determineStateArray();
+		renumberInstructions(cfg);
 	}
 
 	public void determineStateArray() {		
@@ -84,6 +84,24 @@ public class SSA {
 		}
 		return count;
 	}
+
+	/**
+	 * Renumber all the instructions in the SSA before computing live intervals
+	 */
+	public static void renumberInstructions(CFG cfg) {
+		int counter = 0;
+		SSANode b = (SSANode) cfg.rootNode;
+		while (b != null) {
+			for (int i = 0; i < b.nofPhiFunc; i++) {
+				b.phiFunctions[i].result.n = counter++;
+			}
+			for (int i = 0; i < b.nofInstr; i++) {
+				b.instructions[i].result.n = counter++;	
+			}
+			b = (SSANode) b.next;
+		}
+	}
+
 	/**
 	 * Prints out the SSA readable.
 	 * <p>
@@ -117,7 +135,7 @@ public class SSA {
 			System.out.print("\t");
 		System.out.println("SSA for Method: " + cfg.method.name);
 		
-		RegAllocator.renumberInstructions(cfg);
+		SSA.renumberInstructions(cfg);
 
 		while (node != null) {
 			node.print(level + 1, count);
@@ -127,4 +145,5 @@ public class SSA {
 		}
 
 	}
+
 }

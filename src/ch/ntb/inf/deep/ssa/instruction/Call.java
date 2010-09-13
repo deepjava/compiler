@@ -63,10 +63,14 @@ public class Call extends SSAInstruction {
 			System.out.print(operands[i].typeName()+", ");
 		}
 		if(operands.length > 0){
-			System.out.println(operands[operands.length-1].typeName()+ ")");
+			System.out.print(operands[operands.length-1].n + ")");
 		}else{
-			System.out.println(")");
+			System.out.print(")");
 		}
+		System.out.print(",   ");
+		System.out.print(className);
+		System.out.print(".");
+		System.out.println(methodName);
 	}
 
 }

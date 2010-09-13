@@ -1696,7 +1696,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCifgt:
 			case bCifle:
 				value1 = popFromStack();
-				instr = new Branch(sCBranch, value1);
+				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
 				bca = bca+2; //step over branchbyte1 and branchbyte2
@@ -1711,14 +1711,14 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			case bCif_acmpne:
 				value1 = popFromStack();
 				value2 = popFromStack();
-				instr = new Branch(sCBranch, value1, value2);
+				instr = new Branch(sCbranch, value1, value2);
 				instr.result = new SSAValue();
 				addInstruction(instr);
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto:
 //				val = (short) (ssa.cfg.code[bca + 1] & 0xff << 8 | ssa.cfg.code[bca + 2]);
-				instr = new Branch(sCBranch);
+				instr = new Branch(sCbranch);
 				instr.result = new SSAValue();
 				addInstruction(instr);
 				bca = bca+2; //step over branchbyte1 and branchbyte2

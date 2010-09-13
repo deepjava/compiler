@@ -8,7 +8,7 @@ public interface SSAInstructionOpcs {
 	sCconvFloat = 16, sCconvDouble = 17, sCcmpl = 18, sCreturn = 19, sCcall = 20,
 	sCnew = 21, sCinstanceof = 22, sCloadVar = 23, sCloadFromArray = 24, sCstoreToArray =25,
 	sCcmpg = 26, sCalength = 27, sCstoreToField = 28, sCthrow = 29, sCPhiFunc = 30,
-	sCloadLocal = 31, sCRegMove = 32, sCBranch = 33;
+	sCloadLocal = 31, sCregMove = 32, sCbranch = 33;
 	
 	int[] scAttrTab = {
 			/*Format:	0xuuuu'uucc,
