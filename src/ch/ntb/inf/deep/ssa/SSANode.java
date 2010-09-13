@@ -2203,6 +2203,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in multianewarray";
 				}
 				instr.result = result;
+				addInstruction(instr);
 				pushToStack(result);
 				break;
 			case bCifnull:
