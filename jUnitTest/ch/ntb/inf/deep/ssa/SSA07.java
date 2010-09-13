@@ -60,4 +60,10 @@ public class SSA07 extends TestSSA {
 		SSANode[] nodes = getAndTestSSA(4, 1, 0);
 		testNode(nodes[0], 6, 0, 5);
 	}
+	
+	@Test
+	public void testMultiArray(){
+		SSANode[] nodes = getAndTestSSA(5, 1, 0);
+		testNode(nodes[0], 25, 0, 10);
+	}
 }
