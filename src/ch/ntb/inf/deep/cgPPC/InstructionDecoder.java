@@ -1,19 +1,19 @@
 package ch.ntb.inf.deep.cgPPC;
 
-public class InstructionDecoder {
+public class InstructionDecoder implements InstructionOpcs {
 
 	/**
-	 * Encode the Assemblermnemonic into the Machineinstruction. It don't check
+	 * Encode the assembler mnemonic into the machine instruction. Does not check
 	 * if the parameters are correct.
 	 * 
-	 * @author NTB\millischer 07.12.2009
+	 * @author NTB\millischer 07.12.2009, 
+	 * graf 11.9.10 
 	 * @param mnemonic
 	 *            String
-	 * @return Machineinstruction
-	 * @throws NoSuchInstrException
+	 * @return machine instruction
 	 */
-	public static int getCode(String mnemonic) throws NoSuchInstrException {
-		// Maskes
+	public static int getCode(String mnemonic) {
+		// masks
 		int crb = 0x1F;
 		int BD = 0xFFFC;
 		int crf = 0x7;
@@ -60,7 +60,7 @@ public class InstructionDecoder {
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
 
-			res = (0x1F << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x214;
+			res = ppcAdd | (param1 << 21) | (param2 << 16) | (param3 << 11);
 
 		} else if (parts[0].equals("add.")) {
 
@@ -70,7 +70,7 @@ public class InstructionDecoder {
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
 
-			res = (0x1F << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x215;
+			res = ppcAdd | (param1 << 21) | (param2 << 16) | (param3 << 11) | 1;
 		} else if (parts[0].equals("addo")) {
 			String[] param = parts[1].split(",");
 
@@ -157,7 +157,7 @@ public class InstructionDecoder {
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SIMM;
 
-			res = (0x0E << 26) | (param1 << 21) | (param2 << 16) | param3;
+			res = ppcAddi | (param1 << 21) | (param2 << 16) | param3;
 		} else if (parts[0].equals("addic")) {
 			String[] param = parts[1].split(",");
 
@@ -1175,6 +1175,13 @@ public class InstructionDecoder {
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
 
 			res = (0x1F << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | (0x117 << 1);
+		} else if (parts[0].equals("li")) {
+			String[] param = parts[1].split(",");
+
+			param1 = Integer.parseInt(param[0].substring(1)) & r;
+			param2 = Integer.decode(param[1]) & SIMM;
+
+			res = ppcAddi | (param1 << 21) | param2;
 		} else if (parts[0].equals("lmw")) {
 			String[] param = parts[1].split(",");
 			String[] SpParam = param[1].split("\\x28");// 0x28=='('
@@ -1390,7 +1397,8 @@ public class InstructionDecoder {
 				} else if (param[1].equals("dpdr")) {
 					param2 = 723;
 				} else {
-					throw new NoSuchInstrException(parts[0] + " " + param[1]);
+					param2 = 0;
+					assert true : "wrong SPR number";
 				}
 			}
 
@@ -1548,7 +1556,8 @@ public class InstructionDecoder {
 				} else if (param[0].equals("dpdr")) {
 					param1 = 723;
 				} else {
-					throw new NoSuchInstrException(parts[0] + " " + param[0]);
+					param1 = 0;
+					assert true : "wrong SPR number";
 				}
 			}
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
@@ -2315,10 +2324,10 @@ public class InstructionDecoder {
 
 			res = (0x1B << 26) | (param2 << 21) | (param1 << 16) | param3;
 		} else {
-			throw new NoSuchInstrException(parts[0]);
+			assert true : "wrong SPR number";
 		}
 
-		System.out.println(Integer.toBinaryString(res));
+//		System.out.println(Integer.toBinaryString(res));
 		return res;
 	}
 
@@ -2390,13 +2399,13 @@ public class InstructionDecoder {
 					}
 				case 0x10:
 					if (aa == 0 && lk == 0) {
-						return "bc  " + BO + ", " + BI + ", 0x" + Integer.toHexString(BD);
+						return "bc  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
 					} else if (aa == 1 && lk == 0) {
-						return "bca  " + BO + ", " + BI + ", 0x" + Integer.toHexString(BD);
+						return "bca  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
 					} else if (aa == 0 && lk == 1) {
-						return "bcl  " + BO + ", " + BI + ", 0x" + Integer.toHexString(BD);
+						return "bcl  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
 					} else if (aa == 1 && lk == 1) {
-						return "bcla  " + BO + ", " + BI + ", 0x" + Integer.toHexString(BD);
+						return "bcla  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
 					}
 					break;
 				case 0x11:

@@ -1,5 +1,5 @@
 package ch.ntb.inf.deep.cgPPC;
-import ch.ntb.inf.deep.cfg.CFGNode;
+
 import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
@@ -32,8 +32,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 			node = (SSANode) node.next;
 		}
 		node = (SSANode)this.ssa.cfg.rootNode;
-		while (node != null) {
-			if ((node.nofInstr > 0) && (node.instructions[node.nofInstr-1].ssaOpcode == sCBranch)) {
+		while (node != null) {	// resolve local branch targets
+			if ((node.nofInstr > 0) && (node.instructions[node.nofInstr-1].ssaOpcode == sCbranch)) {
 				int code = this.instructions[node.codeEndAddr];
 //				System.out.println("target of branch instruction corrected: 0x" + Integer.toHexString(node.codeEndAddr*4));
 				switch (code & 0xfc000000) {
@@ -66,19 +66,34 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 				dReg = instr.result.reg;
 				switch (instr.result.type) {
 				case tByte: case tShort: case tInteger:
-					int immVal = (Integer)instr.result.constant;	
-					if ((immVal >= -32768) && (immVal <= 32767)) {
-						createInstructionSDI(ppcAddi, 0, dReg, immVal);
-					} else {
-						int volReg = RegAllocator.getVolatile();
+					int immVal = (Integer)instr.result.constant;
+					if ((immVal < -32768) && (immVal > 32767)) {
+						int volReg = RegAllocator.getVolatileGPR();
 						createInstructionSDI(ppcAddis, 0, volReg, immVal >> 16);
 						createInstructionSDI(ppcAddi, volReg, dReg, immVal);
+					} else {
+						if (instr.result.index >= 0) { // local variable
+							createInstructionSDI(ppcAddi, 0, dReg, immVal);
+						} else { // constant used for ssa instruction
+							SSAValue val = instr.result;
+							SSAValue startVal = node.instructions[0].result;
+							SSAInstruction instr1 = node.instructions[val.end - startVal.n];
+							switch (instr1.ssaOpcode) {	// instruction, where the const is used
+							case sCadd:
+							case sCsub:
+							case sCbranch:
+								break;
+							default:
+								System.out.println("ssa opcode of immediate instr =" + instr1.scMnemonics[instr1.ssaOpcode]);
+								assert false : "cg: immediate operator not yet implemented";
+							}
+						}
 					}
 					break;
 				case tLong:
 					// will use constant pool later
 					long immValLong = (Long)instr.result.constant;					
-					int volReg = RegAllocator.getVolatile();
+					int volReg = RegAllocator.getVolatileGPR();
 					createInstructionSDI(ppcAddis, 0, volReg, (int)(immValLong >> 48));
 					createInstructionSDI(ppcAddis, volReg, volReg, (int)(immValLong >> 32));
 					createInstructionSDI(ppcAddis, volReg, volReg, (int)(immValLong >> 16));
@@ -93,6 +108,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 					double immValDouble = (Double)instr.result.constant;					
 					assert false : "not yet implemented";
 					break;
+				default:
+					assert false : "wrong type";
 				}
 				break;
 			case sCadd:
@@ -102,7 +119,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 				dReg = instr.result.reg;
 				switch (instr.result.type) {
 				case tByte: case tShort: case tInteger:
-					createInstructionSSD(ppcAdd, sReg1, sReg2, dReg);
+					if (opds[0].index < 0) {
+						int immVal = (Integer)opds[0].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createInstructionSDI(ppcAddi, sReg2, dReg, immVal);
+					} else if (opds[1].index < 0) {
+						int immVal = (Integer)opds[1].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createInstructionSDI(ppcAddi, sReg1, dReg, immVal);
+					} else {
+						createInstructionSSD(ppcAdd, sReg1, sReg2, dReg);
+					}
 					break;
 				case tLong:
 					assert false : "not yet implemented";
@@ -122,7 +149,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 				dReg = instr.result.reg;
 				switch (instr.result.type) {
 				case tByte: case tShort: case tInteger:
-					createInstructionSSD(ppcSubf, sReg1, sReg2, dReg);
+					if (opds[0].index < 0) {
+						int immVal = (Integer)opds[0].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createInstructionSDI(ppcSubfic, sReg2, dReg, immVal);
+					} else if (opds[1].index < 0) {
+						int immVal = (Integer)opds[1].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createInstructionSDI(ppcSubfic, sReg1, dReg, immVal);
+					} else {
+						createInstructionSSD(ppcSubf, sReg1, sReg2, dReg);
+					}
 					break;
 				case tLong:
 					assert false : "not yet implemented";
@@ -135,93 +172,82 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 					break;
 				}
 				break;
-			case sCBranch:
+			case sCbranch:
 				int bci = ssa.cfg.code[node.lastBCA] & 0xff;
 				switch (bci) {
 				case bCgoto:
-					createInstructionB(ppcB, 0);
+					createInstructionB(ppcB, 0, false);
 					break;
 				case bCif_acmpeq:
 					break;
 				case bCif_acmpne:
 					break;
 				case bCif_icmpeq:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					sReg2 = opds[1].reg;
-					createInstructionCMP(ppcCmp, 0, sReg1, sReg2);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCif_icmpne:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					sReg2 = opds[1].reg;
-					createInstructionCMP(ppcCmp, 0, sReg1, sReg2);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCif_icmplt:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					sReg2 = opds[1].reg;
-					createInstructionCMP(ppcCmp, 0, sReg1, sReg2);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCif_icmpge:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					sReg2 = opds[1].reg;
-					createInstructionCMP(ppcCmp, 0, sReg1, sReg2);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCif_icmpgt:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					sReg2 = opds[1].reg;
-					createInstructionCMP(ppcCmp, 0, sReg1, sReg2);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCif_icmple:
 					opds = instr.getOperands();
 					sReg1 = opds[0].reg;
 					sReg2 = opds[1].reg;
-					createInstructionCMP(ppcCmp, 0, sReg1, sReg2);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
+					switch (opds[0].type) {
+					case tInteger:
+						if (opds[0].index < 0) {
+							int immVal = (Integer)opds[0].constant;
+							if ((immVal >= -32768) && (immVal <= 32767))
+								createInstructionCMPI(ppcCmpi, CRF0, sReg2, immVal);
+						} else if (opds[1].index < 0) {
+							int immVal = (Integer)opds[1].constant;
+							if ((immVal >= -32768) && (immVal <= 32767))
+								createInstructionCMPI(ppcCmpi, CRF0, sReg1, immVal);
+						} else {
+							createInstructionCMP(ppcCmp, CRF0, sReg1, sReg2);
+						}
+						if (bci == bCif_icmpeq) 
+							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						else if (bci == bCif_icmpne)
+							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+						else if (bci == bCif_icmplt)
+							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+						else if (bci == bCif_icmpge)
+							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+						else if (bci == bCif_icmpgt)
+							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+						else if (bci == bCif_icmple)
+							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+						break;
+					default:
+						assert false : "cg: type not yet implemented";
+					}
 					break;
 				case bCifeq:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCifne:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCiflt:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCifge:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCifgt:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
-					break;
 				case bCifle:
 					opds = instr.getOperands();
 					sReg1 = opds[0].reg;
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
-					createInstructionBC(ppcBc, 0xc, 31, 0);
+					switch (opds[0].type) {
+					case tInteger:
+						createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
+						if (bci == bCifeq) 
+							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						else if (bci == bCifne)
+							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+						else if (bci == bCiflt)
+							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+						else if (bci == bCifge)
+							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+						else if (bci == bCifgt)
+							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+						else if (bci == bCifle)
+							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+						break;
+					default:
+						assert false : "cg: type not yet implemented";
+					}
 					break;
 				case bCifnonnull:
 					break;
@@ -229,42 +255,55 @@ public class MachineCode implements SSAInstructionOpcs, SSAValueType, Instructio
 					break;
 				default:
 					System.out.println(bci);
-					assert false : "no such branch instruction";
+					assert false : "cg: no such branch instruction";
 				}
-/*			default:
-				assert false : "no code generated for this ssa function";*/
+				break;
+			case sCcall:
+					System.out.println("came to here");
+				createInstructionB(ppcB, 0, true);
+				break;
+			case sCloadLocal:
+				break;
+			default:
+				assert false : "cg: no code generated for this ssa function";
 			}
 		}
 	}
 
 	private void createInstructionSSD(int opCode, int sReg1, int sReg2, int dReg) {
 		instructions[iCount] = opCode | (sReg1 << 16) | (sReg2 << 11) | (dReg << 21);
+		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
 	private void createInstructionSDI(int opCode, int sReg, int dReg, int immVal) {
 //		System.out.println(Integer.toHexString(opCode | (sReg << 16) | (dReg << 21) | (immVal & 0xffff)));
 		instructions[iCount] =  opCode | (sReg << 16) | (dReg << 21) | (immVal & 0xffff);
+		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
-	private void createInstructionB(int opCode, int LI) {
-		instructions[iCount] = opCode | (LI << 2);
+	private void createInstructionB(int opCode, int LI, boolean link) {
+		instructions[iCount] = opCode | (LI << 2 | (link ? 1 : 0));
+		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
 	private void createInstructionBC(int opCode, int BO, int BI, int BD) {
 		instructions[iCount] = opCode | (BO << 21) | (BI << 16) | (BD << 2);
+		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
 	private void createInstructionCMP(int opCode, int crfD, int sReg1, int sReg2) {
 		instructions[iCount] = opCode | (crfD << 23) | (sReg1 << 16) | (sReg2 << 11);
+		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
 	private void createInstructionCMPI(int opCode, int crfD, int sReg, int SIMM) {
 		instructions[iCount] = opCode | (crfD << 23) | (sReg << 16) | (SIMM & 0xffff);
+		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
