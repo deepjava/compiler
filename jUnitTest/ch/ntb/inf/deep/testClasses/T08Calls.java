@@ -21,7 +21,7 @@ public class T08Calls {
 	
 	
 	/*
-	 * Helper class
+	 * Helper method
 	 */
 	public static int classMethod(int param){
 		int x = 0;
@@ -31,7 +31,7 @@ public class T08Calls {
 		return x;		
 	}
 	/*
-	 * Helper class
+	 * Helper method
 	 */
 	public int objectMethod(int param){
 		return param % 2;		
