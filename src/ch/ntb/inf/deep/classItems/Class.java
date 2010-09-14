@@ -637,6 +637,8 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	}
 
 	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
+		errRep.nofErrors = 0;
+		Type.nofRootClasses = 0;
 		int nofRootClasses = rootClassNames.length;
 		rootClasses = new Class[nofRootClasses];
 		startLoading(nofRootClasses);
