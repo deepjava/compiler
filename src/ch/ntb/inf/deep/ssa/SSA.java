@@ -9,6 +9,8 @@ import ch.ntb.inf.deep.cfg.CFG;
 public class SSA {
 	public CFG cfg;
 	public int nofLoopheaders;
+	public boolean isParam[];
+	public int paramType[];
 	private SSANode loopHeaders[];
 	private SSANode sortedNodes[];
 	private int nofSortedNodes;
@@ -19,7 +21,8 @@ public class SSA {
 		sortedNodes = new SSANode[cfg.getNumberOfNodes()];
 		nofLoopheaders = 0;
 		nofSortedNodes = 0;
-
+		
+		determineParam();
 		sortNodes((SSANode)cfg.rootNode);
 		determineStateArray();
 		renumberInstructions(cfg);
@@ -100,6 +103,84 @@ public class SSA {
 			}
 			b = (SSANode) b.next;
 		}
+	}
+	
+	
+	private void determineParam(){
+		int flags = cfg.method.accAndPorpFlags;
+		String descriptor = cfg.method.methDescriptor.toString();
+		int index = cfg.method.getMaxStckSlots();
+		isParam = new boolean[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
+		paramType = new int[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
+		
+		if((flags & 0x0008) == 0){//method isn't static
+			isParam[index] = true;
+			paramType[index++] = SSAValue.tThis;
+		}
+		
+		char ch = descriptor.charAt(1);
+		for(int i = 1;ch != ')'; i++){//travers only between (....);
+			isParam[index] = true;
+			if(ch == '['){
+				while(ch == '['){
+					i++;
+					ch = descriptor.charAt(i);
+				}
+				paramType[index++] = decodeFieldType(ch)+10;//+10 is for Arrays
+				
+			}else{				
+				paramType[index] = decodeFieldType(ch);
+				if(paramType[index]== SSAValue.tLong || paramType[index] == SSAValue.tDouble){
+					index +=2;
+				}else{
+					index++;
+				}
+			}
+			if(ch == 'L'){
+				while(ch != ';'){
+					i++;
+					ch = descriptor.charAt(i);
+				}
+			}
+			ch = descriptor.charAt(i+1);
+		}		
+	}
+	
+	public int decodeFieldType(char character){
+		int type;;
+		switch(character){
+		case 'B':
+			type = SSAValue.tByte;
+			break;
+		case 'C':
+			type = SSAValue.tChar;
+			break;
+		case 'D':
+			type = SSAValue.tDouble;
+			break;
+		case 'F':
+			type = SSAValue.tFloat;
+			break;
+		case 'I':
+			type = SSAValue.tInteger;
+			break;
+		case 'J':
+			type = SSAValue.tLong;
+			break;
+		case 'L':
+			type = SSAValue.tObject;
+			break;
+		case 'S':
+			type = SSAValue.tShort;
+			break;
+		case 'Z':
+			type = SSAValue.tBoolean;
+			break;
+		default:
+			type = SSAValue.tVoid;
+			break;
+		}
+		return type;
 	}
 
 	/**

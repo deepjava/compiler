@@ -35,8 +35,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	private int stackpointer;
 	public SSAValue exitSet[];
 	public SSAValue entrySet[];
-	private boolean isParam[];
-	private int paramType[];
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
 	public int codeStartAddr, codeEndAddr;
@@ -76,20 +74,14 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (nofPredecessors == 0) {
 			// create new entry and exit sets, locals are uninitialized
 			entrySet = new SSAValue[maxStack + maxLocals];
-			isParam = new boolean[maxStack + maxLocals];
-			paramType = new int[maxStack + maxLocals];
-			determineParam(ssa);
+			
 
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
 			if (this.equals(predecessors[0])) {// equal by "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
-				isParam = new boolean[maxStack + maxLocals];
-				paramType = new int[maxStack + maxLocals];
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
-				isParam = ((SSANode) predecessors[0]).isParam.clone();
-				paramType = ((SSANode) predecessors[0]).paramType.clone();
 			}
 		} else if (nofPredecessors >= 2) {
 			// multiple predecessors --> merge necessary
@@ -109,8 +101,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					}
 					
 					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
-					isParam = ((SSANode) predecessors[0]).isParam.clone();
-					paramType = ((SSANode) predecessors[0]).paramType.clone();
 					
 					for(int i = 0; i < maxStack+maxLocals;i++){
 						SSAValue result = new SSAValue();
@@ -132,7 +122,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
 							
 							//Check if it need a loadParam instruction
-							if(isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)){
+							if(ssa.isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)){
 								param = generateLoadParameter((SSANode)idom, j, ssa);			
 							}							
 							if(param != null){//stack could be empty
@@ -150,14 +140,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					if (entrySet == null) {
 						// first predecessor --> create locals
 						entrySet = ((SSANode) predecessors[i]).exitSet.clone();
-						isParam = ((SSANode) predecessors[i]).isParam.clone();
-						paramType = ((SSANode) predecessors[i]).paramType.clone();
 					} else {
 						// all other predecessors --> merge
 						for (int j = 0; j < maxStack+maxLocals; j++){
 							if (entrySet[j] != null ||((SSANode) predecessors[i]).exitSet[j] != null ){//if both null, do nothing
 								if(entrySet[j] == null){//predecessor is set
-									if(isParam[j]){
+									if(ssa.isParam[j]){
 										//create phi function
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
@@ -176,7 +164,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 								}else{//entrySet[j] != null
 									if(!(entrySet[j].equals(((SSANode) predecessors[i]).exitSet[j]))){//if both equals, do nothing
 										if(((SSANode) predecessors[i]).exitSet[j] == null){
-											if(isParam[j]){
+											if(ssa.isParam[j]){
 												if(entrySet[j].type == SSAValue.tPhiFunc){
 													PhiFunction func = null;
 													//func == null if the phi functions are created by the predecessor
@@ -2011,7 +1999,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
@@ -2028,7 +2016,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
@@ -2045,7 +2033,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
@@ -2063,7 +2051,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor);
+				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
 				addInstruction(instr);
@@ -2305,7 +2293,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		
 		SSAValue result = new SSAValue();
 		result.index = index - maxStack;
-		result.type = paramType[index];
+		result.type = ssa.paramType[index];
 		SSAInstruction instr = new NoOpnd(sCloadLocal);
 		instr.result = result;
 		node.addInstruction(instr);
@@ -2339,8 +2327,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			node.idom = idom;
 			node.entrySet = predecessor.exitSet.clone();
 			node.exitSet = node.entrySet.clone();
-			node.isParam = isParam.clone();
-			node.paramType = paramType.clone();
 			
 			node.addSuccessor(this);
 			predecessors[index] = node;
@@ -2417,83 +2403,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		nofPhiFunc = count;		
 	}
 	
-	private void determineParam(SSA ssa){
-		int index;
-		int flags = ssa.cfg.method.accAndPorpFlags;
-		String descriptor = ssa.cfg.method.methDescriptor.toString();
-		
-		if((flags & 0x0008) != 0){//method is static
-			index = maxStack;
-		}else{//method isn't static
-			index = maxStack+1;
-		}
-		
-		char ch = descriptor.charAt(1);
-		for(int i = 1;ch != ')'; i++){//travers only between (....);
-			isParam[index] = true;
-			if(ch == '['){
-				while(ch == '['){
-					i++;
-					ch = descriptor.charAt(i);
-				}
-				paramType[index++] = decodeFieldType(ch)+10;//+10 is for Arrays
-				
-			}else{				
-				paramType[index] = decodeFieldType(ch);
-				if(paramType[index]== SSAValue.tLong || paramType[index] == SSAValue.tDouble){
-					index +=2;
-				}else{
-					index++;
-				}
-			}
-			if(ch == 'L'){
-				while(ch != ';'){
-					i++;
-					ch = descriptor.charAt(i);
-				}
-			}
-			ch = descriptor.charAt(i+1);
-		}		
-	}
+
 	
-	private int decodeFieldType(char character){
-		int type;;
-		switch(character){
-		case 'B':
-			type = SSAValue.tByte;
-			break;
-		case 'C':
-			type = SSAValue.tChar;
-			break;
-		case 'D':
-			type = SSAValue.tDouble;
-			break;
-		case 'F':
-			type = SSAValue.tFloat;
-			break;
-		case 'I':
-			type = SSAValue.tInteger;
-			break;
-		case 'J':
-			type = SSAValue.tLong;
-			break;
-		case 'L':
-			type = SSAValue.tObject;
-			break;
-		case 'S':
-			type = SSAValue.tShort;
-			break;
-		case 'Z':
-			type = SSAValue.tBoolean;
-			break;
-		default:
-			type = SSAValue.tVoid;
-			break;
-		}
-		return type;
-	}
-	
-	private int decodeReturnDesc(HString methodDescriptor){
+	private int decodeReturnDesc(HString methodDescriptor, SSA ssa){
 		int type, i;
 		char ch = methodDescriptor.charAt(0);
 		for(i = 0; ch != ')'; i++){//travers  (....) we need only the Returnvalue;
@@ -2505,10 +2417,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				i++;
 				ch = methodDescriptor.charAt(i);
 			}
-			type = decodeFieldType(ch)+10;//+10 is for Arrays
+			type = ssa.decodeFieldType(ch)+10;//+10 is for Arrays
 		
 		}else{
-			type = decodeFieldType(ch);
+			type = ssa.decodeFieldType(ch);
 		}
 		return type;		
 	}
