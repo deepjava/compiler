@@ -17,14 +17,15 @@ public class TestCgPPC {
 	public static void createCgPPC(Class clazz) {
 		TestSSA.createSSA(clazz);
 		code = new MachineCode[TestCFG.cfg.length];
-		for (int i = 0; i < TestCFG.cfg.length; i++){
-			RegAllocator.allocateRegisters(TestCFG.cfg[i]);
+//		for (int i = 0; i < TestCFG.cfg.length; i++){
+		int i = 2;
+			RegAllocator.allocateRegisters(TestSSA.ssa[i]);
 			TestSSA.ssa[i].print(0, i);
 			
 			code[i] = new MachineCode(TestSSA.ssa[i]);
 			code[i].print();
 			System.out.println();
-		}
+//		}
 	}
 
 	public static int[] getCode(int methodNo) {
