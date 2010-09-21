@@ -224,18 +224,40 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 													addPhiFunction(phi);
 												}
 												else{//phi functions are created in this node
-													func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													//check if operands are from same type or from type tPhiFunc
+													SSAValue[] opnd = func.getOperands();
+													
+													//determine type
+													int type = opnd[0].type;
+													for(int y = 0; y < opnd.length-1 && opnd[y].type == SSAValue.tPhiFunc; y++ ){
+														type = opnd[y+1].type;
+													}
+													if(type != SSAValue.tPhiFunc && ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tPhiFunc){
+														if(type == ((SSANode) predecessors[i]).exitSet[j].type){
+															func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+														}else{
+															//delete all Operands so the function will be deleted in the method eleminateRedundantPhiFunc()
+															func.setOperands(new SSAValue[0]);
+															entrySet[j]= null;
+														}
+													}else{														
+														func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													}
 												}
 											}else{//entrySet[j] != SSAValue.tPhiFunc
-												SSAValue result = new SSAValue();
-												result.type = SSAValue.tPhiFunc;
-												result.index = j - maxStack;
-												PhiFunction phi = new PhiFunction(sCPhiFunc);
-												phi.result = result;
-												phi.addOperand(entrySet[j]);
-												phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-												entrySet[j]= result;
-												addPhiFunction(phi);
+												if(((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tPhiFunc || entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type){
+													SSAValue result = new SSAValue();
+													result.type = SSAValue.tPhiFunc;
+													result.index = j - maxStack;
+													PhiFunction phi = new PhiFunction(sCPhiFunc);
+													phi.result = result;
+													phi.addOperand(entrySet[j]);
+													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													entrySet[j]= result;
+													addPhiFunction(phi);
+												}else{
+													entrySet[j] = null;
+												}
 											}
 										}
 									}
