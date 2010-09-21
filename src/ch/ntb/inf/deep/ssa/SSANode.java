@@ -30,8 +30,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	public int nofInstr;
 	public int nofPhiFunc;
 	public int nofDeletedPhiFunc; //its used for junit tests
-	private int maxLocals;
-	private int maxStack;
+	public int maxLocals;
+	public int maxStack;
 	private int stackpointer;
 	public SSAValue exitSet[];
 	public SSAValue entrySet[];
@@ -74,8 +74,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		if (nofPredecessors == 0) {
 			// create new entry and exit sets, locals are uninitialized
 			entrySet = new SSAValue[maxStack + maxLocals];
-			
-
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
 			if (this.equals(predecessors[0])) {// equal by "while(true){}
@@ -2058,6 +2056,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
+				((Call)instr).isStatic = true;
 				addInstruction(instr);
 				if(result.type != SSAValue.tVoid){
 					pushToStack(result);
@@ -2076,6 +2075,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
 				instr.result = result;
+				((Call)instr).isInterface = true;
 				addInstruction(instr);
 				if(result.type != SSAValue.tVoid){
 					pushToStack(result);
@@ -2267,7 +2267,11 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 			instructions = newArray;
 
 		}
-		instructions[nofInstr] = instr;
+		if ((nofInstr > 0) && (instructions[nofInstr-1].ssaOpcode == sCbranch)) { // insert before branch instruction
+			instructions[nofInstr] = instructions[nofInstr-1];
+			instructions[nofInstr-1] = instr;
+		} else 
+			instructions[nofInstr] = instr;
 		nofInstr++;
 	}
 
@@ -2332,7 +2336,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 	public SSANode insertNode(SSANode predecessor, SSA ssa){
 		int index = -1;
 		SSANode node = null;
-		// check if base follows predecessor immediate an save index
+		// check if base follows predecessor immediately a save index
 		for(int i = 0; i < nofPredecessors; i++ ){
 			if (predecessors[i].equals(predecessor)){
 				index = i;
@@ -2361,12 +2365,13 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 			}			
 		}
-		//append the node to ssa
+		// insert node
 		SSANode lastNode = (SSANode)ssa.cfg.rootNode;
-		while(lastNode.next != null){
+		while ((lastNode.next != null ) && (lastNode.next != this)){
 			lastNode = (SSANode)lastNode.next;
 		}
 		lastNode.next = node;
+		node.next = this;
 		
 		return node;
 	}

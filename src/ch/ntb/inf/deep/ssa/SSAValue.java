@@ -26,12 +26,15 @@ public class SSAValue implements SSAValueType {
 		
 		switch(type){
 		case 0://void
+			r = n + " (" + r + ")";
 			break;
 		case 1://""
 			break;
 		case 2://ref
+			r = n + " (" + r + ")";
 			break;
 		case 3://Object
+			r = n + " (" + r + ")";
 			break;
 		case 4://Boolean
 		case 5://Char
@@ -64,8 +67,11 @@ public class SSAValue implements SSAValueType {
 			break;
 		case 21://Along
 			break;
-		case 22://PhiFunc
+		case tPhiFunc://PhiFunc
 			r = r + "(" + n + ")";
+			break;
+		case tThis://this
+			r = "(" + r + ")";
 			break;
 		default:
 			break;		

@@ -7,6 +7,8 @@ public class Call extends SSAInstruction {
 	
 	HString methodName;
 	HString className;
+	public boolean isStatic = false;
+	public boolean isInterface = false;
 
 	public Call(int opCode) {
 		ssaOpcode = opCode;
@@ -58,19 +60,19 @@ public class Call extends SSAInstruction {
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
-		System.out.print("Call["+ scMnemonics[ssaOpcode]+"] (");
+		System.out.print("Call["+ scMnemonics[ssaOpcode]+"] {");
 		for (int i=0;i<operands.length-1;i++){
-			System.out.print(operands[i].typeName()+", ");
+			System.out.print(operands[i].n + ", ");
 		}
-		if(operands.length > 0){
-			System.out.print(operands[operands.length-1].n + ")");
-		}else{
-			System.out.print(")");
+		if (operands.length > 0){
+			System.out.print(operands[operands.length-1].n + "}");
+		} else {
+			System.out.print("}");
 		}
-		System.out.print(",   ");
-		System.out.print(className);
-		System.out.print(".");
-		System.out.println(methodName);
+		System.out.print(" (" + result.typeName() + ")");
+		if (ssaOpcode != sCnew) System.out.print(",   " + className + "." + methodName);
+		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
+		System.out.println();
 	}
 
 }

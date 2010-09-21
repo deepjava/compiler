@@ -31,7 +31,10 @@ public class Monadic extends SSAInstruction {
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.println("Monadic["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].typeName() + " )");
+		System.out.print(result.n + ": ");
+		System.out.print("Monadic["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
+		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
+		System.out.println();
 	}
 	
 

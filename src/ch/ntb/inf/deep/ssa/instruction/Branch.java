@@ -40,9 +40,9 @@ public class Branch extends SSAInstruction {
 			System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] ");
 		else {
 			if (operands.length == 2)
-				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].n + ", " + operands[1].n + " )");
+				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
 			else
-				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] ( "+ operands[0].n + " )");
+				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
 		}
 		System.out.println();
 

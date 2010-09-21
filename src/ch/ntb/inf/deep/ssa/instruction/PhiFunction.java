@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class PhiFunction extends SSAInstruction {
 	public int nofOperands;
 	public boolean deleted = false;
+	public boolean visited = false;
 	
 
 	public PhiFunction(int opCode) {
@@ -51,18 +52,21 @@ public class PhiFunction extends SSAInstruction {
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
-		System.out.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] (");
+		System.out.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] {");
 		for (int i=0;i<nofOperands-1;i++){
 			if(operands[i] != null){
-				System.out.print(operands[i].n+", ");
+				System.out.print(operands[i].n + ", ");
 			}else{
 				System.out.print("null, ");
 			}
 		}
 		if(operands[nofOperands-1] != null){
-			System.out.println(operands[nofOperands-1].n+")");
+			System.out.print(operands[nofOperands-1].n + "}");
 		}else{
-			System.out.println("null)");
+			System.out.print("null)");
 		}	
+		System.out.print(" (" + result.typeName() + ")" + ",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
+		if (deleted) System.out.print(" deleted");
+		System.out.println();
 	}
 }

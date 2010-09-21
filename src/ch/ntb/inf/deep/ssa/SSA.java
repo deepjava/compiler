@@ -14,6 +14,7 @@ public class SSA {
 	private SSANode loopHeaders[];
 	private SSANode sortedNodes[];
 	private int nofSortedNodes;
+	public int nofGPR, nofFPR;
 
 	public SSA(CFG cfg) {
 		this.cfg = cfg;

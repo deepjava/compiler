@@ -25,9 +25,10 @@ public class NoOpndRef extends NoOpnd {
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
+		System.out.print(result.n + ": ");
 		System.out.print("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
 		if(fieldName != null){
-			System.out.println("(" + fieldName + ")");
+			System.out.println("{" + fieldName + "}");
 		}else{
 			System.out.println();
 		}
