@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.cgPPC;
 
+import static org.junit.Assert.*;
+
 public class InstructionDecoder implements InstructionOpcs {
 
 	/**
@@ -246,7 +248,6 @@ public class InstructionDecoder implements InstructionOpcs {
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
 
 			res = (0x1F << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | 0x38;
-
 		} else if (parts[0].equals("and.")) {
 			String[] param = parts[1].split(",");
 
@@ -255,110 +256,99 @@ public class InstructionDecoder implements InstructionOpcs {
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
 
 			res = (0x1F << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | 0x39;
-
 		} else if (parts[0].equals("andc")) {
 			String[] param = parts[1].split(",");
-
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
-
 			res = (0x1F << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | 0x78;
-
 		} else if (parts[0].equals("andc.")) {
 			String[] param = parts[1].split(",");
-
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
-
 			res = (0x1F << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | 0x79;
-
 		} else if (parts[0].equals("andi.")) {
 			String[] param = parts[1].split(",");
-
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & UIMM;
-
 			res = (0x1C << 26) | (param2 << 21) | (param1 << 16) | param3;
 		} else if (parts[0].equals("andis.")) {
 			String[] param = parts[1].split(",");
-
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & UIMM;
-
 			res = (0x1D << 26) | (param2 << 21) | (param1 << 16) | param3;
 		} else if (parts[0].equals("b")) {
 			param1 = Integer.decode(parts[1]) & LI;
-
 			res = (0x12 << 26) | param1 | 0x0;
 		} else if (parts[0].equals("ba")) {
 			param1 = Integer.decode(parts[1]) & LI;
-
 			res = (0x12 << 26) | param1 | 0x2;
 		} else if (parts[0].equals("bl")) {
 			param1 = Integer.decode(parts[1]) & LI;
-
 			res = (0x12 << 26) | param1 | 0x1;
 		} else if (parts[0].equals("bla")) {
 			param1 = Integer.decode(parts[1]) & LI;
-
 			res = (0x12 << 26) | param1 | 0x3;
 		} else if (parts[0].equals("bc")) {
 			String[] param = parts[1].split(",");
-
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
+			assert param2 != 0 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
-
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x0;
 		} else if (parts[0].equals("bca")) {
 			String[] param = parts[1].split(",");
-
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
+			assert param2 != 0 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
-
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x2;
 		} else if (parts[0].equals("bcl")) {
 			String[] param = parts[1].split(",");
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
+			assert param2 != 0 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
-
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x1;
 		} else if (parts[0].equals("bcla")) {
 			String[] param = parts[1].split(",");
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
+			assert param2 != 0 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
-
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x3;
 		} else if (parts[0].equals("bcctr")) {
 			String[] param = parts[1].split(",");
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
-
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
+			assert param2 != 0 : "wrong BI field";
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0420;
 		} else if (parts[0].equals("bcctrl")) {
 			String[] param = parts[1].split(",");
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
-
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
+			assert param2 != 0 : "wrong BI field";
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0421;
 		} else if (parts[0].equals("bclr")) {
 			String[] param = parts[1].split(",");
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
-
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0020;
 		} else if (parts[0].equals("bclrl")) {
 			String[] param = parts[1].split(",");
-			param1 = Integer.decode(param[0]) & BO;
-			param2 = Integer.decode(param[1]) & BI;
-
+			param1 = decodeBO(param[0]);
+			assert param1 != 0 : "wrong BO field";
+			param2 = decodeBI(param[1]);
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0021;
 		} else if (parts[0].equals("cmp")) {
 			String[] param = parts[1].split(",");
@@ -1182,6 +1172,13 @@ public class InstructionDecoder implements InstructionOpcs {
 			param2 = Integer.decode(param[1]) & SIMM;
 
 			res = ppcAddi | (param1 << 21) | param2;
+		} else if (parts[0].equals("lis")) {
+			String[] param = parts[1].split(",");
+
+			param1 = Integer.parseInt(param[0].substring(1)) & r;
+			param2 = Integer.decode(param[1]) & SIMM;
+
+			res = ppcAddis | (param1 << 21) | param2;
 		} else if (parts[0].equals("lmw")) {
 			String[] param = parts[1].split(",");
 			String[] SpParam = param[1].split("\\x28");// 0x28=='('
@@ -1192,6 +1189,13 @@ public class InstructionDecoder implements InstructionOpcs {
 			param3 = Integer.parseInt(SpParam[1].substring(1)) & r;
 
 			res = (0x2E << 26) | (param1 << 21) | (param3 << 16) | param2;
+		} else if (parts[0].equals("lr")) {
+			String[] param = parts[1].split(",");
+
+			param1 = Integer.parseInt(param[0].substring(1)) & r;
+			param2 = Integer.parseInt(param[1].substring(1)) & r;
+
+			res = ppcOr | (param2 << 21) | (param1 << 16) | (param2 << 11);
 		} else if (parts[0].equals("lswi")) {
 			String[] param = parts[1].split(",");
 
@@ -1303,13 +1307,6 @@ public class InstructionDecoder implements InstructionOpcs {
 			String[] param = parts[1].split(",");
 
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
-			param2 = Integer.decode(param[1]) & SPR;
-
-			res = (0x1F << 26) | (param1 << 21) | (param2 << 11) | (0x153 << 1);
-		} else if (parts[0].equals("mftb")) {
-			String[] param = parts[1].split(",");
-
-			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			try {
 				int tempInt = Integer.decode(param[1]) & SPR;
 				param2 = ((tempInt & 0x1F) << 5) | ((tempInt & 0x3E0) >> 5);
@@ -1398,11 +1395,18 @@ public class InstructionDecoder implements InstructionOpcs {
 					param2 = 723;
 				} else {
 					param2 = 0;
-					assert true : "wrong SPR number";
+					assert false : "wrong SPR number";
 				}
 			}
 
 			res = (0x1F << 26) | (param1 << 21) | (param2 << 11) | (0x153 << 1);
+		} else if (parts[0].equals("mftb")) {
+			String[] param = parts[1].split(",");
+		
+			param1 = Integer.parseInt(param[0].substring(1)) & r;
+			param2 = Integer.decode(param[1]) & SPR;
+
+			res = (0x1F << 26) | (param1 << 21) | (param2 << 11) | (0x173 << 1);
 		} else if (parts[0].equals("mtcrf")) {
 			String[] param = parts[1].split(",");
 
@@ -1557,7 +1561,7 @@ public class InstructionDecoder implements InstructionOpcs {
 					param1 = 723;
 				} else {
 					param1 = 0;
-					assert true : "wrong SPR number";
+					assert false : "wrong SPR number";
 				}
 			}
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
@@ -2324,11 +2328,26 @@ public class InstructionDecoder implements InstructionOpcs {
 
 			res = (0x1B << 26) | (param2 << 21) | (param1 << 16) | param3;
 		} else {
-			assert true : "wrong SPR number";
+			assert false : "no such instruction";
 		}
 
 //		System.out.println(Integer.toBinaryString(res));
 		return res;
+	}
+
+	private static int decodeBO(String param) {
+		if (param.equals("iffalse")) return iffalse;
+		else if (param.equals("iftrue")) return iftrue;
+		else if (param.equals("always")) return always;
+		else return 0;
+	}
+
+	private static int decodeBI(String param) {
+		if (param.equals("crf0[so]")) return CRF0SO;
+		else if (param.equals("crf0[eq]")) return CRF0EQ;
+		else if (param.equals("crf0[gt]")) return CRF0GT;
+		else if (param.equals("crf0[lt]")) return CRF0LT;
+		else return 0;
 	}
 
 	public static String getMnemonic(Integer machineInstr) {
@@ -2350,8 +2369,10 @@ public class InstructionDecoder implements InstructionOpcs {
 			int FM = (machineInstr & 0x1FE0000) >>> (31 - 14);
 			int CRM = (machineInstr & 0xFF000) >>> (31 - 19);
 			int UIMM = (machineInstr & 0xFFFF);
-			int SIMM = (machineInstr & 0xFFFF);
-			int SPR = (machineInstr & 0x1FF800) >>> (31 - 20);
+			short simm = (short) (machineInstr & 0xFFFF);
+			int SIMM = simm;
+			int spr = (machineInstr & 0x1FF800) >>> (31 - 20);
+			int SPR = (spr >> 5) + ((spr & 0x1f) << 5);
 			int aa = (machineInstr & 0x02) >>> (31 - 30);
 			int lk = (machineInstr & 0x01);
 			int Rc = lk;
@@ -2382,20 +2403,20 @@ public class InstructionDecoder implements InstructionOpcs {
 				case 0x0B:
 					return "cmpi  crf" + crfD + ", " + L + ", r" + A + ", " + SIMM;
 				case 0x0C:
-					return "addic  r" + D + ", r" + A + ", 0x" + Integer.toHexString(SIMM);
+					return "addic  r" + D + ", r" + A + ", " + SIMM;
 				case 0x0D:
-					return "addic.  r" + D + ", r" + A + ", 0x" + Integer.toHexString(SIMM);
+					return "addic.  r" + D + ", r" + A + ", " + SIMM;
 				case 0x0E:
 					if (A == 0) {
-						return "li  r" + D + ", 0x" + Integer.toHexString(SIMM);
+						return "li  r" + D + ", " + SIMM;
 					} else {
-						return "addi  r" + D + ", r" + A + ", 0x" + Integer.toHexString(SIMM);
+						return "addi  r" + D + ", r" + A + ", " + SIMM;
 					}
 				case 0x0F:
 					if (A == 0) {
-						return "lis  r" + D + ", 0x" + Integer.toHexString(SIMM);
+						return "lis  r" + D + ", " + SIMM;
 					} else {
-						return "addis  r" + D + ", r" + A + ", 0x" + Integer.toHexString(SIMM);
+						return "addis  r" + D + ", r" + A + ", " + SIMM;
 					}
 				case 0x10:
 					if (aa == 0 && lk == 0) {
@@ -2571,7 +2592,7 @@ public class InstructionDecoder implements InstructionOpcs {
 						case 0x13C:
 							return "xor  r" + A + ", r" + S + ", r" + B;
 						case 0x153:
-							return "mfspr  r" + D + ", " + SPR;
+							return "mfspr  r" + D + ", " + SPRname(SPR);
 						case 0x157:
 							return "lhax  r" + D + ", r" + A + ", r" + B;
 						case 0x177:
@@ -2588,12 +2609,18 @@ public class InstructionDecoder implements InstructionOpcs {
 							return "sthux  r" + S + ", r" + A + ", r" + B;
 						case 0x1BC:
 							if (Rc == 0) {
-								return "or  r" + A + ", r" + S + ", r" + B;
+								if (S == B)
+									return "lr  r" + A + ", r" + S;
+								else
+									return "or  r" + A + ", r" + S + ", r" + B;
 							} else {
-								return "or.  r" + A + ", r" + S + ", r" + B;
+								if (S == B)
+									return "lr  r" + A + ", r" + S;
+								else
+									return "or.  r" + A + ", r" + S + ", r" + B;
 							}
 						case 0x1D3:
-							return "mtspr  " + SPR + ", r" + S;
+							return "mtspr  " + SPRname(SPR) + ", r" + S;
 						case 0x1DC:
 							if (Rc == 0) {
 								return "nand  r" + A + ", r" + S + ", r" + B;
@@ -3082,5 +3109,52 @@ public class InstructionDecoder implements InstructionOpcs {
 					}
 			}
 			return machineInstr + "  (0x" + Integer.toHexString(machineInstr) + ")";
+	}
+
+	private static String SPRname(int SPR) {
+		if (SPR == 1) return "XER";
+		if (SPR == 8) return "LR";
+		if (SPR == 9) return "CTR";
+		if (SPR == 18) return "DSISR";
+		if (SPR == 19) return "DAR";
+		if (SPR == 22) return "DEC";
+		if (SPR == 26) return "SRR0";
+		if (SPR == 27) return "SRR1";
+		if (SPR == 80) return "EIE";
+		if (SPR == 81) return "EID";
+		if (SPR == 82) return "NRE";
+		if (SPR == 144) return "CMPA";
+		if (SPR == 145) return "CMPB";
+		if (SPR == 146) return "CMPC";
+		if (SPR == 147) return "CMPD";
+		if (SPR == 148) return "ECR";
+		if (SPR == 149) return "DER";
+		if (SPR == 150) return "COUNTA";
+		if (SPR == 151) return "COUNTB";
+		if (SPR == 152) return "CMPE";
+		if (SPR == 153) return "CMPF";
+		if (SPR == 154) return "CMPG";
+		if (SPR == 155) return "CMPH";
+		if (SPR == 156) return "LCTRL1";
+		if (SPR == 157) return "LCTRL2";
+		if (SPR == 158) return "ICTRL";
+		if (SPR == 159) return "BAR";
+		if (SPR == 150) return "DPDR";
+		if (SPR == 268) return "TBL";
+		if (SPR == 269) return "TBU";
+		if (SPR == 272) return "SPRG0";
+		if (SPR == 273) return "SPRG1";
+		if (SPR == 274) return "SPRG2";
+		if (SPR == 275) return "SPRG3";
+		if (SPR == 284) return "TBL";
+		if (SPR == 285) return "TBU";
+		if (SPR == 287) return "PVR";
+		if (SPR == 560) return "ICCSR";
+		if (SPR == 561) return "ICADR";
+		if (SPR == 562) return "ICDAT";
+		if (SPR == 630) return "DPDR";
+		if (SPR == 1022) return "FPECR";
+		assert false : "wrong SPR number";
+		return null;
 	}
 }

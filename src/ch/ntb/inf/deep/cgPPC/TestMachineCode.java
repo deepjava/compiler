@@ -53,7 +53,7 @@ public class TestMachineCode {
 			int i = 4; 
 				ssa[i] = new SSA(cfg[i]);
 				
-				RegAllocator.allocateRegisters(cfg[i]);
+				RegAllocator.allocateRegisters(ssa[i]);
 				
 				System.out.println();
 				ssa[i].print(0, i);

@@ -3,36 +3,36 @@ package ch.ntb.inf.deep.cgPPC;
 interface InstructionOpcs {
 	final int BOtrue = 0x0c;
 	final int BOfalse = 0x04;
+	final int BOalways = 0x14;
 	final int CRF0 = 0;
 	final int EQ = 1;
 	final int GT = 2;
 	final int LT = 3;
+	final int LR = 0x100;
+	
+	final int iffalse = 4;
+	final int iftrue = 0xc;
+	final int always = 0x14;
+	final int CRF0SO = 28;
+	final int CRF0EQ = 29;
+	final int CRF0GT = 30;
+	final int CRF0LT = 31;
 
 	public static String[] BOstring = {
 		"",
 		"",
 		"",
 		"",
-		"if false",
-		"if false",
+		"iffalse",
+		"iffalse",
 		"",
 		"",
 		"",
 		"",
 		"",
 		"",
-		"if true",
-		"if true",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
+		"iftrue",
+		"iftrue",
 		"",
 		"",
 		"",
@@ -40,7 +40,17 @@ interface InstructionOpcs {
 		"",
 		"",
 		"always",
-		"always"
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
 	};
 
 	public static String[] BIstring = {
@@ -83,13 +93,22 @@ interface InstructionOpcs {
 		ppcAddi = (0x0e << 26),
 		ppcAddis = (0x0f << 26),
 		ppcB = (0x12 << 26),
+		ppcBl = (0x12 << 26) | 1,
 		ppcBc = (0x10 << 26),
+		ppcBclr = (0x13 << 26) | (0x10 << 1),
 		ppcCmp = (0x1f << 26),
 		ppcCmpi = (0x0b << 26),
 		ppcFadd = (0x3f << 26) | (0x15 << 1),
 		ppcFadds = (0x3b << 26) | (0x15 << 1),
 		ppcFsub = (0x3f << 26) | (0x14 << 1),
 		ppcFsubs = (0x3b << 26) | (0x14 << 1),
+		ppcLmw = (0x2e << 26),
+		ppcLwz = (0x20 << 26),
+		ppcMfspr = (0x1f << 26) | (0x153 << 1),
+		ppcMtspr = (0x1f << 26) | (0x1d3 << 1),
+		ppcOr = (0x1f << 26) | (0x1bc << 1),
+		ppcStmw = (0x2f << 26),
+		ppcStw = (0x24 << 26),
 		ppcStwu = (0x25 << 26),
 		ppcSubf = (0x1f << 26) | (0x28 << 1),
 		ppcSubfic = (0x08 << 26);
