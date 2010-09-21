@@ -1468,8 +1468,8 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get const
 					wide = false;
 				} else {
-					val = ssa.cfg.code[bca++] & 0xff;// get index
-					val1 = ssa.cfg.code[bca] & 0xff;// get const
+					val = ssa.cfg.code[bca++];// get index
+					val1 = ssa.cfg.code[bca];// get const
 				}
 
 				load(val, SSAValue.tInteger);
