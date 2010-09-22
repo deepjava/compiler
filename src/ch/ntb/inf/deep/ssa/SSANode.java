@@ -1744,7 +1744,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bCtableswitch:
-				popFromStack();
+				value1 = popFromStack();
+				instr = new Branch(sCbranch, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//Step over whole bytecode instruction
 				bca++;
 				//pad bytes
@@ -1762,7 +1765,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca = bca + 4*nofPair1 - 1;
 				break;
 			case bClookupswitch:
-				popFromStack();
+				value1 = popFromStack();
+				instr = new Branch(sCbranch, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//Step over whole bytecode instruction
 				bca++;
 				//pad bytes
@@ -1777,6 +1783,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				bca = bca + 8*nofPair2 - 1;
 				break;
 			case bCireturn:
+				value1 = popFromStack();
+				instr = new Branch(sCreturn, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//discard Stack
 				while(stackpointer >= 0){
 					exitSet[stackpointer]= null;
@@ -1784,6 +1794,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bClreturn:
+				value1 = popFromStack();
+				instr = new Branch(sCreturn, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//discard Stack
 				while(stackpointer >= 0){
 					exitSet[stackpointer]= null;
@@ -1791,6 +1805,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bCfreturn:
+				value1 = popFromStack();
+				instr = new Branch(sCreturn, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//discard Stack
 				while(stackpointer >= 0){
 					exitSet[stackpointer]= null;
@@ -1798,6 +1816,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bCdreturn:
+				value1 = popFromStack();
+				instr = new Branch(sCreturn, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//discard Stack
 				while(stackpointer >= 0){
 					exitSet[stackpointer]= null;
@@ -1805,6 +1827,10 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bCareturn:
+				value1 = popFromStack();
+				instr = new Branch(sCreturn, value1);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//discard Stack
 				while(stackpointer >= 0){
 					exitSet[stackpointer]= null;
@@ -1812,6 +1838,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}
 				break;
 			case bCreturn:
+				instr = new Branch(sCreturn);
+				instr.result = new SSAValue();
+				addInstruction(instr);
 				//discard Stack
 				while(stackpointer >= 0){
 					exitSet[stackpointer]= null;
