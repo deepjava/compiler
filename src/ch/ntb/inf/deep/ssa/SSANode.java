@@ -2247,7 +2247,9 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				break;
 			case bCifnull:
 			case bCifnonnull:
-				popFromStack();
+				value1 = popFromStack();
+				instr = new Branch(sCbranch, value1);
+				instr.result = new SSAValue();
 				bca = bca+2; //step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto_w:
