@@ -115,82 +115,98 @@ SSA:
 Method: <init>
    SSANode 0:
       EntrySet {[ ], [ ]}
-         NoOpnd[sCloadLocal]
-         Call[sCcall] (Object)
-      ExitSet {[ ], [ Object ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
 
 
 Method: multipleReturns1
    SSANode 0:
       EntrySet {[ ], [ , ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadLocal]
-      ExitSet {[ ], [ Integer (null), Integer (0) ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         2: Branch[sCBranch] {1}
+      ExitSet {[ ], [ 1 (Integer), 0 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ ], [ Integer (null), Integer (0) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ ], [ Integer (null), Integer (1) ]}
+      EntrySet {[ ], [ 1 (Integer), 0 (Integer) ]}
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=1, reg=-1
+         4: Branch[sCreturn] {3}
+      ExitSet {[ ], [ 1 (Integer), 3 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ ], [ Integer (null), Integer (0) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ ], [ Integer (null), Integer (22) ]}
+      EntrySet {[ ], [ 1 (Integer), 0 (Integer) ]}
+         5: NoOpnd[sCloadConst] 22 (Integer),   end=0, index=1, reg=-1
+         6: Branch[sCreturn] {5}
+      ExitSet {[ ], [ 1 (Integer), 5 (Integer) ]}
 
 
 Method: multipleReturns1
    SSANode 0:
       EntrySet {[ , ], [ ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+         0: NoOpnd[sCloadConst] 22 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         2: Branch[sCBranch] {1, 0}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         4: Branch[sCreturn] {3}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         5: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         6: Branch[sCBranch] {5, 0}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 3:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         7: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         8: Branch[sCreturn] {7}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 4:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         9: NoOpnd[sCloadConst] 5 (Integer),   end=0, index=-1, reg=-1
+         10: Branch[sCBranch] {9, 0}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 5:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         11: NoOpnd[sCloadConst] 5 (Integer),   end=0, index=-1, reg=-1
+         12: Branch[sCreturn] {11}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 6:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         13: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         14: Branch[sCBranch] {13, 0}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 7:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         15: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         16: Branch[sCreturn] {15}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 8:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         17: NoOpnd[sCloadConst] 4 (Integer),   end=0, index=-1, reg=-1
+         18: Branch[sCBranch] {17, 0}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 9:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         19: NoOpnd[sCloadConst] 4 (Integer),   end=0, index=-1, reg=-1
+         20: Branch[sCreturn] {19}
+      ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 10:
-      EntrySet {[ , ], [ Integer (22) ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (22) ]}
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         21: NoOpnd[sCloadConst] 100 (Integer),   end=0, index=-1, reg=-1
+         22: Branch[sCreturn] {21}
+      ExitSet {[ , ], [ 0 (Integer) ]}
+

@@ -31,39 +31,39 @@ public class SSA07 extends TestSSA {
 	@Test
 	public void testConstructor() {
 		SSANode[] nodes = getAndTestSSA(0, 1, 0);
-		testNode(nodes[0], 2, 0, 2);
+		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testEmptyIntArray() {
 		SSANode[] nodes = getAndTestSSA(1, 1, 0);
-		testNode(nodes[0], 2, 0, 2);
+		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testIntArrayParam() {
 		SSANode[] nodes = getAndTestSSA(2, 4, 1);
-		testNode(nodes[0], 4, 0, 7);
+		testNode(nodes[0], 5, 0, 7);
 		testNode(nodes[1], 4, 0, 7);
-		testNode(nodes[2], 1, 1, 7);
-		testNode(nodes[3], 2, 0, 7);
+		testNode(nodes[2], 2, 1, 7);
+		testNode(nodes[3], 3, 0, 7);
 	}
 	
 	@Test
 	public void testStringArray() {
 		SSANode[] nodes = getAndTestSSA(3, 1, 0);
-		testNode(nodes[0], 19, 0, 5);
+		testNode(nodes[0], 20, 0, 5);
 	}
 	
 	@Test
 	public void testObjectArray() {
 		SSANode[] nodes = getAndTestSSA(4, 1, 0);
-		testNode(nodes[0], 6, 0, 5);
+		testNode(nodes[0], 7, 0, 5);
 	}
 	
 	@Test
 	public void testMultiArray(){
 		SSANode[] nodes = getAndTestSSA(5, 1, 0);
-		testNode(nodes[0], 25, 0, 10);
+		testNode(nodes[0], 26, 0, 10);
 	}
 }

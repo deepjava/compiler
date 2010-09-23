@@ -108,69 +108,103 @@ method simple3
 		predecessor: 
 		successor: 
 
+method simple4
+	nodeNr:0 from 0 to 52	visited: false
+		predecessor: 
+		successor: 
+
+
 
 SSA:
 Method: <init>
    SSANode 0:
       EntrySet {[ ], [ ]}
-         Monadic[sCloadVar] ( Void )
-         Call[sCcall] (Object)
-      ExitSet {[ ], [ Object ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
 
 
 Method: emptyMethodStatic
    SSANode 0:
       EntrySet {}
+         0: Branch[sCreturn] 
       ExitSet {}
 
 
 Method: emptyMethod
    SSANode 0:
       EntrySet {[ ]}
+         0: Branch[sCreturn] 
       ExitSet {[ ]}
 
 
 Method: assignment1
    SSANode 0:
       EntrySet {[ ], [ ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ ], [ Integer (1) ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Integer) ]}
 
 
 Method: simple1
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-         Monadic[sCloadVar] ( Void )
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
-    
-    
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         2: Dyadic[sCadd] {0, 1},   end=0, index=1, reg=-1
+         3: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         4: Dyadic[sCadd] {2, 3},   end=0, index=1, reg=-1
+         5: NoOpnd[sCloadConst] -1 (Integer),   end=0, index=-1, reg=-1
+         6: Dyadic[sCadd] {4, 5},   end=0, index=1, reg=-1
+         7: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         8: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         9: Dyadic[sCadd] {7, 8},   end=0, index=1, reg=-1
+         10: Branch[sCreturn] 
+      ExitSet {[ , ], [ 7 (Integer), 9 (Integer) ]}
+
+
 Method: simple2
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-      ExitSet {[ , ], [ Integer (null), Integer (2) ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=0, reg=-1
+         2: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=0, reg=-1
+         3: Dyadic[sCadd] {1, 1},   end=0, index=0, reg=-1
+         4: Branch[sCreturn] 
+      ExitSet {[ , ], [ 3 (Integer), 1 (Integer) ]}
 
 
 Method: simple3
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-         Dyadic[sCadd] ( Integer, Integer )
-      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=1, reg=-1
+         2: Dyadic[sCadd] {0, 1},   end=0, index=0, reg=-1
+         3: Dyadic[sCadd] {2, 2},   end=0, index=1, reg=-1
+         4: Branch[sCreturn] 
+      ExitSet {[ , ], [ 2 (Integer), 3 (Integer) ]}
 
 
-		
+Method: simple4
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadConst] 100 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 10000 (Integer),   end=0, index=0, reg=-1
+         2: NoOpnd[sCloadConst] 32767 (Integer),   end=0, index=0, reg=-1
+         3: NoOpnd[sCloadConst] 40000 (Integer),   end=0, index=0, reg=-1
+         4: NoOpnd[sCloadConst] 80000 (Integer),   end=0, index=0, reg=-1
+         5: NoOpnd[sCloadConst] 100000 (Integer),   end=0, index=0, reg=-1
+         6: NoOpnd[sCloadConst] 2147440000 (Integer),   end=0, index=0, reg=-1
+         7: NoOpnd[sCloadConst] 2147483647 (Integer),   end=0, index=0, reg=-1
+         8: NoOpnd[sCloadConst] -100 (Integer),   end=0, index=0, reg=-1
+         9: NoOpnd[sCloadConst] -10000 (Integer),   end=0, index=0, reg=-1
+         10: NoOpnd[sCloadConst] -32768 (Integer),   end=0, index=0, reg=-1
+         11: NoOpnd[sCloadConst] -40000 (Integer),   end=0, index=0, reg=-1
+         12: NoOpnd[sCloadConst] -80000 (Integer),   end=0, index=0, reg=-1
+         13: NoOpnd[sCloadConst] -100000 (Integer),   end=0, index=0, reg=-1
+         14: NoOpnd[sCloadConst] -2147440000 (Integer),   end=0, index=0, reg=-1
+         15: NoOpnd[sCloadConst] -2147483648 (Integer),   end=0, index=0, reg=-1
+         16: Branch[sCreturn] 
+      ExitSet {[ ], [ 15 (Integer) ]}
+

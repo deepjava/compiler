@@ -30,25 +30,25 @@ public class SSA08 extends TestSSA {
 	@Test
 	public void testConstructor() {
 		SSANode[] nodes = getAndTestSSA(0, 1, 0);
-		testNode(nodes[0], 2, 0, 2);
+		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testClassMethCall(){
 		SSANode[] nodes = getAndTestSSA(1, 1, 0);
-		testNode(nodes[0], 5, 0, 4);
+		testNode(nodes[0], 6, 0, 4);
 	}
 	
 	@Test
 	public void testObjectMethCall(){
 		SSANode[] nodes = getAndTestSSA(2, 1, 0);
-		testNode(nodes[0], 4, 0, 3);
+		testNode(nodes[0], 5, 0, 3);
 	}
 	
 	@Test
 	public void testCallToAnotherClass(){
 		SSANode[] nodes = getAndTestSSA(3, 1, 0);
-		testNode(nodes[0], 1, 0, 0);
+		testNode(nodes[0], 2, 0, 0);
 	}
 
 }

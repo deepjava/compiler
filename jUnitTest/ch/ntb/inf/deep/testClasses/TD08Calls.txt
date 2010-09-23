@@ -108,71 +108,80 @@ SSA:
 Method: <init>
    SSANode 0:
       EntrySet {[ ], [ ]}
-         NoOpnd[sCloadLocal] null
-         Call[sCcall] (Object)
-      ExitSet {[ ], [ Object ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
 
 
 Method: classMethCall
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         NoOpnd[sCloadConst] 0
-         NoOpnd[sCloadConst] 3
-         Call[sCcall] (Integer)
-         NoOpnd[sCloadConst] 2
-         Dyadic[sCadd] ( Integer, Integer )
-      ExitSet {[ , ], [ Integer (2), Integer (null) ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         2: Call[sCcall] {1} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.classMethod,   end=0, index=1, reg=-1
+         3: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=0, reg=-1
+         4: Dyadic[sCadd] {3, 2},   end=0, index=-1, reg=-1
+         5: Branch[sCreturn] {4}
+      ExitSet {[ , ], [ 3 (Integer), 2 (Integer) ]}
 
 
 Method: objectMethCall
    SSANode 0:
       EntrySet {[ , ], [ ]}
-         Call[sCnew] (Object)
-         Call[sCcall] (Ref)
-         NoOpnd[sCloadConst] 9
-         Call[sCcall] (Integer, Ref)
-      ExitSet {[ , ], [ Ref ]}
+         0: Call[sCnew] {-1} (Ref),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   ch/ntb/inf/deep/testClasses/T08Calls.<init>,   end=0, index=-1, reg=-1
+         2: NoOpnd[sCloadConst] 9 (Integer),   end=0, index=-1, reg=-1
+         3: Call[sCcall] {2, 0} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.objectMethod,   end=0, index=-1, reg=-1
+         4: Branch[sCreturn] {3}
+      ExitSet {[ , ], [ 0 (Ref) ]}
 
 
 Method: callToAnotherClass
    SSANode 0:
       EntrySet {}
-         Call[sCcall] ()
+         0: Call[sCcall] {} (Void),   ch/ntb/inf/deep/testClasses/T01SimpleMethods.emptyMethodStatic,   end=0, index=-1, reg=-1
+         1: Branch[sCreturn] 
       ExitSet {}
 
 
 Method: classMethod
    SSANode 0:
       EntrySet {[ , ], [ , , ]}
-         NoOpnd[sCloadConst] 0
-         NoOpnd[sCloadConst] 0
-         NoOpnd[sCloadLocal] null
-      ExitSet {[ , ], [ Integer (null), Integer (0), Integer (0) ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=2, reg=-1
+         2: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         3: Branch[sCBranch] 
+      ExitSet {[ , ], [ 2 (Integer), 0 (Integer), 1 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
-         NoOpnd[sCloadConst] 3
-         Dyadic[sCadd] ( Phi-Function, Integer )
-         NoOpnd[sCloadConst] 1
-         Dyadic[sCadd] ( Phi-Function, Integer )
-      ExitSet {[ , ], [ Phi-Function, Integer (null), Integer (null) ]}
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         4: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         5: Dyadic[sCadd] {9, 4},   end=0, index=1, reg=-1
+         6: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         7: Dyadic[sCadd] {10, 6},   end=0, index=2, reg=-1
+      ExitSet {[ , ], [ Phi-Function(8), 5 (Integer), 7 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
-         -1: PhiFunction[sCPhiFunc] (-1)
-         -1: PhiFunction[sCPhiFunc] (-1, -1)
-         -1: PhiFunction[sCPhiFunc] (-1, -1)
-      ExitSet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         8: PhiFunction[sCPhiFunc] {2} (Phi-Function),   end=0, index=0, reg=-1 deleted
+         9: PhiFunction[sCPhiFunc] {0, 5} (Phi-Function),   end=0, index=1, reg=-1
+         10: PhiFunction[sCPhiFunc] {1, 7} (Phi-Function),   end=0, index=2, reg=-1
+         11: Branch[sCBranch] {8, 10}
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
 
    SSANode 3:
-      EntrySet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
-      ExitSet {[ , ], [ Phi-Function, Phi-Function, Phi-Function ]}
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         12: Branch[sCreturn] {9}
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
 
 
 Method: objectMethod
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         NoOpnd[sCloadLocal] null
-         NoOpnd[sCloadConst] 2
-         Dyadic[sCrem] ( Integer, Integer )
-      ExitSet {[ , ], [ , Integer (null) ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         2: Dyadic[sCrem] {0, 1},   end=0, index=-1, reg=-1
+         3: Branch[sCreturn] {2}
+      ExitSet {[ , ], [ , 0 (Integer) ]}
+

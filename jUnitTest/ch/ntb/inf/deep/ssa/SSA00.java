@@ -30,6 +30,6 @@ public class SSA00 extends TestSSA {
 	public void testConstructor() {
     	// constructor
 		SSANode[] node = getAndTestSSA(0,1,0);
-		testNode(node[0], 2, 0, 2);
+		testNode(node[0], 3, 0, 2);
 	}
 }

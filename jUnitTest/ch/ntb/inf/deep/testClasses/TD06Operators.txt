@@ -194,134 +194,156 @@ SSA:
 Method: <init>
    SSANode 0:
       EntrySet {[ ], [ ]}
-         NoOpnd[sCloadLocal]
-         Call[sCcall] (Object)
-      ExitSet {[ ], [ Object ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
 
 
 Method: ConditionalOperator1
    SSANode 0:
       EntrySet {[ ], [ , , , , ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-      ExitSet {[ ], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=2, reg=-1
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=3, reg=-1
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=4, reg=-1
+         3: NoOpnd[sCloadConst] 101 (Integer),   end=0, index=0, reg=-1
+         4: Branch[sCBranch] {0}
+      ExitSet {[ ], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ ], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ Integer (1)], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         5: Branch[sCBranch] 
+      ExitSet {[ 1 (Integer)], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ ], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ Integer (0)], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+      ExitSet {[ 2 (Integer)], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 3:
-      EntrySet {[ Phi-Function], [ Integer (101), , Integer (0), Integer (1), Integer (0) ]}
-         PhiFunction[sCPhiFunc] (Integer, Integer)
-         NoOpnd[sCloadConst]
-      ExitSet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ Phi-Function(6)], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         6: PhiFunction[sCPhiFunc] {1, 2} (Phi-Function),   end=0, index=1, reg=-1
+         7: NoOpnd[sCloadConst] 102 (Integer),   end=0, index=0, reg=-1
+         8: Branch[sCBranch] {0}
+      ExitSet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 4:
-      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         9: Branch[sCBranch] {1}
+      ExitSet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 5:
-      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ Integer (0)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         10: Branch[sCBranch] 
+      ExitSet {[ 2 (Integer)], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 6:
-      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ Integer (0)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         11: Branch[sCBranch] 
+      ExitSet {[ 0 (Integer)], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 7:
-      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         12: Branch[sCBranch] {2}
+      ExitSet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 8:
-      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ Integer (0)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         13: Branch[sCBranch] 
+      ExitSet {[ 0 (Integer)], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 9:
-      EntrySet {[ ], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-      ExitSet {[ Integer (1)], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ ], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+      ExitSet {[ 1 (Integer)], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
    SSANode 10:
-      EntrySet {[ Phi-Function], [ Integer (102), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
-         PhiFunction[sCPhiFunc] (Integer, Integer, Integer, Integer)
-         NoOpnd[sCloadConst]
-      ExitSet {[ ], [ Integer (103), Phi-Function, Integer (0), Integer (1), Integer (0) ]}
+      EntrySet {[ Phi-Function(14)], [ 7 (Integer), Phi-Function(6), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         14: PhiFunction[sCPhiFunc] {2, 0, 0, 1} (Phi-Function),   end=0, index=1, reg=-1
+         15: NoOpnd[sCloadConst] 103 (Integer),   end=0, index=0, reg=-1
+         16: Branch[sCreturn] {14}
+      ExitSet {[ ], [ 15 (Integer), Phi-Function(14), 0 (Integer), 1 (Integer), 2 (Integer) ]}
 
 
 Method: ConditionalOperator2
    SSANode 0:
       EntrySet {[ , ], [ , , , , , , , , ]}
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=2, reg=-1
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=3, reg=-1
+         3: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=4, reg=-1
+         4: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=5, reg=-1
+         5: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=6, reg=-1
+         6: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=7, reg=-1
+         7: NoOpnd[sCloadConst] 101 (Integer),   end=0, index=0, reg=-1
+         8: Branch[sCBranch] {5, 4}
+      ExitSet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
 
    SSANode 1:
-      EntrySet {[ , ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
-      ExitSet {[ Integer (1), ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+      EntrySet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+         9: Branch[sCBranch] 
+      ExitSet {[ 4 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
 
    SSANode 2:
-      EntrySet {[ , ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
-      ExitSet {[ Integer (3), ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
+      EntrySet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+      ExitSet {[ 6 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
 
    SSANode 3:
-      EntrySet {[ Phi-Function, ], [ Integer (101), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), ]}
-         PhiFunction[sCPhiFunc] (Integer, Integer)
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ Phi-Function(10), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+         10: PhiFunction[sCPhiFunc] {4, 6} (Phi-Function),   end=0, index=8, reg=-1
+         11: NoOpnd[sCloadConst] 102 (Integer),   end=0, index=0, reg=-1
+         12: Branch[sCBranch] {5, 4}
+      ExitSet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 4:
-      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+         13: Branch[sCBranch] {1}
+      ExitSet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 5:
-      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ Integer (1), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+         14: Branch[sCBranch] 
+      ExitSet {[ 4 (Integer), ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 6:
-      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ Integer (2), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+         15: Branch[sCBranch] 
+      ExitSet {[ 5 (Integer), ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 7:
-      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+         16: Branch[sCBranch] {3, 2}
+      ExitSet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 8:
-      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ Integer (2), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+         17: Branch[sCBranch] 
+      ExitSet {[ 5 (Integer), ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 9:
-      EntrySet {[ , ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ Integer (3), ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+      ExitSet {[ 6 (Integer), ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
 
    SSANode 10:
-      EntrySet {[ Phi-Function, ], [ Integer (102), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-         PhiFunction[sCPhiFunc] (Integer, Integer, Integer, Integer)
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ Phi-Function(18), ], [ 11 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(10) ]}
+         18: PhiFunction[sCPhiFunc] {4, 5, 5, 6} (Phi-Function),   end=0, index=8, reg=-1
+         19: NoOpnd[sCloadConst] 103 (Integer),   end=0, index=0, reg=-1
+         20: Branch[sCBranch] {18, 19}
+      ExitSet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
 
    SSANode 11:
-      EntrySet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
+         21: Branch[sCBranch] {0}
+      ExitSet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
 
    SSANode 12:
-      EntrySet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
+      EntrySet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
+         22: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         23: Branch[sCreturn] {22}
+      ExitSet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
 
    SSANode 13:
-      EntrySet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-         NoOpnd[sCloadConst]
-      ExitSet {[ , ], [ Integer (103), Integer (0), Integer (0), Integer (1), Integer (0), Integer (1), Integer (2), Integer (3), Phi-Function ]}
-		 
+      EntrySet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
+         24: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         25: Branch[sCreturn] {24}
+      ExitSet {[ , ], [ 19 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(18) ]}
+
 		 

@@ -28,37 +28,37 @@ public class SSA01 extends TestSSA {
  	@Test
 	public void emptyMethodStatic() {
 		SSANode[] nodes = getAndTestSSA(1, 1, 0);
-		testNode(nodes[0],0,0,0);
+		testNode(nodes[0],1,0,0);
  	}
 	
 	@Test
 	public void emptyMethod() {
 		SSANode[] nodes = getAndTestSSA(2, 1, 0);
-		testNode(nodes[0],0,0,1);
+		testNode(nodes[0],1,0,1);
  	}
 
 	@Test
 	public void assignment1() {
 		SSANode[] nodes = getAndTestSSA(3, 1,0);
-		testNode(nodes[0],1,0,2);
+		testNode(nodes[0],2,0,2);
  	}
 	
 	@Test
 	public void simple1() {
 		SSANode[] nodes = getAndTestSSA(4, 1,0);
-		testNode(nodes[0],10,0,4);
+		testNode(nodes[0],11,0,4);
  	}
 	
 	@Test
 	public void simple2() {
 		SSANode[] nodes = getAndTestSSA(5, 1,0);
-		testNode(nodes[0],4,0,4);
+		testNode(nodes[0],5,0,4);
  	}
 	
 	@Test
 	public void simple3() {
 		SSANode[] nodes = getAndTestSSA(6, 1,0);
-		testNode(nodes[0],4,0,4);
+		testNode(nodes[0],5,0,4);
  	}
 
 }
