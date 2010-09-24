@@ -232,7 +232,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					break;
 				case tInteger:
 				case tThis:
-				case tObject:
+				case tRef:
 				case tAinteger:
 					regs[i] = reserveNonVolatileGPR();
 					instr.result.reg = regs[i];

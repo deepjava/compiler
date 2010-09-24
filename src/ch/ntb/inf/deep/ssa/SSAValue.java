@@ -25,53 +25,46 @@ public class SSAValue implements SSAValueType {
 		String r = svNames[type];
 		
 		switch(type){
-		case 0://void
+		case tVoid://void
 			r = n + " (" + r + ")";
 			break;
-		case 1://""
-			break;
-		case 2://ref
-			r = n + " (" + r + ")";
-			break;
-		case 3://Object
-			r = n + " (" + r + ")";
-			break;
-		case 4://Boolean
-		case 5://Char
-		case 6://Float
-		case 7://Double
-		case 8://Byte
-		case 9://Short
-		case 10://Integer
-		case 11://Long
-//			r = r + " (" + constant + ")"  ;
-			r = n + " (" + r + ")";
-			break;
-		case 12://Aref
-			break;
-		case 13://Aobject
-			break;
-		case 14://Aboolean
-			break;
-		case 15://Achar
-			break;
-		case 16://Afloat
-			break;
-		case 17://Adouble
-			break;
-		case 18://Abyte
-			break;
-		case 19://Ashort
-			break;
-		case 20://Ainteger
-			break;
-		case 21://Along
+		case tThis://this
+			r = "(" + r + ")";
 			break;
 		case tPhiFunc://PhiFunc
 			r = r + "(" + n + ")";
 			break;
-		case tThis://this
-			r = "(" + r + ")";
+		case tRef://ref
+			r = n + " (" + r + ")";
+			break;
+		case tBoolean://Boolean
+		case tChar://Char
+		case tFloat://Float
+		case tDouble://Double
+		case tByte://Byte
+		case tShort://Short
+		case tInteger://Integer
+		case tLong://Long
+//			r = r + " (" + constant + ")"  ;
+			r = n + " (" + r + ")";
+			break;
+		case tAref://Aref
+			break;
+		case tAboolean://Aboolean
+			break;
+		case tAchar://Achar
+			break;
+		case tAfloat://Afloat
+			break;
+		case tAdouble://Adouble
+			break;
+		case tAbyte://Abyte
+			break;
+		case tAshort://Ashort
+			break;
+		case tAinteger://Ainteger
+			break;
+		case tAlong://Along
 			break;
 		default:
 			break;		

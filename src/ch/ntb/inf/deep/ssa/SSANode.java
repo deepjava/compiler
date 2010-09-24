@@ -296,7 +296,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				break;
 			case bCaconst_null:
 				result = new SSAValue();
-				result.type = SSAValue.tObject;
+				result.type = SSAValue.tRef;
 				result.constant = null;
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -474,7 +474,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}else{
 					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
 						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
-						result.type = SSAValue.tObject;
+						result.type = SSAValue.tRef;
 						result.constant = literal.string;
 					}else{
 						assert false : "Wrong DataItem type";
@@ -506,7 +506,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				}else{
 					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
 						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
-						result.type = SSAValue.tObject;
+						result.type = SSAValue.tRef;
 						result.constant = literal.string;
 					}else{
 						assert false : "Wrong DataItem type";
@@ -593,7 +593,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				load(val, SSAValue.tObject);
+				load(val, SSAValue.tRef);
 				break;
 			case bCiload_0:
 				load(0, SSAValue.tInteger);
@@ -644,16 +644,16 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				load(3, SSAValue.tDouble);
 				break;
 			case bCaload_0:
-				load(0, SSAValue.tObject);
+				load(0, SSAValue.tRef);
 				break;
 			case bCaload_1:
-				load(1, SSAValue.tObject);
+				load(1, SSAValue.tRef);
 				break;
 			case bCaload_2:
-				load(2, SSAValue.tObject);
+				load(2, SSAValue.tRef);
 				break;
 			case bCaload_3:
-				load(3, SSAValue.tObject);
+				load(3, SSAValue.tRef);
 				break;
 			case bCiaload:
 				value2 = popFromStack();
@@ -699,7 +699,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tObject;
+				result.type = SSAValue.tRef;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
 				addInstruction(instr);
@@ -880,7 +880,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tInteger;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -891,7 +891,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tLong;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -902,7 +902,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tFloat;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -913,7 +913,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tDouble;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -924,7 +924,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tObject;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -935,7 +935,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				//Remember the result type isn't set here (could be boolean or byte)
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -946,7 +946,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tChar;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -957,7 +957,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tShort;
+				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2,
 						value3);
 				instr.result = result;
@@ -1883,7 +1883,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tAboolean;
 					break;
 					case 'L':
-						result.type = SSAValue.tAobject;
+						result.type = SSAValue.tAref;
 					break;
 					default:
 						result.type = SSAValue.tAref;
@@ -1915,7 +1915,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tBoolean;
 					break;
 					case 'L':
-						result.type = SSAValue.tObject;
+						result.type = SSAValue.tRef;
 					break;
 					default:
 						result.type = SSAValue.tVoid;
@@ -1974,7 +1974,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tAboolean;
 					break;
 					case 'L':
-						result.type = SSAValue.tAobject;
+						result.type = SSAValue.tAref;
 					break;
 					default:
 						result.type = SSAValue.tAref;
@@ -2006,7 +2006,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 						result.type = SSAValue.tBoolean;
 					break;
 					case 'L':
-						result.type = SSAValue.tObject;
+						result.type = SSAValue.tRef;
 					break;
 					default:
 						result.type = SSAValue.tVoid;
@@ -2117,12 +2117,12 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				result = new SSAValue();
 				if(ssa.cfg.method.owner.constPool[val] instanceof Class){
 					Class clazz = (Class)ssa.cfg.method.owner.constPool[val];
-					value1.type = SSAValue.tObject;
+					value1.type = SSAValue.tRef;
 					value1.constant = clazz.name;
 				}else{
 					if(ssa.cfg.method.owner.constPool[val] instanceof Type){//it is a Array of objects
 						Type type = (Type)ssa.cfg.method.owner.constPool[val];
-						result.type = SSAValue.tAobject;
+						result.type = SSAValue.tAref;
 						result.constant = type.type.name;
 					}else{
 						assert false : "Unknown Parametertype for new";

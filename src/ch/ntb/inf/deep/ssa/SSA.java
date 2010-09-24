@@ -169,7 +169,7 @@ public class SSA {
 			type = SSAValue.tLong;
 			break;
 		case 'L':
-			type = SSAValue.tObject;
+			type = SSAValue.tRef;
 			break;
 		case 'S':
 			type = SSAValue.tShort;
