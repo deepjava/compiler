@@ -2198,6 +2198,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in checkcast";
 				}
 				instr.result = result;
+				pushToStack(value1);
 				addInstruction(instr);
 				break;
 			case bCinstanceof:
