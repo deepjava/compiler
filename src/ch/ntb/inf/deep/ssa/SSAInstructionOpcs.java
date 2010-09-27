@@ -6,7 +6,7 @@ public interface SSAInstructionOpcs {
 	sCrem = 6, sCneg = 7, sCshl = 8, sCshr = 9, sCushr = 10,
 	sCand = 11, sCor = 12, sCxor = 13, sCconvInt = 14, sCconvLong = 15,
 	sCconvFloat = 16, sCconvDouble = 17, sCcmpl = 18, sCreturn = 19, sCcall = 20,
-	sCnew = 21, sCinstanceof = 22, sCloadVar = 23, sCloadFromArray = 24, sCstoreToArray =25,
+	sCnew = 21, sCinstanceof = 22,  sCloadFromArray = 24, sCstoreToArray =25,
 	sCcmpg = 26, sCalength = 27, sCstoreToField = 28, sCthrow = 29, sCPhiFunc = 30,
 	sCloadLocal = 31, sCregMove = 32, sCbranch = 33;
 	
@@ -16,7 +16,7 @@ public interface SSAInstructionOpcs {
 					cc	operation code (opc)
 			*/
 			0x00000000 + sCloadConst,	//load 
-			0x00000000 + sCloadVar,
+			0x00000000 + sCloadLocal,
 			0x00000000 + sCloadFromArray,
 			
 			0x00000000 + sCadd, 		//arithmetic expression
