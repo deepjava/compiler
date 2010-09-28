@@ -2,7 +2,7 @@ package ch.ntb.inf.deep.ssa;
 
 public interface SSAValueType {
 	public static int //Type of SSAValue
-	tVoid = 0, tThis = 1, tPhiFunc = 2, tRef = 3, tBoolean = 4, tChar = 5,
+	tVoid = 0, tPhiFunc = 2, tRef = 3, tBoolean = 4, tChar = 5,
 	tFloat = 6, tDouble = 7, tByte = 8, tShort = 9,
 	tInteger = 10, tLong = 11, tAref = 13, tAboolean =14,
 	tAchar = 15, tAfloat = 16, tAdouble = 17, tAbyte = 18,
@@ -11,7 +11,7 @@ public interface SSAValueType {
 	public static String[] svNames = {
 		
 		"Void",
-		"This",
+		"",
 		"Phi-Function",
 		"Ref",
 		"Boolean",

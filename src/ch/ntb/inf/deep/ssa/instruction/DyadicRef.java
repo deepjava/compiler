@@ -37,6 +37,7 @@ public class DyadicRef extends Dyadic {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
 		System.out.print("DyadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
+		System.out.print(" (" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
 		System.out.println();
 	}

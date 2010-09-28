@@ -116,7 +116,7 @@ public class SSA {
 		
 		if((flags & 0x0008) == 0){//method isn't static
 			isParam[index] = true;
-			paramType[index++] = SSAValue.tThis;
+			paramType[index++] = SSAValue.tRef;
 		}
 		
 		char ch = descriptor.charAt(1);

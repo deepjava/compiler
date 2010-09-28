@@ -11,6 +11,8 @@ public class SSAValue implements SSAValueType {
 	public int end;	// indicates the end number of the live range for this value
 	public SSAValue join = this;	// representative, used for joining values during register allocation
 	public int reg = -1;	// register or memory slot number
+	public int reg2 = -1;	// 2nd register or memory slot number for longs
+	public int volRegs;	// stores information about volatiles which are used to produce this value
 	public int memorySlot = -1;
 	
 	public SSAValue(){
@@ -28,9 +30,6 @@ public class SSAValue implements SSAValueType {
 		case tVoid://void
 			r = n + " (" + r + ")";
 			break;
-		case tThis://this
-			r = "(" + r + ")";
-			break;
 		case tPhiFunc://PhiFunc
 			r = r + "(" + n + ")";
 			break;
@@ -45,26 +44,16 @@ public class SSAValue implements SSAValueType {
 		case tShort://Short
 		case tInteger://Integer
 		case tLong://Long
-//			r = r + " (" + constant + ")"  ;
-			r = n + " (" + r + ")";
-			break;
 		case tAref://Aref
-			break;
 		case tAboolean://Aboolean
-			break;
 		case tAchar://Achar
-			break;
 		case tAfloat://Afloat
-			break;
 		case tAdouble://Adouble
-			break;
 		case tAbyte://Abyte
-			break;
 		case tAshort://Ashort
-			break;
 		case tAinteger://Ainteger
-			break;
 		case tAlong://Along
+			r = n + " (" + r + ")";
 			break;
 		default:
 			break;		

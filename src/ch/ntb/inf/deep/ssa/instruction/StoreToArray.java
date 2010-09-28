@@ -31,7 +31,9 @@ public class StoreToArray extends SSAInstruction {
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
-		System.out.println("StoreToArray["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + ", " + operands[2].n+"}");
+		System.out.print("StoreToArray["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + ", " + operands[2].n+"}");
+		System.out.print(" (" + result.typeName() + ")");
+		System.out.println();
 	}
 
 }

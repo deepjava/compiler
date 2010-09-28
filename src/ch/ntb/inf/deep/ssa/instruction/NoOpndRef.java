@@ -28,10 +28,11 @@ public class NoOpndRef extends NoOpnd {
 		System.out.print(result.n + ": ");
 		System.out.print("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
 		if(fieldName != null){
-			System.out.println("{" + fieldName + "}");
-		}else{
-			System.out.println();
+			System.out.print("{" + fieldName + "}");
 		}
+		System.out.print(" (" + result.typeName() + ")");
+		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
+		System.out.println();
 	}
 
 }

@@ -44,6 +44,7 @@ public class Branch extends SSAInstruction {
 			else
 				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
 		}
+		System.out.print(" (" + result.typeName() + ")");
 		System.out.println();
 
 	}

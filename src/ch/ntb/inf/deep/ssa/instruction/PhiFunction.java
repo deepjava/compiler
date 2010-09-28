@@ -65,7 +65,8 @@ public class PhiFunction extends SSAInstruction {
 		}else{
 			System.out.print("null)");
 		}	
-		System.out.print(" (" + result.typeName() + ")" + ",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
+		System.out.print(" (" + result.typeName() + ")");
+		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
 		if (deleted) System.out.print(" deleted");
 		System.out.println();
 	}

@@ -43,6 +43,7 @@ public class MonadicRef extends Monadic {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
 		System.out.print("MonadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
+		System.out.print(" (" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
 		System.out.println();
 	}

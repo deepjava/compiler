@@ -710,6 +710,7 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
+				result.type = SSAValue.tByte;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
 				addInstruction(instr);
