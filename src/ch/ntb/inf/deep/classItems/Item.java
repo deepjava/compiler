@@ -21,7 +21,7 @@ public abstract class Item   implements Cloneable, IClassFileConsts, IDescAndTyp
 	public HString name; // the key string for any item
 
 	public Item type; // base type for objects of "Class" or "Type" or null
-	public int accAndPorpFlags; // access and property flags (see ClassFileConsts)
+	public int accAndPropFlags; // access and property flags (see ClassFileConsts)
 
 	//--- constructors
 	Item(){

@@ -19,7 +19,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 	 * S	bit[31..28] (-8 <= o <= 7) 4 bit, change of operand stack pointer (in slots):		slotPointer := slotPointer + SignExtend(s)
 	 * 						S=-8: stack change depends on operand type
 	 * F	bit[27..16] (0 <= o <= 0xFFF) 12 bit, Flags: {Branch, CondBranch, UncondBranch, Return, Switch, Call, New, } (see const declarations)
-	 * o	bit[15..14] (0 <= o <= 2) 2 bit, number of oparands (0 undefined for this instruction)
+	 * o	bit[15..14] (0 <= o <= 2) 2 bit, number of operands (0 undefined for this instruction)
 	 * w	bit[13..12] (0 <= w <= 2) 2 bit, number of additional bytes for wide instructions
 	 * L	bit[11.. 8] (0 <= o <= 5) 4 bit, instruction length: number of bytes
 	 * 
@@ -48,7 +48,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 		cpIndex = cpNewIndices[cpIndex];
 		byteCode[addr] = (byte)cpIndex;
 		Item item = newConstPool[cpIndex];
-		item.accAndPorpFlags |= accFlags;
+		item.accAndPropFlags |= accFlags;
 		return item;
 	}
 
@@ -67,7 +67,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 		byteCode[addr] = (byte)(cpIndex>>>8);
 		byteCode[addr+1] = (byte)cpIndex;
 		Item item = newConstPool[cpIndex];
-		item.accAndPorpFlags |= accFlags;
+		item.accAndPropFlags |= accFlags;
 		return item;
 	}
 
@@ -217,7 +217,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 					vrb.print("\t\trefed item: ");  item.printName();
 					vrb.print(", item.type=");  item.type.printName();
 					vrb.print(", owner=");  item.printOwner();
-					vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(item.accAndPorpFlags);
+					vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(item.accAndPropFlags);
 					vrb.println();
 				}
 			}

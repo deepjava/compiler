@@ -89,7 +89,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	 * The method with methodName is selected and returned.
 	 * If the method is not found, an new Method is created and insert, if the method is found it is checked for the correct descriptor.
 	 * @param methName  a registered string
-	 * @param methDescriptor a registred string
+	 * @param methDescriptor a registered string
 	 * @return the selected method or newly created one
 	 */
 	Method insertCondAndGetMethod(HString methName, HString methDescriptor){
@@ -258,7 +258,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				break;
 			case cptIntfMethRef:
 				Item meth = updateAndGetCpMethodEntry(pEntry);
-				meth.accAndPorpFlags |= (1<<dpfInterfCall);
+				meth.accAndPropFlags |= (1<<dpfInterfCall);
 				nofItems++;
 				break;
 			case cptNameAndType: break;// (name index) <<16, descriptor index
@@ -338,7 +338,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 			Type type = getTypeByDescriptor(descriptor);
 			if(field == null) field = new DataItem(name, type);  else field.type = type;
 			
-			field.accAndPorpFlags |= flags;
+			field.accAndPropFlags |= flags;
 			
 			//--- append field
 			if(tail == null)  head = field;  else  tail.next = field;
@@ -454,7 +454,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				}
 			}
 
-			method.accAndPorpFlags |= flags;
+			method.accAndPropFlags |= flags;
 			
 			//--- append method
 			if(tail == null)  head = method;  else  tail.next = method;
@@ -475,7 +475,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				srcFileName = cpStrings[index];
 				break;
 			case atxDeprecated:
-				accAndPorpFlags |= (1<<dpfDeprecated);
+				accAndPropFlags |= (1<<dpfDeprecated);
 				break;
 			case atxInnerClasses: // 4.7.5, p125
 				if( (userReqAttributes&(1<<atxInnerClasses)) == 0) skipAttributeAndLogCond(clf, attrLength, index);
@@ -506,7 +506,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 
 	private void loadClass(int userReqAttributes) throws IOException{
 		if(verbose) vrb.println(">loadClass:");
-		if( (accAndPorpFlags & (1<<dpfClassLoaded) ) == 0 ){// if not yet loaded
+		if( (accAndPropFlags & (1<<dpfClassLoaded) ) == 0 ){// if not yet loaded
 			try{
 				String strName = name.toString();
 				String fullClassPath = Utilities.getFullClassPath(strName);
@@ -514,7 +514,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				RandomAccessFile clf = new RandomAccessFile(fullClassPath, "r");
 	
 				loadConstPool(clf);
-				accAndPorpFlags |= clf.readUnsignedShort();
+				accAndPropFlags |= clf.readUnsignedShort();
 				
 				if(verbose){
 					printOrigConstPool("state: 0");
@@ -555,9 +555,9 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 					print(0);
 				}
 				
-				if( (accAndPorpFlags & ((1<<apfInterface)|(1<<apfEnum))) == 0){
+				if( (accAndPropFlags & ((1<<apfInterface)|(1<<apfEnum))) == 0){
 					analyseByteCode();
-					this.accAndPorpFlags |= (1<<dpfClassLoaded);
+					this.accAndPropFlags |= (1<<dpfClassLoaded);
 				}
 
 //				if(verbose){
@@ -578,12 +578,12 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 			}
 		}
 		//--- load referenced classes
-		if( (accAndPorpFlags & (1<<dpfClassLoaded)) != 0){
+		if( (accAndPropFlags & (1<<dpfClassLoaded)) != 0){
 			for(int cpx = constPool.length-1; cpx >= 0; cpx--){
 				Item item = constPool[cpx];
 				if(item instanceof Class){
 					Class refClass = (Class) item;
-					if( (refClass.accAndPorpFlags & (1<<dpfClassLoaded)) == 0) refClass.loadClass(userReqAttributes);
+					if( (refClass.accAndPropFlags & (1<<dpfClassLoaded)) == 0) refClass.loadClass(userReqAttributes);
 				}
 			}
 		}
@@ -629,7 +629,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 		HString hRootClassName = stab.insertCondAndGetEntry(rootClassName);
 		Class root = new Class(hRootClassName);
 		appendRootClass(root);
-		root.accAndPorpFlags |= (1<<dpfRootClass);
+		root.accAndPropFlags |= (1<<dpfRootClass);
 		assert root.next == null;
 		root.loadClass(userReqAttributes);
 		
@@ -667,8 +667,8 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 		Item cls = classList;
 		while(cls != null){
 			Dbg.indent(1);
-			Dbg.printJavaAccAndPropertyFlags(cls.accAndPorpFlags);  vrb.print(cls.name);
-			vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(cls.accAndPorpFlags); vrb.println();
+			Dbg.printJavaAccAndPropertyFlags(cls.accAndPropFlags);  vrb.print(cls.name);
+			vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(cls.accAndPropFlags); vrb.println();
 			cls.printFields(2);
 			cls.printMethods(2);
 			cls = cls.next;
@@ -700,8 +700,8 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	private void printRedCpEntry(int redCpInd){
 		Item item = constPool[redCpInd];
 		item.printShort(0);
-		Dbg.printSpace(); Dbg.printJavaAccAndPropertyFlags(item.accAndPorpFlags);
-		Dbg.print('+'); Dbg.printDeepAccAndPropertyFlags(item.accAndPorpFlags);
+		Dbg.printSpace(); Dbg.printJavaAccAndPropertyFlags(item.accAndPropFlags);
+		Dbg.print('+'); Dbg.printDeepAccAndPropertyFlags(item.accAndPropFlags);
 	}
 
 	private void printRedCpEntryCond(int cpIndex, int tag){
@@ -804,12 +804,12 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 
 	public void print(int indentLevel){
 		indent(indentLevel);
-		Dbg.printJavaAccAndPropertyFlags(accAndPorpFlags);
+		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags);
 		vrb.print("class ");  vrb.print(name);
 		if(type != null) {
 			vrb.print(" extends "); vrb.print(type.name);
 		}
-		vrb.print("\n\t// dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPorpFlags);
+		vrb.print("\n\t// dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags);
 		vrb.print("\n\t// category: ");  vrb.print((char)category);
 		vrb.print("\n\t// source file: ");  vrb.println(srcFileName);
 

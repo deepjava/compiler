@@ -102,7 +102,7 @@ public class Method extends Item {
 	}
 
 	public void printHeader(){
-		Dbg.printJavaAccAndPropertyFlags(accAndPorpFlags);
+		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags);
 		type.printTypeCategory(); type.printName(); // return type
 		vrb.print(' ');  vrb.print(name);  vrb.print(methDescriptor);
 	}
@@ -118,7 +118,7 @@ public class Method extends Item {
 	public void print(int indentLevel){
 		indent(indentLevel);
 		printHeader();
-		vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPorpFlags); vrb.println(", nofParams="+nofParams);
+		vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags); vrb.println(", nofParams="+nofParams);
 		printLocalVars(indentLevel+1);
 		printLineNumberTable(indentLevel+1);
 	}

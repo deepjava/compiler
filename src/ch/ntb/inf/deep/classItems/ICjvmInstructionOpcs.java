@@ -72,7 +72,7 @@ public interface ICjvmInstructionOpcs {
 		bcapBranch = bcapBase+0,   bcapCondBranch = bcapBase+1,
 		bcapUncondBranch = bcapBase+2,   bcapReturn = bcapBase+3,
 		bcapSwitch = bcapBase+4,   bcapCall = bcapBase+5,
-		bcapNew = bcapBase+6,   bcapCpRef = bcapBase+7,// rferences const pool item
+		bcapNew = bcapBase+6,   bcapCpRef = bcapBase+7,// references const pool item
 		bcapUndef = bcapBase+8;
 
 	int[] bcAttrTab = {
@@ -81,7 +81,7 @@ public interface ICjvmInstructionOpcs {
 				s	bit[31..28] (-8 <= o <= 7) 4 bit, change of operand stack pointer (in slots):		slotPointer := slotPointer + SignExtend(s)
 					   S=-8: stack change depends on operand type
 				F	bit[27..16] (0 <= o <= 0xFFF) 12 bit, Flags: {Branch, CondBranch, UncondBranch, Return, Switch, Call, New, } (see const declarations)
-				o	bit[15..14] (0 <= o <= 2) 2 bit, number of oparands (0 undefined for this instruction)
+				o	bit[15..14] (0 <= o <= 2) 2 bit, number of operands (0 undefined for this instruction)
 				w	bit[13..12] (0 <= w <= 2) 2 bit, number of additional bytes for wide instructions
 				L	bit[11.. 8] (0 <= o <= 5) 4 bit, instruction length: number of bytes
 				cc	bit[ 7.. 0] (0 <= cc <= 255) 8 bit, operation code (opc)

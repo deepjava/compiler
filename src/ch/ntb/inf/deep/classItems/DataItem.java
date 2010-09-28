@@ -25,10 +25,10 @@ public class DataItem extends Item {
 
 	public void print(int indentLevel){
 		indent(indentLevel);
-		Dbg.printJavaAccAndPropertyFlags(this.accAndPorpFlags);
+		Dbg.printJavaAccAndPropertyFlags(this.accAndPropFlags);
 		type.printTypeCategory(); type.printName();
 		vrb.print(' '); printName();
-		vrb.print(";//dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPorpFlags);
+		vrb.print(";//dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags);
 	}
 
 	public void println(int indentLevel){
