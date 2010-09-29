@@ -108,7 +108,7 @@ public class SSA {
 	
 	
 	private void determineParam(){
-		int flags = cfg.method.accAndPorpFlags;
+		int flags = cfg.method.accAndPropFlags;
 		String descriptor = cfg.method.methDescriptor.toString();
 		int index = cfg.method.getMaxStckSlots();
 		isParam = new boolean[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
