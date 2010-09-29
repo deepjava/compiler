@@ -10,15 +10,9 @@ import static org.junit.Assert.*;
  * @author graf
  * 
  */
-public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics {
-	private static final int TopGPR = 31;
-	private static final int TopFPR = 31;
-	private static final int volRegsGPRinitial = 0x00001ffc;
-	private static final int nonVolRegsGPRinitial = 0xffffe000;
-	private static final int volRegsFPRinitial = 0x000001fe;
-	private static final int nonVolRegsFPRinitial = 0xfffffe00;
+public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers {
 
-	private static int volRegsGPR, volRegsFPR;
+	static int volRegsGPR, volRegsFPR;
 	private static int nonVolRegsGPR, nonVolRegsFPR;
 	private static int[] regs;
 	
@@ -140,31 +134,40 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			for (int i = 0; i < b.nofPhiFunc; i++) {
 				PhiFunction phi = b.phiFunctions[i];
 				assert phi.result.index >= 0 : "phi func not resolved";
-				System.out.println("parse exit set for phi function nr" + phi.result.n + " index is " + phi.result.index);
+//				System.out.println("parse exit set for phi function nr" + phi.result.n + " index is " + phi.result.index);
 				parseExitSet(ssa, b, phi);
-				System.out.println("phi function has now reg = " + phi.result.reg);
+//				System.out.println("phi function has now reg = " + phi.result.reg);
 			}
 			parsed = false;
 			for (int i = 0; i < b.nofInstr; i++) {
 				SSAInstruction instr = b.instructions[i];
+				System.out.println("instr = " + scMnemonics[instr.ssaOpcode]);
+				System.out.println("volRegs = " + Integer.toHexString(RegAllocator.volRegsGPR));
 				SSAValue[] opds = instr.getOperands();
+				SSAValue res = instr.result;
+				if (res.type == tFloat || res.type == tDouble) res.volRegs = volRegsFPR;
+				else res.volRegs = volRegsGPR;
+//				System.out.println("free for instr " + instr.result.n);
 				if (opds != null) {
-					// free volatile registers
+					// free volatile registers reserved for operands of this instruction
 					for (SSAValue opd : opds) {
-						SSAValue val = instr.result;
+//						System.out.println("free reg for opd: opd reg = " + opd.reg);
 						SSAValue startVal = b.instructions[0].result;
 						if ((opd.reg >= -1) && (opd.end - startVal.end <= i)) {
-							switch (instr.result.type) {
-							case tFloat:
-							case tDouble:
-								assert false : "not yet";
+							switch (opd.type) {
+							case tFloat: case tDouble:
+								freeVolatileFPR(opd.reg);
 								break;
-							case tInteger:
-							case tAinteger:
+							case tRef: case tBoolean: case tChar: case tByte:
+							case tShort: case tInteger: case tAref: case tAboolean:
+							case tAchar: case tAfloat: case tAdouble: case tAbyte:
+							case tAshort: case tAinteger: case tAlong:
 								System.out.println("free volatile reg " + opd.reg);
 								freeVolatileGPR(opd.reg);
 								break;
-							case tVoid:
+							case tLong:
+								freeVolatileGPR(opd.reg);
+								freeVolatileGPR(opd.reg2);
 								break;
 							default:
 								System.out.println("cfg = " + ssa.cfg.method.name);
@@ -185,7 +188,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							instr.result.reg = reserveVolatileFPR();
 							break;
 						case tInteger:
+						case tByte:
+						case tAbyte:
+						case tAdouble:
+						case tAref:
+						case tRef:
 							instr.result.reg = reserveVolatileGPR();
+							System.out.println("reserve volatile " + instr.result.reg);
 							break;
 						case tVoid:
 							break;
@@ -231,9 +240,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					i++;
 					break;
 				case tInteger:
-				case tThis:
 				case tRef:
 				case tAinteger:
+				case tAbyte:
+				case tAref:
 					regs[i] = reserveNonVolatileGPR();
 					instr.result.reg = regs[i];
 					System.out.println("val " + i + " in exit set is of type " + val.typeName() + " Reg = " + instr.result.reg);
@@ -248,7 +258,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					assert false : "type not implemented";
 				}
 			} else {
-				if ((i == 0) && (ssa.paramType[b.maxStack] == SSAValue.tThis)) {
+				if ((i == 0) && (ssa.paramType[b.maxStack] == SSAValue.tRef)) {
 					System.out.println("reserve GPR for this");
 					reserveNonVolatileGPR();
 					nofGPR++;
@@ -271,6 +281,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	private static int reserveVolatileFPR() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	private static void freeVolatileFPR(int reg) {
+		volRegsFPR |= 1 << reg;
+		volRegsFPR &= volRegsFPRinitial;
 	}
 
 	public static int getVolatileGPR() {

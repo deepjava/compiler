@@ -1756,8 +1756,8 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SH;
-			param4 = Integer.decode(param[2]) & MB;
-			param5 = Integer.decode(param[2]) & ME;
+			param4 = Integer.decode(param[3]) & MB;
+			param5 = Integer.decode(param[4]) & ME;
 
 			res = (0x14 << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | (param4 << 6) | (param5 << 1);
 		} else if (parts[0].equals("rlwimi.")) {
@@ -1766,8 +1766,8 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SH;
-			param4 = Integer.decode(param[2]) & MB;
-			param5 = Integer.decode(param[2]) & ME;
+			param4 = Integer.decode(param[3]) & MB;
+			param5 = Integer.decode(param[4]) & ME;
 
 			res = (0x14 << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | (param4 << 6) | (param5 << 1) | 0x1;
 		} else if (parts[0].equals("rlwinm")) {
@@ -1776,8 +1776,8 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SH;
-			param4 = Integer.decode(param[2]) & MB;
-			param5 = Integer.decode(param[2]) & ME;
+			param4 = Integer.decode(param[3]) & MB;
+			param5 = Integer.decode(param[4]) & ME;
 
 			res = (0x15 << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | (param4 << 6) | (param5 << 1);
 		} else if (parts[0].equals("rlwinm.")) {
@@ -1786,8 +1786,8 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SH;
-			param4 = Integer.decode(param[2]) & MB;
-			param5 = Integer.decode(param[2]) & ME;
+			param4 = Integer.decode(param[3]) & MB;
+			param5 = Integer.decode(param[4]) & ME;
 
 			res = (0x15 << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | (param4 << 6) | (param5 << 1) | 0x1;
 		} else if (parts[0].equals("rlwnm")) {
@@ -1796,8 +1796,8 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SH;
-			param4 = Integer.decode(param[2]) & MB;
-			param5 = Integer.decode(param[2]) & ME;
+			param4 = Integer.decode(param[3]) & MB;
+			param5 = Integer.decode(param[4]) & ME;
 
 			res = (0x17 << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | (param4 << 6) | (param5 << 1);
 		} else if (parts[0].equals("rlwnm.")) {
@@ -1806,8 +1806,8 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SH;
-			param4 = Integer.decode(param[2]) & MB;
-			param5 = Integer.decode(param[2]) & ME;
+			param4 = Integer.decode(param[3]) & MB;
+			param5 = Integer.decode(param[4]) & ME;
 
 			res = (0x17 << 26) | (param2 << 21) | (param1 << 16) | (param3 << 11) | (param4 << 6) | (param5 << 1) | 0x1;
 		} else if (parts[0].equals("sc")) {
@@ -2282,7 +2282,7 @@ public class InstructionDecoder implements InstructionOpcs {
 		} else if (parts[0].equals("tw")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.decode(param[0]) & TO;
+			param1 = decodeTO(param[0]);
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.parseInt(param[2].substring(1)) & r;
 
@@ -2290,7 +2290,7 @@ public class InstructionDecoder implements InstructionOpcs {
 		} else if (parts[0].equals("twi")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.decode(param[0]) & TO;
+			param1 = decodeTO(param[0]);
 			param2 = Integer.parseInt(param[1].substring(1)) & r;
 			param3 = Integer.decode(param[2]) & SIMM;
 
@@ -2336,9 +2336,9 @@ public class InstructionDecoder implements InstructionOpcs {
 	}
 
 	private static int decodeBO(String param) {
-		if (param.equals("iffalse")) return iffalse;
-		else if (param.equals("iftrue")) return iftrue;
-		else if (param.equals("always")) return always;
+		if (param.equals("iffalse")) return BOfalse;
+		else if (param.equals("iftrue")) return BOtrue;
+		else if (param.equals("always")) return BOalways;
 		else return 0;
 	}
 
@@ -2347,6 +2347,14 @@ public class InstructionDecoder implements InstructionOpcs {
 		else if (param.equals("crf0[eq]")) return CRF0EQ;
 		else if (param.equals("crf0[gt]")) return CRF0GT;
 		else if (param.equals("crf0[lt]")) return CRF0LT;
+		else return 0;
+	}
+
+	private static int decodeTO(String param) {
+		if (param.equals("ifequal")) return TOifequal;
+		else if (param.equals("ifless")) return TOifless;
+		else if (param.equals("ifgreater")) return TOifgreater;
+		else if (param.equals("ifgeu")) return TOifgeU;
 		else return 0;
 	}
 
@@ -2393,7 +2401,7 @@ public class InstructionDecoder implements InstructionOpcs {
 
 			switch (opcode) {
 				case 0x03:
-					return "twi  " + TO + ", r" + A + ", " + SIMM;
+					return "twi  " + TOstring[TO] + ", r" + A + ", " + SIMM;
 				case 0x07:
 					return "mulli  r" + D + ", r" + A + ", " + SIMM;
 				case 0x08:
@@ -2518,11 +2526,7 @@ public class InstructionDecoder implements InstructionOpcs {
 						case 0:
 							return "cmp crf" + crfD + ", " + L + ", r" + A + ", r" + B;
 						case 0x04:
-							if (TO == 31 && A == 0 && B == 0) {
-								return "trap";
-							} else {
-								return "tw  " + TO + ", r" + A + ", r" + B;
-							}
+							return "tw  " + TOstring[TO] + ", r" + A + ", r" + B;
 						case 0x13:
 							return "mfcr  r" + D;
 						case 0x14:
@@ -3156,5 +3160,10 @@ public class InstructionDecoder implements InstructionOpcs {
 		if (SPR == 1022) return "FPECR";
 		assert false : "wrong SPR number";
 		return null;
+	}
+	
+	static {
+		int code = InstructionDecoder.getCode("rlwinm  r3, r29, 2, 0, 29");
+//		System.out.println(InstructionDecoder.getMnemonic(code);
 	}
 }
