@@ -1,9 +1,7 @@
 package ch.ntb.inf.deep.cfg;
 
-import org.eclipse.jdt.core.util.ICodeAttribute;
-import org.eclipse.jdt.core.util.IMethodInfo;
-
-import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.*;
+import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.ssa.SSANode;
 
 
@@ -14,7 +12,7 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * 
  * @author buesser 23.2.2010, graf
  */
-public class CFG implements JvmInstructionMnemonics {
+public class CFG implements ICjvmInstructionOpcs {
 	private static final boolean debug = false;
 
 	/**
@@ -88,11 +86,6 @@ public class CFG implements JvmInstructionMnemonics {
 		code = method.code;
 
 		int len = code.length;
-//		if (codeAttr != null) {
-//			len = (int) codeAttr.getCodeLength();
-//		} else {
-//			len = 0;
-//		}
 		if (debug) {
 			System.out.println("code of method "+method.name);			
 			for (int i = 0; i < len; i++) {
@@ -106,71 +99,42 @@ public class CFG implements JvmInstructionMnemonics {
 		startNode.lastBCA = findLastBcaInNode(this, startNode, len);
 		int bca = 0;
 		while (bca < len) {
-			int entry = bcAttrTab[code[bca] & 0xff];
-			assert ((entry & (1 << bcapCFGnotImpl)) == 0) : "bytecode instruction not implemented";
-			if ((entry & bcmpOpcLen) == 0) {
-				if ((code[bca] & 0xff) == bCtableswitch) {
-					int tAddr = (bca + 4) / 4 * 4;
-					int def = code[tAddr] & 0xff << 24 | code[tAddr + 1]
-							& 0xff << 16 | code[tAddr + 2] & 0xff << 8
-							| code[tAddr + 3] & 0xff;
-					tAddr += 4;
-					int low = code[tAddr] & 0xff << 24 | code[tAddr + 1]
-							& 0xff << 16 | code[tAddr + 2] & 0xff << 8
-							| code[tAddr + 3] & 0xff;
-					tAddr += 4;
-					int high = code[tAddr] & 0xff << 24 | code[tAddr + 1]
-							& 0xff << 16 | code[tAddr + 2] & 0xff << 8
-							| code[tAddr + 3] & 0xff;
-					tAddr += 4;
+			int bci = code[bca] & 0xff;
+			int entry = bcAttrTab[bci];
+			int instrLen = (entry >> 8) & 0xF;
+			if (instrLen == 0) {
+				int addr = bca + 1;
+				addr = (addr + 3) & -4; // round to the next multiple of 4
+				int defaultOffset = getInt(code, addr);
+				addr += 4; // skip default offset
+				if (bci == bCtableswitch) {	// bCtableswitch
+					int low = getInt(code, addr);
+					int high = getInt(code, addr + 4);
 					int nofCases = high - low + 1;
-					split(this, bca, bca + def);
+					split(this, bca, bca + defaultOffset);
 					for (int i = 0; i < nofCases; i++) {
-						int branchOffset = code[tAddr] & 0xff << 24
-								| code[tAddr + 1] & 0xff << 16
-								| code[tAddr + 2] & 0xff << 8 | code[tAddr + 3]
-								& 0xff;
+						int branchOffset = getInt(code, addr + 8 + i * 4);
 						split(this, bca, bca + branchOffset);
-						tAddr += 4;
 					}
-					int tableLen = tableSwitchLen(this, bca);
-					bca += tableLen;
-				} else {
-					if ((code[bca] & 0xff) == bClookupswitch) {
-						int tAddr = (bca + 4) / 4 * 4;
-						int def = code[tAddr] & 0xff << 24 | code[tAddr + 1]
-								& 0xff << 16 | code[tAddr + 2] & 0xff << 8
-								| code[tAddr + 3] & 0xff;
-						tAddr += 4;
-						int npairs = code[tAddr] & 0xff << 24 | code[tAddr + 1]
-								& 0xff << 16 | code[tAddr + 2] & 0xff << 8
-								| code[tAddr + 3] & 0xff;
-						tAddr += 8;
-						split(this, bca, bca + def);
-						for (int i = 0; i < npairs; i++) {
-							int branchOffset = code[tAddr] & 0xff << 24
-									| code[tAddr + 1] & 0xff << 16
-									| code[tAddr + 2] & 0xff << 8
-									| code[tAddr + 3] & 0xff;
-							split(this, bca, bca + branchOffset);
-							tAddr += 8;
-						}
-						int tableLen = lookupSwitchLen(this, bca);
-						bca += tableLen;
-					} else { // wide
-						if ((code[bca + 1] & 0xff) == bCiinc)
-							bca += 6;
-						else
-							bca += 4;
+					instrLen = ((high-low) + 1) * 4 + addr + 8 - bca;
+				} else {	// bClookupswitch
+					int nofPairs = getInt(code, addr);
+					split(this, bca, bca + defaultOffset);
+					for (int i = 0; i < nofPairs; i++) {
+						int branchOffset = getInt(code, addr + 8 + i * 8);
+						split(this, bca, bca + branchOffset);
 					}
+					instrLen = nofPairs * 8 + 4 + addr - bca;
 				}
-			} else {
-				if ((entry & (1 << bcapBranch)) != 0) {
-					int branchOffset = (short) (code[bca + 1] & 0xff << 8 | code[bca + 2]);
-					split(this, bca, bca + branchOffset);
-				}
-				bca += (entry & bcmpOpcLen) >> 8;
+			} else if (bci == bCwide) {	// wide instruction
+				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3);
+				
+			} else if ((entry & (1 << bcapBranch)) != 0  && (entry & (1 << bcapReturn)) == 0) {
+				int branchOffset = (short) (code[bca + 1] & 0xff << 8 | code[bca + 2]);
+				split(this, bca, bca + branchOffset);
 			}
+			
+			bca += instrLen;
 		}
 		assert (bca == len) : "last instruction not at end of method";
 		markLoopHeaders(rootNode);
@@ -206,26 +170,18 @@ public class CFG implements JvmInstructionMnemonics {
 			// split after branch
 			CFGNode newNode = new SSANode();
 			newNode.lastBCA = srcNode.lastBCA;
-			int len;
-
-			entry = bcAttrTab[code[bca] & 0xff];
-			if ((entry & bcmpOpcLen) == 0) {
-				if ((code[bca] & 0xff) == bCtableswitch) {
-					len = tableSwitchLen(cfg, bca);
-				} else {
-					if ((code[bca] & 0xff) == bClookupswitch) {
-						len = lookupSwitchLen(cfg, bca);
-					} else { // wide instruction
-						if ((code[bca + 1] & 0xff) == bCiinc)
-							len = 6;
-						else
-							len = 4;
-					}
-				}
-			} else {
-				len = (entry & bcmpOpcLen) >> 8;
+			int bci = code[bca] & 0xff;
+			entry = bcAttrTab[bci];
+			int instrLen = (entry >> 8) & 0xF;
+			if (instrLen == 0) {
+				if (bci == bCtableswitch) 
+					instrLen = tableSwitchLen(cfg, bca);
+				else // lookupswitch
+					instrLen = lookupSwitchLen(cfg, bca);
+			} else if (bci == bCwide) {	// wide instruction
+				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3);
 			}
-			newNode.firstBCA = bca + len;
+			newNode.firstBCA = bca + instrLen;
 			srcNode.lastBCA = bca;
 			newNode.next = srcNode.next;
 			srcNode.next = newNode;
@@ -290,33 +246,28 @@ public class CFG implements JvmInstructionMnemonics {
 	 */
 	private static int findLastBcaInNode(CFG cfg, CFGNode node, int addr) {
 		byte[] code = cfg.code;
+		int instrLen = 0;
 		int bca = node.firstBCA;
-		int len = 0;
 		while (bca < addr) {
 			int entry = bcAttrTab[code[bca] & 0xff];
-			if ((entry & bcmpOpcLen) == 0) {
+			instrLen = (entry >> 8) & 0xF;
+			int bci = (entry & 0xff);
+			if (instrLen == 0) {
 				if (debug)
 					System.out.println("instruction with len undef");
-				if ((code[bca] & 0xff) == bCtableswitch) {
-					len = tableSwitchLen(cfg, bca);
-				} else {
-					if ((code[bca] & 0xff) == bClookupswitch) {
-						len = lookupSwitchLen(cfg, bca);
-					} else { // wide instruction
-						if ((code[bca + 1] & 0xff) == bCiinc)
-							len = 6;
-						else
-							len = 4;
-					}
+				if (bci == bCtableswitch) {	// bCtableswitch
+					instrLen = tableSwitchLen(cfg, bca);
+				} else { // bClookupswitch) {
+					instrLen = lookupSwitchLen(cfg, bca);
 				}
+			} else if (bci == bCwide) {	// wide instruction
+				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3);
 				if (debug)
-					System.out.println("len = " + len);
-			} else {
-				len = (entry & bcmpOpcLen) >> 8;
+					System.out.println("len = " + instrLen);
 			}
-			bca += len;
+			bca += instrLen;
 		}
-		return bca - len;
+		return bca - instrLen;
 	}
 
 	/**
@@ -330,14 +281,11 @@ public class CFG implements JvmInstructionMnemonics {
 	 */
 	private static int tableSwitchLen(CFG cfg, int bca) {
 		byte[] code = cfg.code;
-		int tAddr = (bca + 4) / 4 * 4;
-		tAddr += 4;
-		int low = code[tAddr] & 0xff << 24 | code[tAddr + 1] & 0xff << 16
-				| code[tAddr + 2] & 0xff << 8 | code[tAddr + 3] & 0xff;
-		tAddr += 4;
-		int high = code[tAddr] & 0xff << 24 | code[tAddr + 1] & 0xff << 16
-				| code[tAddr + 2] & 0xff << 8 | code[tAddr + 3] & 0xff;
-		return (tAddr + 4 + (high - low + 1) * 4) - bca;
+		int addr = bca + 1;
+		addr = (addr + 3) & -4; // round to the next multiple of 4
+		int low = getInt(code, addr + 4);
+		int high = getInt(code, addr + 8);
+		return (addr + 12 + (high - low + 1) * 4) - bca;
 	}
 
 	/**
@@ -351,11 +299,10 @@ public class CFG implements JvmInstructionMnemonics {
 	 */
 	private static int lookupSwitchLen(CFG cfg, int bca) {
 		byte[] code = cfg.code;
-		int tAddr = (bca + 4) / 4 * 4;
-		tAddr += 4;
-		int npairs = code[tAddr] & 0xff << 24 | code[tAddr + 1] & 0xff << 16
-				| code[tAddr + 2] & 0xff << 8 | code[tAddr + 3] & 0xff;
-		return tAddr + 4 + 8 * npairs - bca;
+		int addr = bca + 1;
+		addr = (addr + 3) & -4; // round to the next multiple of 4
+		int npairs = getInt(code, addr + 4);
+		return addr + 8 + 8 * npairs - bca;
 	}
 
 	/**
@@ -434,6 +381,10 @@ public class CFG implements JvmInstructionMnemonics {
 				current.next = next.next;
 			current = next;
 		}
+	}
+
+	private static int getInt(byte[] bytes, int index){
+		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
 	}
 
 	private String cfgToString() {
