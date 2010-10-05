@@ -10,11 +10,11 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.IClassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
-public class cgPPC07 extends TestCgPPC {
+public class cgPPC08 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
-		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T07Arrays" };
+		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T08Calls" };
 		try {
 			Class.buildSystem(rootClassNames, (1 << IClassFileConsts.atxCode)
 					| (1 << IClassFileConsts.atxLocalVariableTable)

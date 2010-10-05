@@ -1,12 +1,14 @@
 package ch.ntb.inf.deep.testClasses;
 
 public class T08Calls {
+	short a;
+	static byte b;
 	
 	public static int classMethCall(){
 		int y = 0;
 		int x = classMethod(3);
 		y = 2;
-		
+		b += 100;
 		return y+x;		
 	}
 	
@@ -34,6 +36,8 @@ public class T08Calls {
 	 * Helper method
 	 */
 	public int objectMethod(int param){
+		a += 200;
+		b += 300;
 		return param % 2;		
 	}
 

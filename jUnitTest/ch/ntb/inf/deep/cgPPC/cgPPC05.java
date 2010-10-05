@@ -41,10 +41,10 @@ public class cgPPC05 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r31, r2"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r30, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r31, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[EQ], 0x2c"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[EQ], 16"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r30, 1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r30"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  0x38"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("b  12"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r30, 22"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r30"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lmw  r30, 20(r1)"), code[i++]);
@@ -64,14 +64,26 @@ public class cgPPC05 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stmw  r31, 20(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r31, 22"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r31, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], 0x24"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], 12"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  0x60"), code[i++]);
-		
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r30"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r30, 22"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r30"), code[i++]);
-		
+		assertEquals("wrong instruction", InstructionDecoder.getCode("b  72"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r31, 3"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], 12"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 3"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("b  56"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r31, 5"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], 12"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 5"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("b  40"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r31, 2"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], 12"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 2"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("b  24"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r31, 4"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], 12"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 4"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 100"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lmw  r31, 20(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 32(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);

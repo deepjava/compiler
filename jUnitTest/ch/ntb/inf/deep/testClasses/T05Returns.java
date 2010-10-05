@@ -12,7 +12,7 @@ public class T05Returns {
 		return x;
 	}
 
-	public static int multipleReturns1() {
+	public static int multipleReturns2() {
 		int x = 22;
 		if(x == 1) {
 			return 1;
