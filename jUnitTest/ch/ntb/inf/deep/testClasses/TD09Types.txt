@@ -1,0 +1,144 @@
+Testdokument für die Testklasse T09Types
+
+Sinn und Zweck:
+Diese Klasse benutzt Methoden in denen lokale Variablen mit verschiedenen Typen bentutzt werden. 
+Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden. 
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+static void m1()
+	//nofStackSlots=4, nofLocalSlots=7, codeLen=56
+		  0 ldc2_w <Long -30000>
+		  3 lstore_1 [a]
+		  4 lload_1 [a]
+		  5 ldc2_w <Long 10000>
+		  8 lcmp
+		  9 ifle 22
+		 12 bipush 100
+		 14 istore_3 [b]
+		 15 iload_3 [b]
+		 16 i2f
+		 17 fstore [bb]
+		 19 goto 24
+		 22 fconst_1
+		 23 fstore_3 [d]
+		 24 lload_1 [a]
+		 25 ldc2_w <Long 2>
+		 28 lmul
+		 29 l2f
+		 30 fstore_3 [d]
+		 31 lload_1 [a]
+		 32 lconst_0
+		 33 lcmp
+		 34 ifle 41
+		 37 iconst_1
+		 38 goto 42
+		 41 iconst_0
+		 42 istore_0 [res]
+		 43 lload_1 [a]
+		 44 ldc2_w <Long 16>
+		 47 lmul
+		 48 l2d
+		 49 dstore [e]
+		 51 fload_3 [d]
+		 52 f2i
+		 53 istore [f]
+		 55 return
+		 
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method m1
+	nodeNr:0 from 0 to 9	visited: false
+		predecessor: 
+		successor: CFG-Node [12:19]	CFG-Node [22:23]	
+	nodeNr:1 from 12 to 19	visited: false
+		predecessor: CFG-Node [0:9]	
+		successor: CFG-Node [24:34]	
+	nodeNr:2 from 22 to 23	visited: false
+		predecessor: CFG-Node [0:9]	
+		successor: CFG-Node [24:34]	
+	nodeNr:3 from 24 to 34	visited: false
+		predecessor: CFG-Node [12:19]	CFG-Node [22:23]	
+		successor: CFG-Node [37:38]	CFG-Node [41:41]	
+	nodeNr:4 from 37 to 38	visited: false
+		predecessor: CFG-Node [24:34]	
+		successor: CFG-Node [42:55]	
+	nodeNr:5 from 41 to 41	visited: false
+		predecessor: CFG-Node [24:34]	
+		successor: CFG-Node [42:55]	
+	nodeNr:6 from 42 to 55	visited: false
+		predecessor: CFG-Node [37:38]	CFG-Node [41:41]	
+		successor: 
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Ref),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn]  (Void)
+      ExitSet {[ ], [ 0 (Ref) ]}
+
+
+Method: m1
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , , , , , ]}
+         0: NoOpnd[sCloadConst] -30000 (Long),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 10000 (Long),   end=0, index=-1, reg=-1
+         2: Dyadic[sCcmpl] {0, 1} (Integer),   end=0, index=-1, reg=-1
+         3: Branch[sCBranch] {2} (Void)
+      ExitSet {[ , , , ], [ , 0 (Long), , , , , ]}
+
+   SSANode 1:
+      EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
+         4: NoOpnd[sCloadConst] 100 (Integer),   end=0, index=3, reg=-1
+         5: Monadic[sCconvInt] {4} (Float),   end=0, index=4, reg=-1
+         6: Branch[sCBranch]  (Void)
+      ExitSet {[ , , , ], [ , 0 (Long), , 4 (Integer), 5 (Float), , ]}
+
+   SSANode 2:
+      EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
+         7: NoOpnd[sCloadConst] 1.0 (Float),   end=0, index=3, reg=-1
+      ExitSet {[ , , , ], [ , 0 (Long), , 7 (Float), , , ]}
+
+   SSANode 3:
+      EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
+         8: NoOpnd[sCloadConst] 2 (Long),   end=0, index=-1, reg=-1
+         9: Dyadic[sCmul] {0, 8} (Long),   end=0, index=-1, reg=-1
+         10: Monadic[sCconvLong] {9} (Float),   end=0, index=3, reg=-1
+         11: NoOpnd[sCloadConst] 0 (Long),   end=0, index=-1, reg=-1
+         12: Dyadic[sCcmpl] {0, 11} (Integer),   end=0, index=-1, reg=-1
+         13: Branch[sCBranch] {12} (Void)
+      ExitSet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
+
+   SSANode 4:
+      EntrySet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
+         14: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         15: Branch[sCBranch]  (Void)
+      ExitSet {[ 14 (Integer), , , ], [ , 0 (Long), , 10 (Float), , , ]}
+
+   SSANode 5:
+      EntrySet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
+         16: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+      ExitSet {[ 16 (Integer), , , ], [ , 0 (Long), , 10 (Float), , , ]}
+
+   SSANode 6:
+      EntrySet {[ Phi-Function(17), , , ], [ , 0 (Long), , 10 (Float), , , ]}
+         17: PhiFunction[sCPhiFunc] {14, 16} (Phi-Function),   end=0, index=0, reg=-1
+         18: NoOpnd[sCloadConst] 16 (Long),   end=0, index=-1, reg=-1
+         19: Dyadic[sCmul] {0, 18} (Long),   end=0, index=-1, reg=-1
+         20: Monadic[sCconvLong] {19} (Double),   end=0, index=4, reg=-1
+         21: Monadic[sCconvFloat] {10} (Integer),   end=0, index=6, reg=-1
+         22: Branch[sCreturn]  (Void)
+      ExitSet {[ , , , ], [ Phi-Function(17), 0 (Long), , 10 (Float), 20 (Double), , 21 (Integer) ]}
+
+
