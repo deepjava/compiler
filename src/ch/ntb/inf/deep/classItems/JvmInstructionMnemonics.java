@@ -1,6 +1,6 @@
-package ch.ntb.inf.deep.cfg;
+package ch.ntb.inf.deep.classItems;
 
-public interface JvmInstructionMnemonics extends JvmInstructionOpcs {
+public interface JvmInstructionMnemonics extends ICjvmInstructionOpcs {
 	public static String[] bcMnemonics = {
 			"nop",
 

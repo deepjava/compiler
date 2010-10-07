@@ -189,7 +189,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					break;
 				case tLong:
 					createInstructionSSD(ppcAddc, sReg1, sReg2, dReg);
-					createInstructionSSD(ppcAdde, opds[0].reg2, opds[1].reg2, instr.result.reg2);
+					createInstructionSSD(ppcAdde, opds[0].regAux2, opds[1].regAux2, instr.result.regAux2);
 					break;
 				case tFloat:
 					createInstructionSSD(ppcFadds, sReg1, sReg2, dReg);
@@ -417,7 +417,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					break;
 				case bClreturn:
 					createInstructionSSD(ppcOr, returnGPR1, opds[0].reg, opds[0].reg);
-					createInstructionSSD(ppcOr, returnGPR2, opds[0].reg2, opds[0].reg2);
+					createInstructionSSD(ppcOr, returnGPR2, opds[0].regAux2, opds[0].regAux2);
 					break;
 				case bCfreturn:
 				case bCdreturn:
@@ -509,7 +509,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 3, 0, 28);
 					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
 					createIrDrArB(ppcLwzux, instr.result.reg, reg1, reg2);
-					createIrDrAImm(ppcLwz, instr.result.reg2, reg1, 4);
+					createIrDrAImm(ppcLwz, instr.result.regAux2, reg1, 4);
 					break;
 				case tFloat:
 					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 2, 0, 29);
@@ -565,7 +565,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 3, 0, 28);
 					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
 					createIrSrArB(ppcStwux, valReg, reg1, reg2);
-					createIrSrAImm(ppcStw, opds[2].reg2, reg1, 4);
+					createIrSrAImm(ppcStw, opds[2].regAux2, reg1, 4);
 					break;
 				case tFloat: 
 					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 2, 0, 29);

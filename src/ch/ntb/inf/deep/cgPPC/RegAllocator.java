@@ -167,7 +167,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 								break;
 							case tLong:
 								freeVolatileGPR(opd.reg);
-								freeVolatileGPR(opd.reg2);
+								freeVolatileGPR(opd.regAux2);
 								break;
 							default:
 								System.out.println("cfg = " + ssa.cfg.method.name);

@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.cfg;
+package ch.ntb.inf.deep.classItems;
 
 import java.io.PrintStream;
 

@@ -36,7 +36,7 @@ public class SSA08 extends TestSSA {
 	@Test
 	public void testClassMethCall(){
 		SSANode[] nodes = getAndTestSSA(1, 1, 0);
-		testNode(nodes[0], 6, 0, 4);
+		testNode(nodes[0], 11, 0, 4);
 	}
 	
 	@Test

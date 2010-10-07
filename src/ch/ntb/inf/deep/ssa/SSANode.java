@@ -1,7 +1,7 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
-import ch.ntb.inf.deep.cfg.JvmInstructionMnemonics;
+import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.DataItem;
@@ -24,7 +24,7 @@ import ch.ntb.inf.deep.strings.HString;
 /**
  * @author  millischer
  */
-public class SSANode extends CFGNode implements JvmInstructionMnemonics,
+public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		SSAInstructionOpcs {
 	boolean traversed;
 	public int nofInstr;
@@ -289,8 +289,6 @@ public class SSANode extends CFGNode implements JvmInstructionMnemonics,
 		for (stackpointer = maxStack-1; stackpointer >= 0 && exitSet[stackpointer] == null; stackpointer--);
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
-			int entry = bcAttrTab[ssa.cfg.code[bca] & 0xff];
-			assert ((entry & (1 << bcapSSAnotImpl)) == 0) : "SSA instruction not implemented";
 			switch (ssa.cfg.code[bca] & 0xff) {
 			case bCnop:
 				break;
