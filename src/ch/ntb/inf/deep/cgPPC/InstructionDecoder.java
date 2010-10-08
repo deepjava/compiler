@@ -2385,12 +2385,12 @@ public class InstructionDecoder implements InstructionOpcs {
 			int lk = (machineInstr & 0x01);
 			int Rc = lk;
 			int d = (short) (machineInstr & 0xFFFF);
-			int li = (machineInstr & 0x3FFFFFC);
+			int li = (machineInstr & 0x3FFFFFC) << 6 >> 6; 
 			int OE = (machineInstr & 0x400) >>> (31 - 21);
 			int TO = (machineInstr & 0x3E00000) >>> (31 - 10);
 			int BO = (machineInstr & 0x3E00000) >>> (31 - 10);
 			int BI = (machineInstr & 0x1F0000) >>> (31 - 15);
-			int BD = (machineInstr & 0xFFFC);
+			int BD = (short)(machineInstr & 0xFFFC);
 			int crfD = (machineInstr & 0x3800000) >>> (31 - 8);
 			int crfS = (machineInstr & 0x1C0000) >>> (31 - 13);
 			int L = (machineInstr & 0x200000) >>> (31 - 10);
@@ -2400,717 +2400,717 @@ public class InstructionDecoder implements InstructionOpcs {
 			int XO26to30 = (machineInstr & 0x3E) >>> 1;
 
 			switch (opcode) {
-				case 0x03:
-					return "twi  " + TOstring[TO] + ", r" + A + ", " + SIMM;
-				case 0x07:
-					return "mulli  r" + D + ", r" + A + ", " + SIMM;
-				case 0x08:
-					return "subfic  r" + D + ", r" + A + ", " + SIMM;
-				case 0x0A:
-					return "cmpli  crf" + crfD + ", " + L + ", r" + A + ", " + SIMM;
-				case 0x0B:
-					return "cmpi  crf" + crfD + ", " + L + ", r" + A + ", " + SIMM;
-				case 0x0C:
-					return "addic  r" + D + ", r" + A + ", " + SIMM;
-				case 0x0D:
-					return "addic.  r" + D + ", r" + A + ", " + SIMM;
-				case 0x0E:
-					if (A == 0) {
-						return "li  r" + D + ", " + SIMM;
-					} else {
-						return "addi  r" + D + ", r" + A + ", " + SIMM;
-					}
-				case 0x0F:
-					if (A == 0) {
-						return "lis  r" + D + ", " + SIMM;
-					} else {
-						return "addis  r" + D + ", r" + A + ", " + SIMM;
-					}
+			case 0x03:
+				return "twi  " + TOstring[TO] + ", r" + A + ", " + SIMM;
+			case 0x07:
+				return "mulli  r" + D + ", r" + A + ", " + SIMM;
+			case 0x08:
+				return "subfic  r" + D + ", r" + A + ", " + SIMM;
+			case 0x0A:
+				return "cmpli  crf" + crfD + ", " + L + ", r" + A + ", " + SIMM;
+			case 0x0B:
+				return "cmpi  crf" + crfD + ", " + L + ", r" + A + ", " + SIMM;
+			case 0x0C:
+				return "addic  r" + D + ", r" + A + ", " + SIMM;
+			case 0x0D:
+				return "addic.  r" + D + ", r" + A + ", " + SIMM;
+			case 0x0E:
+				if (A == 0) {
+					return "li  r" + D + ", " + SIMM;
+				} else {
+					return "addi  r" + D + ", r" + A + ", " + SIMM;
+				}
+			case 0x0F:
+				if (A == 0) {
+					return "lis  r" + D + ", " + SIMM;
+				} else {
+					return "addis  r" + D + ", r" + A + ", " + SIMM;
+				}
+			case 0x10:
+				if (aa == 0 && lk == 0) {
+					return "bc  " + BOstring[BO] + ", " + BIstring[BI] + ", " + BD;
+				} else if (aa == 1 && lk == 0) {
+					return "bca  " + BOstring[BO] + ", " + BIstring[BI] + ", " + BD;
+				} else if (aa == 0 && lk == 1) {
+					return "bcl  " + BOstring[BO] + ", " + BIstring[BI] + ", " + BD;
+				} else if (aa == 1 && lk == 1) {
+					return "bcla  " + BOstring[BO] + ", " + BIstring[BI] + ", " + BD;
+				}
+				break;
+			case 0x11:
+				return "sc";
+			case 0x12: // bx
+				if (aa == 0 && lk == 0) {
+					return "b  " + li;
+				} else if (aa == 1 && lk == 0) {
+					return "ba  " + li;
+				} else if (aa == 0 && lk == 1) {
+					return "bl  " + li;
+				} else if (aa == 1 && lk == 1) {
+					return "bla  " + li;
+				}
+				break;
+			case 0x13:
+				switch (XO21to30) {
+				case 0x00:
+					return "mcrf  crf" + crfD + ", crf" + crfS;
 				case 0x10:
-					if (aa == 0 && lk == 0) {
-						return "bc  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
-					} else if (aa == 1 && lk == 0) {
-						return "bca  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
-					} else if (aa == 0 && lk == 1) {
-						return "bcl  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
-					} else if (aa == 1 && lk == 1) {
-						return "bcla  " + BOstring[BO] + ", " + BIstring[BI] + ", [0x" + Integer.toHexString(BD) + "]";
+					if (lk == 0) {
+						return "bclr " + BO + ", " + BI;
+					} else {
+						return "bclrl " + BO + ", " + BI;
 					}
-					break;
-				case 0x11:
-					return "sc";
-				case 0x12: // bx
-					if (aa == 0 && lk == 0) {
-						return "b  0x" + Integer.toHexString(li);
-					} else if (aa == 1 && lk == 0) {
-						return "ba  0x" + Integer.toHexString(li);
-					} else if (aa == 0 && lk == 1) {
-						return "bl  0x" + Integer.toHexString(li);
-					} else if (aa == 1 && lk == 1) {
-						return "bla  0x" + Integer.toHexString(li);
+				case 0x21:
+					return "crnor  crb" + D + ", crb" + A + ", crb" + B;
+				case 0x32:
+					return "rfi";
+				case 0x81:
+					return "crandc  crb" + D + ", crb" + A + ", crb" + B;
+				case 0xC1:
+					return "crxor  crb" + D + ", crb" + A + ", crb" + B;
+				case 0xE1:
+					return "crnand  crb" + D + ", crb" + A + ", crb" + B;
+				case 0x90:
+					return "isync";
+				case 0x101:
+					return "crand  crb" + D + ", crb" + A + ", crb" + B;
+				case 0x121:
+					return "creqv  crb" + D + ", crb" + A + ", crb" + B;
+				case 0x1A1:
+					return "crorc  crb" + D + ", crb" + A + ", crb" + B;
+				case 0x1C1:
+					return "cror  crb" + D + ", crb" + A + ", crb" + B;
+				case 0x210:
+					if (lk == 0) {
+						return "bcctr " + BO + ", " + BI;
+					} else {
+						return "bcctrl " + BO + ", " + BI;
 					}
-					break;
+				}
+				break;
+			case 0x14:
+				if (Rc == 0) {
+					return "rlwimi  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+				} else {
+					return "rlwimi.  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+				}
+			case 0x15:
+				if (Rc == 0) {
+					return "rlwinm  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+				} else {
+					return "rlwinm.  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+				}
+			case 0x17:
+				if (Rc == 0) {
+					return "rlwnm  r" + A + ", r" + S + ", r" + B + ", " + MB + ", " + ME;
+				} else {
+					return "rlwnm.  r" + A + ", r" + S + ", r" + B + ", " + MB + ", " + ME;
+				}
+			case 0x18:
+				if (A == 0 && S == 0 && UIMM == 0) {
+					return "nop";
+				}
+				return "ori  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+			case 0x19:
+				return "oris  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+			case 0x1A:
+				return "xori  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+			case 0x1B:
+				return "xoris  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+			case 0x1C:
+				return "andi. r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+			case 0x1D:
+				return "andis.  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+			case 0x1F:
+				switch (XO21to30) {
+				case 0:
+					return "cmp crf" + crfD + ", " + L + ", r" + A + ", r" + B;
+				case 0x04:
+					return "tw  " + TOstring[TO] + ", r" + A + ", r" + B;
 				case 0x13:
-					switch (XO21to30) {
-						case 0x00:
-							return "mcrf  crf" + crfD + ", crf" + crfS;
-						case 0x10:
-							if (lk == 0) {
-								return "bclr " + BO + ", " + BI;
-							} else {
-								return "bclrl " + BO + ", " + BI;
-							}
-						case 0x21:
-							return "crnor  crb" + D + ", crb" + A + ", crb" + B;
-						case 0x32:
-							return "rfi";
-						case 0x81:
-							return "crandc  crb" + D + ", crb" + A + ", crb" + B;
-						case 0xC1:
-							return "crxor  crb" + D + ", crb" + A + ", crb" + B;
-						case 0xE1:
-							return "crnand  crb" + D + ", crb" + A + ", crb" + B;
-						case 0x90:
-							return "isync";
-						case 0x101:
-							return "crand  crb" + D + ", crb" + A + ", crb" + B;
-						case 0x121:
-							return "creqv  crb" + D + ", crb" + A + ", crb" + B;
-						case 0x1A1:
-							return "crorc  crb" + D + ", crb" + A + ", crb" + B;
-						case 0x1C1:
-							return "cror  crb" + D + ", crb" + A + ", crb" + B;
-						case 0x210:
-							if (lk == 0) {
-								return "bcctr " + BO + ", " + BI;
-							} else {
-								return "bcctrl " + BO + ", " + BI;
-							}
+					return "mfcr  r" + D;
+				case 0x14:
+					return "lwarx  r" + D + ", r" + A + ", r" + B;
+				case 0x17:
+					return "lwzx  r" + D + ", r" + A + ", r" + B;
+				case 0x18:
+					if (Rc == 0) {
+						return "slw  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "slw.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x1A:
+					if (Rc == 0) {
+						return "cntlzw  r" + A + ", r" + S;
+					} else {
+						return "cntlzw.  r" + A + ", r" + S;
+					}
+				case 0x1C:
+					if (Rc == 0) {
+						return "and  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "and.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x20:
+					return "cmpl  crf" + crfD + ", " + L + ", r" + A + ", r" + B;
+				case 0x37:
+					return "lwzux  r" + D + ", r" + A + ", r" + B;
+				case 0x3C:
+					if (Rc == 0) {
+						return "andc  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "andc.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x53:
+					return "mfmsr  r" + D;
+				case 0x57:
+					return "lbzx  r" + D + ", r" + A + ", r" + B;
+				case 0x77:
+					return "lbzux  r" + D + ", r" + A + ", r" + B;
+				case 0x7C:
+					if (Rc == 0) {
+						return "nor  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "nor.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x92:
+					return "mtmsr  r" + S;
+				case 0x96:
+					return "stwcx. r" + S + ", r" + A + ", r" + B;
+				case 0x97:
+					return "stwx  r" + S + ", r" + A + ", r" + B;
+				case 0xB7:
+					return "stwux  r" + S + ", r" + A + ", r" + B;
+				case 0x90:
+					return "mtcrf  " + CRM + ", r" + S;
+				case 0x117:
+					return "lhzx  r" + D + ", r" + A + ", r" + B;
+				case 0x11C:
+					if (Rc == 0) {
+						return "eqv  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "eqv.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x137:
+					return "lhzux  r" + D + ", r" + A + ", r" + B;
+				case 0x13C:
+					return "xor  r" + A + ", r" + S + ", r" + B;
+				case 0x153:
+					return "mfspr  r" + D + ", " + SPRname(SPR);
+				case 0x157:
+					return "lhax  r" + D + ", r" + A + ", r" + B;
+				case 0x177:
+					return "lhaux  r" + D + ", r" + A + ", r" + B;
+				case 0x197:
+					return "sthx  r" + S + ", r" + A + ", r" + B;
+				case 0x19C:
+					if (Rc == 0) {
+						return "orc  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "orc.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x1B7:
+					return "sthux  r" + S + ", r" + A + ", r" + B;
+				case 0x1BC:
+					if (Rc == 0) {
+						if (S == B)
+							return "lr  r" + A + ", r" + S;
+						else
+							return "or  r" + A + ", r" + S + ", r" + B;
+					} else {
+						if (S == B)
+							return "lr  r" + A + ", r" + S;
+						else
+							return "or.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x1D3:
+					return "mtspr  " + SPRname(SPR) + ", r" + S;
+				case 0x1DC:
+					if (Rc == 0) {
+						return "nand  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "nand.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x200:
+					return "mcrxr  crf" + crfD;
+				case 0x205:
+					return "stswi  r" + S + ", r" + A + ", " + NB;
+				case 0x215:
+					return "lswx  r" + D + ", r" + A + ", r" + B;
+				case 0x216:
+					return "lwbrx  r" + D + ", r" + A + ", r" + B;
+				case 0x217:
+					return "lfsx  fr" + D + ", r" + A + ", r" + B;
+				case 0x218:
+					if (Rc == 0) {
+						return "srw  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "srw.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x237:
+					return "lfsux  fr" + D + ", r" + A + ", r" + B;
+				case 0x255:
+					return "lswi  r" + D + ", r" + A + " , " + NB;
+				case 0x256:
+					return "sync";
+				case 0x257:
+					return "lfdx  fr" + D + ", r" + A + ", r" + B;
+				case 0x277:
+					return "lfdux  fr" + D + ", r" + A + ", r" + B;
+				case 0x2D7:
+					return "stfdx  fr" + S + ", r" + A + ", r" + B;
+				case 0x2F7:
+					return "stfdux  fr" + S + ", r" + A + ", r" + B;
+				case 0x295:
+					return "stswx  r" + S + ", r" + A + ", r" + B;
+				case 0x296:
+					return "stwbrx  r" + S + ", r" + A + ", r" + B;
+				case 0x297:
+					return "stfsx  fr" + S + ", r" + A + ", r" + B;
+				case 0x2B7:
+					return "stfsux  fr" + S + ", r" + A + ", r" + B;
+				case 0x316:
+					return "lhbrx  r" + D + ", r" + A + ", r" + B;
+				case 0x318:
+					if (Rc == 0) {
+						return "sraw  r" + A + ", r" + S + ", r" + B;
+					} else {
+						return "sraw.  r" + A + ", r" + S + ", r" + B;
+					}
+				case 0x338:
+					if (Rc == 0) {
+						return "srawi  r" + A + ", r" + S + ", " + SH;
+					} else {
+						return "srawi.  r" + A + ", r" + S + ", " + SH;
+					}
+				case 0x356:
+					return "eieio";
+				case 0x396:
+					return "sthbrx  r" + S + ", r" + A + ", r" + B;
+				case 0x3BA:
+					if (Rc == 0) {
+						return "extsb  r" + A + ", r" + S;
+					} else {
+						return "extsb.  r" + A + ", r" + S;
+					}
+				case 0x3D6:
+					return "icbi  r" + A + ", r" + B;
+				case 0x3D7:
+					return "stfiwx  fr" + S + ", r" + A + ", r" + B;
+
+				case 0x39A:
+					if (Rc == 0) {
+						return "extsh  r" + A + ", r" + S;
+					} else {
+						return "extsh.  r" + A + ", r" + S;
+					}
+				}
+				switch (XO22to30) {
+				case 0x08:
+					if (OE == 0 && Rc == 0) {
+						return "subfc  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "subfc.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "subfco  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "subfco.  r" + D + ", r" + A + ", r" + B;
 					}
 					break;
+				case 0x0A:
+					if (OE == 0 && Rc == 0) {
+						return "addc  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "addc.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "addco  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "addco.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+				case 0x0B:
+					if (Rc == 0) {
+						return "mulhwu  r" + D + ", r" + A + ", r" + S;
+					} else {
+						return "mulhwu.  r" + D + ", r" + A + ", r" + S;
+					}
+				case 0x28:
+					if (OE == 0 && Rc == 0) {
+						return "subf  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "subf.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "subfo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "subfo.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+				case 0x4B:
+					if (Rc == 0) {
+						return "mulhw  r" + D + ", r" + A + ", r" + B;
+					} else {
+						return "mulhw.  r" + D + ", r" + A + ", r" + B;
+					}
+				case 0x68:
+					if (OE == 0 && Rc == 0) {
+						return "neg  r" + D + ", r" + A;
+					} else if (OE == 0 && Rc == 1) {
+						return "neg.  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 0) {
+						return "nego  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 1) {
+						return "nego.  r" + D + ", r" + A;
+					}
+					break;
+				case 0x88:
+					if (OE == 0 && Rc == 0) {
+						return "subfe  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "subfe.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "subfeo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "subfeo.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+				case 0x8A:
+					if (OE == 0 && Rc == 0) {
+						return "adde  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "adde.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "addeo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "addeo.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+				case 0xC8:
+					if (OE == 0 && Rc == 0) {
+						return "subfze  r" + D + ", r" + A;
+					} else if (OE == 0 && Rc == 1) {
+						return "subfze.  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 0) {
+						return "subfzeo  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 1) {
+						return "subfzeo.  r" + D + ", r" + A;
+					}
+					break;
+				case 0xCA:
+					if (OE == 0 && Rc == 0) {
+						return "addze  r" + D + ", r" + A;
+					} else if (OE == 0 && Rc == 1) {
+						return "addze.  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 0) {
+						return "addzeo  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 1) {
+						return "addzeo.  r" + D + ", r" + A;
+					}
+					break;
+				case 0xD7:
+					return "stbx  r" + S + ", r" + A + ", r" + B;
+				case 0xE8:
+					if (OE == 0 && Rc == 0) {
+						return "subfme  r" + D + ", r" + A;
+					} else if (OE == 0 && Rc == 1) {
+						return "subfme.  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 0) {
+						return "subfmeo  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 1) {
+						return "subfmeo.  r" + D + ", r" + A;
+					}
+					break;
+				case 0xEA:
+					if (OE == 0 && Rc == 0) {
+						return "addme  r" + D + ", r" + A;
+					} else if (OE == 0 && Rc == 1) {
+						return "addme.  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 0) {
+						return "addmeo  r" + D + ", r" + A;
+					} else if (OE == 1 && Rc == 1) {
+						return "addmeo.  r" + D + ", r" + A;
+					}
+					break;
+				case 0xEB:
+					if (OE == 0 && Rc == 0) {
+						return "mullw  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "mullw.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "mullwo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "mullwo.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+
+				case 0xF7:
+					return "stbux  r" + S + ", r" + A + ", r" + B;
+				case 0x10A:
+					if (OE == 0 && Rc == 0) {
+						return "add  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "add.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "addo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "addo.  r" + D + ", r" + A + ", r" + B;
+					}
+				case 0x1CB:
+					if (OE == 0 && Rc == 0) {
+						return "divwu  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "divwu.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "divwuo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "divwuo.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+				case 0x1EB:
+					if (OE == 0 && Rc == 0) {
+						return "divw  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 0 && Rc == 1) {
+						return "divw.  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 0) {
+						return "divwo  r" + D + ", r" + A + ", r" + B;
+					} else if (OE == 1 && Rc == 1) {
+						return "divwo.  r" + D + ", r" + A + ", r" + B;
+					}
+					break;
+				}
+				break;
+			case 0x20:
+				return "lwz  r" + D + ", " + d + "(r" + A + ")";
+			case 0x21:
+				return "lwzu  r" + D + ", " + d + "(r" + A + ")";
+			case 0x22:
+				return "lbz  r" + D + ", " + d + "(r" + A + ")";
+			case 0x23:
+				return "lbzu  r" + D + ", " + d + "(r" + A + ")";
+			case 0x24:
+				return "stw  r" + S + ", " + d + "(r" + A + ")";
+			case 0x25:
+				return "stwu  r" + S + ", " + d + "(r" + A + ")";
+			case 0x26:
+				return "stb  r" + S + ", " + d + "(r" + A + ")";
+			case 0x27:
+				return "stbu  r" + S + ", " + d + "(r" + A + ")";
+			case 0x28:
+				return "lhz  r" + D + ", " + d + "(r" + A + ")";
+			case 0x29:
+				return "lhzu  r" + D + ", " + d + "(r" + A + ")";
+			case 0x2A:
+				return "lha  r" + D + ", " + d + "(r" + A + ")";
+			case 0x2B:
+				return "lhau  r" + D + ", " + d + "(r" + A + ")";
+			case 0x2C:
+				return "sth  r" + S + ", " + d + "(r" + A + ")";
+			case 0x2D:
+				return "sthu  r" + S + ", " + d + "(r" + A + ")";
+			case 0x2E:
+				return "lmw  r" + D + ", " + d + "(r" + A + ")";
+			case 0x2F:
+				return "stmw  r" + S + ", " + d + "(r" + A + ")";
+			case 0x30:
+				return "lfs  fr" + D + ", " + d + "(r" + A + ")";
+			case 0x31:
+				return "lfsu  fr" + D + ", " + d + "(r" + A + ")";
+			case 0x32:
+				return "lfd  fr" + D + ", " + d + "(r" + A + ")";
+			case 0x33:
+				return "lfdu  fr" + D + ", " + d + "(r" + A + ")";
+			case 0x34:
+				return "stfs  fr" + S + ", " + d + "(r" + A + ")";
+			case 0x35:
+				return "stfsu  fr" + S + ", " + d + "(r" + A + ")";
+			case 0x36:
+				return "stfd  fr" + S + ", " + d + "(r" + A + ")";
+			case 0x37:
+				return "stfdu  fr" + S + ", " + d + "(r" + A + ")";
+
+			case 0x3B:
+				switch (XO26to30) {
+				case 0x12:
+					if (Rc == 0) {
+						return "fdivs  fr" + D + ", fr" + A + ", fr" + B;
+					} else {
+						return "fdivs.  fr" + D + ", fr" + A + ", fr" + B;
+					}
 				case 0x14:
 					if (Rc == 0) {
-						return "rlwimi  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+						return "fsubs  fr" + D + ", fr" + A + ", fr" + B;
 					} else {
-						return "rlwimi.  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+						return "fsubs.  fr" + D + ", fr" + A + ", fr" + B;
 					}
 				case 0x15:
 					if (Rc == 0) {
-						return "rlwinm  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+						return "fadds  fr" + D + ", fr" + A + ", fr" + B;
 					} else {
-						return "rlwinm.  r" + A + ", r" + S + ", " + SH + ", " + MB + ", " + ME;
+						return "fadds.  fr" + D + ", fr" + A + ", fr" + B;
 					}
-				case 0x17:
-					if (Rc == 0) {
-						return "rlwnm  r" + A + ", r" + S + ", r" + B + ", " + MB + ", " + ME;
-					} else {
-						return "rlwnm.  r" + A + ", r" + S + ", r" + B + ", " + MB + ", " + ME;
-					}
-				case 0x18:
-					if (A == 0 && S == 0 && UIMM == 0) {
-						return "nop";
-					}
-					return "ori  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
 				case 0x19:
-					return "oris  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
-				case 0x1A:
-					return "xori  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
-				case 0x1B:
-					return "xoris  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+					if (Rc == 0) {
+						return "fmuls  fr" + D + ", fr" + A + " fr" + C;
+					} else {
+						return "fmuls.  fr" + D + ", fr" + A + " fr" + C;
+					}
 				case 0x1C:
-					return "andi. r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+					if (Rc == 0) {
+						return "fmsubs  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					} else {
+						return "fmsubs.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					}
 				case 0x1D:
-					return "andis.  r" + A + ", r" + S + ", 0x" + Integer.toHexString(UIMM);
+					if (Rc == 0) {
+						return "fmadds  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					} else {
+						return "fmadds.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					}
+				case 0x1E:
+					if (Rc == 0) {
+						return "fnmsubs  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					} else {
+						return "fnmsubs.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					}
 				case 0x1F:
-					switch (XO21to30) {
-						case 0:
-							return "cmp crf" + crfD + ", " + L + ", r" + A + ", r" + B;
-						case 0x04:
-							return "tw  " + TOstring[TO] + ", r" + A + ", r" + B;
-						case 0x13:
-							return "mfcr  r" + D;
-						case 0x14:
-							return "lwarx  r" + D + ", r" + A + ", r" + B;
-						case 0x17:
-							return "lwzx  r" + D + ", r" + A + ", r" + B;
-						case 0x18:
-							if (Rc == 0) {
-								return "slw  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "slw.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x1A:
-							if (Rc == 0) {
-								return "cntlzw  r" + A + ", r" + S;
-							} else {
-								return "cntlzw.  r" + A + ", r" + S;
-							}
-						case 0x1C:
-							if (Rc == 0) {
-								return "and  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "and.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x20:
-							return "cmpl  crf" + crfD + ", " + L + ", r" + A + ", r" + B;
-						case 0x37:
-							return "lwzux  r" + D + ", r" + A + ", r" + B;
-						case 0x3C:
-							if (Rc == 0) {
-								return "andc  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "andc.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x53:
-							return "mfmsr  r" + D;
-						case 0x57:
-							return "lbzx  r" + D + ", r" + A + ", r" + B;
-						case 0x77:
-							return "lbzux  r" + D + ", r" + A + ", r" + B;
-						case 0x7C:
-							if (Rc == 0) {
-								return "nor  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "nor.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x92:
-							return "mtmsr  r" + S;
-						case 0x96:
-							return "stwcx. r" + S + ", r" + A + ", r" + B;
-						case 0x97:
-							return "stwx  r" + S + ", r" + A + ", r" + B;
-						case 0xB7:
-							return "stwux  r" + S + ", r" + A + ", r" + B;
-						case 0x90:
-							return "mtcrf  " + CRM + ", r" + S;
-						case 0x117:
-							return "lhzx  r" + D + ", r" + A + ", r" + B;
-						case 0x11C:
-							if (Rc == 0) {
-								return "eqv  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "eqv.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x137:
-							return "lhzux  r" + D + ", r" + A + ", r" + B;
-						case 0x13C:
-							return "xor  r" + A + ", r" + S + ", r" + B;
-						case 0x153:
-							return "mfspr  r" + D + ", " + SPRname(SPR);
-						case 0x157:
-							return "lhax  r" + D + ", r" + A + ", r" + B;
-						case 0x177:
-							return "lhaux  r" + D + ", r" + A + ", r" + B;
-						case 0x197:
-							return "sthx  r" + S + ", r" + A + ", r" + B;
-						case 0x19C:
-							if (Rc == 0) {
-								return "orc  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "orc.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x1B7:
-							return "sthux  r" + S + ", r" + A + ", r" + B;
-						case 0x1BC:
-							if (Rc == 0) {
-								if (S == B)
-									return "lr  r" + A + ", r" + S;
-								else
-									return "or  r" + A + ", r" + S + ", r" + B;
-							} else {
-								if (S == B)
-									return "lr  r" + A + ", r" + S;
-								else
-									return "or.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x1D3:
-							return "mtspr  " + SPRname(SPR) + ", r" + S;
-						case 0x1DC:
-							if (Rc == 0) {
-								return "nand  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "nand.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x200:
-							return "mcrxr  crf" + crfD;
-						case 0x205:
-							return "stswi  r" + S + ", r" + A + ", " + NB;
-						case 0x215:
-							return "lswx  r" + D + ", r" + A + ", r" + B;
-						case 0x216:
-							return "lwbrx  r" + D + ", r" + A + ", r" + B;
-						case 0x217:
-							return "lfsx  fr" + D + ", r" + A + ", r" + B;
-						case 0x218:
-							if (Rc == 0) {
-								return "srw  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "srw.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x237:
-							return "lfsux  fr" + D + ", r" + A + ", r" + B;
-						case 0x255:
-							return "lswi  r" + D + ", r" + A + " , " + NB;
-						case 0x256:
-							return "sync";
-						case 0x257:
-							return "lfdx  fr" + D + ", r" + A + ", r" + B;
-						case 0x277:
-							return "lfdux  fr" + D + ", r" + A + ", r" + B;
-						case 0x2D7:
-							return "stfdx  fr" + S + ", r" + A + ", r" + B;
-						case 0x2F7:
-							return "stfdux  fr" + S + ", r" + A + ", r" + B;
-						case 0x295:
-							return "stswx  r" + S + ", r" + A + ", r" + B;
-						case 0x296:
-							return "stwbrx  r" + S + ", r" + A + ", r" + B;
-						case 0x297:
-							return "stfsx  fr" + S + ", r" + A + ", r" + B;
-						case 0x2B7:
-							return "stfsux  fr" + S + ", r" + A + ", r" + B;
-						case 0x316:
-							return "lhbrx  r" + D + ", r" + A + ", r" + B;
-						case 0x318:
-							if (Rc == 0) {
-								return "sraw  r" + A + ", r" + S + ", r" + B;
-							} else {
-								return "sraw.  r" + A + ", r" + S + ", r" + B;
-							}
-						case 0x338:
-							if (Rc == 0) {
-								return "srawi  r" + A + ", r" + S + ", " + SH;
-							} else {
-								return "srawi.  r" + A + ", r" + S + ", " + SH;
-							}
-						case 0x356:
-							return "eieio";
-						case 0x396:
-							return "sthbrx  r" + S + ", r" + A + ", r" + B;
-						case 0x3BA:
-							if (Rc == 0) {
-								return "extsb  r" + A + ", r" + S;
-							} else {
-								return "extsb.  r" + A + ", r" + S;
-							}
-						case 0x3D6:
-							return "icbi  r" + A + ", r" + B;
-						case 0x3D7:
-							return "stfiwx  fr" + S + ", r" + A + ", r" + B;
-
-						case 0x39A:
-							if (Rc == 0) {
-								return "extsh  r" + A + ", r" + S;
-							} else {
-								return "extsh.  r" + A + ", r" + S;
-							}
+					if (Rc == 0) {
+						return "fnmadds  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					} else {
+						return "fnmadds.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
 					}
-					switch (XO22to30) {
-						case 0x08:
-							if (OE == 0 && Rc == 0) {
-								return "subfc  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "subfc.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "subfco  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "subfco.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-						case 0x0A:
-							if (OE == 0 && Rc == 0) {
-								return "addc  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "addc.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "addco  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "addco.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-						case 0x0B:
-							if (Rc == 0) {
-								return "mulhwu  r" + D + ", r" + A + ", r" + S;
-							} else {
-								return "mulhwu.  r" + D + ", r" + A + ", r" + S;
-							}
-						case 0x28:
-							if (OE == 0 && Rc == 0) {
-								return "subf  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "subf.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "subfo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "subfo.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-						case 0x4B:
-							if (Rc == 0) {
-								return "mulhw  r" + D + ", r" + A + ", r" + B;
-							} else {
-								return "mulhw.  r" + D + ", r" + A + ", r" + B;
-							}
-						case 0x68:
-							if (OE == 0 && Rc == 0) {
-								return "neg  r" + D + ", r" + A;
-							} else if (OE == 0 && Rc == 1) {
-								return "neg.  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 0) {
-								return "nego  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 1) {
-								return "nego.  r" + D + ", r" + A;
-							}
-							break;
-						case 0x88:
-							if (OE == 0 && Rc == 0) {
-								return "subfe  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "subfe.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "subfeo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "subfeo.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-						case 0x8A:
-							if (OE == 0 && Rc == 0) {
-								return "adde  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "adde.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "addeo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "addeo.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-						case 0xC8:
-							if (OE == 0 && Rc == 0) {
-								return "subfze  r" + D + ", r" + A;
-							} else if (OE == 0 && Rc == 1) {
-								return "subfze.  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 0) {
-								return "subfzeo  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 1) {
-								return "subfzeo.  r" + D + ", r" + A;
-							}
-							break;
-						case 0xCA:
-							if (OE == 0 && Rc == 0) {
-								return "addze  r" + D + ", r" + A;
-							} else if (OE == 0 && Rc == 1) {
-								return "addze.  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 0) {
-								return "addzeo  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 1) {
-								return "addzeo.  r" + D + ", r" + A;
-							}
-							break;
-						case 0xD7:
-							return "stbx  r" + S + ", r" + A + ", r" + B;
-						case 0xE8:
-							if (OE == 0 && Rc == 0) {
-								return "subfme  r" + D + ", r" + A;
-							} else if (OE == 0 && Rc == 1) {
-								return "subfme.  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 0) {
-								return "subfmeo  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 1) {
-								return "subfmeo.  r" + D + ", r" + A;
-							}
-							break;
-						case 0xEA:
-							if (OE == 0 && Rc == 0) {
-								return "addme  r" + D + ", r" + A;
-							} else if (OE == 0 && Rc == 1) {
-								return "addme.  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 0) {
-								return "addmeo  r" + D + ", r" + A;
-							} else if (OE == 1 && Rc == 1) {
-								return "addmeo.  r" + D + ", r" + A;
-							}
-							break;
-						case 0xEB:
-							if (OE == 0 && Rc == 0) {
-								return "mullw  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "mullw.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "mullwo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "mullwo.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-
-						case 0xF7:
-							return "stbux  r" + S + ", r" + A + ", r" + B;
-						case 0x10A:
-							if (OE == 0 && Rc == 0) {
-								return "add  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "add.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "addo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "addo.  r" + D + ", r" + A + ", r" + B;
-							}
-						case 0x1CB:
-							if (OE == 0 && Rc == 0) {
-								return "divwu  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "divwu.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "divwuo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "divwuo.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
-						case 0x1EB:
-							if (OE == 0 && Rc == 0) {
-								return "divw  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 0 && Rc == 1) {
-								return "divw.  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 0) {
-								return "divwo  r" + D + ", r" + A + ", r" + B;
-							} else if (OE == 1 && Rc == 1) {
-								return "divwo.  r" + D + ", r" + A + ", r" + B;
-							}
-							break;
+				}
+			case 0x3F:
+				switch (XO26to30) {
+				case 0x12:
+					if (Rc == 0) {
+						return "fdiv  fr" + D + ", fr" + A + ", fr" + B;
+					} else {
+						return "fdiv.  fr" + D + ", fr" + A + ", fr" + B;
 					}
-					break;
+				case 0x14:
+					if (Rc == 0) {
+						return "fsub  fr" + D + ", fr" + A + ", fr" + B;
+					} else {
+						return "fsub.  fr" + D + ", fr" + A + ", fr" + B;
+					}
+
+				case 0x15:
+					if (Rc == 0) {
+						return "fadd  fr" + D + ", fr" + A + ", fr" + B;
+					} else {
+						return "fadd.  fr" + D + ", fr" + A + ", fr" + B;
+					}
+				case 0x19:
+					if (Rc == 0) {
+						return "fmul  fr" + D + ", fr" + A + " fr" + C;
+					} else {
+						return "fmul.  fr" + D + ", fr" + A + " fr" + C;
+					}
+				case 0x1C:
+					if (Rc == 0) {
+						return "fmsub  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					} else {
+						return "fmsub.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					}
+				case 0x1D:
+					if (Rc == 0) {
+						return "fmadd  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					} else {
+						return "fmadd.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
+					}
+				case 0x1E:
+					if (Rc == 0) {
+						return "fnmsub  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					} else {
+						return "fnmsub.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					}
+				case 0x1F:
+					if (Rc == 0) {
+						return "fnmadd  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					} else {
+						return "fnmadd.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
+					}
+				}
+				switch (XO21to30) {
+				case 0x00:
+					return "fcmpu  crf" + (D >> 2) + ", fr" + A + ", fr" + B;
+				case 0x0C:
+					if (Rc == 0) {
+						return "frsp  fr" + D + ", fr" + B;
+					} else {
+						return "frsp.  fr" + D + ", fr" + B;
+					}
+				case 0x0E:
+					if (Rc == 0) {
+						return "fctiw  fr" + D + ", fr" + B;
+					} else {
+						return "fctiw.  fr" + D + ", fr" + B;
+					}
+				case 0x0F:
+					if (Rc == 0) {
+						return "fctiwz  fr" + D + ", fr" + B;
+					} else {
+						return "fctiwz.  fr" + D + ", fr" + B;
+					}
 				case 0x20:
-					return "lwz  r" + D + ", " + d + "(r" + A + ")";
-				case 0x21:
-					return "lwzu  r" + D + ", " + d + "(r" + A + ")";
-				case 0x22:
-					return "lbz  r" + D + ", " + d + "(r" + A + ")";
-				case 0x23:
-					return "lbzu  r" + D + ", " + d + "(r" + A + ")";
-				case 0x24:
-					return "stw  r" + S + ", " + d + "(r" + A + ")";
-				case 0x25:
-					return "stwu  r" + S + ", " + d + "(r" + A + ")";
+					return "fcmpo  crf" + crfD + ", fr" + A + ", fr" + B;
 				case 0x26:
-					return "stb  r" + S + ", " + d + "(r" + A + ")";
-				case 0x27:
-					return "stbu  r" + S + ", " + d + "(r" + A + ")";
+					if (Rc == 0) {
+						return "mtfsb1  crb" + D;
+					} else {
+						return "mtfsb1.  crb" + D;
+					}
 				case 0x28:
-					return "lhz  r" + D + ", " + d + "(r" + A + ")";
-				case 0x29:
-					return "lhzu  r" + D + ", " + d + "(r" + A + ")";
-				case 0x2A:
-					return "lha  r" + D + ", " + d + "(r" + A + ")";
-				case 0x2B:
-					return "lhau  r" + D + ", " + d + "(r" + A + ")";
-				case 0x2C:
-					return "sth  r" + S + ", " + d + "(r" + A + ")";
-				case 0x2D:
-					return "sthu  r" + S + ", " + d + "(r" + A + ")";
-				case 0x2E:
-					return "lmw  r" + D + ", " + d + "(r" + A + ")";
-				case 0x2F:
-					return "stmw  r" + S + ", " + d + "(r" + A + ")";
-				case 0x30:
-					return "lfs  fr" + D + ", " + d + "(r" + A + ")";
-				case 0x31:
-					return "lfsu  fr" + D + ", " + d + "(r" + A + ")";
-				case 0x32:
-					return "lfd  fr" + D + ", " + d + "(r" + A + ")";
-				case 0x33:
-					return "lfdu  fr" + D + ", " + d + "(r" + A + ")";
-				case 0x34:
-					return "stfs  fr" + S + ", " + d + "(r" + A + ")";
-				case 0x35:
-					return "stfsu  fr" + S + ", " + d + "(r" + A + ")";
-				case 0x36:
-					return "stfd  fr" + S + ", " + d + "(r" + A + ")";
-				case 0x37:
-					return "stfdu  fr" + S + ", " + d + "(r" + A + ")";
-
-				case 0x3B:
-					switch (XO26to30) {
-						case 0x12:
-							if (Rc == 0) {
-								return "fdivs  fr" + D + ", fr" + A + ", fr" + B;
-							} else {
-								return "fdivs.  fr" + D + ", fr" + A + ", fr" + B;
-							}
-						case 0x14:
-							if (Rc == 0) {
-								return "fsubs  fr" + D + ", fr" + A + ", fr" + B;
-							} else {
-								return "fsubs.  fr" + D + ", fr" + A + ", fr" + B;
-							}
-						case 0x15:
-							if (Rc == 0) {
-								return "fadds  fr" + D + ", fr" + A + ", fr" + B;
-							} else {
-								return "fadds.  fr" + D + ", fr" + A + ", fr" + B;
-							}
-						case 0x19:
-							if (Rc == 0) {
-								return "fmuls  fr" + D + ", fr" + A + " fr" + C;
-							} else {
-								return "fmuls.  fr" + D + ", fr" + A + " fr" + C;
-							}
-						case 0x1C:
-							if (Rc == 0) {
-								return "fmsubs  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							} else {
-								return "fmsubs.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							}
-						case 0x1D:
-							if (Rc == 0) {
-								return "fmadds  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							} else {
-								return "fmadds.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							}
-						case 0x1E:
-							if (Rc == 0) {
-								return "fnmsubs  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							} else {
-								return "fnmsubs.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							}
-						case 0x1F:
-							if (Rc == 0) {
-								return "fnmadds  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							} else {
-								return "fnmadds.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							}
+					if (Rc == 0) {
+						return "fneg  fr" + D + ", fr" + B;
+					} else {
+						return "fneg.  fr" + D + ", fr" + B;
 					}
-				case 0x3F:
-					switch (XO26to30) {
-						case 0x12:
-							if (Rc == 0) {
-								return "fdiv  fr" + D + ", fr" + A + ", fr" + B;
-							} else {
-								return "fdiv.  fr" + D + ", fr" + A + ", fr" + B;
-							}
-						case 0x14:
-							if (Rc == 0) {
-								return "fsub  fr" + D + ", fr" + A + ", fr" + B;
-							} else {
-								return "fsub.  fr" + D + ", fr" + A + ", fr" + B;
-							}
-
-						case 0x15:
-							if (Rc == 0) {
-								return "fadd  fr" + D + ", fr" + A + ", fr" + B;
-							} else {
-								return "fadd.  fr" + D + ", fr" + A + ", fr" + B;
-							}
-						case 0x19:
-							if (Rc == 0) {
-								return "fmul  fr" + D + ", fr" + A + " fr" + C;
-							} else {
-								return "fmul.  fr" + D + ", fr" + A + " fr" + C;
-							}
-						case 0x1C:
-							if (Rc == 0) {
-								return "fmsub  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							} else {
-								return "fmsub.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							}
-						case 0x1D:
-							if (Rc == 0) {
-								return "fmadd  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							} else {
-								return "fmadd.  fr" + D + ", fr" + A + " fr" + C + ", fr" + B;
-							}
-						case 0x1E:
-							if (Rc == 0) {
-								return "fnmsub  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							} else {
-								return "fnmsub.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							}
-						case 0x1F:
-							if (Rc == 0) {
-								return "fnmadd  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							} else {
-								return "fnmadd.  fr" + D + ", fr" + A + ", fr" + C + ", fr" + B;
-							}
+				case 0x40:
+					return "mcrfs  crf" + crfD + ", crf" + crfS;
+				case 0x46:
+					if (Rc == 0) {
+						return "mtfsb0  crb" + D;
+					} else {
+						return "mtfsb0.  crb" + D;
 					}
-					switch (XO21to30) {
-						case 0x00:
-							return "fcmpu  crf" + (D >> 2) + ", fr" + A + ", fr" + B;
-						case 0x0C:
-							if (Rc == 0) {
-								return "frsp  fr" + D + ", fr" + B;
-							} else {
-								return "frsp.  fr" + D + ", fr" + B;
-							}
-						case 0x0E:
-							if (Rc == 0) {
-								return "fctiw  fr" + D + ", fr" + B;
-							} else {
-								return "fctiw.  fr" + D + ", fr" + B;
-							}
-						case 0x0F:
-							if (Rc == 0) {
-								return "fctiwz  fr" + D + ", fr" + B;
-							} else {
-								return "fctiwz.  fr" + D + ", fr" + B;
-							}
-						case 0x20:
-							return "fcmpo  crf" + crfD + ", fr" + A + ", fr" + B;
-						case 0x26:
-							if (Rc == 0) {
-								return "mtfsb1  crb" + D;
-							} else {
-								return "mtfsb1.  crb" + D;
-							}
-						case 0x28:
-							if (Rc == 0) {
-								return "fneg  fr" + D + ", fr" + B;
-							} else {
-								return "fneg.  fr" + D + ", fr" + B;
-							}
-						case 0x40:
-							return "mcrfs  crf" + crfD + ", crf" + crfS;
-						case 0x46:
-							if (Rc == 0) {
-								return "mtfsb0  crb" + D;
-							} else {
-								return "mtfsb0.  crb" + D;
-							}
-						case 0x48:
-							if (Rc == 0) {
-								return "fmr  fr" + D + ", fr" + B;
-							} else {
-								return "fmr.  fr" + D + ", fr" + B;
-							}
-						case 0x86:
-							if (Rc == 0) {
-								return "mtfsfi  crf" + crfD + ", " + IMM;
-							} else {
-								return "mtfsfi.  crf" + crfD + ", " + IMM;
-							}
-						case 0x88:
-							if (Rc == 0) {
-								return "fnabs  fr" + D + ", fr" + B;
-							} else {
-								return "fnabs.  fr" + D + ", fr" + B;
-							}
-						case 0x108:
-							if (Rc == 0) {
-								return "fabs  fr" + D + ", fr" + B;
-							} else {
-								return "fabs.  fr" + D + ", fr" + B;
-							}
-						case 0x247:
-							if (Rc == 0) {
-								return "mffs  fr" + D;
-							} else {
-								return "mffs.  fr" + D;
-							}
-						case 0x2C7:
-							if (Rc == 0) {
-								return "mtfsf  " + FM + ", fr" + B;
-							} else {
-								return "mtfsf.  " + FM + ", fr" + B;
-							}
-
+				case 0x48:
+					if (Rc == 0) {
+						return "fmr  fr" + D + ", fr" + B;
+					} else {
+						return "fmr.  fr" + D + ", fr" + B;
 					}
+				case 0x86:
+					if (Rc == 0) {
+						return "mtfsfi  crf" + crfD + ", " + IMM;
+					} else {
+						return "mtfsfi.  crf" + crfD + ", " + IMM;
+					}
+				case 0x88:
+					if (Rc == 0) {
+						return "fnabs  fr" + D + ", fr" + B;
+					} else {
+						return "fnabs.  fr" + D + ", fr" + B;
+					}
+				case 0x108:
+					if (Rc == 0) {
+						return "fabs  fr" + D + ", fr" + B;
+					} else {
+						return "fabs.  fr" + D + ", fr" + B;
+					}
+				case 0x247:
+					if (Rc == 0) {
+						return "mffs  fr" + D;
+					} else {
+						return "mffs.  fr" + D;
+					}
+				case 0x2C7:
+					if (Rc == 0) {
+						return "mtfsf  " + FM + ", fr" + B;
+					} else {
+						return "mtfsf.  " + FM + ", fr" + B;
+					}
+
+				}
 			}
 			return machineInstr + "  (0x" + Integer.toHexString(machineInstr) + ")";
 	}
@@ -3161,9 +3161,9 @@ public class InstructionDecoder implements InstructionOpcs {
 		assert false : "wrong SPR number";
 		return null;
 	}
-	
+
 	static {
 		int code = InstructionDecoder.getCode("rlwinm  r3, r29, 2, 0, 29");
-//		System.out.println(InstructionDecoder.getMnemonic(code);
+		//		System.out.println(InstructionDecoder.getMnemonic(code);
 	}
 }

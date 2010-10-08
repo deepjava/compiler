@@ -12,27 +12,63 @@ import static org.junit.Assert.*;
  */
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers {
 
-	static int volRegsGPR, volRegsFPR;
-	private static int nonVolRegsGPR, nonVolRegsFPR;
+	private static final boolean gpr = true;
+	private static final boolean fpr = false;
+	private static final boolean vol = true;
+	private static final boolean nonVol = false;
+	
+	static int regsGPR, regsFPR;
 	private static int[] regs;
+	public static SSAValue[] lastExitSet;
 	
 	/**
 	 * generates the live ranges of all SSAValues and assigns register to them
 	 */
 	public static void allocateRegisters(SSA ssa) {
-		volRegsGPR = volRegsGPRinitial;
-		nonVolRegsGPR = nonVolRegsGPRinitial;
-		volRegsFPR = volRegsFPRinitial;
-		nonVolRegsFPR = nonVolRegsFPRinitial;
+		regsGPR = volRegsGPRinitial | nonVolRegsGPRinitial;
+		regsFPR = volRegsFPRinitial | nonVolRegsFPRinitial;
 		regs = new int[ssa.cfg.method.maxLocals];
 
 		System.out.println("allocate registers for " + ssa.cfg.method.name);
+		insertRegMoves(ssa);
+		SSA.renumberInstructions(ssa.cfg);
 		buildIntervals(ssa);	// compute live intervals
 		resolvePhiFunctions(ssa);
 		assignRegisters(ssa);
 
 	}
 
+	/**
+	 * Inserts register moves for phi functions in case that ....
+	 */
+	private static void insertRegMoves(SSA ssa) {
+		SSANode b = (SSANode) ssa.cfg.rootNode;
+		while (b != null) {
+			for (int i = 0; i < b.nofPhiFunc; i++) {
+				SSAInstruction phi = b.phiFunctions[i];
+				SSAValue[] opds = phi.getOperands();
+				SSAValue res = phi.result;
+				if (res.index != opds[0].index && opds[0].index >= 0) {
+					SSAValue[] newOpds = new SSAValue[opds.length];
+					for (int k = 0; k < b.nofPredecessors; k++) {
+						SSANode n = (SSANode)b.predecessors[k];
+						SSAValue r = new SSAValue();
+						r.type = opds[k].type;
+						r.index = res.index;
+						SSAInstruction move = new Monadic(sCregMove, opds[k]);
+						move.result = r;
+						n.addInstruction(move);
+						n.exitSet[b.maxStack - 1 + r.index] = r;
+						newOpds[k] = r;
+						phi.print(1);
+					}
+					phi.setOperands(newOpds);
+				}
+			}
+			b = (SSANode) b.next;
+		}	
+	}
+	
 	/**
 	 * Computes the live ranges of all SSAValues 
 	 */
@@ -66,17 +102,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	private static void resolvePhiFunctions(SSA ssa) {
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b != null) {
-			for (int i = 0; i < b.maxLocals; i++) {
-				SSAValue val = b.exitSet[b.maxStack + i];
-				if ((val != null) && (val.type == tPhiFunc)) {
-					val.index = i;
-				}
-			}
-			b = (SSANode) b.next;
-		}
-
-		b = (SSANode) ssa.cfg.rootNode;
-		while (b != null) {
 			for (int i = 0; i < b.nofPhiFunc; i++) {
 				PhiFunction phi = b.phiFunctions[i];
 				handlePhiFunction(ssa, phi);
@@ -92,24 +117,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		System.out.println("handle phi function on line " + phi.result.n);
 		for (int i = 0; i < opds.length; i++) {
 			if (opds[i].type == tPhiFunc) {
-				System.out.println("\t\thas phi as opds");
 				int ssaLine = opds[i].n;
 				PhiFunction phi1 = searchPhiFunction(ssa, ssaLine);
 				handlePhiFunction(ssa, phi1);
 			}
-		}
-		if (phi.result.index >= 0) {
-			System.out.println("\t\tindex >= 0");
-			for (int i = 0; i < opds.length; i++) {
+			if (opds[i].index < 0)
 				opds[i].index = phi.result.index;
-			}
-			phi.result.type = opds[0].type;
-		} else {
-			System.out.println("\t\tindex < 0");
-			for (int i = 0; i < opds.length; i++) {
-				phi.result.type = opds[0].type;
-			}
 		}
+		phi.result.type = opds[0].type;
 	}
 
 	private static PhiFunction searchPhiFunction(SSA ssa, int n) {
@@ -129,45 +144,51 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 */
 	private static void assignRegisters(SSA ssa) {
 		SSANode b = (SSANode) ssa.cfg.rootNode;
-		boolean parsed = false;
+		while (b.next != null) b = (SSANode) b.next;
+		lastExitSet = b.exitSet;
+		parseExitSet(ssa, b);
+		
+		b = (SSANode) ssa.cfg.rootNode;
 		while (b != null) {
+			parseExitSet(ssa, b);
 			for (int i = 0; i < b.nofPhiFunc; i++) {
-				PhiFunction phi = b.phiFunctions[i];
-				assert phi.result.index >= 0 : "phi func not resolved";
-//				System.out.println("parse exit set for phi function nr" + phi.result.n + " index is " + phi.result.index);
-				parseExitSet(ssa, b, phi);
-//				System.out.println("phi function has now reg = " + phi.result.reg);
+				SSAInstruction phi = b.phiFunctions[i];
+				SSAValue[] opds = phi.getOperands();
+				SSAValue res = phi.result;
+				phi.result.reg = regs[phi.result.index];
 			}
-			parsed = false;
 			for (int i = 0; i < b.nofInstr; i++) {
 				SSAInstruction instr = b.instructions[i];
-				System.out.println("instr = " + scMnemonics[instr.ssaOpcode]);
-				System.out.println("volRegs = " + Integer.toHexString(RegAllocator.volRegsGPR));
+				// reserve additional volatile registers
+				if (instr.ssaOpcode == sCloadConst) {
+					instr.result.regAux1 = reserveReg(gpr, vol);
+				} else if (instr.ssaOpcode == sCloadFromArray || instr.ssaOpcode == sCstoreToArray) {
+					instr.result.regAux1 = reserveReg(gpr, vol);
+					instr.result.regAux2 = reserveReg(gpr, vol);
+				}
+				if (instr.result.regAux1 != -1) freeVolReg(gpr, instr.result.regAux1);
+				if (instr.result.regAux2 != -1) freeVolReg(gpr, instr.result.regAux2);
 				SSAValue[] opds = instr.getOperands();
 				SSAValue res = instr.result;
-				if (res.type == tFloat || res.type == tDouble) res.volRegs = volRegsFPR;
-				else res.volRegs = volRegsGPR;
-//				System.out.println("free for instr " + instr.result.n);
 				if (opds != null) {
 					// free volatile registers reserved for operands of this instruction
 					for (SSAValue opd : opds) {
-//						System.out.println("free reg for opd: opd reg = " + opd.reg);
 						SSAValue startVal = b.instructions[0].result;
 						if ((opd.reg >= -1) && (opd.end - startVal.end <= i)) {
 							switch (opd.type) {
 							case tFloat: case tDouble:
-								freeVolatileFPR(opd.reg);
+								freeVolReg(fpr, opd.reg);
 								break;
 							case tRef: case tBoolean: case tChar: case tByte:
 							case tShort: case tInteger: case tAref: case tAboolean:
 							case tAchar: case tAfloat: case tAdouble: case tAbyte:
 							case tAshort: case tAinteger: case tAlong:
-								System.out.println("free volatile reg " + opd.reg);
-								freeVolatileGPR(opd.reg);
+//								System.out.println("free volatile reg " + opd.reg);
+								freeVolReg(gpr, opd.reg);
 								break;
 							case tLong:
-								freeVolatileGPR(opd.reg);
-								freeVolatileGPR(opd.regAux2);
+								freeVolReg(gpr, opd.reg);
+								freeVolReg(gpr, opd.regLong);
 								break;
 							default:
 								System.out.println("cfg = " + ssa.cfg.method.name);
@@ -179,13 +200,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					}
 				}
 				if (instr.ssaOpcode != sCbranch) {	// branch instruction has no result
-//					System.out.println("handle ssa instruction assign register");
 					if (instr.result.index < 0) { 
-//						System.out.println("reserve volatile");
 						switch (instr.result.type) {
 						case tFloat:
 						case tDouble:
-							instr.result.reg = reserveVolatileFPR();
+							instr.result.reg = reserveReg(fpr, vol);
 							break;
 						case tInteger:
 						case tByte:
@@ -193,8 +212,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						case tAdouble:
 						case tAref:
 						case tRef:
-							instr.result.reg = reserveVolatileGPR();
-							System.out.println("reserve volatile " + instr.result.reg);
+							instr.result.reg = reserveReg(gpr, vol);
 							break;
 						case tVoid:
 							break;
@@ -206,11 +224,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						}
 					}  else {	// is a local variable
 //						System.out.println("reserve nonvolatile");
-						if (!parsed) {
-//							System.out.println("parse exit set");
-							parsed = true;
-							parseExitSet(ssa, b, instr);
-						}
 						instr.result.reg = regs[instr.result.index];
 //						System.out.println("register assigned " + instr.result.reg);
 					}
@@ -220,22 +233,23 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		}	
 	}
 
-	private static void parseExitSet(SSA ssa, SSANode b, SSAInstruction instr) {
-		nonVolRegsGPR = nonVolRegsGPRinitial;
-		nonVolRegsFPR = nonVolRegsFPRinitial;
+	private static void parseExitSet(SSA ssa, SSANode b) {
 		int nofGPR = 0, nofFPR = 0;
+		regsGPR |= nonVolRegsGPRinitial;
+		regsFPR |= nonVolRegsFPRinitial;
 		for (int i = 0; i < b.maxLocals; i++) {
 			SSAValue val = b.exitSet[b.maxStack + i];
+			if (val == null) {
+				val = lastExitSet[b.maxStack + i];
+			}
 			if (val != null) {
 				switch (val.type) {
 				case tFloat:
-					regs[i] = reserveNonVolatileFPR();
-					instr.result.reg = regs[i];
+					regs[i] = reserveReg(fpr, nonVol);
 					nofFPR++;
 					break;
 				case tDouble:
-					regs[i] = reserveNonVolatileFPR();
-					instr.result.reg = regs[i];
+					regs[i] = reserveReg(fpr, nonVol);
 					nofFPR++;
 					i++;
 					break;
@@ -244,104 +258,96 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				case tAinteger:
 				case tAbyte:
 				case tAref:
-					regs[i] = reserveNonVolatileGPR();
-					instr.result.reg = regs[i];
-					System.out.println("val " + i + " in exit set is of type " + val.typeName() + " Reg = " + instr.result.reg);
+					regs[i] = reserveReg(gpr, nonVol);
 					nofGPR++;
 					break;
 				case tPhiFunc:
 					break;
 				default:
 					System.out.println("cfg = " + ssa.cfg.method.name);
-					System.out.println("instr = " + scMnemonics[instr.ssaOpcode]);
+					//				System.out.println("instr = " + scMnemonics[instr.ssaOpcode]);
 					System.out.println("type = " + svNames[val.type]);
 					assert false : "type not implemented";
 				}
+				/*			if ((i == 0) && (ssa.paramType[b.maxStack] == SSAValue.tRef)) {
+//				System.out.println("reserve GPR for this");
+				regs[i] = reserveReg(gpr, nonVol);
+				nofGPR++;
+			}			*/	
+				if (nofGPR > ssa.nofGPR) ssa.nofGPR = nofGPR;
+				if (nofFPR > ssa.nofFPR) ssa.nofFPR = nofFPR;
+			}
+		}	
+	}
+
+	private static int reserveReg(boolean isGPR, boolean isVolatile) {
+		int regs;
+		if (isGPR) {
+			if (isVolatile) {
+				regs = regsGPR & volRegsGPRinitial;
+				int i = 0;
+				while (regs != 0) {
+					if ((regs & 1) != 0) {
+						regsGPR &= ~(1 << i);
+						return i;
+					}
+					regs /= 2;
+					i++;
+				}
+				assert false: "not enough registers for volatile GPRs";
+				return 0;
 			} else {
-				if ((i == 0) && (ssa.paramType[b.maxStack] == SSAValue.tRef)) {
-					System.out.println("reserve GPR for this");
-					reserveNonVolatileGPR();
-					nofGPR++;
-				}				
+				regs = regsGPR & nonVolRegsGPRinitial;			
+				int i = 31;
+				while (regs != 0) {
+					if ((regs & (1 << i)) != 0) {
+						regsGPR &= ~(1 << i);
+						return i;
+					}
+					i--;
+				}
+				assert false: "not enough registers for nonvolatile GPRs";
+				return 0;
 			}
-			if (nofGPR > ssa.nofGPR) ssa.nofGPR = nofGPR;
-			if (nofFPR > ssa.nofFPR) ssa.nofFPR = nofFPR;
-			instr.result.reg = regs[instr.result.index];
-//			System.out.println("val " + i + " in exit set is of type " + val.typeName() + " Reg = " + instr.result.reg);
-
+		} else {
+			if (isVolatile) {
+				regs = regsFPR & volRegsFPRinitial;
+				int i = 0;
+				while (regs != 0) {
+					if ((regs & 1) != 0) {
+						regsFPR &= ~(1 << i);
+						return i;
+					}
+					regs /= 2;
+					i++;
+				}
+				assert false: "not enough registers for volatile FPRs";
+				return 0;
+			} else {
+				regs = regsFPR & nonVolRegsFPRinitial;			
+				int i = 31;
+				while (regs != 0) {
+					if ((regs & (1 << i)) != 0) {
+						regsFPR &= ~(1 << i);
+						return i;
+					}
+					i--;
+				}
+				assert false: "not enough registers for nonvolatile FPRs";
+				return 0;
+			}		
 		}
-		
 	}
 
-	private static void freeVolatileGPR(int reg) {
-		volRegsGPR |= 1 << reg;
-		volRegsGPR &= volRegsGPRinitial;
-	}
-
-	private static int reserveVolatileFPR() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	private static void freeVolatileFPR(int reg) {
-		volRegsFPR |= 1 << reg;
-		volRegsFPR &= volRegsFPRinitial;
-	}
-
-	public static int getVolatileGPR() {
-		int regs = volRegsGPR;
-		int i = 0;
-		while (regs != 0) {
-			if ((regs & 1) != 0) return i;
-			regs /= 2;
-			i++;
+	private static void freeVolReg(boolean isGPR, int reg) {
+		int mask; 	// ??????????????
+		if (isGPR) {
+			mask = (1 << reg) & volRegsGPRinitial;
+			regsGPR |= 1 << reg;
+		} else {
+			mask = (1 << reg) & volRegsFPRinitial;
+			regsFPR |= 1 << reg;
 		}
-		assert false: "not enough registers for volatiles";
-		return 0;
-	}
-
-	public static int reserveVolatileGPR() {
-		int regs = volRegsGPR;
-		int i = 0;
-		while (regs != 0) {
-			if ((regs & 1) != 0) {
-				volRegsGPR &= ~(1 << i);
-				return i;
-			}
-			regs /= 2;
-			i++;
-		}
-		assert false: "not enough registers for volatile GPRs";
-		return 0;
-	}
-
-	public static int reserveNonVolatileGPR() {
-		int regs = nonVolRegsGPR;
-		int i = 31;
-		while (regs != 0) {
-			if ((regs & (1 << i)) != 0) {
-				nonVolRegsGPR &= ~(1 << i);
-				return i;
-			}
-			i--;
-		}
-		assert false: "not enough registers for nonvolatile GPRs";
-		return 0;
-	}
-
-	public static int reserveNonVolatileFPR() {
-		int regs = nonVolRegsFPR;
-		int i = 31;
-		while (regs != 0) {
-			if ((regs & (1 << 31)) != 0) {
-				volRegsFPR &= ~(1 << i);
-				return i;
-			}
-			regs <<= 1;
-			i--;
-		}
-		assert false: "not enough registers for nonvolatile FPRs";
-		return 0;
 	}
 
 }

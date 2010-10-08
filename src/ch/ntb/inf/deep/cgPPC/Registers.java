@@ -1,8 +1,14 @@
 package ch.ntb.inf.deep.cgPPC;
 
 interface Registers {
-	final int TopGPR = 31;
-	final int TopFPR = 31;
+	final int nofGPR = 32;
+	final int nofFPR = 32;
+	
+	final int topGPR = 31;
+	final int topFPR = 31;
+	
+	final int paramStartGPR = 2;
+	final int paramStartFPR = 1;
 	
 	final int returnGPR1 = 2;
 	final int returnGPR2 = 3;

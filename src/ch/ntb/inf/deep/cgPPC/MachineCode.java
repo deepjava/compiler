@@ -55,20 +55,21 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					CFGNode[] successors = node.successors;
 					switch (code & 0xfc000000) {
 					case ppcB:			
-						System.out.println("abs branch found");
-						int targAddr = ((SSANode)successors[0]).codeStartAddr;
-						this.instructions[node.codeEndAddr] |= (targAddr << 2) & 0x3ffffff;
+//						System.out.println("abs branch found");
+						int branchOffset = ((SSANode)successors[0]).codeStartAddr - node.codeEndAddr;
+						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
 						break;
 					case ppcBc:
-						System.out.println("cond branch found");
-						targAddr = ((SSANode)successors[1]).codeStartAddr;
-						this.instructions[node.codeEndAddr] |= (targAddr << 2) & 0xffff;
+//						System.out.println("cond branch found");
+						branchOffset = ((SSANode)successors[1]).codeStartAddr - node.codeEndAddr;
+						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0xffff;
 						break;
 					}
 				} else if (node.instructions[node.nofInstr-1].ssaOpcode == sCreturn) {
 					if (node.next != null) {
-						this.instructions[node.codeEndAddr] |= (iCount << 2) & 0x3ffffff;
-						System.out.println("return branch found, epilog start instr = " + iCount);
+						int branchOffset = iCount - node.codeEndAddr;
+						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+//						System.out.println("return branch found, epilog start instr = " + iCount);
 					}
 				}
 			}
@@ -79,10 +80,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 
 	public void translateSSA (SSANode node) {
 		SSAValue[] opds;
-		int sReg1, sReg2, dReg, refReg, reg1, reg2, indexReg, valReg, prevVolRegsGPR;
+		int sReg1, sReg2, dReg, refReg, indexReg, valReg, prevVolRegsGPR;
+		for (int i = 0; i < node.nofPhiFunc; i++) {
+			SSAInstruction instr = node.phiFunctions[i];
+			opds = instr.getOperands(); 
+			if (instr.result.reg != opds[0].reg) {
+//				System.out.println("insert move register");
+//				createIrArSrB(ppcOr, instr.result.reg, opds[0].reg, opds[0].reg);
+			}
+			break;
+			
+		}
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
-//			System.out.println("ssa opcode =" + instr.scMnemonics[instr.ssaOpcode]);
+			System.out.println("ssa opcode =" + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				int high, low, addr;
@@ -97,9 +108,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						if (immVal < 0) low--;
 //						System.out.println("new instr, low = " + low);
 						if (low != 0) {
-							int volReg = RegAllocator.getVolatileGPR();
-							createInstructionSDI(ppcAddis, 0, volReg, high);
-							createInstructionSDI(ppcAddi, volReg, dReg, low);
+							createInstructionSDI(ppcAddis, 0, instr.result.regAux1, high);
+							createInstructionSDI(ppcAddi, instr.result.regAux1, dReg, low);
 						} else {
 //						System.out.println("low = 0");
 							createInstructionSDI(ppcAddis, 0, dReg, high);
@@ -107,7 +117,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					} else {
 						if (instr.result.index >= 0) { // local variable
 							createInstructionSDI(ppcAddi, 0, dReg, immVal);
-						} else { // constant used for ssa instruction
+						} else { // constant used for ssa instruction further down
 							SSAValue val = instr.result;
 							SSAValue startVal = node.instructions[0].result;
 							SSAInstruction instr1 = node.instructions[val.end - startVal.n];
@@ -127,11 +137,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case tLong:
 					// will use constant pool later
 					long immValLong = (Long)instr.result.constant;					
-					int volReg = RegAllocator.getVolatileGPR();
-					createInstructionSDI(ppcAddis, 0, volReg, (int)(immValLong >> 48));
-					createInstructionSDI(ppcAddis, volReg, volReg, (int)(immValLong >> 32));
-					createInstructionSDI(ppcAddis, volReg, volReg, (int)(immValLong >> 16));
-					createInstructionSDI(ppcAddi, volReg, dReg, (int)immValLong);
+					createInstructionSDI(ppcAddis, 0, instr.result.regAux1, (int)(immValLong >> 48));
+					createInstructionSDI(ppcAddis, instr.result.regAux1, instr.result.regAux1, (int)(immValLong >> 32));
+					createInstructionSDI(ppcAddis, instr.result.regAux1, instr.result.regAux1, (int)(immValLong >> 16));
+					createInstructionSDI(ppcAddi, instr.result.regAux1, dReg, (int)immValLong);
 					assert false : "not yet implemented";
 					break;
 				case tFloat:
@@ -144,22 +153,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 //					assert false : "not yet implemented";
 					break;
 				case tRef:
-					prevVolRegsGPR = RegAllocator.volRegsGPR;
-					RegAllocator.volRegsGPR = instr.result.volRegs;
-					reg1 = RegAllocator.reserveVolatileGPR();
-					
-					System.out.println("cfg = " + ssa.cfg.method.name);
-					System.out.println("instr = " + scMnemonics[instr.ssaOpcode]);
-					System.out.println("type = " + svNames[instr.result.type]);
-					System.out.println("vol reg = " + reg1);
-					System.out.println("result reg = " + instr.result.reg);
-					System.out.println("volRegs = " + Integer.toHexString(RegAllocator.volRegsGPR));
 					addr = stringAddr;
 					high = (addr >> 16) + (addr >> 15) - ((addr&0xffff0000) >> 15);
 					low = (addr - (high >> 16)) & 0xffff;
-					createIrDrAImm(ppcAddis, reg1, 0, high);
-					createIrDrAImm(ppcAddi, reg1, reg1, low);
-					RegAllocator.volRegsGPR = prevVolRegsGPR;
+					createIrDrAImm(ppcAddis, instr.result.regAux1, 0, high);
+					createIrDrAImm(ppcAddi, instr.result.regAux1, instr.result.regAux1, low);
 					break;
 				default:
 					System.out.println("cfg = " + ssa.cfg.method.name);
@@ -189,7 +187,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					break;
 				case tLong:
 					createInstructionSSD(ppcAddc, sReg1, sReg2, dReg);
-					createInstructionSSD(ppcAdde, opds[0].regAux2, opds[1].regAux2, instr.result.regAux2);
+					createInstructionSSD(ppcAdde, opds[0].regLong, opds[1].regLong, instr.result.regLong);
 					break;
 				case tFloat:
 					createInstructionSSD(ppcFadds, sReg1, sReg2, dReg);
@@ -417,7 +415,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					break;
 				case bClreturn:
 					createInstructionSSD(ppcOr, returnGPR1, opds[0].reg, opds[0].reg);
-					createInstructionSSD(ppcOr, returnGPR2, opds[0].regAux2, opds[0].regAux2);
+					createInstructionSSD(ppcOr, returnGPR2, opds[0].regLong, opds[0].regLong);
 					break;
 				case bCfreturn:
 				case bCdreturn:
@@ -482,44 +480,40 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				refReg = opds[0].reg;
 				indexReg = opds[1].reg;
 				createItrap(ppcTwi, TOifequal, refReg, 0);
-				prevVolRegsGPR = RegAllocator.volRegsGPR;
-				RegAllocator.volRegsGPR = instr.result.volRegs;
-				reg1 = RegAllocator.reserveVolatileGPR();
-				createIrDrAImm(ppcLha, reg1, refReg, arrayLenOffset);
-				createItrap(ppcTw, TOifgeU, indexReg, reg1);
-				reg2 = RegAllocator.reserveVolatileGPR();
+				createIrDrAImm(ppcLha, instr.result.regAux1, refReg, arrayLenOffset);
+				createItrap(ppcTw, TOifgeU, indexReg, instr.result.regAux1);
 				switch (instr.result.type) {
 				case tByte: 
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLbzx, instr.result.reg, reg2, indexReg);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrDrArB(ppcLbzx, instr.result.reg, instr.result.regAux2, indexReg);
 					createIrArS(ppcExtsb, instr.result.reg, instr.result.reg);
 					break;
 				case tShort: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 1, 0, 30);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLhax, instr.result.reg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 1, 0, 30);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrDrArB(ppcLhax, instr.result.reg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tInteger: 
 				case tRef:
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 2, 0, 29);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLwzx, instr.result.reg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 2, 0, 29);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrDrArB(ppcLwzx, instr.result.reg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tLong: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 3, 0, 28);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLwzux, instr.result.reg, reg1, reg2);
-					createIrDrAImm(ppcLwz, instr.result.regAux2, reg1, 4);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 3, 0, 28);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrDrArB(ppcLwzux, instr.result.reg, instr.result.regAux1, instr.result.regAux2);
+					createIrDrAImm(ppcLwz, instr.result.regLong, instr.result.regAux1, 4);
 					break;
 				case tFloat:
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 2, 0, 29);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLfsx, instr.result.reg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 2, 0, 29);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrDrArB(ppcLfsx, instr.result.reg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tDouble: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 3, 0, 28);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLfdx, instr.result.reg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 3, 0, 28);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrDrArB(ppcLfdx, instr.result.reg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tChar: 
 					assert false : "cg: type char not implemented";
@@ -527,7 +521,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				default:
 					assert false : "cg: type not implemented";
 				}
-				RegAllocator.volRegsGPR = prevVolRegsGPR;
 				break;
 			case sCstoreToArray:
 				opds = instr.getOperands();
@@ -535,47 +528,40 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				indexReg = opds[1].reg;
 				valReg = opds[2].reg;
 				createItrap(ppcTwi, TOifequal, refReg, 0);
-				prevVolRegsGPR = RegAllocator.volRegsGPR;
-//				System.out.println("prevVolRegsGPR = " + Integer.toHexString(prevVolRegsGPR));
-//				System.out.println("instr.result.volRegs = " + Integer.toHexString(instr.result.volRegs));
-				RegAllocator.volRegsGPR = instr.result.volRegs;
-				reg1 = RegAllocator.reserveVolatileGPR();
-//				System.out.println("reg1 = " + reg1);
-				createIrDrAImm(ppcLha, reg1, refReg, arrayLenOffset);
-				createItrap(ppcTw, TOifgeU, indexReg, reg1);
-				reg2 = RegAllocator.reserveVolatileGPR();
+				createIrDrAImm(ppcLha, instr.result.regAux1, refReg, arrayLenOffset);
+				createItrap(ppcTw, TOifgeU, indexReg, instr.result.regAux1);
 				switch (opds[2].type) {
 				case tByte: 
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStbx, valReg, indexReg, reg2);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrSrArB(ppcStbx, valReg, indexReg, instr.result.regAux2);
 					break;
 				case tShort: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 1, 0, 30);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcSthx, valReg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 1, 0, 30);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrSrArB(ppcSthx, valReg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tInteger: case tRef:
 				case tAref: case tAboolean: case tAchar: case tAfloat: case tAdouble:
 				case tAbyte: case tAshort: case tAinteger: case tAlong:
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 2, 0, 29);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStwx, valReg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 2, 0, 29);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrSrArB(ppcStwx, valReg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tLong: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 3, 0, 28);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStwux, valReg, reg1, reg2);
-					createIrSrAImm(ppcStw, opds[2].regAux2, reg1, 4);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 3, 0, 28);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrSrArB(ppcStwux, valReg, instr.result.regAux1, instr.result.regAux2);
+					createIrSrAImm(ppcStw, opds[2].regLong, instr.result.regAux1, 4);
 					break;
 				case tFloat: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 2, 0, 29);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStfsx, valReg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 2, 0, 29);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrSrArB(ppcStfsx, valReg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tDouble: 
-					createIrArRotateMask(ppcRlwinm, reg1, indexReg, 3, 0, 28);
-					createIrDrAImm(ppcAddi, reg2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStfdx, valReg, reg1, reg2);
+					createIrArRotateMask(ppcRlwinm, instr.result.regAux1, indexReg, 3, 0, 28);
+					createIrDrAImm(ppcAddi, instr.result.regAux2, refReg, arrayFirstOffset);
+					createIrSrArB(ppcStfdx, valReg, instr.result.regAux1, instr.result.regAux2);
 					break;
 				case tChar: 
 					assert false : "cg: type char not implemented";
@@ -586,7 +572,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					System.out.println("type = " + svNames[opds[2].type]);
 					assert false : "cg: type not implemented";
 				}
-				RegAllocator.volRegsGPR = prevVolRegsGPR;
+				break;
+			case sCstoreToField:
+				opds = instr.getOperands();
+				refReg = opds[0].reg;
 				break;
 			case sCalength:
 				opds = instr.getOperands();
@@ -595,6 +584,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				createInstructionSDI(ppcLha, refReg, instr.result.reg , arrayLenOffset);
 				break;
 			case sCloadLocal:
+				break;
+			case sCregMove:
+				opds = instr.getOperands();
+				createIrArSrB(ppcOr, instr.result.reg, opds[0].reg, opds[0].reg);
 				break;
 			default:
 				assert false : "cg: no code generated for " + instr.scMnemonics[instr.ssaOpcode] + " function";
@@ -716,42 +709,44 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	private void insertProlog(int stackSize, int nofLocals, boolean isStatic) {
-		Method m = ssa.cfg.method;
-		nofParamGPR = 0; nofParamFPR = 0;
-		for (int i = m.maxStackSlots; i < m.maxStackSlots + m.maxLocals; i++) {
-//			System.out.print(ssa.isParam[i] + ", ");
-			if (ssa.isParam[i]) {
-				switch (ssa.paramType[i]) {
-				case tInteger:
-				case tRef:
-				case tBoolean:
-					nofParamGPR++;
-					System.out.println("type is integer");
-					break;
-				case tLong:
-					nofParamGPR += 2;
-					i++;
-					System.out.println("type is long");
-					break;
-				case tFloat:
-				case tDouble:
-					nofParamFPR++;
-					System.out.println("type is float");
-					break;
-				default:
-					System.out.println("type " + ssa.paramType[i]);
-					assert false : "type not implemented";
-				}
-			}
-		}
-		createInstructionSDI(ppcStwu, stackPtr, stackPtr, -stackSize);
+		createIrSrAImm(ppcStwu, stackPtr, stackPtr, -stackSize);
 		createInstructionSPR(ppcMfspr, LR, 0);
-		createInstructionSDI(ppcStw, stackPtr, 0, stackSize - LRoffset);
+		createIrSrAImm(ppcStw, 0, stackPtr, stackSize - LRoffset);
 		if (ssa.nofGPR > 0) {
-			createInstructionSDI(ppcStmw, stackPtr, 32-ssa.nofGPR, stackSize - GPRoffset);
-//		int count = ssa.cfg.method.nofParams + (isStatic? 0 : 1);
-			for (int i = 0; i < nofParamGPR; i++) {
-				createInstructionSSD(ppcOr, 31 - i, 2 + i, 2 + i);
+			createIrSrAImm(ppcStmw, nofGPR-ssa.nofGPR, stackPtr, stackSize - GPRoffset);
+		}
+		if (ssa.nofFPR > 0) {
+			assert false : "cg not yet implemented";
+		}
+		if (ssa.nofGPR > 0 || ssa.nofFPR > 0) {
+			Method m = ssa.cfg.method;
+			nofParamGPR = 0; nofParamFPR = 0;
+			for (int i = m.maxStackSlots; i < m.maxStackSlots + m.maxLocals; i++) {
+				if (ssa.isParam[i]) {
+					switch (ssa.paramType[i]) {
+					case tInteger:
+					case tRef:
+					case tBoolean:
+						nofParamGPR++;
+						System.out.println("param type is integer");
+						if (RegAllocator.lastExitSet[i] != null)
+							createIrArSrB(ppcOr, RegAllocator.lastExitSet[i].reg, nofParamGPR+paramStartGPR-1, nofParamGPR+paramStartGPR-1);
+						break;
+					case tLong:
+						nofParamGPR += 2;
+						i++;
+						System.out.println("param type is long");
+						break;
+					case tFloat:
+					case tDouble:
+						nofParamFPR++;
+						System.out.println("param type is float");
+						break;
+					default:
+						System.out.println("type " + ssa.paramType[i]);
+						assert false : "type not implemented";
+					}
+				}
 			}
 		}
 	}
@@ -781,6 +776,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			System.out.print("\t[0x");
 			System.out.print(Integer.toHexString(i*4));
 			System.out.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
+			if (opcode == 0x10) {
+				int BD = (short)(instructions[i] & 0xFFFC);
+				System.out.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+			} else if (opcode == 0x12) {
+				int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+				System.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+			}
 			System.out.println();
 			}
 	}
