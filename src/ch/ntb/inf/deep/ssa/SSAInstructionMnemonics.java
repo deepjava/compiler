@@ -35,7 +35,8 @@ public interface SSAInstructionMnemonics extends SSAInstructionOpcs {
 		"sCPhiFunc",
 		"sCloadLocal",
 		"sCRegMove",		
-		"sCBranch"		
+		"sCBranch",
+		"sCloadFromField"
 	};
 
 }

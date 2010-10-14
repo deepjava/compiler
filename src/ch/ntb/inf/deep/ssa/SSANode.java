@@ -1855,7 +1855,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a DataItem. Used in getstatic";
 				}
 				field =(DataItem) ssa.cfg.method.owner.constPool[val];
-				if(field.name.charAt(0) == '['){
+				if(field.type.name.charAt(0) == '['){
 					switch(field.type.name.charAt(0)){
 					case 'B':
 						result.type = SSAValue.tAbyte;
@@ -1888,7 +1888,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tAref;
 					}					
 				}else{
-					switch(field.name.charAt(0)){
+					switch(field.type.name.charAt(0)){
 					case 'B':
 						result.type = SSAValue.tByte;
 					break;
@@ -1920,7 +1920,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tVoid;
 					}					
 				}
-				instr = new NoOpndRef(sCloadConst, field.name);
+				instr = new NoOpndRef(sCloadFromField, field.name);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -1979,7 +1979,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tAref;
 					}					
 				}else{
-					switch(field.name.charAt(0)){
+					switch(field.type.name.charAt(0)){
 					case 'B':
 						result.type = SSAValue.tByte;
 					break;
@@ -2013,7 +2013,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				value1 = popFromStack();
 				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new MonadicRef(sCloadConst, null,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1);
+					instr = new MonadicRef(sCloadFromField, null,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in getfield";
