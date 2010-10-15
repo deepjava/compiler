@@ -2456,9 +2456,9 @@ public class InstructionDecoder implements InstructionOpcs {
 					return "mcrf  crf" + crfD + ", crf" + crfS;
 				case 0x10:
 					if (lk == 0) {
-						return "bclr " + BO + ", " + BI;
+						return "bclr " + BOstring[BO] + ", " + BIstring[BI];
 					} else {
-						return "bclrl " + BO + ", " + BI;
+						return "bclrl " + BOstring[BO] + ", " + BIstring[BI];
 					}
 				case 0x21:
 					return "crnor  crb" + D + ", crb" + A + ", crb" + B;
@@ -2482,9 +2482,9 @@ public class InstructionDecoder implements InstructionOpcs {
 					return "cror  crb" + D + ", crb" + A + ", crb" + B;
 				case 0x210:
 					if (lk == 0) {
-						return "bcctr " + BO + ", " + BI;
+						return "bcctr " + BOstring[BO] + ", " + BIstring[BI];
 					} else {
-						return "bcctrl " + BO + ", " + BI;
+						return "bcctrl " + BOstring[BO] + ", " + BIstring[BI];
 					}
 				}
 				break;

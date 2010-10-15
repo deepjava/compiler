@@ -159,12 +159,23 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			}
 			for (int i = 0; i < b.nofInstr; i++) {
 				SSAInstruction instr = b.instructions[i];
+				System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode]);
+				System.out.println("\tregsGPR before assigning = " + Integer.toHexString(regsGPR));
 				// reserve additional volatile registers
-				if (instr.ssaOpcode == sCloadConst) {
+				switch (instr.ssaOpcode) {
+				case sCloadConst:
+				case sCcall:
+				case sCloadFromField:
+				case sCstoreToField:
 					instr.result.regAux1 = reserveReg(gpr, vol);
-				} else if (instr.ssaOpcode == sCloadFromArray || instr.ssaOpcode == sCstoreToArray) {
+					break;
+				case sCloadFromArray:
+				case sCstoreToArray:
 					instr.result.regAux1 = reserveReg(gpr, vol);
 					instr.result.regAux2 = reserveReg(gpr, vol);
+					break;
+				default:
+					break;
 				}
 				if (instr.result.regAux1 != -1) freeVolReg(gpr, instr.result.regAux1);
 				if (instr.result.regAux2 != -1) freeVolReg(gpr, instr.result.regAux2);
@@ -174,7 +185,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					// free volatile registers reserved for operands of this instruction
 					for (SSAValue opd : opds) {
 						SSAValue startVal = b.instructions[0].result;
-						if ((opd.reg >= -1) && (opd.end - startVal.end <= i)) {
+						if ((opd.reg >= -1) && (opd.end <= startVal.n + i)) {
 							switch (opd.type) {
 							case tFloat: case tDouble:
 								freeVolReg(fpr, opd.reg);
@@ -193,9 +204,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							default:
 								System.out.println("cfg = " + ssa.cfg.method.name);
 								System.out.println("instr = " + scMnemonics[instr.ssaOpcode]);
-								System.out.println("type = " + svNames[instr.result.type]);
+								System.out.println("type = " + svNames[opd.type]);
 								assert false : "type not implemented";
 							}
+							System.out.println("\tfree register of opd " + opd.n + ", regsGPR is now = " + Integer.toHexString(regsGPR));
+							System.out.println("\topd.reg = " + opd.reg + ", opd.end = " + opd.end + ", startVal.n = " + startVal.end + ", i = " + i);
 						}
 					}
 				}
@@ -206,13 +219,16 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						case tDouble:
 							instr.result.reg = reserveReg(fpr, vol);
 							break;
-						case tInteger:
-						case tByte:
-						case tAbyte:
-						case tAdouble:
-						case tAref:
-						case tRef:
+						case tRef: case tBoolean: case tChar: 
+						case tByte: case tShort: case tInteger: 	
+						case tAref: case tAboolean: case tAchar: case tAfloat:
+						case tAdouble: case tAbyte: case tAshort: case tAinteger:
+						case tAlong:
 							instr.result.reg = reserveReg(gpr, vol);
+							break;
+						case tLong:
+							instr.result.reg = reserveReg(gpr, vol);
+							instr.result.regLong = reserveReg(gpr, vol);
 							break;
 						case tVoid:
 							break;
@@ -253,13 +269,19 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					nofFPR++;
 					i++;
 					break;
-				case tInteger:
-				case tRef:
-				case tAinteger:
-				case tAbyte:
-				case tAref:
+				case tRef: case tBoolean: case tChar: 
+				case tByte: case tShort: case tInteger: 	
+				case tAref: case tAboolean: case tAchar: case tAfloat:
+				case tAdouble: case tAbyte: case tAshort: case tAinteger:
+				case tAlong:
 					regs[i] = reserveReg(gpr, nonVol);
 					nofGPR++;
+					break;
+				case tLong:
+					regs[i] = reserveReg(gpr, nonVol);
+					regs[i+1] = reserveReg(gpr, nonVol);
+					nofGPR++;
+					i++;
 					break;
 				case tPhiFunc:
 					break;
@@ -289,6 +311,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				while (regs != 0) {
 					if ((regs & 1) != 0) {
 						regsGPR &= ~(1 << i);
+						System.out.println("\tregsGPR is now = " + Integer.toHexString(regsGPR));
 						return i;
 					}
 					regs /= 2;
