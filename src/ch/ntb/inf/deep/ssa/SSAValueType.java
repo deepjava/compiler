@@ -23,7 +23,7 @@ public interface SSAValueType {
 		"Integer",
 		"Long",
 		"",
-		"Array-Ref",
+		"Ref-Array",
 		"Boolean-Array",
 		"Char-Array",
 		"Float-Array",

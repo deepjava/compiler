@@ -70,7 +70,12 @@ public class Call extends SSAInstruction {
 			System.out.print("}");
 		}
 		System.out.print(" (" + result.typeName() + ")");
-		if (ssaOpcode != sCnew) System.out.print(",   " + className + "." + methodName);
+		if (className != null) {
+			System.out.print(",   " + className);
+			if (methodName != null) System.out.print("." + methodName);
+		} else {
+			System.out.print(",   " + operands[0].constant);			
+		}
 		System.out.print(",   end=" + result.end + ", index=" + result.index + ", reg=" + result.reg);
 		System.out.println();
 	}
