@@ -1,8 +1,9 @@
 package ch.ntb.inf.deep.testClasses;
 
 public class T08Calls {
-	short a;
-	static byte b;
+	short a = 31000;
+	static byte b = -128;
+	static boolean c = true;
 	
 	public static int classMethCall(){
 		int y = 0;

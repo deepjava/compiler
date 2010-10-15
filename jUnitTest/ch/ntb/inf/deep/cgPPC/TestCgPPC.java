@@ -18,7 +18,7 @@ public class TestCgPPC {
 		TestSSA.createSSA(clazz);
 		code = new MachineCode[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
-//		int i = 3;
+//		int i = 1;
 			RegAllocator.allocateRegisters(TestSSA.ssa[i]);
 			TestSSA.ssa[i].print(0, i);
 			
