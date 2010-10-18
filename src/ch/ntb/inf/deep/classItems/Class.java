@@ -636,7 +636,8 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 		if(verbose) vrb.println("<loadRootClass");
 	}
 
-	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
+	public static void buildSystem(String[] rootClassNames, String targetFilesFolder, int userReqAttributes) throws IOException{
+		Utilities.setTargetFilesFolder(targetFilesFolder);
 		errRep.nofErrors = 0;
 		Type.nofRootClasses = 0;
 		int nofRootClasses = rootClassNames.length;
@@ -653,8 +654,10 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 		if(errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
-	
-	
+	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
+		buildSystem(rootClassNames, "", userReqAttributes);
+	}
+
 	//--- debug primitives
 	public void printItemCategory(){
 		vrb.print("class");
