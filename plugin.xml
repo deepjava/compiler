@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="ch.ntb.inf.deep.launcher.DeepLaunchDelegate"
+            id="deep.launchType"
+            modes="run"
+            name="Deep Application"
+            public="true">
+         <fileExtension
+               default="true"
+               extension="java">
+         </fileExtension>
+      </launchConfigurationType>
+   </extension>
+   <extension
+         id="ch.ntb.inf.deep.nature.DeepNature"
+         name="Deep Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="ch.ntb.inf.deep.nature.DeepNature">
+         </run>
+      </runtime>
+      <requires-nature
+            id="org.eclipse.jdt.core.javanature">
+      </requires-nature>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="deep.launchType"
+            icon="icons/full/obj16/deep.gif"
+            id="deep.typeImage">
+      </launchConfigurationTypeImage>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="ch.ntb.inf.deep.ui.tabs.DeepTabGroup"
+            description="Specify and launch a programm"
+            id="deep.tabGroup"
+            type="deep.launchType">
+      </launchConfigurationTabGroup>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            fixed="false"
+            icon="icons/full/elcl16/deepActiv.gif"
+            id="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            name="Deep">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="ch.ntb.inf.deep.ui.wizard.category"
+            name="Deep">
+      </category>
+      <wizard
+            canFinishEarly="false"
+            category="ch.ntb.inf.deep.ui.wizard.category"
+            class="ch.ntb.inf.deep.ui.wizard.StartWizard"
+            finalPerspective="org.eclipse.jdt.ui.JavaPerspective"
+            hasPages="true"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.wizard.StartWizard"
+            name="Deep Project"
+            project="true">
+      </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            adaptable="true"
+            class="ch.ntb.inf.deep.ui.properties.ProjectPage"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.properties.ProjectPage"
+            name="Target configuration"
+            objectClass="org.eclipse.core.resources.IResource">
+      </page>
+   </extension>
+   <extension
+         id="dummybuilder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="org.eclipse.jdt.internal.core.builder.JavaBuilder">
+         </run>
+      </builder>
+   </extension>
+
+</plugin>
