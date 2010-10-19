@@ -37,6 +37,8 @@ public class T01SimpleMethods {
 
     public static void simple4() {
         int a;
+        a = 0;
+        a = 1;
         a = 100;
         a = 10000;
         a = 32767;
@@ -53,6 +55,14 @@ public class T01SimpleMethods {
         a = -100000;
         a = -2147440000;
         a = -2147483648;
+    }
+
+    public static void simple5() {
+        long a;
+        a = 1;
+        a = -1;
+        a = 0x2233445566778899L;
+        a = 0x9988776655443322L;
     }
 
 }

@@ -35,10 +35,10 @@ public class cgPPC06 extends TestCgPPC {
 	public void conditionalOperator1() {
 		int[] code = getCode(1);
 		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -32(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -48(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 32(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stmw  r27, 20(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 44(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("stmw  r27, 16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r29, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r28, 1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r27, 0"), code[i++]);
@@ -64,10 +64,10 @@ public class cgPPC06 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r30, r28"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r31, 103"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r30"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lmw  r27, 20(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 32(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lmw  r27, 16(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 44(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 32"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 48"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
 	}
 	
@@ -76,10 +76,10 @@ public class cgPPC06 extends TestCgPPC {
 	public void conditionalOperator2() {
 		int[] code = getCode(2);
 		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -32(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -64(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 32(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stmw  r23, 20(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 60(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("stmw  r23, 16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r30, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r29, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r28, 1"), code[i++]);
@@ -115,10 +115,10 @@ public class cgPPC06 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lmw  r23, 20(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 32(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lmw  r23, 16(r1)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 60(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 32"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 64"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
 	}
 	
