@@ -15,9 +15,10 @@ public class cgPPC05 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
+		String workspace =System.getProperty("user.dir");
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T05Returns" };
 		try {
-			Class.buildSystem(rootClassNames, (1 << IClassFileConsts.atxCode)
+			Class.buildSystem(rootClassNames,workspace, (1 << IClassFileConsts.atxCode)
 					| (1 << IClassFileConsts.atxLocalVariableTable)
 					| (1 << IClassFileConsts.atxLineNumberTable)
 					| (1 << IClassFileConsts.atxExceptions));

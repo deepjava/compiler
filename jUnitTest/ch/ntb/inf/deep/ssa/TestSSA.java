@@ -1,11 +1,6 @@
 package ch.ntb.inf.deep.ssa;
 
-import static org.junit.Assert.*;
-
-import java.util.List;
-
-import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cfg.CFGNode;
+import static org.junit.Assert.assertEquals;
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
 
