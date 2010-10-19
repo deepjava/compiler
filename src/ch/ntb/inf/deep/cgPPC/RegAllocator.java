@@ -241,6 +241,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					}  else {	// is a local variable
 //						System.out.println("reserve nonvolatile");
 						instr.result.reg = regs[instr.result.index];
+						if (instr.result.type == tLong)
+							instr.result.regLong = regs[instr.result.index+1];					
 //						System.out.println("register assigned " + instr.result.reg);
 					}
 				}
@@ -280,7 +282,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				case tLong:
 					regs[i] = reserveReg(gpr, nonVol);
 					regs[i+1] = reserveReg(gpr, nonVol);
-					nofGPR++;
+					nofGPR += 2;
 					i++;
 					break;
 				case tPhiFunc:

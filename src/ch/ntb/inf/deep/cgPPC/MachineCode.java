@@ -11,9 +11,9 @@ import ch.ntb.inf.deep.classItems.*;
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, IClassFileConsts {
 	private static final int defaultNofInstr = 16;
 	private static final int stackPtr = 1;	// register for stack pointer
-	private static final int GPRoffset = 12;	
-	private static final int FPRoffset = 32;	
-	private static final int LRoffset = 0;	
+	private static int GPRoffset;	
+	private static int FPRoffset;	
+	private static int LRoffset;	
 	
 	private static final int arrayLenOffset = 8;	
 	private static final int arrayFirstOffset = 12;
@@ -31,6 +31,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	int epilogStartInstr;
 	int stackSize;
 	int nofParamGPR = 0, nofParamFPR = 0;
+	boolean tempStorage;
 	
 	/**
 	 * contains machine instructions for the ssa of a method
@@ -43,7 +44,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		System.out.println("start generating code for " + ssa.cfg.method.name);
 		this.ssa = ssa;
 		instructions = new int[defaultNofInstr];
-		stackSize = (32 + ssa.nofGPR * 4 + ssa.nofFPR * 8) / 16 * 16;
+		calcStackSize();
 		boolean isStatic = (ssa.cfg.method.accAndPropFlags & (1 << apfStatic)) != 0;
 		insertProlog(stackSize, isStatic);
 		SSANode node = (SSANode)this.ssa.cfg.rootNode;
@@ -83,6 +84,15 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			node = (SSANode) node.next;
 		}
 		insertEpilog(stackSize);
+	}
+
+	private void calcStackSize() {
+		int size = 16 + ssa.nofGPR * 4 + ssa.nofFPR * 8 + (tempStorage? 8 : 0);
+		int padding = (16 - (size % 16)) % 16;
+		stackSize = size + padding;
+		LRoffset = stackSize - 4;
+		GPRoffset = stackSize - 16 - (ssa.nofGPR - 1) * 4;
+		FPRoffset = stackSize - 16 - ssa.nofGPR * 4 - (ssa.nofFPR - 1) * 8;
 	}
 
 	public void translateSSA (SSANode node) {
@@ -449,7 +459,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						loadConstantAndFixup(fixup, paramStartGPR + 1);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
-						loadConstantAndFixup(refCD, paramStartGPR + 1);	// ref
+						loadConstantAndFixup(fixup, paramStartGPR + 1);	// ref
 						createIBOBI(ppcBclr, BOalways, 0);
 						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
 						break;
@@ -905,21 +915,22 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	private void loadConstant(int val, int reg) {
-		int high = (val >> 16) + (val >> 15) - ((val&0xffff0000) >> 15);
-		int low = (val - (high >> 16)) & 0xffff;
-		if (val < 0) low--;
-		if (low != 0) {
-			createIrDrASimm(ppcAddis, reg, 0, high);
-			createIrDrASimm(ppcAddi, reg, reg, low);
+		int low = val & 0xffff;
+		int high = (val >> 16) & 0xffff;
+		if ((low >> 15) == 0) {
+			if (low != 0) createIrDrASimm(ppcAddi, reg, 0, low);
+			if (high != 0) createIrDrASimm(ppcAddis, reg, reg, high);
+			if ((low == 0) && (high == 0)) createIrDrASimm(ppcAddi, reg, 0, 0);
 		} else {
-			createIrDrASimm(ppcAddis, reg, 0, high);
+			if (low != 0) createIrDrASimm(ppcAddi, reg, 0, low);
+			if (((high + 1) & 0xffff) != 0) createIrDrASimm(ppcAddis, reg, reg, high + 1);
 		}
 	}
 	
 	private void loadConstantAndFixup(int val, int reg) {
-		assert fixup >= 0 && fixup <= 32768 : "fixup is out of range";
-		createIrDrASimm(ppcAddis, reg, 0, 0);
-		createIrDrASimm(ppcAddi, reg, reg, fixup);
+		assert val >= 0 && val <= 32768 : "fixup is out of range";
+		createIrDrASimm(ppcAddi, reg, 0, val);
+		createIrDrASimm(ppcAddis, reg, reg, 0);
 		fixup = iCount - 2;
 	}
 
@@ -938,13 +949,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private void insertProlog(int stackSize, boolean isStatic) {
 		createIrSrASimm(ppcStwu, stackPtr, stackPtr, -stackSize);
 		createIrSspr(ppcMfspr, LR, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, stackSize - LRoffset);
+		createIrSrASimm(ppcStw, 0, stackPtr, LRoffset);
 		if (ssa.nofGPR > 0) {
-			createIrSrAd(ppcStmw, nofGPR-ssa.nofGPR, stackPtr, stackSize - GPRoffset);
+			createIrSrAd(ppcStmw, nofGPR-ssa.nofGPR, stackPtr, GPRoffset);
 		}
 		if (ssa.nofFPR > 0) {
 			for (int i = 0; i < ssa.nofFPR; i++)
-				createIrSrAd(ppcStfd, topFPR-i, stackPtr, stackSize - FPRoffset);
+				createIrSrAd(ppcStfd, topFPR-i, stackPtr, FPRoffset);
 		}
 		if (ssa.nofGPR > 0 || ssa.nofFPR > 0) {
 			Method m = ssa.cfg.method;
@@ -982,8 +993,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private void insertEpilog(int stackSize) {
 		epilogStartInstr = iCount;
 		if (ssa.nofGPR > 0)
-			createIrDrAd(ppcLmw, 32-ssa.nofGPR, stackPtr, stackSize - GPRoffset);
-		createIrDrAd(ppcLwz, 0, stackPtr, stackSize - LRoffset);
+			createIrDrAd(ppcLmw, 32-ssa.nofGPR, stackPtr, GPRoffset);
+		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
 		createIrSspr(ppcMtspr, LR, 0);
 		createIrDrASimm(ppcAddi, stackPtr, stackPtr, stackSize);
 		createIBOBI(ppcBclr, BOalways, 0);
