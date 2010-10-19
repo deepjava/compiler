@@ -9,7 +9,7 @@
  *     IBM Corporation - initial API and implementation
  *     Bjorn Freeman-Benson - initial API and implementation
  *     
- *     adapt from Example  PDAMainTab
+ * changes: Millischer Roger  adapt from Example  PDAMainTab
  *******************************************************************************/
 package ch.ntb.inf.deep.ui.tabs;
 
