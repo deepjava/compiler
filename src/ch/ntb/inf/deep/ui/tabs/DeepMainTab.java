@@ -121,6 +121,7 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 			if (program != null) {
 				fProgramText.setText(program);
 			}
+			locationPath = configuration.getAttribute(DeepPlugin.ATTR_DEEP_LOCATION, "");
 		} catch (CoreException e) {
 			setErrorMessage(e.getMessage());
 		}
