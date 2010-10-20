@@ -111,19 +111,19 @@ public class CFG implements ICjvmInstructionOpcs {
 					int low = getInt(code, addr);
 					int high = getInt(code, addr + 4);
 					int nofCases = high - low + 1;
-					split(this, bca, bca + defaultOffset);
 					for (int i = 0; i < nofCases; i++) {
 						int branchOffset = getInt(code, addr + 8 + i * 4);
 						split(this, bca, bca + branchOffset);
 					}
+					split(this, bca, bca + defaultOffset);
 					instrLen = ((high-low) + 1) * 4 + addr + 8 - bca;
 				} else {	// bClookupswitch
 					int nofPairs = getInt(code, addr);
-					split(this, bca, bca + defaultOffset);
 					for (int i = 0; i < nofPairs; i++) {
 						int branchOffset = getInt(code, addr + 8 + i * 8);
 						split(this, bca, bca + branchOffset);
 					}
+					split(this, bca, bca + defaultOffset);
 					instrLen = nofPairs * 8 + 4 + addr - bca;
 				}
 			} else if (bci == bCwide) {	// wide instruction
