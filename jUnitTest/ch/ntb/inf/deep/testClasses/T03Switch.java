@@ -22,6 +22,19 @@ public class T03Switch {
 		}
 		return i + 3;
 	}
+	
+	public static void switchNear3(int i) {
+		switch(i & 1) {
+		case -3: 
+		case 1:
+			double a = i; //2.4;
+			break;
+		case 3: 
+			int b = -1;
+		}
+		float c = 2 * i;
+	}
+	
 	public static int switchFar1(int i) {
 		switch(i) {
 			case -100: return -100;
