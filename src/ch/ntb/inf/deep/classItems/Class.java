@@ -583,7 +583,10 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				Item item = constPool[cpx];
 				if(item instanceof Class){
 					Class refClass = (Class) item;
-					if( (refClass.accAndPropFlags & (1<<dpfClassLoaded)) == 0) refClass.loadClass(userReqAttributes);
+					if( (refClass.accAndPropFlags & (1<<dpfClassLoaded)) == 0) {
+						releaseLoadingResources();//TODO Verify
+						refClass.loadClass(userReqAttributes);
+					}
 				}
 			}
 		}
