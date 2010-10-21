@@ -93,9 +93,9 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 //					int defaultOffset = getInt(bc, addr);
 					addr += 4; // skip default offset
 					if(opc == bCtableswitch){
-						int low = getInt(byteCode, addr+4);
-						int high = getInt(byteCode, addr+8);
-						instrLength = ((high-low) + 4) * 4 + addr - instrAddr;
+						int low = getInt(byteCode, addr);
+						int high = getInt(byteCode, addr+4);
+						instrLength = ((high-low) + 3) * 4 + addr - instrAddr;
 					}else{// opc == bClookupswitch
 						int nofPairs = getInt(byteCode, addr);//+4 is wrong
 						instrLength = (nofPairs * 2 + 2) * 4	 + (addr - instrAddr);
