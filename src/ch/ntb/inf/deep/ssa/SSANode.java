@@ -2043,7 +2043,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];//index into cp
 				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
 				operands = new SSAValue[val1+1];//objectref + nargs
-				for(int i = 0; i < operands.length; i++){
+				for(int i = operands.length-1; i > -1; i--){
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
@@ -2060,7 +2060,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
 				operands = new SSAValue[val1+1];//objectref + nargs
-				for(int i = 0; i < operands.length; i++){
+				for(int i = operands.length-1; i > -1; i--){
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
@@ -2077,7 +2077,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
 				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
 				operands = new SSAValue[val1];//nargs
-				for(int i = 0; i < operands.length; i++){
+				for(int i = operands.length-1; i > -1; i--){
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
@@ -2096,7 +2096,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca = bca+2;//step over count and zero byte
 				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
 				operands = new SSAValue[val1+1];//objectref + nargs
-				for(int i = 0; i < operands.length; i++){
+				for(int i = operands.length-1; i > -1; i--){
 					operands[i]= popFromStack();
 				}
 				result = new SSAValue();
