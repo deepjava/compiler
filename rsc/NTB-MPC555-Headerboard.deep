@@ -1,0 +1,22 @@
+#deep-0
+
+meta {
+	version = "2010-09-07";
+	description = "NTB MPC555 Headerboard";
+	import = MPC555.deep;
+	
+}
+
+constants {
+
+}
+
+device {
+	name = "externalRAM"
+	attributes = read, write;
+}
+
+device {
+	name = "externalFlash";
+	attributes = read;
+}

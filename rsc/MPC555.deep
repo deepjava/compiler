@@ -1,0 +1,85 @@
+#deep-0
+
+meta {
+	version = "2010-09-07";
+	description = "Freescale MPC555 (all devices)";
+}
+
+constants {
+	IMB = 0x0;										# Internal Memory Base
+	SRAMA_BaseAddr = IMB + 0x3F9800;				# Internal SRAM A Base Address
+	SRAMA_Size = 0x2800;							# Internal SRAM A Size (10 KiB)
+	SRAMB_BaseAddr = SRAMA_BaseAddr + SRAMA_Size;	# Internal SRAM B Base Address
+	SRAMB_Size = 0x4000;							# Internal SRAM B Size (16 KiB)
+	CMFA_BaseAddr = IMB + 0x0;						# Internal Flash A Base Address
+	CMFA_Size = 0x4000;								# Internal Flash A Size (256 KiB)
+	CMFB = CMFA_BaseAddr + CMFA_Size;				# Internal Flash B Base Address
+	CMFB_Size = 0x3000;								# Internal Flash B Size (192 KiB)
+	
+	sysTabBaseAddr = SRAMA_BaseAddr;				# Base address of the systemtable segment
+	stackSize = 0x2000;								# Default stack size
+}
+
+memorymap {
+
+	device InternalRam {
+		attributes = read, write;
+		width = 4; # byte
+	}
+	
+	device InternalFlash {
+		attributes = read;
+		width = 4; # byte
+		size = CMFA_Size + CMFB_Size;
+	}
+	
+	segment SysTab {
+		device = InternalRam;
+		base = sysTabBaseAddr;
+		attributes = read, write, sysconst};
+	}
+	
+	segment Constants {
+		device = InternalRam;
+		attributes = read, write, const;
+	}
+	
+	segment Code {
+		device = InternalRam;
+		attributes = read, write, code;
+	}
+	
+	segment Variables {
+		device = InternalRam;
+		attributes = read, write, var;
+	}
+	
+	segment Stack {
+		device = InternalRam;
+		attributes = read, write, stack;
+		size = stackSize;
+	}
+	
+	segment InternalFlashA {
+		device = InternalFlash;
+		base = internalFlashABaseAddr;
+		width = 4;
+		size = CMFA_Size;
+	}
+	
+	segment InternalFlashB {
+		device = InternalFlash;
+		base = internalFlashBBaseAddr;
+		width = 4;
+		size = CMFB_Size;
+	}
+}
+
+registermap {
+	register R0 {
+		type = GPR;
+		addr = 0;
+		size = 4;
+		repr = Hex;
+	}
+}

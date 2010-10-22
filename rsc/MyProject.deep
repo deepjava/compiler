@@ -1,0 +1,24 @@
+#deep-0
+
+meta {
+	version = "2010-09-07";
+	description = "Example Project file";
+	import = NTB-MPC555-Headerboard.deep;
+}
+
+project {
+	programmer = NTB-USB-BDI;
+	rootClasses = ch.ntb.stud.maxMustermann.FirstRootClass, ch.ntb.stud.maxMustermann.SecondRootClass;
+}
+
+memorymap {
+	segment MySpecialSegment {
+		device = InternalFlash;
+		base = internalFlashABaseAddr + 0x100;
+		width = 4;
+		size = CMFA_Size - 0x100;
+	}
+}
+
+// TODO: map{} ch.ntb.stud.maxMustermann.FirstRootClass@MySpecialSegment
+
