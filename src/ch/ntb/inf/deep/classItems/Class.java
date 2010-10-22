@@ -584,7 +584,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				if(item instanceof Class){
 					Class refClass = (Class) item;
 					if( (refClass.accAndPropFlags & (1<<dpfClassLoaded)) == 0) {
-						releaseLoadingResources();//TODO Verify
+						//releaseLoadingResources();//TODO Verify????
 						refClass.loadClass(userReqAttributes);
 					}
 				}
