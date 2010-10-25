@@ -130,6 +130,8 @@ interface InstructionOpcs {
 		ppcAdde = (0x1f << 26) | (0x8a << 1),
 		ppcAddi = (0x0e << 26),
 		ppcAddis = (0x0f << 26),
+		ppcAnd = (0x1f << 26) | (0x1c << 1),
+		ppcAndi = (0x1c << 26),
 		ppcB = (0x12 << 26),
 		ppcBl = (0x12 << 26) | 1,
 		ppcBc = (0x10 << 26),

@@ -19,4 +19,7 @@ interface Registers {
 	final int volRegsFPRinitial = 0x000001fe;
 	final int nonVolRegsFPRinitial = 0xfffffe00;
 
+	final boolean gpr = true;
+	final boolean fpr = false;
+
 }

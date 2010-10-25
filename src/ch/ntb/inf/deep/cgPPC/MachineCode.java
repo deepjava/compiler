@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 import ch.ntb.inf.deep.classItems.*;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, IClassFileConsts {
+	private static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
 	private static final int stackPtr = 1;	// register for stack pointer
 	private static int GPRoffset;	
@@ -22,54 +23,98 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static final int methodOffset = 24;
 	private static final int cppOffset = 24;
 	private static final int classVarOffset = 4;
+	private static final int objVarOffset = 6;
 	private static final int varOffset = 8;
 	
-	/**
-	 * reference to the SSA of a method
-	 */
-	SSA ssa;
-	int epilogStartInstr;
-	int stackSize;
-	int nofParamGPR = 0, nofParamFPR = 0;
-	boolean tempStorage;
+	private static SSA ssa;	// reference to the SSA of a method
+	int[] instructions;	//contains machine instructions for the ssa of a method
+	int iCount;	//nof instructions for this method
 	
-	/**
-	 * contains machine instructions for the ssa of a method
-	 */
-	int[] instructions;
-	int iCount;
+	private static int nofParam;
+	private static int nofParamGPR, nofParamFPR;
+	static int nofNonVolGPR, nofNonVolFPR;
+	private static int nofMoveGPR, nofMoveFPR;
+	static int[] paramType = new int[maxNofParam];
+	static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
+	static int[] paramRegNr = new int[maxNofParam];
+	private static int[] moveGPR = new int[maxNofParam];
+	private static int[] moveFPR = new int[maxNofParam];
+	private static SSAValue[] lastExitSet;
+
+	private int epilogStartInstr;
+	private static int stackSize;
+	private static boolean tempStorage;
+	
 	int fixup;
 
 	public MachineCode(SSA ssa) {
-		System.out.println("start generating code for " + ssa.cfg.method.name);
-		this.ssa = ssa;
+		MachineCode.ssa = ssa;
 		instructions = new int[defaultNofInstr];
-		calcStackSize();
-		boolean isStatic = (ssa.cfg.method.accAndPropFlags & (1 << apfStatic)) != 0;
-		insertProlog(stackSize, isStatic);
-		SSANode node = (SSANode)this.ssa.cfg.rootNode;
+
+		// make local copy
+		int maxStackSlots = ssa.cfg.method.maxStackSlots;
+		int i = maxStackSlots;
+		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
+			paramType[i - maxStackSlots] = ssa.paramType[i];
+			paramHasNonVolReg[i] = false;
+			i++;
+		}
+		nofParam = i - maxStackSlots;
+		assert nofParam <= maxNofParam : "method has too many parameters";
+		
+		System.out.println("build intervals for " + ssa.cfg.method.name);
+		RegAllocator.buildIntervals(ssa);
+		
+		System.out.println("assign registers to parameters, nofParam = " + nofParam);
+		SSANode b = (SSANode) ssa.cfg.rootNode;
+		while (b.next != null) {
+			b = (SSANode) b.next;
+		}	
+		lastExitSet = b.exitSet;
+		// determine, which parameters go into which register
+		parseExitSet(lastExitSet, maxStackSlots);
+		
+		System.out.println("allocate registers");
+		RegAllocator.assignRegisters(this);
+		ssa.print(0);
+		
+		stackSize = calcStackSize();
+		insertProlog();
+		SSANode node = (SSANode)ssa.cfg.rootNode;
 		while (node != null) {
 			node.codeStartAddr = iCount;
 			translateSSA(node);
 			node.codeEndAddr = iCount-1;
 			node = (SSANode) node.next;
 		}
-		node = (SSANode)this.ssa.cfg.rootNode;
+		node = (SSANode)ssa.cfg.rootNode;
 		while (node != null) {	// resolve local branch targets
 			if (node.nofInstr > 0) {
 				if (node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) {
 					int code = this.instructions[node.codeEndAddr];
-					System.out.println("target of branch instruction corrected: 0x" + Integer.toHexString(node.codeEndAddr*4));
+					//					System.out.println("target of branch instruction corrected: 0x" + Integer.toHexString(node.codeEndAddr*4));
 					CFGNode[] successors = node.successors;
 					switch (code & 0xfc000000) {
 					case ppcB:			
-//						System.out.println("abs branch found");
-						int branchOffset = ((SSANode)successors[0]).codeStartAddr - node.codeEndAddr;
-						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+						if ((code & 0xffff) != 0) {	// switch
+							int nofCases = (code & 0xffff) >> 2;
+							int k;
+							for (k = 0; k < nofCases; k++) {
+								int branchOffset = ((SSANode)successors[k]).codeStartAddr - (node.codeEndAddr+1-(nofCases-k)*2);
+								this.instructions[node.codeEndAddr+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
+							}
+							int branchOffset = ((SSANode)successors[k]).codeStartAddr - node.codeEndAddr;
+							this.instructions[node.codeEndAddr] &= 0xfc000000;
+							this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+						} else {
+							//							System.out.println("abs branch found");
+							int branchOffset = ((SSANode)successors[0]).codeStartAddr - node.codeEndAddr;
+							this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+						}
 						break;
 					case ppcBc:
-//						System.out.println("cond branch found");
-						branchOffset = ((SSANode)successors[1]).codeStartAddr - node.codeEndAddr;
+						//						System.out.println("cond branch found");
+						int branchOffset = ((SSANode)successors[1]).codeStartAddr - node.codeEndAddr;
 						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0xffff;
 						break;
 					}
@@ -77,7 +122,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					if (node.next != null) {
 						int branchOffset = iCount - node.codeEndAddr;
 						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
-//						System.out.println("return branch found, epilog start instr = " + iCount);
+						//						System.out.println("return branch found, epilog start instr = " + iCount);
 					}
 				}
 			}
@@ -86,18 +131,102 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		insertEpilog(stackSize);
 	}
 
-	private void calcStackSize() {
-		int size = 16 + ssa.nofGPR * 4 + ssa.nofFPR * 8 + (tempStorage? 8 : 0);
-		int padding = (16 - (size % 16)) % 16;
-		stackSize = size + padding;
-		LRoffset = stackSize - 4;
-		GPRoffset = stackSize - 16 - (ssa.nofGPR - 1) * 4;
-		FPRoffset = stackSize - 16 - ssa.nofGPR * 4 - (ssa.nofFPR - 1) * 8;
+	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
+		nofParamGPR = 0; nofParamFPR = 0;
+		nofMoveGPR = 0; nofMoveFPR = 0;
+		System.out.print("[");
+		for (int i = 0; i < nofParam; i++) {
+			int type = paramType[i];
+			System.out.print("(" + svNames[type] + ")");
+			if (type == tLong) {
+				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
+					System.out.print("r");
+					if (paramHasNonVolReg[i]) {
+						int reg = RegAllocator.reserveReg(gpr, true);
+						int regLong = RegAllocator.reserveReg(gpr, true);
+						moveGPR[nofMoveGPR] = nofParamGPR;
+						moveGPR[nofMoveGPR+1] = nofParamGPR+1;
+						nofMoveGPR += 2;
+						paramRegNr[i] = reg;
+						paramRegNr[i+1] = regLong;
+						System.out.print(reg + ",r" + regLong);
+					} else {
+						RegAllocator.reserveReg(gpr, paramStartGPR + nofParamGPR);
+						RegAllocator.reserveReg(gpr, paramStartGPR + nofParamGPR + 1);
+						paramRegNr[i] = paramStartGPR + nofParamGPR;
+						paramRegNr[i+1] = paramStartGPR + nofParamGPR + 1;
+						System.out.print((paramStartGPR + nofParamGPR) + ",r" + (paramStartGPR + nofParamGPR + 1));
+					}
+				}
+				nofParamGPR += 2;
+			} else if (type == tFloat) {
+				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
+					System.out.print("fr");
+					if (paramHasNonVolReg[i]) {
+						int reg = RegAllocator.reserveReg(fpr, true);
+						moveFPR[nofMoveFPR] = nofParamFPR;
+						nofMoveFPR++;
+						paramRegNr[i] = reg;
+						System.out.print(reg);
+					} else {
+						RegAllocator.reserveReg(fpr, paramStartFPR + nofParamFPR);
+						paramRegNr[i] = paramStartFPR + nofParamFPR;
+						System.out.print(paramStartFPR + nofParamFPR);
+					}
+				}
+				nofParamFPR++;
+			} else if (type == tDouble) {
+				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
+					System.out.print("fr");
+					if (paramHasNonVolReg[i]) {
+						int reg = RegAllocator.reserveReg(fpr, true);
+						moveFPR[nofMoveFPR] = nofParamFPR;
+						nofMoveFPR++;
+						paramRegNr[i] = reg;
+						System.out.print(reg);
+					} else {
+						RegAllocator.reserveReg(fpr, paramStartFPR + nofParamFPR);
+						paramRegNr[i] = paramStartFPR + nofParamFPR;
+						System.out.print(paramStartFPR + nofParamFPR);
+					}
+				}
+				nofParamFPR++;
+				i++;
+			} else {
+				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
+					System.out.print("r");
+					if (paramHasNonVolReg[i]) {
+						int reg = RegAllocator.reserveReg(gpr, true);
+						moveGPR[nofMoveGPR] = nofParamGPR;
+						nofMoveGPR++;
+						paramRegNr[i] = reg;
+						System.out.print(reg);
+					} else {
+						RegAllocator.reserveReg(gpr, paramStartGPR + nofParamGPR);
+						paramRegNr[i] = paramStartGPR + nofParamGPR;
+						System.out.print(paramStartGPR + nofParamGPR);
+					}
+				}
+				nofParamGPR++;
+			}
+			if (i < nofParam - 1) System.out.print(", ");
+		}
+		System.out.println("]");
 	}
 
-	public void translateSSA (SSANode node) {
+	private static int calcStackSize() {
+		int size = 16 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
+		int padding = (16 - (size % 16)) % 16;
+		size = size + padding;
+		LRoffset = size - 4;
+		GPRoffset = size - 12 - nofNonVolGPR * 4;
+		FPRoffset = size - 12 - nofNonVolGPR * 4 - nofNonVolFPR * 8;
+		return size;
+	}
+
+	private void translateSSA (SSANode node) {
 		SSAValue[] opds;
-		int sReg1, sReg2, dReg, refReg, indexReg, valReg, bci;
+		int sReg1, sReg2, dReg, refReg, indexReg, valReg, bci, offset;
 		for (int i = 0; i < node.nofPhiFunc; i++) {
 			SSAInstruction instr = node.phiFunctions[i];
 			opds = instr.getOperands(); 
@@ -121,14 +250,19 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					if ((immVal < -32768) || (immVal > 32767)) {
 						loadConstant(immVal, dReg);
 					} else {
-						if (instr.result.index >= 0) { // local variable
+						if ((instr.result.index >= 0) || (instr.result.join != null)) { // local variable
 							createIrDrASimm(ppcAddi, dReg, 0, immVal);
 						} else { // constant used for ssa instruction further down
 							SSAValue val = instr.result;
 							SSAValue startVal = node.instructions[0].result;
 							SSAInstruction instr1 = node.instructions[val.end - startVal.n];
+			System.out.println("val.end = " + val.end);
+			System.out.println("startVal.n = " + startVal.n);
 							switch (instr1.ssaOpcode) {	// instruction, where the const is used
 							case sCadd:
+							case sCand:
+							case sCor:
+							case sCxor:
 							case sCsub:
 							case sCmul:
 							case sCbranch:
@@ -144,8 +278,30 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					long immValLong;
 					if (obj instanceof Long) immValLong = (Long)obj;	
 					else immValLong = (Integer)obj;
-					loadConstant((int)(immValLong >> 32), instr.result.reg);
-					loadConstant((int)immValLong, instr.result.regLong);
+					if ((immValLong < -32768) || (immValLong > 32767)) {
+						loadConstant((int)(immValLong >> 32), instr.result.reg);
+						loadConstant((int)immValLong, instr.result.regLong);
+					} else {
+						if (instr.result.index >= 0) { // local variable
+							createIrDrASimm(ppcAddi, dReg, 0, (int)immValLong);
+						} else { // constant used for ssa instruction further down
+							SSAValue val = instr.result;
+							SSAValue startVal = node.instructions[0].result;
+							SSAInstruction instr1 = node.instructions[val.end - startVal.n];
+							switch (instr1.ssaOpcode) {	// instruction, where the const is used
+							case sCadd:
+							case sCand:
+							case sCor:
+							case sCxor:
+							case sCsub:
+							case sCmul:
+							case sCbranch:
+								break;
+							default:
+								createIrDrASimm(ppcAddi, dReg, 0, (int)immValLong);
+							}
+						}
+					}
 					break;
 				case tFloat:	// load from const pool
 					loadConstantAndFixup(fixup, instr.result.regAux1);
@@ -176,10 +332,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						int immVal = (Integer)opds[0].constant;
 						if ((immVal >= -32768) && (immVal <= 32767))
 							createIrDrASimm(ppcAddi, dReg, sReg2, immVal);
+						else
+							createIrDrArB(ppcAdd, dReg, sReg1, sReg2);
 					} else if ((opds[1].index < 0) && (opds[1].constant != null)) {
 						int immVal = (Integer)opds[1].constant;
 						if ((immVal >= -32768) && (immVal <= 32767))
 							createIrDrASimm(ppcAddi, dReg, sReg1, immVal);
+						else
+							createIrDrArB(ppcAdd, dReg, sReg1, sReg2);
 					} else {
 						createIrDrArB(ppcAdd, dReg, sReg1, sReg2);
 					}
@@ -297,7 +457,55 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				break;
 			case sCrem:
 				break;
-			case sCconvInt:
+			case sCand:
+				opds = instr.getOperands();
+				sReg1 = opds[0].reg;
+				sReg2 = opds[1].reg;
+				dReg = instr.result.reg;
+				if (instr.result.type == tInteger) {
+					if ((opds[0].index < 0) && (opds[0].constant != null)) {
+						int immVal = (Integer)opds[0].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createIrArSuimm(ppcAndi, dReg, sReg2, immVal);
+						else
+							createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
+					} else if ((opds[1].index < 0) && (opds[1].constant != null)) {
+						int immVal = (Integer)opds[1].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createIrArSuimm(ppcAndi, dReg, sReg1, immVal);
+						else
+							createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
+					} else
+						createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
+				} else if (instr.result.type == tLong) {
+					if ((opds[0].index < 0) && (opds[0].constant != null)) {
+						long immVal = (Long)opds[0].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createIrArSuimm(ppcAndi, dReg, sReg2, (int)immVal);
+						else {
+							createIrArSrB(ppcAnd, instr.result.regLong, opds[0].regLong, opds[1].regLong);
+							createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
+						}
+					} else if ((opds[1].index < 0) && (opds[1].constant != null)) {
+						long immVal = (Integer)opds[1].constant;
+						if ((immVal >= -32768) && (immVal <= 32767))
+							createIrArSuimm(ppcAndi, dReg, sReg1, (int)immVal);
+						else {
+							createIrArSrB(ppcAnd, instr.result.regLong, opds[0].regLong, opds[1].regLong);
+							createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
+						}
+					} else {
+						createIrArSrB(ppcAnd, instr.result.regLong, opds[0].regLong, opds[1].regLong);
+						createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
+					}
+				} else
+					assert false : "cg: wrong type";
+			break;
+			case sCor:
+				break;
+			case sCxor:
+				break;
+			case sCconvInt:	// int -> other type
 				opds = instr.getOperands();
 				sReg1 = opds[0].reg;
 				dReg = instr.result.reg;
@@ -379,8 +587,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			case sCcall:
 				opds = instr.getOperands();
 				if (((Call)instr).isStatic) {	// invokestatic
-					loadConstantAndFixup(fixup, paramStartGPR);	// addr of method
-					createIrSspr(ppcMtspr, LR, paramStartGPR);
+					loadConstantAndFixup(fixup, instr.result.regAux1);	// addr of method
+					createIrSspr(ppcMtspr, LR, instr.result.regAux1);
 				} else {	// invokevirtual and invokespecial and invokeinterface
 					refReg = opds[0].reg;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -416,14 +624,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case tShort: case tInteger: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
-					createIrArSrB(ppcOr, returnGPR1, instr.result.reg, instr.result.reg);
+					createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
 					break;
 				case tLong:
-					createIrArSrB(ppcOr, returnGPR1, instr.result.reg, instr.result.reg);
-					createIrArSrB(ppcOr, returnGPR1 + 1, instr.result.regLong, instr.result.regLong);
+					createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+					createIrArSrB(ppcOr, instr.result.regLong, returnGPR1 + 1, returnGPR1 + 1);
 					break;
 				case tFloat: case tDouble:
-					createIrDrB(ppcFmr, returnFPR, instr.result.reg);
+					createIrDrB(ppcFmr, instr.result.reg, returnFPR);
 					break;
 				case tVoid:	// no return value
 					break;
@@ -573,71 +781,49 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				break;
 			case sCstoreToField:
 				opds = instr.getOperands();
+				int type;
 				if (opds.length == 1) {	// putstatic
 					sReg1 = opds[0].reg;
+					sReg2 = opds[0].regLong;
+					refReg = instr.result.regAux1;
+					type = opds[0].type;
+					offset = classVarOffset;
 					loadConstantAndFixup(fixup, instr.result.regAux1);
-					switch (opds[0].type) {
-					case tBoolean: case tByte: case tShort: 
-					case tInteger: case tRef: case tAref: case tAboolean:
-					case tAchar: case tAfloat: case tAdouble: case tAbyte: 
-					case tAshort: case tAinteger: case tAlong:
-						/*	unterscheiden zwischen Typen der Felder
-						 * if (ref.dataItem.type == tBoolean or case tByte:
-						createIrSrAd(ppcStb, sReg1, instr.result.regAux1, classVarOffset);
-					else if == tShort: 
-						createIrSrAd(ppcSth, sReg1, instr.result.regAux1, classVarOffset);
-					else*/
-						createIrSrAd(ppcStw, sReg1, instr.result.regAux1, classVarOffset);
-						break;
-					case tChar: 
-						assert false : "cg: type not implemented";
-					break;
-					case tLong:
-						createIrSrAd(ppcStwu, sReg1, instr.result.regAux1, classVarOffset);
-						createIrSrAd(ppcStw, opds[0].regLong, instr.result.regAux1, 4);
-						break;
-					case tFloat: 
-						createIrSrAd(ppcStfs, sReg1, instr.result.regAux1, classVarOffset);
-						break;
-					case tDouble: 
-						createIrSrAd(ppcStfd, sReg1, instr.result.regAux1, classVarOffset);
-						break;
-					default:
-						assert false : "cg: wrong type";
-					}
 				} else {	// putfield
 					refReg = opds[0].reg;
 					sReg1 = opds[1].reg;
+					sReg2 = opds[1].regLong;
+					type = opds[1].type;
+					offset = objVarOffset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
-					switch (opds[1].type) {
-					case tBoolean: case tByte: case tShort: 
-					case tInteger: case tRef: case tAref: case tAboolean:
-					case tAchar: case tAfloat: case tAdouble: case tAbyte: 
-					case tAshort: case tAinteger: case tAlong:
-						/*	unterscheiden zwischen Typen der Felder
-						 * if (ref.dataItem.type == tBoolean or case tByte:
-						createIrSrAd(ppcStb, sReg1, instr.result.regAux1, classVarOffset);
-					else if == tShort: 
-						createIrSrAd(ppcSth, sReg1, instr.result.regAux1, classVarOffset);
-					else*/
-						createIrSrAd(ppcStw, sReg1, refReg, varOffset);
-						break;
-					case tChar: 
-						assert false : "cg: type not implemented";
+				}
+				switch (type) {
+				case tBoolean: case tByte: 
+					createIrSrAd(ppcStb, sReg1, refReg, offset);
 					break;
-					case tLong:
-						createIrSrAd(ppcStwu, sReg1, refReg, varOffset);
-						createIrSrAd(ppcStw, opds[1].regLong, refReg, 4);
-						break;
-					case tFloat: 
-						createIrSrAd(ppcStfs, sReg1, refReg, varOffset);
-						break;
-					case tDouble: 
-						createIrSrAd(ppcStfd, sReg1, refReg, varOffset);
-						break;
-					default:
-						assert false : "cg: wrong type";
-					}
+				case tShort: 
+					createIrSrAd(ppcSth, sReg1, refReg, offset);
+					break;
+				case tInteger: case tRef: case tAref: case tAboolean:
+				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
+				case tAshort: case tAinteger: case tAlong:
+					createIrSrAd(ppcStw, sReg1, refReg, offset);
+					break;
+				case tChar: 
+					assert false : "cg: type not implemented";
+					break;
+				case tLong:
+					createIrSrAd(ppcStwu, sReg1, refReg, offset);
+					createIrSrAd(ppcStw, sReg2, refReg, 4);
+					break;
+				case tFloat: 
+					createIrSrAd(ppcStfs, sReg1, refReg, offset);
+					break;
+				case tDouble: 
+					createIrSrAd(ppcStfd, sReg1, refReg, offset);
+					break;
+				default:
+					assert false : "cg: wrong type";
 				}
 				break;
 			case sCalength:
@@ -656,7 +842,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				bci = ssa.cfg.code[node.lastBCA] & 0xff;
 				switch (bci) {
 				case bCgoto:
-					createInstructionB(ppcB, 0, false);
+					createIli(ppcB, 0, false);
 					break;
 				case bCif_acmpeq:
 					break;
@@ -672,57 +858,57 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					opds = instr.getOperands();
 					sReg1 = opds[0].reg;
 					sReg2 = opds[1].reg;
-					assertEquals("cg: wrong type", opds[0].type, tInteger);
-					assertEquals("cg: wrong type", opds[1].type, tInteger);
+//					assertEquals("cg: wrong type", opds[0].type, tInteger);
+//					assertEquals("cg: wrong type", opds[1].type, tInteger);
 					if (opds[0].index < 0) {
 						if (opds[0].constant != null) {
 							System.out.println("constant is not null");
 							int immVal = (Integer)opds[0].constant;
 							if ((immVal >= -32768) && (immVal <= 32767))
-								createInstructionCMPI(ppcCmpi, CRF0, sReg2, immVal);
+								createICRFrASimm(ppcCmpi, CRF0, sReg2, immVal);
 							else
-								createInstructionCMP(ppcCmp, CRF0, sReg2, sReg1);
+								createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);
 						} else
-								createInstructionCMP(ppcCmp, CRF0, sReg2, sReg1);					
+								createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);					
 					} else if (opds[1].index < 0) {
 						if (opds[1].constant != null) {
 							int immVal = (Integer)opds[1].constant;
 							if ((immVal >= -32768) && (immVal <= 32767)) {
 								inverted = true;
-								createInstructionCMPI(ppcCmpi, CRF0, sReg1, immVal);
+								createICRFrASimm(ppcCmpi, CRF0, sReg1, immVal);
 							} else
-								createInstructionCMP(ppcCmp, CRF0, sReg2, sReg1);
+								createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);
 						} else
-							createInstructionCMP(ppcCmp, CRF0, sReg2, sReg1);					
+							createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);					
 					} else {
-						createInstructionCMP(ppcCmp, CRF0, sReg2, sReg1);
+						createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);
 					}
 					if (!inverted) {
 						if (bci == bCif_icmpeq) 
-							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
 						else if (bci == bCif_icmpne)
-							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
 						else if (bci == bCif_icmplt)
-							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
 						else if (bci == bCif_icmpge)
-							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
 						else if (bci == bCif_icmpgt)
-							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
 						else if (bci == bCif_icmple)
-							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
 					} else {
 						if (bci == bCif_icmpeq) 
-							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
 						else if (bci == bCif_icmpne)
-							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
 						else if (bci == bCif_icmplt)
-							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
 						else if (bci == bCif_icmpge)
-							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
 						else if (bci == bCif_icmpgt)
-							createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
 						else if (bci == bCif_icmple)
-							createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
 					}
 					break;
 				case bCifeq:
@@ -733,20 +919,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case bCifle:
 					opds = instr.getOperands();
 					sReg1 = opds[0].reg;
-					assertEquals("cg: wrong type", opds[0].type, tInteger);
-					createInstructionCMPI(ppcCmpi, 0, sReg1, 0);
+//					assertEquals("cg: wrong type", opds[0].type, tInteger);
+					createICRFrASimm(ppcCmpi, 0, sReg1, 0);
 					if (bci == bCifeq) 
-						createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
 					else if (bci == bCifne)
-						createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
 					else if (bci == bCiflt)
-						createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
 					else if (bci == bCifge)
-						createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
 					else if (bci == bCifgt)
-						createInstructionBC(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
 					else if (bci == bCifle)
-						createInstructionBC(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
 					break;
 				case bCifnonnull:
 					assert false : "cg: branch not implemented";
@@ -754,38 +940,76 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case bCifnull:
 					assert false : "cg: branch not implemented";
 					break;
+				case bCtableswitch:
+					opds = instr.getOperands();
+					sReg1 = opds[0].reg;
+					int addr = node.lastBCA + 1;
+					addr = (addr + 3) & -4; // round to the next multiple of 4
+					addr += 4; // skip default offset
+					int low = getInt(ssa.cfg.code, addr);
+					int high = getInt(ssa.cfg.code, addr + 4);
+					int nofCases = high - low + 1;
+					for (int k = 0; k < nofCases; k++) {
+						createICRFrASimm(ppcCmpi, 0, sReg1, low + k);
+						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+					}
+					createIli(ppcB, nofCases, false);
+					break;
+				case bClookupswitch:
+					opds = instr.getOperands();
+					sReg1 = opds[0].reg;
+					addr = node.lastBCA + 1;
+					addr = (addr + 3) & -4; // round to the next multiple of 4
+					addr += 4; // skip default offset
+					int nofPairs = getInt(ssa.cfg.code, addr);
+					for (int k = 0; k < nofPairs; k++) {
+						int key = getInt(ssa.cfg.code, addr + 4 + k * 8);
+						createICRFrASimm(ppcCmpi, 0, sReg1, key);
+						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+					}
+					createIli(ppcB, nofPairs, true);
+					break;
 				default:
 					System.out.println(bci);
 					assert false : "cg: no such branch instruction";
 				}
 				break;
 			case sCloadFromField:
-				loadConstantAndFixup(fixup, instr.result.regAux1);
+				opds = instr.getOperands();
+				if (opds == null) {	// getstatic
+					sReg1 = instr.result.regAux1;
+					offset = classVarOffset;
+					loadConstantAndFixup(fixup, sReg1);
+				} else {	// getfield
+					sReg1 = opds[0].reg;
+					offset = objVarOffset;
+					createItrap(ppcTwi, TOifequal, opds[0].reg, 0);
+				}
 				switch (instr.result.type) {
 				case tBoolean: case tByte:
-					createIrDrAd(ppcLbz, instr.result.reg, instr.result.regAux1, classVarOffset);
+					createIrDrAd(ppcLbz, instr.result.reg, sReg1, offset);
 					createIrArS(ppcExtsb, instr.result.reg, instr.result.reg);
 					break;
 				case tShort: 
-					createIrDrAd(ppcLha, instr.result.reg, instr.result.regAux1, classVarOffset);
+					createIrDrAd(ppcLha, instr.result.reg, sReg1, offset);
 					break;
 				case tInteger: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
-					createIrDrAd(ppcLwz, instr.result.reg, instr.result.regAux1, classVarOffset);
+					createIrDrAd(ppcLwz, instr.result.reg, sReg1, offset);
 					break;
 				case tChar: 
 					assert false : "cg: type not implemented";
 					break;
 				case tLong:
-					createIrDrAd(ppcLwzu, instr.result.reg, instr.result.regAux1, classVarOffset);
-					createIrDrAd(ppcLwz, instr.result.regLong, instr.result.regAux1, 4);
+					createIrDrAd(ppcLwzu, instr.result.reg, sReg1, offset);
+					createIrDrAd(ppcLwz, instr.result.regLong, sReg1, 4);
 					break;
 				case tFloat: 
-					createIrDrAd(ppcLfs, instr.result.reg, instr.result.regAux1, classVarOffset);
+					createIrDrAd(ppcLfs, instr.result.reg, sReg1, offset);
 					break;
 				case tDouble: 
-					createIrDrAd(ppcLfd, instr.result.reg, instr.result.regAux1, classVarOffset);
+					createIrDrAd(ppcLfd, instr.result.reg, sReg1, offset);
 					break;
 				default:
 					assert false : "cg: wrong type";
@@ -795,6 +1019,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				assert false : "cg: no code generated for " + instr.scMnemonics[instr.ssaOpcode] + " function";
 			}
 		}
+	}
+
+	private static int getInt(byte[] bytes, int index){
+		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
 	}
 
 	private void createIrArS(int opCode, int rA, int rS) {
@@ -825,6 +1053,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 
 	private void createIrDrASimm(int opCode, int rD, int rA, int simm) {
 		instructions[iCount] = opCode | (rD << 21) | (rA << 16) | (simm  & 0xffff);
+		incInstructionNum();
+	}
+
+	private void createIrArSuimm(int opCode, int rA, int rS, int uimm) {
+		instructions[iCount] = opCode | (rA << 16) | (rS << 21) | (uimm  & 0xffff);
 		incInstructionNum();
 	}
 
@@ -871,20 +1104,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		incInstructionNum();
 	}
 
-	private void createInstructionB(int opCode, int LI, boolean link) {
-		instructions[iCount] = opCode | (LI << 2 | (link ? 1 : 0));
-//		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
-		incInstructionNum();
-	}
-
 	private void createIli(int opCode, int LI, boolean link) {
 		instructions[iCount] = opCode | (LI << 2 | (link ? 1 : 0));
 		incInstructionNum();
 	}
 
-	private void createInstructionBC(int opCode, int BO, int BI, int BD) {
+	private void createIBOBIBD(int opCode, int BO, int BI, int BD) {
 		instructions[iCount] = opCode | (BO << 21) | (BI << 16) | (BD << 2);
-//		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
@@ -893,14 +1119,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		incInstructionNum();
 	}
 
-	private void createInstructionCMP(int opCode, int crfD, int sReg1, int sReg2) {
-		instructions[iCount] = opCode | (crfD << 23) | (sReg1 << 16) | (sReg2 << 11);
+	private void createICRFrArB(int opCode, int crfD, int rA, int rB) {
+		instructions[iCount] = opCode | (crfD << 23) | (rA << 16) | (rB << 11);
 //		System.out.println(InstructionDecoder.getMnemonic(instructions[iCount]));
 		incInstructionNum();
 	}
 
-	private void createInstructionCMPI(int opCode, int crfD, int sReg, int SIMM) {
-		instructions[iCount] = opCode | (crfD << 23) | (sReg << 16) | (SIMM & 0xffff);
+	private void createICRFrASimm(int opCode, int crfD, int rA, int simm) {
+		instructions[iCount] = opCode | (crfD << 23) | (rA << 16) | (simm & 0xffff);
 		incInstructionNum();
 	}
 
@@ -946,54 +1172,31 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		}
 	}
 
-	private void insertProlog(int stackSize, boolean isStatic) {
+	private void insertProlog() {
 		createIrSrASimm(ppcStwu, stackPtr, stackPtr, -stackSize);
 		createIrSspr(ppcMfspr, LR, 0);
 		createIrSrASimm(ppcStw, 0, stackPtr, LRoffset);
-		if (ssa.nofGPR > 0) {
-			createIrSrAd(ppcStmw, nofGPR-ssa.nofGPR, stackPtr, GPRoffset);
+		if (nofNonVolGPR > 0) {
+			createIrSrAd(ppcStmw, nofGPR-nofNonVolGPR, stackPtr, GPRoffset);
 		}
-		if (ssa.nofFPR > 0) {
-			for (int i = 0; i < ssa.nofFPR; i++)
-				createIrSrAd(ppcStfd, topFPR-i, stackPtr, FPRoffset);
+		if (nofNonVolFPR > 0) {
+			for (int i = 0; i < nofNonVolFPR; i++)
+				createIrSrAd(ppcStfd, topFPR-i, stackPtr, FPRoffset + i * 8);
 		}
-		if (ssa.nofGPR > 0 || ssa.nofFPR > 0) {
-			Method m = ssa.cfg.method;
-			nofParamGPR = 0; nofParamFPR = 0;
-			for (int i = m.maxStackSlots; i < m.maxStackSlots + m.maxLocals; i++) {
-				if (ssa.isParam[i]) {
-					switch (ssa.paramType[i]) {
-					case tInteger:
-					case tRef:
-					case tBoolean:
-						nofParamGPR++;
-						System.out.println("param type is integer");
-						if (RegAllocator.lastExitSet[i] != null)
-							createIrArSrB(ppcOr, RegAllocator.lastExitSet[i].reg, nofParamGPR+paramStartGPR-1, nofParamGPR+paramStartGPR-1);
-						break;
-					case tLong:
-						nofParamGPR += 2;
-						i++;
-						System.out.println("param type is long");
-						break;
-					case tFloat:
-					case tDouble:
-						nofParamFPR++;
-						System.out.println("param type is float");
-						break;
-					default:
-						System.out.println("type " + ssa.paramType[i]);
-						assert false : "type not implemented";
-					}
-				}
-			}
-		}
+		for (int i = 0; i < nofMoveGPR; i++)
+			createIrArSrB(ppcOr, topGPR - 1, moveGPR[i], moveGPR[i]);
+		for (int i = 0; i < nofMoveFPR; i++)
+			createIrDrB(ppcFmr, topFPR - 1, moveFPR[i]);	// stimmt instruktion rDrB ?????
 	}
 
 	private void insertEpilog(int stackSize) {
 		epilogStartInstr = iCount;
-		if (ssa.nofGPR > 0)
-			createIrDrAd(ppcLmw, 32-ssa.nofGPR, stackPtr, GPRoffset);
+		if (nofNonVolFPR > 0) {
+			for (int i = 0; i < nofNonVolFPR; i++)
+				createIrDrAd(ppcLfd, topFPR-i, stackPtr, FPRoffset + i * 8);
+		}
+		if (nofNonVolGPR > 0)
+			createIrDrAd(ppcLmw, nofGPR - nofNonVolGPR, stackPtr, GPRoffset);
 		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
 		createIrSspr(ppcMtspr, LR, 0);
 		createIrDrASimm(ppcAddi, stackPtr, stackPtr, stackSize);
@@ -1005,7 +1208,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		Method m = ssa.cfg.method;
 		System.out.println("Method has " + m.maxLocals + " locals where " + m.nofParams + " are parameters");
 		System.out.println("stackSize = " + stackSize);
-		System.out.println("Method uses " + ssa.nofGPR + " GPR and " + ssa.nofFPR + " FPR for locals where " + nofParamGPR + " GPR and " + nofParamFPR + " FPR are for parameters");
+		System.out.println("Method uses " + nofNonVolGPR + " GPR and " + nofNonVolFPR + " FPR for locals where " + nofParamGPR + " GPR and " + nofParamFPR + " FPR are for parameters");
 		System.out.println();
 		
 		System.out.println("Code for Method:" + ssa.cfg.method.name);
