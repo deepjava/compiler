@@ -1,12 +1,13 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFG;
+import ch.ntb.inf.deep.classItems.IClassFileConsts;
 
 /**
  * @author millischer
  */
 
-public class SSA {
+public class SSA implements IClassFileConsts{
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
@@ -14,7 +15,6 @@ public class SSA {
 	private SSANode loopHeaders[];
 	private SSANode sortedNodes[];
 	private int nofSortedNodes;
-	public int nofGPR, nofFPR;
 
 	public SSA(CFG cfg) {
 		this.cfg = cfg;
@@ -114,7 +114,7 @@ public class SSA {
 		isParam = new boolean[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
 		paramType = new int[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
 		
-		if((flags & 0x0008) == 0){//method isn't static
+		if((flags & (1 << apfStatic)) == 0){//method isn't static
 			isParam[index] = true;
 			paramType[index++] = SSAValue.tRef;
 		}
@@ -206,10 +206,8 @@ public class SSA {
 	 * 
 	 * @param level
 	 *            defines how much to indent
-	 * @param SSANr
-	 *            the Number of the SSA in this class
 	 */
-	public void print(int level, int SSANr) {
+	public void print(int level) {
 		int count = 0;
 		SSANode node = (SSANode) this.cfg.rootNode;
 

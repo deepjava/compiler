@@ -16,4 +16,17 @@ public class T09Types {
 		int f = (int) d;
 	}
 
+	float m2(long a, float b, double c, byte[] d, short e, int f, int g) {
+		a = 0x7545 & a;
+		e += 100;
+		T08Calls.classMethod(d[2]);
+		e = (short)(20 + e);
+		g |= 0x223344;
+		c = 3.2;
+		int h = g - e;
+		T08Calls.classMethod(h);
+		short i = (short)h;		
+		return b;
+	}
+
 }

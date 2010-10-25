@@ -58,14 +58,6 @@ public class SSA03 extends TestSSA {
 		testNode(nodes[7], 2, 0, 3);
 		testNode(nodes[8], 3, 1, 3);
 	}
-	@Test
-	public void testSwitchNear3(){
-		SSANode[] nodes = getAndTestSSA(3, 4, 0);
-		testNode(nodes[0], 4, 0, 6);
-		testNode(nodes[1], 2, 0, 6);
-		testNode(nodes[2], 1, 0, 6);
-		testNode(nodes[3], 4, 0, 6);
-	}
 	
 	@Test
 	public void testSwitchFar1(){

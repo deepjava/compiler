@@ -9,13 +9,14 @@ public class SSAValue implements SSAValueType {
 	public Object constant;
 	public int n = -1;	// each ssa-instruction is numbered for the register allocation 
 	public int end;	// indicates the end number of the live range for this value
-	public SSAValue join = this;	// representative, used for joining values during register allocation
 	public int reg = -1;	// register or memory slot number
-	public int regLong = -1;	// 2nd register or memory slot number for longs
+	public int regLong = -1;	// 2nd register or memory slot number for longs, contains upper 4 bytes
 	public int regAux1 = -1;	// auxiliary register 1, used for translating complex SSA instructions
 	public int regAux2 = -1;	// auxiliary register 2, used for translating complex SSA instructions 
 	public int volRegs;	// stores information about volatiles which are used to produce this value
 	public int memorySlot = -1;
+	public SSAValue join;
+	public boolean nonVol;
 	
 	public SSAValue(){
 	}

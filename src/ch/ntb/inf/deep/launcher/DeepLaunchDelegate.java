@@ -77,7 +77,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate {
 			for (int i = 0; i < cfg.length; i++){
 				ssa[i] = new SSA(cfg[i]);
 				System.out.println();
-				ssa[i].print(0, i);
+				ssa[i].print(0);
 			}		
 		}
 	}

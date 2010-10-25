@@ -2,8 +2,12 @@ package ch.ntb.inf.deep.ssa;
 
 public interface SSAInstructionMnemonics extends SSAInstructionOpcs {
 	public static String[] scMnemonics = {
-		"", //Empty String
 		"sCloadConst",
+		"sCloadLocal",
+		"sCloadFromField",
+		"sCloadFromArray",
+		"sCstoreToField",
+		"sCstoreToArray",
 		"sCadd",
 		"sCsub",
 		"sCmul",
@@ -21,22 +25,16 @@ public interface SSAInstructionMnemonics extends SSAInstructionOpcs {
 		"sCconvFloat",
 		"sCconvDouble",
 		"sCcmpl",
-		"sCreturn",
+		"sCcmpg",
+		"sCinstanceof",
+		"sCalength",
 		"sCcall",
 		"sCnew",
-		"sCinstanceof",
-		"sCloadVar",
-		"sCloadFromArray",
-		"sCstoreToArray",
-		"sCcmpg",
-		"sCalength",
-		"sCstoreToField",
+		"sCreturn",
 		"sCthrow",
-		"sCPhiFunc",
-		"sCloadLocal",
-		"sCRegMove",		
 		"sCBranch",
-		"sCloadFromField"
+		"sCRegMove",		
+		"sCPhiFunc"
 	};
 
 }
