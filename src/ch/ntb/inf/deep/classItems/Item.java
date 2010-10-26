@@ -22,6 +22,7 @@ public abstract class Item   implements Cloneable, IClassFileConsts, IDescAndTyp
 
 	public Item type; // base type for objects of "Class" or "Type" or null
 	public int accAndPropFlags; // access and property flags (see ClassFileConsts)
+	public int offSet; // the offset in the data array on the target
 
 	//--- constructors
 	Item(){
