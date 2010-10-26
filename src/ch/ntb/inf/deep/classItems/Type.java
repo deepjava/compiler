@@ -13,13 +13,13 @@ public class Type extends Item {
 
 	static HString[] classFileAttributeTable;// well known attributes
 //	static final byte[] primitveTypeChars = { 'D', 'F', 'J', 'Z', 'B', 'S', 'C', 'I', 'V' }; // inclusive 'V'
-	static Type[] wellKnownTypes;;
+	public static Type[] wellKnownTypes;;
 	static HString hsNumber, hsString;
 
 	public static Class[] rootClasses;
 	public static int nofRootClasses = 0;
 
-	static Class classList, classListTail;
+	public static Class classList, classListTail;
 	static int nofClasses = 0;
 
 	//-- const pool arrays
@@ -32,7 +32,7 @@ public class Type extends Item {
 	//--- instance fields
 	byte category; // { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
 	byte sizeInBits;// { 1..8, 16, 32, 64 }
-	char objectSizeOrDim; // [Byte],  if(category == 'L') object size in Byte,   if(category == '[') dimension of the array
+	public char objectSizeOrDim; // [Byte],  if(category == 'L') object size in Byte,   if(category == '[') dimension of the array
 
 	//--- class (static) methods
 	protected static void appendClass(Class newClass){
