@@ -1,0 +1,171 @@
+	public static int switchNear2(int i) {
+		switch(i) {
+		case 0: return 0;
+		case 1: return 1;
+		case 2: i++; break;
+		case 3: return 3;
+		case 4: i += 4;
+		case 5: i += 5; break;
+		default: return -1;
+		}
+		return i + 3;
+	}
+
+	"public static int switchNear2(int)"
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=67
+	{
+		  0 iload_0 [i]
+		  1 tableswitch
+			Default: 61
+			Case: 0: 40
+			Case: 1: 42
+			Case: 2: 44
+			Case: 3: 50
+			Case: 4: 52
+			Case: 5: 55
+		 40 iconst_0
+		 41 ireturn
+		 42 iconst_1
+		 43 ireturn
+		 44 iinc i, 1
+		 47 goto 63
+		 50 iconst_3
+		 51 ireturn
+		 52 iinc i, 4
+		 55 iinc i, 5
+		 58 goto 63
+		 61 iconst_m1
+		 62 ireturn
+		 63 iload_0 [i]
+		 64 iconst_3
+		 65 iadd
+		 66 ireturn
+
+
+CFG of method switchNear2
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor:
+		successor: CFG-Node [40:41]	CFG-Node [42:43]	CFG-Node [44:47]	CFG-Node [50:51]	CFG-Node [52:52]	CFG-Node [55:58]	CFG-Node [61:62]
+	nodeNr:1 from 40 to 41	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:2 from 42 to 43	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:3 from 44 to 47	visited: false
+		predecessor: CFG-Node [0:1]
+		successor: CFG-Node [63:66]
+	nodeNr:4 from 50 to 51	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:5 from 52 to 52	visited: false
+		predecessor: CFG-Node [0:1]
+		successor: CFG-Node [55:58]
+	nodeNr:6 from 55 to 58	visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [52:52]
+		successor: CFG-Node [63:66]
+	nodeNr:7 from 61 to 62	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:8 from 63 to 66	visited: false
+		predecessor: CFG-Node [44:47]	CFG-Node [55:58]
+		successor:
+
+SSA for Method: switchNear2
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=13, index=0, reg=2, join={13}
+         1: Branch[sCBranch] {0} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=3, reg=3
+         3: Branch[sCreturn] {2} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         4: NoOpnd[sCloadConst] 1 (Integer),   end=5, reg=3
+         5: Branch[sCreturn] {4} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         6: NoOpnd[sCloadConst] 1 (Integer),   end=7
+         7: Dyadic[sCadd] {0, 6} (Integer),   end=19, index=0, reg=2, join={19}
+         8: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 7 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         9: NoOpnd[sCloadConst] 3 (Integer),   end=10, reg=3
+         10: Branch[sCreturn] {9} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         11: NoOpnd[sCloadConst] 4 (Integer),   end=12
+         12: Dyadic[sCadd] {0, 11} (Integer),   end=13, index=0, reg=2, join={13}
+      ExitSet {[ , ], [ 12 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ Phi-Function(13) ]}
+         13: PhiFunction[sCPhiFunc] {0, 12} (Phi-Function),   end=15, index=0, reg=2
+         14: NoOpnd[sCloadConst] 5 (Integer),   end=15
+         15: Dyadic[sCadd] {13, 14} (Integer),   end=19, index=0, reg=2, join={19}
+         16: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 15 (Integer) ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         17: NoOpnd[sCloadConst] -1 (Integer),   end=18, reg=2
+         18: Branch[sCreturn] {17} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ Phi-Function(19) ]}
+         19: PhiFunction[sCPhiFunc] {7, 15} (Phi-Function),   end=21, index=0, reg=2
+         20: NoOpnd[sCloadConst] 3 (Integer),   end=21
+         21: Dyadic[sCadd] {19, 20} (Integer),   end=22, reg=2
+         22: Branch[sCreturn] {21} (Void)
+      ExitSet {[ , ], [ Phi-Function(19) ]}
+
+Code for Method:switchNear2
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	2c020000	[0xc]	cmpi  crf0, 0, r2, 0
+	419d0030	[0x10]	bc  iftrue, CRF0[EQ], 48, [0x40]	
+	2c020001	[0x14]	cmpi  crf0, 0, r2, 1
+	419d0034	[0x18]	bc  iftrue, CRF0[EQ], 52, [0x4c]	
+	2c020002	[0x1c]	cmpi  crf0, 0, r2, 2
+	419d0038	[0x20]	bc  iftrue, CRF0[EQ], 56, [0x58]	
+	2c020003	[0x24]	cmpi  crf0, 0, r2, 3
+	419d0038	[0x28]	bc  iftrue, CRF0[EQ], 56, [0x60]	
+	2c020004	[0x2c]	cmpi  crf0, 0, r2, 4
+	419d003c	[0x30]	bc  iftrue, CRF0[EQ], 60, [0x6c]	
+	2c020005	[0x34]	cmpi  crf0, 0, r2, 5
+	419d0038	[0x38]	bc  iftrue, CRF0[EQ], 56, [0x70]	
+	4800003c	[0x3c]	b  60, [0x78]	
+	38600000	[0x40]	li  r3, 0
+	7c621b78	[0x44]	lr  r2, r3
+	4800003c	[0x48]	b  60, [0x84]	
+	38600001	[0x4c]	li  r3, 1
+	7c621b78	[0x50]	lr  r2, r3
+	48000030	[0x54]	b  48, [0x84]	
+	38420001	[0x58]	addi  r2, r2, 1
+	48000024	[0x5c]	b  36, [0x80]	
+	38600003	[0x60]	li  r3, 3
+	7c621b78	[0x64]	lr  r2, r3
+	4800001c	[0x68]	b  28, [0x84]	
+	38420004	[0x6c]	addi  r2, r2, 4
+	38420005	[0x70]	addi  r2, r2, 5
+	4800000c	[0x74]	b  12, [0x80]	
+	3840ffff	[0x78]	li  r2, -1
+	48000008	[0x7c]	b  8, [0x84]	
+	38420003	[0x80]	addi  r2, r2, 3
+	8001000c	[0x84]	lwz  r0, 12(r1)
+	7c0803a6	[0x88]	mtspr  LR, r0
+	38210010	[0x8c]	addi  r1, r1, 16
+	4e800020	[0x90]	bclr always, CRF7[SO]

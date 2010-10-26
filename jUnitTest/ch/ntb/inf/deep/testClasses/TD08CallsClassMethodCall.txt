@@ -1,0 +1,74 @@
+	static byte b = -128;
+
+	public static int classMethCall(){
+		int y = 0;
+		int x = classMethod(3);
+		y = 2;
+		b += 100;
+		return y+x;		
+	}
+	
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=23 
+	{
+		  0 iconst_0
+		  1 istore_0 [y]
+		  2 iconst_3
+		  3 invokestatic ch/ntb/inf/deep/testClasses/T08Calls.classMethod(int): int
+		  6 istore_1 [x]
+		  7 iconst_2
+		  8 istore_0 [y]
+		  9 getstatic ch/ntb/inf/deep/testClasses/T08Calls.b: byte
+		 12 bipush 100
+		 14 iadd
+		 15 i2b
+		 16 putstatic ch/ntb/inf/deep/testClasses/T08Calls.b: byte
+		 19 iload_0 [y]
+		 20 iload_1 [x]
+		 21 iadd
+		 22 ireturn
+
+SSA for Method: classMethCall
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=0, reg=31
+         1: NoOpnd[sCloadConst] 3 (Integer),   end=2, index=-1, reg=2
+         2: Call[sCcall] {1} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.classMethod,   end=9, index=1, reg=30
+         3: NoOpnd[sCloadConst] 2 (Integer),   end=9, index=0, reg=31
+         4: NoOpndRef[sCloadFromField]{b} (Byte),   end=6, index=-1, reg=2
+         5: NoOpnd[sCloadConst] 100 (Integer),   end=6, index=-1, reg=3
+         6: Dyadic[sCadd] {4, 5} (Integer),   end=7, index=-1, reg=2
+         7: Monadic[sCconvInt] {6} (Byte),   end=8, index=-1, reg=2
+         8: MonadicRef[sCstoreToField] {7} (Void),   end=8, index=-1, reg=-1
+         9: Dyadic[sCadd] {3, 2} (Integer),   end=10, index=-1, reg=2
+         10: Branch[sCreturn] {9} (Void)
+      ExitSet {[ , ], [ 3 (Integer), 2 (Integer) ]}
+
+Code for Method:classMethCall
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	90010020	[0x8]	stw  r0, 32(r1)
+	bfc10014	[0xc]	stmw  r30, 20(r1)
+	3be00000	[0x10]	li  r31, 0
+	38400003	[0x14]	li  r2, 3
+	3c400000	[0x18]	lis  r2, 0
+	38420000	[0x1c]	addi  r2, r2, 0
+	7c4803a6	[0x20]	mtspr  LR, r2
+	4e800020	[0x24]	bclr always, CRF7[SO]
+	7fc2f378	[0x28]	lr  r2, r30
+	3be00002	[0x2c]	li  r31, 2
+	3c400000	[0x30]	lis  r2, 0
+	38420006	[0x34]	addi  r2, r2, 6
+	88420004	[0x38]	lbz  r2, 4(r2)
+	7c420774	[0x3c]	extsb  r2, r2
+	7c421a14	[0x40]	add  r2, r2, r3
+	7c420774	[0x44]	extsb  r2, r2
+	3c600000	[0x48]	lis  r3, 0
+	3863000c	[0x4c]	addi  r3, r3, 12
+	90430004	[0x50]	stw  r2, 4(r3)
+	7c5ff214	[0x54]	add  r2, r31, r30
+	bbc10014	[0x58]	lmw  r30, 20(r1)
+	80010020	[0x5c]	lwz  r0, 32(r1)
+	7c0803a6	[0x60]	mtspr  LR, r0
+	38210020	[0x64]	addi  r1, r1, 32
+	4e800020	[0x68]	bclr always, CRF7[SO]
+

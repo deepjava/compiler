@@ -1,0 +1,116 @@
+	public static int intArray(int start){
+		int[] b = new int[5];
+		for (int i = 0; i < b.length; i++){
+			b[i]= i + start; 
+		}
+		return b[2];
+	}
+
+public static int intArray(int)
+	//nofStackSlots=4, nofLocalSlots=3, codeLen=28 
+		  0 iconst_5
+		  1 newarray int
+		  3 astore_1 [b]
+		  4 iconst_0
+		  5 istore_2 [i]
+		  6 goto 18		  
+		  9 aload_1 [b]
+		 10 iload_2 [i]
+		 11 iload_2 [i]
+		 12 iload_0 [start]
+		 13 iadd
+		 14 iastore
+		 15 iinc i, 1		 
+		 18 iload_2 [i]
+		 19 aload_1 [b]
+		 20 arraylength
+		 21 if_icmplt 9		 
+		 24 aload_1 [b]
+		 25 iconst_2
+		 26 iaload
+		 27 ireturn
+
+method intArray
+	nodeNr:0 from 0 to 6	visited: false
+		predecessor: 
+		successor: CFG-Node [18:21]	
+	nodeNr:1 from 9 to 15	visited: false
+		predecessor: CFG-Node [18:21]	
+		successor: CFG-Node [18:21]	
+	nodeNr:2 from 18 to 21	is loop header visited: false
+		predecessor: CFG-Node [0:6]	CFG-Node [9:15]	
+		successor: CFG-Node [24:27]	CFG-Node [9:15]	
+	nodeNr:3 from 24 to 27	visited: false
+		predecessor: CFG-Node [18:21]	
+		successor: 
+
+SSA for Method: intArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, index=-1, reg=2
+         1: Call[sCnew] {0} (Integer-Array),   end=10, index=1, reg=30
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=11, index=2, reg=29
+         3: NoOpnd[sCloadLocal] (Integer),   end=9, index=0, reg=31
+         4: Branch[sCBranch] 
+      ExitSet {[ , , , ], [ 3 (Integer), 1 (Integer-Array), 2 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+         5: Dyadic[sCadd] {11, 9} (Integer),   end=6, index=-1, reg=2
+         6: StoreToArray[sCstoreToArray] {10, 11, 5}
+         7: NoOpnd[sCloadConst] 1 (Integer),   end=8, index=-1, reg=2
+         8: Dyadic[sCadd] {11, 7} (Integer),   end=11, index=2, reg=29
+      ExitSet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 8 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+         9: PhiFunction[sCPhiFunc] {3} (Integer),   end=5, index=0, reg=31 deleted
+         10: PhiFunction[sCPhiFunc] {1} (Integer-Array),   end=15, index=1, reg=30 deleted
+         11: PhiFunction[sCPhiFunc] {2, 8} (Integer),   end=13, index=2, reg=29
+         12: MonadicRef[sCalength] {10} (Integer),   end=13, index=-1, reg=2
+         13: Branch[sCBranch] {12, 11}
+      ExitSet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+         14: NoOpnd[sCloadConst] 2 (Integer),   end=15, index=-1, reg=2
+         15: Dyadic[sCloadFromArray] {10, 14} (Integer),   end=16, index=-1, reg=2
+         16: Branch[sCreturn] {15}
+      ExitSet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	90010020	[0x8]	stw  r0, 32(r1)
+	bfa10014	[0xc]	stmw  r29, 20(r1)
+	7c5f1378	[0x10]	lr  r31, r2
+	38400005	[0x14]	li  r2, 5
+	0e020000	[0x18]	twi  ifless, r2, 0
+	3860000a	[0x1c]	li  r3, 10
+	48000001	[0x20]	bl  0, [0x20]	
+	7c5e1378	[0x24]	lr  r30, r2
+	3ba00000	[0x28]	li  r29, 0
+	48000024	[0x2c]	b  36, [0x50]	
+	7c5dfa14	[0x30]	add  r2, r29, r31
+	0c9e0000	[0x34]	twi  ifequal, r30, 0
+	a87e0008	[0x38]	lha  r3, 8(r30)
+	7cbd1808	[0x3c]	tw  ifgeU, r29, r3
+	57a3103a	[0x40]	rlwinm  r3, r29, 2, 0, 29
+	389e000c	[0x44]	addi  r4, r30, 12
+	7c43212e	[0x48]	stwx  r2, r3, r4
+	3bbd0001	[0x4c]	addi  r29, r29, 1
+	0c9e0000	[0x50]	twi  ifequal, r30, 0
+	a85e0008	[0x54]	lha  r2, 8(r30)
+	7c1d1000	[0x58]	cmp crf0, 0, r29, r2
+	419fffd4	[0x5c]	bc  iftrue, CRF0[LT], -44, [0x30]	
+	38400002	[0x60]	li  r2, 2
+	0c9e0000	[0x64]	twi  ifequal, r30, 0
+	a87e0008	[0x68]	lha  r3, 8(r30)
+	7ca21808	[0x6c]	tw  ifgeU, r2, r3
+	5443103a	[0x70]	rlwinm  r3, r2, 2, 0, 29
+	389e000c	[0x74]	addi  r4, r30, 12
+	7c43202e	[0x78]	lwzx  r2, r3, r4
+	bba10014	[0x7c]	lmw  r29, 20(r1)
+	80010020	[0x80]	lwz  r0, 32(r1)
+	7c0803a6	[0x84]	mtspr  LR, r0
+	38210020	[0x88]	addi  r1, r1, 32
+	4e800020	[0x8c]	bclr 20, 0

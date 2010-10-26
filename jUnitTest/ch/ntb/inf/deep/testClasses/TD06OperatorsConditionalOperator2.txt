@@ -1,0 +1,250 @@
+	public static boolean ConditionalOperator2() {
+		int mark;
+		boolean bRes = false;
+		boolean a = false, b = true, c = false;
+		int d = 1, e = 2, f = 3;
+		int iRes;
+		mark = 101;
+		iRes = d < e ? d : f;
+		mark = 102;
+		iRes = d < e ? (a ? d : e) : (b != c ? e : f);
+		mark = 103;
+		return (mark > iRes) && bRes;
+	}
+
+
+public static boolean ConditionalOperator2()
+	//nofStackSlots=2, nofLocalSlots=9, codeLen=93
+		  0 iconst_0
+		  1 istore_1 [bRes]
+		  2 iconst_0
+		  3 istore_2 [a]
+		  4 iconst_1
+		  5 istore_3 [b]
+		  6 iconst_0
+		  7 istore [c]
+		  9 iconst_1
+		 10 istore [d]
+		 12 iconst_2
+		 13 istore [e]
+		 15 iconst_3
+		 16 istore [f]
+		 18 bipush 101
+		 20 istore_0 [mark]
+		 21 iload [d]
+		 23 iload [e]
+		 25 if_icmpge 33
+		 28 iload [d]
+		 30 goto 35
+		 33 iload [f]
+		 35 istore [iRes]
+		 37 bipush 102
+		 39 istore_0 [mark]
+		 40 iload [d]
+		 42 iload [e]
+		 44 if_icmpge 61
+		 47 iload_2 [a]
+		 48 ifeq 56
+		 51 iload [d]
+		 53 goto 74
+		 56 iload [e]
+		 58 goto 74
+		 61 iload_3 [b]
+		 62 iload [c]
+		 64 if_icmpeq 72
+		 67 iload [e]
+		 69 goto 74
+		 72 iload [f]
+		 74 istore [iRes]
+		 76 bipush 103
+		 78 istore_0 [mark]
+		 79 iload_0 [mark]
+		 80 iload [iRes]
+		 82 if_icmple 91
+		 85 iload_1 [bRes]
+		 86 ifeq 91
+		 89 iconst_1
+		 90 ireturn
+		 91 iconst_0
+		 92 ireturn
+
+method ConditionalOperator2
+	nodeNr:0 from 0 to 25	visited: false
+		predecessor:
+		successor: CFG-Node [28:30]	CFG-Node [33:33]
+	nodeNr:1 from 28 to 30	visited: false
+		predecessor: CFG-Node [0:25]
+		successor: CFG-Node [35:44]
+	nodeNr:2 from 33 to 33	visited: false
+		predecessor: CFG-Node [0:25]
+		successor: CFG-Node [35:44]
+	nodeNr:3 from 35 to 44	visited: false
+		predecessor: CFG-Node [28:30]	CFG-Node [33:33]
+		successor: CFG-Node [47:48]	CFG-Node [61:64]
+	nodeNr:4 from 47 to 48	visited: false
+		predecessor: CFG-Node [35:44]
+		successor: CFG-Node [51:53]	CFG-Node [56:58]
+	nodeNr:5 from 51 to 53	visited: false
+		predecessor: CFG-Node [47:48]
+		successor: CFG-Node [74:82]
+	nodeNr:6 from 56 to 58	visited: false
+		predecessor: CFG-Node [47:48]
+		successor: CFG-Node [74:82]
+	nodeNr:7 from 61 to 64	visited: false
+		predecessor: CFG-Node [35:44]
+		successor: CFG-Node [67:69]	CFG-Node [72:72]
+	nodeNr:8 from 67 to 69	visited: false
+		predecessor: CFG-Node [61:64]
+		successor: CFG-Node [74:82]
+	nodeNr:9 from 72 to 72	visited: false
+		predecessor: CFG-Node [61:64]
+		successor: CFG-Node [74:82]
+	nodeNr:10 from 74 to 82	visited: false
+		predecessor: CFG-Node [51:53]	CFG-Node [56:58]	CFG-Node [67:69]	CFG-Node [72:72]
+		successor: CFG-Node [85:86]	CFG-Node [91:92]
+	nodeNr:11 from 85 to 86	visited: false
+		predecessor: CFG-Node [74:82]
+		successor: CFG-Node [89:90]	CFG-Node [91:92]
+	nodeNr:12 from 89 to 90	visited: false
+		predecessor: CFG-Node [85:86]
+		successor:
+	nodeNr:13 from 91 to 92	visited: false
+		predecessor: CFG-Node [74:82]	CFG-Node [85:86]
+		successor:
+
+SSA for Method: ConditionalOperator2
+   SSANode 0:
+      EntrySet {[ , ], [ , , , , , , , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=27, index=1, reg=30
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=15, index=2, reg=29
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=20, index=3, reg=28
+         3: NoOpnd[sCloadConst] 0 (Integer),   end=20, index=4, reg=27
+         4: NoOpnd[sCloadConst] 1 (Integer),   end=16, index=5, reg=26
+         5: NoOpnd[sCloadConst] 2 (Integer),   end=21, index=6, reg=25
+         6: NoOpnd[sCloadConst] 3 (Integer),   end=23, index=7, reg=24
+         7: NoOpnd[sCloadConst] 101 (Integer),   end=7, index=0, reg=31
+         8: Branch[sCBranch] {5, 4} (Void)
+      ExitSet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+         9: Monadic[sCRegMove] {4} (Integer),   end=12, index=8, reg=23
+         10: Branch[sCBranch]  (Void)
+      ExitSet {[ 4 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 9 (Integer), ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+         11: Monadic[sCRegMove] {6} (Integer),   end=12, index=8, reg=23
+      ExitSet {[ 6 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 11 (Integer), ]}
+
+   SSANode 3:
+      EntrySet {[ 12 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+         12: PhiFunction[sCPhiFunc] {9, 11} (Integer),   end=0, index=8, reg=23
+         13: NoOpnd[sCloadConst] 102 (Integer),   end=13, index=0, reg=31
+         14: Branch[sCBranch] {5, 4} (Void)
+      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         15: Branch[sCBranch] {1} (Void)
+      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         16: Monadic[sCRegMove] {4} (Integer),   end=24, index=8, reg=23
+         17: Branch[sCBranch]  (Void)
+      ExitSet {[ 4 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 16 (Integer), 12 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         18: Monadic[sCRegMove] {5} (Integer),   end=24, index=8, reg=23
+         19: Branch[sCBranch]  (Void)
+      ExitSet {[ 5 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 18 (Integer), 12 (Integer) ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         20: Branch[sCBranch] {3, 2} (Void)
+      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         21: Monadic[sCRegMove] {5} (Integer),   end=24, index=8, reg=23
+         22: Branch[sCBranch]  (Void)
+      ExitSet {[ 5 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 21 (Integer), 12 (Integer) ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         23: Monadic[sCRegMove] {6} (Integer),   end=24, index=8, reg=23
+      ExitSet {[ 6 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 23 (Integer), 12 (Integer) ]}
+
+   SSANode 10:
+      EntrySet {[ 24 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+         24: PhiFunction[sCPhiFunc] {16, 18, 21, 23} (Integer),   end=26, index=8, reg=23
+         25: NoOpnd[sCloadConst] 103 (Integer),   end=26, index=0, reg=31
+         26: Branch[sCBranch] {24, 25} (Void)
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+
+   SSANode 11:
+      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+         27: Branch[sCBranch] {0} (Void)
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+
+   SSANode 12:
+      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+         28: NoOpnd[sCloadConst] 1 (Integer),   end=29, index=-1, reg=2
+         29: Branch[sCreturn] {28} (Void)
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+
+   SSANode 13:
+      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+         30: NoOpnd[sCloadConst] 0 (Integer),   end=31, index=-1, reg=2
+         31: Branch[sCreturn] {30} (Void)
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+
+
+Code for Method:ConditionalOperator2
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	90010020	[0x8]	stw  r0, 32(r1)
+	bee10014	[0xc]	stmw  r23, 20(r1)
+	3bc00000	[0x10]	li  r30, 0
+	3ba00000	[0x14]	li  r29, 0
+	3b800001	[0x18]	li  r28, 1
+	3b600000	[0x1c]	li  r27, 0
+	3b400001	[0x20]	li  r26, 1
+	3b200002	[0x24]	li  r25, 2
+	3b000003	[0x28]	li  r24, 3
+	3be00065	[0x2c]	li  r31, 101
+	7c1ac800	[0x30]	cmp crf0, 0, r26, r25
+	409f000c	[0x34]	bc  iffalse, CRF0[LT], 12, [0x40]	
+	7f57d378	[0x38]	lr  r23, r26
+	48000008	[0x3c]	b  8, [0x44]	
+	7f17c378	[0x40]	lr  r23, r24
+	3be00066	[0x44]	li  r31, 102
+	7c1ac800	[0x48]	cmp crf0, 0, r26, r25
+	409f001c	[0x4c]	bc  iffalse, CRF0[LT], 28, [0x68]	
+	2c1d0000	[0x50]	cmpi  crf0, 0, r29, 0
+	419d000c	[0x54]	bc  iftrue, CRF0[EQ], 12, [0x60]	
+	7f57d378	[0x58]	lr  r23, r26
+	48000020	[0x5c]	b  32, [0x7c]	
+	7f37cb78	[0x60]	lr  r23, r25
+	48000018	[0x64]	b  24, [0x7c]	
+	7c1cd800	[0x68]	cmp crf0, 0, r28, r27
+	419d000c	[0x6c]	bc  iftrue, CRF0[EQ], 12, [0x78]	
+	7f37cb78	[0x70]	lr  r23, r25
+	48000008	[0x74]	b  8, [0x7c]	
+	7f17c378	[0x78]	lr  r23, r24
+	3be00067	[0x7c]	li  r31, 103
+	7c1fb800	[0x80]	cmp crf0, 0, r31, r23
+	409e0014	[0x84]	bc  iffalse, CRF0[GT], 20, [0x98]	
+	2c1e0000	[0x88]	cmpi  crf0, 0, r30, 0
+	419d000c	[0x8c]	bc  iftrue, CRF0[EQ], 12, [0x98]	
+	38400001	[0x90]	li  r2, 1
+	48000008	[0x94]	b  8, [0x9c]	
+	38400000	[0x98]	li  r2, 0
+	bae10014	[0x9c]	lmw  r23, 20(r1)
+	80010020	[0xa0]	lwz  r0, 32(r1)
+	7c0803a6	[0xa4]	mtspr  LR, r0
+	38210020	[0xa8]	addi  r1, r1, 32
+	4e800020	[0xac]	bclr 20, 0
+

@@ -1,0 +1,53 @@
+     public static void simple1(int y) {
+        int x = 0;
+        x++;
+        x += 3;
+        x--;  
+        x = y + 1;
+    }
+
+	"public static void simple1(int)"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=16 
+	{
+		  0 iconst_0
+		  1 istore_1 [x]
+		  2 iinc x, 1
+		  5 iinc x, 3
+		  8 iinc x, -1
+		 11 iload_0 [y]
+		 12 iconst_1
+		 13 iadd
+		 14 istore_1 [x]
+		 15 return
+
+
+SSA for Method: simple1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=2, index=1, reg=3
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=2
+         2: Dyadic[sCadd] {0, 1} (Integer),   end=4, index=1, reg=3
+         3: NoOpnd[sCloadConst] 3 (Integer),   end=4
+         4: Dyadic[sCadd] {2, 3} (Integer),   end=6, index=1, reg=3
+         5: NoOpnd[sCloadConst] -1 (Integer),   end=6
+         6: Dyadic[sCadd] {4, 5} (Integer),   end=6, index=1, reg=3
+         7: NoOpnd[sCloadLocal] (Integer),   end=9, index=0, reg=2
+         8: NoOpnd[sCloadConst] 1 (Integer),   end=9
+         9: Dyadic[sCadd] {7, 8} (Integer),   end=9, index=1, reg=2
+         10: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ 7 (Integer), 9 (Integer) ]}
+
+Code for Method:simple1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38600000	[0xc]	li  r3, 0
+	38630001	[0x10]	addi  r3, r3, 1
+	38630003	[0x14]	addi  r3, r3, 3
+	3863ffff	[0x18]	addi  r3, r3, -1
+	38420001	[0x1c]	addi  r2, r2, 1
+	8001000c	[0x20]	lwz  r0, 12(r1)
+	7c0803a6	[0x24]	mtspr  LR, r0
+	38210010	[0x28]	addi  r1, r1, 16
+	4e800020	[0x2c]	bclr always, CRF7[SO]
+

@@ -1,0 +1,29 @@
+    public void emptyMethod() {
+    }
+
+public void emptyMethod()
+	//nofStackSlots=0, nofLocalSlots=1, codeLen=1 
+		0 return
+
+
+method emptyMethod
+	nodeNr:0 from 0 to 0	visited: false
+		predecessor: 
+		successor: 
+
+
+SSA for Method: emptyMethod
+   SSANode 0:
+      EntrySet {[ ]}
+         0: Branch[sCreturn]  (Void)
+      ExitSet {[ ]}
+
+Code for Method:emptyMethod
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	8001000c	[0xc]	lwz  r0, 12(r1)
+	7c0803a6	[0x10]	mtspr  LR, r0
+	38210010	[0x14]	addi  r1, r1, 16
+	4e800020	[0x18]	bclr always, CRF7[SO]
+

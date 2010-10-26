@@ -1,0 +1,81 @@
+    public static int if1(int a) {
+        int i;
+        if(a > 0) {
+            i = a + 1;
+        }
+        else {
+            i = a - 1;
+        }
+        return i;
+    }
+
+public static int if1(int)
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=17 
+		  0 iload_0 [a]
+		  1 ifle 11
+		  4 iload_0 [a]
+		  5 iconst_1
+		  6 iadd
+		  7 istore_1 [i]
+		  8 goto 15
+		 11 iload_0 [a]
+		 12 iconst_1
+		 13 isub
+		 14 istore_1 [i]
+		 15 iload_1 [i]
+		 16 ireturn
+
+method if1
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor: 
+		successor: CFG-Node [4:8]	CFG-Node [11:14]	
+	nodeNr:1 from 4 to 8	visited: false
+		predecessor: CFG-Node [0:1]	
+		successor: CFG-Node [15:16]	
+	nodeNr:2 from 11 to 14	visited: false
+		predecessor: CFG-Node [0:1]	
+		successor: CFG-Node [15:16]	
+	nodeNr:3 from 15 to 16	visited: false
+		predecessor: CFG-Node [4:8]	CFG-Node [11:14]	
+		successor: 
+
+SSA for Method: if1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=6, index=0, reg=2
+         1: Branch[sCBranch] {0} (Void)
+      ExitSet {[ , ], [ 0 (Integer), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 0 (Integer), ]}
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=3
+         3: Dyadic[sCadd] {0, 2} (Integer),   end=7, index=1, reg=3, join={7}
+         4: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 0 (Integer), 3 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 0 (Integer), ]}
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=6
+         6: Dyadic[sCsub] {0, 5} (Integer),   end=7, index=1, reg=3, join={7}
+      ExitSet {[ , ], [ 0 (Integer), 6 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 0 (Integer), Phi-Function(7) ]}
+         7: PhiFunction[sCPhiFunc] {3, 6} (Phi-Function),   end=8, index=1, reg=3
+         8: Branch[sCreturn] {7} (Void)
+      ExitSet {[ , ], [ 0 (Integer), Phi-Function(7) ]}
+
+Code for Method:if1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	2c020000	[0xc]	cmpi  crf0, 0, r2, 0
+	409e000c	[0x10]	bc  iffalse, CRF0[GT], 12, [0x1c]	
+	38620001	[0x14]	addi  r3, r2, 1
+	48000008	[0x18]	b  8, [0x20]	
+	3862ffff	[0x1c]	addi  r3, r2, -1
+	7c621b78	[0x20]	lr  r2, r3
+	8001000c	[0x24]	lwz  r0, 12(r1)
+	7c0803a6	[0x28]	mtspr  LR, r0
+	38210010	[0x2c]	addi  r1, r1, 16
+	4e800020	[0x30]	bclr always, CRF7[SO]

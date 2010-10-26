@@ -58,11 +58,11 @@ public class T01SimpleMethods {
     }
 
     public static void simple5() {
-/*        long a;
+        long a;
         a = 1;
         a = -1;
         a = 0x2233445566778899L;
-        a = 0x9988776655443322L;*/
+        a = 0x9988776655443322L;
     }
 
 }

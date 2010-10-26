@@ -1,0 +1,70 @@
+	public static void multiArray(){
+		int[][] x = new int[2][3];
+		double [][] d = new double[][]{{2.4d,3.1d},{3.5d,8.3d}};
+	}
+
+		  0 iconst_2
+		  1 iconst_3
+		  2 multianewarray int[][]
+		  6 astore_0 [x]
+		  7 iconst_2
+		  8 anewarray [D
+		 11 dup
+		 12 iconst_0
+		 13 iconst_2
+		 14 newarray double
+		 16 dup
+		 17 iconst_0
+		 18 ldc2_w <Double 2.4>
+		 21 dastore
+		 22 dup
+		 23 iconst_1
+		 24 ldc2_w <Double 3.1>
+		 27 dastore
+		 28 aastore
+		 29 dup
+		 30 iconst_1
+		 31 iconst_2
+		 32 newarray double
+		 34 dup
+		 35 iconst_0
+		 36 ldc2_w <Double 3.5>
+		 39 dastore
+		 40 dup
+		 41 iconst_1
+		 42 ldc2_w <Double 8.3>
+		 45 dastore
+		 46 aastore
+		 47 astore_1 [d]
+		 48 return
+
+SSA for Method: multiArray
+   SSANode 0:
+      EntrySet {[ , , , , , , , ], [ , ]}
+         0: NoOpnd[sCloadConst] 2 (Integer),   end=2, index=-1, reg=2
+         1: NoOpnd[sCloadConst] 3 (Integer),   end=2, index=-1, reg=3
+         2: Call[sCnew] {1, 0} (Ref-Array),   [[I,   end=2, index=0, reg=31
+         3: NoOpnd[sCloadConst] 2 (Integer),   end=4, index=-1, reg=2
+         4: Call[sCnew] {3} (Ref-Array),   [D,   end=24, index=1, reg=30
+         5: NoOpnd[sCloadConst] 0 (Integer),   end=14, index=-1, reg=2
+         6: NoOpnd[sCloadConst] 2 (Integer),   end=7, index=-1, reg=3
+         7: Call[sCnew] {6} (Double-Array),   2,   end=14, index=-1, reg=3
+         8: NoOpnd[sCloadConst] 0 (Integer),   end=10, index=-1, reg=4
+         9: NoOpnd[sCloadConst] 2.4 (Double),   end=10, index=-1, reg=1
+         10: StoreToArray[sCstoreToArray] {7, 8, 9} (Void)
+         11: NoOpnd[sCloadConst] 1 (Integer),   end=13, index=-1, reg=4
+         12: NoOpnd[sCloadConst] 3.1 (Double),   end=13, index=-1, reg=1
+         13: StoreToArray[sCstoreToArray] {7, 11, 12} (Void)
+         14: StoreToArray[sCstoreToArray] {4, 5, 7} (Void)
+         15: NoOpnd[sCloadConst] 1 (Integer),   end=24, index=-1, reg=2
+         16: NoOpnd[sCloadConst] 2 (Integer),   end=17, index=-1, reg=3
+         17: Call[sCnew] {16} (Double-Array),   2,   end=24, index=-1, reg=3
+         18: NoOpnd[sCloadConst] 0 (Integer),   end=20, index=-1, reg=4
+         19: NoOpnd[sCloadConst] 3.5 (Double),   end=20, index=-1, reg=1
+         20: StoreToArray[sCstoreToArray] {17, 18, 19} (Void)
+         21: NoOpnd[sCloadConst] 1 (Integer),   end=23, index=-1, reg=4
+         22: NoOpnd[sCloadConst] 8.3 (Double),   end=23, index=-1, reg=1
+         23: StoreToArray[sCstoreToArray] {17, 21, 22} (Void)
+         24: StoreToArray[sCstoreToArray] {4, 15, 17} (Void)
+         25: Branch[sCreturn]  (Void)
+      ExitSet {[ , , , , , , , ], [ 2 (Ref-Array), 4 (Ref-Array) ]}

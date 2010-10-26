@@ -52,7 +52,7 @@ public class CFG03 extends TestCFG {
 
 	@Test
 	public void switchFar1() {
-		CFGNode[] nodes = getAndTestNodes(3, 5);
+		CFGNode[] nodes = getAndTestNodes(4, 5);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {36,39,41,44});
 		testNode(nodes[1], 36, 38, false, nodes[0], new int[] {0}, new int[] {});
 		testNode(nodes[2], 39, 40, false, nodes[0], new int[] {0}, new int[] {});
@@ -62,7 +62,7 @@ public class CFG03 extends TestCFG {
 
 	@Test
 	public void switchFar2() {
-		CFGNode[] nodes = getAndTestNodes(4, 10);
+		CFGNode[] nodes = getAndTestNodes(5, 10);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {36,39,89,139});
 		testNode(nodes[1], 36, 38, false, nodes[0], new int[] {0}, new int[] {});
 		testNode(nodes[2], 39, 40, false, nodes[0], new int[] {0}, new int[] {89,79,81,89,87,89});

@@ -1,0 +1,50 @@
+    public static void simple2() {
+        
+        int a = 1;
+        int b = 2;
+        a = 1 + 2;
+        a = b; 
+        a = a + b;
+    }
+
+	"public static void simple2()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=13 
+	{
+		  0 iconst_1
+		  1 istore_0 [a]
+		  2 iconst_2
+		  3 istore_1 [b]
+		  4 iconst_3
+		  5 istore_0 [a]
+		  6 iload_1 [b]
+		  7 istore_0 [a]
+		  8 iload_0 [a]
+		  9 iload_1 [b]
+		 10 iadd
+		 11 istore_0 [a]
+		 12 return
+
+
+SSA for Method: simple2
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=2
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=3, index=0, reg=2
+         2: NoOpnd[sCloadConst] 3 (Integer),   end=2, index=0, reg=3
+         3: Dyadic[sCadd] {1, 1} (Integer),   end=3, index=0, reg=2
+         4: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ 3 (Integer), 1 (Integer) ]}
+
+Code for Method:simple2
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400001	[0xc]	li  r2, 1
+	38400002	[0x10]	li  r2, 2
+	38600003	[0x14]	li  r3, 3
+	7c421214	[0x18]	add  r2, r2, r2
+	8001000c	[0x1c]	lwz  r0, 12(r1)
+	7c0803a6	[0x20]	mtspr  LR, r0
+	38210010	[0x24]	addi  r1, r1, 16
+	4e800020	[0x28]	bclr always, CRF7[SO]
+

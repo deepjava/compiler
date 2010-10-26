@@ -1,0 +1,79 @@
+	public static String multiObjectArray(String s){
+		Object[][] obj = new Object[3][5][6];		
+		String[][] str = new String[][]{{s,s},{s,s}};
+		return str[0][1];
+	}
+
+		  0 iconst_3
+		  1 iconst_5
+		  2 bipush 6
+		  4 multianewarray Ljava/lang/Object[][][];
+		  8 astore_1 [obj]
+		  9 iconst_2
+		 10 anewarray [Ljava/lang/String;
+		 13 dup
+		 14 iconst_0
+		 15 iconst_2
+		 16 anewarray java/lang/String
+		 19 dup
+		 20 iconst_0
+		 21 aload_0 [s]
+		 22 aastore
+		 23 dup
+		 24 iconst_1
+		 25 aload_0 [s]
+		 26 aastore
+		 27 aastore
+		 28 dup
+		 29 iconst_1
+		 30 iconst_2
+		 31 anewarray java/lang/String
+		 34 dup
+		 35 iconst_0
+		 36 aload_0 [s]
+		 37 aastore
+		 38 dup
+		 39 iconst_1
+		 40 aload_0 [s]
+		 41 aastore
+		 42 aastore
+		 43 astore_2 [str]
+		 44 aload_2 [str]
+		 45 iconst_0
+		 46 aaload
+		 47 iconst_1
+		 48 aaload
+		 49 areturn
+
+SSA for Method: multiObjectArray
+   SSANode 0:
+      EntrySet {[ , , , , , , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 3 (Integer),   end=3, index=-1, reg=2
+         1: NoOpnd[sCloadConst] 5 (Integer),   end=3, index=-1, reg=3
+         2: NoOpnd[sCloadConst] 6 (Integer),   end=3, index=-1, reg=4
+         3: Call[sCnew] {2, 1, 0} (Ref-Array),   [[[Ljava/lang/Object;,   end=3, index=1, reg=30
+         4: NoOpnd[sCloadConst] 2 (Integer),   end=5, index=-1, reg=2
+         5: Call[sCnew] {4} (Ref-Array),   [Ljava/lang/String;,   end=24, index=2, reg=29
+         6: NoOpnd[sCloadConst] 0 (Integer),   end=14, index=-1, reg=2
+         7: NoOpnd[sCloadConst] 2 (Integer),   end=8, index=-1, reg=3
+         8: Call[sCnew] {7} (Ref-Array),   java/lang/String,   end=14, index=-1, reg=3
+         9: NoOpnd[sCloadConst] 0 (Integer),   end=11, index=-1, reg=4
+         10: NoOpnd[sCloadLocal] (Ref),   end=21, index=0, reg=31
+         11: StoreToArray[sCstoreToArray] {8, 9, 10} (Void)
+         12: NoOpnd[sCloadConst] 1 (Integer),   end=13, index=-1, reg=3
+         13: StoreToArray[sCstoreToArray] {8, 12, 10} (Void)
+         14: StoreToArray[sCstoreToArray] {5, 6, 8} (Void)
+         15: NoOpnd[sCloadConst] 1 (Integer),   end=22, index=-1, reg=2
+         16: NoOpnd[sCloadConst] 2 (Integer),   end=17, index=-1, reg=3
+         17: Call[sCnew] {16} (Ref-Array),   java/lang/String,   end=22, index=-1, reg=3
+         18: NoOpnd[sCloadConst] 0 (Integer),   end=19, index=-1, reg=4
+         19: StoreToArray[sCstoreToArray] {17, 18, 10} (Void)
+         20: NoOpnd[sCloadConst] 1 (Integer),   end=21, index=-1, reg=3
+         21: StoreToArray[sCstoreToArray] {17, 20, 10} (Void)
+         22: StoreToArray[sCstoreToArray] {5, 15, 17} (Void)
+         23: NoOpnd[sCloadConst] 0 (Integer),   end=24, index=-1, reg=2
+         24: Dyadic[sCloadFromArray] {5, 23} (Ref),   end=26, index=-1, reg=2
+         25: NoOpnd[sCloadConst] 1 (Integer),   end=26, index=-1, reg=3
+         26: Dyadic[sCloadFromArray] {24, 25} (Ref),   end=27, index=-1, reg=2
+         27: Branch[sCreturn] {26} (Void)
+      ExitSet {[ , , , , , , ], [ 10 (Ref), 3 (Ref-Array), 5 (Ref-Array) ]}

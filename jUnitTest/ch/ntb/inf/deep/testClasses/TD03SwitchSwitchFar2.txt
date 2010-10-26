@@ -1,0 +1,216 @@
+	public static int switchFar2(int i) {
+		switch(i) {
+			case -100: return -100;
+			case 0:
+				switch (i) {
+					case 0: break;
+					case 1: return 2;
+					case 2: i += 2;
+					case 3: break;
+					case 4: return 3;
+				}
+			case 100:
+				switch (i) {
+					case 0: break;
+					case 2: i += 2;
+					case 5: break;
+					default: return -1;
+				}
+		}
+		return i;
+	}
+
+
+	"public static int switchFar2(int)"
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=141
+	{
+		  0 iload_0 [i]
+		  1 lookupswitch
+			Default: 139
+			Case: -100: 36
+			Case: 0: 39
+			Case: 100: 89
+		 36 bipush -100
+		 38 ireturn
+		 39 iload_0 [i]
+		 40 tableswitch
+			Default: 89
+			Case: 0: 76
+			Case: 1: 79
+			Case: 2: 81
+			Case: 3: 84
+			Case: 4: 87
+		 76 goto 89
+		 79 iconst_2
+		 80 ireturn
+		 81 iinc i, 2
+		 84 goto 89
+		 87 iconst_3
+		 88 ireturn
+		 89 iload_0 [i]
+		 90 tableswitch
+			Default: 137
+			Case: 0: 128
+			Case: 1: 137
+			Case: 2: 131
+			Case: 3: 137
+			Case: 4: 137
+			Case: 5: 134
+		128 goto 139
+		131 iinc i, 2
+		134 goto 139
+		137 iconst_m1
+		138 ireturn
+		139 iload_0 [i]
+		140 ireturn
+
+
+CFG of method switchFar2
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor:
+		successor: CFG-Node [36:38]	CFG-Node [39:40]	CFG-Node [89:90]	CFG-Node [139:140]
+	nodeNr:1 from 36 to 38	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:2 from 39 to 40	visited: false
+		predecessor: CFG-Node [0:1]
+		successor: CFG-Node [89:90]	CFG-Node [79:80]	CFG-Node [81:84]	CFG-Node [89:90]	CFG-Node [87:88]	CFG-Node [89:90]
+	nodeNr:3 from 79 to 80	visited: false
+		predecessor: CFG-Node [39:40]
+		successor:
+	nodeNr:4 from 81 to 84	visited: false
+		predecessor: CFG-Node [39:40]
+		successor: CFG-Node [89:90]
+	nodeNr:5 from 87 to 88	visited: false
+		predecessor: CFG-Node [39:40]
+		successor:
+	nodeNr:6 from 89 to 90	visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [39:40]	CFG-Node [81:84]
+		successor: CFG-Node [139:140]	CFG-Node [137:138]	CFG-Node [131:134]	CFG-Node [137:138]	CFG-Node [137:138]	CFG-Node [139:140]	CFG-Node [137:138]
+	nodeNr:7 from 131 to 134	visited: false
+		predecessor: CFG-Node [89:90]
+		successor: CFG-Node [139:140]
+	nodeNr:8 from 137 to 138	visited: false
+		predecessor: CFG-Node [89:90]
+		successor:
+	nodeNr:9 from 139 to 140	visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [89:90]	CFG-Node [131:134]
+		successor:
+
+SSA for Method: switchFar2
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=19, index=0, reg=2, join={19}
+         1: Branch[sCBranch] {0} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         2: NoOpnd[sCloadConst] -100 (Integer),   end=3, reg=3
+         3: Branch[sCreturn] {2} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         4: Branch[sCBranch] {0} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         5: NoOpnd[sCloadConst] 2 (Integer),   end=6, reg=3
+         6: Branch[sCreturn] {5} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         7: NoOpnd[sCloadConst] 2 (Integer),   end=8
+         8: Dyadic[sCadd] {0, 7} (Integer),   end=12, index=0, reg=2, join={12}
+         9: Branch[sCBranch]  (Void)
+      ExitSet {[ ], [ 8 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         10: NoOpnd[sCloadConst] 3 (Integer),   end=11, reg=3
+         11: Branch[sCreturn] {10} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ ], [ Phi-Function(12) ]}
+         12: PhiFunction[sCPhiFunc] {0, 8} (Phi-Function),   end=19, index=0, reg=2, join={19}
+         13: Branch[sCBranch] {12} (Void)
+      ExitSet {[ ], [ Phi-Function(12) ]}
+
+   SSANode 7:
+      EntrySet {[ ], [ Phi-Function(12) ]}
+         14: NoOpnd[sCloadConst] 2 (Integer),   end=15
+         15: Dyadic[sCadd] {12, 14} (Integer),   end=19, index=0, reg=2, join={19}
+         16: Branch[sCBranch]  (Void)
+      ExitSet {[ ], [ 15 (Integer) ]}
+
+   SSANode 8:
+      EntrySet {[ ], [ Phi-Function(12) ]}
+         17: NoOpnd[sCloadConst] -1 (Integer),   end=18, reg=2
+         18: Branch[sCreturn] {17} (Void)
+      ExitSet {[ ], [ Phi-Function(12) ]}
+
+   SSANode 9:
+      EntrySet {[ ], [ Phi-Function(19) ]}
+         19: PhiFunction[sCPhiFunc] {0, 12, 15} (Phi-Function),   end=20, index=0, reg=2
+         20: Branch[sCreturn] {19} (Void)
+      ExitSet {[ ], [ Phi-Function(19) ]}
+
+Code for Method:switchFar2
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	2c02ff9c	[0xc]	cmpi  crf0, 0, r2, -100
+	419d0018	[0x10]	bc  iftrue, CRF0[EQ], 24, [0x28]	
+	2c020000	[0x14]	cmpi  crf0, 0, r2, 0
+	419d001c	[0x18]	bc  iftrue, CRF0[EQ], 28, [0x34]	
+	2c020064	[0x1c]	cmpi  crf0, 0, r2, 100
+	419d0060	[0x20]	bc  iftrue, CRF0[EQ], 96, [0x80]	
+	480000a0	[0x24]	b  160, [0xc4]	
+	3860ff9c	[0x28]	li  r3, -100
+	7c621b78	[0x2c]	lr  r2, r3
+	48000094	[0x30]	b  148, [0xc4]	
+	2c020000	[0x34]	cmpi  crf0, 0, r2, 0
+	419d0048	[0x38]	bc  iftrue, CRF0[EQ], 72, [0x80]	
+	2c020001	[0x3c]	cmpi  crf0, 0, r2, 1
+	419d0020	[0x40]	bc  iftrue, CRF0[EQ], 32, [0x60]	
+	2c020002	[0x44]	cmpi  crf0, 0, r2, 2
+	419d0024	[0x48]	bc  iftrue, CRF0[EQ], 36, [0x6c]	
+	2c020003	[0x4c]	cmpi  crf0, 0, r2, 3
+	419d0030	[0x50]	bc  iftrue, CRF0[EQ], 48, [0x80]	
+	2c020004	[0x54]	cmpi  crf0, 0, r2, 4
+	419d001c	[0x58]	bc  iftrue, CRF0[EQ], 28, [0x74]	
+	48000024	[0x5c]	b  36, [0x80]	
+	38600002	[0x60]	li  r3, 2
+	7c621b78	[0x64]	lr  r2, r3
+	4800005c	[0x68]	b  92, [0xc4]	
+	38420002	[0x6c]	addi  r2, r2, 2
+	48000010	[0x70]	b  16, [0x80]	
+	38600003	[0x74]	li  r3, 3
+	7c621b78	[0x78]	lr  r2, r3
+	48000048	[0x7c]	b  72, [0xc4]	
+	2c020000	[0x80]	cmpi  crf0, 0, r2, 0
+	419d0040	[0x84]	bc  iftrue, CRF0[EQ], 64, [0xc4]	
+	2c020001	[0x88]	cmpi  crf0, 0, r2, 1
+	419d0030	[0x8c]	bc  iftrue, CRF0[EQ], 48, [0xbc]	
+	2c020002	[0x90]	cmpi  crf0, 0, r2, 2
+	419d0020	[0x94]	bc  iftrue, CRF0[EQ], 32, [0xb4]	
+	2c020003	[0x98]	cmpi  crf0, 0, r2, 3
+	419d0020	[0x9c]	bc  iftrue, CRF0[EQ], 32, [0xbc]	
+	2c020004	[0xa0]	cmpi  crf0, 0, r2, 4
+	419d0018	[0xa4]	bc  iftrue, CRF0[EQ], 24, [0xbc]	
+	2c020005	[0xa8]	cmpi  crf0, 0, r2, 5
+	419d0018	[0xac]	bc  iftrue, CRF0[EQ], 24, [0xc4]	
+	4800000c	[0xb0]	b  12, [0xbc]	
+	38420002	[0xb4]	addi  r2, r2, 2
+	4800000c	[0xb8]	b  12, [0xc4]	
+	3840ffff	[0xbc]	li  r2, -1
+	48000004	[0xc0]	b  4, [0xc4]	
+	8001000c	[0xc4]	lwz  r0, 12(r1)
+	7c0803a6	[0xc8]	mtspr  LR, r0
+	38210010	[0xcc]	addi  r1, r1, 16
+	4e800020	[0xd0]	bclr always, CRF7[SO]
+

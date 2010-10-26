@@ -1,0 +1,133 @@
+	static void m1() {
+		boolean res;
+		long a = -30000;
+		if (a > 10000) {
+			int b = 100;
+			float bb = b;
+		} else {
+			float c = 1.0f;
+		}
+		float d = a * 2;
+		res = a > 0? true : false;
+		double e = a * 16;
+		int f = (int) d;
+	}
+	
+	"static void m1()"
+	//nofStackSlots=4, nofLocalSlots=7, codeLen=56 
+	{
+		  0 ldc2_w <Long -30000>
+		  3 lstore_1 [a]
+		  4 lload_1 [a]
+		  5 ldc2_w <Long 10000>
+		  8 lcmp
+		  9 ifle 22
+		 12 bipush 100
+		 14 istore_3 [b]
+		 15 iload_3 [b]
+		 16 i2f
+		 17 fstore [bb]
+		 19 goto 24
+		 22 fconst_1
+		 23 fstore_3 [d]
+		 24 lload_1 [a]
+		 25 ldc2_w <Long 2>
+		 28 lmul
+		 29 l2f
+		 30 fstore_3 [d]
+		 31 lload_1 [a]
+		 32 lconst_0
+		 33 lcmp
+		 34 ifle 41
+		 37 iconst_1
+		 38 goto 42
+		 41 iconst_0
+		 42 istore_0 [res]
+		 43 lload_1 [a]
+		 44 ldc2_w <Long 16>
+		 47 lmul
+		 48 l2d
+		 49 dstore [e]
+		 51 fload_3 [d]
+		 52 f2i
+		 53 istore [f]
+		 55 return
+
+SSA for Method: m1
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , , , , , ]}
+         0: NoOpnd[sCloadConst] -30000 (Long),   end=19, index=1, regLong=2, reg=3
+         1: NoOpnd[sCloadConst] 10000 (Long),   end=2, reg=4
+         2: Dyadic[sCcmpl] {0, 1} (Integer),   end=3, reg=4
+         3: Branch[sCBranch] {2} (Void)
+      ExitSet {[ , , , ], [ , 0 (Long), , , , , ]}
+
+   SSANode 1:
+      EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
+         4: NoOpnd[sCloadConst] 100 (Integer),   end=5, index=3, reg=4
+         5: Monadic[sCconvInt] {4} (Float),   end=5, index=4, reg=1
+         6: Branch[sCBranch]  (Void)
+      ExitSet {[ , , , ], [ , 0 (Long), , 4 (Integer), 5 (Float), , ]}
+
+   SSANode 2:
+      EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
+         7: NoOpnd[sCloadConst] 1.0 (Float),   end=7, index=3, reg=1
+      ExitSet {[ , , , ], [ , 0 (Long), , 7 (Float), , , ]}
+
+   SSANode 3:
+      EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
+         8: NoOpnd[sCloadConst] 2 (Long),   end=9
+         9: Dyadic[sCmul] {0, 8} (Long),   end=10, regLong=4, reg=5
+         10: Monadic[sCconvLong] {9} (Float),   end=21, index=3, reg=1
+         11: NoOpnd[sCloadConst] 0 (Long),   end=12, reg=4
+         12: Dyadic[sCcmpl] {0, 11} (Integer),   end=13, reg=4
+         13: Branch[sCBranch] {12} (Void)
+      ExitSet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
+
+   SSANode 4:
+      EntrySet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
+         14: NoOpnd[sCloadConst] 1 (Integer),   end=17, reg=4, join={17}
+         15: Branch[sCBranch]  (Void)
+      ExitSet {[ 14 (Integer), , , ], [ , 0 (Long), , 10 (Float), , , ]}
+
+   SSANode 5:
+      EntrySet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
+         16: NoOpnd[sCloadConst] 0 (Integer),   end=17, reg=4, join={17}
+      ExitSet {[ 16 (Integer), , , ], [ , 0 (Long), , 10 (Float), , , ]}
+
+   SSANode 6:
+      EntrySet {[ Phi-Function(17), , , ], [ , 0 (Long), , 10 (Float), , , ]}
+         17: PhiFunction[sCPhiFunc] {14, 16} (Phi-Function),   end=17, index=0, reg=4
+         18: NoOpnd[sCloadConst] 16 (Long),   end=19
+         19: Dyadic[sCmul] {0, 18} (Long),   end=20, regLong=2, reg=3
+         20: Monadic[sCconvLong] {19} (Double),   end=20, index=4, reg=2
+         21: Monadic[sCconvFloat] {10} (Integer),   end=21, index=6, reg=2
+         22: Branch[sCreturn]  (Void)
+      ExitSet {[ , , , ], [ Phi-Function(17), 0 (Long), , 10 (Float), 20 (Double), , 21 (Integer) ]}
+
+Code for Method:m1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	3840ffff	[0xc]	li  r2, -1
+	38608ad0	[0x10]	li  r3, -30000
+	ffe00000	[0x14]	fcmpu  crf7, fr0, fr0
+	38802710	[0x18]	li  r4, 10000
+	2c040000	[0x1c]	cmpi  crf0, 0, r4, 0
+	409e000c	[0x20]	bc  iffalse, CRF0[GT], 12, [0x2c]	
+	38800064	[0x24]	li  r4, 100
+	48000010	[0x28]	b  16, [0x38]	
+	38800000	[0x2c]	li  r4, 0
+	3c840000	[0x30]	addis  r4, r4, 0
+	c0240018	[0x34]	lfs  fr1, 24(r4)
+	ffe00000	[0x38]	fcmpu  crf7, fr0, fr0
+	38800000	[0x3c]	li  r4, 0
+	2c040000	[0x40]	cmpi  crf0, 0, r4, 0
+	409e000c	[0x44]	bc  iffalse, CRF0[GT], 12, [0x50]	
+	38800001	[0x48]	li  r4, 1
+	48000008	[0x4c]	b  8, [0x54]	
+	38800000	[0x50]	li  r4, 0
+	8001000c	[0x54]	lwz  r0, 12(r1)
+	7c0803a6	[0x58]	mtspr  LR, r0
+	38210010	[0x5c]	addi  r1, r1, 16
+	4e800020	[0x60]	bclr always, CRF7[SO]

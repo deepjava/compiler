@@ -1,0 +1,81 @@
+	public static void objectArray(){
+		Object[] objs = new Object[3];
+		objs[0] = new Object();
+	}
+
+public static void objectArray()
+	//nofStackSlots=4, nofLocalSlots=1, codeLen=16 
+		  0 iconst_3
+		  1 anewarray java/lang/Object
+		  4 astore_0 [objs]
+		  5 aload_0 [objs]
+		  6 iconst_0
+		  7 new java/lang/Object
+		 10 dup
+		 11 invokespecial java/lang/Object(): void
+		 14 aastore
+		 15 return
+
+method objectArray
+	nodeNr:0 from 0 to 15	visited: false
+		predecessor: 
+		successor: 
+
+
+SSA for Method: objectArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ ]}
+         0: NoOpnd[sCloadConst] 3 (Integer),   end=1, index=-1, reg=2
+         1: Call[sCnew] {0} (Ref-Array),   java/lang/Object,   end=5, index=0, reg=31
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=5, index=-1, reg=2
+         3: Call[sCnew] {-1} (Ref)java/lang/Object,   end=5, index=-1, reg=3
+         4: Call[sCcall] {3} (Void),   java/lang/Object.<init>,   end=4, index=-1, reg=-1
+         5: StoreToArray[sCstoreToArray] {1, 2, 3} (Void)
+         6: Branch[sCreturn]  (Void)
+      ExitSet {[ , , , ], [ 1 (Ref-Array) ]}
+
+
+
+Problem: 2: volatile Reg R2, wird aber durch CALL   in 3 zerstört
+
+
+
+Code for Method:objectArray
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	90010020	[0x8]	stw  r0, 32(r1)
+	bfe10014	[0xc]	stmw  r31, 20(r1)
+	38400003	[0x10]	li  r2, 3
+	0e020000	[0x14]	twi  ifless, r2, 0
+	3c600000	[0x18]	lis  r3, 0
+	38630000	[0x1c]	addi  r3, r3, 0
+	7c6803a6	[0x20]	mtspr  LR, r3
+	3c600000	[0x24]	lis  r3, 0
+	38630006	[0x28]	addi  r3, r3, 6
+	4e800020	[0x2c]	bclr 20, 0
+	7c5f1378	[0x30]	lr  r31, r2
+	38400000	[0x34]	li  r2, 0
+	3c400000	[0x38]	lis  r2, 0
+	38420009	[0x3c]	addi  r2, r2, 9
+	7c4803a6	[0x40]	mtspr  LR, r2
+	3c400000	[0x44]	lis  r2, 0
+	3842000e	[0x48]	addi  r2, r2, 14
+	4e800020	[0x4c]	bclr 20, 0
+	7c431378	[0x50]	lr  r3, r2
+	0c830000	[0x54]	twi  ifequal, r3, 0
+	8083fffc	[0x58]	lwz  r4, -4(r3)
+	8084ffe8	[0x5c]	lwz  r4, -24(r4)
+	7c8803a6	[0x60]	mtspr  LR, r4
+	7c621b78	[0x64]	lr  r2, r3
+	4e800020	[0x68]	bclr 20, 0
+	0c9f0000	[0x6c]	twi  ifequal, r31, 0
+	a87f0008	[0x70]	lha  r3, 8(r31)
+	7ca21808	[0x74]	tw  ifgeU, r2, r3
+	5443103a	[0x78]	rlwinm  r3, r2, 2, 0, 29
+	389f000c	[0x7c]	addi  r4, r31, 12
+	7c63212e	[0x80]	stwx  r3, r3, r4
+	bbe10014	[0x84]	lmw  r31, 20(r1)
+	80010020	[0x88]	lwz  r0, 32(r1)
+	7c0803a6	[0x8c]	mtspr  LR, r0
+	38210020	[0x90]	addi  r1, r1, 32
+	4e800020	[0x94]	bclr 20, 0

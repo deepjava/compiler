@@ -1,0 +1,89 @@
+	float m2(long a, float b, double c, byte[] d, short e, int f, int g) {
+		a = 0x7545 & a;
+		e += 100;
+		T08Calls.classMethod(d[2]);
+		e = (short)(20 + e);
+		g |= 0x223344;
+		c = 3.2;
+		int h = g - e;
+		T08Calls.classMethod(h);
+		short i = (short)h;		
+		return b;
+	}
+	
+build intervals for m2
+assign registers to parameters, nofParam = 10
+[(Ref), (Long)r3,r4, (Void), (Float)fr31, (Double)fr2, (Byte-Array)r6, (Short)r7, (Integer), (Integer)r31]
+
+SSA for Method: m2
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , , , , , , , , , , ]}
+         0: NoOpnd[sCloadConst] 30021 (Long),   end=2
+         1: NoOpnd[sCloadLocal] (Long),   end=2, index=1, regLong=3, reg=4
+         2: Dyadic[sCand] {0, 1} (Long),   end=2, index=1, regLong=2, reg=3
+         3: NoOpnd[sCloadLocal] (Integer),   end=5, index=7, reg=7
+         4: NoOpnd[sCloadConst] 100 (Integer),   end=5
+         5: Dyadic[sCadd] {3, 4} (Integer),   end=6, reg=2
+         6: Monadic[sCconvInt] {5} (Short),   end=12, index=7, reg=31
+         7: NoOpnd[sCloadLocal] (Ref),   end=9, index=6, reg=6
+         8: NoOpnd[sCloadConst] 2 (Integer),   end=9, reg=2
+         9: Dyadic[sCloadFromArray] {7, 8} (Byte),   end=10, reg=2
+         10: Call[sCcall] {9} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.classMethod,   end=10, reg=2
+         11: NoOpnd[sCloadConst] 20 (Integer),   end=12
+         12: Dyadic[sCadd] {11, 6} (Integer),   end=13, reg=2
+         13: Monadic[sCconvInt] {12} (Short),   end=18, index=7, reg=2
+         14: NoOpnd[sCloadLocal] (Integer),   end=16, index=9, reg=31
+         15: NoOpnd[sCloadConst] 2241348 (Integer),   end=16
+         16: Dyadic[sCor] {14, 15} (Integer),   end=18, index=9, reg=3
+         17: NoOpnd[sCloadConst] 3.2 (Double),   end=17, index=4, reg=1
+         18: Dyadic[sCsub] {16, 13} (Integer),   end=20, index=10, reg=31
+         19: Call[sCcall] {18} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.classMethod,   end=19, reg=2
+         20: Monadic[sCconvInt] {18} (Short),   end=20, index=11, reg=2
+         21: NoOpnd[sCloadLocal] (Float),   end=22, index=3, reg=31
+         22: Branch[sCreturn] {21} (Void)
+      ExitSet {[ , , , ], [ , 2 (Long), , 21 (Float), 17 (Double), , 7 (Ref), 13 (Short), , 16 (Integer), 18 (Integer), 20 (Short) ]}
+
+Code for Method:m2
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001001c	[0x8]	stw  r0, 28(r1)
+	bfe10010	[0xc]	stmw  r31, 16(r1)
+	dbe10008	[0x10]	stfd  fr31, 8(r1)
+	7cfe3b78	[0x14]	lr  r30, r7
+	ffc00090	[0x18]	fmr  fr30, fr0
+	70837545	[0x1c]	andi. r3, r4, 0x7545
+	38470064	[0x20]	addi  r2, r7, 100
+	7c5f0734	[0x24]	extsh  r31, r2
+	38400002	[0x28]	li  r2, 2
+	c860000	[0x2c]	twi  ifequal, r6, 0
+	a8660008	[0x30]	lha  r3, 8(r6)
+	7ca21808	[0x34]	tw  ifgeU, r2, r3
+	3886000c	[0x38]	addi  r4, r6, 12
+	7c4410ae	[0x3c]	lbzx  r2, r4, r2
+	7c420774	[0x40]	extsb  r2, r2
+	38600000	[0x44]	li  r3, 0
+	3c630000	[0x48]	addis  r3, r3, 0
+	7c6803a6	[0x4c]	mtspr  LR, r3
+	4e800020	[0x50]	bclr always, CRF7[SO]
+	385f0014	[0x54]	addi  r2, r31, 20
+	7c420734	[0x58]	extsh  r2, r2
+	ffe03344	[0x5c]	-2084028  (0xffe03344)
+	ffff0022	[0x60]	-65502  (0xffff0022)
+	38800011	[0x64]	li  r4, 17
+	3c840000	[0x68]	addis  r4, r4, 0
+	c8240018	[0x6c]	lfd  fr1, 24(r4)
+	7fe21850	[0x70]	subf  r31, r2, r3
+	38400019	[0x74]	li  r2, 25
+	3c420000	[0x78]	addis  r2, r2, 0
+	7c4803a6	[0x7c]	mtspr  LR, r2
+	7fe2fb78	[0x80]	lr  r2, r31
+	4e800020	[0x84]	bclr always, CRF7[SO]
+	7fe20734	[0x88]	extsh  r2, r31
+	fc02f890	[0x8c]	fmr  fr0, fr31
+	cbe10008	[0x90]	lfd  fr31, 8(r1)
+	bbe10010	[0x94]	lmw  r31, 16(r1)
+	8001001c	[0x98]	lwz  r0, 28(r1)
+	7c0803a6	[0x9c]	mtspr  LR, r0
+	38210020	[0xa0]	addi  r1, r1, 32
+	4e800020	[0xa4]	bclr always, CRF7[SO]
+

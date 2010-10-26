@@ -1,0 +1,71 @@
+    public static void doWhile1() {
+        int i = 0;
+        do {
+            i++;
+        } while(i < 10);
+        int j = i + 1; 
+    }
+
+	"public static void doWhile1()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=16 
+	{
+		  0 iconst_0
+		  1 istore_0 [i]
+		  2 iinc i, 1
+		  5 iload_0 [i]
+		  6 bipush 10
+		  8 if_icmplt 2
+		 11 iload_0 [i]
+		 12 iconst_1
+		 13 iadd
+		 14 istore_1 [j]
+		 15 return
+
+CFG of method doWhile1
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor: 
+		successor: CFG-Node [2:8]	
+	nodeNr:1 from 2 to 8	is loop header visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [2:8]	
+		successor: CFG-Node [11:15]	CFG-Node [2:8]	
+	nodeNr:2 from 11 to 15	visited: false
+		predecessor: CFG-Node [2:8]	
+		successor: 
+
+SSA for Method: doWhile1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=1, index=0, reg=2, join={1}
+      ExitSet {[ , ], [ 0 (Integer), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function(1), Phi-Function(2) ]}
+         1: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   end=4, index=0, reg=2
+         2: PhiFunction[sCPhiFunc] {2} (Phi-Function),   end=2, index=1, reg=2, join={2} deleted
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=4
+         4: Dyadic[sCadd] {1, 3} (Integer),   end=1, index=0, reg=2, join={1}
+         5: NoOpnd[sCloadConst] 10 (Integer),   end=6
+         6: Branch[sCBranch] {5, 4} (Void)
+      ExitSet {[ , ], [ 4 (Integer), Phi-Function(2) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 4 (Integer), Phi-Function(2) ]}
+         7: NoOpnd[sCloadConst] 1 (Integer),   end=8
+         8: Dyadic[sCadd] {4, 7} (Integer),   end=8, index=1, reg=2
+         9: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ 4 (Integer), 8 (Integer) ]}
+
+Code for Method:doWhile1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	38420001	[0x10]	addi  r2, r2, 1
+	2c02000a	[0x14]	cmpi  crf0, 0, r2, 10
+	419ffff8	[0x18]	bc  iftrue, CRF0[LT], -8, [0x10]	
+	38420001	[0x1c]	addi  r2, r2, 1
+	8001000c	[0x20]	lwz  r0, 12(r1)
+	7c0803a6	[0x24]	mtspr  LR, r0
+	38210010	[0x28]	addi  r1, r1, 16
+	4e800020	[0x2c]	bclr always, CRF7[SO]
+
