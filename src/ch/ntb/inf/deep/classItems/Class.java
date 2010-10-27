@@ -1,4 +1,5 @@
 package ch.ntb.inf.deep.classItems;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -11,10 +12,19 @@ import ch.ntb.inf.deep.strings.StringTable;
 public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
-	public Item methods;
-	Item fields;
+	
+	public Item methods; // list with all methods
+	public int nOfMethods = -1; // number of methods
+	
+	public Item fields; // list with all fields
+	public int nOfInstanceFields = -1; // number of instance fields
+	public int nOfClassFields = -1; // number of class/static fields
+		
+	public Class[] interfaces;
+	public int nOfInterfaces = -1; // number of interfaces
+	
 	Class[] imports;
-	Class[] interfaces;
+	
 	HString srcFileName; // file ident + ".java", e.g.  String.java  for java/lang/String.java
 
 	//--- debug fields
@@ -54,10 +64,14 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	 */
 	private Method getAndExtractMethod(HString methName, HString methDescriptor){
 		Item item = methods, pred = null;
-		while(item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) item = item.next;
+		while(item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) {
+			pred = item;
+			item = item.next;
+		}
 		if(item != null){
-			if(pred == null) methods = item.next; else  pred.next = item.next;
+			if(pred == null) methods = item.next; else pred.next = item.next;
 			item.next = null;
+			nOfMethods--;
 		}
 		return (Method)item;
 	}
@@ -103,6 +117,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 			Type retrunType = getReturnType(methDescriptor);
 			method = new Method(methName, retrunType, methDescriptor);
 			method.next = methods;  methods = method;
+			nOfMethods++;
 		}
 		return method;
 	}
@@ -285,6 +300,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 
 	private void readInterfaces(RandomAccessFile clf) throws IOException{
 		int cnt = clf.readUnsignedShort();
+		nOfInterfaces = cnt;
 		if(cnt > 0){
 			interfaces = new Class[cnt];
 			for (int intf = 0; intf < cnt; intf++){
@@ -340,6 +356,10 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 			
 			field.accAndPropFlags |= flags;
 			
+			// Update field counters
+			if((field.accAndPropFlags & (1 << apfStatic)) > 0) nOfClassFields++;
+			else nOfInstanceFields++;
+			
 			//--- append field
 			if(tail == null)  head = field;  else  tail.next = field;
 			tail = field;
@@ -351,6 +371,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 
 	private void readMethods(RandomAccessFile clf, int userReqAttributes) throws IOException{
 		int methodCnt = clf.readUnsignedShort();
+		nOfMethods = methodCnt;
 		Item head = null, tail = null;
 		while(methodCnt-- > 0){
 			int flags;
@@ -584,7 +605,6 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 				if(item instanceof Class){
 					Class refClass = (Class) item;
 					if( (refClass.accAndPropFlags & (1<<dpfClassLoaded)) == 0) {
-						//releaseLoadingResources();//TODO Verify????
 						refClass.loadClass(userReqAttributes);
 					}
 				}
