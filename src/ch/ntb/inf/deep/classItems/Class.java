@@ -48,10 +48,15 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 	 */
 	private DataItem getAndExtractField(HString fieldName){
 		Item item = fields, pred = null;
-		while(item != null && item.name != fieldName) item = item.next;
+		while(item != null && item.name != fieldName) {
+			pred = item;
+			item = item.next;
+		}
 		if(item != null){
 			if(pred == null) fields = item.next; else  pred.next = item.next;
 			item.next = null;
+			if((item.accAndPropFlags & (1 << apfStatic)) > 0) nOfClassFields--;
+			else nOfInstanceFields--;
 		}
 		return (DataItem)item;
 	}
@@ -94,6 +99,8 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 		}else{// create Field and update field list
 			field = new DataItem(fieldName, fieldType);
 			field.next = fields;  fields = field;
+			if((field.accAndPropFlags & (1 << apfStatic)) > 0) nOfClassFields++;
+			else nOfInstanceFields++;
 		}
 		return field;
 	}
