@@ -22,7 +22,7 @@ public abstract class Item   implements Cloneable, IClassFileConsts, IDescAndTyp
 
 	public Item type; // base type for objects of "Class" or "Type" or null
 	public int accAndPropFlags; // access and property flags (see ClassFileConsts)
-	public int offSet; // the offset in the data array on the target
+	public int offSet; // the offset in the data segment on the target, e.g. the offset of a constant in the constant pool or the offset of a method in the class descriptor
 
 	//--- constructors
 	Item(){
@@ -89,5 +89,14 @@ public abstract class Item   implements Cloneable, IClassFileConsts, IDescAndTyp
 
 	public void println(int indentLevel){
 		print(indentLevel);  vrb.println();
+	}
+	
+	public void printOffset(int indentLevel){
+		indent(indentLevel);
+		printOffset();
+	}
+	
+	public void printOffset(){
+		vrb.print("offset = " + offSet);
 	}
 }
