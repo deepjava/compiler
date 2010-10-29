@@ -10,6 +10,8 @@ project {
 	libpath = "I:/woAuchImmer";
 	rootclasses = "ch.ntb.stud.maxMustermann.FirstRootClass", "ch.ntb.stud.maxMustermann.SecondRootClass";
 	sysmodules = BootFromRAM;
+	debuglevel = 0;
+	printlevel = 3;
 }
 
 operatingsystem {
