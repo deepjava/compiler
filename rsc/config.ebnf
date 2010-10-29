@@ -49,6 +49,8 @@ InterruptAssignment                 = "interrupt" AssignOp String EndToken .
 ExceptionAssignment                 = "exception" AssignOp String EndToken .
 RootClassAssignments                = "rootClasses" AssignOp StringEnum EndToken .
 SystemtableAssignment               = "systemtable" "@" SegmentDesignator {EnumSeparator "@" SegmentDesignator } EndToken .
+PrintLevelAssignment                = "printlevel" AssignOp IntNumber EndToken .
+DebugLevelAssignment                = "DebugLevel" AssignOp IntNumber EndToken .
 
 MetaBlock                           = "meta" "{" VersionAssigment FileDescAssigment [ImportAssigment] "}" .
 ConstantsBlock                      = "constants" "{" {VarAssigment} "}" .
@@ -62,7 +64,7 @@ RegisterMapBlock                    = "registermap" "{" { RegisterBlock } "}" .
 MapBlock                            = "map" "{" ContentAttribute "@" SegmentDesignator {EnumSeparator ContentAttribute "@" SegmentDesignator} "}" . 
 ModulesBlock                        = "modules" "{" {MapBlock SystemModules | SegmentDesignator  EndToken} "}" . 
 SysModulesBlock                     = "sysmodules" Designator "{" SystemtableAssigment ModulesBlock "}" .
-ProjectBlock                        = "project" "{" RootClassAssignments LibPathAssignment SysModulesAssignment  "}" .
+ProjectBlock                        = "project" "{" RootClassAssignments LibPathAssignment SysModulesAssignment DebugLevelAssignment PrintLevelAssignment "}" .
 OperatingSystemBlock                = "operatingsystem" "{" KernelAssignment HeapAssignment InterruptAssignment ExceptionAssignment "}" .
 
 Config                              = MetaBlock { ProjectBlock | Constants | MemoryMap | RegisterMapBlock | SysModules | RegInit | OperatingSystemBlock } .
