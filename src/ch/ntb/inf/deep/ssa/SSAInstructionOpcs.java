@@ -15,21 +15,23 @@ public interface SSAInstructionOpcs {
 
 	byte  // attributes of SSA instructions
 	ssaApBase = 8, 
-	ssaApCall = ssaApBase+0,   ssaApPhi = ssaApBase+1,   ssaApLoadLocal = ssaApBase+2;
+	ssaApCall = ssaApBase+0,   ssaApPhi = ssaApBase+1,   
+	ssaApLoadLocal = ssaApBase+2,	ssaApImmOpd = ssaApBase+3;
 
 	int[] scAttrTab = {
-			/*Format:	0xuuuu'aacc,
+			/*Format:	0xuuuN'aacc,
 					u	unused
+					N	Nof auxiliary registers for this instruction
 					aa	attributes
 					cc	operation code (opc)
 			*/
-			0x00000000 + sCloadConst,	//load 
+			0x00010000 + sCloadConst,	//load 
 			0x00000000 | (1<<ssaApLoadLocal) + sCloadLocal,
-			0x00000000 + sCloadFromField,
-			0x00000000 + sCloadFromArray,
+			0x00010000 + sCloadFromField,
+			0x00020000 + sCloadFromArray,
 			
-			0x00000000 + sCstoreToField, //store
-			0x00000000 + sCstoreToArray, 
+			0x00010000 + sCstoreToField, //store
+			0x00020000 + sCstoreToArray, 
 			
 			0x00000000 + sCadd, 		//arithmetic 
 			0x00000000 + sCsub,
@@ -56,7 +58,7 @@ public interface SSAInstructionOpcs {
 			
 			0x00000000 + sCalength, 	//arrayLength
 			
-			0x00000000 | (1<<ssaApCall) + sCcall, 		//call
+			0x00010000 | (1<<ssaApCall) + sCcall, 		//call
 			0x00000000 | (1<<ssaApCall) + sCnew,
 			0x00000000 + sCreturn, 		
 			0x00000000 + sCthrow, 		

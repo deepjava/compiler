@@ -6,6 +6,7 @@ public class PhiFunction extends SSAInstruction {
 	public int nofOperands;
 	public boolean deleted = false;
 	public boolean visited = false;
+	public int start;
 	
 
 	public PhiFunction(int opCode) {
@@ -66,7 +67,7 @@ public class PhiFunction extends SSAInstruction {
 			System.out.print("null)");
 		}	
 		System.out.print(" (" + result.typeName() + ")");
-		System.out.print(",   end=" + result.end);
+		System.out.print(",   start=" + start + ", end=" + result.end);
 		if (result.index != -1) System.out.print(", index=" + result.index);
 		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);
 		if (result.reg != -1) System.out.print(", reg=" + result.reg);
