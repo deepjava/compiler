@@ -3,20 +3,19 @@
 meta {
 	version = "2010-09-07";
 	description = "NTB MPC555 Headerboard";
-	import = MPC555.deep;
+	import = "D:/work/Crosssystem/deep/rsc/MPC555.deep";
 	
 }
 
 constants {
 
 }
-
-device {
-	name = "externalRAM"
-	attributes = read, write;
-}
-
-device {
-	name = "externalFlash";
-	attributes = read;
+memorymap{
+    device ExtRam {
+    	attributes = read, write;
+    }
+    
+    device ExtFlash {
+    	attributes = read;
+    }
 }
