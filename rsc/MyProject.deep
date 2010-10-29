@@ -3,7 +3,7 @@
 meta {
 	version = "2010-09-07";
 	description = "Example Project file";
-	import = "NTB-ClassicTaskingSystem.deep", "NTB-MPC555-Headerboard.deep", "NTB-USBBDI.deep";
+	import = "D:/work/Crosssystem/deep/rsc/NTB-MPC555-Headerboard.deep";
 }
 
 project {
