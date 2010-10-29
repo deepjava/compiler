@@ -3,22 +3,30 @@
 meta {
 	version = "2010-09-07";
 	description = "Example Project file";
-	import = NTB-MPC555-Headerboard.deep;
+	import = "NTB-ClassicTaskingSystem.deep", "NTB-MPC555-Headerboard.deep", "NTB-USBBDI.deep";
 }
 
 project {
-	programmer = NTB-USB-BDI;
-	rootClasses = ch.ntb.stud.maxMustermann.FirstRootClass, ch.ntb.stud.maxMustermann.SecondRootClass;
+	libpath = "I:/woAuchImmer";
+	rootclasses = "ch.ntb.stud.maxMustermann.FirstRootClass", "ch.ntb.stud.maxMustermann.SecondRootClass";
+	sysmodules = BootFromRAM;
+}
+
+operatingsystem {
+    kernel = "ch.ntb.inf.mpc555.kernel";
+    heap = "ch.ntb.inf.mpc555.heap";
+    interrupt = "ch.ntb.inf.mpc555.interrupt";
+    exception = "ch.ntb.inf.mpc555.exception";
 }
 
 memorymap {
-	segment MySpecialSegment {
+	segment InternalFlash.MySpecialSegment {
 		device = InternalFlash;
 		base = internalFlashABaseAddr + 0x100;
 		width = 4;
-		size = CMFA_Size - 0x100;
+		size = 0x100;
 	}
 }
 
-// TODO: map{} ch.ntb.stud.maxMustermann.FirstRootClass@MySpecialSegment
+# TODO: map{} ch.ntb.stud.maxMustermann.FirstRootClass@MySpecialSegment
 

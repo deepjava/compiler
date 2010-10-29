@@ -1,51 +1,69 @@
 
-Digit              = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
-HexDigit           = Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" .
-IntNumber          = ( Digit {Digit} ) | ( "0" ( "x" | "X") HexDigit {HexDigit} ) .
+Digit                               = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
+HexDigit                            = Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" .
+IntNumber                           = ( Digit {Digit} ) | ( "0" ( "x" | "X") HexDigit {HexDigit} ) .
 
-Letter             = a...z | A...Z | "_" .
-String             = '"' {Letter | Digit | "-" | " " } '"'.
-Designator         = Letter {Letter | Digit} .
+Letter                              = a...z | A...Z | "_" .
+String                              = '"' {any character except " } '"'.
+Designator                          = Letter {Letter | Digit} .
 
-EnumSeparator      = "," .
-AssignOp           = "=" .
-EndToken           = ";" .
+EnumSeparator                       = "," .
+AssignOp                            = "=" .
+EndToken                            = ";" .
 
-// TODO: make different attributes for read/write and const, code, etc.
-Attribute          = "read" | "write" | "const" | "code" | "var" | "heap" | "stack" | "sysconst" .
-RegisterType       = "GPR" | "FPR" | "SPR" | "gpr" | "fpr" | "spr" .
-RegisterRep        = "hex" | "dez" | "bin" | "float" | "Hex" | "Dez" | "Bin" | "Float" .
+Attribute                           = ContentAttribute | "read" | "write" .
+ContentAttribute                    = "const" | "code" | "var" | "heap" | "stack" | "sysconst" .
+RegisterType                        = "GPR" | "FPR" | "SPR" | "gpr" | "fpr" | "spr" .
+RegisterRep                         = "hex" | "dez" | "bin" | "float" | "Hex" | "Dez" | "Bin" | "Float" .
+SystemModules                       = "kernel" | "interrupts" | "exceptions" | "heap" | "program" .
 
-AttributeEnum      = Attribute { "," Attribute } .
-StringEnum         = String { "," String } .
-StringEnum         = String { "," String } .
+AttributeEnum                       = Attribute { EnumSeparator Attribute } .
+StringEnum                          = String { EnumSeparator String } .
+SegmentDesignator                   = Designator { "." Designator } .
 
-Factor             = IntNumber | "(" Expression ")" .
-Term               = Factor { ( "*" | "/" ) Factor } .
-Expression         = Term { ( "+" | "-" ) Term } .
+Factor                              = IntNumber | "(" Expression ")" | Designator .
+Term                                = Factor { ( "*" | "/" ) Factor } .
+Expression                          = Term { ( "+" | "-" ) Term } .
 
-VarAssigment       = Designator AssignOp Expression EndToken .
-VersionAssigment   = "version" AssignOp String EndToken .
-FileDescAssigment  = "description" AssignOp String EndToken .
-ImportAssigment    = "import" AssignOp StringEnum EndToken .
-DeviceAssigment    = "device" AssignOp Designator EndToken .
-AttributeAssigment = "attributes" AssignOp AttributeEnum EndToken .
-WithAssigment      = "width" AssignOp Expression  EndToken .
-SizeAssigment      = "size" AssignOp Expression EndToken .
-BaseAssigment      = "base" AssignOp Expression EndToken .
-RegAssigment       = Designator AssignOp Expression EndToken .
+VarAssigment                        = Designator AssignOp Expression  EndToken .
+VersionAssigment                    = "version" AssignOp String EndToken .
+FileDescAssigment                   = "description" AssignOp String EndToken .
+ImportAssigment                     = "import" AssignOp StringEnum EndToken .
+DeviceAssigment                     = "device" AssignOp Designator EndToken .
+AttributeAssigment                  = "attributes" AssignOp AttributeEnum EndToken .
+WidthAssigment                      = "width" AssignOp Expression  EndToken .
+SizeAssigment                       = "size" AssignOp Expression EndToken .
+SegmentSizeAssignment               = "segmentsize" AssingOp Expression EndToken .
+ArraySizeAssignment                 = "arraysize" AssignOp Expression EndToken . 
+NofSegmentAssignment                = "nofsegments" AssignOp Expression EndToken .
+BaseAssigment                       = "base" AssignOp Expression EndToken .
+RegAssigment                        = Designator AssignOp Expression EndToken .
+AddressAssignment                   = "addr" AssignOp Expression EndToken .
+RegisterRepresentationAssignment    = "repr" AssignOp RegisterRep EndToken . 
+TypeAssignment                      = "type" AssignOp RegisterType EndToken .
+LibPathAssignment                   = "libpath" AssignOp String EndToken .
+SysModulesAssignment                = "sysmodules" AssignOp Designator EndToken .
+KernelAssignment                    = "kernel" AssignOp String EndToken .
+HeapAssignment                      = "heap" AssignOp String EndToken . 
+InterruptAssignment                 = "interrupt" AssignOp String EndToken .
+ExceptionAssignment                 = "exception" AssignOp String EndToken .
+RootClassAssignments                = "rootClasses" AssignOp StringEnum EndToken .
+SystemtableAssignment               = "systemtable" "@" SegmentDesignator {EnumSeparator "@" SegmentDesignator } EndToken .
 
-MetaBlock          = "meta" "{" VersionAssigment FileDescAssigment [ImportAssigment] "}" .
-ConstantsBlock     = "constants" "{" {VarAssigment} "}" .
-DeviceBlock        = "device" Designator "{" [AttributeAssigment] [BaseAssigment] [WithAssigment] [SizeAssigment] "}" .
-SegmentBlock       = "segment" Designator "{" [DeviceAssigment] [AttributeAssigment] [BaseAssigment] [WithAssigment] [SizeAssigment] "}" .
-RegInitBlock       = "reginit" "{" { RegAssigment }
+MetaBlock                           = "meta" "{" VersionAssigment FileDescAssigment [ImportAssigment] "}" .
+ConstantsBlock                      = "constants" "{" {VarAssigment} "}" .
+DeviceBlock                         = "device" Designator "{" [AttributeAssigment] [BaseAssigment] [WidthAssigment] [SizeAssigment] "}" .
+RegInitBlock                        = "reginit" "{" { RegAssigment } "}" .
+RegisterBlock                       = "register" Designator "{" TypeAssignment AddressAssignment SizeAssignment [registerRepresentationAssignment] "}" . 
+SegmentBlock                        = "segment" SegmentDesignator "{" [DeviceAssigment] [AttributeAssigment] [BaseAssigment] [WidthAssigment] [SizeAssigment] {SegmentArray | SegmentBlock} "}".
+SegmentArray                        = "segmentarray" Designator "[" [ "xx" | "XXX" ] "]" "{" SegmentSizeAssignment [ArraySizeAssignment][WidhtAssignment][NofSegmentAssignment] "}" .
+MemoryMapBlock                      = "memorymap" "{" {DeviceBlock | SegmentBlock | RegInitBlock | ModulesBlock } "}" .
+RegisterMapBlock                    = "registermap" "{" { RegisterBlock } "}" .
+MapBlock                            = "map" "{" ContentAttribute "@" SegmentDesignator {EnumSeparator ContentAttribute "@" SegmentDesignator} "}" . 
+ModulesBlock                        = "modules" "{" {MapBlock SystemModules | SegmentDesignator  EndToken} "}" . 
+SysModulesBlock                     = "sysmodules" Designator "{" SystemtableAssigment ModulesBlock "}" .
+ProjectBlock                        = "project" "{" RootClassAssignments LibPathAssignment SysModulesAssignment  "}" .
+OperatingSystemBlock                = "operatingsystem" "{" KernelAssignment HeapAssignment InterruptAssignment ExceptionAssignment "}" .
 
-MemoryMapBlock     = "memorymap" "{" {DeviceBlock | SegmentBlcok | RegInitBlock } "}" .
-RegisterMapBlock   = { RegisterBlock } .
-// TODO: SysModulesBlock(incl. map)
-// TODO: ProjectBlock
-SysModulesBlock    = 
-
-ConfigFile    = MetaBlock { Constants | MemoryMap | RegisterMap | SysModules | RegInit } .
+Config                              = MetaBlock { ProjectBlock | Constants | MemoryMap | RegisterMapBlock | SysModules | RegInit | OperatingSystemBlock } .
 

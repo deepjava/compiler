@@ -36,7 +36,7 @@ memorymap {
 	segment SysTab {
 		device = InternalRam;
 		base = sysTabBaseAddr;
-		attributes = read, write, sysconst};
+		attributes = read, write, sysconst;
 	}
 	
 	segment Constants {
@@ -83,3 +83,13 @@ registermap {
 		repr = Hex;
 	}
 }
+
+sysmodules Flash{
+    systemtable @ InternalRam.SysTab, @ExternalFlashAM29LV160D.SysTab;
+    modules{
+        map{code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam} kernel;
+        map{code@ExternalFlash.s1, const@ExternalFlash, var@InternalRam} heap;
+        map{code@ExternalFlash.ExcCode, const@ExternalFlash, var@InternalRam} exception;
+        map{code@ExternalFlash.s1, const@ExternalFlash, var@InternalRam} "ch.ntb.inf.test.firstRootClass";
+    }
+} 
