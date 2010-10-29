@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class Parser {
 	private static final short g9 = g8 + 4, sVersion = g9,
 			sDescription = g9 + 1, sImport = g9 + 2, sAttributes = g9 + 3,
 			sWidth = g9 + 4, sSize = g9 + 5, sBase = g9 + 6,
-			sSystemtable = g9 + 7,  sRootclasses = g9 + 8,
+			sSystemtable = g9 + 7, sRootclasses = g9 + 8,
 			sSegmentsize = g9 + 9, sArraysize = g9 + 10,
 			sNofsegements = g9 + 11, sKernel = g9 + 12, sInterrupt = g9 + 13,
 			sException = g9 + 14, sProgram = g9 + 15, sXx = g9 + 16,
@@ -61,7 +62,7 @@ public class Parser {
 			sSegment = g10 + 4, sMemorymap = g10 + 5, sMap = g10 + 6,
 			sModules = g10 + 7, sSysmodules = g10 + 8, sProject = g10 + 9,
 			sSegmentarray = g10 + 10, sRegistermap = g10 + 11,
-			sRegister = g10 + 12,sOperatingSystem = g10 + 13;
+			sRegister = g10 + 12, sOperatingSystem = g10 + 13;
 	// -------- Designator, IntNumber,
 	private static final short g11 = g10 + 14, sDesignator = g11,
 			sNumber = g11 + 1;
@@ -69,36 +70,44 @@ public class Parser {
 	private static final short g12 = g11 + 2, sEndOfFile = g12;
 	// -------- Error codes
 	private static final short errDigitExp = 101, errRParenExp = 102,
-			errRBraceExp = 103, errRBracketExp = 104, errQuotationMarkExp = 105, errIOExp = 106,
+			errRBraceExp = 103, errRBracketExp = 104,
+			errQuotationMarkExp = 105, errIOExp = 106,
 			errUnexpectetSymExp = 107, errLBraceExp = 108,
 			errLBracketExp = 109, errSemicolonMissExp = 110,
 			errAssignExp = 111;
 
-	private static BufferedReader configFile;
 	private static int nOfErrors;
 	private static int sym;
 	private static String strBuffer;
-	private static ArrayList<String> importList;
 	private static int chBuffer;
 	private static int intNumber;
-	private static ErrorReporter reporter;
+	private static ErrorReporter reporter = ErrorReporter.reporter;
+
+	private BufferedReader configFile;
+	private ArrayList<String> importList;
 
 	public static void main(String[] args) {
-		try {
-			reporter = ErrorReporter.reporter;
-			importList = new ArrayList<String>();
-			configFile = new BufferedReader(new FileReader(
-					"D:/work/Crosssystem/deep/rsc/MyProject.deep"));
-		} catch (IOException e) {
-			reporter.error(errIOExp, e.getMessage());
-		}
-		next();
-		Config();
+
+		Parser p = new Parser();
+		p.parseAndCreateConfig("D:/work/Crosssystem/deep/rsc/MyProject.deep");
 		Dbg.vrb.println();
 		Dbg.vrb.println("Config read with " + nOfErrors + " error(s)");
 	}
 
-	static int Config() {
+	public void parseAndCreateConfig(String file){
+		try {
+			importList = new ArrayList<String>();
+			configFile = new BufferedReader(new FileReader(file));
+		} catch (FileNotFoundException e) {
+			reporter.error(errIOExp, e.getMessage());
+		}
+		Config();
+	}
+
+	private int Config() {
+		// read first Symbol
+		next();
+
 		Meta();
 
 		while (sym != sEndOfFile) {
@@ -126,8 +135,8 @@ public class Parser {
 				OperatingSystem();
 				break;
 			default:
-				 nOfErrors++;
-				 reporter.error(errUnexpectetSymExp, "Unexpectet Symbol");
+				nOfErrors++;
+				reporter.error(errUnexpectetSymExp, "expectet symbol : constants | memorymap | registermap | sysmodules | reginit | project | operatingsystem, received symbol: " + symToString() + "\n" );
 				next();
 			}
 		}
@@ -139,7 +148,7 @@ public class Parser {
 	 * 
 	 * @return a String
 	 */
-	private static String readString() {
+	private String readString() {
 		if (sym != sQuotationMark) {
 			nOfErrors++;
 			reporter.error(errQuotationMarkExp,
@@ -151,7 +160,7 @@ public class Parser {
 		int ch;
 		try {
 			ch = configFile.read();
-			while ((ch > 34 && ch <= 126) || ch ==  ' ' || ch == '!' ) {
+			while ((ch > 34 && ch <= 126) || ch == ' ' || ch == '!') {
 				sb.append((char) ch);
 				ch = configFile.read();
 			}
@@ -174,7 +183,7 @@ public class Parser {
 	/**
 	 * determine the next symbol ignores tabs and spaces
 	 */
-	private static void next() {
+	private void next() {
 		int ch = 0;
 		try {
 			if (chBuffer != 0) {
@@ -306,7 +315,7 @@ public class Parser {
 
 	private static boolean isKeyword(String str) {
 		String temp = str.toLowerCase();// only for keywords for which the case
-										// sensitivity will not be considered
+		// sensitivity will not be considered
 		sym = sDesignator;
 		switch (temp.charAt(0)) {
 		case 'a':
@@ -352,7 +361,7 @@ public class Parser {
 			} else if (str.equals("description")) {
 				sym = sDescription;
 				return true;
-			} else if (str.equals("debuglevel")){
+			} else if (str.equals("debuglevel")) {
 				sym = sDebugLevel;
 				return true;
 			}
@@ -429,7 +438,7 @@ public class Parser {
 			}
 			break;
 		case 'o':
-			if(str.equals("operatingsystem")){
+			if (str.equals("operatingsystem")) {
 				sym = sOperatingSystem;
 				return true;
 			}
@@ -440,7 +449,7 @@ public class Parser {
 			} else if (str.equals("program")) {
 				sym = sProgram;
 				return true;
-			} else if (str.equals("printlevel")){
+			} else if (str.equals("printlevel")) {
 				sym = sPrintLevel;
 				return true;
 			}
@@ -690,7 +699,7 @@ public class Parser {
 		}
 	}
 
-	private static void Meta() {
+	private void Meta() {
 		if (sym != sMeta) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -711,10 +720,15 @@ public class Parser {
 		Dbg.vrb.println("description = " + FileDescAssignment() + ";");
 		if (sym == sImport) {
 			ImportAssignment();
-			Dbg.vrb.print("imports = ");
+			//context save of static sym
+			int cs = sym;
+			Parser p2;
 			for (int i = 0; i < importList.size(); i++) {
-				Dbg.vrb.print(importList.get(i) + "; ");
+				p2 = new Parser();
+				p2.parseAndCreateConfig(importList.get(i));
 			}
+			//restore context save
+			sym = cs;
 		}
 		Dbg.vrb.println();
 		if (sym != sRBrace) {
@@ -728,7 +742,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Constants() {
+	private void Constants() {
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
@@ -752,7 +766,7 @@ public class Parser {
 		next();
 	}
 
-	private static void MemoryMap() {
+	private void MemoryMap() {
 		if (sym != sMemorymap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -792,7 +806,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Device() {
+	private void Device() {
 		if (sym != sDevice) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -847,7 +861,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Segment() {
+	private void Segment() {
 		if (sym != sSegment) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -910,7 +924,7 @@ public class Parser {
 		next();
 	}
 
-	private static void SegmentArray() {
+	private void SegmentArray() {
 		if (sym != sSegmentarray) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -983,7 +997,7 @@ public class Parser {
 		next();
 	}
 
-	private static void RegInit() {
+	private void RegInit() {
 		if (sym != sReginit) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1016,7 +1030,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Modules() {
+	private void Modules() {
 		if (sym != sModules) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1080,7 +1094,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Map() {
+	private void Map() {
 		if (sym != sMap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1153,7 +1167,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Registermap() {
+	private void Registermap() {
 		if (sym != sRegistermap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1184,7 +1198,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Register() {
+	private void Register() {
 		if (sym != sRegister) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1231,7 +1245,7 @@ public class Parser {
 		next();
 	}
 
-	private static void SystemModules() {
+	private void SystemModules() {
 		if (sym != sSysmodules) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1274,7 +1288,7 @@ public class Parser {
 		next();
 	}
 
-	private static void Project() {
+	private void Project() {
 		if (sym != sProject) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1292,9 +1306,10 @@ public class Parser {
 			return;
 		}
 		next();
-		while (sym == sRootclasses || sym == sLibPath || sym == sSysmodules || sym == sDebugLevel || sym == sPrintLevel) {
+		while (sym == sRootclasses || sym == sLibPath || sym == sSysmodules
+				|| sym == sDebugLevel || sym == sPrintLevel) {
 			if (sym == sRootclasses) {
-				ArrayList<String> classes =RootClassesAssignment();
+				ArrayList<String> classes = RootClassesAssignment();
 				Dbg.vrb.print("  rootclasses = ");
 				for (int i = 0; i < classes.size(); i++) {
 					Dbg.vrb.print(classes.get(i) + "; ");
@@ -1302,11 +1317,11 @@ public class Parser {
 				Dbg.vrb.println();
 			} else if (sym == sLibPath) {
 				Dbg.vrb.println("  libpath = " + LibPathAssignment());
-			} else if ( sym == sSysmodules){
+			} else if (sym == sSysmodules) {
 				Dbg.vrb.println("  sysmodules = " + SystemModulesAssignment());
-			} else if ( sym == sDebugLevel){
+			} else if (sym == sDebugLevel) {
 				Dbg.vrb.println("  debuglevel = " + DebugLevelAssignment());
-			} else if (sym == sPrintLevel){
+			} else if (sym == sPrintLevel) {
 				Dbg.vrb.println("  printlevel = " + PrintLevelAssignment());
 			}
 		}
@@ -1320,8 +1335,8 @@ public class Parser {
 		Dbg.vrb.println();
 		next();
 	}
-	
-	private static void OperatingSystem() {
+
+	private void OperatingSystem() {
 		if (sym != sOperatingSystem) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1339,14 +1354,15 @@ public class Parser {
 			return;
 		}
 		next();
-		while (sym == sKernel || sym == sHeap || sym == sInterrupt || sym == sException) {
+		while (sym == sKernel || sym == sHeap || sym == sInterrupt
+				|| sym == sException) {
 			if (sym == sKernel) {
 				Dbg.vrb.println("  kernel = " + KernelAssignment());
 			} else if (sym == sHeap) {
 				Dbg.vrb.println("  heap = " + HeapAssignment());
-			} else if(sym == sInterrupt){
+			} else if (sym == sInterrupt) {
 				Dbg.vrb.println("  interrupt = " + InterruptAssignment());
-			}else{
+			} else {
 				Dbg.vrb.println("  exception = " + ExceptionAssignment());
 			}
 		}
@@ -1361,7 +1377,7 @@ public class Parser {
 		next();
 	}
 
-	private static String VersionAssignment() {
+	private String VersionAssignment() {
 		String s;
 		if (sym != sVersion) {
 			nOfErrors++;
@@ -1391,7 +1407,7 @@ public class Parser {
 		return s;
 	}
 
-	private static String FileDescAssignment() {
+	private String FileDescAssignment() {
 		String s;
 		if (sym != sDescription) {
 			nOfErrors++;
@@ -1421,7 +1437,7 @@ public class Parser {
 		return s;
 	}
 
-	private static void ImportAssignment() {
+	private void ImportAssignment() {
 		if (sym != sImport) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1452,7 +1468,7 @@ public class Parser {
 		return;
 	}
 
-	private static int VarAssignment() {
+	private int VarAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sDesignator) {
 			nOfErrors++;
@@ -1484,7 +1500,7 @@ public class Parser {
 
 	}
 
-	private static int Expression() {
+	private int Expression() {
 		int value = Term();
 		while (sym == sPlus || sym == sMinus) {
 			int operator = sym;
@@ -1498,7 +1514,7 @@ public class Parser {
 		return value;
 	}
 
-	private static int Term() {
+	private int Term() {
 		int value = Factor();
 		while (sym == sMul || sym == sDiv) {
 			int operator = sym;
@@ -1512,7 +1528,7 @@ public class Parser {
 		return value;
 	}
 
-	private static int Factor() {
+	private int Factor() {
 		int value = 1;
 		if (sym == sNumber) {
 			value = intNumber;
@@ -1540,7 +1556,7 @@ public class Parser {
 		return value;
 	}
 
-	private static String DeviceAssignment() {
+	private String DeviceAssignment() {
 		String s = "";
 		if (sym != sDevice) {
 			nOfErrors++;
@@ -1578,7 +1594,7 @@ public class Parser {
 		return s;
 	}
 
-	private static int BaseAssignment() {
+	private int BaseAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sBase) {
 			nOfErrors++;
@@ -1609,7 +1625,7 @@ public class Parser {
 		return res;
 	}
 
-	private static int WidthAssignment() {
+	private int WidthAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sWidth) {
 			nOfErrors++;
@@ -1640,7 +1656,7 @@ public class Parser {
 		return res;
 	}
 
-	private static int SizeAssignment() {
+	private int SizeAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sSize) {
 			nOfErrors++;
@@ -1671,7 +1687,7 @@ public class Parser {
 		return res;
 	}
 
-	private static int SegmentSizeAssignment() {
+	private int SegmentSizeAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sSegmentsize) {
 			nOfErrors++;
@@ -1702,7 +1718,7 @@ public class Parser {
 		return res;
 	}
 
-	private static int ArraySizeAssignment() {
+	private int ArraySizeAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sArraysize) {
 			nOfErrors++;
@@ -1733,7 +1749,7 @@ public class Parser {
 		return res;
 	}
 
-	private static int NofSegmentAssignment() {
+	private int NofSegmentAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sNofsegements) {
 			nOfErrors++;
@@ -1764,11 +1780,11 @@ public class Parser {
 		return res;
 	}
 
-	private static int RegAssignment() {
+	private int RegAssignment() {
 		return VarAssignment();
 	}
 
-	private static int[] AttributeAssignment() {
+	private int[] AttributeAssignment() {
 		int[] temp = new int[8];
 		int[] res = temp;
 		int count = 0;
@@ -1818,7 +1834,7 @@ public class Parser {
 		return res;
 	}
 
-	private static int RegTypeAssignment() {
+	private int RegTypeAssignment() {
 		int s;
 		if (sym != sType) {
 			nOfErrors++;
@@ -1857,7 +1873,7 @@ public class Parser {
 		return s;
 	}
 
-	private static int RegisterRepresentationAssignment() {
+	private int RegisterRepresentationAssignment() {
 		int s = sUndef;
 		if (sym != sRepr) {
 			nOfErrors++;
@@ -1895,7 +1911,7 @@ public class Parser {
 		return s;
 	}
 
-	private static int AddressAssignment() {
+	private int AddressAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sAddr) {
 			nOfErrors++;
@@ -1926,7 +1942,7 @@ public class Parser {
 		return res;
 	}
 
-	private static String SegmentDesignator() {
+	private String SegmentDesignator() {
 		StringBuffer sb = new StringBuffer();
 		if (sym != sDesignator) {
 			nOfErrors++;
@@ -1953,7 +1969,7 @@ public class Parser {
 		return sb.toString();
 	}
 
-	private static ArrayList<String> SystemtableAssignment() {
+	private ArrayList<String> SystemtableAssignment() {
 		ArrayList<String> tempList = new ArrayList<String>();
 		if (sym != sSystemtable) {
 			nOfErrors++;
@@ -1977,7 +1993,7 @@ public class Parser {
 		return tempList;
 	}
 
-	private static ArrayList<String> RootClassesAssignment() {
+	private ArrayList<String> RootClassesAssignment() {
 		ArrayList<String> tempList = new ArrayList<String>();
 		if (sym != sRootclasses) {
 			nOfErrors++;
@@ -2008,7 +2024,7 @@ public class Parser {
 		return tempList;
 	}
 
-	private static String LibPathAssignment() {
+	private String LibPathAssignment() {
 		String s = "";
 		if (sym != sLibPath) {
 			nOfErrors++;
@@ -2036,8 +2052,8 @@ public class Parser {
 		next();
 		return s;
 	}
-	
-	private static String SystemModulesAssignment(){
+
+	private String SystemModulesAssignment() {
 		String s = "";
 		if (sym != sSysmodules) {
 			nOfErrors++;
@@ -2073,13 +2089,15 @@ public class Parser {
 		next();
 		return s;
 	}
-	private static String KernelAssignment() {
+
+	private String KernelAssignment() {
 		String s = "";
 		if (sym != sKernel) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected: kernel, received symbol: " + symToString()
-							+ " ");
+			reporter
+					.error(errUnexpectetSymExp,
+							"expected: kernel, received symbol: "
+									+ symToString() + " ");
 			return s;
 		}
 		next();
@@ -2101,13 +2119,13 @@ public class Parser {
 		next();
 		return s;
 	}
-	private static String HeapAssignment() {
+
+	private String HeapAssignment() {
 		String s = "";
 		if (sym != sHeap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
-					"expected: heap, received symbol: " + symToString()
-							+ " ");
+					"expected: heap, received symbol: " + symToString() + " ");
 			return s;
 		}
 		next();
@@ -2129,7 +2147,8 @@ public class Parser {
 		next();
 		return s;
 	}
-	private static String InterruptAssignment() {
+
+	private String InterruptAssignment() {
 		String s = "";
 		if (sym != sInterrupt) {
 			nOfErrors++;
@@ -2157,14 +2176,13 @@ public class Parser {
 		next();
 		return s;
 	}
-	private static String ExceptionAssignment() {
+
+	private String ExceptionAssignment() {
 		String s = "";
 		if (sym != sException) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected: exception" +
-					", received symbol: " + symToString()
-							+ " ");
+			reporter.error(errUnexpectetSymExp, "expected: exception"
+					+ ", received symbol: " + symToString() + " ");
 			return s;
 		}
 		next();
@@ -2186,15 +2204,13 @@ public class Parser {
 		next();
 		return s;
 	}
-	
-	private static int DebugLevelAssignment() {
+
+	private int DebugLevelAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sDebugLevel) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected: exception" +
-					", received symbol: " + symToString()
-							+ " ");
+			reporter.error(errUnexpectetSymExp, "expected: exception"
+					+ ", received symbol: " + symToString() + " ");
 			return res;
 		}
 		next();
@@ -2205,9 +2221,9 @@ public class Parser {
 			return res;
 		}
 		next();
-		if (sym != sNumber){
+		if (sym != sNumber) {
 			nOfErrors++;
-			reporter.error(errDigitExp,"expected: number, received symbol: "
+			reporter.error(errDigitExp, "expected: number, received symbol: "
 					+ symToString() + " ");
 			return res;
 		}
@@ -2223,15 +2239,13 @@ public class Parser {
 		next();
 		return res;
 	}
-	
-	private static int PrintLevelAssignment() {
+
+	private int PrintLevelAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sPrintLevel) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected: printlevel" +
-					", received symbol: " + symToString()
-							+ " ");
+			reporter.error(errUnexpectetSymExp, "expected: printlevel"
+					+ ", received symbol: " + symToString() + " ");
 			return res;
 		}
 		next();
@@ -2242,9 +2256,9 @@ public class Parser {
 			return res;
 		}
 		next();
-		if (sym != sNumber){
+		if (sym != sNumber) {
 			nOfErrors++;
-			reporter.error(errDigitExp,"expected: number, received symbol: "
+			reporter.error(errDigitExp, "expected: number, received symbol: "
 					+ symToString() + " ");
 			return res;
 		}
@@ -2260,5 +2274,5 @@ public class Parser {
 		next();
 		return res;
 	}
-	
+
 }
