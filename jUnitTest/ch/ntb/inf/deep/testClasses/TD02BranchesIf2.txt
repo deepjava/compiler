@@ -9,10 +9,11 @@
         }
         b=a;
         a++;
+        b++;
     }
 
 	"public static void if2()"
-	//nofStackSlots=2, nofLocalSlots=2, codeLen=24 
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=27 
 	{
 		  0 iconst_1
 		  1 istore_0 [a]
@@ -29,7 +30,8 @@
 		 18 iload_0 [a]
 		 19 istore_1 [b]
 		 20 iinc a, 1
-		 23 return
+		 23 iinc b, 1
+		 26 return
 
 CFG of method if2
 	nodeNr:0 from 0 to 6	visited: false
@@ -37,11 +39,11 @@ CFG of method if2
 		successor: CFG-Node [9:12]	CFG-Node [15:17]	
 	nodeNr:1 from 9 to 12	visited: false
 		predecessor: CFG-Node [0:6]	
-		successor: CFG-Node [18:23]	
+		successor: CFG-Node [18:26]	
 	nodeNr:2 from 15 to 17	visited: false
 		predecessor: CFG-Node [0:6]	
-		successor: CFG-Node [18:23]	
-	nodeNr:3 from 18 to 23	visited: false
+		successor: CFG-Node [18:26]	
+	nodeNr:3 from 18 to 26	visited: false
 		predecessor: CFG-Node [9:12]	CFG-Node [15:17]	
 		successor: 
 
@@ -56,24 +58,27 @@ SSA for Method: if2
 
    SSANode 1:
       EntrySet {[ , ], [ 0 (Integer), 1 (Integer) ]}
-         3: NoOpnd[sCloadConst] 6 (Integer),   end=6, index=0, reg=2, join={6}
-         4: Branch[sCBranch]  (Void)
-      ExitSet {[ , ], [ 3 (Integer), 1 (Integer) ]}
+         3: NoOpnd[sCloadConst] 6 (Integer),   end=4, index=0, reg=2
+         4: Monadic[sCRegMove] {3} (Integer),   end=8, index=1, reg=2, join={8}
+         5: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 4 (Integer), 1 (Integer) ]}
 
    SSANode 2:
       EntrySet {[ , ], [ 0 (Integer), 1 (Integer) ]}
-         5: NoOpnd[sCloadConst] 8 (Integer),   end=6, index=0, reg=2, join={6}
-      ExitSet {[ , ], [ 5 (Integer), 1 (Integer) ]}
+         6: NoOpnd[sCloadConst] 8 (Integer),   end=7, index=0, reg=3
+         7: Monadic[sCRegMove] {6} (Integer),   end=8, index=1, reg=2, join={8}
+      ExitSet {[ , ], [ 7 (Integer), 1 (Integer) ]}
 
    SSANode 3:
-      EntrySet {[ , ], [ Phi-Function(6), 1 (Integer) ]}
-         6: PhiFunction[sCPhiFunc] {3, 5} (Phi-Function),   end=8, index=1, reg=2
-         7: NoOpnd[sCloadConst] 1 (Integer),   end=8
-         8: Dyadic[sCadd] {6, 7} (Integer),   end=8, index=0, reg=2
-         9: Branch[sCreturn]  (Void)
-      ExitSet {[ , ], [ 8 (Integer), Phi-Function(6) ]}
-
-Code for Method:if2
+      EntrySet {[ , ], [ Phi-Function(8), 1 (Integer) ]}
+         8: PhiFunction[sCPhiFunc] {4, 7} (Phi-Function),   start=4, end=12, index=1, reg=2
+         9: NoOpnd[sCloadConst] 1 (Integer),   end=10
+         10: Dyadic[sCadd] {8, 9} (Integer),   end=10, index=0, reg=3
+         11: NoOpnd[sCloadConst] 1 (Integer),   end=12
+         12: Dyadic[sCadd] {8, 11} (Integer),   end=12, index=1, reg=2
+         13: Branch[sCreturn]  (Void)
+         
+Code for Method: if2
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
@@ -82,10 +87,12 @@ Code for Method:if2
 	7c021800	[0x14]	cmp crf0, 0, r2, r3
 	419f000c	[0x18]	bc  iftrue, CRF0[LT], 12, [0x24]	
 	38400006	[0x1c]	li  r2, 6
-	48000008	[0x20]	b  8, [0x28]	
-	38400008	[0x24]	li  r2, 8
-	38420001	[0x28]	addi  r2, r2, 1
-	8001000c	[0x2c]	lwz  r0, 12(r1)
-	7c0803a6	[0x30]	mtspr  LR, r0
-	38210010	[0x34]	addi  r1, r1, 16
-	4e800020	[0x38]	bclr always, CRF7[SO]
+	4800000c	[0x20]	b  12, [0x2c]	
+	38600008	[0x24]	li  r3, 8
+	7c621b78	[0x28]	lr  r2, r3
+	38620001	[0x2c]	addi  r3, r2, 1
+	38420001	[0x30]	addi  r2, r2, 1
+	8001000c	[0x34]	lwz  r0, 12(r1)
+	7c0803a6	[0x38]	mtspr  LR, r0
+	38210010	[0x3c]	addi  r1, r1, 16
+	4e800020	[0x40]	bclr always, CRF7[SO]         

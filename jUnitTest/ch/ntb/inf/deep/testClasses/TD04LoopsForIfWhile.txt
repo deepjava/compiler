@@ -58,8 +58,8 @@ CFG of method forIfWhile
 SSA for Method: forIfWhile
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         0: NoOpnd[sCloadConst] 0 (Integer),   end=17, index=1, reg=3, join={17}
-         1: NoOpnd[sCloadLocal] (Ref),   end=16, index=0, reg=2, join={16}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=17, index=1, reg=3, join={13}
+         1: NoOpnd[sCloadLocal] (Ref),   end=16, index=0, reg=2, join={12}
          2: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ 1 (Ref), 0 (Integer) ]}
 
@@ -82,24 +82,24 @@ SSA for Method: forIfWhile
 
    SSANode 4:
       EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9) ]}
-         8: PhiFunction[sCPhiFunc] {16} (Phi-Function),   end=12, index=0, reg=2, join={12} deleted
-         9: PhiFunction[sCPhiFunc] {17, 7} (Phi-Function),   end=13, index=1, reg=3, join={13}
+         8: PhiFunction[sCPhiFunc] {16} (Phi-Function),   start=8, end=12, index=0, reg=2, join={12} deleted
+         9: PhiFunction[sCPhiFunc] {17, 7} (Phi-Function),   start=7, end=13, index=1, reg=3, join={13}
          10: NoOpnd[sCloadConst] 75 (Integer),   end=11
          11: Branch[sCBranch] {10, 9} (Void)
       ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9) ]}
 
    SSANode 5:
       EntrySet {[ , ], [ Phi-Function(12), Phi-Function(13) ]}
-         12: PhiFunction[sCPhiFunc] {16, 8} (Phi-Function),   end=12, index=0, reg=2
-         13: PhiFunction[sCPhiFunc] {17, 9} (Phi-Function),   end=15, index=1, reg=2
+         12: PhiFunction[sCPhiFunc] {16, 8} (Phi-Function),   start=1, end=16, index=0, reg=2
+         13: PhiFunction[sCPhiFunc] {17, 9} (Phi-Function),   start=0, end=19, index=1, reg=3
          14: NoOpnd[sCloadConst] 1 (Integer),   end=15
-         15: Dyadic[sCadd] {13, 14} (Integer),   end=17, index=1, reg=3, join={17}
+         15: Dyadic[sCadd] {13, 14} (Integer),   end=17, index=1, reg=3, join={13}
       ExitSet {[ , ], [ Phi-Function(12), 15 (Integer) ]}
 
    SSANode 6:
       EntrySet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
-         16: PhiFunction[sCPhiFunc] {1} (Phi-Function),   end=12, index=0, reg=2, join={12} deleted
-         17: PhiFunction[sCPhiFunc] {0, 15} (Phi-Function),   end=13, index=1, reg=2, join={13}
+         16: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=16, end=16, index=0, reg=2, join={12} deleted
+         17: PhiFunction[sCPhiFunc] {0, 15} (Phi-Function),   start=17, end=19, index=1, reg=3, join={13}
          18: NoOpnd[sCloadConst] 100 (Integer),   end=19
          19: Branch[sCBranch] {18, 17} (Void)
       ExitSet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
@@ -109,20 +109,20 @@ SSA for Method: forIfWhile
          20: Branch[sCreturn]  (Void)
       ExitSet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
 
-Code for Method:forIfWhile
+Code for Method: forIfWhile
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
 	38600000	[0xc]	li  r3, 0
 	48000020	[0x10]	b  32, [0x30]	
-	2c020032	[0x14]	cmpi  crf0, 0, r2, 50
+	2c030032	[0x14]	cmpi  crf0, 0, r3, 50
 	409e0014	[0x18]	bc  iffalse, CRF0[GT], 20, [0x2c]	
 	48000008	[0x1c]	b  8, [0x24]	
 	38630001	[0x20]	addi  r3, r3, 1
 	2c03004b	[0x24]	cmpi  crf0, 0, r3, 75
 	419ffff8	[0x28]	bc  iftrue, CRF0[LT], -8, [0x20]	
-	38620001	[0x2c]	addi  r3, r2, 1
-	2c020064	[0x30]	cmpi  crf0, 0, r2, 100
+	38630001	[0x2c]	addi  r3, r3, 1
+	2c030064	[0x30]	cmpi  crf0, 0, r3, 100
 	419fffe0	[0x34]	bc  iftrue, CRF0[LT], -32, [0x14]	
 	8001000c	[0x38]	lwz  r0, 12(r1)
 	7c0803a6	[0x3c]	mtspr  LR, r0

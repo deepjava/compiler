@@ -37,94 +37,95 @@ public static Ljava/lang/String; stringArray()
 SSA for Method: stringArray
    SSANode 0:
       EntrySet {[ , , , ], [ ]}
-         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, index=-1, reg=2
-         1: Call[sCnew] {0} (Array-Ref),   end=18, index=0, reg=31
-         2: NoOpnd[sCloadConst] 0 (Integer),   end=4, index=-1, reg=2
-         3: NoOpnd[sCloadConst] This (Ref),   end=4, index=-1, reg=3
-         4: StoreToArray[sCstoreToArray] {1, 2, 3} (Void)
-         5: NoOpnd[sCloadConst] 1 (Integer),   end=7, index=-1, reg=2
-         6: NoOpnd[sCloadConst] is (Ref),   end=7, index=-1, reg=3
-         7: StoreToArray[sCstoreToArray] {1, 5, 6} (Void)
-         8: NoOpnd[sCloadConst] 2 (Integer),   end=10, index=-1, reg=2
-         9: NoOpnd[sCloadConst] a (Ref),   end=10, index=-1, reg=3
-         10: StoreToArray[sCstoreToArray] {1, 8, 9} (Void)
-         11: NoOpnd[sCloadConst] 3 (Integer),   end=13, index=-1, reg=2
-         12: NoOpnd[sCloadConst] test (Ref),   end=13, index=-1, reg=3
-         13: StoreToArray[sCstoreToArray] {1, 11, 12} (Void)
-         14: NoOpnd[sCloadConst] 4 (Integer),   end=16, index=-1, reg=2
-         15: NoOpnd[sCloadConst] string (Ref),   end=16, index=-1, reg=3
-         16: StoreToArray[sCstoreToArray] {1, 14, 15} (Void)
-         17: NoOpnd[sCloadConst] 0 (Integer),   end=18, index=-1, reg=2
-         18: Dyadic[sCloadFromArray] {1, 17} (Ref),   end=19, index=-1, reg=2
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, reg=2
+         1: Call[sCnew] {0} (Ref-Array),   java/lang/String,   end=18, index=0, reg=2
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=4, reg=3
+         3: NoOpnd[sCloadConst] This (Ref),   end=4, reg=4
+         4: StoreToArray[sCstoreToArray] {1, 2, 3} (Void),   end=4
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=7, reg=3
+         6: NoOpnd[sCloadConst] is (Ref),   end=7, reg=4
+         7: StoreToArray[sCstoreToArray] {1, 5, 6} (Void),   end=7
+         8: NoOpnd[sCloadConst] 2 (Integer),   end=10, reg=3
+         9: NoOpnd[sCloadConst] a (Ref),   end=10, reg=4
+         10: StoreToArray[sCstoreToArray] {1, 8, 9} (Void),   end=10
+         11: NoOpnd[sCloadConst] 3 (Integer),   end=13, reg=3
+         12: NoOpnd[sCloadConst] test (Ref),   end=13, reg=4
+         13: StoreToArray[sCstoreToArray] {1, 11, 12} (Void),   end=13
+         14: NoOpnd[sCloadConst] 4 (Integer),   end=16, reg=3
+         15: NoOpnd[sCloadConst] string (Ref),   end=16, reg=4
+         16: StoreToArray[sCstoreToArray] {1, 14, 15} (Void),   end=16
+         17: NoOpnd[sCloadConst] 0 (Integer),   end=18, reg=3
+         18: Dyadic[sCloadFromArray] {1, 17} (Ref),   end=19, reg=2
          19: Branch[sCreturn] {18} (Void)
-      ExitSet {[ , , , ], [ 1 (Array-Ref) ]}
+      ExitSet {[ , , , ], [ 1 (Ref-Array) ]}
 
-Code for Method:stringArray
+Code for Method: stringArray
 	9421ffe0	[0x0]	stwu  r1, -32(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	90010020	[0x8]	stw  r0, 32(r1)
-	bfe10014	[0xc]	stmw  r31, 20(r1)
+	9001001c	[0x8]	stw  r0, 28(r1)
+	bfe10010	[0xc]	stmw  r31, 16(r1)
 	38400005	[0x10]	li  r2, 5
-	0e020000	[0x14]	twi  ifless, r2, 0
-	38600014	[0x18]	li  r3, 20
-	48000001	[0x1c]	bl  0x0
-	7c5f1378	[0x20]	lr  r31, r2
-	38400000	[0x24]	li  r2, 0
-	3c600000	[0x28]	lis  r3, 0
-	38630010	[0x2c]	addi  r3, r3, 16
-	0c9f0000	[0x30]	twi  ifequal, r31, 0
-	a89f0008	[0x34]	lha  r4, 8(r31)
-	7ca22008	[0x38]	tw  ifgeU, r2, r4
-	5444103a	[0x3c]	rlwinm  r4, r2, 2, 0, 29
-	38bf000c	[0x40]	addi  r5, r31, 12
-	7c64292e	[0x44]	stwx  r3, r4, r5
-	38400001	[0x48]	li  r2, 1
-	3c600000	[0x4c]	lis  r3, 0
-	38630010	[0x50]	addi  r3, r3, 16
-	0c9f0000	[0x54]	twi  ifequal, r31, 0
-	a89f0008	[0x58]	lha  r4, 8(r31)
-	7ca22008	[0x5c]	tw  ifgeU, r2, r4
-	5444103a	[0x60]	rlwinm  r4, r2, 2, 0, 29
-	38bf000c	[0x64]	addi  r5, r31, 12
-	7c64292e	[0x68]	stwx  r3, r4, r5
-	38400002	[0x6c]	li  r2, 2
-	3c600000	[0x70]	lis  r3, 0
-	38630010	[0x74]	addi  r3, r3, 16
-	0c9f0000	[0x78]	twi  ifequal, r31, 0
-	a89f0008	[0x7c]	lha  r4, 8(r31)
-	7ca22008	[0x80]	tw  ifgeU, r2, r4
-	5444103a	[0x84]	rlwinm  r4, r2, 2, 0, 29
-	38bf000c	[0x88]	addi  r5, r31, 12
-	7c64292e	[0x8c]	stwx  r3, r4, r5
-	38400003	[0x90]	li  r2, 3
-	3c600000	[0x94]	lis  r3, 0
-	38630010	[0x98]	addi  r3, r3, 16
-	0c9f0000	[0x9c]	twi  ifequal, r31, 0
-	a89f0008	[0xa0]	lha  r4, 8(r31)
-	7ca22008	[0xa4]	tw  ifgeU, r2, r4
-	5444103a	[0xa8]	rlwinm  r4, r2, 2, 0, 29
-	38bf000c	[0xac]	addi  r5, r31, 12
-	7c64292e	[0xb0]	stwx  r3, r4, r5
-	38400004	[0xb4]	li  r2, 4
-	3c600000	[0xb8]	lis  r3, 0
-	38630010	[0xbc]	addi  r3, r3, 16
-	0c9f0000	[0xc0]	twi  ifequal, r31, 0
-	a89f0008	[0xc4]	lha  r4, 8(r31)
-	7ca22008	[0xc8]	tw  ifgeU, r2, r4
-	5444103a	[0xcc]	rlwinm  r4, r2, 2, 0, 29
-	38bf000c	[0xd0]	addi  r5, r31, 12
-	7c64292e	[0xd4]	stwx  r3, r4, r5
-	38400000	[0xd8]	li  r2, 0
-	0c9f0000	[0xdc]	twi  ifequal, r31, 0
-	a87f0008	[0xe0]	lha  r3, 8(r31)
-	7ca21808	[0xe4]	tw  ifgeU, r2, r3
-	5443103a	[0xe8]	rlwinm  r3, r2, 2, 0, 29
-	389f000c	[0xec]	addi  r4, r31, 12
-	7c43202e	[0xf0]	lwzx  r2, r3, r4
-	bbe10014	[0xf4]	lmw  r31, 20(r1)
-	80010020	[0xf8]	lwz  r0, 32(r1)
-	7c0803a6	[0xfc]	mtspr  LR, r0
-	38210020	[0x100]	addi  r1, r1, 32
-	4e800020	[0x104]	bclr 20, 0
-
-
+	e020000	[0x14]	twi  ifless, r2, 0
+	38600000	[0x18]	li  r3, 0
+	3c630000	[0x1c]	addis  r3, r3, 0
+	7c6803a6	[0x20]	mtspr  LR, r3
+	38600006	[0x24]	li  r3, 6
+	3c630000	[0x28]	addis  r3, r3, 0
+	4e800020	[0x2c]	bclr always, CRF7[SO]
+	38600000	[0x30]	li  r3, 0
+	38800009	[0x34]	li  r4, 9
+	3c840000	[0x38]	addis  r4, r4, 0
+	c820000	[0x3c]	twi  ifequal, r2, 0
+	a8a20008	[0x40]	lha  r5, 8(r2)
+	7ca32808	[0x44]	tw  ifgeU, r3, r5
+	5465103a	[0x48]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x4c]	addi  r6, r2, 12
+	7c85312e	[0x50]	stwx  r4, r5, r6
+	38600001	[0x54]	li  r3, 1
+	3880000d	[0x58]	li  r4, 13
+	3c840000	[0x5c]	addis  r4, r4, 0
+	c820000	[0x60]	twi  ifequal, r2, 0
+	a8a20008	[0x64]	lha  r5, 8(r2)
+	7ca32808	[0x68]	tw  ifgeU, r3, r5
+	5465103a	[0x6c]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x70]	addi  r6, r2, 12
+	7c85312e	[0x74]	stwx  r4, r5, r6
+	38600002	[0x78]	li  r3, 2
+	38800016	[0x7c]	li  r4, 22
+	3c840000	[0x80]	addis  r4, r4, 0
+	c820000	[0x84]	twi  ifequal, r2, 0
+	a8a20008	[0x88]	lha  r5, 8(r2)
+	7ca32808	[0x8c]	tw  ifgeU, r3, r5
+	5465103a	[0x90]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x94]	addi  r6, r2, 12
+	7c85312e	[0x98]	stwx  r4, r5, r6
+	38600003	[0x9c]	li  r3, 3
+	3880001f	[0xa0]	li  r4, 31
+	3c840000	[0xa4]	addis  r4, r4, 0
+	c820000	[0xa8]	twi  ifequal, r2, 0
+	a8a20008	[0xac]	lha  r5, 8(r2)
+	7ca32808	[0xb0]	tw  ifgeU, r3, r5
+	5465103a	[0xb4]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0xb8]	addi  r6, r2, 12
+	7c85312e	[0xbc]	stwx  r4, r5, r6
+	38600004	[0xc0]	li  r3, 4
+	38800028	[0xc4]	li  r4, 40
+	3c840000	[0xc8]	addis  r4, r4, 0
+	c820000	[0xcc]	twi  ifequal, r2, 0
+	a8a20008	[0xd0]	lha  r5, 8(r2)
+	7ca32808	[0xd4]	tw  ifgeU, r3, r5
+	5465103a	[0xd8]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0xdc]	addi  r6, r2, 12
+	7c85312e	[0xe0]	stwx  r4, r5, r6
+	38600000	[0xe4]	li  r3, 0
+	c820000	[0xe8]	twi  ifequal, r2, 0
+	a8820008	[0xec]	lha  r4, 8(r2)
+	7ca32008	[0xf0]	tw  ifgeU, r3, r4
+	5464103a	[0xf4]	rlwinm  r4, r3, 2, 0, 29
+	38a2000c	[0xf8]	addi  r5, r2, 12
+	7c44282e	[0xfc]	lwzx  r2, r4, r5
+	bbe10010	[0x100]	lmw  r31, 16(r1)
+	8001001c	[0x104]	lwz  r0, 28(r1)
+	7c0803a6	[0x108]	mtspr  LR, r0
+	38210020	[0x10c]	addi  r1, r1, 32
+	4e800020	[0x110]	bclr always, CRF7[SO]

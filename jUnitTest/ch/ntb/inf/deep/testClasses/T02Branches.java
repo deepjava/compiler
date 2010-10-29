@@ -23,6 +23,7 @@ public class T02Branches {
         }
         b=a;
         a++;
+        b++;
     }
 
     public static void if3() {	// nested if

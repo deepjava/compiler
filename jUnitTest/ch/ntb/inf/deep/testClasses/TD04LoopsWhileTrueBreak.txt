@@ -34,7 +34,7 @@ SSA for Method: whileTrueBreak
          3: Branch[sCreturn]  (Void)
       ExitSet {[ , ], [ 0 (Integer), 0 (Integer) ]}
 
-Code for Method:whileTrueBreak
+Code for Method: whileTrueBreak
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)

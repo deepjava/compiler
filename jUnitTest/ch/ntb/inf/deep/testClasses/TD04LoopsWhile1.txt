@@ -48,7 +48,7 @@ SSA for Method: while1
 
    SSANode 2:
       EntrySet {[ , ], [ Phi-Function(4) ]}
-         4: PhiFunction[sCPhiFunc] {0, 3} (Phi-Function),   end=7, index=0, reg=2
+         4: PhiFunction[sCPhiFunc] {0, 3} (Phi-Function),   start=0, end=7, index=0, reg=2
          5: NoOpnd[sCloadConst] 10 (Integer),   end=6
          6: Branch[sCBranch] {5, 4} (Void)
       ExitSet {[ , ], [ Phi-Function(4) ]}

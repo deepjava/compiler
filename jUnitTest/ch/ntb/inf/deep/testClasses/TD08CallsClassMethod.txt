@@ -22,53 +22,49 @@
 		 18 iload_1 [x]
 		 19 ireturn
 
-
 SSA for Method: classMethod
    SSANode 0:
       EntrySet {[ , ], [ , , ]}
-         0: NoOpnd[sCloadConst] 0 (Integer),   end=9, index=1, reg=30
-         1: NoOpnd[sCloadConst] 0 (Integer),   end=10, index=2, reg=29
-         2: NoOpnd[sCloadLocal] (Integer),   end=8, index=0, reg=31
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=9, index=1, reg=3, join={9}
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=10, index=2, reg=4, join={10}
+         2: NoOpnd[sCloadLocal] (Integer),   end=8, index=0, reg=2, join={8}
          3: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ 2 (Integer), 0 (Integer), 1 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ , ], [ 8 (Integer), 9 (Integer), 10 (Integer) ]}
-         4: NoOpnd[sCloadConst] 3 (Integer),   end=5, index=-1, reg=2
-         5: Dyadic[sCadd] {9, 4} (Integer),   end=9, index=1, reg=30
-         6: NoOpnd[sCloadConst] 1 (Integer),   end=7, index=-1, reg=2
-         7: Dyadic[sCadd] {10, 6} (Integer),   end=10, index=2, reg=29
-      ExitSet {[ , ], [ 8 (Integer), 5 (Integer), 7 (Integer) ]}
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         4: NoOpnd[sCloadConst] 3 (Integer),   end=5
+         5: Dyadic[sCadd] {9, 4} (Integer),   end=9, index=1, reg=3, join={9}
+         6: NoOpnd[sCloadConst] 1 (Integer),   end=7
+         7: Dyadic[sCadd] {10, 6} (Integer),   end=10, index=2, reg=4, join={10}
+      ExitSet {[ , ], [ Phi-Function(8), 5 (Integer), 7 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ , ], [ 8 (Integer), 9 (Integer), 10 (Integer) ]}
-         8: PhiFunction[sCPhiFunc] {2} (Integer),   end=11, index=0, reg=31 deleted
-         9: PhiFunction[sCPhiFunc] {0, 5} (Integer),   end=12, index=1, reg=30
-         10: PhiFunction[sCPhiFunc] {1, 7} (Integer),   end=11, index=2, reg=29
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         8: PhiFunction[sCPhiFunc] {2} (Phi-Function),   start=2, end=11, index=0, reg=2 deleted
+         9: PhiFunction[sCPhiFunc] {0, 5} (Phi-Function),   start=0, end=12, index=1, reg=3
+         10: PhiFunction[sCPhiFunc] {1, 7} (Phi-Function),   start=1, end=11, index=2, reg=4
          11: Branch[sCBranch] {8, 10} (Void)
-      ExitSet {[ , ], [ 8 (Integer), 9 (Integer), 10 (Integer) ]}
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
 
    SSANode 3:
-      EntrySet {[ , ], [ 8 (Integer), 9 (Integer), 10 (Integer) ]}
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
          12: Branch[sCreturn] {9} (Void)
-      ExitSet {[ , ], [ 8 (Integer), 9 (Integer), 10 (Integer) ]}
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
 
-Code for Method:classMethod
-	9421ffe0	[0x0]	stwu  r1, -32(r1)
+Code for Method: classMethod
+	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	90010020	[0x8]	stw  r0, 32(r1)
-	bfa10014	[0xc]	stmw  r29, 20(r1)
-	7c5f1378	[0x10]	lr  r31, r2
-	3bc00000	[0x14]	li  r30, 0
-	3ba00000	[0x18]	li  r29, 0
-	4800000c	[0x1c]	b  12, [0x28]	
-	7fde1214	[0x20]	add  r30, r30, r2
-	7fbd1214	[0x24]	add  r29, r29, r2
-	7c1df800	[0x28]	cmp crf0, 0, r29, r31
-	419ffff4	[0x2c]	bc  iftrue, CRF0[LT], -12, [0x20]	
-	7fc2f378	[0x30]	lr  r2, r30
-	bba10014	[0x34]	lmw  r29, 20(r1)
-	80010020	[0x38]	lwz  r0, 32(r1)
-	7c0803a6	[0x3c]	mtspr  LR, r0
-	38210020	[0x40]	addi  r1, r1, 32
-	4e800020	[0x44]	bclr always, CRF7[SO]
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38600000	[0xc]	li  r3, 0
+	38800000	[0x10]	li  r4, 0
+	4800000c	[0x14]	b  12, [0x20]	
+	38630003	[0x18]	addi  r3, r3, 3
+	38840001	[0x1c]	addi  r4, r4, 1
+	7c041000	[0x20]	cmp crf0, 0, r4, r2
+	419ffff4	[0x24]	bc  iftrue, CRF0[LT], -12, [0x18]	
+	7c621b78	[0x28]	lr  r2, r3
+	8001000c	[0x2c]	lwz  r0, 12(r1)
+	7c0803a6	[0x30]	mtspr  LR, r0
+	38210010	[0x34]	addi  r1, r1, 16
+	4e800020	[0x38]	bclr always, CRF7[SO]

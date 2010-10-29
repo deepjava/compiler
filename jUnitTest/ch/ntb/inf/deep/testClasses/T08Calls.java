@@ -8,7 +8,6 @@ public class T08Calls {
 	public static int classMethCall(){
 		int y = 0;
 		int x = classMethod(3);
-		y = 2;
 		b += 100;
 		return y+x;		
 	}

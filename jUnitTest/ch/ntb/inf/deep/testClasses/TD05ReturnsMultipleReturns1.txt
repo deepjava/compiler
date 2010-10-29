@@ -24,7 +24,6 @@ public static int multipleReturns1(boolean)
 		 13 iload_1 [x]
 		 14 ireturn
 
-
 method multipleReturns1
 	nodeNr:0 from 0 to 3	visited: false
 		predecessor: 
@@ -36,25 +35,37 @@ method multipleReturns1
 		predecessor: CFG-Node [0:3]	
 		successor: 
 
-
 SSA for Method: multipleReturns1
    SSANode 0:
       EntrySet {[ ], [ , ]}
-         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=30
-         1: NoOpnd[sCloadLocal] (Integer),   end=2, index=0, reg=31
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=3
+         1: NoOpnd[sCloadLocal] (Integer),   end=2, index=0, reg=2
          2: Branch[sCBranch] {1} (Void)
       ExitSet {[ ], [ 1 (Integer), 0 (Integer) ]}
 
    SSANode 1:
       EntrySet {[ ], [ 1 (Integer), 0 (Integer) ]}
-         3: NoOpnd[sCloadConst] 1 (Integer),   end=4, index=1, reg=30
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=4, index=1, reg=2
          4: Branch[sCreturn] {3} (Void)
       ExitSet {[ ], [ 1 (Integer), 3 (Integer) ]}
 
    SSANode 2:
       EntrySet {[ ], [ 1 (Integer), 0 (Integer) ]}
-         5: NoOpnd[sCloadConst] 22 (Integer),   end=6, index=1, reg=30
+         5: NoOpnd[sCloadConst] 22 (Integer),   end=6, index=1, reg=2
          6: Branch[sCreturn] {5} (Void)
       ExitSet {[ ], [ 1 (Integer), 5 (Integer) ]}
 
-
+Code for Method: multipleReturns1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38600000	[0xc]	li  r3, 0
+	2c020000	[0x10]	cmpi  crf0, 0, r2, 0
+	419d000c	[0x14]	bc  iftrue, CRF0[EQ], 12, [0x20]	
+	38400001	[0x18]	li  r2, 1
+	48000008	[0x1c]	b  8, [0x24]	
+	38400016	[0x20]	li  r2, 22
+	8001000c	[0x24]	lwz  r0, 12(r1)
+	7c0803a6	[0x28]	mtspr  LR, r0
+	38210010	[0x2c]	addi  r1, r1, 16
+	4e800020	[0x30]	bclr always, CRF7[SO]

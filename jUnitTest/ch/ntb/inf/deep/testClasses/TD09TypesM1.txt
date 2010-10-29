@@ -57,7 +57,7 @@ SSA for Method: m1
    SSANode 0:
       EntrySet {[ , , , ], [ , , , , , , ]}
          0: NoOpnd[sCloadConst] -30000 (Long),   end=19, index=1, regLong=2, reg=3
-         1: NoOpnd[sCloadConst] 10000 (Long),   end=2, reg=4
+         1: NoOpnd[sCloadConst] 10000 (Long),   end=2, regLong=4, reg=5
          2: Dyadic[sCcmpl] {0, 1} (Integer),   end=3, reg=4
          3: Branch[sCBranch] {2} (Void)
       ExitSet {[ , , , ], [ , 0 (Long), , , , , ]}
@@ -79,7 +79,7 @@ SSA for Method: m1
          8: NoOpnd[sCloadConst] 2 (Long),   end=9
          9: Dyadic[sCmul] {0, 8} (Long),   end=10, regLong=4, reg=5
          10: Monadic[sCconvLong] {9} (Float),   end=21, index=3, reg=1
-         11: NoOpnd[sCloadConst] 0 (Long),   end=12, reg=4
+         11: NoOpnd[sCloadConst] 0 (Long),   end=12, regLong=4, reg=5
          12: Dyadic[sCcmpl] {0, 11} (Integer),   end=13, reg=4
          13: Branch[sCBranch] {12} (Void)
       ExitSet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
@@ -97,7 +97,7 @@ SSA for Method: m1
 
    SSANode 6:
       EntrySet {[ Phi-Function(17), , , ], [ , 0 (Long), , 10 (Float), , , ]}
-         17: PhiFunction[sCPhiFunc] {14, 16} (Phi-Function),   end=17, index=0, reg=4
+         17: PhiFunction[sCPhiFunc] {14, 16} (Phi-Function),   start=14, end=17, index=0, reg=4
          18: NoOpnd[sCloadConst] 16 (Long),   end=19
          19: Dyadic[sCmul] {0, 18} (Long),   end=20, regLong=2, reg=3
          20: Monadic[sCconvLong] {19} (Double),   end=20, index=4, reg=2
@@ -105,14 +105,14 @@ SSA for Method: m1
          22: Branch[sCreturn]  (Void)
       ExitSet {[ , , , ], [ Phi-Function(17), 0 (Long), , 10 (Float), 20 (Double), , 21 (Integer) ]}
 
-Code for Method:m1
+Code for Method: m1
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
 	3840ffff	[0xc]	li  r2, -1
 	38608ad0	[0x10]	li  r3, -30000
-	ffe00000	[0x14]	fcmpu  crf7, fr0, fr0
-	38802710	[0x18]	li  r4, 10000
+	38800000	[0x14]	li  r4, 0
+	38a02710	[0x18]	li  r5, 10000
 	2c040000	[0x1c]	cmpi  crf0, 0, r4, 0
 	409e000c	[0x20]	bc  iffalse, CRF0[GT], 12, [0x2c]	
 	38800064	[0x24]	li  r4, 100
@@ -120,8 +120,8 @@ Code for Method:m1
 	38800000	[0x2c]	li  r4, 0
 	3c840000	[0x30]	addis  r4, r4, 0
 	c0240018	[0x34]	lfs  fr1, 24(r4)
-	ffe00000	[0x38]	fcmpu  crf7, fr0, fr0
-	38800000	[0x3c]	li  r4, 0
+	38800000	[0x38]	li  r4, 0
+	38a00000	[0x3c]	li  r5, 0
 	2c040000	[0x40]	cmpi  crf0, 0, r4, 0
 	409e000c	[0x44]	bc  iffalse, CRF0[GT], 12, [0x50]	
 	38800001	[0x48]	li  r4, 1

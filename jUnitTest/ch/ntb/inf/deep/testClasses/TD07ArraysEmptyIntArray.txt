@@ -16,23 +16,23 @@ method emptyIntArray
 SSA for Method: emptyIntArray
    SSANode 0:
       EntrySet {[ ], [ ]}
-         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, index=-1, reg=2
-         1: Call[sCnew] {0} (Integer-Array),   end=1, index=0, reg=31
-         2: Branch[sCreturn] 
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, reg=2
+         1: Call[sCnew] {0} (Integer-Array),   5,   end=1, index=0, reg=2
+         2: Branch[sCreturn]  (Void)
       ExitSet {[ ], [ 1 (Integer-Array) ]}
 
-Code for Method:emptyIntArray
-	9421ffe0	[0x0]	stwu  r1, -32(r1)
+Code for Method: emptyIntArray
+	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	90010020	[0x8]	stw  r0, 32(r1)
-	bfe10014	[0xc]	stmw  r31, 20(r1)
-	38400005	[0x10]	li  r2, 5
-	0e020000	[0x14]	twi  ifless, r2, 0
-	3860000a	[0x18]	li  r3, 10
-	48000001	[0x1c]	bl  0x0
-	7c5f1378	[0x20]	lr  r31, r2
-	bbe10014	[0x24]	lmw  r31, 20(r1)
-	80010020	[0x28]	lwz  r0, 32(r1)
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400005	[0xc]	li  r2, 5
+	e020000	[0x10]	twi  ifless, r2, 0
+	38600000	[0x14]	li  r3, 0
+	3c630000	[0x18]	addis  r3, r3, 0
+	7c6803a6	[0x1c]	mtspr  LR, r3
+	3860000a	[0x20]	li  r3, 10
+	4e800020	[0x24]	bclr always, CRF7[SO]
+	8001000c	[0x28]	lwz  r0, 12(r1)
 	7c0803a6	[0x2c]	mtspr  LR, r0
-	38210020	[0x30]	addi  r1, r1, 32
-	4e800020	[0x34]	bclr 20, 0
+	38210010	[0x30]	addi  r1, r1, 16
+	4e800020	[0x34]	bclr always, CRF7[SO]

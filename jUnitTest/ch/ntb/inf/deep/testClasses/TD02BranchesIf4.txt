@@ -48,7 +48,6 @@ CFG of method if4
 		predecessor: CFG-Node [10:13]	CFG-Node [16:17]	
 		successor: 
 
-
 SSA for Method: if4
    SSANode 0:
       EntrySet {[ ], [ , , , ]}
@@ -60,24 +59,26 @@ SSA for Method: if4
 
    SSANode 1:
       EntrySet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
-         4: NoOpnd[sCloadConst] 8 (Integer),   end=7, index=3, reg=2, join={7}
-         5: Branch[sCBranch]  (Void)
-      ExitSet {[ ], [ , 0 (Integer), 1 (Integer), 4 (Integer) ]}
+         4: NoOpnd[sCloadConst] 8 (Integer),   end=5, index=3, reg=2
+         5: Monadic[sCRegMove] {4} (Integer),   end=9, index=2, reg=2, join={9}
+         6: Branch[sCBranch]  (Void)
+      ExitSet {[ ], [ , 5 (Integer), 1 (Integer), 4 (Integer) ]}
 
    SSANode 2:
       EntrySet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
-         6: NoOpnd[sCloadConst] 2 (Integer),   end=7, index=3, reg=2, join={7}
-      ExitSet {[ ], [ , 0 (Integer), 1 (Integer), 6 (Integer) ]}
+         7: NoOpnd[sCloadConst] 2 (Integer),   end=8, index=3, reg=3
+         8: Monadic[sCRegMove] {7} (Integer),   end=9, index=2, reg=2, join={9}
+      ExitSet {[ ], [ , 8 (Integer), 1 (Integer), 7 (Integer) ]}
 
    SSANode 3:
-      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), Phi-Function(7) ]}
-         7: PhiFunction[sCPhiFunc] {4, 6} (Phi-Function),   end=9, index=2, reg=2
-         8: NoOpnd[sCloadConst] 1 (Integer),   end=9
-         9: Dyadic[sCadd] {7, 8} (Integer),   end=9, index=2, reg=2
-         10: Branch[sCreturn]  (Void)
-      ExitSet {[ ], [ , 0 (Integer), 9 (Integer), Phi-Function(7) ]}
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), Phi-Function(9) ]}
+         9: PhiFunction[sCPhiFunc] {5, 8} (Phi-Function),   start=5, end=11, index=2, reg=2
+         10: NoOpnd[sCloadConst] 1 (Integer),   end=11
+         11: Dyadic[sCadd] {9, 10} (Integer),   end=11, index=2, reg=2
+         12: Branch[sCreturn]  (Void)
+      ExitSet {[ ], [ , 0 (Integer), 11 (Integer), Phi-Function(9) ]}
 
-Code for Method:if4
+Code for Method: if4
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
@@ -87,10 +88,11 @@ Code for Method:if4
 	2c020000	[0x18]	cmpi  crf0, 0, r2, 0
 	419d000c	[0x1c]	bc  iftrue, CRF0[EQ], 12, [0x28]	
 	38400008	[0x20]	li  r2, 8
-	48000008	[0x24]	b  8, [0x2c]	
-	38400002	[0x28]	li  r2, 2
-	38420001	[0x2c]	addi  r2, r2, 1
-	8001000c	[0x30]	lwz  r0, 12(r1)
-	7c0803a6	[0x34]	mtspr  LR, r0
-	38210010	[0x38]	addi  r1, r1, 16
-	4e800020	[0x3c]	bclr always, CRF7[SO]
+	4800000c	[0x24]	b  12, [0x30]	
+	38600002	[0x28]	li  r3, 2
+	7c621b78	[0x2c]	lr  r2, r3
+	38420001	[0x30]	addi  r2, r2, 1
+	8001000c	[0x34]	lwz  r0, 12(r1)
+	7c0803a6	[0x38]	mtspr  LR, r0
+	38210010	[0x3c]	addi  r1, r1, 16
+	4e800020	[0x40]	bclr always, CRF7[SO]

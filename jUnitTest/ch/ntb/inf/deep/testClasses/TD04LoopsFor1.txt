@@ -52,8 +52,8 @@ SSA for Method: for1
 
    SSANode 2:
       EntrySet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
-         7: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   end=7, index=0, reg=2
-         8: PhiFunction[sCPhiFunc] {1, 6} (Phi-Function),   end=10, index=1, reg=3
+         7: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   start=0, end=7, index=0, reg=2
+         8: PhiFunction[sCPhiFunc] {1, 6} (Phi-Function),   start=1, end=10, index=1, reg=3
          9: NoOpnd[sCloadConst] 10 (Integer),   end=10
          10: Branch[sCBranch] {9, 8} (Void)
       ExitSet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
@@ -63,7 +63,7 @@ SSA for Method: for1
          11: Branch[sCreturn]  (Void)
       ExitSet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
 
-Code for Method:for1
+Code for Method: for1
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)

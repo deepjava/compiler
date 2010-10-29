@@ -8,25 +8,22 @@
 		  0 invokestatic ch/ntb/inf/deep/testClasses/T01SimpleMethods.emptyMethodStatic(): void
 		  3 return
 
-
 SSA for Method: callToAnotherClass
    SSANode 0:
       EntrySet {}
-         0: Call[sCcall] {} (Void),   ch/ntb/inf/deep/testClasses/T01SimpleMethods.emptyMethodStatic,   end=0, index=-1, reg=-1
+         0: Call[sCcall] {} (Void),   ch/ntb/inf/deep/testClasses/T01SimpleMethods.emptyMethodStatic,   end=0
          1: Branch[sCreturn]  (Void)
       ExitSet {}
 
-
-Code for Method:callToAnotherClass
-	9421ffe0	[0x0]	stwu  r1, -32(r1)
+Code for Method: callToAnotherClass
+	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	90010020	[0x8]	stw  r0, 32(r1)
-	3c400000	[0xc]	lis  r2, 0
-	38420000	[0x10]	addi  r2, r2, 0
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	3c420000	[0x10]	addis  r2, r2, 0
 	7c4803a6	[0x14]	mtspr  LR, r2
 	4e800020	[0x18]	bclr always, CRF7[SO]
-	80010020	[0x1c]	lwz  r0, 32(r1)
+	8001000c	[0x1c]	lwz  r0, 12(r1)
 	7c0803a6	[0x20]	mtspr  LR, r0
-	38210020	[0x24]	addi  r1, r1, 32
+	38210010	[0x24]	addi  r1, r1, 16
 	4e800020	[0x28]	bclr always, CRF7[SO]
-

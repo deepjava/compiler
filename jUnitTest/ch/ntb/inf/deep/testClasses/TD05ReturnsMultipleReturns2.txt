@@ -92,67 +92,102 @@ method multipleReturns2
 SSA for Method: multipleReturns2
    SSANode 0:
       EntrySet {[ , ], [ ]}
-         0: NoOpnd[sCloadConst] 22 (Integer),   end=18, index=0, reg=31
-         1: NoOpnd[sCloadConst] 1 (Integer),   end=2, index=-1, reg=2
+         0: NoOpnd[sCloadConst] 22 (Integer),   end=18, index=0, reg=2
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=2
          2: Branch[sCBranch] {1, 0} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 1:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         3: NoOpnd[sCloadConst] 1 (Integer),   end=4, index=-1, reg=2
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=4, reg=3
          4: Branch[sCreturn] {3} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 2:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         5: NoOpnd[sCloadConst] 3 (Integer),   end=6, index=-1, reg=2
+         5: NoOpnd[sCloadConst] 3 (Integer),   end=6
          6: Branch[sCBranch] {5, 0} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 3:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         7: NoOpnd[sCloadConst] 3 (Integer),   end=8, index=-1, reg=2
+         7: NoOpnd[sCloadConst] 3 (Integer),   end=8, reg=3
          8: Branch[sCreturn] {7} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 4:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         9: NoOpnd[sCloadConst] 5 (Integer),   end=10, index=-1, reg=2
+         9: NoOpnd[sCloadConst] 5 (Integer),   end=10
          10: Branch[sCBranch] {9, 0} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 5:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         11: NoOpnd[sCloadConst] 5 (Integer),   end=12, index=-1, reg=2
+         11: NoOpnd[sCloadConst] 5 (Integer),   end=12, reg=3
          12: Branch[sCreturn] {11} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 6:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         13: NoOpnd[sCloadConst] 2 (Integer),   end=14, index=-1, reg=2
+         13: NoOpnd[sCloadConst] 2 (Integer),   end=14
          14: Branch[sCBranch] {13, 0} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 7:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         15: NoOpnd[sCloadConst] 2 (Integer),   end=16, index=-1, reg=2
+         15: NoOpnd[sCloadConst] 2 (Integer),   end=16, reg=3
          16: Branch[sCreturn] {15} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 8:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         17: NoOpnd[sCloadConst] 4 (Integer),   end=18, index=-1, reg=2
+         17: NoOpnd[sCloadConst] 4 (Integer),   end=18
          18: Branch[sCBranch] {17, 0} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 9:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         19: NoOpnd[sCloadConst] 4 (Integer),   end=20, index=-1, reg=2
+         19: NoOpnd[sCloadConst] 4 (Integer),   end=20, reg=2
          20: Branch[sCreturn] {19} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
 
    SSANode 10:
       EntrySet {[ , ], [ 0 (Integer) ]}
-         21: NoOpnd[sCloadConst] 100 (Integer),   end=22, index=-1, reg=2
+         21: NoOpnd[sCloadConst] 100 (Integer),   end=22, reg=2
          22: Branch[sCreturn] {21} (Void)
       ExitSet {[ , ], [ 0 (Integer) ]}
+
+Code for Method: multipleReturns2
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400016	[0xc]	li  r2, 22
+	2c020001	[0x10]	cmpi  crf0, 0, r2, 1
+	409d0010	[0x14]	bc  iffalse, CRF0[EQ], 16, [0x24]	
+	38600001	[0x18]	li  r3, 1
+	7c621b78	[0x1c]	lr  r2, r3
+	48000054	[0x20]	b  84, [0x74]	
+	2c020003	[0x24]	cmpi  crf0, 0, r2, 3
+	409d0010	[0x28]	bc  iffalse, CRF0[EQ], 16, [0x38]	
+	38600003	[0x2c]	li  r3, 3
+	7c621b78	[0x30]	lr  r2, r3
+	48000040	[0x34]	b  64, [0x74]	
+	2c020005	[0x38]	cmpi  crf0, 0, r2, 5
+	409d0010	[0x3c]	bc  iffalse, CRF0[EQ], 16, [0x4c]	
+	38600005	[0x40]	li  r3, 5
+	7c621b78	[0x44]	lr  r2, r3
+	4800002c	[0x48]	b  44, [0x74]	
+	2c020002	[0x4c]	cmpi  crf0, 0, r2, 2
+	409d0010	[0x50]	bc  iffalse, CRF0[EQ], 16, [0x60]	
+	38600002	[0x54]	li  r3, 2
+	7c621b78	[0x58]	lr  r2, r3
+	48000018	[0x5c]	b  24, [0x74]	
+	2c020004	[0x60]	cmpi  crf0, 0, r2, 4
+	409d000c	[0x64]	bc  iffalse, CRF0[EQ], 12, [0x70]	
+	38400004	[0x68]	li  r2, 4
+	48000008	[0x6c]	b  8, [0x74]	
+	38400064	[0x70]	li  r2, 100
+	8001000c	[0x74]	lwz  r0, 12(r1)
+	7c0803a6	[0x78]	mtspr  LR, r0
+	38210010	[0x7c]	addi  r1, r1, 16
+	4e800020	[0x80]	bclr always, CRF7[SO]

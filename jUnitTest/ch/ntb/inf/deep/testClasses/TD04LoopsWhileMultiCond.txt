@@ -53,7 +53,7 @@ SSA for Method: whileMultiCond
 
    SSANode 2:
       EntrySet {[ , ], [ Phi-Function(4) ]}
-         4: PhiFunction[sCPhiFunc] {0, 3} (Phi-Function),   end=8, index=0, reg=2
+         4: PhiFunction[sCPhiFunc] {0, 3} (Phi-Function),   start=0, end=8, index=0, reg=2
          5: NoOpnd[sCloadConst] 10 (Integer),   end=6
          6: Branch[sCBranch] {5, 4} (Void)
       ExitSet {[ , ], [ Phi-Function(4) ]}
@@ -68,7 +68,7 @@ SSA for Method: whileMultiCond
          8: Branch[sCreturn] {4} (Void)
       ExitSet {[ , ], [ Phi-Function(4) ]}
 
-Code for Method:whileMultiCond
+Code for Method: whileMultiCond
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)

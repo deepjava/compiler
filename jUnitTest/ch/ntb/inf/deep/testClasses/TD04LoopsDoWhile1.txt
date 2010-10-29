@@ -40,10 +40,10 @@ SSA for Method: doWhile1
 
    SSANode 1:
       EntrySet {[ , ], [ Phi-Function(1), Phi-Function(2) ]}
-         1: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   end=4, index=0, reg=2
-         2: PhiFunction[sCPhiFunc] {2} (Phi-Function),   end=2, index=1, reg=2, join={2} deleted
+         1: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   start=0, end=8, index=0, reg=2
+         2: PhiFunction[sCPhiFunc] {2} (Phi-Function),   start=2, end=2, index=1, reg=3, join={2} deleted
          3: NoOpnd[sCloadConst] 1 (Integer),   end=4
-         4: Dyadic[sCadd] {1, 3} (Integer),   end=1, index=0, reg=2, join={1}
+         4: Dyadic[sCadd] {1, 3} (Integer),   end=8, index=0, reg=2, join={1}
          5: NoOpnd[sCloadConst] 10 (Integer),   end=6
          6: Branch[sCBranch] {5, 4} (Void)
       ExitSet {[ , ], [ 4 (Integer), Phi-Function(2) ]}

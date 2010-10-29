@@ -12,32 +12,31 @@ public class T08Calls {
 		  6 putstatic ch/ntb/inf/deep/testClasses/T08Calls.c: boolean
 		  9 return
 
-
 SSA for Method: <clinit>
    SSANode 0:
       EntrySet {[ ]}
-         0: NoOpnd[sCloadConst] -128 (Integer),   end=1, index=-1, reg=2
-         1: MonadicRef[sCstoreToField] {0} (Void),   end=1, index=-1, reg=-1
-         2: NoOpnd[sCloadConst] 1 (Integer),   end=3, index=-1, reg=2
-         3: MonadicRef[sCstoreToField] {2} (Void),   end=3, index=-1, reg=-1
+         0: NoOpnd[sCloadConst] -128 (Integer),   end=1, reg=2
+         1: MonadicRef[sCstoreToField] {0} (Void),   end=1
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=3, reg=2
+         3: MonadicRef[sCstoreToField] {2} (Void),   end=3
          4: Branch[sCreturn]  (Void)
       ExitSet {[ ]}
 
-Code for Method:<clinit>
-	9421ffe0	[0x0]	stwu  r1, -32(r1)
+Code for Method: <clinit>
+	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	90010020	[0x8]	stw  r0, 32(r1)
+	9001000c	[0x8]	stw  r0, 12(r1)
 	3840ff80	[0xc]	li  r2, -128
-	3c600000	[0x10]	lis  r3, 0
-	38630000	[0x14]	addi  r3, r3, 0
+	38600000	[0x10]	li  r3, 0
+	3c630000	[0x14]	addis  r3, r3, 0
 	90430004	[0x18]	stw  r2, 4(r3)
 	38400001	[0x1c]	li  r2, 1
-	3c600000	[0x20]	lis  r3, 0
-	38630004	[0x24]	addi  r3, r3, 4
+	38600004	[0x20]	li  r3, 4
+	3c630000	[0x24]	addis  r3, r3, 0
 	90430004	[0x28]	stw  r2, 4(r3)
-	80010020	[0x2c]	lwz  r0, 32(r1)
+	8001000c	[0x2c]	lwz  r0, 12(r1)
 	7c0803a6	[0x30]	mtspr  LR, r0
-	38210020	[0x34]	addi  r1, r1, 32
+	38210010	[0x34]	addi  r1, r1, 16
 	4e800020	[0x38]	bclr always, CRF7[SO]
 
 
@@ -55,12 +54,12 @@ SSA for Method: <init>
    SSANode 0:
       EntrySet {[ , ], [ ]}
          0: NoOpnd[sCloadLocal] (Ref),   end=3, index=0, reg=31
-         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=1, index=-1, reg=-1
-         2: NoOpnd[sCloadConst] 31000 (Integer),   end=3, index=-1, reg=2
-         3: DyadicRef[sCstoreToField] {0, 2} (Void),   end=3, index=-1, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=1
+         2: NoOpnd[sCloadConst] 31000 (Integer),   end=3, reg=2
+         3: DyadicRef[sCstoreToField] {0, 2} (Void),   end=3
          4: Branch[sCreturn]  (Void)
       ExitSet {[ , ], [ 0 (Ref) ]}
-
+      
 Code for Method:<init>
 	9421ffe0	[0x0]	stwu  r1, -32(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR

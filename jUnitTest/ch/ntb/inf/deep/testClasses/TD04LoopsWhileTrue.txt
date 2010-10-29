@@ -32,19 +32,19 @@ SSA for Method: whileTrue
 
    SSANode 1:
       EntrySet {[ , ], [ Phi-Function(1), Phi-Function(2) ]}
-         1: PhiFunction[sCPhiFunc] {0} (Phi-Function),   end=4, index=0, reg=2 deleted
-         2: PhiFunction[sCPhiFunc] {4} (Phi-Function),   end=2, index=1, reg=2 deleted
+         1: PhiFunction[sCPhiFunc] {0} (Phi-Function),   start=0, end=4, index=0, reg=2 deleted
+         2: PhiFunction[sCPhiFunc] {4} (Phi-Function),   start=2, end=4, index=1, reg=3 deleted
          3: NoOpnd[sCloadConst] 1 (Integer),   end=4
-         4: Dyadic[sCadd] {1, 3} (Integer),   end=2, index=1, reg=2, join={2}
+         4: Dyadic[sCadd] {1, 3} (Integer),   end=4, index=1, reg=3, join={2}
          5: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ Phi-Function(1), 4 (Integer) ]}
 
-Code for Method:whileTrue
+Code for Method: whileTrue
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
 	3840000a	[0xc]	li  r2, 10
-	38420001	[0x10]	addi  r2, r2, 1
+	38620001	[0x10]	addi  r3, r2, 1
 	4bfffffc	[0x14]	b  -4, [0x10]	
 	8001000c	[0x18]	lwz  r0, 12(r1)
 	7c0803a6	[0x1c]	mtspr  LR, r0
