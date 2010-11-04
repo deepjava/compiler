@@ -1,6 +1,9 @@
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.cfg.CFG;
+import ch.ntb.inf.deep.cgPPC.MachineCode;
 import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Method extends Item {
@@ -9,7 +12,12 @@ public class Method extends Item {
 	public HString methDescriptor;
 
 	public Class owner;
-	public byte[] code;
+	public byte[] code; // java byte code of this method
+	
+	public MachineCode machineCode; // machine code of this method
+	public CFG cfg; // cfg of this method
+	public SSA ssa; // ssa of this method
+	
 	ExceptionTabEntry[] exceptionTab;
 	LocalVar[] localVars;
 	int[] lineNrTab; // entry: (startPc<<16) | lineNr

@@ -4,24 +4,27 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.Utilities;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
-public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
+public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts {
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
 	
 	public Item methods; // list with all methods
-	public int nOfMethods = -1; // number of methods
+	public int nOfMethods = 0; // number of methods
 	
 	public Item fields; // list with all fields
-	public int nOfInstanceFields = -1; // number of instance fields
-	public int nOfClassFields = -1; // number of class/static fields
+	public int nOfInstanceFields = 0; // number of instance fields
+	public int nOfClassFields = 0; // number of class/static fields
 		
 	public Class[] interfaces;
-	public int nOfInterfaces = -1; // number of interfaces
+	public int nOfInterfaces = 0; // number of interfaces
+	
+	public int nOfBaseClasses = 0; // number of base classes
 	
 	Class[] imports;
 	
@@ -378,7 +381,7 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts{
 
 	private void readMethods(RandomAccessFile clf, int userReqAttributes) throws IOException{
 		int methodCnt = clf.readUnsignedShort();
-		nOfMethods = methodCnt;
+	//	nOfMethods = methodCnt;
 		Item head = null, tail = null;
 		while(methodCnt-- > 0){
 			int flags;
