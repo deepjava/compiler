@@ -12,7 +12,7 @@ interface Registers {
 	
 	final int returnGPR1 = 2;
 	final int returnGPR2 = 3;
-	final int returnFPR = 2;
+	final int returnFPR = 1;
 	
 	final int volRegsGPRinitial = 0x00001ffc;
 	final int nonVolRegsGPRinitial = 0xffffe000;
