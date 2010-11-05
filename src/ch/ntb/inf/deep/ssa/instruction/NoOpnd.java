@@ -1,9 +1,9 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class NoOpnd extends SSAInstruction {
-	
 	
 	public NoOpnd(int opcode){
 		ssaOpcode = opcode;		
@@ -24,7 +24,18 @@ public class NoOpnd extends SSAInstruction {
 		System.out.print(result.n + ": ");
 		System.out.print("NoOpnd["+ scMnemonics[ssaOpcode]+"] ");
 		if (ssaOpcode == sCloadConst) 
-			System.out.print(result.constant + " (" + result.typeName() + ")");
+			if (result.constant instanceof Constant) {
+		//		((Constant)result.constant).printConstVal((Constant)result.constant, 23, 34);
+				Constant constant = (Constant)result.constant;
+				long value = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+				char category = constant.name.charAt(0);
+				if (category == 'F') 
+					System.out.print(Float.toString(Float.intBitsToFloat(constant.valueH)));
+				else
+					System.out.print(Double.longBitsToDouble(value));
+				System.out.print(" (" + result.typeName() + ")");
+			} else 
+				System.out.print(result.constant + " (" + result.typeName() + ")");
 		else
 			System.out.print("(" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end);

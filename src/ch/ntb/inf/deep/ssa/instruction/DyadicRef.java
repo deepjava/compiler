@@ -1,35 +1,35 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.ssa.SSAValue;
-import ch.ntb.inf.deep.strings.HString;
 
 public class DyadicRef extends Dyadic {
-	HString fieldName;
+	public Item field;
 
 	public DyadicRef(int opCode) {
 		super(opCode);
 	}
 
-	public DyadicRef(int opCode, HString fieldName) {
+	public DyadicRef(int opCode, Item field) {
 		super(opCode);
-		this.fieldName = fieldName;
+		this.field = field;
 	}
 
 	public DyadicRef(int opCode, SSAValue operand1,	SSAValue operand2) {
 		super(opCode, operand1, operand2);
 	}
 
-	public DyadicRef(int opCode, HString fieldName, SSAValue operand1, SSAValue operand2) {
+	public DyadicRef(int opCode, Item field, SSAValue operand1, SSAValue operand2) {
 		super(opCode, operand1, operand2);
-		this.fieldName = fieldName;
+		this.field = field;
 	}
 
-	public void setArg(HString fieldName) {
-		this.fieldName = fieldName;
+	public void setArg(Item field) {
+		this.field = field;
 	}
 
-	public HString getArg() {
-		return fieldName;
+	public Item getArg() {
+		return field;
 	}
 
 	@Override
@@ -37,6 +37,7 @@ public class DyadicRef extends Dyadic {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
 		System.out.print(result.n + ": ");
 		System.out.print("DyadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
+		if(field.name != null) System.out.print(" {" + field.name + "}");
 		System.out.print(" (" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end);
 		if (result.index != -1) System.out.print(", index=" + result.index);

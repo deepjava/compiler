@@ -33,21 +33,21 @@ public interface SSAInstructionOpcs {
 			0x00010000 + sCstoreToField, //store
 			0x00020000 + sCstoreToArray, 
 			
-			0x00000000 + sCadd, 		//arithmetic 
-			0x00000000 + sCsub,
-			0x00000000 + sCmul,
+			0x00000000 | (1<<ssaApImmOpd) + sCadd, 		//arithmetic 
+			0x00000000 | (1<<ssaApImmOpd) + sCsub,
+			0x00040000 | (1<<ssaApImmOpd) + sCmul,
 			0x00000000 + sCdiv,
 			0x00000000 + sCrem,
 			0x00000000 + sCneg,		 	
 			
-			0x00000000 + sCshl,		 	//shift and logical 
-			0x00000000 + sCshr,
-			0x00000000 + sCushr,
-			0x00000000 + sCand,
-			0x00000000 + sCor,
-			0x00000000 + sCxor,
+			0x00050000 | (1<<ssaApImmOpd) + sCshl,		 	//shift and logical 
+			0x00050000 | (1<<ssaApImmOpd) + sCshr,
+			0x00050000 | (1<<ssaApImmOpd) + sCushr,
+			0x00000000 | (1<<ssaApImmOpd) + sCand,
+			0x00000000 | (1<<ssaApImmOpd) + sCor,
+			0x00000000 | (1<<ssaApImmOpd) + sCxor,
 			
-			0x00000000 + sCconvInt, 	//convert from
+			0x00060000 + sCconvInt, 	//convert from
 			0x00000000 + sCconvLong,
 			0x00000000 + sCconvFloat,
 			0x00000000 + sCconvDouble,
@@ -62,7 +62,7 @@ public interface SSAInstructionOpcs {
 			0x00000000 | (1<<ssaApCall) + sCnew,
 			0x00000000 + sCreturn, 		
 			0x00000000 + sCthrow, 		
-			0x00000000 + sCbranch, 		
+			0x00000000 | (1<<ssaApImmOpd) + sCbranch, 		
 			
 			0x00000000 + sCregMove, 		
 			

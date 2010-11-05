@@ -1,12 +1,10 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.ssa.SSAValue;
-import ch.ntb.inf.deep.strings.HString;
 
 public class Call extends SSAInstruction {
-	
-	HString methodName;
-	HString className;
+	public Item item;
 	public boolean isStatic = false;
 	public boolean isInterface = false;
 
@@ -14,22 +12,19 @@ public class Call extends SSAInstruction {
 		ssaOpcode = opCode;
 	}
 	
-	public Call(int opCode, HString className , HString methodName){
+	public Call(int opCode, Item item){
 		ssaOpcode = opCode;
-		this.methodName = methodName;
-		this.className = className;
+		this.item = item;
 	}
-	
 	
 	public Call(int opCode,SSAValue[] operands){
 		ssaOpcode = opCode;
 		this.operands = operands;
 	}
 	
-	public Call(int opCode, HString className , HString methodName, SSAValue[] operands){
+	public Call(int opCode, Item item, SSAValue[] operands){
 		ssaOpcode = opCode;
-		this.methodName = methodName;
-		this.className = className;
+		this.item = item;
 		this.operands = operands;
 	}
 
@@ -43,17 +38,8 @@ public class Call extends SSAInstruction {
 		this.operands = operands;
 	}
 	
-	public void setArgs(HString className , HString methodName){
-		this.methodName = methodName;
-		this.className = className;
-	}
-	
-	/**
-	 * returns the ClassName at HString[0] and MethodeNamen at HString[1];
-	 * @return HString[]
-	 */
-	public HString[] getArgs(){
-		return new HString[]{this.className, this.methodName};
+	public void setArgs(Item item){
+		this.item = item;
 	}
 	
 	@Override
@@ -70,12 +56,8 @@ public class Call extends SSAInstruction {
 			System.out.print("}");
 		}
 		System.out.print(" (" + result.typeName() + ")");
-		if (className != null) {
-			System.out.print(",   " + className);
-			if (methodName != null) System.out.print("." + methodName);
-		} else {
-			System.out.print(",   " + operands[0].constant);			
-		}
+		if (item != null) System.out.print(",   " + item.name);
+//			System.out.print(",   " + operands[0].constant);			
 		System.out.print(",   end=" + result.end);
 		if (result.index != -1) System.out.print(", index=" + result.index);
 		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);

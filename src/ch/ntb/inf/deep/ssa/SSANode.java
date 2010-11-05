@@ -464,7 +464,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					}else{
 						if(constant.type.name.charAt(0)== 'F'){ //is a float
 							result.type = SSAValue.tFloat;
-							result.constant = Float.intBitsToFloat(constant.valueH);
+							result.constant = constant;
+//							result.constant = Float.intBitsToFloat(constant.valueH);
 						}else{
 							assert false : "Wrong Constant type";
 						}
@@ -473,7 +474,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
 						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tRef;
-						result.constant = literal.string;
+						result.constant = literal;
+//						result.constant = literal.string;
 					}else{
 						assert false : "Wrong DataItem type";
 						break;
@@ -496,7 +498,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					}else{
 						if(constant.type.name.charAt(0)== 'F'){ //is a float
 							result.type = SSAValue.tFloat;
-							result.constant = Float.intBitsToFloat(constant.valueH);
+							result.constant = constant;
+//							result.constant = Float.intBitsToFloat(constant.valueH);
 						}else{
 							assert false : "Wrong Constant type";
 						}
@@ -505,7 +508,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
 						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tRef;
-						result.constant = literal.string;
+						result.constant = literal;
+//						result.constant = literal.string;
 					}else{
 						assert false : "Wrong DataItem type";
 						break;
@@ -525,7 +529,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					long temp = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);;
 					if(constant.type.name.charAt(0)== 'D'){//is a Double
 						result.type = SSAValue.tDouble;
-						result.constant = Double.longBitsToDouble(temp);
+						result.constant = constant;
+//						result.constant = Double.longBitsToDouble(temp);
 					}else{
 						if(constant.type.name.charAt(0)== 'J'){ //is a Long
 							result.type = SSAValue.tLong;
@@ -1920,7 +1925,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tVoid;
 					}					
 				}
-				instr = new NoOpndRef(sCloadFromField, field.name);
+				instr = new NoOpndRef(sCloadFromField, field);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
@@ -1932,7 +1937,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				value1 = popFromStack();
 				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new MonadicRef(sCstoreToField, null,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1);
+					instr = new MonadicRef(sCstoreToField, (DataItem)ssa.cfg.method.owner.constPool[val], value1);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in putstatic";
@@ -2013,7 +2018,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				value1 = popFromStack();
 				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new MonadicRef(sCloadFromField, null,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1);
+					instr = new MonadicRef(sCloadFromField, (DataItem)ssa.cfg.method.owner.constPool[val], value1);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in getfield";
@@ -2030,7 +2035,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new DyadicRef(sCstoreToField,((DataItem)ssa.cfg.method.owner.constPool[val]).name, value1, value2);
+					instr = new DyadicRef(sCstoreToField,(DataItem)ssa.cfg.method.owner.constPool[val], value1, value2);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in putfield";
@@ -2048,7 +2053,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				result = new SSAValue();
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
+				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
 				addInstruction(instr);
 				if(result.type != SSAValue.tVoid){
@@ -2065,7 +2070,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				result = new SSAValue();
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
+				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
 				addInstruction(instr);
 				if(result.type != SSAValue.tVoid){
@@ -2082,7 +2087,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				result = new SSAValue();
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
+				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
 				((Call)instr).isStatic = true;
 				addInstruction(instr);
@@ -2101,7 +2106,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				result = new SSAValue();
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]).owner.name,((Method)ssa.cfg.method.owner.constPool[val]).name, operands);
+				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
 				((Call)instr).isInterface = true;
 				addInstruction(instr);
@@ -2154,7 +2159,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				SSAValue[] opnd = {value1};
 				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, opnd);
+					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]), opnd);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in anewarray";
@@ -2191,7 +2196,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				result = value1;
 				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new MonadicRef(sCthrow, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, value1);
+					instr = new MonadicRef(sCthrow, (Type)ssa.cfg.method.owner.constPool[val], value1);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in checkcast";
@@ -2207,7 +2212,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
 				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new MonadicRef(sCinstanceof, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, value1);
+					instr = new MonadicRef(sCinstanceof, ((Type)ssa.cfg.method.owner.constPool[val]), value1);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in instanceof";
@@ -2236,7 +2241,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					operands[i] = popFromStack();
 				}
 				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]).name,null, operands);
+					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]), operands);
 				}else{
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in multianewarray";
