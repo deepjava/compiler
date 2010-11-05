@@ -81,7 +81,7 @@ SSA for Method: switchNear3
          10: Branch[sCreturn]  (Void)
       ExitSet {[ , ], [ 0 (Integer), 9 (Float), , ]}
 
-Code for Method:switchNear3
+Code for Method: switchNear3
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
@@ -89,22 +89,37 @@ Code for Method:switchNear3
 	2c03fffd	[0x10]	cmpi  crf0, 0, r3, -3
 	419d0038	[0x14]	bc  iftrue, CRF0[EQ], 56, [0x4c]	
 	2c03fffe	[0x18]	cmpi  crf0, 0, r3, -2
-	419d0038	[0x1c]	bc  iftrue, CRF0[EQ], 56, [0x54]	
+	419d0054	[0x1c]	bc  iftrue, CRF0[EQ], 84, [0x70]	
 	2c03ffff	[0x20]	cmpi  crf0, 0, r3, -1
-	419d0030	[0x24]	bc  iftrue, CRF0[EQ], 48, [0x54]	
+	419d004c	[0x24]	bc  iftrue, CRF0[EQ], 76, [0x70]	
 	2c030000	[0x28]	cmpi  crf0, 0, r3, 0
-	419d0028	[0x2c]	bc  iftrue, CRF0[EQ], 40, [0x54]	
+	419d0044	[0x2c]	bc  iftrue, CRF0[EQ], 68, [0x70]	
 	2c030001	[0x30]	cmpi  crf0, 0, r3, 1
 	419d0018	[0x34]	bc  iftrue, CRF0[EQ], 24, [0x4c]	
 	2c030002	[0x38]	cmpi  crf0, 0, r3, 2
-	419d0018	[0x3c]	bc  iftrue, CRF0[EQ], 24, [0x54]	
+	419d0034	[0x3c]	bc  iftrue, CRF0[EQ], 52, [0x70]	
 	2c030003	[0x40]	cmpi  crf0, 0, r3, 3
-	419d000c	[0x44]	bc  iftrue, CRF0[EQ], 12, [0x50]	
-	4800000c	[0x48]	b  12, [0x54]	
-	48000008	[0x4c]	b  8, [0x54]	
-	3860ffff	[0x50]	li  r3, -1
-	1c420002	[0x54]	mulli  r2, r2, 2
-	8001000c	[0x58]	lwz  r0, 12(r1)
-	7c0803a6	[0x5c]	mtspr  LR, r0
-	38210010	[0x60]	addi  r1, r1, 16
-	4e800020	[0x64]	bclr always, CRF7[SO]
+	419d0028	[0x44]	bc  iftrue, CRF0[EQ], 40, [0x6c]	
+	48000028	[0x48]	b  40, [0x70]	
+	6c408000	[0x4c]	xoris  r0, r2, 0x8000
+	90010000	[0x50]	stw  r0, 0(r1)
+	38600000	[0x54]	li  r3, 0
+	3c630000	[0x58]	addis  r3, r3, 0
+	c8230020	[0x5c]	lfd  fr1, 32(r3)
+	c801fffc	[0x60]	lfd  fr0, -4(r1)
+	fc200828	[0x64]	fsub  fr1, fr0, fr1
+	48000008	[0x68]	b  8, [0x70]	
+	3860ffff	[0x6c]	li  r3, -1
+	1c420002	[0x70]	mulli  r2, r2, 2
+	6c408000	[0x74]	xoris  r0, r2, 0x8000
+	90010000	[0x78]	stw  r0, 0(r1)
+	38600015	[0x7c]	li  r3, 21
+	3c630000	[0x80]	addis  r3, r3, 0
+	c8230020	[0x84]	lfd  fr1, 32(r3)
+	c801fffc	[0x88]	lfd  fr0, -4(r1)
+	fc200828	[0x8c]	fsub  fr1, fr0, fr1
+	fc200818	[0x90]	frsp  fr1, fr1
+	8001000c	[0x94]	lwz  r0, 12(r1)
+	7c0803a6	[0x98]	mtspr  LR, r0
+	38210010	[0x9c]	addi  r1, r1, 16
+	4e800020	[0xa0]	bclr always, CRF7[SO]

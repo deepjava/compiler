@@ -10,17 +10,57 @@
 		short i = (short)h;		
 		return b;
 	}
-	
-build intervals for m2
-assign registers to parameters, nofParam = 10
-[(Ref), (Long)r3,r4, (Void), (Float)fr31, (Double)fr2, (Byte-Array)r6, (Short)r7, (Integer), (Integer)r31]
 
+	"float m2(long float doublebyte[] short int int)"
+	//nofStackSlots=4, nofLocalSlots=12, codeLen=62 
+	{
+		  0 ldc2_w <Long 30021>
+		  3 lload_1 [a]
+		  4 land
+		  5 lstore_1 [a]
+		  6 iload [e]
+		  8 bipush 100
+		 10 iadd
+		 11 i2s
+		 12 istore [e]
+		 14 aload [d]
+		 16 iconst_2
+		 17 baload
+		 18 invokestatic ch/ntb/inf/deep/testClasses/T08Calls.classMethod(int): int
+		 21 pop
+		 22 bipush 20
+		 24 iload [e]
+		 26 iadd
+		 27 i2s
+		 28 istore [e]
+		 30 iload [g]
+		 32 ldc 2241348
+		 34 ior
+		 35 istore [g]
+		 37 ldc2_w <Double 3.2>
+		 40 dstore [c]
+		 42 iload [g]
+		 44 iload [e]
+		 46 isub
+		 47 istore [h]
+		 49 iload [h]
+		 51 invokestatic ch/ntb/inf/deep/testClasses/T08Calls.classMethod(int): int
+		 54 pop
+		 55 iload [h]
+		 57 i2s
+		 58 istore [i]
+		 60 fload_3 [b]
+		 61 freturn
+	
+assign registers to parameters, nofParam = 10
+[(Ref), (Long)r3,r4, (Float)fr31, (Double)fr2, (Byte-Array)r5, (Short)r6, (Integer), (Integer)r31]
+allocate registers
 SSA for Method: m2
    SSANode 0:
       EntrySet {[ , , , ], [ , , , , , , , , , , , ]}
          0: NoOpnd[sCloadConst] 30021 (Long),   end=2
          1: NoOpnd[sCloadLocal] (Long),   end=2, index=1, regLong=3, reg=4
-         2: Dyadic[sCand] {0, 1} (Long),   end=2, index=1, regLong=2, reg=3
+         2: Dyadic[sCand] {0, 1} (Long),   end=2, index=1, regLong=2, reg=7
          3: NoOpnd[sCloadLocal] (Integer),   end=5, index=7, reg=6
          4: NoOpnd[sCloadConst] 100 (Integer),   end=5
          5: Dyadic[sCadd] {3, 4} (Integer),   end=6, reg=2
@@ -33,7 +73,7 @@ SSA for Method: m2
          12: Dyadic[sCadd] {11, 6} (Integer),   end=13, reg=2
          13: Monadic[sCconvInt] {12} (Short),   end=18, index=7, reg=2
          14: NoOpnd[sCloadLocal] (Integer),   end=16, index=9, reg=31
-         15: NoOpnd[sCloadConst] 2241348 (Integer),   end=16
+         15: NoOpnd[sCloadConst] 2241348 (Integer),   end=16, reg=3
          16: Dyadic[sCor] {14, 15} (Integer),   end=18, index=9, reg=3
          17: NoOpnd[sCloadConst] 3.2 (Double),   end=17, index=4, reg=1
          18: Dyadic[sCsub] {16, 13} (Integer),   end=20, index=10, reg=31
@@ -51,38 +91,41 @@ Code for Method: m2
 	dbe10004	[0x10]	stfd  fr31, 4(r1)
 	7d1f4378	[0x14]	lr  r31, r8
 	ffe00890	[0x18]	fmr  fr31, fr1
-	70837545	[0x1c]	andi. r3, r4, 0x7545
-	38460064	[0x20]	addi  r2, r6, 100
-	7c5e0734	[0x24]	extsh  r30, r2
-	38400002	[0x28]	li  r2, 2
-	c850000	[0x2c]	twi  ifequal, r5, 0
-	a8650008	[0x30]	lha  r3, 8(r5)
-	7ca21808	[0x34]	tw  ifgeU, r2, r3
-	3885000c	[0x38]	addi  r4, r5, 12
-	7c4410ae	[0x3c]	lbzx  r2, r4, r2
-	7c420774	[0x40]	extsb  r2, r2
-	38600000	[0x44]	li  r3, 0
-	3c630000	[0x48]	addis  r3, r3, 0
-	7c6803a6	[0x4c]	mtspr  LR, r3
-	4e800020	[0x50]	bclr always, CRF7[SO]
-	385e0014	[0x54]	addi  r2, r30, 20
-	7c420734	[0x58]	extsh  r2, r2
-	ffe03344	[0x5c]	-2084028  (0xffe03344)
-	ffff0022	[0x60]	-65502  (0xffff0022)
-	38800011	[0x64]	li  r4, 17
-	3c840000	[0x68]	addis  r4, r4, 0
-	c8240018	[0x6c]	lfd  fr1, 24(r4)
-	7fe21850	[0x70]	subf  r31, r2, r3
-	38400019	[0x74]	li  r2, 25
-	3c420000	[0x78]	addis  r2, r2, 0
-	7c4803a6	[0x7c]	mtspr  LR, r2
-	7fe2fb78	[0x80]	lr  r2, r31
-	4e800020	[0x84]	bclr always, CRF7[SO]
-	7fe20734	[0x88]	extsh  r2, r31
-	fc02f890	[0x8c]	fmr  fr0, fr31
-	cbe10004	[0x90]	lfd  fr31, 4(r1)
-	bbc1000c	[0x94]	lmw  r30, 12(r1)
-	8001001c	[0x98]	lwz  r0, 28(r1)
-	7c0803a6	[0x9c]	mtspr  LR, r0
-	38210020	[0xa0]	addi  r1, r1, 32
-	4e800020	[0xa4]	bclr always, CRF7[SO]
+	7c621b78	[0x1c]	lr  r2, r3
+	70877545	[0x20]	andi. r7, r4, 0x7545
+	38460064	[0x24]	addi  r2, r6, 100
+	7c5e0734	[0x28]	extsh  r30, r2
+	38400002	[0x2c]	li  r2, 2
+	0c850000	[0x30]	twi  ifequal, r5, 0
+	a8650008	[0x34]	lha  r3, 8(r5)
+	7ca21808	[0x38]	tw  ifgeU, r2, r3
+	3885000c	[0x3c]	addi  r4, r5, 12
+	7c4410ae	[0x40]	lbzx  r2, r4, r2
+	7c420774	[0x44]	extsb  r2, r2
+	38600000	[0x48]	li  r3, 0
+	3c630000	[0x4c]	addis  r3, r3, 0
+	7c6803a6	[0x50]	mtspr  LR, r3
+	4e800020	[0x54]	bclr always, CRF7[SO]
+	385e0014	[0x58]	addi  r2, r30, 20
+	7c420734	[0x5c]	extsh  r2, r2
+	38603344	[0x60]	li  r3, 13124
+	3c630022	[0x64]	addis  r3, r3, 34
+	7fe31b78	[0x68]	or  r3, r31, r3
+	38800012	[0x6c]	li  r4, 18
+	3c840000	[0x70]	addis  r4, r4, 0
+	c8240018	[0x74]	lfd  fr1, 24(r4)
+	7fe21850	[0x78]	subf  r31, r2, r3
+	3840001b	[0x7c]	li  r2, 27
+	3c420000	[0x80]	addis  r2, r2, 0
+	7c4803a6	[0x84]	mtspr  LR, r2
+	7fe2fb78	[0x88]	lr  r2, r31
+	4e800020	[0x8c]	bclr always, CRF7[SO]
+	7fe20734	[0x90]	extsh  r2, r31
+	fc20f890	[0x94]	fmr  fr1, fr31
+	cbe10004	[0x98]	lfd  fr31, 4(r1)
+	bbc1000c	[0x9c]	lmw  r30, 12(r1)
+	8001001c	[0xa0]	lwz  r0, 28(r1)
+	7c0803a6	[0xa4]	mtspr  LR, r0
+	38210020	[0xa8]	addi  r1, r1, 32
+	4e800020	[0xac]	bclr always, CRF7[SO]
+

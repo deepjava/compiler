@@ -136,7 +136,7 @@ SSA for Method: switchFar2
 
    SSANode 6:
       EntrySet {[ ], [ Phi-Function(12) ]}
-         12: PhiFunction[sCPhiFunc] {0, 8} (Phi-Function),   end=19, index=0, reg=2, join={19}
+         12: PhiFunction[sCPhiFunc] {0, 8} (Phi-Function),   start=8, end=19, index=0, reg=2, join={19}
          13: Branch[sCBranch] {12} (Void)
       ExitSet {[ ], [ Phi-Function(12) ]}
 
@@ -149,17 +149,17 @@ SSA for Method: switchFar2
 
    SSANode 8:
       EntrySet {[ ], [ Phi-Function(12) ]}
-         17: NoOpnd[sCloadConst] -1 (Integer),   end=18, reg=2
+         17: NoOpnd[sCloadConst] -1 (Integer),   end=18, reg=3
          18: Branch[sCreturn] {17} (Void)
       ExitSet {[ ], [ Phi-Function(12) ]}
 
    SSANode 9:
       EntrySet {[ ], [ Phi-Function(19) ]}
-         19: PhiFunction[sCPhiFunc] {0, 12, 15} (Phi-Function),   end=20, index=0, reg=2
+         19: PhiFunction[sCPhiFunc] {0, 12, 15} (Phi-Function),   start=0, end=20, index=0, reg=2
          20: Branch[sCreturn] {19} (Void)
       ExitSet {[ ], [ Phi-Function(19) ]}
 
-Code for Method:switchFar2
+Code for Method: switchFar2
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
@@ -169,10 +169,10 @@ Code for Method:switchFar2
 	419d001c	[0x18]	bc  iftrue, CRF0[EQ], 28, [0x34]	
 	2c020064	[0x1c]	cmpi  crf0, 0, r2, 100
 	419d0060	[0x20]	bc  iftrue, CRF0[EQ], 96, [0x80]	
-	480000a0	[0x24]	b  160, [0xc4]	
+	480000a4	[0x24]	b  164, [0xc8]	
 	3860ff9c	[0x28]	li  r3, -100
 	7c621b78	[0x2c]	lr  r2, r3
-	48000094	[0x30]	b  148, [0xc4]	
+	48000098	[0x30]	b  152, [0xc8]	
 	2c020000	[0x34]	cmpi  crf0, 0, r2, 0
 	419d0048	[0x38]	bc  iftrue, CRF0[EQ], 72, [0x80]	
 	2c020001	[0x3c]	cmpi  crf0, 0, r2, 1
@@ -186,14 +186,14 @@ Code for Method:switchFar2
 	48000024	[0x5c]	b  36, [0x80]	
 	38600002	[0x60]	li  r3, 2
 	7c621b78	[0x64]	lr  r2, r3
-	4800005c	[0x68]	b  92, [0xc4]	
+	48000060	[0x68]	b  96, [0xc8]	
 	38420002	[0x6c]	addi  r2, r2, 2
 	48000010	[0x70]	b  16, [0x80]	
 	38600003	[0x74]	li  r3, 3
 	7c621b78	[0x78]	lr  r2, r3
-	48000048	[0x7c]	b  72, [0xc4]	
+	4800004c	[0x7c]	b  76, [0xc8]	
 	2c020000	[0x80]	cmpi  crf0, 0, r2, 0
-	419d0040	[0x84]	bc  iftrue, CRF0[EQ], 64, [0xc4]	
+	419d0044	[0x84]	bc  iftrue, CRF0[EQ], 68, [0xc8]	
 	2c020001	[0x88]	cmpi  crf0, 0, r2, 1
 	419d0030	[0x8c]	bc  iftrue, CRF0[EQ], 48, [0xbc]	
 	2c020002	[0x90]	cmpi  crf0, 0, r2, 2
@@ -203,14 +203,16 @@ Code for Method:switchFar2
 	2c020004	[0xa0]	cmpi  crf0, 0, r2, 4
 	419d0018	[0xa4]	bc  iftrue, CRF0[EQ], 24, [0xbc]	
 	2c020005	[0xa8]	cmpi  crf0, 0, r2, 5
-	419d0018	[0xac]	bc  iftrue, CRF0[EQ], 24, [0xc4]	
+	419d001c	[0xac]	bc  iftrue, CRF0[EQ], 28, [0xc8]	
 	4800000c	[0xb0]	b  12, [0xbc]	
 	38420002	[0xb4]	addi  r2, r2, 2
-	4800000c	[0xb8]	b  12, [0xc4]	
-	3840ffff	[0xbc]	li  r2, -1
-	48000004	[0xc0]	b  4, [0xc4]	
-	8001000c	[0xc4]	lwz  r0, 12(r1)
-	7c0803a6	[0xc8]	mtspr  LR, r0
-	38210010	[0xcc]	addi  r1, r1, 16
-	4e800020	[0xd0]	bclr always, CRF7[SO]
+	48000010	[0xb8]	b  16, [0xc8]	
+	3860ffff	[0xbc]	li  r3, -1
+	7c621b78	[0xc0]	lr  r2, r3
+	48000004	[0xc4]	b  4, [0xc8]	
+	8001000c	[0xc8]	lwz  r0, 12(r1)
+	7c0803a6	[0xcc]	mtspr  LR, r0
+	38210010	[0xd0]	addi  r1, r1, 16
+	4e800020	[0xd4]	bclr always, CRF7[SO]
+
 

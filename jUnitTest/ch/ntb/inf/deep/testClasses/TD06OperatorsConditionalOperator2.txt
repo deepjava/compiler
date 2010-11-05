@@ -115,136 +115,132 @@ method ConditionalOperator2
 SSA for Method: ConditionalOperator2
    SSANode 0:
       EntrySet {[ , ], [ , , , , , , , , ]}
-         0: NoOpnd[sCloadConst] 0 (Integer),   end=27, index=1, reg=30
-         1: NoOpnd[sCloadConst] 0 (Integer),   end=15, index=2, reg=29
-         2: NoOpnd[sCloadConst] 1 (Integer),   end=20, index=3, reg=28
-         3: NoOpnd[sCloadConst] 0 (Integer),   end=20, index=4, reg=27
-         4: NoOpnd[sCloadConst] 1 (Integer),   end=16, index=5, reg=26
-         5: NoOpnd[sCloadConst] 2 (Integer),   end=21, index=6, reg=25
-         6: NoOpnd[sCloadConst] 3 (Integer),   end=23, index=7, reg=24
-         7: NoOpnd[sCloadConst] 101 (Integer),   end=7, index=0, reg=31
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=27, index=1, reg=2
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=15, index=2, reg=3
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=20, index=3, reg=4
+         3: NoOpnd[sCloadConst] 0 (Integer),   end=20, index=4, reg=5
+         4: NoOpnd[sCloadConst] 1 (Integer),   end=16, index=5, reg=6
+         5: NoOpnd[sCloadConst] 2 (Integer),   end=21, index=6, reg=7
+         6: NoOpnd[sCloadConst] 3 (Integer),   end=23, index=7, reg=8
+         7: NoOpnd[sCloadConst] 101 (Integer),   end=7, index=0, reg=9
          8: Branch[sCBranch] {5, 4} (Void)
       ExitSet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
 
    SSANode 1:
       EntrySet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
-         9: Monadic[sCRegMove] {4} (Integer),   end=12, index=8, reg=23
+         9: Monadic[sCRegMove] {4} (Integer),   end=12, index=8, reg=9, join={12}
          10: Branch[sCBranch]  (Void)
       ExitSet {[ 4 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 9 (Integer), ]}
 
    SSANode 2:
       EntrySet {[ , ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
-         11: Monadic[sCRegMove] {6} (Integer),   end=12, index=8, reg=23
+         11: Monadic[sCRegMove] {6} (Integer),   end=12, index=8, reg=9, join={12}
       ExitSet {[ 6 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 11 (Integer), ]}
 
    SSANode 3:
-      EntrySet {[ 12 (Integer), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
-         12: PhiFunction[sCPhiFunc] {9, 11} (Integer),   end=0, index=8, reg=23
-         13: NoOpnd[sCloadConst] 102 (Integer),   end=13, index=0, reg=31
+      EntrySet {[ Phi-Function(12), ], [ 7 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), ]}
+         12: PhiFunction[sCPhiFunc] {9, 11} (Phi-Function),   start=9, end=12, index=8, reg=9
+         13: NoOpnd[sCloadConst] 102 (Integer),   end=13, index=0, reg=9
          14: Branch[sCBranch] {5, 4} (Void)
-      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
 
    SSANode 4:
-      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
          15: Branch[sCBranch] {1} (Void)
-      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
 
    SSANode 5:
-      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
-         16: Monadic[sCRegMove] {4} (Integer),   end=24, index=8, reg=23
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
+         16: Monadic[sCRegMove] {4} (Integer),   end=24, index=8, reg=9, join={24}
          17: Branch[sCBranch]  (Void)
-      ExitSet {[ 4 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 16 (Integer), 12 (Integer) ]}
+      ExitSet {[ 4 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 16 (Integer), Phi-Function(12) ]}
 
    SSANode 6:
-      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
-         18: Monadic[sCRegMove] {5} (Integer),   end=24, index=8, reg=23
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
+         18: Monadic[sCRegMove] {5} (Integer),   end=24, index=8, reg=9, join={24}
          19: Branch[sCBranch]  (Void)
-      ExitSet {[ 5 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 18 (Integer), 12 (Integer) ]}
+      ExitSet {[ 5 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 18 (Integer), Phi-Function(12) ]}
 
    SSANode 7:
-      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
          20: Branch[sCBranch] {3, 2} (Void)
-      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
+      ExitSet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
 
    SSANode 8:
-      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
-         21: Monadic[sCRegMove] {5} (Integer),   end=24, index=8, reg=23
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
+         21: Monadic[sCRegMove] {5} (Integer),   end=24, index=8, reg=9, join={24}
          22: Branch[sCBranch]  (Void)
-      ExitSet {[ 5 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 21 (Integer), 12 (Integer) ]}
+      ExitSet {[ 5 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 21 (Integer), Phi-Function(12) ]}
 
    SSANode 9:
-      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
-         23: Monadic[sCRegMove] {6} (Integer),   end=24, index=8, reg=23
-      ExitSet {[ 6 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 23 (Integer), 12 (Integer) ]}
+      EntrySet {[ , ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
+         23: Monadic[sCRegMove] {6} (Integer),   end=24, index=8, reg=9, join={24}
+      ExitSet {[ 6 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 23 (Integer), Phi-Function(12) ]}
 
    SSANode 10:
-      EntrySet {[ 24 (Integer), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 12 (Integer) ]}
-         24: PhiFunction[sCPhiFunc] {16, 18, 21, 23} (Integer),   end=26, index=8, reg=23
-         25: NoOpnd[sCloadConst] 103 (Integer),   end=26, index=0, reg=31
+      EntrySet {[ Phi-Function(24), ], [ 13 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(12) ]}
+         24: PhiFunction[sCPhiFunc] {16, 18, 21, 23} (Phi-Function),   start=16, end=26, index=8, reg=9
+         25: NoOpnd[sCloadConst] 103 (Integer),   end=26, index=0, reg=3
          26: Branch[sCBranch] {24, 25} (Void)
-      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
 
    SSANode 11:
-      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
          27: Branch[sCBranch] {0} (Void)
-      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
 
    SSANode 12:
-      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
-         28: NoOpnd[sCloadConst] 1 (Integer),   end=29, index=-1, reg=2
+      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
+         28: NoOpnd[sCloadConst] 1 (Integer),   end=29, reg=2
          29: Branch[sCreturn] {28} (Void)
-      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
 
    SSANode 13:
-      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
-         30: NoOpnd[sCloadConst] 0 (Integer),   end=31, index=-1, reg=2
+      EntrySet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
+         30: NoOpnd[sCloadConst] 0 (Integer),   end=31, reg=2
          31: Branch[sCreturn] {30} (Void)
-      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), 24 (Integer) ]}
+      ExitSet {[ , ], [ 25 (Integer), 0 (Integer), 1 (Integer), 2 (Integer), 3 (Integer), 4 (Integer), 5 (Integer), 6 (Integer), Phi-Function(24) ]}
 
-
-Code for Method:ConditionalOperator2
-	9421ffe0	[0x0]	stwu  r1, -32(r1)
+Code for Method: ConditionalOperator2
+	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	90010020	[0x8]	stw  r0, 32(r1)
-	bee10014	[0xc]	stmw  r23, 20(r1)
-	3bc00000	[0x10]	li  r30, 0
-	3ba00000	[0x14]	li  r29, 0
-	3b800001	[0x18]	li  r28, 1
-	3b600000	[0x1c]	li  r27, 0
-	3b400001	[0x20]	li  r26, 1
-	3b200002	[0x24]	li  r25, 2
-	3b000003	[0x28]	li  r24, 3
-	3be00065	[0x2c]	li  r31, 101
-	7c1ac800	[0x30]	cmp crf0, 0, r26, r25
-	409f000c	[0x34]	bc  iffalse, CRF0[LT], 12, [0x40]	
-	7f57d378	[0x38]	lr  r23, r26
-	48000008	[0x3c]	b  8, [0x44]	
-	7f17c378	[0x40]	lr  r23, r24
-	3be00066	[0x44]	li  r31, 102
-	7c1ac800	[0x48]	cmp crf0, 0, r26, r25
-	409f001c	[0x4c]	bc  iffalse, CRF0[LT], 28, [0x68]	
-	2c1d0000	[0x50]	cmpi  crf0, 0, r29, 0
-	419d000c	[0x54]	bc  iftrue, CRF0[EQ], 12, [0x60]	
-	7f57d378	[0x58]	lr  r23, r26
-	48000020	[0x5c]	b  32, [0x7c]	
-	7f37cb78	[0x60]	lr  r23, r25
-	48000018	[0x64]	b  24, [0x7c]	
-	7c1cd800	[0x68]	cmp crf0, 0, r28, r27
-	419d000c	[0x6c]	bc  iftrue, CRF0[EQ], 12, [0x78]	
-	7f37cb78	[0x70]	lr  r23, r25
-	48000008	[0x74]	b  8, [0x7c]	
-	7f17c378	[0x78]	lr  r23, r24
-	3be00067	[0x7c]	li  r31, 103
-	7c1fb800	[0x80]	cmp crf0, 0, r31, r23
-	409e0014	[0x84]	bc  iffalse, CRF0[GT], 20, [0x98]	
-	2c1e0000	[0x88]	cmpi  crf0, 0, r30, 0
-	419d000c	[0x8c]	bc  iftrue, CRF0[EQ], 12, [0x98]	
-	38400001	[0x90]	li  r2, 1
-	48000008	[0x94]	b  8, [0x9c]	
-	38400000	[0x98]	li  r2, 0
-	bae10014	[0x9c]	lmw  r23, 20(r1)
-	80010020	[0xa0]	lwz  r0, 32(r1)
-	7c0803a6	[0xa4]	mtspr  LR, r0
-	38210020	[0xa8]	addi  r1, r1, 32
-	4e800020	[0xac]	bclr 20, 0
-
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	38600000	[0x10]	li  r3, 0
+	38800001	[0x14]	li  r4, 1
+	38a00000	[0x18]	li  r5, 0
+	38c00001	[0x1c]	li  r6, 1
+	38e00002	[0x20]	li  r7, 2
+	39000003	[0x24]	li  r8, 3
+	39200065	[0x28]	li  r9, 101
+	7c063800	[0x2c]	cmp crf0, 0, r6, r7
+	409f000c	[0x30]	bc  iffalse, CRF0[LT], 12, [0x3c]	
+	7cc93378	[0x34]	lr  r9, r6
+	48000008	[0x38]	b  8, [0x40]	
+	7d094378	[0x3c]	lr  r9, r8
+	39200066	[0x40]	li  r9, 102
+	7c063800	[0x44]	cmp crf0, 0, r6, r7
+	409f001c	[0x48]	bc  iffalse, CRF0[LT], 28, [0x64]	
+	2c030000	[0x4c]	cmpi  crf0, 0, r3, 0
+	419d000c	[0x50]	bc  iftrue, CRF0[EQ], 12, [0x5c]	
+	7cc93378	[0x54]	lr  r9, r6
+	48000020	[0x58]	b  32, [0x78]	
+	7ce93b78	[0x5c]	lr  r9, r7
+	48000018	[0x60]	b  24, [0x78]	
+	7c042800	[0x64]	cmp crf0, 0, r4, r5
+	419d000c	[0x68]	bc  iftrue, CRF0[EQ], 12, [0x74]	
+	7ce93b78	[0x6c]	lr  r9, r7
+	48000008	[0x70]	b  8, [0x78]	
+	7d094378	[0x74]	lr  r9, r8
+	38600067	[0x78]	li  r3, 103
+	7c034800	[0x7c]	cmp crf0, 0, r3, r9
+	409e0014	[0x80]	bc  iffalse, CRF0[GT], 20, [0x94]	
+	2c020000	[0x84]	cmpi  crf0, 0, r2, 0
+	419d000c	[0x88]	bc  iftrue, CRF0[EQ], 12, [0x94]	
+	38400001	[0x8c]	li  r2, 1
+	48000008	[0x90]	b  8, [0x98]	
+	38400000	[0x94]	li  r2, 0
+	8001000c	[0x98]	lwz  r0, 12(r1)
+	7c0803a6	[0x9c]	mtspr  LR, r0
+	38210010	[0xa0]	addi  r1, r1, 16
+	4e800020	[0xa4]	bclr always, CRF7[SO]

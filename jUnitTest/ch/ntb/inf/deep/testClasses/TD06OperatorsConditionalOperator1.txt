@@ -146,12 +146,10 @@ SSA for Method: ConditionalOperator1
 
    SSANode 10:
       EntrySet {[ Phi-Function(20)], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
-         20: PhiFunction[sCPhiFunc] {12, 14, 17, 19} (Phi-Function),   start=12, end=22, index=1, reg=2
-         21: NoOpnd[sCloadConst] 103 (Integer),   end=21, index=0, reg=3
+         20: PhiFunction[sCPhiFunc] {12, 14, 17, 19} (Phi-Function),   start=12, end=22, index=1, reg=5
+         21: NoOpnd[sCloadConst] 103 (Integer),   end=21, index=0, reg=2
          22: Branch[sCreturn] {20} (Void)
       ExitSet {[ ], [ 21 (Integer), Phi-Function(20), 0 (Integer), 1 (Integer), 2 (Integer) ]}
-      
-      sicher noch falsch regMove muss gleiches Ziel haben wie phi
 
 Code for Method: ConditionalOperator1
 	9421fff0	[0x0]	stwu  r1, -16(r1)
@@ -180,8 +178,9 @@ Code for Method: ConditionalOperator1
 	7c451378	[0x5c]	lr  r5, r2
 	48000008	[0x60]	b  8, [0x68]	
 	7c651b78	[0x64]	lr  r5, r3
-	38600067	[0x68]	li  r3, 103
-	8001000c	[0x6c]	lwz  r0, 12(r1)
-	7c0803a6	[0x70]	mtspr  LR, r0
-	38210010	[0x74]	addi  r1, r1, 16
-	4e800020	[0x78]	bclr always, CRF7[SO]
+	38400067	[0x68]	li  r2, 103
+	7ca22b78	[0x6c]	lr  r2, r5
+	8001000c	[0x70]	lwz  r0, 12(r1)
+	7c0803a6	[0x74]	mtspr  LR, r0
+	38210010	[0x78]	addi  r1, r1, 16
+	4e800020	[0x7c]	bclr always, CRF7[SO]

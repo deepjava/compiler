@@ -30,4 +30,11 @@ public class T06Operators {
 		return (mark > iRes) && bRes;
 	}
 
+	public static byte m3(short a, char b, long c, byte d) {
+		int x = a << 6;
+		x = a << 33;
+		x = a << b;
+		return (byte)(x << d);
+	}
+
 }

@@ -60,72 +60,70 @@ SSA for Method: stringArray
       ExitSet {[ , , , ], [ 1 (Ref-Array) ]}
 
 Code for Method: stringArray
-	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	9001001c	[0x8]	stw  r0, 28(r1)
-	bfe10010	[0xc]	stmw  r31, 16(r1)
-	38400005	[0x10]	li  r2, 5
-	e020000	[0x14]	twi  ifless, r2, 0
-	38600000	[0x18]	li  r3, 0
-	3c630000	[0x1c]	addis  r3, r3, 0
-	7c6803a6	[0x20]	mtspr  LR, r3
-	38600006	[0x24]	li  r3, 6
-	3c630000	[0x28]	addis  r3, r3, 0
-	4e800020	[0x2c]	bclr always, CRF7[SO]
-	38600000	[0x30]	li  r3, 0
-	38800009	[0x34]	li  r4, 9
-	3c840000	[0x38]	addis  r4, r4, 0
-	c820000	[0x3c]	twi  ifequal, r2, 0
-	a8a20008	[0x40]	lha  r5, 8(r2)
-	7ca32808	[0x44]	tw  ifgeU, r3, r5
-	5465103a	[0x48]	rlwinm  r5, r3, 2, 0, 29
-	38c2000c	[0x4c]	addi  r6, r2, 12
-	7c85312e	[0x50]	stwx  r4, r5, r6
-	38600001	[0x54]	li  r3, 1
-	3880000d	[0x58]	li  r4, 13
-	3c840000	[0x5c]	addis  r4, r4, 0
-	c820000	[0x60]	twi  ifequal, r2, 0
-	a8a20008	[0x64]	lha  r5, 8(r2)
-	7ca32808	[0x68]	tw  ifgeU, r3, r5
-	5465103a	[0x6c]	rlwinm  r5, r3, 2, 0, 29
-	38c2000c	[0x70]	addi  r6, r2, 12
-	7c85312e	[0x74]	stwx  r4, r5, r6
-	38600002	[0x78]	li  r3, 2
-	38800016	[0x7c]	li  r4, 22
-	3c840000	[0x80]	addis  r4, r4, 0
-	c820000	[0x84]	twi  ifequal, r2, 0
-	a8a20008	[0x88]	lha  r5, 8(r2)
-	7ca32808	[0x8c]	tw  ifgeU, r3, r5
-	5465103a	[0x90]	rlwinm  r5, r3, 2, 0, 29
-	38c2000c	[0x94]	addi  r6, r2, 12
-	7c85312e	[0x98]	stwx  r4, r5, r6
-	38600003	[0x9c]	li  r3, 3
-	3880001f	[0xa0]	li  r4, 31
-	3c840000	[0xa4]	addis  r4, r4, 0
-	c820000	[0xa8]	twi  ifequal, r2, 0
-	a8a20008	[0xac]	lha  r5, 8(r2)
-	7ca32808	[0xb0]	tw  ifgeU, r3, r5
-	5465103a	[0xb4]	rlwinm  r5, r3, 2, 0, 29
-	38c2000c	[0xb8]	addi  r6, r2, 12
-	7c85312e	[0xbc]	stwx  r4, r5, r6
-	38600004	[0xc0]	li  r3, 4
-	38800028	[0xc4]	li  r4, 40
-	3c840000	[0xc8]	addis  r4, r4, 0
-	c820000	[0xcc]	twi  ifequal, r2, 0
-	a8a20008	[0xd0]	lha  r5, 8(r2)
-	7ca32808	[0xd4]	tw  ifgeU, r3, r5
-	5465103a	[0xd8]	rlwinm  r5, r3, 2, 0, 29
-	38c2000c	[0xdc]	addi  r6, r2, 12
-	7c85312e	[0xe0]	stwx  r4, r5, r6
-	38600000	[0xe4]	li  r3, 0
-	c820000	[0xe8]	twi  ifequal, r2, 0
-	a8820008	[0xec]	lha  r4, 8(r2)
-	7ca32008	[0xf0]	tw  ifgeU, r3, r4
-	5464103a	[0xf4]	rlwinm  r4, r3, 2, 0, 29
-	38a2000c	[0xf8]	addi  r5, r2, 12
-	7c44282e	[0xfc]	lwzx  r2, r4, r5
-	bbe10010	[0x100]	lmw  r31, 16(r1)
-	8001001c	[0x104]	lwz  r0, 28(r1)
-	7c0803a6	[0x108]	mtspr  LR, r0
-	38210020	[0x10c]	addi  r1, r1, 32
-	4e800020	[0x110]	bclr always, CRF7[SO]
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400005	[0xc]	li  r2, 5
+	e020000	[0x10]	twi  ifless, r2, 0
+	38600000	[0x14]	li  r3, 0
+	3c630000	[0x18]	addis  r3, r3, 0
+	7c6803a6	[0x1c]	mtspr  LR, r3
+	38600005	[0x20]	li  r3, 5
+	3c630000	[0x24]	addis  r3, r3, 0
+	4e800020	[0x28]	bclr always, CRF7[SO]
+	38600000	[0x2c]	li  r3, 0
+	38800008	[0x30]	li  r4, 8
+	3c840000	[0x34]	addis  r4, r4, 0
+	c820000	[0x38]	twi  ifequal, r2, 0
+	a8a20008	[0x3c]	lha  r5, 8(r2)
+	7ca32808	[0x40]	tw  ifgeU, r3, r5
+	5465103a	[0x44]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x48]	addi  r6, r2, 12
+	7c85312e	[0x4c]	stwx  r4, r5, r6
+	38600001	[0x50]	li  r3, 1
+	3880000c	[0x54]	li  r4, 12
+	3c840000	[0x58]	addis  r4, r4, 0
+	c820000	[0x5c]	twi  ifequal, r2, 0
+	a8a20008	[0x60]	lha  r5, 8(r2)
+	7ca32808	[0x64]	tw  ifgeU, r3, r5
+	5465103a	[0x68]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x6c]	addi  r6, r2, 12
+	7c85312e	[0x70]	stwx  r4, r5, r6
+	38600002	[0x74]	li  r3, 2
+	38800015	[0x78]	li  r4, 21
+	3c840000	[0x7c]	addis  r4, r4, 0
+	c820000	[0x80]	twi  ifequal, r2, 0
+	a8a20008	[0x84]	lha  r5, 8(r2)
+	7ca32808	[0x88]	tw  ifgeU, r3, r5
+	5465103a	[0x8c]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x90]	addi  r6, r2, 12
+	7c85312e	[0x94]	stwx  r4, r5, r6
+	38600003	[0x98]	li  r3, 3
+	3880001e	[0x9c]	li  r4, 30
+	3c840000	[0xa0]	addis  r4, r4, 0
+	c820000	[0xa4]	twi  ifequal, r2, 0
+	a8a20008	[0xa8]	lha  r5, 8(r2)
+	7ca32808	[0xac]	tw  ifgeU, r3, r5
+	5465103a	[0xb0]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0xb4]	addi  r6, r2, 12
+	7c85312e	[0xb8]	stwx  r4, r5, r6
+	38600004	[0xbc]	li  r3, 4
+	38800027	[0xc0]	li  r4, 39
+	3c840000	[0xc4]	addis  r4, r4, 0
+	c820000	[0xc8]	twi  ifequal, r2, 0
+	a8a20008	[0xcc]	lha  r5, 8(r2)
+	7ca32808	[0xd0]	tw  ifgeU, r3, r5
+	5465103a	[0xd4]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0xd8]	addi  r6, r2, 12
+	7c85312e	[0xdc]	stwx  r4, r5, r6
+	38600000	[0xe0]	li  r3, 0
+	c820000	[0xe4]	twi  ifequal, r2, 0
+	a8820008	[0xe8]	lha  r4, 8(r2)
+	7ca32008	[0xec]	tw  ifgeU, r3, r4
+	5464103a	[0xf0]	rlwinm  r4, r3, 2, 0, 29
+	38a2000c	[0xf4]	addi  r5, r2, 12
+	7c44282e	[0xf8]	lwzx  r2, r4, r5
+	8001000c	[0xfc]	lwz  r0, 12(r1)
+	7c0803a6	[0x100]	mtspr  LR, r0
+	38210010	[0x104]	addi  r1, r1, 16
+	4e800020	[0x108]	bclr always, CRF7[SO]
