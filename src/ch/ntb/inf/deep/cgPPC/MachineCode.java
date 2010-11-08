@@ -275,11 +275,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				opds = instr.getOperands();
 				if (opds == null) {	// getstatic
 					sReg1 = instr.result.regAux1;
-					offset = ((NoOpndRef)instr).field.offSet;
+					offset = ((NoOpndRef)instr).field.offset;
 					loadConstantAndFixup(fixup, sReg1);
 				} else {	// getfield
 					sReg1 = opds[0].reg;
-					offset = ((MonadicRef)instr).item.offSet;
+					offset = ((MonadicRef)instr).item.offset;
 					createItrap(ppcTwi, TOifequal, opds[0].reg, 0);
 				}
 				switch (instr.result.type) {
@@ -365,14 +365,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					sReg2 = opds[0].regLong;
 					refReg = instr.result.regAux1;
 					type = opds[0].type;
-					offset = ((MonadicRef)instr).item.offSet;
+					offset = ((MonadicRef)instr).item.offset;
 					loadConstantAndFixup(fixup, instr.result.regAux1);
 				} else {	// putfield
 					refReg = opds[0].reg;
 					sReg1 = opds[1].reg;
 					sReg2 = opds[1].regLong;
 					type = opds[1].type;
-					offset = ((DyadicRef)instr).field.offSet;
+					offset = ((DyadicRef)instr).field.offset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}
 				switch (type) {
@@ -1006,7 +1006,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrSspr(ppcMtspr, LR, res.regAux1);
 				} else {	// invokevirtual and invokespecial and invokeinterface
 					refReg = opds[0].reg;
-					offset = ((Call)instr).item.offSet;
+					offset = ((Call)instr).item.offset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 					createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 					createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
