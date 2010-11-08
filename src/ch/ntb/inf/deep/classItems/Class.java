@@ -14,6 +14,8 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts 
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
 	
+	// TODO: counting of the methods, fields, interfaces and base classes doas'nt work properly 
+	
 	public Item methods; // list with all methods
 	public int nOfMethods = 0; // number of methods
 	
@@ -26,10 +28,22 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts 
 	
 	public int nOfBaseClasses = 0; // number of base classes
 	
+	public int[] targetConstantPool; // pool with float and double constants for the target
+	public int targetConstantPoolSize = 0; // size of this pool on the target (in bits)
+	
+	public int[] targetStringPool; // pool with constant stings for the target 
+	public int targetStringPoolSize = 0; // size of this pool on the target (in bits)
+	
+	public int[] targetClassDescriptor; // class descriptor (for the target)
+	public int targetClassDescriptorSize = 0; // size of the class descriptor on the target
+	
+	public int classFieldsSizeOnTarget = 0; // size of all class/static fields on the target
+	public int codeSizeOnTarget = 0; // size of the machine code on the target
+	
 	Class[] imports;
 	
 	HString srcFileName; // file ident + ".java", e.g.  String.java  for java/lang/String.java
-
+	
 	//--- debug fields
 	int magic, version;
 

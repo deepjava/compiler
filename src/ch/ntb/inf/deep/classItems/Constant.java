@@ -57,6 +57,17 @@ public class Constant extends DataItem {
 		}
 	}
 
+	public void printValue() {
+		vrb.print("value = "); 
+		printConstVal(type, valueH, valueL);
+	}
+
+	public void printValue(int indentLevel) {
+		indent(indentLevel);
+		vrb.print("value = "); 
+		printConstVal(type, valueH, valueL);
+	}
+	
 	public void print(int indentLevel){
 		super.print(indentLevel);
 		indent(1);

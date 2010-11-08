@@ -30,8 +30,8 @@ public class Type extends Item {
 	static int prevCpLenth, constPoolCnt;
 
 	//--- instance fields
-	byte category; // { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
-	byte sizeInBits;// { 1..8, 16, 32, 64 }
+	public byte category; // { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
+	public byte sizeInBits;// { 1..8, 16, 32, 64 }
 	public char objectSizeOrDim; // [Byte],  if(category == 'L') object size in Byte,   if(category == '[') dimension of the array
 
 	//--- class (static) methods
