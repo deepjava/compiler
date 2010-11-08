@@ -207,6 +207,10 @@ if (testAssertion) {
 	public abstract String toString();
 
 
+	public int sizeInBits() {
+		return arrayLen * 16;
+	}
+	
 	
 	//--- debug primitives
 
