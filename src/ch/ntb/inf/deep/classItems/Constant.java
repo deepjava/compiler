@@ -11,6 +11,11 @@ public class Constant extends DataItem {
 		this.valueL = valueLow;
 	}
 
+	public Constant(int valueHigh, int valueLow){
+		this.valueH = valueHigh;
+		this.valueL = valueLow;
+	}
+
 
 	//--- debug primitives
 	public void printShort(int indentLevel){
