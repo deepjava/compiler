@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.cgPPC;
 
+import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 
@@ -30,9 +31,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		for (int i = 0; i < regAtIndex.length; i++) regAtIndex[i] = -1;
 		
-		insertRegMoves(ssa);	// nicht mehr nötig ??
-		SSA.renumberInstructions(ssa.cfg);
-		nofInstructions = 64; // ANzahl noch bestimmen
+		insertRegMoves(ssa);
+		
+		// copy into local array for faster access
+		nofInstructions = SSA.renumberInstructions(ssa.cfg);
 		if (nofInstructions > instrs.length) {
 			instrs = new SSAInstruction[nofInstructions];
 		}
@@ -47,14 +49,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			}
 			b = (SSANode) b.next;
 		}	
-		nofInstructions = count;
 		
 		resolvePhiFunctions();	
 		calcLiveRange();	// compute live intervals
 		assignRegType();	// assign volatile or nonvolatile type
 	}
 
-	// Inserts register moves for phi functions in case that ....
+	// Inserts register moves for phi functions in case that opnd and 
+	// result of phi function have different index
 	private static void insertRegMoves(SSA ssa) {
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b != null) {
@@ -223,6 +225,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					}
 				}
 			}
+			
+			// reserve temporary storage on the stack for certain fpr operations
+			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
+				MachineCode.tempStorage = true;
+			System.out.println("temp storage = true");
+			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
+				MachineCode.tempStorage = true;
 
 			// reserve register for result of instruction
 			SSAValue joinVal = res.join;
@@ -286,13 +295,18 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| (instr1.ssaOpcode == sCshr)
 							|| (instr1.ssaOpcode == sCushr)
 							|| ((instr1.ssaOpcode == sCbranch) && (res.type == tInteger ))) {
-						Object obj = res.constant;
-						long immValLong;
-						if (obj instanceof Long) immValLong = (Long)obj;	
-						else immValLong = (Integer)obj;
-						if ((immValLong >= -32768) && (immValLong <= 32767)) {
-						} else 
-							findReg(res);
+						Constant constant = (Constant)res.constant;
+						if (res.type == tLong) {
+							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+							if ((immValLong >= -32768) && (immValLong <= 32767)) {
+							} else
+								findReg(res);
+						} else {	
+							int immVal = constant.valueH;
+							if ((immVal >= -32768) && (immVal <= 32767)) {
+							} else 
+								findReg(res);
+						}
 					} else {	// opd has index != -1 or cannot be used as immediate opd	
 						findReg(res);			
 					}
