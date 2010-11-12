@@ -91,8 +91,9 @@ public class SSA implements IClassFileConsts{
 
 	/**
 	 * Renumber all the instructions in the SSA before computing live intervals
+	 * @return nof SSA instructions in method
 	 */
-	public static void renumberInstructions(CFG cfg) {
+	public static int renumberInstructions(CFG cfg) {
 		int counter = 0;
 		SSANode b = (SSANode) cfg.rootNode;
 		while (b != null) {
@@ -104,6 +105,7 @@ public class SSA implements IClassFileConsts{
 			}
 			b = (SSANode) b.next;
 		}
+		return counter;
 	}
 	
 	

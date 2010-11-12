@@ -16,7 +16,8 @@ public interface SSAInstructionOpcs {
 	byte  // attributes of SSA instructions
 	ssaApBase = 8, 
 	ssaApCall = ssaApBase+0,   ssaApPhi = ssaApBase+1,   
-	ssaApLoadLocal = ssaApBase+2,	ssaApImmOpd = ssaApBase+3;
+	ssaApLoadLocal = ssaApBase+2,	ssaApImmOpd = ssaApBase+3,
+	ssaApTempStore = ssaApBase+4;
 
 	int[] scAttrTab = {
 			/*Format:	0xuuuN'aacc,
@@ -47,10 +48,10 @@ public interface SSAInstructionOpcs {
 			0x00000000 | (1<<ssaApImmOpd) + sCor,
 			0x00000000 | (1<<ssaApImmOpd) + sCxor,
 			
-			0x00060000 + sCconvInt, 	//convert from
-			0x00000000 + sCconvLong,
-			0x00000000 + sCconvFloat,
-			0x00000000 + sCconvDouble,
+			0x00060000 | (1<<ssaApTempStore) + sCconvInt, 	//convert from
+			0x00000000 | (1<<ssaApTempStore) + sCconvLong,
+			0x00000000 | (1<<ssaApTempStore) + sCconvFloat,
+			0x00000000 | (1<<ssaApTempStore) + sCconvDouble,
 			
 			0x00000000 + sCcmpl, 		//compare
 			0x00000000 + sCcmpg,

@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
@@ -304,7 +305,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_m1:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = -1;
+				result.constant = new Constant(-1, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -313,7 +314,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = 0;
+				result.constant = new Constant(0, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -322,7 +323,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = 1;
+				result.constant = new Constant(1, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -331,7 +332,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_2:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = 2;
+				result.constant = new Constant(2, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -340,7 +341,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_3:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = 3;
+				result.constant = new Constant(3, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -349,7 +350,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_4:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = 4;
+				result.constant = new Constant(4, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -358,7 +359,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_5:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = 5;
+				result.constant = new Constant(5, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -367,7 +368,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
-				result.constant = 0;
+				result.constant = new Constant(0, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -376,7 +377,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
-				result.constant = 1;
+				result.constant = new Constant(0, 1);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -385,7 +386,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
-				result.constant = 0.0f;
+				result.constant = new Constant(Float.floatToIntBits(0.0f), 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -394,7 +395,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
-				result.constant = 1.0f;
+				result.constant = new Constant(Float.floatToIntBits(1.0f), 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -403,7 +404,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfconst_2:
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
-				result.constant = 2.0f;
+				result.constant = new Constant(Float.floatToIntBits(2.0f), 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -412,7 +413,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
-				result.constant = 0.0;
+				result.constant = new Constant((int)(Double.doubleToLongBits(0.0)>>32), (int)(Double.doubleToLongBits(0.0)));
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -421,7 +422,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
-				result.constant = 1.0;
+				result.constant = new Constant((int)(Double.doubleToLongBits(1.0)>>32), (int)(Double.doubleToLongBits(1.0)));
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -433,7 +434,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = ssa.cfg.code[bca];// sign-extended
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = val;
+				result.constant = new Constant(val, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -446,7 +447,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = sval;// sign-extended to int
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = val;
+				result.constant = new Constant(val, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -460,7 +461,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
 					if(constant.type.name.charAt(0)== 'I'){//is a int
 						result.type = SSAValue.tInteger;
-						result.constant = constant.valueH;
+						result.constant = constant;
 					}else{
 						if(constant.type.name.charAt(0)== 'F'){ //is a float
 							result.type = SSAValue.tFloat;
@@ -494,7 +495,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
 					if(constant.type.name.charAt(0)== 'I'){//is a int
 						result.type = SSAValue.tInteger;
-						result.constant = constant.valueH;
+						result.constant = constant;
 					}else{
 						if(constant.type.name.charAt(0)== 'F'){ //is a float
 							result.type = SSAValue.tFloat;
@@ -526,15 +527,13 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
 					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					long temp = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);;
 					if(constant.type.name.charAt(0)== 'D'){//is a Double
 						result.type = SSAValue.tDouble;
 						result.constant = constant;
-//						result.constant = Double.longBitsToDouble(temp);
 					}else{
 						if(constant.type.name.charAt(0)== 'J'){ //is a Long
 							result.type = SSAValue.tLong;
-							result.constant = temp;
+							result.constant = constant;
 						}else{
 							assert false : "Wrong Constant type";
 						}
@@ -1501,7 +1500,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 				value2 = new SSAValue();
 				value2.type = SSAValue.tInteger;
-				value2.constant = val1;
+				value2.constant = new Constant(val1, 0);
 				instr = new NoOpnd(sCloadConst);
 				instr.result = value2;
 				addInstruction(instr);
@@ -2089,7 +2088,6 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
-				((Call)instr).isStatic = true;
 				addInstruction(instr);
 				if(result.type != SSAValue.tVoid){
 					pushToStack(result);
@@ -2108,7 +2106,6 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
 				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
-				((Call)instr).isInterface = true;
 				addInstruction(instr);
 				if(result.type != SSAValue.tVoid){
 					pushToStack(result);
@@ -2120,14 +2117,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = new SSAValue();
 				result = new SSAValue();
 				if(ssa.cfg.method.owner.constPool[val] instanceof Class){
-					Class clazz = (Class)ssa.cfg.method.owner.constPool[val];
+					Item clazz = ssa.cfg.method.owner.constPool[val];
 					value1.type = SSAValue.tRef;
-					value1.constant = clazz.name;
+					value1.constant = clazz;
 				}else{
 					if(ssa.cfg.method.owner.constPool[val] instanceof Type){//it is a Array of objects
-						Type type = (Type)ssa.cfg.method.owner.constPool[val];
+						Item type = ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tAref;
-						result.constant = type.type.name;
+						result.constant = type.type;
 					}else{
 						assert false : "Unknown Parametertype for new";
 						break;

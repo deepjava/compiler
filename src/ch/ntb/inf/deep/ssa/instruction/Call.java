@@ -5,8 +5,6 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Call extends SSAInstruction {
 	public Item item;
-	public boolean isStatic = false;
-	public boolean isInterface = false;
 
 	public Call(int opCode) {
 		ssaOpcode = opCode;

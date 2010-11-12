@@ -1,12 +1,14 @@
 package ch.ntb.inf.deep.ssa;
 
+import ch.ntb.inf.deep.classItems.Item;
+
 /**
  * @author   millischer
  */
 public class SSAValue implements SSAValueType {
 	public int type;
 	public int index = -1;	// index into state array	
-	public Object constant;
+	public Item constant;	// contains reference to constant data
 	public int n = -1;	// each ssa-instruction is numbered for the register allocation 
 	public int end;	// indicates the end number of the live range for this value
 	public int reg = -1;	// register or memory slot number
@@ -15,8 +17,8 @@ public class SSAValue implements SSAValueType {
 	public int regAux2 = -1;	// auxiliary register 2, used for translating complex SSA instructions 
 	public int volRegs;	// stores information about volatiles which are used to produce this value
 	public int memorySlot = -1;
-	public SSAValue join;
-	public boolean nonVol;
+	public SSAValue join;	// for resolving phi functions
+	public boolean nonVol;	// value resides in volatile or nonvolatile register
 	
 	public SSAValue(){
 	}
