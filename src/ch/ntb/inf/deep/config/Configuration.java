@@ -8,20 +8,43 @@ public class Configuration {
 	private static SysModules sysModules;
 	private static RegInit regInit;
 	private static OperatingSystem os;
-	
-	
-	
-	
+
 	/**
-	 * Returns the first Segment which matches the attributes and classname.
-	 * If no match the methode returns null.
+	 * Returns the first Segment which contains the code for the given
+	 * classname. If no such segment exists the method returns null.
 	 * 
-	 * @param attributes defined in {@link IAttributes}
-	 * @param Class the name of the desired Class 
+	 * @param Class
+	 *            the name of the desired Class
 	 * @return a Segment or null
 	 */
-	public static Segment getSegmentOf(int attributes, String Class){
-		
+	public static Segment getCodeSegmentOf(String Class) {
+
+		return null;
+	}
+
+	/**
+	 * Returns the first Segment which contains the constants for the given
+	 * classname. If no such segment exists the method returns null.
+	 * 
+	 * @param Class
+	 *            the name of the desired Class
+	 * @return a Segment or null
+	 */
+	public static Segment getConstSegmentOf(String Class) {
+
+		return null;
+	}
+
+	/**
+	 * Returns the first Segment which contains the variables for the given
+	 * classname. If no such segment exists the method returns null.
+	 * 
+	 * @param Class
+	 *            the name of the desired Class
+	 * @return a Segment or null
+	 */
+	public static Segment getVarSegmentOf(String Class) {
+
 		return null;
 	}
 
