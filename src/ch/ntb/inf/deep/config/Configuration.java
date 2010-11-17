@@ -10,6 +10,11 @@ public class Configuration {
 	private static SysModules sysModules;
 	private static RegInit regInit;
 	private static OperatingSystem os;
+	private static Class heap;
+	private static final int maxNumbersOfHeaps = 4;
+	private static final int maxNumbersOfStacks = 4;
+	public static Segment[] heaps = new Segment[maxNumbersOfHeaps];
+	public static Segment[] stacks = new Segment[maxNumbersOfStacks];
 
 	/**
 	 * Returns the first Segment which contains the code for the given
@@ -69,16 +74,22 @@ public class Configuration {
 	}
 	
 	/**
-	 * @return the number of defined stacks
+	 * @return the number of defined stacks.
 	 */
 	public static int getNumberOfStacks(){
 		return 0;
 	}
 	
 	/**
-	 * @return the number of defined heaps
+	 * @return the number of defined heaps.
 	 */
 	public static int getNumberOfHeaps(){
 		return 0;
 	}
+	
+	public static Class getReferenceToHeapClass(){
+		//finde Heap klasse und cache sie
+		return heap;
+	}
+	
 }
