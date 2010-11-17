@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.strings.HString;
+
 public class Configuration {
 	private static Project project;
 	private static SystemConstants constants;
@@ -13,11 +15,11 @@ public class Configuration {
 	 * Returns the first Segment which contains the code for the given
 	 * classname. If no such segment exists the method returns null.
 	 * 
-	 * @param Class
+	 * @param clazz
 	 *            the name of the desired Class
 	 * @return a Segment or null
 	 */
-	public static Segment getCodeSegmentOf(String Class) {
+	public static Segment getCodeSegmentOf(HString clazz) {
 
 		return null;
 	}
@@ -26,11 +28,11 @@ public class Configuration {
 	 * Returns the first Segment which contains the constants for the given
 	 * classname. If no such segment exists the method returns null.
 	 * 
-	 * @param Class
+	 * @param clazz
 	 *            the name of the desired Class
 	 * @return a Segment or null
 	 */
-	public static Segment getConstSegmentOf(String Class) {
+	public static Segment getConstSegmentOf(HString clazz) {
 
 		return null;
 	}
@@ -39,13 +41,44 @@ public class Configuration {
 	 * Returns the first Segment which contains the variables for the given
 	 * classname. If no such segment exists the method returns null.
 	 * 
-	 * @param Class
+	 * @param clazz
 	 *            the name of the desired Class
 	 * @return a Segment or null
 	 */
-	public static Segment getVarSegmentOf(String Class) {
+	public static Segment getVarSegmentOf(HString clazz) {
 
 		return null;
 	}
-
+	
+	/**
+	 * Sets the projectblock of this configuration. If a Project is already set it 
+	 * will be overwritten.
+	 * 
+	 * @param project
+	 */
+	public static void setProject(Project project){
+		Configuration.project = project;
+		
+	}
+	
+	/**
+	 * @return the project which was set or null.
+	 */
+	public static Project getProject(){
+		return Configuration.project;
+	}
+	
+	/**
+	 * @return the number of defined stacks
+	 */
+	public static int getNumberOfStacks(){
+		return 0;
+	}
+	
+	/**
+	 * @return the number of defined heaps
+	 */
+	public static int getNumberOfHeaps(){
+		return 0;
+	}
 }
