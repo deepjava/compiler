@@ -8,6 +8,7 @@ public class Segment implements IAttributes {
 	int attributes = 0;
 	int baseAddress = -1;
 	int size = 0;
+	int requiredSize = 0;
 	int width = 0;
 	
 	public Segment() {}
@@ -83,5 +84,21 @@ public class Segment implements IAttributes {
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Add Size to requiredSize.
+	 * @param size
+	 */
+	public void addToRequiredSize(int size){
+		requiredSize += size;
+	}
+	
+	
+	/**
+	 * @return the required size of the Segement.
+	 */
+	public int getRequiredSize(){
+		return requiredSize;
 	}
 }
