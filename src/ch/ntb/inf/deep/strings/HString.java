@@ -207,9 +207,7 @@ if (testAssertion) {
 	public abstract String toString();
 
 
-	public int sizeInBits() {
-		return arrayLen * 16;
-	}
+	public abstract int sizeInByte();
 	
 	
 	//--- debug primitives

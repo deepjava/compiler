@@ -175,4 +175,8 @@ public class H8String extends HString {
 //    	printlnChars(strChars, strChars.length);
     	return new String(strChars);
     }
+    
+    public int sizeInByte() {
+    	return length;
+    }
 }

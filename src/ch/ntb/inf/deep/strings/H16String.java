@@ -119,4 +119,8 @@ public class H16String extends HString {
     public String toString(){
      	return new String(chars);
     }
+    
+    public int sizeInByte() {
+    	return 2 * length;
+    }
 }
