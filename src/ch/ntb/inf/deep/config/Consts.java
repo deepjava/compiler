@@ -1,39 +1,35 @@
 package ch.ntb.inf.deep.config;
 
-import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
-public class SystemConstants implements ErrorCodes {
-	private static SystemConstants sysBlock;
-	ValueAssignment sysConst;
+public class Consts implements ErrorCodes {
 
-	private SystemConstants() {
+	private static Consts constBlock;
+	ValueAssignment consts;
+
+	private Consts() {
 	}
 
-	public static SystemConstants getInstance() {
-		if (sysBlock == null) {
-			sysBlock = new SystemConstants();
+	public static Consts getInstance() {
+		if (constBlock == null) {
+			constBlock = new Consts();
 		}
-		return sysBlock;
+		return constBlock;
 	}
 
-	public void addSysConst(HString constName, int value) {
-		if (sysConst == null) {
-			sysConst = new ValueAssignment(constName, value);
+	public void addConst(HString constName, int value) {
+		if (consts == null) {
+			consts = new ValueAssignment(constName, value);
 			return;
 		}
 		int constHash = constName.hashCode();
-		ValueAssignment current = sysConst;
+		ValueAssignment current = consts;
 		ValueAssignment prev = null;
 		while (current != null) {
 			if (current.name.hashCode() == constHash) {
-				if (current.name.equals(sysConst.name)) {
-					ErrorReporter.reporter
-							.error(
-									errOverwriteProtectedConst,
-									constName.toString()
-											+ " is allready set, overwriting is not allowed\n");
-					return;
+				if (current.name.equals(consts.name)) {
+					// TODO warn user
+					current.setValue(value);
 				}
 			}
 			prev = current;
@@ -44,17 +40,17 @@ public class SystemConstants implements ErrorCodes {
 
 	}
 
-	public ValueAssignment getSysConst() {
-		return sysConst;
+	public ValueAssignment getConst() {
+		return consts;
 	}
 
 	public void println(int indentLevel) {
-		if (sysConst != null) {
+		if (consts != null) {
 			for (int i = indentLevel; i > 0; i--) {
 				System.out.print("  ");
 			}
-			System.out.println("sysconst {");
-			ValueAssignment current = sysConst;
+			System.out.println("constants {");
+			ValueAssignment current = consts;
 			while (current != null) {
 				current.println(indentLevel + 1);
 				current = current.next;
@@ -68,7 +64,7 @@ public class SystemConstants implements ErrorCodes {
 
 	public int getConstByName(HString name) {
 		int constHash = name.hashCode();
-		ValueAssignment current = sysConst;
+		ValueAssignment current = consts;
 		while (current != null) {
 			if (current.name.hashCode() == constHash) {
 				if (current.name.equals(name)) {

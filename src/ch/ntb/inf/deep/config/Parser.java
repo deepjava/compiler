@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,8 +9,9 @@ import java.util.ArrayList;
 
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.strings.HString;
 
-public class Parser {
+public class Parser implements ErrorCodes, IAttributes {
 
 	// private static final boolean DEBUG = true;
 
@@ -21,26 +23,28 @@ public class Parser {
 			sRBracket = g1 + 5;
 	// -------- Punctuation mark ",", '"', ";", "."
 	private static final short g2 = g1 + 6, sComma = g2,
-			sQuotationMark = g2 + 1, sSemicolon = g2 + 2, sDot = g2 + 3;
+			sQuotationMark = g2 + 1, sSemicolon = g2 + 2, sDot = g2 + 3,
+			sColon = g2 + 4;
 	// -------- Math op.: "*", "/", "+", "-"
-	private static final short g3 = g2 + 4, sMul = g3, sDiv = g3 + 1,
+	private static final short g3 = g2 + 5, sMul = g3, sDiv = g3 + 1,
 			sPlus = g3 + 2, sMinus = g3 + 3;
 	// -------- Assignment op.: "="
 	private static final short g4 = g3 + 4, sEqualsSign = g4, sAt = g4 + 1;
 	// -------- Access attribute : "read", "write"
 	private static final short g5 = g4 + 2, sRead = g5, sWrite = g5 + 1;
 	// -------- Content attribute: "const", "code", "var", "heap", "stack",
-	// "sysconst"
+	// "systab"
 	private static final short g6 = g5 + 2, sConst = g6, sCode = g6 + 1,
-			sVar = g6 + 2, sHeap = g6 + 3, sStack = g6 + 4, sSysConst = g6 + 5;
+			sVar = g6 + 2, sHeap = g6 + 3, sStack = g6 + 4, sSysTab = g6 + 5,
+			sDefault = g6 + 6;
 	// -------- Register type: "GPR", "FPR", "SPR"
-	private static final short g7 = g6 + 6, sGPR = g7, sFPR = g7 + 1,
+	public static final short g7 = g6 + 7, sGPR = g7, sFPR = g7 + 1,
 			sSPR = g7 + 2;
 	// -------- Register representation: "HEX", "DEZ", "BIN", "FLOAT"
-	private static final short g8 = g7 + 3, sHex = g8, sDez = g8 + 1,
+	public static final short g8 = g7 + 3, sHex = g8, sDez = g8 + 1,
 			sBin = g8 + 2, sFloat = g8 + 3;
 	// -------- Assignment keywords; "version", "description", "import",
-	// "device", "attributes", "width", "size", "base", "systemtable",
+	// "device", "attributes", "width", "size", "base",
 	// "programmer", "rootclasses", "segmentsize", "arraysize", "nofsegments",
 	// "xx", "xxx"
 	// "kernel", "heap", "interrupt", "exception", "addr", "type", "repr",
@@ -48,33 +52,26 @@ public class Parser {
 	private static final short g9 = g8 + 4, sVersion = g9,
 			sDescription = g9 + 1, sImport = g9 + 2, sAttributes = g9 + 3,
 			sWidth = g9 + 4, sSize = g9 + 5, sBase = g9 + 6,
-			sSystemtable = g9 + 7, sRootclasses = g9 + 8,
-			sSegmentsize = g9 + 9, sArraysize = g9 + 10,
-			sNofsegements = g9 + 11, sKernel = g9 + 12, sInterrupt = g9 + 13,
-			sException = g9 + 14, sProgram = g9 + 15, sXx = g9 + 16,
-			sXxx = g9 + 17, sAddr = g9 + 18, sType = g9 + 19, sRepr = g9 + 20,
-			sLibPath = g9 + 21, sDebugLevel = g9 + 22, sPrintLevel = g9 + 23;
+			sRootclasses = g9 + 7, sSegmentsize = g9 + 8, sArraysize = g9 + 9,
+			sNofsegements = g9 + 10, sKernel = g9 + 11, sInterrupt = g9 + 12,
+			sException = g9 + 13, sXx = g9 + 14, sXxx = g9 + 15,
+			sAddr = g9 + 16, sType = g9 + 17, sRepr = g9 + 18,
+			sLibPath = g9 + 19, sDebugLevel = g9 + 20, sPrintLevel = g9 + 21;
 	// -------- Block keywords: "meta", "constants", " device", "reginit",
-	// "segment", "memorymap", "map", "modules", "sysmodules", "project",
-	// "segmentarray", register", operatingsystem
-	private static final short g10 = g9 + 24, sMeta = g10,
+	// "segment", "memorymap", "map", "modules", "project",
+	// "segmentarray", register", operatingsystem, sysconst
+	private static final short g10 = g9 + 22, sMeta = g10,
 			sConstants = g10 + 1, sDevice = g10 + 2, sReginit = g10 + 3,
 			sSegment = g10 + 4, sMemorymap = g10 + 5, sMap = g10 + 6,
-			sModules = g10 + 7, sSysmodules = g10 + 8, sProject = g10 + 9,
+			sModules = g10 + 7, sTargetConf = g10 + 8, sProject = g10 + 9,
 			sSegmentarray = g10 + 10, sRegistermap = g10 + 11,
-			sRegister = g10 + 12, sOperatingSystem = g10 + 13;
+			sRegister = g10 + 12, sOperatingSystem = g10 + 13,
+			sSysConst = g10 + 14;
 	// -------- Designator, IntNumber,
-	private static final short g11 = g10 + 14, sDesignator = g11,
+	private static final short g11 = g10 + 15, sDesignator = g11,
 			sNumber = g11 + 1;
 	// -------- End of file: EOF
 	private static final short g12 = g11 + 2, sEndOfFile = g12;
-	// -------- Error codes
-	private static final short errDigitExp = 101, errRParenExp = 102,
-			errRBraceExp = 103, errRBracketExp = 104,
-			errQuotationMarkExp = 105, errIOExp = 106,
-			errUnexpectetSymExp = 107, errLBraceExp = 108,
-			errLBracketExp = 109, errSemicolonMissExp = 110,
-			errAssignExp = 111;
 
 	private static int nOfErrors;
 	private static int sym;
@@ -82,61 +79,88 @@ public class Parser {
 	private static int chBuffer;
 	private static int intNumber;
 	private static ErrorReporter reporter = ErrorReporter.reporter;
+	private static ArrayList<String> importedFiles = new ArrayList<String>();
+	private static String loc;
+	private static String libPath;
 
 	private BufferedReader configFile;
 	private ArrayList<String> importList;
 
 	public static void main(String[] args) {
-
-		Parser p = new Parser();
-		p.parseAndCreateConfig("D:/work/Crosssystem/deep/rsc/MyProject.deep");
-		Dbg.vrb.println();
+		parseAndCreateConfig("D:/work/Crosssystem/deep", "rsc/MyProject.deep");
 		Dbg.vrb.println("Config read with " + nOfErrors + " error(s)");
+		Configuration.print();
+		Configuration.createInterfaceFile("D:/work/Crosssystem/deep", "rsc/TestInterface.java");
 	}
 
-	public void parseAndCreateConfig(String file){
+	public Parser(String file) {
 		try {
 			importList = new ArrayList<String>();
 			configFile = new BufferedReader(new FileReader(file));
 		} catch (FileNotFoundException e) {
 			reporter.error(errIOExp, e.getMessage());
 		}
-		Config();
 	}
 
-	private int Config() {
+	public static void parseAndCreateConfig(String location, String file) {
+		String fileToRead;
+		importedFiles.add(file);
+		if (Parser.loc == null) {// save only the first location by the first
+			// call of the static method
+			// parseAndCreateConfig(...)
+			if (location.endsWith("/")) {
+				fileToRead = location + file;
+				Parser.loc = location;
+			} else {
+				fileToRead = location + "/" + file;
+				Parser.loc = location + "/";
+			}
+		} else if (location.endsWith("/")) {
+			fileToRead = location + file;
+		} else {
+			fileToRead = location + "/" + file;
+		}
+		Parser par = new Parser(fileToRead);
+		par.config();
+	}
+
+	private int config() {
 		// read first Symbol
 		next();
 
-		Meta();
+		meta();
 
 		while (sym != sEndOfFile) {
 			switch (sym) {
 			case sConstants:
-				next();
-				Constants();
+				constants();
 				break;
 			case sMemorymap:
-				MemoryMap();
+				memoryMap();
 				break;
 			case sRegistermap:
-				Registermap();
+				registermap();
 				break;
-			case sSysmodules:
-				SystemModules();
+			case sTargetConf:
+				targetconfiguration();
 				break;
 			case sReginit:
-				RegInit();
+				regInit();
 				break;
 			case sProject:
-				Project();
+				project();
 				break;
 			case sOperatingSystem:
-				OperatingSystem();
+				operatingSystem();
+				break;
+			case sSysConst:
+				sysconst();
 				break;
 			default:
 				nOfErrors++;
-				reporter.error(errUnexpectetSymExp, "expectet symbol : constants | memorymap | registermap | sysmodules | reginit | project | operatingsystem, received symbol: " + symToString() + "\n" );
+				reporter.error(errUnexpectetSymExp,
+								"expectet symbol : constants | sysconst | memorymap | registermap | targetconfiguration | reginit | project | operatingsystem, received symbol: "
+										+ symToString() + "\n");
 				next();
 			}
 		}
@@ -178,139 +202,6 @@ public class Parser {
 		}
 		next();
 		return sb.toString();
-	}
-
-	/**
-	 * determine the next symbol ignores tabs and spaces
-	 */
-	private void next() {
-		int ch = 0;
-		try {
-			if (chBuffer != 0) {
-				ch = chBuffer;
-				chBuffer = 0;
-			} else {
-				ch = configFile.read();
-			}
-			switch (ch) {
-			case '#':
-				configFile.readLine();
-				next();
-				break; // Ignore comments
-			case '\t':
-			case ' ':
-			case '\r':
-			case '\n':
-				next();
-				break; // Ignore spaces, tabs and CR
-			case '{':
-				sym = sLBrace;
-				break;
-			case '}':
-				sym = sRBrace;
-				break;
-			case '(':
-				sym = sLParen;
-				break;
-			case ')':
-				sym = sRParen;
-				break;
-			case '[':
-				sym = sLBracket;
-				break;
-			case ']':
-				sym = sRBracket;
-				break;
-			case '*':
-				sym = sMul;
-				break;
-			case '/':
-				sym = sDiv;
-				break;
-			case '+':
-				sym = sPlus;
-				break;
-			case '-':
-				sym = sMinus;
-				break;
-			case ',':
-				sym = sComma;
-				break;
-			case '"':
-				sym = sQuotationMark;
-				break;
-			case '=':
-				sym = sEqualsSign;
-				break;
-			case ';':
-				sym = sSemicolon;
-				break;
-			case '@':
-				sym = sAt;
-				break;
-			case '.':
-				sym = sDot;
-				break;
-			default:
-				String s;
-				StringBuffer sb;
-				if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
-						|| ch == '_') {// Designator or Keyword
-					sb = new StringBuffer();
-					do {
-						sb.append((char) ch);
-						ch = configFile.read();
-					} while ((ch >= 'a' && ch <= 'z')
-							|| (ch >= 'A' && ch <= 'Z')
-							|| (ch >= '0' && ch <= '9') || ch == '_');
-					chBuffer = ch;
-					s = sb.toString();
-					if (!isKeyword(s)) {
-						strBuffer = s;
-					}
-				} else if (ch >= '0' && ch <= '9') { // Number
-					sym = sNumber;
-					intNumber = 0;
-					if (ch == '0') {
-						ch = configFile.read();
-						if (ch == 'x' || ch == 'X') {// its maybe a hex digit
-							sb = new StringBuffer();
-							sb.append("0x");
-							ch = configFile.read();
-							while ((ch >= '0' && ch <= '9')
-									|| (ch >= 'a' && ch <= 'f')
-									|| (ch >= 'A' && ch <= 'F')) {
-								sb.append((char) ch);
-								ch = configFile.read();
-							}
-							chBuffer = ch;
-							intNumber = Integer.decode(sb.toString());
-							break;
-						} else if (ch == ';') {
-							chBuffer = ch;
-							return;
-						} else {// check if it is a digit
-							if (!(ch >= '0' && ch <= '9')) {
-								nOfErrors++;
-								reporter.error(errDigitExp, "Invalide Number");
-								chBuffer = ch;
-								break;
-							}
-						}
-					}
-					do {
-						intNumber = intNumber * 10 + ch - '0';
-						ch = configFile.read();
-					} while (ch >= '0' && ch <= '9');
-					chBuffer = ch;
-				} else if (ch == -1)
-					sym = sEndOfFile;
-				else
-					sym = sUndef;
-			}
-		} catch (IOException e) {
-			reporter.error(errIOExp, e.getMessage());
-		}
 	}
 
 	private static boolean isKeyword(String str) {
@@ -363,6 +254,9 @@ public class Parser {
 				return true;
 			} else if (str.equals("debuglevel")) {
 				sym = sDebugLevel;
+				return true;
+			} else if (str.equals("default")) {
+				sym = sDefault;
 				return true;
 			}
 			break;
@@ -446,9 +340,6 @@ public class Parser {
 			if (str.equals("project")) {
 				sym = sProject;
 				return true;
-			} else if (str.equals("program")) {
-				sym = sProgram;
-				return true;
 			} else if (str.equals("printlevel")) {
 				sym = sPrintLevel;
 				return true;
@@ -485,8 +376,8 @@ public class Parser {
 			} else if (str.equals("segment")) {
 				sym = sSegment;
 				return true;
-			} else if (str.equals("sysconst")) {
-				sym = sSysConst;
+			} else if (str.equals("systab")) {
+				sym = sSysTab;
 				return true;
 			} else if (str.equals("segmentsize")) {
 				sym = sSegmentsize;
@@ -497,17 +388,17 @@ public class Parser {
 			} else if (temp.equals("spr")) {
 				sym = sSPR;
 				return true;
-			} else if (str.equals("sysmodules")) {
-				sym = sSysmodules;
-				return true;
-			} else if (str.equals("systemtable")) {
-				sym = sSystemtable;
+			} else if (str.equals("sysconst")) {
+				sym = sSysConst;
 				return true;
 			}
 			break;
 		case 't':
 			if (str.equals("type")) {
 				sym = sType;
+				return true;
+			} else if (str.equals("targetconfiguration")) {
+				sym = sTargetConf;
 				return true;
 			}
 		case 'v':
@@ -542,6 +433,142 @@ public class Parser {
 		return false;
 	}
 
+	/**
+	 * determine the next symbol ignores tabs and spaces
+	 */
+	private void next() {
+		int ch = 0;
+		try {
+			if (chBuffer != 0) {
+				ch = chBuffer;
+				chBuffer = 0;
+			} else {
+				ch = configFile.read();
+			}
+			switch (ch) {
+			case '#':
+				configFile.readLine();
+				next();
+				break; // Ignore comments
+			case '\t':
+			case ' ':
+			case '\r':
+			case '\n':
+				next();
+				break; // Ignore spaces, tabs and CR
+			case '{':
+				sym = sLBrace;
+				break;
+			case '}':
+				sym = sRBrace;
+				break;
+			case '(':
+				sym = sLParen;
+				break;
+			case ')':
+				sym = sRParen;
+				break;
+			case '[':
+				sym = sLBracket;
+				break;
+			case ']':
+				sym = sRBracket;
+				break;
+			case '*':
+				sym = sMul;
+				break;
+			case '/':
+				sym = sDiv;
+				break;
+			case '+':
+				sym = sPlus;
+				break;
+			case '-':
+				sym = sMinus;
+				break;
+			case ',':
+				sym = sComma;
+				break;
+			case '"':
+				sym = sQuotationMark;
+				break;
+			case '=':
+				sym = sEqualsSign;
+				break;
+			case ';':
+				sym = sSemicolon;
+				break;
+			case '@':
+				sym = sAt;
+				break;
+			case '.':
+				sym = sDot;
+				break;
+			case ':':
+				sym = sColon;
+				break;
+			default:
+				String s;
+				StringBuffer sb;
+				if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+						|| ch == '_') {// Designator or Keyword
+					sb = new StringBuffer();
+					do {
+						sb.append((char) ch);
+						ch = configFile.read();
+					} while ((ch >= 'a' && ch <= 'z')
+							|| (ch >= 'A' && ch <= 'Z')
+							|| (ch >= '0' && ch <= '9') || ch == '_');
+					chBuffer = ch;
+					s = sb.toString();
+					if (!isKeyword(s)) {
+						strBuffer = s;
+					}
+				} else if (ch >= '0' && ch <= '9') { // Number
+					sym = sNumber;
+					intNumber = 0;
+					if (ch == '0') {
+						ch = configFile.read();
+						if (ch == 'x' || ch == 'X') {// its maybe a hex digit
+							sb = new StringBuffer();
+							sb.append("0x");
+							ch = configFile.read();
+							while ((ch >= '0' && ch <= '9')
+									|| (ch >= 'a' && ch <= 'f')
+									|| (ch >= 'A' && ch <= 'F')) {
+								sb.append((char) ch);
+								ch = configFile.read();
+							}
+							chBuffer = ch;
+							intNumber = Integer.decode(sb.toString());
+							break;
+						} else if (ch == ';') {
+							chBuffer = ch;
+							return;
+						} else {// check if it is a digit
+							if (!(ch >= '0' && ch <= '9')) {
+								nOfErrors++;
+								reporter.error(errDigitExp, "Invalide Number");
+								chBuffer = ch;
+								break;
+							}
+						}
+					}
+					do {
+						intNumber = intNumber * 10 + ch - '0';
+						ch = configFile.read();
+					} while (ch >= '0' && ch <= '9');
+					chBuffer = ch;
+				} else if (ch == -1)
+					sym = sEndOfFile;
+				else
+					sym = sUndef;
+			}
+		} catch (IOException e) {
+			reporter.error(errIOExp, e.getMessage());
+		}
+	}
+
 	private static String symToString() {
 		return symToString(sym);
 	}
@@ -570,6 +597,8 @@ public class Parser {
 			return ";";
 		case sDot:
 			return ".";
+		case sColon:
+			return ":";
 		case sMul:
 			return "*";
 		case sDiv:
@@ -596,8 +625,10 @@ public class Parser {
 			return "heap";
 		case sStack:
 			return "stack";
-		case sSysConst:
-			return "sysconst";
+		case sSysTab:
+			return "systab";
+		case sDefault:
+			return "default";
 		case sGPR:
 			return "gpr";
 		case sFPR:
@@ -626,8 +657,8 @@ public class Parser {
 			return "size";
 		case sBase:
 			return "base";
-		case sSystemtable:
-			return "systemtable";
+		case sSysConst:
+			return "sysconst";
 		case sRootclasses:
 			return "rootclasses";
 		case sSegmentsize:
@@ -642,8 +673,6 @@ public class Parser {
 			return "interrupt";
 		case sException:
 			return "exception";
-		case sProgram:
-			return "program";
 		case sXx:
 			return "xx";
 		case sXxx:
@@ -676,8 +705,8 @@ public class Parser {
 			return "map";
 		case sModules:
 			return "modules";
-		case sSysmodules:
-			return "sysmodules";
+		case sTargetConf:
+			return "targetconfiguration";
 		case sProject:
 			return "project";
 		case sSegmentarray:
@@ -699,7 +728,7 @@ public class Parser {
 		}
 	}
 
-	private void Meta() {
+	private void meta() {
 		if (sym != sMeta) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -716,21 +745,11 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("version = " + VersionAssignment() + ";");
-		Dbg.vrb.println("description = " + FileDescAssignment() + ";");
+		versionAssignment();
+		fileDescAssignment();
 		if (sym == sImport) {
-			ImportAssignment();
-			//context save of static sym
-			int cs = sym;
-			Parser p2;
-			for (int i = 0; i < importList.size(); i++) {
-				p2 = new Parser();
-				p2.parseAndCreateConfig(importList.get(i));
-			}
-			//restore context save
-			sym = cs;
+			importAssignment();
 		}
-		Dbg.vrb.println();
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
@@ -738,11 +757,34 @@ public class Parser {
 							+ " ");
 			return;
 		}
-		Dbg.vrb.println();
+		if (Configuration.getProject() != null) {
+			for (int i = 0; i < importList.size(); i++) {
+				String toCmp = importList.get(i);
+				if (!importedFiles.contains(toCmp)) {
+					importedFiles.add(toCmp);
+					File f = new File(loc + toCmp);
+					if (f.exists()) {
+						parseAndCreateConfig(loc, toCmp);
+					} else {
+						parseAndCreateConfig(libPath, toCmp);
+					}
+				}
+			}
+			// delete importList to prevent to do imports twice(in "project()")
+			importList = null;
+		}
 		next();
 	}
 
-	private void Constants() {
+	private void constants() {
+		if (sym != sConstants) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp,
+					"expected symbol: constants, received symbol: "
+							+ symToString() + " ");
+			return;
+		}
+		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
@@ -751,11 +793,10 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("Constants:");
+		Consts constants = Consts.getInstance();
 		while (sym == sDesignator) {
-			Dbg.vrb.println("  " + strBuffer + " = " + VarAssignment());
+			constants.addConst(HString.getHString(strBuffer), varAssignment());
 		}
-		Dbg.vrb.println();
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
@@ -766,7 +807,38 @@ public class Parser {
 		next();
 	}
 
-	private void MemoryMap() {
+	private void sysconst() {
+		if (sym != sSysConst) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp,
+					"expected symbol: sysconst, received symbol: "
+							+ symToString() + " ");
+			return;
+		}
+		next();
+		if (sym != sLBrace) {
+			nOfErrors++;
+			reporter.error(errLBraceExp,
+					"expected symbol: {, received symbol: " + symToString()
+							+ " ");
+			return;
+		}
+		next();
+		SystemConstants sysConst = SystemConstants.getInstance();
+		while (sym == sDesignator) {
+			sysConst.addSysConst(HString.getHString(strBuffer), varAssignment());
+		}
+		if (sym != sRBrace) {
+			nOfErrors++;
+			reporter.error(errRBraceExp,
+					"expected symbol: }, received symbol: " + symToString()
+							+ " ");
+			return;
+		}
+		next();
+	}
+
+	private void memoryMap() {
 		if (sym != sMemorymap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -783,17 +855,19 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("MemoryMap:\n");
+		MemoryMap memMap = MemoryMap.getInstance();
 		while (sym == sDevice || sym == sSegment || sym == sReginit
-				|| sym == sModules) {
+				|| sym == sModules || sym == sSegmentarray) {
 			if (sym == sDevice) {
-				Device();
+				memMap.addDevice(device());
 			} else if (sym == sSegment) {
-				Segment();
+				memMap.addSegment(segment(false, 0, 0));
 			} else if (sym == sReginit) {
-				RegInit();
+				regInit();
+			} else if (sym == sSegmentarray) {
+				segmentArray(false, null);
 			} else {// sModules
-				Modules();
+				modules(null);
 			}
 		}
 		if (sym != sRBrace) {
@@ -806,13 +880,13 @@ public class Parser {
 		next();
 	}
 
-	private void Device() {
+	private Device device() {
 		if (sym != sDevice) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
 					"expected symbol: device, received symbol: "
 							+ symToString() + " ");
-			return;
+			return null;
 		}
 		next();
 		if (sym != sDesignator) {
@@ -820,111 +894,139 @@ public class Parser {
 			reporter.error(errUnexpectetSymExp,
 					"expected symbol: designator, received symbol: "
 							+ symToString() + " ");
-			return;
+			return null;
 		}
-		// TODO create Device
-		Dbg.vrb.println("Device " + strBuffer + ":");
+		HString dev = HString.getHString(strBuffer);
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
 					"expected symbol: {, received symbol: " + symToString()
 							+ " ");
-			return;
+			return null;
 		}
 		next();
+		int attributes = 0;
+		int base = 0;
+		int width = 0;
+		int size = 0;
 		while (sym == sAttributes || sym == sBase || sym == sWidth
 				|| sym == sSize) {
 			if (sym == sAttributes) {
-				int[] attr = AttributeAssignment();
-				Dbg.vrb.print("  Attributes =");
-				for (int i = 0; i < attr.length; i++) {
-					Dbg.vrb.print(" " + symToString(attr[i]));
-				}
-				Dbg.vrb.println(";");
+				attributes = attributeAssignment();
 			} else if (sym == sBase) {
-				Dbg.vrb.println("  Base = " + BaseAssignment());
+				base = baseAssignment();
 			} else if (sym == sWidth) {
-				Dbg.vrb.println("  Width = " + WidthAssignment());
+				width = widthAssignment();
 			} else {// sSize
-				Dbg.vrb.println("  Size = " + SizeAssignment());
+				size = sizeAssignment();
 			}
 		}
-		Dbg.vrb.println();
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
 					"expected symbol: }, received symbol: " + symToString()
 							+ " ");
-			return;
+
+			return null;
+		}
+		if (attributes == 0 || width == 0 || size == 0) {
+			reporter.error(errInconsistentattributes,
+					"Missing attribute by creation of device: "
+							+ dev.toString() + "\n");
+			return null;
 		}
 		next();
+		return new Device(dev, base, size, width, attributes);
 	}
 
-	private void Segment() {
+	private Segment segment(boolean isSubSegment, int inheritAttributes,
+			int inheritWidth) {
 		if (sym != sSegment) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
 					"expected symbol: segment, received symbol: "
 							+ symToString() + " ");
-			return;
+			return null;
 		}
 		next();
-		Dbg.vrb.println("Segment: " + SegmentDesignator());
+		Segment seg = new Segment(segmentDesignator());
+		// Dbg.vrb.println(seg.name.toString());
+		if (isSubSegment) {// set inherit attributes and width
+			seg.setAttribute(inheritAttributes);
+			seg.setWidth(inheritWidth);
+			if (seg.name.indexOf('.', 0) != -1) {
+				reporter.error(errSyntax,
+						"Dots are not allowed in subsegment designators. Sytax error in: "
+								+ seg.name.toString() + "\n");
+				return null;
+			}
+		} else {// get width and attributes from Device
+			int indexOf = seg.name.indexOf('.', 0);
+			HString devName = seg.name.substring(0, indexOf);
+			Device dev = MemoryMap.getInstance().getDeviceByName(devName);
+			if (dev == null) {
+				ErrorReporter.reporter.error(errNoSuchDevice,
+						"Device for Segment " + seg.getName().toString()
+								+ "not found\n");
+			}
+			seg.setAttribute(dev.attributes);
+			seg.setWidth(dev.width);
+		}
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
 					"expected symbol: {, received symbol: " + symToString()
 							+ " ");
-			return;
+			return null;
 		}
 		next();
 		while (sym == sDevice || sym == sAttributes || sym == sBase
-				|| sym == sWidth || sym == sSize || sym == sSegmentarray
-				|| sym == sSegment) {
+				|| sym == sWidth || sym == sSize) {
 			switch (sym) {
 			case sDevice:
-				Dbg.vrb.println("  device = " + DeviceAssignment());
+				seg.setDeviceAssignedTo(HString.getHString(deviceAssignment()));
 				break;
 			case sAttributes:
-				int[] attr = AttributeAssignment();
-				Dbg.vrb.print("  Attributes =");
-				for (int i = 0; i < attr.length; i++) {
-					Dbg.vrb.print(" " + symToString(attr[i]));
-				}
-				Dbg.vrb.println(";");
+				seg.setAttributes(attributeAssignment());
 				break;
 			case sBase:
-				Dbg.vrb.println("  Base = " + BaseAssignment());
+				seg.setBaseAddress(baseAssignment());
 				break;
 			case sWidth:
-				Dbg.vrb.println("  Width = " + WidthAssignment());
+				seg.setWidth(widthAssignment());
 				break;
 			case sSize:
-				Dbg.vrb.println("  Size = " + SizeAssignment());
-				break;
-			case sSegmentarray:
-				SegmentArray();
-				break;
-			case sSegment:
-				Segment();
-				break;
-			default:
+				seg.setSize(sizeAssignment());
 				break;
 			}
 		}
-		Dbg.vrb.println();
+		while (sym == sSegmentarray || sym == sSegment) {
+			if (sym == sSegmentarray) {
+				segmentArray(true, seg);
+			} else {
+				seg.addSubSegment(segment(true, seg.getAttributes(), seg
+						.getWidth()));
+			}
+		}
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
 					"expected symbol: }, received symbol: " + symToString()
 							+ " ");
-			return;
+			return null;
 		}
 		next();
+		return seg;
 	}
 
-	private void SegmentArray() {
+	private void segmentArray(boolean isSubSegment, Segment parent) {
+		int arraySize = 0;
+		int baseAddr = -1;
+		int width = 0;
+		int attributes = 0;
+		int nofSegments = 0;
+
 		if (sym != sSegmentarray) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -933,41 +1035,50 @@ public class Parser {
 			return;
 		}
 		next();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected symbol: designator, received symbol: "
-							+ symToString() + " ");
-			return;
-		}
-		Dbg.vrb.print("SegmentArray " + strBuffer);
-		next();
-		if (sym != sLBracket) {
-			nOfErrors++;
-			reporter.error(errLBracketExp,
-					"expected symbol: [, received symbol: " + symToString()
-							+ " ");
-			return;
-		}
-		next();
-		if (sym == sXx) {
-			// TODO Format Auto- numeration example s00, s01, s02
-			Dbg.vrb.print("[xx");
-		}
-		if (sym == sXxx) {
-			// TODO Format Auto- numeration example s000, s001, s002
-			Dbg.vrb.print("[xxx");
-		}
-		next();
-		if (sym != sRBracket) {
-			nOfErrors++;
-			reporter.error(errRBracketExp,
-					"expected symbol: ], received symbol: " + symToString()
-							+ " ");
-			return;
-		}
-		Dbg.vrb.println("]");
-		next();
+		HString segName = segmentDesignator();
+		Device dev = null;
+		if (!isSubSegment) {
+			int indexOf = segName.indexOf('.', 0);
+			if (indexOf != -1) {
+				segName = segName.substring(indexOf + 1);
+				HString devName = segName.substring(0, indexOf);
+				dev = MemoryMap.getInstance().getDeviceByName(devName);
+				if (dev == null) {
+					ErrorReporter.reporter.error(errNoSuchDevice,
+							"Device " +devName.toString()+" for Segment " + segName.toString()
+									+ "not found\n");
+					return;
+				}
+				
+					indexOf = segName.indexOf('.', 0);
+					if (indexOf != -1) {// it is true when the new Segment is a
+						// Subsegment
+						HString segment = segName.substring(0, indexOf);
+						Segment seg = dev.getSegementByName(segment);
+						segName = segName.substring(indexOf + 1);
+						indexOf = segName.indexOf('.', 0);
+						while (indexOf != -1) {
+							segment = segName.substring(0, indexOf);
+							seg = seg.getSubSegmentByName(segment);
+							segName = segName.substring(indexOf + 1);
+							indexOf = segName.indexOf('.', 0);
+						}
+						parent = seg;
+						attributes = seg.getAttributes();
+						width = seg.width;
+					} else {
+						attributes = dev.attributes;
+						width = dev.width;
+					}
+				}else {
+					ErrorReporter.reporter.error(errSyntax,
+							"Error in memorymap segementarray definition ("
+									+ segName.toString()
+									+ "), segmentarray names starts with the device name!");
+				}
+			}
+		
+
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
@@ -976,15 +1087,19 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("    segmentsize = " + SegmentSizeAssignment());
-
-		while (sym == sArraysize || sym == sWidth || sym == sNofsegements) {
+		int segSize = segmentSizeAssignment();
+		while (sym == sArraysize || sym == sWidth || sym == sNofsegements
+				|| sym == sBase || sym == sAttributes) {
 			if (sym == sArraysize) {
-				Dbg.vrb.println("    arraysize = " + ArraySizeAssignment());
+				arraySize = arraySizeAssignment();
+			} else if (sym == sNofsegements) {
+				nofSegments = nofSegmentAssignment();
 			} else if (sym == sWidth) {
-				Dbg.vrb.println("    width = " + WidthAssignment());
-			} else {// sNofSegments
-				Dbg.vrb.println("   nofsegments = " + NofSegmentAssignment());
+				width = widthAssignment();
+			} else if (sym == sAttributes) {
+				attributes = attributeAssignment();
+			} else {// sym == sBase
+				baseAddr = baseAssignment();
 			}
 		}
 		if (sym != sRBrace) {
@@ -994,10 +1109,54 @@ public class Parser {
 							+ " ");
 			return;
 		}
+		if (arraySize != 0) {
+			if (nofSegments != 0) {
+				if (nofSegments != (arraySize / segSize)) {
+					reporter
+							.error(errInconsistentattributes,
+									"Number of segemts in segmentarray creation not as expected");
+					return;
+				}
+			} else {
+				nofSegments = arraySize / segSize;
+				if (arraySize % segSize != 0) {
+					reporter.error(errInconsistentattributes,
+							"Segmentsize is not a multiple of Arraysize");
+					return;
+				}
+			}
+		} else {
+			if (nofSegments == 0) {
+				reporter.error(errInconsistentattributes,
+						"Missing attribute in segmentarray creation");
+				return;
+			}
+		}
+		// from here is nofSegments != 0
+		Segment root = new Segment(HString.getHString(segName.toString() + 1), baseAddr,
+				segSize, width, attributes);
+		Segment current = root;
+
+		for (int i = 2; i <= nofSegments; i++) {
+			if (baseAddr != -1) {
+				baseAddr += segSize;
+			}
+			current.next = new Segment(HString.getHString(segName.toString() + i),
+					baseAddr, segSize, width, attributes);
+			current = current.next;
+		}
 		next();
+		if(parent != null){
+			parent.addSubSegment(root);
+		}else if(!isSubSegment){
+			dev.addSegment(root);
+		}else{
+			reporter.error(errInvalideParameter,
+			"Parent Segment must be given for Subsegmentarrays");
+		}
 	}
 
-	private void RegInit() {
+	private void regInit() {
 		if (sym != sReginit) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1014,11 +1173,9 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("RegInit:");
 		while (sym == sDesignator) {
-			Dbg.vrb
-					.println("  register " + strBuffer + " = "
-							+ RegAssignment());
+			Configuration.setRegInit(HString.getHString(strBuffer),
+					regAssignment());
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1030,7 +1187,8 @@ public class Parser {
 		next();
 	}
 
-	private void Modules() {
+	// If modules are called from MemoryMap, targetConfig = null;
+	private void modules(TargetConfiguration targetConfig) {
 		if (sym != sModules) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1046,35 +1204,140 @@ public class Parser {
 							+ " ");
 			return;
 		}
-		Dbg.vrb.println("Modules:");
 		next();
-		while (sym == sMap) {
-			Map();
-			switch (sym) {
-			case sKernel:
-				Dbg.vrb.println("kernel");
-				next();
-				break;
-			case sInterrupt:
-				Dbg.vrb.println("interrupt");
-				next();
-				break;
-			case sException:
-				Dbg.vrb.println("exception");
-				next();
-				break;
-			case sHeap:
-				Dbg.vrb.println("heap");
-				next();
-				break;
-			case sProgram:
-				Dbg.vrb.println("program");
-				next();
-				break;
-			default:
-				Dbg.vrb.println(readString());
-				break;
+		MemoryMap memMap = MemoryMap.getInstance();
+		while (sym == sKernel || sym == sInterrupt || sym == sException
+				|| sym == sHeap || sym == sDesignator || sym == sDefault) {
+			Module root = null, current = null;
+			do {
+				if (sym == sComma) {// breaks the endless loop
+					next();
+				}
+				switch (sym) {
+				case sKernel:
+					if (root == null) {
+						root = new Module(HString.getHString("kernel"));
+						current = root;
+					} else {
+						current.next = new Module(HString.getHString("kernel"));
+						current = current.next;
+					}
+					next();
+					break;
+				case sInterrupt:
+					if (root == null) {
+						root = new Module(HString.getHString("interrupt"));
+						current = root;
+					} else {
+						current.next = new Module(HString
+								.getHString("interrupt"));
+						current = current.next;
+					}
+					next();
+					break;
+				case sException:
+					if (root == null) {
+						root = new Module(HString.getHString("exception"));
+						current = root;
+					} else {
+						current.next = new Module(HString
+								.getHString("exception"));
+						current = current.next;
+					}
+					next();
+					break;
+				case sHeap:
+					if (root == null) {
+						root = new Module(HString.getHString("heap"));
+						current = root;
+					} else {
+						current.next = new Module(HString.getHString("heap"));
+						current = current.next;
+					}
+					next();
+					break;
+				case sDefault:
+					if (root == null) {
+						root = new Module(HString.getHString("default"));
+						current = root;
+					} else {
+						current.next = new Module(HString.getHString("default"));
+						current = current.next;
+					}
+					next();
+					break;
+				case sDesignator:
+					if (root == null) {
+						root = new Module(HString
+								.getHString(concatenatedDesignator()));
+						current = root;
+					} else {
+						current.next = new Module(HString
+								.getHString(concatenatedDesignator()));
+						current = current.next;
+					}
+					break;
+				default:
+					reporter.error(errUnexpectetSymExp, "Unexpected symbol: "
+							+ symToString() + " by module creation");
+					break;
+				}
+			} while (sym == sComma);
+			if (sym != sColon) {
+				nOfErrors++;
+				reporter.error(errSemicolonMissExp,
+						"expected symbol: :, received symbol: " + symToString()
+								+ " ");
+				return;
 			}
+			do {
+				current = root;
+				SegmentAssignment assign = null;
+				next();
+				switch (sym) {
+				case sConst:
+					assign = new SegmentAssignment(HString.getHString("const"));
+					next();
+					break;
+				case sCode:
+					assign = new SegmentAssignment(HString.getHString("code"));
+					next();
+					break;
+				case sVar:
+					assign = new SegmentAssignment(HString.getHString("var"));
+					next();
+					break;
+				case sHeap:
+					assign = new SegmentAssignment(HString.getHString("heap"));
+					next();
+					break;
+				case sStack:
+					assign = new SegmentAssignment(HString.getHString("stack"));
+					next();
+					break;
+				default:
+					nOfErrors++;
+					reporter.error(errUnexpectetSymExp,
+							"expected symbol: contentattribute, received symbol: "
+									+ symToString() + " ");
+					return;
+				}
+				if (sym != sAt) {
+					nOfErrors++;
+					reporter.error(errAssignExp,
+							"expected symbol: @, received symbol: "
+									+ symToString() + " ");
+					return;
+				}
+				next();
+				assign.setSegmentDesignator(segmentDesignator());
+				while (current != null) {
+					current.setSegmentAssignment(assign);
+					current = current.next;
+				}
+
+			} while (sym == sComma);
+
 			if (sym != sSemicolon) {
 				nOfErrors++;
 				reporter.error(errSemicolonMissExp,
@@ -1083,6 +1346,17 @@ public class Parser {
 				return;
 			}
 			next();
+			if (targetConfig != null) {
+				while (root != null) {
+					targetConfig.setModule(root);
+					root = root.next;
+				}
+			} else {
+				while (root != null) {
+					memMap.setModule(root);
+					root = root.next;
+				}
+			}
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1094,80 +1368,63 @@ public class Parser {
 		next();
 	}
 
-	private void Map() {
-		if (sym != sMap) {
+	private Register register() {
+		if (sym != sRegister) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
-					"expected symbol: map, received symbol: " + symToString()
-							+ " ");
-			return;
+					"expected symbol: register, received symbol: "
+							+ symToString() + " ");
+			return null;
 		}
 		next();
-		Dbg.vrb.print("map { ");
+		if (sym != sDesignator) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp,
+					"expected symbol: designator, received symbol: "
+							+ symToString() + " ");
+			return null;
+		}
+		Register reg = new Register(HString.getHString(strBuffer));
+		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
 					"expected symbol: {, received symbol: " + symToString()
 							+ " ");
-			return;
+			return null;
 		}
-		do {
-			next();
-			switch (sym) {
-			case sConst:
-				Dbg.vrb.print("const");
-				next();
-				break;
-			case sCode:
-				Dbg.vrb.print("code");
-				next();
-				break;
-			case sVar:
-				Dbg.vrb.print("var");
-				next();
-				break;
-			case sHeap:
-				Dbg.vrb.print("heap");
-				next();
-				break;
-			case sStack:
-				Dbg.vrb.print("stack");
-				next();
-				break;
-			case sSysConst:
-				Dbg.vrb.print("sysconst");
-				next();
-				break;
-			default:
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp,
-						"expected symbol: modules, received symbol: "
-								+ symToString() + " ");
-				return;
+		next();
+		while (sym == sType || sym == sAddr || sym == sSize || sym == sRepr) {
+			if (sym == sType) {
+				reg.setType(regTypeAssignment());
 			}
-			if (sym != sAt) {
-				nOfErrors++;
-				reporter.error(errAssignExp,
-						"expected symbol: @, received symbol: " + symToString()
-								+ " ");
-				return;
+			if (sym == sAddr) {
+				reg.setAddress(addressAssignment());
 			}
-			Dbg.vrb.print("@");
-			next();
-			Dbg.vrb.print(SegmentDesignator() + ", ");
-		} while (sym == sComma);
+			if (sym == sSize) {
+				reg.setSize(sizeAssignment());
+			}
+			if (sym == sRepr) {
+				reg.setRepresentation(registerRepresentationAssignment());
+			}
+		}
+		if (reg.addr < 0 || reg.type < 0 || reg.size < 0) {
+			reporter.error(errInconsistentattributes,
+					"Missing attribute in creation of Register: "
+							+ reg.getName().toString() + "\n");
+		}
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
 					"expected symbol: }, received symbol: " + symToString()
 							+ " ");
-			return;
+			return null;
 		}
-		Dbg.vrb.println("}");
 		next();
+		return reg;
 	}
 
-	private void Registermap() {
+	private void registermap() {
 		if (sym != sRegistermap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1176,7 +1433,7 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.print("registermap: ");
+		RegisterMap regMap = RegisterMap.getInstance();
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
@@ -1186,7 +1443,7 @@ public class Parser {
 		}
 		next();
 		while (sym == sRegister) {
-			Register();
+			regMap.addRegister(register());
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1198,11 +1455,11 @@ public class Parser {
 		next();
 	}
 
-	private void Register() {
-		if (sym != sRegister) {
+	private void targetconfiguration() {
+		if (sym != sTargetConf) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
-					"expected symbol: register, received symbol: "
+					"expected symbol: targetconfiguration, received symbol: "
 							+ symToString() + " ");
 			return;
 		}
@@ -1214,7 +1471,8 @@ public class Parser {
 							+ symToString() + " ");
 			return;
 		}
-		Dbg.vrb.println("register " + strBuffer);
+		TargetConfiguration targetConfig = new TargetConfiguration(HString
+				.getHString(strBuffer));
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
@@ -1224,17 +1482,7 @@ public class Parser {
 			return;
 		}
 		next();
-		while (sym == sType || sym == sAddr || sym == sSize || sym == sRepr) {
-			Dbg.vrb.println("  type = " + symToString(RegTypeAssignment()));
-			Dbg.vrb.println("  addr = " + AddressAssignment());
-			Dbg.vrb.println("  size = " + SizeAssignment());
-
-			if (sym == sRepr) {
-				Dbg.vrb.println("  repr = "
-						+ symToString(RegisterRepresentationAssignment()));
-			}
-		}
-		Dbg.vrb.println();
+		modules(targetConfig);
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
@@ -1242,53 +1490,11 @@ public class Parser {
 							+ " ");
 			return;
 		}
+		Configuration.addTargetConfiguration(targetConfig);
 		next();
 	}
 
-	private void SystemModules() {
-		if (sym != sSysmodules) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected symbol: sysmodules, received symbol: "
-							+ symToString() + " ");
-			return;
-		}
-		next();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected symbol: designator, received symbol: "
-							+ symToString() + " ");
-			return;
-		}
-		Dbg.vrb.println("systemmodule " + strBuffer + ":");
-		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp,
-					"expected symbol: {, received symbol: " + symToString()
-							+ " ");
-			return;
-		}
-		next();
-		ArrayList<String> systab = SystemtableAssignment();
-		Dbg.vrb.print("  systemtable ");
-		for (int i = 0; i < systab.size(); i++) {
-			Dbg.vrb.print("@ " + systab.get(i) + "; ");
-		}
-		Dbg.vrb.println();
-		Modules();
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp,
-					"expected symbol: }, received symbol: " + symToString()
-							+ " ");
-			return;
-		}
-		next();
-	}
-
-	private void Project() {
+	private void project() {
 		if (sym != sProject) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1297,7 +1503,6 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("project:");
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
@@ -1306,23 +1511,20 @@ public class Parser {
 			return;
 		}
 		next();
-		while (sym == sRootclasses || sym == sLibPath || sym == sSysmodules
+		Project proj = new Project();
+		while (sym == sRootclasses || sym == sLibPath || sym == sTargetConf
 				|| sym == sDebugLevel || sym == sPrintLevel) {
 			if (sym == sRootclasses) {
-				ArrayList<String> classes = RootClassesAssignment();
-				Dbg.vrb.print("  rootclasses = ");
-				for (int i = 0; i < classes.size(); i++) {
-					Dbg.vrb.print(classes.get(i) + "; ");
-				}
-				Dbg.vrb.println();
+				HString classes = rootClassesAssignment();
+				proj.setRootClasses(classes);
 			} else if (sym == sLibPath) {
-				Dbg.vrb.println("  libpath = " + LibPathAssignment());
-			} else if (sym == sSysmodules) {
-				Dbg.vrb.println("  sysmodules = " + SystemModulesAssignment());
+				proj.setLibPath(libPathAssignment());
+			} else if (sym == sTargetConf) {
+				proj.setTagetConfig(targetConfigurationAssignment());
 			} else if (sym == sDebugLevel) {
-				Dbg.vrb.println("  debuglevel = " + DebugLevelAssignment());
+				proj.setDebugLevel(debugLevelAssignment());
 			} else if (sym == sPrintLevel) {
-				Dbg.vrb.println("  printlevel = " + PrintLevelAssignment());
+				proj.setPrintLevel(printLevelAssignment());
 			}
 		}
 		if (sym != sRBrace) {
@@ -1332,11 +1534,27 @@ public class Parser {
 							+ " ");
 			return;
 		}
-		Dbg.vrb.println();
+		Configuration.setProject(proj);
+		if (importList != null) {
+			for (int i = 0; i < importList.size(); i++) {
+				String toCmp = importList.get(i);
+				if (!importedFiles.contains(toCmp)) {
+					importedFiles.add(toCmp);
+					File f = new File(loc + toCmp);
+					if (f.exists()) {
+						parseAndCreateConfig(loc, toCmp);
+					} else {
+						parseAndCreateConfig(libPath, toCmp);
+					}
+				}
+			}
+			// delete importList to prevent to do imports twice(in "project()")
+			importList = null;
+		}
 		next();
 	}
 
-	private void OperatingSystem() {
+	private void operatingSystem() {
 		if (sym != sOperatingSystem) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1345,7 +1563,6 @@ public class Parser {
 			return;
 		}
 		next();
-		Dbg.vrb.println("operatingsystem: ");
 		if (sym != sLBrace) {
 			nOfErrors++;
 			reporter.error(errLBraceExp,
@@ -1354,16 +1571,17 @@ public class Parser {
 			return;
 		}
 		next();
+		OperatingSystem os = new OperatingSystem();
 		while (sym == sKernel || sym == sHeap || sym == sInterrupt
 				|| sym == sException) {
 			if (sym == sKernel) {
-				Dbg.vrb.println("  kernel = " + KernelAssignment());
+				os.setKernel(kernelAssignment());
 			} else if (sym == sHeap) {
-				Dbg.vrb.println("  heap = " + HeapAssignment());
+				os.setHeap(heapAssignment());
 			} else if (sym == sInterrupt) {
-				Dbg.vrb.println("  interrupt = " + InterruptAssignment());
+				os.setInterrupt(interruptAssignment());
 			} else {
-				Dbg.vrb.println("  exception = " + ExceptionAssignment());
+				os.setException(exceptionAssignment());
 			}
 		}
 		if (sym != sRBrace) {
@@ -1373,11 +1591,11 @@ public class Parser {
 							+ " ");
 			return;
 		}
-		Dbg.vrb.println();
+		Configuration.setOperatingSystem(os);
 		next();
 	}
 
-	private String VersionAssignment() {
+	private String versionAssignment() {
 		String s;
 		if (sym != sVersion) {
 			nOfErrors++;
@@ -1407,7 +1625,7 @@ public class Parser {
 		return s;
 	}
 
-	private String FileDescAssignment() {
+	private String fileDescAssignment() {
 		String s;
 		if (sym != sDescription) {
 			nOfErrors++;
@@ -1437,7 +1655,7 @@ public class Parser {
 		return s;
 	}
 
-	private void ImportAssignment() {
+	private void importAssignment() {
 		if (sym != sImport) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1468,7 +1686,7 @@ public class Parser {
 		return;
 	}
 
-	private int VarAssignment() {
+	private int varAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sDesignator) {
 			nOfErrors++;
@@ -1486,7 +1704,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1500,42 +1718,42 @@ public class Parser {
 
 	}
 
-	private int Expression() {
-		int value = Term();
+	private int expression() {
+		int value = term();
 		while (sym == sPlus || sym == sMinus) {
 			int operator = sym;
 			next();
 			if (operator == sPlus) {
-				value = value + Term();
+				value = value + term();
 			} else if (operator == sMinus) {
-				value = value - Term();
+				value = value - term();
 			}
 		}
 		return value;
 	}
 
-	private int Term() {
-		int value = Factor();
+	private int term() {
+		int value = factor();
 		while (sym == sMul || sym == sDiv) {
 			int operator = sym;
 			next();
 			if (operator == sMul) {
-				value *= Factor();
+				value *= factor();
 			} else if (operator == sDiv) {
-				value /= Factor();
+				value /= factor();
 			}
 		}
 		return value;
 	}
 
-	private int Factor() {
+	private int factor() {
 		int value = 1;
 		if (sym == sNumber) {
 			value = intNumber;
 			next();
 		} else if (sym == sLParen) {
 			next();
-			value = Expression();
+			value = expression();
 			if (sym == sRParen) {
 				next();
 			} else {
@@ -1545,7 +1763,7 @@ public class Parser {
 								+ " ");
 			}
 		} else if (sym == sDesignator) {
-			// TODO value = getVariable(strBuffer);
+			value = Configuration.getValueFor(HString.getHString(strBuffer));
 			next();
 		} else {
 			nOfErrors++;
@@ -1556,7 +1774,7 @@ public class Parser {
 		return value;
 	}
 
-	private String DeviceAssignment() {
+	private String deviceAssignment() {
 		String s = "";
 		if (sym != sDevice) {
 			nOfErrors++;
@@ -1594,7 +1812,7 @@ public class Parser {
 		return s;
 	}
 
-	private int BaseAssignment() {
+	private int baseAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sBase) {
 			nOfErrors++;
@@ -1612,7 +1830,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1625,7 +1843,7 @@ public class Parser {
 		return res;
 	}
 
-	private int WidthAssignment() {
+	private int widthAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sWidth) {
 			nOfErrors++;
@@ -1643,7 +1861,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1656,7 +1874,7 @@ public class Parser {
 		return res;
 	}
 
-	private int SizeAssignment() {
+	private int sizeAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sSize) {
 			nOfErrors++;
@@ -1674,7 +1892,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1687,7 +1905,7 @@ public class Parser {
 		return res;
 	}
 
-	private int SegmentSizeAssignment() {
+	private int segmentSizeAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sSegmentsize) {
 			nOfErrors++;
@@ -1705,7 +1923,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1718,7 +1936,7 @@ public class Parser {
 		return res;
 	}
 
-	private int ArraySizeAssignment() {
+	private int arraySizeAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sArraysize) {
 			nOfErrors++;
@@ -1736,7 +1954,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1749,7 +1967,7 @@ public class Parser {
 		return res;
 	}
 
-	private int NofSegmentAssignment() {
+	private int nofSegmentAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sNofsegements) {
 			nOfErrors++;
@@ -1767,7 +1985,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1780,14 +1998,12 @@ public class Parser {
 		return res;
 	}
 
-	private int RegAssignment() {
-		return VarAssignment();
+	private int regAssignment() {
+		return varAssignment();
 	}
 
-	private int[] AttributeAssignment() {
-		int[] temp = new int[8];
-		int[] res = temp;
-		int count = 0;
+	private int attributeAssignment() {
+		int res = 0;
 		if (sym != sAttributes) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1805,24 +2021,40 @@ public class Parser {
 		}
 		do {
 			next();
-			if (sym == sRead || sym == sWrite || sym == sConst || sym == sCode
-					|| sym == sVar || sym == sHeap || sym == sStack
-					|| sym == sSysConst) {
-				res[count] = sym;
-				count++;
-				next();
-			} else {
+			switch (sym) {
+			case sRead:
+				res |= (1 << atrRead);
+				break;
+			case sWrite:
+				res |= (1 << atrWrite);
+				break;
+			case sConst:
+				res |= (1 << atrWconst);
+				break;
+			case sCode:
+				res |= (1 << atrCode);
+				break;
+			case sVar:
+				res |= (1 << atrVar);
+				break;
+			case sHeap:
+				res |= (1 << atrHeap);
+				break;
+			case sStack:
+				res |= (1 << atrStack);
+				break;
+			case sSysTab:
+				res |= (1 << AtrSysTab);
+				break;
+			default:
 				nOfErrors++;
 				reporter.error(errUnexpectetSymExp,
 						"expected symbol: attributes, received symbol: "
 								+ symToString() + " ");
 				return res;
 			}
+			next();
 		} while (sym == sComma);
-		res = new int[count];
-		for (int i = 0; i < count; i++) {
-			res[i] = temp[i];
-		}
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -1834,7 +2066,7 @@ public class Parser {
 		return res;
 	}
 
-	private int RegTypeAssignment() {
+	private int regTypeAssignment() {
 		int s;
 		if (sym != sType) {
 			nOfErrors++;
@@ -1873,7 +2105,7 @@ public class Parser {
 		return s;
 	}
 
-	private int RegisterRepresentationAssignment() {
+	private int registerRepresentationAssignment() {
 		int s = sUndef;
 		if (sym != sRepr) {
 			nOfErrors++;
@@ -1911,7 +2143,7 @@ public class Parser {
 		return s;
 	}
 
-	private int AddressAssignment() {
+	private int addressAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sAddr) {
 			nOfErrors++;
@@ -1929,7 +2161,7 @@ public class Parser {
 			return res;
 		}
 		next();
-		res = Expression();
+		res = expression();
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -1942,7 +2174,7 @@ public class Parser {
 		return res;
 	}
 
-	private String SegmentDesignator() {
+	private String concatenatedDesignator() {
 		StringBuffer sb = new StringBuffer();
 		if (sym != sDesignator) {
 			nOfErrors++;
@@ -1954,47 +2186,54 @@ public class Parser {
 		sb.append(strBuffer);
 		next();
 		while (sym == sDot) {
+			sb.append(".");
+			next();
+			if (sym == sMul) {
+				sb.append("*");
+			} else if (sym != sDesignator) {
+				nOfErrors++;
+				reporter.error(errUnexpectetSymExp,
+						"expected symbol: designator, received symbol: "
+								+ symToString() + " ");
+				return sb.toString();
+			} else {
+				sb.append(strBuffer);
+			}
+			next();
+		}
+		return sb.toString();
+	}
+
+	private HString segmentDesignator() {
+		StringBuffer sb = new StringBuffer();
+		if (sym != sDesignator) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp,
+					"expected symbol: designator, received symbol: "
+							+ symToString() + " ");
+			return HString.getHString(sb.toString());
+		}
+		sb.append(strBuffer);
+		next();
+		while (sym == sDot) {
 			next();
 			if (sym != sDesignator) {
 				nOfErrors++;
 				reporter.error(errUnexpectetSymExp,
 						"expected symbol: designator, received symbol: "
 								+ symToString() + " ");
-				return sb.toString();
+				return HString.getHString(sb.toString());
 			}
 			sb.append(".");
 			sb.append(strBuffer);
 			next();
 		}
-		return sb.toString();
+		return HString.getHString(sb.toString());
 	}
 
-	private ArrayList<String> SystemtableAssignment() {
-		ArrayList<String> tempList = new ArrayList<String>();
-		if (sym != sSystemtable) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp,
-					"expected: systemtable, received symbol: " + symToString()
-							+ " ");
-			return tempList;
-		}
-		do {
-			next();
-			if (sym != sAt) {
-				nOfErrors++;
-				reporter.error(errAssignExp, "expected: @, received symbol: "
-						+ symToString() + " ");
-				return tempList;
-			}
-			next();
-			tempList.add(SegmentDesignator());
-		} while (sym == sComma);
-		next();
-		return tempList;
-	}
-
-	private ArrayList<String> RootClassesAssignment() {
-		ArrayList<String> tempList = new ArrayList<String>();
+	private HString rootClassesAssignment() {
+		HString tempList = null;
+		HString current = null;
 		if (sym != sRootclasses) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -2011,7 +2250,13 @@ public class Parser {
 		}
 		do {
 			next();
-			tempList.add(readString());
+			if (tempList == null) {
+				tempList = HString.getHString(readString());
+				current = tempList;
+			} else {
+				current.next = HString.getHString(readString());
+				current = current.next;
+			}
 		} while (sym == sComma);
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -2024,8 +2269,8 @@ public class Parser {
 		return tempList;
 	}
 
-	private String LibPathAssignment() {
-		String s = "";
+	private HString libPathAssignment() {
+		HString s = HString.getHString("");
 		if (sym != sLibPath) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -2041,7 +2286,7 @@ public class Parser {
 			return s;
 		}
 		next();
-		s = readString();
+		s = HString.getHString(readString());
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2053,13 +2298,13 @@ public class Parser {
 		return s;
 	}
 
-	private String SystemModulesAssignment() {
-		String s = "";
-		if (sym != sSysmodules) {
+	private HString targetConfigurationAssignment() {
+		HString s = HString.getHString("");
+		if (sym != sTargetConf) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
-					"expected: sysmodules, received symbol: " + symToString()
-							+ " ");
+					"expected: targetconfiguration , received symbol: "
+							+ symToString() + " ");
 			return s;
 		}
 		next();
@@ -2077,7 +2322,7 @@ public class Parser {
 							+ symToString() + " ");
 			return s;
 		}
-		s = strBuffer;
+		s = HString.getHString(strBuffer);
 		next();
 		if (sym != sSemicolon) {
 			nOfErrors++;
@@ -2090,8 +2335,8 @@ public class Parser {
 		return s;
 	}
 
-	private String KernelAssignment() {
-		String s = "";
+	private HString kernelAssignment() {
+		HString s = HString.getHString("");
 		if (sym != sKernel) {
 			nOfErrors++;
 			reporter
@@ -2108,7 +2353,7 @@ public class Parser {
 			return s;
 		}
 		next();
-		s = readString();
+		s = HString.getHString(readString());
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2120,8 +2365,8 @@ public class Parser {
 		return s;
 	}
 
-	private String HeapAssignment() {
-		String s = "";
+	private HString heapAssignment() {
+		HString s = HString.getHString("");
 		if (sym != sHeap) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -2136,7 +2381,7 @@ public class Parser {
 			return s;
 		}
 		next();
-		s = readString();
+		s = HString.getHString(readString());
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2148,8 +2393,8 @@ public class Parser {
 		return s;
 	}
 
-	private String InterruptAssignment() {
-		String s = "";
+	private HString interruptAssignment() {
+		HString s = HString.getHString("");
 		if (sym != sInterrupt) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -2165,7 +2410,7 @@ public class Parser {
 			return s;
 		}
 		next();
-		s = readString();
+		s = HString.getHString(readString());
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2177,8 +2422,8 @@ public class Parser {
 		return s;
 	}
 
-	private String ExceptionAssignment() {
-		String s = "";
+	private HString exceptionAssignment() {
+		HString s = HString.getHString("");
 		if (sym != sException) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "expected: exception"
@@ -2193,7 +2438,7 @@ public class Parser {
 			return s;
 		}
 		next();
-		s = readString();
+		s = HString.getHString(readString());
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2205,7 +2450,7 @@ public class Parser {
 		return s;
 	}
 
-	private int DebugLevelAssignment() {
+	private int debugLevelAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sDebugLevel) {
 			nOfErrors++;
@@ -2240,7 +2485,7 @@ public class Parser {
 		return res;
 	}
 
-	private int PrintLevelAssignment() {
+	private int printLevelAssignment() {
 		int res = Integer.MIN_VALUE;
 		if (sym != sPrintLevel) {
 			nOfErrors++;
