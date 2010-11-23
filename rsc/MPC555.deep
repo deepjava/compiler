@@ -5,7 +5,7 @@ meta {
 	description = "Freescale MPC555 (all devices)";
 }
 
-constants {
+sysconst {
 	IMB = 0x0;										# Internal Memory Base
 	SRAMA_BaseAddr = IMB + 0x3F9800;				# Internal SRAM A Base Address
 	SRAMA_Size = 0x2800;							# Internal SRAM A Size (10 KiB)
@@ -23,55 +23,67 @@ constants {
 memorymap {
 
 	device InternalRam {
-		attributes = read, write;
+		attributes = read, write, const, code, var, systab, heap, stack;
 		width = 4; # byte
+		size = 0x6800; #10+16kB
+		base = SRAMA_BaseAddr;
 	}
 	
 	device InternalFlash {
 		attributes = read;
 		width = 4; # byte
 		size = CMFA_Size + CMFB_Size;
+		base = CMFA_BaseAddr;
 	}
 	
-	segment SysTab {
-		device = InternalRam;
+	segment InternalRam.SysTab {
 		base = sysTabBaseAddr;
-		attributes = read, write, sysconst;
+		attributes = read, write, systab;
 	}
 	
-	segment Constants {
-		device = InternalRam;
+	segment InternalRam.Constants {
 		attributes = read, write, const;
 	}
 	
-	segment Code {
-		device = InternalRam;
+	segment InternalRam.Code {
 		attributes = read, write, code;
 	}
 	
-	segment Variables {
-		device = InternalRam;
+	segment InternalRam.Variables {
 		attributes = read, write, var;
 	}
 	
-	segment Stack {
-		device = InternalRam;
+	segment InternalRam.Stack {
 		attributes = read, write, stack;
 		size = stackSize;
 	}
 	
-	segment InternalFlashA {
-		device = InternalFlash;
+	segment InternalFlash.A {
 		base = internalFlashABaseAddr;
 		width = 4;
 		size = CMFA_Size;
+		
+		segment block0 {
+		   attributes = read, write, code;
+		   base =  internalFlashABaseAddr;
+		   size = CMFA_Size;
+		   
+		   segment ExcCode {
+		      base = 0x5000;
+		   }
+		}
 	}
 	
-	segment InternalFlashB {
-		device = InternalFlash;
-		base = internalFlashBBaseAddr;
+	segment InternalFlash.B {
+		base =  a;
 		width = 4;
 		size = CMFB_Size;
+
+	}
+	
+	segment InternalFlash.B.S2 {
+        width = 4;
+        size = CMFB_Size;
 	}
 }
 
@@ -84,12 +96,31 @@ registermap {
 	}
 }
 
-sysmodules Flash{
-    systemtable @ InternalRam.SysTab, @ExternalFlashAM29LV160D.SysTab;
-    modules{
-        map{code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam} kernel;
-        map{code@ExternalFlash.s1, const@ExternalFlash, var@InternalRam} heap;
-        map{code@ExternalFlash.ExcCode, const@ExternalFlash, var@InternalRam} exception;
-        map{code@ExternalFlash.s1, const@ExternalFlash, var@InternalRam} "ch.ntb.inf.test.firstRootClass";
+targetconfiguration BootFromFlash {
+    modules {
+            kernel : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            default: code@ExternalFlash.ExcCode, const@ExternalFlash, var@InternalRam;
+            ch.ntb.inf.myProject.package1.Class1,
+            ch.ntb.inf.myProject.package1.Class2,
+            ch.ntb.inf.myProject.package1.Class3,
+            ch.ntb.inf.myProject.package1.Class4,
+            ch.ntb.inf.myProject.package1.Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            ch.ntb.inf.myProject.package2.* : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
     }
-} 
+}
+
+targetconfiguration BootFromRam {
+    modules {
+            kernel : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            default: code@ExternalFlash.ExcCode, const@ExternalFlash, var@InternalRam;
+            ch.ntb.inf.myProject.package1.Class1,
+            ch.ntb.inf.myProject.package1.Class2,
+            ch.ntb.inf.myProject.package1.Class3,
+            ch.ntb.inf.myProject.package1.Class4,
+            ch.ntb.inf.myProject.package1.Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            ch.ntb.inf.myProject.package2.* : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+    }
+}
+

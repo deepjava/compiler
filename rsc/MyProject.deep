@@ -3,13 +3,13 @@
 meta {
 	version = "2010-09-07";
 	description = "Example Project file";
-	import = "D:/work/Crosssystem/deep/rsc/NTB-MPC555-Headerboard.deep";
+	import = "rsc/NTB-MPC555-Headerboard.deep";
 }
 
 project {
 	libpath = "I:/woAuchImmer";
 	rootclasses = "ch.ntb.stud.maxMustermann.FirstRootClass", "ch.ntb.stud.maxMustermann.SecondRootClass";
-	sysmodules = BootFromRAM;
+	targetconfiguration = BootFromRAM;
 	debuglevel = 0;
 	printlevel = 3;
 }
@@ -30,5 +30,4 @@ memorymap {
 	}
 }
 
-# TODO: map{} ch.ntb.stud.maxMustermann.FirstRootClass@MySpecialSegment
 

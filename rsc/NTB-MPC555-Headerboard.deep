@@ -3,7 +3,7 @@
 meta {
 	version = "2010-09-07";
 	description = "NTB MPC555 Headerboard";
-	import = "D:/work/Crosssystem/deep/rsc/MPC555.deep";
+	import = "rsc/MPC555.deep";
 	
 }
 
@@ -13,9 +13,15 @@ constants {
 memorymap{
     device ExtRam {
     	attributes = read, write;
+    	base = 0x800000;
+    	width = 4;
+    	size = 0x200000;
     }
     
     device ExtFlash {
     	attributes = read;
+    	width = 4;
+    	base = 0x1000000;
+    	size = 0x400000;
     }
 }
