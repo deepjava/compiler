@@ -9,7 +9,7 @@ meta {
 project {
 	libpath = "I:/woAuchImmer";
 	rootclasses = "ch.ntb.stud.maxMustermann.FirstRootClass", "ch.ntb.stud.maxMustermann.SecondRootClass";
-	targetconfiguration = BootFromRAM;
+	targetconfiguration = BootFromRam;
 	debuglevel = 0;
 	printlevel = 3;
 }
@@ -24,7 +24,7 @@ operatingsystem {
 memorymap {
 	segment InternalFlash.MySpecialSegment {
 		device = InternalFlash;
-		base = internalFlashABaseAddr + 0x100;
+		base = CMFA_BaseAddr + 0x100;
 		width = 4;
 		size = 0x100;
 	}

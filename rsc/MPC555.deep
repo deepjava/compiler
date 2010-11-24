@@ -59,13 +59,13 @@ memorymap {
 	}
 	
 	segment InternalFlash.A {
-		base = internalFlashABaseAddr;
+		base = CMFA_BaseAddr;
 		width = 4;
 		size = CMFA_Size;
 		
 		segment block0 {
 		   attributes = read, write, code;
-		   base =  internalFlashABaseAddr;
+		   base =  CMFA_BaseAddr;
 		   size = CMFA_Size;
 		   
 		   segment ExcCode {
@@ -75,7 +75,7 @@ memorymap {
 	}
 	
 	segment InternalFlash.B {
-		base =  a;
+		base =  CMFA_BaseAddr;
 		width = 4;
 		size = CMFB_Size;
 
@@ -98,21 +98,21 @@ registermap {
 
 targetconfiguration BootFromFlash {
     modules {
-            kernel : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            kernel : code@ExtFlash.S1, const@ExtFlash, var@InternalRam.Variables;
             heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
             default: code@ExternalFlash.ExcCode, const@ExternalFlash, var@InternalRam;
-            ch.ntb.inf.myProject.package1.Class1,
-            ch.ntb.inf.myProject.package1.Class2,
-            ch.ntb.inf.myProject.package1.Class3,
-            ch.ntb.inf.myProject.package1.Class4,
-            ch.ntb.inf.myProject.package1.Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
-            ch.ntb.inf.myProject.package2.* : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            ch/ntb/inf/myProject/package1/Class1,
+            ch/ntb/inf/myProject/package1/Class2,
+            ch/ntb/inf/myProject/package1/Class3,
+            ch/ntb/inf/myProject/package1/Class4,
+            ch/ntb/inf/myProject/package1/Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            ch/ntb/inf/myProject/package2/* : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
     }
 }
 
 targetconfiguration BootFromRam {
     modules {
-            kernel : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            kernel : code@ExtFlash.S1, const@ExtFlash.S1, var@InternalRam.Variables;
             heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
             default: code@ExternalFlash.ExcCode, const@ExternalFlash, var@InternalRam;
             ch.ntb.inf.myProject.package1.Class1,

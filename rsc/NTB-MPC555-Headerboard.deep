@@ -21,7 +21,11 @@ memorymap{
     device ExtFlash {
     	attributes = read;
     	width = 4;
-    	base = 0x1000000;
+    	base = 0x3333;
     	size = 0x400000;
+    	
     }
+    	segment ExtFlash.S1 {
+              base = 0x5000;
+           }
 }
