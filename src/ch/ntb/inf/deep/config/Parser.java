@@ -89,10 +89,10 @@ public class Parser implements ErrorCodes, IAttributes {
 	public static void main(String[] args) {
 		parseAndCreateConfig("D:/work/Crosssystem/deep", "rsc/MyProject.deep");
 		Dbg.vrb.println("Config read with " + nOfErrors + " error(s)");
-		//Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
-		//Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
-		//Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		Configuration.print();
+		//Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+		//Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+		//Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		Configuration.createInterfaceFile("D:/work/Crosssystem/deep","rsc/TestInterface.java");
 	}
 
