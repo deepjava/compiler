@@ -20,7 +20,7 @@ SystemModules                       = "kernel" | "interrupts" | "exceptions" | "
 AttributeEnum                       = Attribute { EnumSeparator Attribute } .
 StringEnum                          = String { EnumSeparator String } .
 SegmentDesignator                   = Designator { "." Designator }  .
-ConcatenatedDesignator              = Designator { "." Designator } [".*"] .
+ConcatenatedDesignator              = Designator { ("." | "/") Designator } [".*" | "/*"] .
 ConcatenatedDesignatorEnum          = ConcatenatedDesignator { EnumSeparator ConcatenatedDesignator} .
 
 Factor                              = IntNumber | "(" Expression ")" | Designator .
