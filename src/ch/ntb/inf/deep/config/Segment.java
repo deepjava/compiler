@@ -117,13 +117,13 @@ public class Segment implements IAttributes {
 	
 	public boolean addSubSegment(Segment s) {
 		if(s.width == this.width) {
-			if(this.subSegments == null) {
-				this.subSegments = s;
-				this.lastSubSegment = this.subSegments;
+			if(subSegments == null) {
+				subSegments = s;
+				lastSubSegment = subSegments;
 			}
 			else {
-				this.lastSubSegment.next = s;
-				this.lastSubSegment = this.subSegments.next;
+				lastSubSegment.next = s;
+				lastSubSegment = lastSubSegment.next;
 			}
 			return true;
 		}
