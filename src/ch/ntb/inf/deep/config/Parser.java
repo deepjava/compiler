@@ -89,8 +89,11 @@ public class Parser implements ErrorCodes, IAttributes {
 	public static void main(String[] args) {
 		parseAndCreateConfig("D:/work/Crosssystem/deep", "rsc/MyProject.deep");
 		Dbg.vrb.println("Config read with " + nOfErrors + " error(s)");
+		//Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+		//Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+		//Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		Configuration.print();
-		Configuration.createInterfaceFile("D:/work/Crosssystem/deep", "rsc/TestInterface.java");
+		Configuration.createInterfaceFile("D:/work/Crosssystem/deep","rsc/TestInterface.java");
 	}
 
 	public Parser(String file) {
@@ -98,8 +101,12 @@ public class Parser implements ErrorCodes, IAttributes {
 			importList = new ArrayList<String>();
 			configFile = new BufferedReader(new FileReader(file));
 		} catch (FileNotFoundException e) {
-			reporter.error(errIOExp, e.getMessage());
+			reporter.error(errIOExp, " " + e.getMessage() + "\n");
 		}
+	}
+
+	static void incrementErrors() {
+		nOfErrors++;
 	}
 
 	public static void parseAndCreateConfig(String location, String file) {
@@ -158,7 +165,9 @@ public class Parser implements ErrorCodes, IAttributes {
 				break;
 			default:
 				nOfErrors++;
-				reporter.error(errUnexpectetSymExp,
+				reporter
+						.error(
+								errUnexpectetSymExp,
 								"expectet symbol : constants | sysconst | memorymap | registermap | targetconfiguration | reginit | project | operatingsystem, received symbol: "
 										+ symToString() + "\n");
 				next();
@@ -826,7 +835,8 @@ public class Parser implements ErrorCodes, IAttributes {
 		next();
 		SystemConstants sysConst = SystemConstants.getInstance();
 		while (sym == sDesignator) {
-			sysConst.addSysConst(HString.getHString(strBuffer), varAssignment());
+			sysConst
+					.addSysConst(HString.getHString(strBuffer), varAssignment());
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1009,6 +1019,12 @@ public class Parser implements ErrorCodes, IAttributes {
 						.getWidth()));
 			}
 		}
+		if ((seg.attributes & (1 << atrHeap)) != 0) {
+			Configuration.setHeapSegmentRef(seg);
+		}
+		if ((seg.attributes & (1 << atrStack)) != 0) {
+			Configuration.setStackSegmentRef(seg);
+		}
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp,
@@ -1044,40 +1060,41 @@ public class Parser implements ErrorCodes, IAttributes {
 				HString devName = segName.substring(0, indexOf);
 				dev = MemoryMap.getInstance().getDeviceByName(devName);
 				if (dev == null) {
-					ErrorReporter.reporter.error(errNoSuchDevice,
-							"Device " +devName.toString()+" for Segment " + segName.toString()
-									+ "not found\n");
+					ErrorReporter.reporter.error(errNoSuchDevice, "Device "
+							+ devName.toString() + " for Segment "
+							+ segName.toString() + "not found\n");
 					return;
 				}
-				
+
+				indexOf = segName.indexOf('.', 0);
+				if (indexOf != -1) {// it is true when the new Segment is a
+					// Subsegment
+					HString segment = segName.substring(0, indexOf);
+					Segment seg = dev.getSegementByName(segment);
+					segName = segName.substring(indexOf + 1);
 					indexOf = segName.indexOf('.', 0);
-					if (indexOf != -1) {// it is true when the new Segment is a
-						// Subsegment
-						HString segment = segName.substring(0, indexOf);
-						Segment seg = dev.getSegementByName(segment);
+					while (indexOf != -1) {
+						segment = segName.substring(0, indexOf);
+						seg = seg.getSubSegmentByName(segment);
 						segName = segName.substring(indexOf + 1);
 						indexOf = segName.indexOf('.', 0);
-						while (indexOf != -1) {
-							segment = segName.substring(0, indexOf);
-							seg = seg.getSubSegmentByName(segment);
-							segName = segName.substring(indexOf + 1);
-							indexOf = segName.indexOf('.', 0);
-						}
-						parent = seg;
-						attributes = seg.getAttributes();
-						width = seg.width;
-					} else {
-						attributes = dev.attributes;
-						width = dev.width;
 					}
-				}else {
-					ErrorReporter.reporter.error(errSyntax,
-							"Error in memorymap segementarray definition ("
-									+ segName.toString()
-									+ "), segmentarray names starts with the device name!");
+					parent = seg;
+					attributes = seg.getAttributes();
+					width = seg.width;
+				} else {
+					attributes = dev.attributes;
+					width = dev.width;
 				}
+			} else {
+				ErrorReporter.reporter
+						.error(
+								errSyntax,
+								"Error in memorymap segementarray definition ("
+										+ segName.toString()
+										+ "), segmentarray names starts with the device name!");
 			}
-		
+		}
 
 		if (sym != sLBrace) {
 			nOfErrors++;
@@ -1133,26 +1150,41 @@ public class Parser implements ErrorCodes, IAttributes {
 			}
 		}
 		// from here is nofSegments != 0
-		Segment root = new Segment(HString.getHString(segName.toString() + 1), baseAddr,
-				segSize, width, attributes);
+		Segment root = new Segment(HString.getHString(segName.toString() + 1),
+				baseAddr, segSize, width, attributes);
 		Segment current = root;
+	
+		// setReference for heap and stack segments
+		if ((current.attributes & (1 << atrHeap)) != 0) {
+			Configuration.setHeapSegmentRef(current);
+		}
+		if ((current.attributes & (1 << atrStack)) != 0) {
+			Configuration.setStackSegmentRef(current);
+		}
 
 		for (int i = 2; i <= nofSegments; i++) {
 			if (baseAddr != -1) {
 				baseAddr += segSize;
 			}
-			current.next = new Segment(HString.getHString(segName.toString() + i),
-					baseAddr, segSize, width, attributes);
+			current.next = new Segment(HString.getHString(segName.toString()
+					+ i), baseAddr, segSize, width, attributes);
 			current = current.next;
+			// setReference for heap and stack segments
+			if ((current.attributes & (1 << atrHeap)) != 0) {
+				Configuration.setHeapSegmentRef(current);
+			}
+			if ((current.attributes & (1 << atrStack)) != 0) {
+				Configuration.setStackSegmentRef(current);
+			}
 		}
 		next();
-		if(parent != null){
+		if (parent != null) {
 			parent.addSubSegment(root);
-		}else if(!isSubSegment){
+		} else if (!isSubSegment) {
 			dev.addSegment(root);
-		}else{
+		} else {
 			reporter.error(errInvalideParameter,
-			"Parent Segment must be given for Subsegmentarrays");
+					"Parent Segment must be given for Subsegmentarrays");
 		}
 	}
 
@@ -1687,7 +1719,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int varAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sDesignator) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1747,7 +1779,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int factor() {
-		int value = 1;
+		int value = Integer.MAX_VALUE;
 		if (sym == sNumber) {
 			value = intNumber;
 			next();
@@ -1764,6 +1796,7 @@ public class Parser implements ErrorCodes, IAttributes {
 			}
 		} else if (sym == sDesignator) {
 			value = Configuration.getValueFor(HString.getHString(strBuffer));
+
 			next();
 		} else {
 			nOfErrors++;
@@ -1813,7 +1846,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int baseAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sBase) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1844,7 +1877,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int widthAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sWidth) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1875,7 +1908,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int sizeAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sSize) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1906,7 +1939,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int segmentSizeAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sSegmentsize) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1937,7 +1970,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int arraySizeAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sArraysize) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -1968,7 +2001,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int nofSegmentAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sNofsegements) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -2144,7 +2177,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int addressAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sAddr) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp,
@@ -2185,8 +2218,8 @@ public class Parser implements ErrorCodes, IAttributes {
 		}
 		sb.append(strBuffer);
 		next();
-		while (sym == sDot) {
-			sb.append(".");
+		while (sym == sDot || sym == sDiv) {
+			sb.append("/");
 			next();
 			if (sym == sMul) {
 				sb.append("*");
@@ -2353,7 +2386,7 @@ public class Parser implements ErrorCodes, IAttributes {
 			return s;
 		}
 		next();
-		s = HString.getHString(readString());
+		s = HString.getHString(readString().replace('.', '/'));
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2381,7 +2414,7 @@ public class Parser implements ErrorCodes, IAttributes {
 			return s;
 		}
 		next();
-		s = HString.getHString(readString());
+		s = HString.getHString(readString().replace('.', '/'));
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2410,7 +2443,7 @@ public class Parser implements ErrorCodes, IAttributes {
 			return s;
 		}
 		next();
-		s = HString.getHString(readString());
+		s = HString.getHString(readString().replace('.', '/'));
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2438,7 +2471,7 @@ public class Parser implements ErrorCodes, IAttributes {
 			return s;
 		}
 		next();
-		s = HString.getHString(readString());
+		s = HString.getHString(readString().replace('.', '/'));
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp,
@@ -2451,7 +2484,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int debugLevelAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sDebugLevel) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "expected: exception"
@@ -2486,7 +2519,7 @@ public class Parser implements ErrorCodes, IAttributes {
 	}
 
 	private int printLevelAssignment() {
-		int res = Integer.MIN_VALUE;
+		int res = Integer.MAX_VALUE;
 		if (sym != sPrintLevel) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "expected: printlevel"
