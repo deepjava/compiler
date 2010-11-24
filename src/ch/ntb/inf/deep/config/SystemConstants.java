@@ -77,6 +77,6 @@ public class SystemConstants implements ErrorCodes {
 			}
 			current = current.next;
 		}
-		return Integer.MIN_VALUE;
+		return Integer.MAX_VALUE;
 	}
 }
