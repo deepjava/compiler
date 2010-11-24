@@ -43,6 +43,20 @@ public class TargetConfiguration {
 		return targetConfig;
 	}
 	
+	public Module getModuleByName(HString moduleName){
+		int modHash = moduleName.hashCode();
+		Module current = targetConfig;
+		while(current != null){
+			if(current.name.hashCode() == modHash){
+				if(current.name.equals(moduleName)){
+					return current;
+				}
+			}
+			current = current.next;
+		}
+		return null;
+	}
+	
 	public void print(int indentLevel){
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");
