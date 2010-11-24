@@ -21,7 +21,7 @@ public abstract class HString implements IhStringConsts {
 	}
 
 	// --- instance fields
-	HString next;
+	public HString next;
 	char[] chars;
 	int hash; // == this.toString().hashCode()
 	char length; // string length (number of chars)
