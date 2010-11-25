@@ -4,7 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-
+import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.Utilities;
 import ch.ntb.inf.deep.strings.HString;
@@ -29,16 +29,18 @@ public class Class extends Type implements IClassFileConsts, IDescAndTypeConsts 
 	public int nOfBaseClasses = 0; // number of base classes
 	
 	public int[] targetConstantPool; // pool with float and double constants for the target
-	public int targetConstantPoolSize = 0; // size of this pool on the target (in bits)
+	public int targetConstantPoolSize = 0; // size of this pool on the target (in byte)
 	
 	public int[] targetStringPool; // pool with constant stings for the target 
-	public int targetStringPoolSize = 0; // size of this pool on the target (in bits)
+	public int targetStringPoolSize = 0; // size of this pool on the target (in byte)
 	
 	public int[] targetClassDescriptor; // class descriptor (for the target)
-	public int targetClassDescriptorSize = 0; // size of the class descriptor on the target
+	public int targetClassDescriptorSize = 0; // size of the class descriptor on the target (in byte)
 	
 	public int classFieldsSizeOnTarget = 0; // size of all class/static fields on the target
-	public int codeSizeOnTarget = 0; // size of the machine code on the target
+	public int codeSizeOnTarget = 0; // size of the machine code on the target (in byte)
+	
+	public Segment codeSegment, varSegment, constSegment; // references to the memory segments for this class
 	
 	Class[] imports;
 	

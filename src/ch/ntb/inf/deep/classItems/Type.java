@@ -20,7 +20,7 @@ public class Type extends Item {
 	public static int nofRootClasses = 0;
 
 	public static Class classList, classListTail;
-	static int nofClasses = 0;
+	public static int nofClasses = 0;
 
 	//-- const pool arrays
 	static Item[] cpItems;
