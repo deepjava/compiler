@@ -24,6 +24,13 @@ public class Register {
 	
 	public void setType(int type){
 		this.type = type;
+		if(repr == 0){
+			if(type == Parser.sFPR){
+				repr = Parser.sFloat;
+			}else{
+				repr = Parser.sHex;
+			}
+		}
 	}
 	
 	public void setRepresentation(int repr){
@@ -59,6 +66,9 @@ public class Register {
 		}
 		if(type == Parser.sSPR){
 			return HString.getHString("SPR");
+		}
+		if(type == Parser.sIOR){
+			return HString.getHString("IOR");
 		}
 		
 		return HString.getHString("Undefined Type");

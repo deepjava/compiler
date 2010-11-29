@@ -79,4 +79,8 @@ public class SystemConstants implements ErrorCodes {
 		}
 		return Integer.MAX_VALUE;
 	}
+
+	public static void clear() {
+		sysBlock = null;		
+	}
 }

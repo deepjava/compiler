@@ -8,7 +8,6 @@ public class Segment implements IAttributes {
 	public Segment next;
 	
 	HString name;
-	HString deviceAssignedTo;
 	int attributes = 0;
 	int baseAddress = -1;
 	int size = 0;
@@ -19,20 +18,13 @@ public class Segment implements IAttributes {
 		this.name = name;
 	}
 	
-	public Segment(HString name, HString deviceAssignedTo){
+	public Segment(HString name, int baseAddress) {
 		this.name = name;
-		this.deviceAssignedTo = deviceAssignedTo;
-	}
-	
-	public Segment(HString name, HString deviceAssignedTo,int baseAddress) {
-		this.name = name;
-		this.deviceAssignedTo = deviceAssignedTo;
 		this.baseAddress = baseAddress;
 	}
 	
-	public Segment(HString name, HString deviceAssignedTo, int baseAddress, int size) {
+	public Segment(HString name, int baseAddress, int size) {
 		this.name = name;
-		this.deviceAssignedTo = deviceAssignedTo;
 		this.baseAddress = baseAddress;
 		this.size = size;
 	}
@@ -51,11 +43,7 @@ public class Segment implements IAttributes {
 		this.width = width;
 		this.attributes = attributes;
 	}
-	
-	public void setDeviceAssignedTo(HString device ){
-		deviceAssignedTo = device;
-	}
-	
+		
 	public void setAttribute(int attributes) {
 		this.attributes = attributes;
 	}
@@ -104,10 +92,6 @@ public class Segment implements IAttributes {
 	
 	public HString getName(){
 		return name;
-	}
-	
-	public HString getDeviceAssignedTo(){
-		return deviceAssignedTo;
 	}
 	
 	public int getAttributes(){

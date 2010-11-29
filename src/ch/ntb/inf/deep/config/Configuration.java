@@ -1,11 +1,11 @@
 package ch.ntb.inf.deep.config;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
 import org.eclipse.core.runtime.Path;
 
-import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -19,7 +19,7 @@ public class Configuration implements ErrorCodes {
 	private static TargetConfiguration activeTarConf;
 	private static ValueAssignment regInit;
 	private static OperatingSystem os;
-	private static Class heap;
+//	private static Class heap;
 	private static final int maxNumbersOfHeaps = 4;
 	private static final int maxNumbersOfStacks = 4;
 	private static int nofHeapSegments = 0;
@@ -66,26 +66,7 @@ public class Configuration implements ErrorCodes {
 	private static Segment getSegmentOf(HString clazz, HString contentAttribute) {
 		Segment seg;
 		SegmentAssignment segAss;
-		// determine active configuration if it is not set
-		if (activeTarConf == null) {
-			HString tarConf = project.getTargetConfig();
-			int tarConfHash = tarConf.hashCode();
-			activeTarConf = targetConfig;
-			while (activeTarConf != null) {
-				if (activeTarConf.name.hashCode() == tarConfHash) {
-					if (activeTarConf.name.equals(tarConf)) {
-						break;
-					}
-				}
-				activeTarConf = activeTarConf.next;
-			}
-			if (activeTarConf == null) {
-				ErrorReporter.reporter
-						.error(errInconsistentattributes,
-								"Targetconfiguration which is set in project, not found\n");
-				return null;
-			}
-		}
+		
 		// first check if clazz is a system class
 		if (os.getKernel().equals(clazz)) {
 			segAss = activeTarConf
@@ -94,48 +75,55 @@ public class Configuration implements ErrorCodes {
 		} else if (os.getHeap().equals(clazz)) {
 			segAss = activeTarConf.getModuleByName(HString.getHString("heap"))
 					.getSegmentAssignments();
-		} else if (os.getInterrupt().equals(clazz)) {
-			segAss = activeTarConf.getModuleByName(
-					HString.getHString("interrupt")).getSegmentAssignments();
 		} else if (os.getException().equals(clazz)) {
 			segAss = activeTarConf.getModuleByName(
 					HString.getHString("exception")).getSegmentAssignments();
 		} else {// Class is not a system class
-			Module mod =memoryMap.getModuleByName(clazz);
-			if(mod != null){
+			Module mod =activeTarConf.getModuleByName(clazz);
+			if(mod == null){
+				mod = memoryMap.getModuleByName(clazz);
+			}
+			if (mod != null) {
 				segAss = mod.getSegmentAssignments();
-			}else{
+			} else {
 				// module for Class not found load default
-				segAss = activeTarConf.getModuleByName(HString.getHString("default")).getSegmentAssignments();
+				segAss = activeTarConf.getModuleByName(
+						HString.getHString("default")).getSegmentAssignments();
 			}
 		}
 		while (segAss != null) {
 			if (segAss.contentAttribute.equals(contentAttribute)) {
-					String segDesignator = segAss.segmentDesignator.toString();
-					int index = segDesignator.indexOf('.');
-					// Determine Device name
-					HString name = HString.getHString(segDesignator.substring(0, index));
+				String segDesignator = segAss.segmentDesignator.toString();
+				int index = segDesignator.indexOf('.');
+				// Determine Device name
+				HString name = HString.getHString(segDesignator.substring(0,
+						index));
+				segDesignator = segDesignator.substring(index + 1);
+				Device dev = memoryMap.getDeviceByName(name);
+				if (dev == null) {
+					ErrorReporter.reporter.error(errNoSuchDevice, "Device: "
+							+ name.toString() + "with segment for "
+							+ contentAttribute.toString() + " not found\n");
+					return null;
+				}
+				index = segDesignator.indexOf('.');
+				if (index == -1) {
+					return dev.getSegementByName(HString
+							.getHString(segDesignator));
+				}
+				name = HString.getHString(segDesignator.substring(0, index));
+				segDesignator = segDesignator.substring(index + 1);
+				seg = dev.getSegementByName(name);
+				index = segDesignator.indexOf('.');
+				while (index != -1) {
+					name = HString
+							.getHString(segDesignator.substring(0, index));
 					segDesignator = segDesignator.substring(index + 1);
-					Device dev = memoryMap.getDeviceByName(name);
-					if (dev == null) {
-						ErrorReporter.reporter.error(errNoSuchDevice,"Device: " + name.toString()+ "with segment for " + contentAttribute.toString() + " not found\n");
-						return null;
-					}
+					seg = seg.getSubSegmentByName(name);
 					index = segDesignator.indexOf('.');
-					if (index == -1) {
-						return dev.getSegementByName(HString.getHString(segDesignator));
-					}
-					name = HString.getHString(segDesignator.substring(0, index));
-					segDesignator = segDesignator.substring(index + 1);
-					seg = dev.getSegementByName(name);
-					index = segDesignator.indexOf('.');
-					while (index != -1) {
-						name = HString.getHString(segDesignator.substring(0,index));
-						segDesignator = segDesignator.substring(index + 1);
-						seg = seg.getSubSegmentByName(name);
-						index = segDesignator.indexOf('.');
-					}
-					return seg.getSubSegmentByName(HString.getHString(segDesignator));
+				}
+				return seg.getSubSegmentByName(HString
+						.getHString(segDesignator));
 			}
 			segAss = segAss.next;
 		}
@@ -175,24 +163,36 @@ public class Configuration implements ErrorCodes {
 	public static int getNumberOfHeaps() {
 		return nofHeapSegments;
 	}
-
-	public static Class getReferenceToHeapClass() {
-		if (heap == null) {
-			HString str = os.getHeap();
-			int heapHash = str.hashCode();
-			Class current = Class.classList;
-			while (current != null) {
-				if (current.name.hashCode() == heapHash) {
-					if (current.name.equals(str)) {
-						heap = current;
-						break;
-					}
-				}
-				current = (Class) current.next;
-			}
-		}
-		return heap;
+	
+	public static HString getHeapClassname(){
+		return os.getHeap();
 	}
+	
+	public static HString getExceptionClassname(){
+		return os.getException();
+	}
+	
+	public static HString getHwdClassname(){
+		return os.getHwd();
+	}
+
+//	public static Class getReferenceToHeapClass() {
+//		if (heap == null) {
+//			HString str = os.getHeap();
+//			int heapHash = str.hashCode();
+//			Class current = Class.classList;
+//			while (current != null) {
+//				if (current.name.hashCode() == heapHash) {
+//					if (current.name.equals(str)) {
+//						heap = current;
+//						break;
+//					}
+//				}
+//				current = (Class) current.next;
+//			}
+//		}
+//		return heap;
+//	}
 
 	public static void setOperatingSystem(OperatingSystem os) {
 		Configuration.os = os;
@@ -257,18 +257,20 @@ public class Configuration implements ErrorCodes {
 		return regInit;
 	}
 
-	public static ValueAssignment getSysConstants() {
+	public static ValueAssignment getConstant() {
 		if (sysConst == null) {
 			return null;
 		}
 		return sysConst.getSysConst();
 	}
 
-	public static ValueAssignment getConsts() {
+	public static int getSysConstValue(HString name) {
 		if (consts == null) {
-			return null;
+			return -1;
 		}
-		return consts.getConst();
+		sysConst.getConstByName(name);
+	
+		return -1;
 	}
 
 	public static int getValueFor(HString constName) {
@@ -302,10 +304,10 @@ public class Configuration implements ErrorCodes {
 		}
 		registerMap.println(1);
 		if (regInit != null) {
-			System.out.println("  regInit{");
+			System.out.println("  RegInit{");
 			ValueAssignment initReg = regInit;
 			while (initReg != null) {
-				initReg.print(2);
+				initReg.println(2);
 				initReg = initReg.next;
 			}
 			System.out.println("  }");
@@ -313,25 +315,35 @@ public class Configuration implements ErrorCodes {
 		memoryMap.println(1);
 	}
 
-	public static void createInterfaceFile(String location, String fileName) {
+	public static void createInterfaceFile(HString fileToCreate) {
 		int indexOf;
 		String pack;
 		String className;
 		try {
-			FileWriter fw = new FileWriter(location + "/" + fileName);
-			indexOf = fileName.lastIndexOf(Path.SEPARATOR);
+			indexOf = fileToCreate.lastIndexOf(Path.SEPARATOR);
 			if (indexOf != -1) {
-				pack = fileName.substring(0, indexOf) + ";";
-				className = fileName.substring(indexOf + 1);
+				className = fileToCreate.substring(indexOf + 1).toString();
+				pack = fileToCreate.substring(0, indexOf).toString();
 			} else {
+				className = fileToCreate.toString();
 				pack = "";
-				className = fileName;
+			}
+			//check if path exists
+			File f = new File(fileToCreate.substring(0, indexOf).toString());
+			if(!f.exists()){
+				f.mkdirs();
+			}
+			FileWriter fw = new FileWriter(fileToCreate.toString());
+			indexOf = pack.lastIndexOf(Path.SEPARATOR);
+			if (indexOf != -1) {
+				pack = pack.substring(indexOf + 1) + ";";
 			}
 			pack = pack.replace(Path.SEPARATOR, '.');
-			fw.write("package " + pack + "\n\n");
+			fw.write("package ch.ntb.inf.deep.runtime." + pack + "\n\n");
 			indexOf = className.indexOf(".");
 			fw.write("public interface " + className.substring(0, indexOf)
 					+ "{\n");
+			fw.write("\t//Systemconstants\n");
 			ValueAssignment current = sysConst.getSysConst();
 			while (current != null) {
 				fw.write("\tpublic static final int "
@@ -339,6 +351,39 @@ public class Configuration implements ErrorCodes {
 						+ Integer.toHexString(current.getValue()) + ";\n");
 				current = current.next;
 			}
+			fw.write("\n\t//Registermap GPR\n");
+			Register reg = registerMap.gpr;
+			while(reg != null){
+				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+				reg = reg.next;
+			}
+			fw.write("\n\t//Registermap FPR\n");
+			reg = registerMap.fpr;
+			while(reg != null){
+				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+				reg = reg.next;
+			}
+			fw.write("\n\t//Registermap SPR\n");
+			reg = registerMap.spr;
+			while(reg != null){
+				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+				reg = reg.next;
+			}
+			fw.write("\n\t//Registermap IOR\n");
+			reg = registerMap.ior;
+			while(reg != null){
+				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+				reg = reg.next;
+			}
+			fw.write("\n\t//Register inital value\n");
+			current = regInit;
+			while (current != null) {
+				fw.write("\tpublic static final int "
+						+ current.getName().toString() + " = 0x"
+						+ Integer.toHexString(current.getValue()) + ";\n");
+				current = current.next;
+			}
+			
 			fw.write("}");
 			fw.flush();
 			fw.close();
@@ -387,5 +432,45 @@ public class Configuration implements ErrorCodes {
 			res[i] = stacks[i];
 		}
 		return res;
+	}
+
+	public static void clear() {
+		project = null;
+		SystemConstants.clear();
+		sysConst = SystemConstants.getInstance();
+		Consts.clear();
+		consts = Consts.getInstance();
+		MemoryMap.clear();
+		memoryMap = MemoryMap.getInstance();
+		RegisterMap.clear();
+		registerMap = RegisterMap.getInstance();
+		targetConfig = null;
+		activeTarConf = null;
+		regInit = null;
+		os = null;
+//		heap = null;
+		nofHeapSegments = 0;
+		nofStackSegments = 0;
+		heaps = new Segment[maxNumbersOfHeaps];
+		stacks = new Segment[maxNumbersOfStacks];
+	}
+		
+	protected static void setActiveTargetConfig(HString targetConfigName){
+		// determine active configuration if it is not set
+		if (activeTarConf == null) {
+			activeTarConf = targetConfig;
+			while (activeTarConf != null) {
+				if (activeTarConf.name.equals(targetConfigName)) {
+					break;
+				}
+				activeTarConf = activeTarConf.next;
+			}
+			if (activeTarConf == null) {
+				ErrorReporter.reporter
+						.error(errInconsistentattributes,
+								"Targetconfiguration which is set is not found\n");
+			}
+		}
+		
 	}
 }

@@ -75,4 +75,8 @@ public class Consts implements ErrorCodes {
 		}
 		return Integer.MAX_VALUE;
 	}
+
+	public static void clear() {
+		constBlock = null;		
+	}
 }

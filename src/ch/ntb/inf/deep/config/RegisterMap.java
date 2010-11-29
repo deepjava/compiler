@@ -7,6 +7,7 @@ public class RegisterMap implements ErrorCodes {
 	Register gpr;
 	Register fpr;
 	Register spr;
+	Register ior;
 
 	private RegisterMap() {
 	}
@@ -98,6 +99,33 @@ public class RegisterMap implements ErrorCodes {
 		// if no match prev shows the tail of the list
 		prev.next = reg;
 	}
+	
+	private void addIorRegister(Register reg) {
+		if (ior == null) {
+			ior = reg;
+			return;
+		}
+		Register current = ior;
+		Register prev = null;
+		int regHash = reg.name.hashCode();
+		while (current != null) {
+			if (current.name.hashCode() == regHash) {
+				if (current.name.equals(reg.name)) {
+					reg.next = current.next;
+					if (prev != null) {
+						prev.next = reg;
+					} else {
+						ior = reg;
+					}
+					return;
+				}
+			}
+			prev = current;
+			current = current.next;
+		}
+		// if no match prev shows the tail of the list
+		prev.next = reg;
+	}
 
 	public void addRegister(Register reg) {
 		if (reg.type == Parser.sGPR) {
@@ -106,7 +134,9 @@ public class RegisterMap implements ErrorCodes {
 			addFprRegister(reg);
 		} else if (reg.type == Parser.sSPR) {
 			addSprRegister(reg);
-		} else {
+		} else if (reg.type == Parser.sIOR) {
+			addIorRegister(reg);
+		} else  {
 			ErrorReporter.reporter.error(errInvalidType,
 					"Invalide register type in register "
 							+ reg.getName().toString() + "\n");
@@ -146,11 +176,20 @@ public class RegisterMap implements ErrorCodes {
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
-		
+		current = ior;
+		while(current != null){
+			current.println(indentLevel + 1);
+			current = current.next;
+		}
+				
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");
 		}
 		System.out.println("}");
+	}
+
+	public static void clear() {
+		regMap = null;		
 	}
 
 }

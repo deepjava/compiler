@@ -44,13 +44,17 @@ public class TargetConfiguration {
 	}
 	
 	public Module getModuleByName(HString moduleName){
-		int modHash = moduleName.hashCode();
 		Module current = targetConfig;
-		while(current != null){
-			if(current.name.hashCode() == modHash){
-				if(current.name.equals(moduleName)){
-					return current;
+		while (current != null) {
+			if (current.name.charAt(current.name.length() - 1) == '*') {
+				if (current.name.length() <= moduleName.length()) {
+					HString temp = current.name.substring(0, current.name.length() - 2);
+					if (temp.equals(moduleName.substring(0, temp.length()))) {
+						return current;
+					}
 				}
+			} else if (current.name.equals(moduleName)) {
+				return current;
 			}
 			current = current.next;
 		}
