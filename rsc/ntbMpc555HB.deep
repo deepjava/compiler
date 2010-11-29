@@ -1,0 +1,31 @@
+#deep-0
+
+meta {
+	version = "2010-09-07";
+	description = "NTB MPC555 Headerboard";
+	import = "MPC555.deep";
+	
+}
+
+constants {
+
+}
+memorymap{
+    device ExtRam {
+    	attributes = read, write;
+    	base = 0x800000;
+    	width = 4;
+    	size = 0x200000;
+    }
+    
+    device ExtFlash {
+    	attributes = read;
+    	width = 4;
+    	base = 0x3333;
+    	size = 0x400000;
+    	
+    }
+    	segment ExtFlash.S1 {
+              base = 0x5000;
+           }
+}
