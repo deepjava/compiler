@@ -130,7 +130,7 @@ public class CFG implements ICjvmInstructionOpcs {
 				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3);
 				
 			} else if ((entry & (1 << bcapBranch)) != 0  && (entry & (1 << bcapReturn)) == 0) {
-				int branchOffset = (short) (code[bca + 1] & 0xff << 8 | code[bca + 2]);
+				int branchOffset = (short)(((code[bca + 1]&0xff) << 8) | (code[bca + 2]&0xff));
 				split(this, bca, bca + branchOffset);
 			}
 			
@@ -384,7 +384,7 @@ public class CFG implements ICjvmInstructionOpcs {
 	}
 
 	private static int getInt(byte[] bytes, int index){
-		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
+		return ((bytes[index]&0xff)<<24) | (bytes[index+1]&0xff)<<16 | (bytes[index+2]&0xff)<<8 | (bytes[index+3]&0xff);
 	}
 
 	private String cfgToString() {
