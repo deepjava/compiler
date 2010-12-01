@@ -5,7 +5,7 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Device implements ErrorCodes{
 	public Segment segments;
-	private Segment lastSegment;
+	public Segment lastSegment;
 	public Device next;
 
 	HString name;
@@ -37,6 +37,7 @@ public class Device implements ErrorCodes{
 				lastSegment = segments;
 			} else {
 				lastSegment.next = s;
+				s.prev = lastSegment;
 				lastSegment = lastSegment.next;
 			}
 		}else{
