@@ -4,8 +4,10 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Segment implements IAttributes {
 	public Segment subSegments;
-	private Segment lastSubSegment;
+	public Segment parent;
+	public Segment lastSubSegment;
 	public Segment next;
+	public Segment prev;
 	
 	HString name;
 	int attributes = 0;
@@ -100,6 +102,7 @@ public class Segment implements IAttributes {
 
 	
 	public boolean addSubSegment(Segment s) {
+		s.parent = this;
 		if(s.width == this.width) {
 			if(subSegments == null) {
 				subSegments = s;
@@ -107,6 +110,7 @@ public class Segment implements IAttributes {
 			}
 			else {
 				lastSubSegment.next = s;
+				s.prev = lastSubSegment;
 				lastSubSegment = lastSubSegment.next;
 			}
 			return true;
