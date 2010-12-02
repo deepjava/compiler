@@ -60,7 +60,7 @@ public class Device implements ErrorCodes{
 		return current;
 	}
 	
-	public HString gwetName(){
+	public HString getName(){
 		return name;
 	}
 
