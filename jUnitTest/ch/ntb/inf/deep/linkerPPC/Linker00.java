@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.linker;
+package ch.ntb.inf.deep.linkerPPC;
 
 import java.io.IOException;
 
@@ -7,19 +7,22 @@ import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.DataItem;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.linkerPPC.Linker;
 
-public class Linker00 extends TestLinker {
+public class Linker00 extends TestLinker implements ICclassFileConsts {
 	@BeforeClass
 	public static void setUp() {
 		String workspace = System.getProperty("user.dir");
-		String[] rootClasses = new String[] { "ch/ntb/inf/deep/testClasses/T10Constants" };
-		int attributes = (1 << IClassFileConsts.atxCode) | (1 << IClassFileConsts.atxLocalVariableTable) | (1 << IClassFileConsts.atxExceptions) | (1 << IClassFileConsts.atxLineNumberTable);
+		String[] rootClassesNames = new String[] { "ch/ntb/inf/deep/testClasses/T10Constants" };
+		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
+		
 		try {
-			Class.buildSystem(rootClasses, workspace, attributes);
+			Class.buildSystem(rootClassesNames, new String[]{workspace}, null, attributes);
+			
+			System.out.println("===================================================================");
+			System.out.println("Number of classes: " + Type.nofClasses);
 			
 			Class clazz = Type.classList;
 			Method method;
@@ -27,12 +30,6 @@ public class Linker00 extends TestLinker {
 			while(clazz != null) {
 				// Linker: Calculate offsets
 				Linker.calculateOffsets(clazz);
-				
-				// Linker: Create constant pool
-				Linker.createConstantPool(clazz);
-				
-				// Linker: Create string pool
-				Linker.createStringPool(clazz);
 				
 				// Print for debuging
 				System.out.println("Class: " + clazz.name.toString());
@@ -54,30 +51,30 @@ public class Linker00 extends TestLinker {
 					field = (DataItem)field.next;
 				}
 				
-				System.out.println("  Constant pool:");
-				System.out.println("    Size: " + clazz.targetConstantPoolSize + " bits");
+/*				System.out.println("  Constant pool:");
+				System.out.println("    Size: " + clazz.constantPoolSize + " byte");
 				if(clazz.targetConstantPool != null) {
 					for(int i = 0; i < clazz.targetConstantPool.length; i++) {
-						System.out.println("    [0x" + Integer.toHexString(i * 32) + "] " + Integer.toHexString((clazz.targetConstantPool[i])));
+						System.out.println("    [0x" + Integer.toHexString(i * 4) + "] " + Integer.toHexString((clazz.targetConstantPool[i])));
 					}
 				}
 				
 				System.out.println("  String pool:");
-				System.out.println("    Size: " + clazz.targetStringPoolSize + " bits");
+				System.out.println("    Size: " + clazz.stringPoolSize + " byte");
 				if(clazz.targetStringPool != null) {
 					for(int i = 0; i < clazz.targetStringPool.length; i++) {
-						System.out.println("    [0x" + Integer.toHexString(i * 32) + "] " + Integer.toHexString((clazz.targetStringPool[i])));
+						System.out.println("    [0x" + Integer.toHexString(i * 4) + "] " + Integer.toHexString((clazz.targetStringPool[i])));
 					}
 				}
 				
 				System.out.println("  Class descriptor:");
-				System.out.println("    Size: " + clazz.targetClassDescriptorSize + " bits");
+				System.out.println("    Size: " + clazz.classDescriptorSize + " byte");
 				if(clazz.targetClassDescriptor != null) {
 					for(int i = 0; i < clazz.targetClassDescriptor.length; i++) {
-						System.out.println("    [0x" + Integer.toHexString(i * 32) + "] " + Integer.toHexString((clazz.targetClassDescriptor[i])));
+						System.out.println("    [0x" + Integer.toHexString(i * 4) + "] " + Integer.toHexString((clazz.targetClassDescriptor[i])));
 					}
 				}
-				
+*/
 				clazz = (Class)clazz.next;
 			}
 		} catch (IOException e) {

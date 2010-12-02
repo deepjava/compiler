@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.linker;
+package ch.ntb.inf.deep.linkerPPC;
 
 import static org.junit.Assert.assertEquals;
 
