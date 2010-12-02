@@ -59,6 +59,10 @@ public class Device implements ErrorCodes{
 		}
 		return current;
 	}
+	
+	public HString gwetName(){
+		return name;
+	}
 
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
