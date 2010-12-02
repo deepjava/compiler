@@ -4,23 +4,23 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 public class cgPPC01 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir");
+		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T01SimpleMethods" };
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1 << IClassFileConsts.atxCode)
-					| (1 << IClassFileConsts.atxLocalVariableTable)
-					| (1 << IClassFileConsts.atxLineNumberTable)
-					| (1 << IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames,new String[]{workspace},null, (1 << atxCode)
+					| (1 << atxLocalVariableTable)
+					| (1 << atxLineNumberTable)
+					| (1 << atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -32,7 +32,7 @@ public class cgPPC01 extends TestCgPPC {
 
 	@Test
 	public void emptyMethodStatic() {
-		int[] code = getCode(1);
+		int[] code = getCode(0);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -45,7 +45,7 @@ public class cgPPC01 extends TestCgPPC {
 	
 	@Test
 	public void emptyMethod() {
-		int[] code = getCode(2);
+		int[] code = getCode(8);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -58,7 +58,7 @@ public class cgPPC01 extends TestCgPPC {
 	
 	@Test
 	public void testAssignment1() {
-		int[] code = getCode(3);
+		int[] code = getCode(1);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -72,7 +72,7 @@ public class cgPPC01 extends TestCgPPC {
 	
 	@Test
 	public void testSimple1() {
-		int[] code = getCode(4);
+		int[] code = getCode(2);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -90,7 +90,7 @@ public class cgPPC01 extends TestCgPPC {
 	
 	@Test
 	public void testSimple2() {
-		int[] code = getCode(5);
+		int[] code = getCode(3);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -107,7 +107,7 @@ public class cgPPC01 extends TestCgPPC {
 	
 	@Test
 	public void testSimple3() {
-		int[] code = getCode(6);
+		int[] code = getCode(4);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -124,7 +124,7 @@ public class cgPPC01 extends TestCgPPC {
 	
 	@Test
 	public void testSimple4() {
-		int[] code = getCode(7);
+		int[] code = getCode(5);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -165,7 +165,7 @@ public class cgPPC01 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void testSimple5() {
-		int[] code = getCode(8);
+		int[] code = getCode(6);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);

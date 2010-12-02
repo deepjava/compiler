@@ -2,9 +2,10 @@ package ch.ntb.inf.deep.cgPPC;
 
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.ssa.TestSSA;
 
-public class TestCgPPC {
+public class TestCgPPC implements ICclassFileConsts {
 
 	static MachineCode[] code;
 

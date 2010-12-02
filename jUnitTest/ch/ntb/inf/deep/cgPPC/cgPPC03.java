@@ -8,20 +8,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 public class cgPPC03 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir");
+		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T03Switch" };
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1 << IClassFileConsts.atxCode)
-					| (1 << IClassFileConsts.atxLocalVariableTable)
-					| (1 << IClassFileConsts.atxLineNumberTable)
-					| (1 << IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames,new String[]{workspace},null, (1 << atxCode)
+					| (1 << atxLocalVariableTable)
+					| (1 << atxLineNumberTable)
+					| (1 << atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -33,7 +32,7 @@ public class cgPPC03 extends TestCgPPC {
 
 	@Test
 	public void switchNear1() {
-		int[] code = getCode(1);
+		int[] code = getCode(0);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -60,7 +59,7 @@ public class cgPPC03 extends TestCgPPC {
 	
 	@Test
 	public void switchNear2() {
-		int[] code = getCode(2);
+		int[] code = getCode(1);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -103,7 +102,7 @@ public class cgPPC03 extends TestCgPPC {
 	
 	@Test
 	public void switchNear3() {
-		int[] code = getCode(3);
+		int[] code = getCode(2);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -150,7 +149,7 @@ public class cgPPC03 extends TestCgPPC {
 	
 	@Test
 	public void switchFar1() {
-		int[] code = getCode(4);
+		int[] code = getCode(3);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -177,7 +176,7 @@ public class cgPPC03 extends TestCgPPC {
 
 	@Test
 	public void switchFar2() {
-		int[] code = getCode(5);
+		int[] code = getCode(4);
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
