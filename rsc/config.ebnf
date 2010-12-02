@@ -13,7 +13,7 @@ EndToken                            = ";" .
 
 Attribute                           = ContentAttribute | "read" | "write" .
 ContentAttribute                    = "const" | "code" | "var" | "heap" | "stack" | "systab" .
-RegisterType                        = "GPR" | "FPR" | "SPR" | "gpr" | "fpr" | "spr" .
+Type                                = "GPR" | "FPR" | "SPR" | "gpr" | "fpr" | "spr" | "new" | "NEW" | "unsafe" | "UNSAFE" | "safe" | "SAFE".
 RegisterRep                         = "hex" | "dez" | "bin" | "float" | "Hex" | "Dez" | "Bin" | "Float" .
 SystemModules                       = "kernel" | "interrupts" | "exceptions" | "heap" | "default"  .
 
@@ -41,13 +41,19 @@ BaseAssigment                       = "base" AssignOp Expression EndToken .
 RegAssigment                        = Designator AssignOp Expression EndToken .
 AddressAssignment                   = "addr" AssignOp Expression EndToken .
 RegisterRepresentationAssignment    = "repr" AssignOp RegisterRep EndToken . 
-TypeAssignment                      = "type" AssignOp RegisterType EndToken .
+TypeAssignment                      = "type" AssignOp Type EndToken .
 LibPathAssignment                   = "libpath" AssignOp String EndToken .
 TargetConfigurationAssignment       = "targetconfiguration" AssignOp Designator EndToken .
-KernelAssignment                    = "kernel" AssignOp String EndToken .
-HeapAssignment                      = "heap" AssignOp String EndToken . 
-InterruptAssignment                 = "interrupt" AssignOp String EndToken .
-ExceptionAssignment                 = "exception" AssignOp String EndToken .
+ByteCodeAssignment                  = "bc" AssignOp IntNumber EndToken .
+
+MethodBlock                         = "method" Designator "{" TypeAssignment [ByteCodeAssignment] "}" .
+KernelModule                        = "kernel" "{" ClassAssignment [MethodBlock] "}" .
+HeapModule                          = "heap" "{" ClassAssignment [MethodBlock] "}" . 
+HwdModule                           = "interrupt" "{" ClassAssignment [MethodBlock] "}" .
+ExceptionModule                     = "exception" "{" ClassAssignment [MethodBlock] "}".
+BitOpsModule                        = "bitops" "{" ClassAssignment [MethodBlock] "}" .
+
+ClassAssignment                     = "class" AssignOp Designator { "."|"/" Designator } EndToken . 
 RootClassAssignments                = "rootClasses" AssignOp StringEnum EndToken .
 PrintLevelAssignment                = "printlevel" AssignOp IntNumber EndToken .
 DebugLevelAssignment                = "DebugLevel" AssignOp IntNumber EndToken .
