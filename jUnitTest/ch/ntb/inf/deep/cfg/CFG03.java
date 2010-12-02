@@ -2,21 +2,21 @@ package ch.ntb.inf.deep.cfg;
 
 import java.io.IOException;
 
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
-public class CFG03 extends TestCFG {
+public class CFG03 extends TestCFG implements ICclassFileConsts {
 
 	@BeforeClass
 	static public void setUp() throws Exception {
 		String workspace =System.getProperty("user.dir");
     	String[] rootClassNames = new String[]{"ch/ntb/inf/deep/testClasses/T03Switch"};
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1<<IClassFileConsts.atxCode)|(1<<IClassFileConsts.atxLocalVariableTable)|(1<<IClassFileConsts.atxLineNumberTable)|(1<<IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames, new String[]{workspace + "/bin"}, null, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -28,7 +28,7 @@ public class CFG03 extends TestCFG {
 
 	@Test
 	public void switchNear1() {
-		CFGNode[] nodes = getAndTestNodes(1, 5);
+		CFGNode[] nodes = getAndTestNodes(0, 5);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] { 28,30,32,34 });
 		testNode(nodes[1], 28, 29, false, nodes[0], new int[] { 0 }, new int[] { });
 		testNode(nodes[2], 30, 31, false, nodes[0], new int[] { 0 }, new int[] { });
@@ -38,7 +38,7 @@ public class CFG03 extends TestCFG {
 
 	@Test
 	public void switchNear2() {
-		CFGNode[] nodes = getAndTestNodes(2, 9);
+		CFGNode[] nodes = getAndTestNodes(1, 9);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {40,42,44,50,52,55,61});
 		testNode(nodes[1], 40, 41, false, nodes[0], new int[] {0}, new int[] {});
 		testNode(nodes[2], 42, 43, false, nodes[0], new int[] {0}, new int[] {});
@@ -52,7 +52,7 @@ public class CFG03 extends TestCFG {
 
 	@Test
 	public void switchFar1() {
-		CFGNode[] nodes = getAndTestNodes(4, 5);
+		CFGNode[] nodes = getAndTestNodes(3, 5);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {36,39,41,44});
 		testNode(nodes[1], 36, 38, false, nodes[0], new int[] {0}, new int[] {});
 		testNode(nodes[2], 39, 40, false, nodes[0], new int[] {0}, new int[] {});
@@ -62,7 +62,7 @@ public class CFG03 extends TestCFG {
 
 	@Test
 	public void switchFar2() {
-		CFGNode[] nodes = getAndTestNodes(5, 10);
+		CFGNode[] nodes = getAndTestNodes(4, 10);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {36,39,89,139});
 		testNode(nodes[1], 36, 38, false, nodes[0], new int[] {0}, new int[] {});
 		testNode(nodes[2], 39, 40, false, nodes[0], new int[] {0}, new int[] {89,79,81,89,87,89});

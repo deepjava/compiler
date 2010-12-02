@@ -3,22 +3,22 @@ package ch.ntb.inf.deep.cfg;
 
 import java.io.IOException;
 
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 
-public class CFG04 extends TestCFG {
+public class CFG04 extends TestCFG implements ICclassFileConsts {
 
     @BeforeClass
     public static void setUp() {
     	String workspace =System.getProperty("user.dir");
     	String[] rootClassNames = new String[]{"ch/ntb/inf/deep/testClasses/T04Loops"};
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1<<IClassFileConsts.atxCode)|(1<<IClassFileConsts.atxLocalVariableTable)|(1<<IClassFileConsts.atxLineNumberTable)|(1<<IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames, new String[]{workspace + "/bin"}, null, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -31,7 +31,7 @@ public class CFG04 extends TestCFG {
 
     @Test
     public void doWhile1() {
-        CFGNode[] nodes = getAndTestNodes(1, 3);
+        CFGNode[] nodes = getAndTestNodes(0, 3);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] { 2 });
 		testNode(nodes[1], 2, 8, true, nodes[0], new int[] { 0, 2 }, new int[] { 11, 2 });
 		testNode(nodes[2], 11, 15, false, nodes[1], new int[] { 2 }, new int[] {});
@@ -39,7 +39,7 @@ public class CFG04 extends TestCFG {
 
 	@Test
 	public void doWhileIf1() {
-		CFGNode[] nodes = getAndTestNodes(2, 13);
+		CFGNode[] nodes = getAndTestNodes(1, 13);
 		testNode(nodes[0], 0, 4, false, null, new int[] {}, new int[] { 5 });
 		testNode(nodes[1], 5, 15, true, nodes[0], new int[] { 0, 39 }, new int[] { 22, 18 });
 		testNode(nodes[2], 18, 19, false, nodes[1], new int[] { 5 }, new int[] { 23 });
@@ -57,7 +57,7 @@ public class CFG04 extends TestCFG {
 	
 	@Test
 	public void while1() {
-		CFGNode[] nodes = getAndTestNodes(3, 4);
+		CFGNode[] nodes = getAndTestNodes(2, 4);
 		testNode(nodes[0], 0, 2, false, null, new int[] {}, new int[] { 8 });
 		testNode(nodes[1], 5, 5, false, nodes[2], new int[] { 8 }, new int[] { 8 });
 		testNode(nodes[2], 8, 11, true, nodes[0], new int[] { 5, 0 }, new int[] { 14, 5 });
@@ -66,20 +66,20 @@ public class CFG04 extends TestCFG {
 
     @Test
 	public void whileTrue() {
-		CFGNode[] nodes = getAndTestNodes(4, 2);	
+		CFGNode[] nodes = getAndTestNodes(3, 2);	
 		testNode(nodes[0], 0, 2, false, null, new int[] {}, new int[] {3});
 		testNode(nodes[1], 3, 7, true, nodes[0], new int[] {0,3}, new int[] {3});
     }
 
     @Test
 	public void whileTrueBreak() {
-		CFGNode[] nodes = getAndTestNodes(5, 1);	
+		CFGNode[] nodes = getAndTestNodes(4, 1);	
 		testNode(nodes[0], 0, 9, false, null, new int[] {}, new int[] {});
    }
     
 	@Test
 	public void whileMultiCond() {
-		CFGNode[] nodes = getAndTestNodes(6, 5);
+		CFGNode[] nodes = getAndTestNodes(5, 5);
 		testNode(nodes[0], 0, 2, false, null, new int[] {}, new int[] { 8 });
 		testNode(nodes[1], 5, 5, false, nodes[3], new int[] { 14 }, new int[] { 8 });
 		testNode(nodes[2], 8, 11, true, nodes[0], new int[] { 5, 0 }, new int[] { 14, 18 });
