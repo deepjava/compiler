@@ -3,11 +3,11 @@
 meta {
 	version = "2010-12-02";
 	description = "Example project file";
-	import = "rsc/ntbMpc555STS", "rsc/ntbMpc555HB.deep";
+	import = "rsc/ntbMpc555STS.deep", "rsc/ntbMpc555HB.deep";
 }
 
 project {
-#	libpath = "D:/work/Crosssystem/deep/icons/full";
+	libpath = "../RuntimeSystem";
 	rootclasses = "ch/ntb/inf/deep/testClasses/T10Constants";
 	debuglevel = 3;
 	printlevel = 3;
