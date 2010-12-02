@@ -509,13 +509,13 @@ public class Configuration implements ErrorCodes  {
 		setActiveTargetConfig(HString.getHString(targetConfigurationName));
 	}
 	public static void main(String[] args) {
-		parseAndCreateConfig("D:/work/Crosssystem/deep/rsc/MyProject.deep",	"BootFromRam");
+		parseAndCreateConfig("D:/work/Crosssystem/deep/ExampleProject.deep", "BootFromRam");
 		Configuration.print();
 		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
-		String[] names =Configuration.getRootClassNames();
-		for(int i = 0; i < names.length; i++){
-			System.out.println(names[i]);
-		}
+//		String[] names =Configuration.getRootClassNames();
+//		for(int i = 0; i < names.length; i++){
+//			System.out.println(names[i]);
+//		}
 		
 		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);

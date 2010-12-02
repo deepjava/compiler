@@ -28,6 +28,10 @@ public class RegisterMap implements ErrorCodes {
 		Register current = spr;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;
@@ -38,6 +42,10 @@ public class RegisterMap implements ErrorCodes {
 		current = ior;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;
@@ -48,6 +56,10 @@ public class RegisterMap implements ErrorCodes {
 		current = gpr;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;
@@ -58,6 +70,10 @@ public class RegisterMap implements ErrorCodes {
 		current = fpr;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;
@@ -68,6 +84,10 @@ public class RegisterMap implements ErrorCodes {
 		current = fpscr;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;
@@ -78,6 +98,10 @@ public class RegisterMap implements ErrorCodes {
 		current = cr;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;
@@ -88,6 +112,10 @@ public class RegisterMap implements ErrorCodes {
 		current = msr;
 		while(current != null){
 			if(current.name.equals(registername)){
+				if(current.getInit()!= null){
+					current.setInit(init);
+					return;
+				}
 				current.setInit(init);
 				current.nextWithInitValue = regWithInitalValue;
 				regWithInitalValue = current;

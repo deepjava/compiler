@@ -570,6 +570,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 								ch = configFile.read();
 							}
 							chBuffer = ch;
+							//work around for problem when in hex-int-number the most significant bit is set;
+							if(sb.length() > 9 && sb.charAt(2) > '7'){
+								sb.replace(2, 3, "7");
+								intNumber = Integer.decode(sb.toString()) + 0x80000000;
+								break;
+							}
 							intNumber = Integer.decode(sb.toString());
 							break;
 						} else if (ch == ';') {
@@ -992,6 +998,10 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				size = sizeAssignment();
 			}
 		}
+		Device device =new Device(dev, base, size, width, attributes);
+		if(sym == sSegment){
+			device.addSegment(segment(true,device.attributes, device.width));
+		}
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
@@ -1007,7 +1017,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		next();
-		return new Device(dev, base, size, width, attributes);
+		return device;
 	}
 
 	private Segment segment(boolean isSubSegment, int inheritAttributes,
@@ -2021,6 +2031,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 	private int factor() {
 		int value = Integer.MAX_VALUE;
+		boolean isNeg = false;
+		if (sym == sMinus){
+			isNeg = true;
+			next();
+		}
 		if (sym == sNumber) {
 			value = intNumber;
 			next();
@@ -2045,6 +2060,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ lineNumber
 					+ " expected symbol: number, received symbol: "
 					+ symToString() + " ");
+		}
+		if(isNeg){
+			return -value;
 		}
 		return value;
 	}
