@@ -3,7 +3,7 @@
 meta {
 	version = "2010-09-07";
 	description = "NTB MPC555 Headerboard";
-	import = "MPC555.deep";
+	import = "rsc/MPC555.deep";
 	
 }
 
@@ -28,4 +28,32 @@ memorymap{
     	segment ExtFlash.S1 {
               base = 0x5000;
            }
+}
+
+targetconfiguration BootFromFlash {
+    modules {
+            kernel : code@ExtFlash.S1, const@ExtFlash, var@InternalRam.Variables;
+            heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            default: code@ExtFlash.S1, const@ExtFlash, var@InternalRam.Variables;
+            ch/ntb/inf/myProject/package1/Class1,
+            ch/ntb/inf/myProject/package1/Class2,
+            ch/ntb/inf/myProject/package1/Class3,
+            ch/ntb/inf/myProject/package1/Class4,
+            ch/ntb/inf/myProject/package1/Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            ch/ntb/inf/myProject/package2/* : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+    }
+}
+
+targetconfiguration BootFromRam {
+    modules {
+            kernel : code@ExtFlash.S1, const@ExtFlash.S1, var@InternalRam.Variables;
+            heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            default: code@ExtFlash.S1, const@ExtFlash.S1, var@InternalRam.Variables;
+            ch.ntb.inf.myProject.package1.Class1,
+            ch.ntb.inf.myProject.package1.Class2,
+            ch.ntb.inf.myProject.package1.Class3,
+            ch.ntb.inf.myProject.package1.Class4,
+            ch.ntb.inf.myProject.package1.Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            ch.ntb.inf.myProject.package2.* : code@InternalFlash.B, const@InternalFlash.B.S2, var@InternalFlash.B;
+    }
 }
