@@ -33,17 +33,21 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	
 	public int nOfBaseClasses = 0; // number of base classes
 	
-	public int[] targetConstantPool; // pool with float and double constants for the target
-	public int targetConstantPoolSize = 0; // size of this pool on the target (in byte)
+	public int nOfReferences = 0; // number of class fields which are references
 	
-	public int[] targetStringPool; // pool with constant stings for the target 
-	public int targetStringPoolSize = 0; // size of this pool on the target (in byte)
+	public int[] constantBlock; // the constant block for this class
+	public int constantBlockSize; // size of the constant block
 	
-	public int[] targetClassDescriptor; // class descriptor (for the target)
-	public int targetClassDescriptorSize = 0; // size of the class descriptor on the target (in byte)
+	public int machineCodeSize = 0; // size of the machine code on the target (in byte)
+	public int classFieldsSize = 0; // size of all class/static fields on the target
+	public int constantPoolSize = 0; // size of this pool on the target (in byte)
+	public int stringPoolSize = 0; // size of this pool on the target (in byte)
+	public int classDescriptorSize = 0; // size of the class descriptor on the target (in byte)
 	
-	public int classFieldsSizeOnTarget = 0; // size of all class/static fields on the target
-	public int codeSizeOnTarget = 0; // size of the machine code on the target (in byte)
+	// TODO delete:
+//	public int[] targetStringPool; // pool with constant stings for the target 
+//	public int[] targetClassDescriptor; // class descriptor (for the target)
+//	public int[] targetConstantPool; // pool with float and double constants for the target
 	
 	public Segment codeSegment, varSegment, constSegment; // references to the memory segments for this class
 	

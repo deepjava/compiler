@@ -5,152 +5,93 @@ import java.io.IOException;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.MachineCode;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.ssa.SSA;
 
-public class Launcher {
-	
-	public static void buildAll(String[] rootClasses, String[] paths) {
-		int attributes = (1 << IClassFileConsts.atxCode) | (1 << IClassFileConsts.atxLocalVariableTable) | (1 << IClassFileConsts.atxExceptions);
-		attributes |= (1 << IClassFileConsts.atxLineNumberTable); // TODO always necessary?
+public class Launcher implements ICclassFileConsts {
+
+	public static void buildAll(String projectConfigFile, String targetConfiguration) {
+
+		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions)| (1 << atxLineNumberTable);
 		
+		// 1) Read configuration
+		Configuration.parseAndCreateConfig(projectConfigFile, targetConfiguration);
+
 		try {
-			// TODO update call to Class.buildSystem
-			Class.buildSystem(rootClasses,paths[0], attributes);
+			// 2) Read requiered classes
+			Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 			
+			// 3) Loop One
 			Class clazz = Type.classList;
 			Method method;
 			while(clazz != null) {
-				method = (Method)clazz.methods;
-				
-				// Linker: Calculate offsets
+				// 3.1) Linker: calculate offsets
 				Linker.calculateOffsets(clazz);
 				
-				// Linker: Create constant pool
-				Linker.createConstantPool(clazz);
-				
-				// Linker: Create string pool
-				Linker.createStringPool(clazz);
-				
-				while(method  != null) {
-					// CFG: create CFG
+				method = (Method)clazz.methods;
+				while(method != null) {
+					// 3.2) Create CFG
 					method.cfg = new CFG(method);
 					
-					// SSA: create SSA
+					// 3.3) Create SSA
 					method.ssa = new SSA(method.cfg);
 					
-					// Code generator: generate machine code
+					// 3.4) Create machine code
 					method.machineCode = new MachineCode(method.ssa);
 					
 					method = (Method)method.next;
 				}
+				
+				// 3.5) Linker: calculate required size
+				Linker.calculateRequiredSize(clazz);
+				
 				clazz = (Class)clazz.next;
 			}
 			
+			// 4) Linker: freeze memory map
+			Linker.freezeMemoryMap();
+			
+			// 5) Loop Two
+			clazz = Type.classList;
 			while(clazz != null) {
-				
-				// Linker: Calculate absolute addresses
+				// 5.1) Linker: calculate absolute addresses
 				Linker.calculateAbsoluteAddresses(clazz);
 				
 				method = (Method)clazz.methods;
-				while(method  != null) {
-					// Code generator: update machine code
-					// TODO call function for updating machine code
-				}
-
-				// Linker: Create class descriptor
-				Linker.createClassDescriptor(clazz);
-			}
-			
-			Linker.generateTargetImage();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public static void downloadTargetImage() {
-		
-	}
-	
-	public static void saveTargetImage2File(String file) {
-		
-	}
-	
-	public static void buildCfgOnly(String[] rootClasses, String[] paths) {
-		int attributes = (1 << IClassFileConsts.atxCode) | (1 << IClassFileConsts.atxLocalVariableTable) | (1 << IClassFileConsts.atxExceptions);
-		attributes |= (1 << IClassFileConsts.atxLineNumberTable); // TODO always necessary?
-		try {
-			Class.buildSystem(rootClasses,paths[0], attributes);
-			
-			Class clazz = Type.classList;
-			Method method;
-			while(clazz != null) {
-				method = (Method)clazz.methods;
-				while(method  != null) {
-					// CFG: create CFG
-					method.cfg = new CFG(method);
-				}
-				clazz = (Class)clazz.next;
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public static void buildSsaOnly(String[] rootClasses, String[] paths) {
-		int attributes = (1 << IClassFileConsts.atxCode) | (1 << IClassFileConsts.atxLocalVariableTable) | (1 << IClassFileConsts.atxExceptions);
-		attributes |= (1 << IClassFileConsts.atxLineNumberTable); // TODO always necessary?
-		try {
-			Class.buildSystem(rootClasses,paths[0], attributes);
-			
-			Class clazz = Type.classList;
-			Method method;
-			while(clazz != null) {
-				method = (Method)clazz.methods;
-				while(method  != null) {
-					// CFG: create CFG
-					method.cfg = new CFG(method);
+				while(method != null) {
+					// 5.2) Code generator: fix up
 					
-					// SSA: create SSA
-					method.ssa = new SSA(method.cfg);
+					
+					method = (Method)method.next;
 				}
+				
+				// 5.3) Linker: Create constant block
+				Linker.createConstantBlock(clazz);
+				
 				clazz = (Class)clazz.next;
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-/*	public static void buildLinkerStepOneOnly(String[] rootClasses, String[] paths) {
-		int attributes = (1 << IClassFileConsts.atxCode) | (1 << IClassFileConsts.atxLocalVariableTable) | (1 << IClassFileConsts.atxExceptions);
-		attributes |= (1 << IClassFileConsts.atxLineNumberTable); // TODO always necessary?
-		try {
-			Class.buildSystem(rootClasses, paths[0], attributes);
 			
-			Class clazz = Type.classList;
-			while(clazz != null) {
-				// Linker: Calculate offsets
-				Linker.calculateOffsets(clazz);
-				
-				// Linker: Create constant pool
-				Linker.createConstantPool(clazz);
-				
-				// Linker: Create string pool
-				Linker.createStringPool(clazz);
-				
-				clazz = (Class)clazz.next;
-			}
+			// 6) Linker: Create system table
+			Linker.createSystemTable();
+			
+			// 7) Linker: Create target image
+			
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	*/
+
+	public static void downloadTargetImage() {
+		// 8a) download image to target
+	}
+
+	public static void saveTargetImage2File(String file) {
+		// 8b) save target image to a file
+	}
 }
