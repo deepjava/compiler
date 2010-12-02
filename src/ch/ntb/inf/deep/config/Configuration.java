@@ -138,7 +138,7 @@ public class Configuration implements ErrorCodes  {
 	}
 	
 	public static String[] getSearchPaths(){
-		return new String[]{location,project.getLibPath().toString()};
+		return new String[]{location + "bin/", project.getLibPath().toString() + "bin/"};
 	}
 
 	/**
