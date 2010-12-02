@@ -1,6 +1,6 @@
 package ch.ntb.inf.deep.cgPPC;
 
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.cfg.*;
 import ch.ntb.inf.deep.ssa.*;
@@ -8,7 +8,7 @@ import ch.ntb.inf.deep.ssa.instruction.*;
 import static org.junit.Assert.*;
 import ch.ntb.inf.deep.classItems.*;
 
-public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, IClassFileConsts {
+public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
 	private static final int defaultNofFixup = 8;
@@ -47,7 +47,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 
 	private static SSA ssa;	// reference to the SSA of a method
 	int[] instructions;	//contains machine instructions for the ssa of a method
-	int iCount;	//nof instructions for this method
+	public int iCount;	//nof instructions for this method
 	
 	Item[] fixups;	// contains all references whose address has to be fixed by the linker
 	int fCount;	//nof fixups
