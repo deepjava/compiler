@@ -135,9 +135,9 @@ public abstract class HString implements IhStringConsts {
 if (verbose) vrb.println("\ncp A: byteNr=" + inByteNr + ", bx=" + bx + ", stringLength=" + stringLength + ", ch=0x" + Integer.toHexString(charValue));
 
 			if (charValue < 0) {// char consists of more then 1 byte
-				charValue &= 0x1F;
+//				charValue &= 0x1F;
 				if ((charValue >> 5 & 0x7) - 6 == 0) {// 2 byte (1 follow byte) char
-					charValue = (charValue << 6) | (byteBuffer[bx++] & 0x3F);
+					charValue = ( (charValue << 6) | (byteBuffer[bx++] & 0x3F) ) & 0x7FF;
 					inByteNr++;
 				} else {// 3 byte (2 follow bytes) char
 					charValue = (charValue << 6) | (byteBuffer[bx++] & 0x3F);

@@ -2,9 +2,11 @@ package ch.ntb.inf.deep.debug;
 
 import java.io.PrintStream;
 
+import ch.ntb.inf.deep.host.StdStreams;
 
-public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, IClassFileConstsAndMnemonics {
-	public static PrintStream vrb = System.out;
+
+public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConstsAndMnemonics {
+	public static PrintStream vrb = StdStreams.vrb;
 	public static final boolean verbose = false;
 
 	public static final  char newLineChar = '\n';	

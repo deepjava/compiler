@@ -26,14 +26,14 @@ public class ErrorReporter {
 
 	private  ErrorReporter() {
 		clear();
-		errPrStream = System.out;
+		errPrStream = StdStreams.out;
 		this.maxNofErrors = Integer.MAX_VALUE;
 		// printErrorPos = false;
 	}
 
-	public void setPrintStream(PrintStream errStream) {
-		errPrStream = errStream;
-	}
+//	public void setPrintStream(PrintStream errStream) {
+//		errPrStream = errStream;
+//	}
 
 	public void setMaxNrOfErrors(int maxNofErrors) {
 		this.maxNofErrors = maxNofErrors;
