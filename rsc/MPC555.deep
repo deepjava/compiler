@@ -3,6 +3,7 @@
 meta {
 	version = "2010-09-07";
 	description = "Freescale MPC555 (all devices)";
+	import = "rsc/MPC555-Registermap.deep";
 }
 
 sysconst {
@@ -85,20 +86,6 @@ memorymap {
         width = 4;
         size = CMFB_Size;
 	}
-}
-
-registermap {
-	register R0 {
-		type = GPR;
-		addr = 0;
-		size = 4;
-	}
-	
-	register SRR1 {
-        type = IOR;
-        addr = 27;
-        size = 4;
-    }
 }
 reginit {
     SRR1init = 0x3802;
