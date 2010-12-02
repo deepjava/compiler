@@ -16,6 +16,10 @@ memorymap{
     	base = 0x800000;
     	width = 4;
     	size = 0x200000;
+    	
+    	segment S1 {
+              base = 0x5000;
+        }
     }
     
     device ExtFlash {
@@ -25,9 +29,19 @@ memorymap{
     	size = 0x400000;
     	
     }
-    	segment ExtFlash.S1 {
-              base = 0x5000;
-           }
+    	
+}
+reginit {
+    BR0init = 0x01000003;
+    OR0init = 0xFFC00020; 
+    BR1init = 0x0800003;
+    OR1init = 0xFFE00020; 
+    DMBRinit = 0x3;
+    DMORinit = 0x7E000000;
+    ICTRLinit = 7;
+    RSRinit = -1;
+    DERinit = 0x31C3400F;   
+    SRR1init = 0x3802;
 }
 
 targetconfiguration BootFromFlash {
