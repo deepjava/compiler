@@ -1,6 +1,6 @@
 package ch.ntb.inf.deep.classItems;
 
-public interface IDescAndTypeConsts {
+public interface ICdescAndTypeConsts {
 	char // primitive type descriptors
 		tdVoid = 'V', // void
 
@@ -18,24 +18,27 @@ public interface IDescAndTypeConsts {
 		tcRef = 'L', // must be first char of a reference type descriptor
 		tcArray = '['; // must be first char of an array type descriptor
 
-	byte // well known type indices (indices for types in the wellKnownTypeTab)
-		txVoid = 0, // void
-		
-		txBoolean = 1,	 // boolean
-		txByte = 2, // byte
-		txShort = 3, // short
-		txChar = 4, // char
-		txInt = 5, // int
-		txLong = 6, // long
-		txFloat = 7, // float
-		txDouble = 8, // double
-		txMaxOfPrimtiveTypes = txDouble,
-	
-		txString = 9,	 // java/lang/String
-		txMaxOfStringOrPrimtiveTypes = txString,
-		
-		txObject = 10,
-		nofWellKnownTypes = 11;
+	byte// well known type indices (indices for types in the wellKnownTypeTab)
+	// The indices of {txBoolean, txChar, txFloat, txDouble, txByte, txShort, txInt, txLong}
+	// must be equal to the coding of these types in byte code  instruction newarray.
+		txNull = 0, //?
+		txString = 1,  // java/lang/String
+		txObject = 2,
+
+		txVoid = 3, // void, 
+		txBoolean = 4,	 // boolean
+		txChar = 5, // char
+		txFloat = 6, // float
+		txDouble = 7, // double
+		txByte = 8, // byte
+		txShort = 9, // short
+		txInt = 10, // int
+		txLong = 11, // long
+		nofWellKnownTypes = 12;
+
+//		txMaxOfPrimtiveTypes = txDouble,
+//		txMaxOfStringOrPrimtiveTypes = txString,
+
 //	byte // base type name indices
 //		btnxVoid = 1,
 //		//--- 1 slot types (4 bytes)

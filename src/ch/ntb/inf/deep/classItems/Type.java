@@ -1,15 +1,15 @@
 package ch.ntb.inf.deep.classItems;
 
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
 public class Type extends Item {
 	//--- class (static) fields
-	static StringTable stab;
-//	static RandomAccessFile classFile;
+	public static final byte nofNewMethods = 4; // bc instructions: {new[0], newarray[1], anewarray[2], multianewarray[3]}
+	public static final Item[] newMethods = new Item[nofNewMethods];
 
 	static HString[] classFileAttributeTable;// well known attributes
 //	static final byte[] primitveTypeChars = { 'D', 'F', 'J', 'Z', 'B', 'S', 'C', 'I', 'V' }; // inclusive 'V'
@@ -17,7 +17,7 @@ public class Type extends Item {
 	static HString hsNumber, hsString;
 
 	public static Class[] rootClasses;
-	public static int nofRootClasses = 0;
+	public static int nofRootClasses;
 
 	public static Class classList, classListTail;
 	public static int nofClasses = 0;
@@ -99,17 +99,13 @@ public class Type extends Item {
 		return atx;
 	}
 
-	protected static void skipAttributeAndLogCond(RandomAccessFile clf, int attrLength, int cpIndexOfAttribute) throws IOException{
+	protected static void skipAttributeAndLogCond(DataInputStream clfInStrm, int attrLength, int cpIndexOfAttribute) throws IOException{
 		if(cpIndexOfAttribute > 0){
 			log.print(" skipped attribute: ");
 			log.printf("length=%1$d, cp[%2$d] = ", attrLength, cpIndexOfAttribute);
 			log.println(cpStrings[cpIndexOfAttribute]);
 		}
-		clf.skipBytes(attrLength);
-//		for(int n = 0; n < attrLength; n++){
-//			int value = clf.readUnsignedByte();
-//			log.printf("(%1$d,%2$d)", n, value);
-//		}
+		clfInStrm.skipBytes(attrLength);
 	}
 
 	protected static Item getClassByName(HString registredClassName){
@@ -136,18 +132,18 @@ public class Type extends Item {
 	}
 	
 	protected static Type selectInStringOrPrimitiveTypesByRef(Item type){
-		int index = txMaxOfStringOrPrimtiveTypes;
+		int index = nofWellKnownTypes-1;
 		while(index >= 0 && wellKnownTypes[index] != type) index--;
 		if(index < 0) return null; else return wellKnownTypes[index];
 	}
 	
 	protected static Type getPrimitiveTypeByCharName(char charName){
 		int typeIndex = getPrimitiveTypeIndex(charName);
-		assert typeIndex >= 0 && typeIndex <= txMaxOfPrimtiveTypes;
+		assert typeIndex >= 0 && typeIndex < nofWellKnownTypes;
 		return wellKnownTypes[typeIndex];
 	}
 	
-	protected Type getTypeByNameAndUpdate(char typeCategory, HString registredTypeName, Type baseType){
+	protected static Type getTypeByNameAndUpdate(char typeCategory, HString registredTypeName, Type baseType){
 		 // updates for clysses only, not for arrays yet
 		Type type = null;
 		if(typeCategory == tcPrimitive){

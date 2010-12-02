@@ -9,11 +9,11 @@ public class Constant extends DataItem {
 		super(name, type);
 		this.valueH = valueHigh;
 		this.valueL = valueLow;
+		this.accAndPropFlags = (1<<apfFinal);
 	}
 
 	public Constant(int valueHigh, int valueLow){
-		this.valueH = valueHigh;
-		this.valueL = valueLow;
+		this(stab.undefIdent, null, valueHigh, valueLow);
 	}
 
 

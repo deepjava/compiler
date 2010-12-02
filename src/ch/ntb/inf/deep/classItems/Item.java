@@ -4,12 +4,15 @@ import java.io.PrintStream;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.strings.StringTable;
 
-public abstract class Item   implements Cloneable, IClassFileConsts, IDescAndTypeConsts {
+public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndTypeConsts {
 	static final boolean verbose = false, enAssertion = true;
 	static PrintStream vrb = System.out;
 	static PrintStream log = System.out;
 	static ErrorReporter errRep = ErrorReporter.reporter;
+
+	static StringTable stab;
 
 	public static void indent(int indentLevel){
 		indentLevel = indentLevel*3;
@@ -37,6 +40,17 @@ public abstract class Item   implements Cloneable, IClassFileConsts, IDescAndTyp
 	Item(HString name, Type type){
 		this.name = name;
 		this.type = type;
+	}
+
+	public Item getItemByName(HString name){
+		Item item = this;
+		while(item != null && name != item.name)  item = item.next;
+		return item;
+	}
+
+	public Item getItemByName(String jname){
+		HString name = stab.insertCondAndGetEntry(jname);
+		return getItemByName(name);
 	}
 
 	protected Item clone(){

@@ -33,8 +33,8 @@ public class Method extends Item {
 	}
 
 	//--- instance methods
-//	public void markCall(){ accAndPorpFlags += (1<<dpfCall);  }
-//	public void markInterfaceCall(){ accAndPorpFlags += (1<<dpfInterfCall);  }
+//	public void markCall(){ accAndPropFlags += (1<<dpfCall);  }
+//	public void markInterfaceCall(){ accAndPropFlags += (1<<dpfInterfCall);  }
 
 	void insertLocalVar(LocalVar locVar){
 		int key = locVar.index;

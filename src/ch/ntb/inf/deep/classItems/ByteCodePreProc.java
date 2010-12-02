@@ -9,7 +9,7 @@ import ch.ntb.inf.deep.debug.Dbg;
  * <br>fixes constant pool indices in accordant instructions
  * <br>sets access and property flags {dpfReadAccess, dpfWriteAccess, dpfCall, dpfInterfCall, dpfNew, dpfTypeTest} accordingly
  */
-public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
+public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs {
 	static final boolean verbose = false, assertions = true;
 	static PrintStream vrb = Item.vrb;
 
@@ -75,6 +75,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 		ByteCodePreProc.cpNewIndices = cpNewIndices;
 		ByteCodePreProc.newConstPool = newConstPool;
 		ByteCodePreProc.byteCode = byteCode;
+		if(byteCode == null) return;
 		
 		int bcLength = byteCode.length;
 		int instrAddr = 0;
@@ -179,7 +180,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 					break;
 
 				case bCnew:
-					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfNew);
+					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfInstances);
 					if(assertions) {
 						assert item != null;
 						assert item instanceof Class;
@@ -187,7 +188,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 					break;
 					
 				case bCanewarray:
-					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfNew);
+					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfInstances);
 					if(assertions) {
 						assert item != null;
 						assert item instanceof Class;
@@ -195,7 +196,7 @@ public class ByteCodePreProc implements IClassFileConsts, ICjvmInstructionOpcs {
 					break;
 
 				case bCmultianewarray:
-					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfNew);
+					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfInstances);
 					if(assertions) {
 						assert item != null;
 						assert item instanceof Class;
