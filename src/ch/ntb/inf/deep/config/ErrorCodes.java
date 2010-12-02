@@ -13,7 +13,7 @@ public interface ErrorCodes {
 	//Data tree error codes
 	public static final short errNoSuchDevice = 201, errNoDevices = 202, errSyntax = 203, errInconsistentattributes = 204,
 	errInvalidType = 205, errInvalideParameter = 206, errOverwriteProtectedConst = 207, errUndefinedConst = 208, errMaxNofReached = 209,
-	errMissingTag = 210;
+	errMissingTag = 210, errNoSuchRegister = 211;
 	
 	
 }

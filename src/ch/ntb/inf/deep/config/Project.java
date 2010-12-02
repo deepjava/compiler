@@ -58,11 +58,11 @@ public class Project {
 		for (int i = indentLevel; i > 0; i--) {
 			System.out.print("  ");
 		}
-		System.out.println("Project {");
+		System.out.println("project {");
 		for (int i = indentLevel+1; i > 0; i--) {
 			System.out.print("  ");
 		}
-		System.out.print("Rootclasses: ");
+		System.out.print("rootclasses = ");
 		HString current = rootClasses;
 		while (current.next != null) {
 			System.out.print(current.toString() + ", ");
@@ -75,17 +75,17 @@ public class Project {
 		for (int i = indentLevel+1; i > 0; i--) {
 			System.out.print("  ");
 		}
-		System.out.println("LibPath: " + libPath.toString());
+		System.out.println("libpath = " + libPath.toString());
 		
 		for (int i = indentLevel+1; i > 0; i--) {
 			System.out.print("  ");
 		}
-		System.out.println("Debuglevel: " + debugLevel);
+		System.out.println("debuglevel = " + debugLevel);
 		
 		for (int i = indentLevel+1; i > 0; i--) {
 			System.out.print("  ");
 		}
-		System.out.println("Printlevel: " + printLevel);
+		System.out.println("printlevel = " + printLevel);
 		
 		for (int i = indentLevel; i > 0; i--) {
 			System.out.print("  ");

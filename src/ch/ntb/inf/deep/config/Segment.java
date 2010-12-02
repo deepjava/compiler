@@ -151,7 +151,7 @@ public class Segment implements IAttributes {
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");
 		}
-		System.out.println("Segment " + name.toString() + "{");
+		System.out.println("segment " + name.toString() + "{");
 		for(int i = indentLevel + 1; i > 0; i--){
 			System.out.print("  ");
 		}

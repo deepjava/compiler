@@ -5,10 +5,12 @@ import ch.ntb.inf.deep.strings.HString;
 public class Register {
 	HString name;
 	Register next;
+	Register nextWithInitValue;
 	int type = -1;
 	int addr = -1;
 	int size = -1;
 	int repr;
+	ValueAssignment init;
 	
 	public Register(HString name){
 		this.name = name;
@@ -22,6 +24,10 @@ public class Register {
 		this.size = size;
 	}
 	
+	public void setInit(ValueAssignment init){
+		this.init = init;
+	}
+	
 	public void setType(int type){
 		this.type = type;
 		if(repr == 0){
@@ -31,6 +37,14 @@ public class Register {
 				repr = Parser.sHex;
 			}
 		}
+	}
+	
+	public void setInitalValue(ValueAssignment init){
+		this.init = init;
+	}
+	
+	public ValueAssignment getInit(){
+		return init;
 	}
 	
 	public void setRepresentation(int repr){
@@ -70,6 +84,15 @@ public class Register {
 		if(type == Parser.sIOR){
 			return HString.getHString("IOR");
 		}
+		if (type == Parser.sMSR){
+			return HString.getHString("MSR");
+		}
+		if (type == Parser.sCR){
+			return HString.getHString("CR");
+		}
+		if (type == Parser.sFPSCR){
+			return HString.getHString("FPSCR");
+		}
 		
 		return HString.getHString("Undefined Type");
 	}
@@ -94,7 +117,7 @@ public class Register {
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");
 		}
-		System.out.println("Register " + name.toString() + " {");
+		System.out.println("register " + name.toString() + " {");
 		
 		for(int i = indentLevel + 1; i > 0; i--){
 			System.out.print("  ");

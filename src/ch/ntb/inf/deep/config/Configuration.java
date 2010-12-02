@@ -132,7 +132,7 @@ public class Configuration implements ErrorCodes  {
 		return null;
 	}
 	
-	public Device getFirstDevice(){
+	public static Device getFirstDevice(){
 		return memoryMap.getDevices();
 	}
 

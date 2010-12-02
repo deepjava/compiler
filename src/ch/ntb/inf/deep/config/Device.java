@@ -64,7 +64,7 @@ public class Device implements ErrorCodes{
 		for (int i = indentLevel; i > 0; i--) {
 			System.out.print("  ");
 		}
-		System.out.println("Device " + name.toString() + "{");
+		System.out.println("device " + name.toString() + "{");
 		for (int i = indentLevel + 1; i > 0; i--) {
 			System.out.print("  ");
 		}

@@ -65,7 +65,7 @@ public class TargetConfiguration {
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");
 		}
-		System.out.println("TargetConfiguration " + name.toString() + " {");
+		System.out.println("targetconfiguration " + name.toString() + " {");
 		Module current = targetConfig;
 		while(current != null){
 			current.println(indentLevel + 1);

@@ -1,45 +1,63 @@
 package ch.ntb.inf.deep.config;
 
-import ch.ntb.inf.deep.strings.HString;
 
 public class OperatingSystem {
-	private HString kernel;
-	private HString heap;
-	private HString exception;
-	private HString hwd;
+	private SystemClass kernel;
+	private SystemClass heap;
+	private SystemClass exception;
+	private SystemClass us;
+	private SystemClass lowlevel;
+	private SystemClass list;
 	
 	
 	
-	public void setKernel(HString kernel){
+	public void setKernel(SystemClass kernel){
 		this.kernel = kernel;
+		this.addClass(kernel);
 	}
 	
-	public void setHeap(HString heap){
+	public void setHeap(SystemClass heap){
 		this.heap = heap;
+		this.addClass(heap);
 	}
 	
-	public void setException(HString exception){
+	public void setException(SystemClass exception){
 		this.exception = exception;
+		this.addClass(exception);
 	}
 	
-	public void setHwd(HString hwd){
-		this.hwd = hwd;
+	public void setUs(SystemClass us){
+		this.us = us;
+		this.addClass(us);
 	}
 	
-	public HString getKernel(){
+	public void setLowLevel(SystemClass lowlevel){
+		this.lowlevel = lowlevel;
+		this.addClass(lowlevel);
+	}
+	
+	public SystemClass getKernel(){
 		return kernel;
 	}
 	
-	public HString getHeap(){
+	public SystemClass getHeap(){
 		return heap;
 	}
 	
-	public HString getException(){
+	public SystemClass getException(){
 		return exception;
 	}
 	
-	public HString getHwd(){
-		return hwd;
+	public SystemClass getUs(){
+		return us;
+	}
+	
+	public SystemClass getLowLevel(){
+		return lowlevel;
+	}
+	
+	public SystemClass getClassList(){
+		return list;
 	}
 	
 	public void println(int indentLevel){
@@ -51,27 +69,41 @@ public class OperatingSystem {
 		for(int i = indentLevel+1; i > 0; i--){
 			System.out.print("  ");
 		}
-		System.out.println("kernel: " + kernel.toString());
+		System.out.println("kernel {");
+		kernel.print(indentLevel+2);
 		
 		for(int i = indentLevel+1; i > 0; i--){
 			System.out.print("  ");
 		}
-		System.out.println("heap: " + heap.toString());
-		
-		
-		for(int i = indentLevel+1; i > 0; i--){
-			System.out.print("  ");
-		}
-		System.out.println("exception: " + exception.toString());
+		System.out.println("exception {");
+		exception.print(indentLevel+2);
 		
 		for(int i = indentLevel+1; i > 0; i--){
 			System.out.print("  ");
 		}
-		System.out.println("hwd: " + hwd.toString());
+		System.out.println("heap {");
+		heap.print(indentLevel+2);		
+		
+		for(int i = indentLevel+1; i > 0; i--){
+			System.out.print("  ");
+		}
+		System.out.println("us {");
+		us.print(indentLevel+2);
+		
+		for(int i = indentLevel+1; i > 0; i--){
+			System.out.print("  ");
+		}
+		System.out.println("lowlevel {");
+		lowlevel.print(indentLevel+2);
 		
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");
 		}
 		System.out.println("}");
+	}
+	
+	private void addClass(SystemClass clazz){
+		clazz.next = list;
+		list = clazz;
 	}
 }
