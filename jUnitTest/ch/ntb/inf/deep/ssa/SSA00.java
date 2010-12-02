@@ -6,17 +6,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 public class SSA00 extends TestSSA {
 
 	@Before
 	public void setUp() {
-		String workspace =System.getProperty("user.dir"); 
     	String[] rootClassNames = new String[]{"ch/ntb/inf/deep/testClasses/T00EmptyClass"};
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1<<IClassFileConsts.atxCode)|(1<<IClassFileConsts.atxLocalVariableTable)|(1<<IClassFileConsts.atxLineNumberTable)|(1<<IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

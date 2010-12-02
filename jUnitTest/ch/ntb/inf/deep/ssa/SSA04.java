@@ -6,20 +6,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 public class SSA04 extends TestSSA {
 
 	@BeforeClass
-	public static void setUp() {
-		String workspace =System.getProperty("user.dir");
+	public static void setUp() {;
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T04Loops" };
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1 << IClassFileConsts.atxCode)
-					| (1 << IClassFileConsts.atxLocalVariableTable)
-					| (1 << IClassFileConsts.atxLineNumberTable)
-					| (1 << IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames, (1 << atxCode)
+					| (1 << atxLocalVariableTable)
+					| (1 << atxLineNumberTable)
+					| (1 << atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -31,13 +29,13 @@ public class SSA04 extends TestSSA {
 
 	@Test
 	public void testConstructor() {
-		SSANode[] nodes = getAndTestSSA(0, 1, 0);
+		SSANode[] nodes = getAndTestSSA(7, 1, 0);
 		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testDoWhile1(){
-		SSANode[] nodes = getAndTestSSA(1, 3, 1);
+		SSANode[] nodes = getAndTestSSA(0, 3, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 4, 1, 4);
 		testNode(nodes[2], 3, 0, 4);
@@ -45,7 +43,7 @@ public class SSA04 extends TestSSA {
 	
 	@Test
 	public void testDoWhileIf1(){
-		SSANode[] nodes = getAndTestSSA(2, 13, 1);
+		SSANode[] nodes = getAndTestSSA(1, 13, 1);
 		testNode(nodes[0], 2, 0, 6);
 		testNode(nodes[1], 5, 2, 6);
 		testNode(nodes[2], 2, 0, 6);
@@ -63,7 +61,7 @@ public class SSA04 extends TestSSA {
 	
 	@Test
 	public void testWhile1(){
-		SSANode[] nodes = getAndTestSSA(3, 4, 1);
+		SSANode[] nodes = getAndTestSSA(2, 4, 1);
 		testNode(nodes[0], 2, 0, 3);
 		testNode(nodes[1], 2, 0, 3);
 		testNode(nodes[2], 2, 1, 3);
@@ -72,20 +70,20 @@ public class SSA04 extends TestSSA {
 	
 	@Test
 	public void testWhileTrue(){
-		SSANode[] nodes = getAndTestSSA(4, 2, 1);
+		SSANode[] nodes = getAndTestSSA(3, 2, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 3, 0, 4);
 	}
 	
 	@Test
 	public void testWhileTrueBreak(){
-		SSANode[] nodes = getAndTestSSA(5, 1, 0);
+		SSANode[] nodes = getAndTestSSA(4, 1, 0);
 		testNode(nodes[0], 4, 0, 4);
 	}
 	
 	@Test
 	public void testWhileMultiCond(){
-		SSANode[] nodes = getAndTestSSA(6, 5, 1);
+		SSANode[] nodes = getAndTestSSA(5, 5, 1);
 		testNode(nodes[0], 2, 0, 3);
 		testNode(nodes[1], 2, 0, 3);
 		testNode(nodes[2], 2, 1, 3);
@@ -95,7 +93,7 @@ public class SSA04 extends TestSSA {
 	
 	@Test
 	public void testFor1(){
-		SSANode[] nodes = getAndTestSSA(7, 4, 1);
+		SSANode[] nodes = getAndTestSSA(6, 4, 1);
 		testNode(nodes[0], 3, 0, 4);
 		testNode(nodes[1], 4, 0, 4);
 		testNode(nodes[2], 2, 2, 4);

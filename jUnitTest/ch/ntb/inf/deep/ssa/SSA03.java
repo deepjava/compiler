@@ -6,20 +6,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 public class SSA03 extends TestSSA {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir");
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T03Switch" };
 		try {
-			Class.buildSystem(rootClassNames,workspace, (1 << IClassFileConsts.atxCode)
-					| (1 << IClassFileConsts.atxLocalVariableTable)
-					| (1 << IClassFileConsts.atxLineNumberTable)
-					| (1 << IClassFileConsts.atxExceptions));
+			Class.buildSystem(rootClassNames, (1 << atxCode)
+					| (1 << atxLocalVariableTable)
+					| (1 << atxLineNumberTable)
+					| (1 << atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -31,13 +29,13 @@ public class SSA03 extends TestSSA {
 
 	@Test
 	public void testConstructor() {
-		SSANode[] nodes = getAndTestSSA(0, 1, 0);
+		SSANode[] nodes = getAndTestSSA(5, 1, 0);
 		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testSwitchNear1(){
-		SSANode[] nodes = getAndTestSSA(1, 5, 0);
+		SSANode[] nodes = getAndTestSSA(0, 5, 0);
 		testNode(nodes[0], 2, 0, 2);
 		testNode(nodes[1], 2, 0, 2);
 		testNode(nodes[2], 2, 0, 2);
@@ -47,7 +45,7 @@ public class SSA03 extends TestSSA {
 	
 	@Test
 	public void testSwitchNear2(){
-		SSANode[] nodes = getAndTestSSA(2, 9, 0);
+		SSANode[] nodes = getAndTestSSA(1, 9, 0);
 		testNode(nodes[0], 2, 0, 3);
 		testNode(nodes[1], 2, 0, 3);
 		testNode(nodes[2], 2, 0, 3);
@@ -61,7 +59,7 @@ public class SSA03 extends TestSSA {
 	
 	@Test
 	public void testSwitchFar1(){
-		SSANode[] nodes = getAndTestSSA(4, 5, 0);
+		SSANode[] nodes = getAndTestSSA(3, 5, 0);
 		testNode(nodes[0], 2, 0, 2);
 		testNode(nodes[1], 2, 0, 2);
 		testNode(nodes[2], 2, 0, 2);
@@ -71,7 +69,7 @@ public class SSA03 extends TestSSA {
 	
 	@Test
 	public void testSwitchFar2(){
-		SSANode[] nodes = getAndTestSSA(5, 10, 0);
+		SSANode[] nodes = getAndTestSSA(4, 10, 0);
 		testNode(nodes[0], 2, 0, 2);
 		testNode(nodes[1], 2, 0, 2);
 		testNode(nodes[2], 1, 0, 2);

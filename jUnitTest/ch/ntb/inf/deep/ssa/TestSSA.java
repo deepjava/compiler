@@ -3,8 +3,9 @@ package ch.ntb.inf.deep.ssa;
 import static org.junit.Assert.assertEquals;
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 
-public class TestSSA {
+public class TestSSA implements ICclassFileConsts{
 
 	static public SSA[] ssa;
 
