@@ -19,6 +19,7 @@ public class Configuration implements ErrorCodes  {
 	private static TargetConfiguration targetConfig;
 	private static TargetConfiguration activeTarConf;
 	private static OperatingSystem os;
+	private static String location;
 //	private static Class heap;
 	private static final int maxNumbersOfHeaps = 4;
 	private static final int maxNumbersOfStacks = 4;
@@ -134,6 +135,10 @@ public class Configuration implements ErrorCodes  {
 	
 	public static Device getFirstDevice(){
 		return memoryMap.getDevices();
+	}
+	
+	public static String[] getSearchPaths(){
+		return new String[]{location,project.getLibPath().toString()};
 	}
 
 	/**
@@ -422,6 +427,27 @@ public class Configuration implements ErrorCodes  {
 		}
 		return res;
 	}
+	
+	public static String[] getRootClassNames(){
+		int count = 0;
+		HString classNamesRoot = project.getRootClasses();
+		HString current = classNamesRoot;
+		//count
+		while(current != null){
+			count++;
+			current = current.next;
+		}
+		if(count > 0){
+			String[] classNames = new String[count];
+			for(int i = 0; i <count; i++){
+				classNames[i] =classNamesRoot.toString();
+				classNamesRoot = classNamesRoot.next;
+			}
+			return classNames;
+		}
+		return null;
+		
+	}
 
 	public static void clear() {
 		Parser.clear();
@@ -467,26 +493,33 @@ public class Configuration implements ErrorCodes  {
 		}
 		
 	}
-	public static void parseAndCreateConfig(HString file, HString targetConfigurationName) {
+	public static void parseAndCreateConfig(String file, String targetConfigurationName) {
 		int index = file.lastIndexOf('/');
-		Parser.loc = file.substring(0, index + 1);
-		Parser par = new Parser(file);
+		HString fileToRead = HString.getHString(file);
+		location = file.substring(0, index + 1);
+		Parser.loc = HString.getHString(location);
+		Parser par = new Parser(fileToRead);
 		//if (importedFiles.size() < 1 || par.hasChanged(file)) {
 			clear();
-			Parser.checksum.add(par.calculateChecksum(file));
-			Parser.importedFiles.add(file.substring(index + 1));
+			Parser.checksum.add(par.calculateChecksum(fileToRead));
+			Parser.importedFiles.add(fileToRead.substring(index + 1));
 			Parser.locForImportedFiles.add(Parser.loc);
 			par.config();
 		//}
-		setActiveTargetConfig(targetConfigurationName);
+		setActiveTargetConfig(HString.getHString(targetConfigurationName));
 	}
 	public static void main(String[] args) {
-		parseAndCreateConfig(HString.getHString("D:/work/Crosssystem/deep/rsc/MyProject.deep"),	HString.getHString("BootFromRam"));
+		parseAndCreateConfig("D:/work/Crosssystem/deep/rsc/MyProject.deep",	"BootFromRam");
 		Configuration.print();
 		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
+		String[] names =Configuration.getRootClassNames();
+		for(int i = 0; i < names.length; i++){
+			System.out.println(names[i]);
+		}
+		
 		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
-		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
+		//Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
 	}
 }
