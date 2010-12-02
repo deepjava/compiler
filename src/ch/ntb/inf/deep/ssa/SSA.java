@@ -1,13 +1,13 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 
 /**
  * @author millischer
  */
 
-public class SSA implements IClassFileConsts{
+public class SSA implements ICclassFileConsts{
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];

@@ -10,8 +10,8 @@ import java.io.InputStream;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
-import ch.ntb.inf.deep.host.SystemClass;
-import ch.ntb.inf.deep.host.SystemMethod;
+import ch.ntb.inf.deep.config.SystemClass;
+import ch.ntb.inf.deep.config.SystemMethod;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
@@ -790,9 +790,9 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 		}
 
 //		vrb.printf("sysClass: %1$s\n\taccAndPropFlags3=0x%2$8x\n\tsysClsAttributes=0x%3$8x\n", sysCls.name, sysCls.accAndPropFlags, sysClsAttributes);
-		sysCls.accAndPropFlags |= (sysClsAttributes & ((1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfSynthetic) ) | (1<<dpfIsSysPrimitive) );
+		sysCls.accAndPropFlags |= (sysClsAttributes & ((1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfSynthetic) ) | (1<<dpfSysPrimitive) );
 //		vrb.printf("\taccAndPropFlags4=0x%1$8x\n", sysCls.accAndPropFlags);
-		int methAttrAddOn = sysCls.accAndPropFlags & ((1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfSynthetic)|(1<<dpfIsSysPrimitive));
+		int methAttrAddOn = sysCls.accAndPropFlags & ((1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfSynthetic)|(1<<dpfSysPrimitive));
 //		vrb.printf("\t  methAttrAddOn5=0x%1$8x\n", methAttrAddOn);
 		
 		SystemMethod meth = sysClass.methods;

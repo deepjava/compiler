@@ -49,8 +49,8 @@ public interface ICclassFileConsts {
 
 		//--- method flags:
 		dpfCommand = dpfBase+8,	// method is a command, i.e. this method is invoked by an outside client
-		dpfIsSysPrimitive = dpfBase+9,	// method is a system primitive
-		dpfIsExcHnd = dpfBase+10,	// method is an exception handler, i.e. this method is invoked by hardware
+		dpfSysPrimitive = dpfBase+9,	// method is a system primitive
+		dpfExcHnd = dpfBase+10,	// method is an exception handler, i.e. this method is invoked by hardware
 		dpfCall = dpfBase+11,	// method gets called by the bc instructions invokestatic or invokevirtual
 		dpfInterfCall = dpfBase+12,	// method gets invoked by the bc instruction invokeinterface
 		dpfExcHndCall = dpfBase+13,	// method gets invoked directly or indirectly by an exception handler method

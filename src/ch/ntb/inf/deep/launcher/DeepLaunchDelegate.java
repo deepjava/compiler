@@ -13,12 +13,12 @@ import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import ch.ntb.inf.deep.DeepPlugin;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.IClassFileConsts;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.ssa.SSA;
 
-public class DeepLaunchDelegate extends JavaLaunchDelegate {
+public class DeepLaunchDelegate extends JavaLaunchDelegate implements ICclassFileConsts{
 	/**
 	 * Used to map temp file to launch obejct.
 	 */
@@ -51,7 +51,8 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate {
 		rootClassNames = new String[]{program};
 	
 		try {
-			Class.buildSystem(rootClassNames, location,(1<<IClassFileConsts.atxCode)|(1<<IClassFileConsts.atxLocalVariableTable)|(1<<IClassFileConsts.atxLineNumberTable)|(1<<IClassFileConsts.atxExceptions));
+			//TODO correct the call
+			Class.buildSystem(rootClassNames, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
