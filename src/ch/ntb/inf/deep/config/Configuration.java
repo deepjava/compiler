@@ -6,10 +6,11 @@ import java.io.IOException;
 
 import org.eclipse.core.runtime.Path;
 
+import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Configuration implements ErrorCodes {
+public class Configuration implements ErrorCodes  {
 	private static Project project;
 	private static SystemConstants sysConst = SystemConstants.getInstance();
 	private static Consts consts = Consts.getInstance();
@@ -17,7 +18,6 @@ public class Configuration implements ErrorCodes {
 	private static RegisterMap registerMap = RegisterMap.getInstance();
 	private static TargetConfiguration targetConfig;
 	private static TargetConfiguration activeTarConf;
-	private static ValueAssignment regInit;
 	private static OperatingSystem os;
 //	private static Class heap;
 	private static final int maxNumbersOfHeaps = 4;
@@ -131,6 +131,10 @@ public class Configuration implements ErrorCodes {
 		// segment for contentattribute not set
 		return null;
 	}
+	
+	public Device getFirstDevice(){
+		return memoryMap.getDevices();
+	}
 
 	/**
 	 * Sets the projectblock of this configuration. If a Project is already set
@@ -165,16 +169,14 @@ public class Configuration implements ErrorCodes {
 	}
 	
 	public static HString getHeapClassname(){
-		return os.getHeap();
+		return HString.getHString(os.getHeap().name);
 	}
 	
 	public static HString getExceptionClassname(){
-		return os.getException();
+		return HString.getHString(os.getException().name);
 	}
 	
-	public static HString getHwdClassname(){
-		return os.getHwd();
-	}
+	
 
 //	public static Class getReferenceToHeapClass() {
 //		if (heap == null) {
@@ -233,28 +235,15 @@ public class Configuration implements ErrorCodes {
 		return targetConfig;
 	}
 
-	public static void setRegInit(HString register, int initValue) {
-		if (regInit == null) {
-			regInit = new ValueAssignment(register, initValue);
-		}
-		int regHash = register.hashCode();
-		ValueAssignment current = regInit;
-		while (current != null) {
-			if (current.name.hashCode() == regHash) {
-				if (current.name.equals(register)) {
-					current.setValue(initValue);
-					return;
-				}
-			}
-			current = current.next;
-		}
-		ValueAssignment init = new ValueAssignment(register, initValue);
-		init.next = regInit;
-		regInit = init;
+	public static void setRegInit(HString name, int initValue) {
+		
+		ValueAssignment init = new ValueAssignment(name, initValue);
+		HString register = name.substring(0, name.length()-4);
+		registerMap.addInitValueFor(register, init);
 	}
 
-	public static ValueAssignment getRegInit() {
-		return regInit;
+	public static Register getInitializedRegisters() {
+		return registerMap.regWithInitalValue;
 	}
 
 	public static ValueAssignment getConstant() {
@@ -288,7 +277,7 @@ public class Configuration implements ErrorCodes {
 	}
 
 	public static void print() {
-		System.out.println("Configuration {");
+		System.out.println("configuration {");
 		if (project != null) {
 			project.println(1);
 		}
@@ -303,12 +292,12 @@ public class Configuration implements ErrorCodes {
 			os.println(1);
 		}
 		registerMap.println(1);
-		if (regInit != null) {
-			System.out.println("  RegInit{");
-			ValueAssignment initReg = regInit;
+		if (registerMap.regWithInitalValue != null) {
+			System.out.println("  reginit{");
+			Register initReg = registerMap.regWithInitalValue;
 			while (initReg != null) {
-				initReg.println(2);
-				initReg = initReg.next;
+				initReg.init.println(2);
+				initReg = initReg.nextWithInitValue;
 			}
 			System.out.println("  }");
 		}
@@ -376,12 +365,12 @@ public class Configuration implements ErrorCodes {
 				reg = reg.next;
 			}
 			fw.write("\n\t//Register inital value\n");
-			current = regInit;
-			while (current != null) {
+			Register initReg = registerMap.regWithInitalValue;
+			while (initReg != null) {
 				fw.write("\tpublic static final int "
-						+ current.getName().toString() + " = 0x"
-						+ Integer.toHexString(current.getValue()) + ";\n");
-				current = current.next;
+						+ initReg.init.getName().toString() + " = 0x"
+						+ Integer.toHexString(initReg.init.getValue()) + ";\n");
+				initReg = initReg.nextWithInitValue;
 			}
 			
 			fw.write("}");
@@ -435,6 +424,7 @@ public class Configuration implements ErrorCodes {
 	}
 
 	public static void clear() {
+		Parser.clear();
 		project = null;
 		SystemConstants.clear();
 		sysConst = SystemConstants.getInstance();
@@ -446,7 +436,6 @@ public class Configuration implements ErrorCodes {
 		registerMap = RegisterMap.getInstance();
 		targetConfig = null;
 		activeTarConf = null;
-		regInit = null;
 		os = null;
 //		heap = null;
 		nofHeapSegments = 0;
@@ -454,7 +443,12 @@ public class Configuration implements ErrorCodes {
 		heaps = new Segment[maxNumbersOfHeaps];
 		stacks = new Segment[maxNumbersOfStacks];
 	}
-		
+	
+	public static SystemClass getSystemPrimitives(){
+		return os.getClassList();
+		}
+	
+	
 	protected static void setActiveTargetConfig(HString targetConfigName){
 		// determine active configuration if it is not set
 		if (activeTarConf == null) {
@@ -472,5 +466,27 @@ public class Configuration implements ErrorCodes {
 			}
 		}
 		
+	}
+	public static void parseAndCreateConfig(HString file, HString targetConfigurationName) {
+		int index = file.lastIndexOf('/');
+		Parser.loc = file.substring(0, index + 1);
+		Parser par = new Parser(file);
+		//if (importedFiles.size() < 1 || par.hasChanged(file)) {
+			clear();
+			Parser.checksum.add(par.calculateChecksum(file));
+			Parser.importedFiles.add(file.substring(index + 1));
+			Parser.locForImportedFiles.add(Parser.loc);
+			par.config();
+		//}
+		setActiveTargetConfig(targetConfigurationName);
+	}
+	public static void main(String[] args) {
+		parseAndCreateConfig(HString.getHString("D:/work/Crosssystem/deep/rsc/MyProject.deep"),	HString.getHString("BootFromRam"));
+		Configuration.print();
+		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
+		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
+		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
 	}
 }
