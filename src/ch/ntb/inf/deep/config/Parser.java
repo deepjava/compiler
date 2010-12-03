@@ -572,8 +572,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 							chBuffer = ch;
 							//work around for problem when in hex-int-number the most significant bit is set;
 							if(sb.length() > 9 && sb.charAt(2) > '7'){
-								sb.replace(2, 3, "7");
-								intNumber = Integer.decode(sb.toString()) + 0x80000000;
+								String most = sb.substring(2, 3);
+								sb.replace(2, 3, "0");
+								intNumber = (Integer.parseInt(most,16) << 28) |Integer.decode(sb.toString());
 								break;
 							}
 							intNumber = Integer.decode(sb.toString());
