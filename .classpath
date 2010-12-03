@@ -4,5 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry excluding="views/ByteCodeView.java|ch/ntb/cross/eclipse/views/ByteCodeView.java|ch/ntb/cross/eclipse/views/CFGView.java|ch/ntb/cross/eclipse/views/SSAView.java|ch/ntb/cross/eclipse/views/TargetCodeView.java|ch/ntb/cross/eclipse/views/helpers/ModifiedDot.java|ch/ntb/cross/eclipse/views/printers/SSAPrinter.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="jUnitTest"/>
+	<classpathentry kind="lib" path="I:/BlackBox/BB555JOD/jo/lib/ch.ntb.usb.jar"/>
+	<classpathentry kind="lib" path="I:/BlackBox/BB555JOD/jo/lib/ch.ntb.mcdp.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
