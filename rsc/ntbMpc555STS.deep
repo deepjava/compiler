@@ -7,11 +7,29 @@ meta {
 
 operatingsystem {
         kernel {
-                class = "ch/ntb/inf/deep/runtime/mpc555/kernel";
+        	class = "ch/ntb/inf/deep/runtime/mpc555/kernel";
         }
-        exception {
-                class = "ch/ntb/inf/deep/runtime/mpc555/PPCException";
+        exceptionBaseClass {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/PPCException";
         }
+        
+
+        exception Reset {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/Reset";
+        	method reset {
+        		attributes = exchnd;
+				address = 0x100;
+        	}
+        }
+        
+        exception SystemCall {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
+        	
+			method systemCall {
+        		attributes = exchnd;
+        	}
+        }
+        
         heap {
                 class = "ch/ntb/inf/deep/runtime/mpc555/heap";
                 method newMultiDimArray  {
