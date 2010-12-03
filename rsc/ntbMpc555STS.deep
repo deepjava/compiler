@@ -14,21 +14,22 @@ operatingsystem {
         }
         
 
-#       exception Reset {
-#        	class = "ch/ntb/inf/deep/runtime/mpc555/Reset";
-#        	method reset {
-#        		attributes = exchnd;
-#				address = 0x100;
-#        	}
-#        }
+       exception {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/Reset";
+        	method reset {
+        		attributes = exchnd;
+				addr = 0x100;
+        	}
+        }
         
-#        exception SystemCall {
-#        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
+        exception {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
         	
-#			method systemCall {
-#        		attributes = exchnd;
-#        	}
-#        }
+			method systemCall {
+        		attributes = exchnd;
+        		addr = 0x200;
+        	}
+        }
         
         heap {
                 class = "ch/ntb/inf/deep/runtime/mpc555/heap";
