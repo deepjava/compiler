@@ -11,6 +11,8 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 
+// TODO rewrite this test!!!
+
 public class Linker00 extends TestLinker implements ICclassFileConsts {
 	@BeforeClass
 	public static void setUp() {
@@ -19,7 +21,7 @@ public class Linker00 extends TestLinker implements ICclassFileConsts {
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 		
 		try {
-			Class.buildSystem(rootClassesNames, new String[]{workspace}, null, attributes);
+			Class.buildSystem(rootClassesNames, new String[]{workspace + "/bin"}, null, attributes);
 			
 			System.out.println("===================================================================");
 			System.out.println("Number of classes: " + Type.nofClasses);
@@ -50,6 +52,12 @@ public class Linker00 extends TestLinker implements ICclassFileConsts {
 					System.out.println("    Size: " + ((Type)field.type).sizeInBits);
 					field = (DataItem)field.next;
 				}
+				
+				
+				//Linker.calculateRequiredSize(clazz);
+				//Linker.calculateAbsoluteAddresses(clazz);
+				//Linker.createConstantBlock(clazz);
+				clazz.printConstantBlock(5);
 				
 /*				System.out.println("  Constant pool:");
 				System.out.println("    Size: " + clazz.constantPoolSize + " byte");
