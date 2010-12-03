@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.cgPPC;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
+import ch.ntb.inf.deep.strings.HString;
 
 /**
  * register allocation
@@ -229,7 +230,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			// reserve temporary storage on the stack for certain fpr operations
 			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
 				MachineCode.tempStorage = true;
-			System.out.println("temp storage = true");
+//			System.out.println("temp storage = true");
 			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
 				MachineCode.tempStorage = true;
 
@@ -294,6 +295,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| (instr1.ssaOpcode == sCshl)
 							|| (instr1.ssaOpcode == sCshr)
 							|| (instr1.ssaOpcode == sCushr)
+							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETGPR")))
+							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETFPR")))
+							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETSPR")))
+							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTGPR")) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTFPR")) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTSPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCbranch) && (res.type == tInteger ))) {
 						Constant constant = (Constant)res.constant;
 						if (res.type == tLong) {

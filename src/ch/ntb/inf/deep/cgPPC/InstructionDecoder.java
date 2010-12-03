@@ -3143,7 +3143,6 @@ public class InstructionDecoder implements InstructionOpcs {
 		if (SPR == 157) return "LCTRL2";
 		if (SPR == 158) return "ICTRL";
 		if (SPR == 159) return "BAR";
-		if (SPR == 150) return "DPDR";
 		if (SPR == 268) return "TBL";
 		if (SPR == 269) return "TBU";
 		if (SPR == 272) return "SPRG0";
@@ -3157,6 +3156,7 @@ public class InstructionDecoder implements InstructionOpcs {
 		if (SPR == 561) return "ICADR";
 		if (SPR == 562) return "ICDAT";
 		if (SPR == 630) return "DPDR";
+		if (SPR == 638) return "IMMR";
 		if (SPR == 1022) return "FPECR";
 		assert false : "wrong SPR number";
 		return null;

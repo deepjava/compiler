@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.cfg.*;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
+import ch.ntb.inf.deep.strings.HString;
 import static org.junit.Assert.*;
 import ch.ntb.inf.deep.classItems.*;
 
@@ -19,6 +20,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static final int constForDoubleConv = 32;
 	
 	private static int LRoffset;	
+	private static int SRR0offset;	
+	private static int SRR1offset;	
 	private static int GPRoffset;	
 	private static int FPRoffset;	
 	private static int localVarOffset;
@@ -62,7 +65,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		tempStorage = false;
 
-		// make local copy
+		// make local copy 
 		int maxStackSlots = ssa.cfg.method.maxStackSlots;
 		int i = maxStackSlots;
 		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
@@ -76,6 +79,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		assert nofParam <= maxNofParam : "method has too many parameters";
 		
 		System.out.println("build intervals for " + ssa.cfg.method.name);
+		ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
 		
 		System.out.println("assign registers to parameters, nofParam = " + nofParam);
@@ -91,8 +95,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		RegAllocator.assignRegisters(this);
 		ssa.print(0);
 		
-		stackSize = calcStackSize();
-		iCount = calcPrologSize();
+		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// no prolog
+		} else if (ssa.cfg.method.name.equals(HString.getHString("interrupt"))) {
+			stackSize = calcStackSizeException();
+			insertPrologException();
+		} else {
+			stackSize = calcStackSize();
+			iCount = calcPrologSize();
+		}
 		
 		SSANode node = (SSANode)ssa.cfg.rootNode;
 		while (node != null) {
@@ -142,8 +152,12 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			}
 			node = (SSANode) node.next;
 		}
-		insertEpilog(stackSize);
-		insertProlog();
+		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// auch alle anderen excps
+			insertEpilogException(stackSize);
+		} else {
+			insertEpilog(stackSize);
+			insertProlog();
+		}
 		print();
 	}
 
@@ -224,6 +238,19 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (tempStorage) tempStorageOffset = FPRoffset - 8;
 		else tempStorageOffset = FPRoffset;
+		return size;
+	}
+
+	private static int calcStackSizeException() {
+		int size = 24 + nofNonVolGPR * nofGPR + (tempStorage? 8 : 0);
+		int padding = (16 - (size % 16)) % 16;
+		size = size + padding;
+		LRoffset = size - 4;
+		SRR0offset = size - 16;
+		SRR0offset = size - 20;
+		GPRoffset = size - 20 - nofNonVolGPR * nofGPR;
+		if (tempStorage) tempStorageOffset = GPRoffset - 8;
+		else tempStorageOffset = GPRoffset;
 		return size;
 	}
 
@@ -1039,20 +1066,83 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				// ref.accAndProb & 
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-				if (false) {	//SYScall
-					if (true) {	//GET1
+				System.out.println("Call to " + call.item.name);
+//				if (false) {	//SYScall
+				
+					if (call.item.name.equals(HString.getHString("GET1"))) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 						createIrArS(ppcExtsb, res.reg, res.reg);
-					} else if (true) { // GET2
+						break;
+					} else if (call.item.name.equals(HString.getHString("GET2"))) { // GET2
 						createIrDrAd(ppcLha, res.reg, opds[0].reg, 0);
-					} else if (true) { // GET4
+						break;
+					} else if (call.item.name.equals(HString.getHString("GET4"))) { // GET4
 						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
+						break;
+					} else if (call.item.name.equals(HString.getHString("GET8"))) {
+						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
+						break;
+					} else if (call.item.name.equals(HString.getHString("PUT1"))) {
+						createIrSrAd(ppcStb, opds[1].reg, opds[0].reg, 0);
+						break;
+					} else if (call.item.name.equals(HString.getHString("PUT2"))) {
+						createIrSrAd(ppcSth, opds[1].reg, opds[0].reg, 0);
+						break;
+					} else if (call.item.name.equals(HString.getHString("PUT4"))) {
+						createIrSrAd(ppcStw, opds[1].reg, opds[0].reg, 0);
+						break;
+					} else if (call.item.name.equals(HString.getHString("GETGPR"))) {
+						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
+						break;
+					} else if (call.item.name.equals(HString.getHString("GETFPR"))) {
+						createIrDrB(ppcFmr, res.reg, opds[0].reg);
+						break;
+					} else if (call.item.name.equals(HString.getHString("GETSPR"))) {
+						int spr = ((Constant)opds[0].constant).valueH;
+//						System.out.println("spr = " + spr);
+						createIrSspr(ppcMfspr, spr, res.reg);
+						break;
+					} else if (call.item.name.equals(HString.getHString("PUTGPR"))) {
+						int gpr = ((Constant)opds[0].constant).valueH;
+						createIrArSrB(ppcOr, gpr, opds[1].reg, opds[1].reg);
+						break;
+					} else if (call.item.name.equals(HString.getHString("PUTFPR"))) {
+						createIrDrB(ppcFmr, opds[1].reg, opds[0].reg);
+						break;
+					} else if (call.item.name.equals(HString.getHString("PUTSPR"))) {
+						createIrArSrB(ppcOr, 0, opds[1].reg, opds[1].reg);
+						int spr = ((Constant)opds[0].constant).valueH;
+						createIrSspr(ppcMtspr, spr, 0);
+						break;
+					} else if (call.item.name.equals(HString.getHString("ASM"))) {
+					//	int code = InstructionDecoder.getCode(opds[0].toString());
+						System.out.println("asm1 = " + ((StringLiteral)opds[0].constant).string);
+						System.out.println("asm2 = " + InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString()));
+						instructions[iCount] = InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString());
+						iCount++;
+						int len = instructions.length;
+						if (iCount == len) {
+							int[] newInstructions = new int[2 * len];
+							for (int k = 0; k < len; k++)
+								newInstructions[k] = instructions[k];
+							instructions = newInstructions;
+						}
+						break;
 					}
-					
-				} else if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
+			/*	} else 
+				*/
+				if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
 					loadConstantAndFixup(res.regAux1, call.item);	// addr of method
 					createIrSspr(ppcMtspr, LR, res.regAux1);
-				} else {	// invokevirtual and invokespecial and invokeinterface
+				} else if ((call.item.accAndPropFlags & (1<<apfInterface)) != 0) {	// invokeinterface
+					refReg = opds[0].reg;
+					offset = call.item.offset;
+					createItrap(ppcTwi, TOifequal, refReg, 0);
+					createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
+					createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
+					createIrDrAd(ppcLwz, res.regAux1, res.regAux1, 0);
+					createIrSspr(ppcMtspr, LR, res.regAux1);
+				} else {	// invokevirtual and invokespecial
 					refReg = opds[0].reg;
 					offset = call.item.offset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -1445,7 +1535,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	private void createIrSspr(int opCode, int spr, int rS) {
-		instructions[iCount] = opCode | (spr << 11) | (rS << 21);
+		int temp = ((spr & 0x1F) << 5) | ((spr & 0x3E0) >> 5);
+		instructions[iCount] = opCode | (temp << 11) | (rS << 21);
+		incInstructionNum();
+	}
+
+	private void createIrfi(int opCode) {
+		instructions[iCount] = opCode;
 		incInstructionNum();
 	}
 
@@ -1509,6 +1605,18 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		iCount = count;
 	}
 
+	private void insertPrologException() {
+		iCount = 0;
+		createIrSrASimm(ppcStwu, stackPtr, stackPtr, -stackSize);
+		createIrSspr(ppcMfspr, SRR0, 0);
+		createIrSrASimm(ppcStw, 0, stackPtr, SRR0offset);
+		createIrSspr(ppcMfspr, SRR1, 0);
+		createIrSrASimm(ppcStw, 0, stackPtr, SRR1offset);
+		createIrSspr(ppcMfspr, LR, 0);
+		createIrSrASimm(ppcStw, 0, stackPtr, LRoffset);
+		createIrSrAd(ppcStmw, paramStartGPR, stackPtr, GPRoffset);
+	}
+
 	private void insertEpilog(int stackSize) {
 		if (nofNonVolFPR > 0) {
 			for (int i = 0; i < nofNonVolFPR; i++)
@@ -1522,6 +1630,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		createIBOBI(ppcBclr, BOalways, 0);
 	}
 
+	private void insertEpilogException(int stackSize) {
+		createIrDrAd(ppcLmw, paramStartGPR, stackPtr, GPRoffset);
+		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
+		createIrSspr(ppcMtspr, LR, 0);
+		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
+		createIrfi(ppcRfi);
+	}
+	
 	public void print(){
 //		System.out.println("Method information for " + ssa.cfg.method.name);
 		Method m = ssa.cfg.method;

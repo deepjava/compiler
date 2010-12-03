@@ -19,7 +19,9 @@ interface InstructionOpcs {
 	final int EQ = 1;
 	final int GT = 2;
 	final int LT = 3;
-	final int LR = 0x100;
+	final int LR = 8;
+	final int SRR0 = 26;
+	final int SRR1 = 27;
 	
 	final int CRF0SO = 28;
 	final int CRF0EQ = 29;
@@ -184,6 +186,7 @@ interface InstructionOpcs {
 		ppcOr = (0x1f << 26) | (0x1bc << 1),
 		ppcOri = (0x18 << 26),
 		ppcOris = (0x19 << 26),
+		ppcRfi = (0x13 << 26) | (0x32 << 1),
 		ppcRlwinm = (0x15 << 26),
 		ppcRlwimi = (0x14 << 26),
 		ppcRlwnm = (0x17 << 26),
