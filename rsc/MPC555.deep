@@ -21,7 +21,7 @@ sysconst {
     cblkCodeSizeOffset = 8;
     cblkVarBaseOffset = 12;
     cblkVarSizeOffset = 16;
-    cblkCliniAddrOffset = 20;
+    cblkClinitAddrOffset = 20;
     cblkNofPtrsOffset = 24;
     stStackOffset = 4;
     stHeapOffset = 8;
