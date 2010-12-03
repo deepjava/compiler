@@ -76,7 +76,7 @@ public class Configuration implements ErrorCodes  {
 		} else if (os.getHeap().equals(clazz)) {
 			segAss = activeTarConf.getModuleByName(HString.getHString("heap"))
 					.getSegmentAssignments();
-		} else if (os.getException().equals(clazz)) {
+		} else if (os.getExceptionBaseClass().equals(clazz)) {
 			segAss = activeTarConf.getModuleByName(
 					HString.getHString("exception")).getSegmentAssignments();
 		} else {// Class is not a system class
@@ -178,7 +178,7 @@ public class Configuration implements ErrorCodes  {
 	}
 	
 	public static HString getExceptionClassname(){
-		return HString.getHString(os.getException().name);
+		return HString.getHString(os.getExceptionBaseClass().name);
 	}
 	
 	

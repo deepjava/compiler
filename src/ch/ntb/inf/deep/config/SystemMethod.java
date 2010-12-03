@@ -4,6 +4,7 @@ public class SystemMethod {
 	public SystemMethod next;
 	public String name;
 	public int attributes; // e.g. (1<<dpfNew) 
+	public int addr = -1;
 
 	public SystemMethod(String name) {
 		this.name = name;
@@ -24,6 +25,13 @@ public class SystemMethod {
 			System.out.print("  ");
 		}
 		System.out.println("attributes: 0x"+Integer.toHexString(attributes));
+		
+		if(addr > -1){
+			for(int i = indentLevel+1; i > 0; i--){
+				System.out.print("  ");
+			}
+			System.out.println("addr: 0x"+Integer.toHexString(addr));
+		}
 		
 		for(int i = indentLevel; i > 0; i--){
 			System.out.print("  ");

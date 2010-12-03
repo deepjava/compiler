@@ -45,9 +45,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	// --------Types and flags: 
 	public static final short g7 = g6 + 7, sGPR = g7, sFPR = g7 + 1,
 			sSPR = g7 + 2, sIOR = g7 + 3, sUnsafe = g7 + 4, sSynthetic = g7 + 5,
-			sNew = g7 + 6, sMSR = g7 + 7, sCR = g7 + 8, sFPSCR = g7 + 9;
+			sNew = g7 + 6, sMSR = g7 + 7, sCR = g7 + 8, sFPSCR = g7 + 9, sExcHnd = g7 + 10;
 	// -------- Register representation: 
-	public static final short g8 = g7 + 10, sHex = g8, sDez = g8 + 1,
+	public static final short g8 = g7 + 11, sHex = g8, sDez = g8 + 1,
 			sBin = g8 + 2, sFloat = g8 + 3;
 	// -------- Assignment keywords; 
 	private static final short g9 = g8 + 4, sVersion = g9,
@@ -57,9 +57,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			sNofsegements = g9 + 10, sKernel = g9 + 11, sExceptionBaseClass = g9 + 12,
 			sUs = g9 + 13, sAddr = g9 + 14, sType = g9 + 15, sRepr = g9 + 16,
 			sLibPath = g9 + 17, sDebugLevel = g9 + 18, sPrintLevel = g9 + 19,
-			sLowlevel = g9 + 20, sClass = g9 + 21, sId = g9 + 22;
+			sLowlevel = g9 + 20, sClass = g9 + 21, sId = g9 + 22, sException = g9 + 23;
 	// -------- Block keywords: 
-	private static final short g10 = g9 + 23, sMeta = g10,
+	private static final short g10 = g9 + 24, sMeta = g10,
 			sConstants = g10 + 1, sDevice = g10 + 2, sReginit = g10 + 3,
 			sSegment = g10 + 4, sMemorymap = g10 + 5, sMap = g10 + 6,
 			sModules = g10 + 7, sTargetConf = g10 + 8, sProject = g10 + 9,
@@ -268,7 +268,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			}
 			break;
 		case 'e':
-			if (str.equals("exceptionbaseclass")) {
+			if(str.equals("exception")){
+				sym = sException;
+				return true;
+			}if(str.equals("exchnd")){
+				sym = sExcHnd;
+				return true;
+			}else if(str.equals("exceptionbaseclass")) {
 				sym = sExceptionBaseClass;
 				return true;
 			}
@@ -688,6 +694,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "CR";
 		case sFPSCR:
 			return "FPSCR";
+		case sExcHnd:
+			return "exchnd";
 		case sHex:
 			return "hex";
 		case sDez:
@@ -742,6 +750,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "class";
 		case sId:
 			return "id";
+		case sException:
+			return "exception";
 		case sMeta:
 			return "meta";
 		case sConstants:
@@ -1318,7 +1328,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		MemoryMap memMap = MemoryMap.getInstance();
-		while (sym == sKernel || sym == sExceptionBaseClass || sym == sHeap
+		while (sym == sKernel || sym == sException || sym == sHeap
 				|| sym == sDesignator || sym == sDefault) {
 			Module root = null, current = null;
 			do {
@@ -1336,7 +1346,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					}
 					next();
 					break;
-				case sExceptionBaseClass:
+				case sException:
 					if (root == null) {
 						root = new Module(HString.getHString("exception"));
 						current = root;
@@ -1724,13 +1734,15 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		OperatingSystem os = new OperatingSystem();
-		while (sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel) {
-			if (sym == sKernel) {
+		while (sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException) {
+			if(sym == sException){
+				os.addException(systemClass());
+			}else if (sym == sKernel) {
 				os.setKernel(systemClass());
 			} else if (sym == sHeap) {
 				os.setHeap(systemClass());
 			} else if (sym == sExceptionBaseClass) {
-				os.setException(systemClass());
+				os.setExceptionBaseClass(systemClass());
 			} else if (sym == sUs) {
 				os.setUs(systemClass());
 			} else if (sym == sLowlevel) {
@@ -1744,11 +1756,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ symToString() + " ");
 			return;
 		}
-		if (os.getException() == null || os.getHeap() == null
+		if (os.getExceptionBaseClass() == null || os.getHeap() == null
 				|| os.getKernel() == null || os.getUs() == null || os.getLowLevel() == null) {
 			nOfErrors++;
 			reporter.error(	errMissingTag,"in "	+ currentFile
-							+ " \"operatingsystem\" all tags \"kernel, heap, exception, hwd and bitops\" must be defined");
+							+ " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined");
 			return;
 		}
 		Configuration.setOperatingSystem(os);
@@ -1758,7 +1770,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	private SystemClass systemClass() {
 		boolean isExceptionBase = false;
 		if (!(sym == sKernel || sym == sHeap || sym == sExceptionBaseClass
-				|| sym == sUs || sym == sLowlevel )) {
+				|| sym == sUs || sym == sLowlevel || sym == sException)) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber + "received symbol: "
@@ -1836,7 +1848,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		next();
-		while (sym == sAttributes || sym == sId) {
+		while (sym == sAttributes || sym == sId || sym  == sAddr) {
 			if (sym == sAttributes) {
 				method.attributes |= attributeAssignment();
 			} else if (sym == sId) {
@@ -1867,6 +1879,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					return null;
 				}
 				next();
+			}else if(sym == sAddr){
+				method.addr = addressAssignment();
 			}
 		}
 		if (sym != sRBrace) {
@@ -2332,6 +2346,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				break;
 			case sSynthetic:
 				res |= (1 << dpfSynthetic);
+				break;
+			case sExcHnd:
+				res |= (1 << dpfExcHnd);
 				break;
 			default:
 				nOfErrors++;
