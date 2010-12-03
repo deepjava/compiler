@@ -1,7 +1,7 @@
 #deep-0
 
 meta {
-	version = "2010-09-07";
+	version = "2010-12-02";
 	description = "Freescale MPC555 (all devices)";
 	import = "rsc/MPC555-Registermap.deep";
 }
@@ -17,24 +17,19 @@ sysconst {
 	CMFB = CMFA_BaseAddr + CMFA_Size;				# Internal Flash B Base Address
 	CMFB_Size = 0x3000;								# Internal Flash B Size (192 KiB)
 	
-	sysTabBaseAddr = SRAMA_BaseAddr;				# Base address of the systemtable segment
+	sysTabBaseAddr = SRAMA_BaseAddr;				# Base address of the system table segment
 	stackSize = 0x2000;								# Default stack size
+	heapSize = 0x2000;								# Default heap size
 }
 
 memorymap {
 
+	# ===== Internal RAM =====
 	device InternalRam {
-		attributes = read, write, const, code, var, systab, heap, stack;
+		attributes = read, write;
 		width = 4; # byte
-		size = 0x6800; #10+16kB
+		size = SRAMA_Size + SRAMB_Size;
 		base = SRAMA_BaseAddr;
-	}
-	
-	device InternalFlash {
-		attributes = read;
-		width = 4; # byte
-		size = CMFA_Size + CMFB_Size;
-		base = CMFA_BaseAddr;
 	}
 	
 	segment InternalRam.SysTab {
@@ -59,37 +54,28 @@ memorymap {
 		size = stackSize;
 	}
 	
+	segment InternalRam.Heap {
+		attributes = read, write, stack;
+		size = heapSize;
+	}
+	
+	
+	# ===== Internal Flash =====
+	device InternalFlash {
+		attributes = read;
+		width = 4; # byte
+		size = CMFA_Size + CMFB_Size;
+		base = CMFA_BaseAddr;
+	}
+	
 	segment InternalFlash.A {
 		base = CMFA_BaseAddr;
-		width = 4;
 		size = CMFA_Size;
-		
-		segment block0 {
-		   attributes = read, write, code;
-		   base =  CMFA_BaseAddr;
-		   size = CMFA_Size;
-		   
-		   segment ExcCode {
-		      base = 0x5000;
-		   }
-		}
 	}
 	
 	segment InternalFlash.B {
-		base =  CMFA_BaseAddr;
-		width = 4;
+		base =  CMFB_BaseAddr;
 		size = CMFB_Size;
 
 	}
-	
-	segment InternalFlash.B.S2 {
-        width = 4;
-        size = CMFB_Size;
-	}
 }
-reginit {
-    SRR1init = 0x3802;
-}
-
-
-
