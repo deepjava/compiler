@@ -3,7 +3,7 @@ package ch.ntb.inf.deep.config;
 public class SystemMethod {
 	public SystemMethod next;
 	public String name;
-	public int attributes; // e.g. (1<<dpfNew) | bCnewarray
+	public int attributes; // e.g. (1<<dpfNew) 
 
 	public SystemMethod(String name) {
 		this.name = name;

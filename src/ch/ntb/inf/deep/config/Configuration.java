@@ -427,6 +427,9 @@ public class Configuration implements ErrorCodes  {
 		}
 		return res;
 	}
+	public static RegisterMap getRegisterMap(){
+		return registerMap;
+	}
 	
 	public static String[] getRootClassNames(){
 		int count = 0;
@@ -520,6 +523,6 @@ public class Configuration implements ErrorCodes  {
 		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
-		//Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
+		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
 	}
 }

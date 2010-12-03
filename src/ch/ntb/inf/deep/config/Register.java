@@ -3,8 +3,8 @@ package ch.ntb.inf.deep.config;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Register {
+	public Register next;
 	HString name;
-	Register next;
 	Register nextWithInitValue;
 	int type = -1;
 	int addr = -1;

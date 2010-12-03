@@ -14,8 +14,18 @@ sysconst {
 	SRAMB_Size = 0x4000;							# Internal SRAM B Size (16 KiB)
 	CMFA_BaseAddr = IMB + 0x0;						# Internal Flash A Base Address
 	CMFA_Size = 0x4000;								# Internal Flash A Size (256 KiB)
-	CMFB = CMFA_BaseAddr + CMFA_Size;				# Internal Flash B Base Address
+	CMFB_BaseAddr = CMFA_BaseAddr + CMFA_Size;				# Internal Flash B Base Address
 	CMFB_Size = 0x3000;								# Internal Flash B Size (192 KiB)
+    
+    cblkCodeBaseOffset = 4;
+    cblkCodeSizeOffset = 8;
+    cblkVarBaseOffset = 12;
+    cblkVarSizeOffset = 16;
+    cblkCliniAddrOffset = 20;
+    cblkNofPtrsOffset = 24;
+    stStackOffset = 4;
+    stHeapOffset = 8;
+    stNofStacksOffset = 12;
 	
 	sysTabBaseAddr = SRAMA_BaseAddr;				# Base address of the system table segment
 	stackSize = 0x2000;								# Default stack size

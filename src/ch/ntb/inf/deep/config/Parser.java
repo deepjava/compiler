@@ -54,7 +54,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			sDescription = g9 + 1, sImport = g9 + 2, sAttributes = g9 + 3,
 			sWidth = g9 + 4, sSize = g9 + 5, sBase = g9 + 6,
 			sRootclasses = g9 + 7, sSegmentsize = g9 + 8, sArraysize = g9 + 9,
-			sNofsegements = g9 + 10, sKernel = g9 + 11, sException = g9 + 12,
+			sNofsegements = g9 + 10, sKernel = g9 + 11, sExceptionBaseClass = g9 + 12,
 			sUs = g9 + 13, sAddr = g9 + 14, sType = g9 + 15, sRepr = g9 + 16,
 			sLibPath = g9 + 17, sDebugLevel = g9 + 18, sPrintLevel = g9 + 19,
 			sLowlevel = g9 + 20, sClass = g9 + 21, sId = g9 + 22;
@@ -268,8 +268,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			}
 			break;
 		case 'e':
-			if (str.equals("exception")) {
-				sym = sException;
+			if (str.equals("exceptionbaseclass")) {
+				sym = sExceptionBaseClass;
 				return true;
 			}
 			break;
@@ -720,8 +720,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "nofsegements";
 		case sKernel:
 			return "kernel";
-		case sException:
-			return "exception";
+		case sExceptionBaseClass:
+			return "exceptionbaseclass";
 		case sUs:
 			return "us";
 		case sAddr:
@@ -1318,7 +1318,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		MemoryMap memMap = MemoryMap.getInstance();
-		while (sym == sKernel || sym == sException || sym == sHeap
+		while (sym == sKernel || sym == sExceptionBaseClass || sym == sHeap
 				|| sym == sDesignator || sym == sDefault) {
 			Module root = null, current = null;
 			do {
@@ -1336,7 +1336,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					}
 					next();
 					break;
-				case sException:
+				case sExceptionBaseClass:
 					if (root == null) {
 						root = new Module(HString.getHString("exception"));
 						current = root;
@@ -1724,12 +1724,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		OperatingSystem os = new OperatingSystem();
-		while (sym == sKernel || sym == sHeap || sym == sException || sym == sUs || sym == sLowlevel) {
+		while (sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel) {
 			if (sym == sKernel) {
 				os.setKernel(systemClass());
 			} else if (sym == sHeap) {
 				os.setHeap(systemClass());
-			} else if (sym == sException) {
+			} else if (sym == sExceptionBaseClass) {
 				os.setException(systemClass());
 			} else if (sym == sUs) {
 				os.setUs(systemClass());
@@ -1756,13 +1756,17 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	}
 
 	private SystemClass systemClass() {
-		if (!(sym == sKernel || sym == sHeap || sym == sException
-				|| sym == sUs || sym == sLowlevel)) {
+		boolean isExceptionBase = false;
+		if (!(sym == sKernel || sym == sHeap || sym == sExceptionBaseClass
+				|| sym == sUs || sym == sLowlevel )) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber + "received symbol: "
 					+ symToString() + " ");
 			return null;
+		}
+		if(sym == sExceptionBaseClass){
+			isExceptionBase = true;
 		}
 		next();
 		if (sym != sLBrace) {
@@ -1782,8 +1786,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		SystemClass clazz = new SystemClass(classAssignment());
+		SystemMethod meth;
 		while (sym == sMethod) {
-			clazz.add(method());
+			meth = method();
+			clazz.addMethod(meth);
+			clazz.addAttributes(meth.attributes);
 		}
 
 		if (sym != sRBrace) {
@@ -1794,7 +1801,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		next();
-
+		if(isExceptionBase){
+			clazz.addAttributes(1 << dpfExcHnd);
+		}
 		return clazz;
 
 	}

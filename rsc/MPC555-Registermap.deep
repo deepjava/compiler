@@ -7,7 +7,7 @@ meta  {
 
 
 registermap {
-	# special registers -> IVALID TYPE!
+	# special registers
 	register MSR {
 		 type = MSR;
 		 addr = 1;

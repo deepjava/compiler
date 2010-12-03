@@ -4,13 +4,18 @@ public class SystemClass {
 	public SystemClass next;
 	public String name;
 	public SystemMethod methods;
-	public int attributes; //e.g (
+	public int attributes; // e.g. (1<<dpfExcHnd) 
 
 	public SystemClass(String name) {
 		this.name = name;
 	}
+	
+	public void addAttributes(int attributes){
+		this.attributes |= attributes;
+	}
+	
 
-	public void add(SystemMethod method) {
+	public void addMethod(SystemMethod method) {
 		method.next = methods;
 		methods = method;
 	}

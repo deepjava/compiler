@@ -6,9 +6,13 @@ import ch.ntb.inf.deep.strings.HString;
 public class RegisterMap implements ErrorCodes {
 	private static RegisterMap regMap;
 	Register regWithInitalValue;
+	int nofGprs = 0;
 	Register gpr;
+	int nofFprs = 0;
 	Register fpr;
+	int nofSprs = 0;
 	Register spr;
+	int nofIors = 0;
 	Register ior;
 	Register msr;
 	Register cr;
@@ -23,12 +27,13 @@ public class RegisterMap implements ErrorCodes {
 		}
 		return regMap;
 	}
-	public void addInitValueFor(HString registername, ValueAssignment init){
-		//search register
+
+	public void addInitValueFor(HString registername, ValueAssignment init) {
+		// search register
 		Register current = spr;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				if (current.getInit() != null) {
 					current.setInit(init);
 					return;
 				}
@@ -40,37 +45,9 @@ public class RegisterMap implements ErrorCodes {
 			current = current.next;
 		}
 		current = ior;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
-					current.setInit(init);
-					return;
-				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
-			}
-			current = current.next;
-		}
-		current = gpr;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
-					current.setInit(init);
-					return;
-				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
-			}
-			current = current.next;
-		}
-		current = fpr;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				if (current.getInit() != null) {
 					current.setInit(init);
 					return;
 				}
@@ -82,9 +59,9 @@ public class RegisterMap implements ErrorCodes {
 			current = current.next;
 		}
 		current = fpscr;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				if (current.getInit() != null) {
 					current.setInit(init);
 					return;
 				}
@@ -96,9 +73,9 @@ public class RegisterMap implements ErrorCodes {
 			current = current.next;
 		}
 		current = cr;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				if (current.getInit() != null) {
 					current.setInit(init);
 					return;
 				}
@@ -110,9 +87,9 @@ public class RegisterMap implements ErrorCodes {
 			current = current.next;
 		}
 		current = msr;
-		while(current != null){
-			if(current.name.equals(registername)){
-				if(current.getInit()!= null){
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				if (current.getInit() != null) {
 					current.setInit(init);
 					return;
 				}
@@ -123,7 +100,23 @@ public class RegisterMap implements ErrorCodes {
 			}
 			current = current.next;
 		}
-		//if Register doesn't exist yet create one;
+		current = gpr;
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				ErrorReporter.reporter
+						.error("it is not allowed to set a init value for a gpr register");
+			}
+			current = current.next;
+		}
+		current = fpr;
+		while (current != null) {
+			if (current.name.equals(registername)) {
+				ErrorReporter.reporter
+						.error("it is not allowed to set a init value for a fpr register");
+			}
+			current = current.next;
+		}
+		// if Register doesn't exist yet create one;
 		Register reg = new Register(registername);
 		reg.setInit(init);
 		reg.nextWithInitValue = regWithInitalValue;
@@ -131,6 +124,7 @@ public class RegisterMap implements ErrorCodes {
 	}
 
 	private void addGprRegister(Register reg) {
+		nofGprs++;
 		if (gpr == null) {
 			gpr = reg;
 			return;
@@ -158,6 +152,7 @@ public class RegisterMap implements ErrorCodes {
 	}
 
 	private void addFprRegister(Register reg) {
+		nofFprs++;
 		if (fpr == null) {
 			fpr = reg;
 			return;
@@ -185,6 +180,7 @@ public class RegisterMap implements ErrorCodes {
 	}
 
 	private void addSprRegister(Register reg) {
+		nofSprs++;
 		if (spr == null) {
 			spr = reg;
 			return;
@@ -210,8 +206,9 @@ public class RegisterMap implements ErrorCodes {
 		// if no match prev shows the tail of the list
 		prev.next = reg;
 	}
-	
+
 	private void addIorRegister(Register reg) {
+		nofIors++;
 		if (ior == null) {
 			ior = reg;
 			return;
@@ -237,36 +234,40 @@ public class RegisterMap implements ErrorCodes {
 		// if no match prev shows the tail of the list
 		prev.next = reg;
 	}
-	private void setMSRRegister(Register reg){
+
+	private void setMSRRegister(Register reg) {
 		msr = reg;
 	}
-	private void setCRRegister(Register reg){
+
+	private void setCRRegister(Register reg) {
 		cr = reg;
 	}
-	private void setFPSCRRegister(Register reg){
+
+	private void setFPSCRRegister(Register reg) {
 		fpscr = reg;
 	}
 
 	public void addRegister(Register reg) {
-		//if a register init is set before all register was set we have to check and merge
-		if(regWithInitalValue != null){
+		// if a register init is set before all register was set we have to
+		// check and merge
+		if (regWithInitalValue != null) {
 			Register current = regWithInitalValue;
-			while(current != null){
-				if(current.name.equals(reg.name)){
-					//copy content of reg into current
+			while (current != null) {
+				if (current.name.equals(reg.name)) {
+					// copy content of reg into current
 					current.name = reg.name;
 					current.next = reg.next;
 					current.type = reg.type;
 					current.addr = reg.addr;
 					current.size = reg.size;
 					current.repr = reg.repr;
-					
-					//replace reg with current;
+
+					// replace reg with current;
 					reg = current;
 					break;
 				}
 			}
-		}		
+		}
 		if (reg.type == Parser.sGPR) {
 			addGprRegister(reg);
 		} else if (reg.type == Parser.sFPR) {
@@ -288,59 +289,90 @@ public class RegisterMap implements ErrorCodes {
 			return;
 		}
 	}
-	
-	public Register getGprRegister(){
+
+	public Register getGprRegister() {
 		return gpr;
 	}
-	
-	public Register getFprRegister(){
+
+	public Register getFprRegister() {
 		return fpr;
 	}
-	
-	public Register getSprRegister(){
+
+	public Register getSprRegister() {
 		return spr;
 	}
 	
-	public void println(int indentLevel){
-		for(int i = indentLevel; i > 0; i--){
+	public Register getIorRegister(){
+		return ior;
+	}
+	
+	public Register getMSR(){
+		return msr;
+	}
+	
+	public Register getCR(){
+		return cr;
+	}
+	
+	public Register getFpscr(){
+		return fpscr;
+	}
+	
+	public int getNofGprs(){
+		return nofGprs;
+	}
+
+	public int getNofFprs(){
+		return nofFprs;
+	}
+	
+	public int getNofSprs(){
+		return nofSprs;
+	}
+	
+	public int getNofIors(){
+		return nofIors;
+	}
+	public void println(int indentLevel) {
+		for (int i = indentLevel; i > 0; i--) {
 			System.out.print("  ");
 		}
 		System.out.println("registermap {");
-		
+
 		msr.println(indentLevel + 1);
-		
+
 		cr.println(indentLevel + 1);
-				
+
 		Register current = gpr;
-		while(current != null){
+		while (current != null) {
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
 		fpscr.println(indentLevel + 1);
 		current = fpr;
-		while(current != null){
+		while (current != null) {
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
 		current = spr;
-		while(current != null){
+		while (current != null) {
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
 		current = ior;
-		while(current != null){
+		while (current != null) {
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
-				
-		for(int i = indentLevel; i > 0; i--){
+
+		for (int i = indentLevel; i > 0; i--) {
 			System.out.print("  ");
 		}
 		System.out.println("}");
 	}
 
 	public static void clear() {
-		regMap = null;		
+		regMap = null;
 	}
 
 }
