@@ -2644,7 +2644,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		String str = readString();
-		if (str.charAt(str.length() - 1) != '/') {
+		if (str.length() > 0 && str.charAt(str.length() - 1) != '/') {
 			str = str + '/';
 		}
 		s = HString.getHString(str);
