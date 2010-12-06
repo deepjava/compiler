@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.linkerPPC;
 
+import java.io.PrintStream;
+
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
@@ -9,13 +11,16 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.Device;
+import ch.ntb.inf.deep.config.IAttributes;
 import ch.ntb.inf.deep.config.Segment;
+import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
 
-public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
+public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
+	
+	private static PrintStream vrb = System.out;
 		
 	private static final int stringHeaderSize = 4; // byte
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
@@ -45,16 +50,22 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 	 */
 	public static void calculateOffsets(Class clazz) {
 		int c1, c2, c3;
-			
+		
+		vrb.println("[LINKER] START: Calculating offsets for class \"" + clazz.name +"\":\n");
+		
 		// Constant pool
+		vrb.println("  1) Constant pool:");
 		c1 = 0; // offset counter for the constant floating point numbers (in byte)
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
+				
 				if(clazz.constPool[i].type == Type.wellKnownTypes[txFloat]) {
+					vrb.println("    constPool[" + i + "] Type: float, Offset: " + c1);
 					clazz.constPool[i].offset = c1;
 					c1 += Float.SIZE/8;
 				}
 				else if(clazz.constPool[i].type == Type.wellKnownTypes[txDouble]) {
+					vrb.println("    constPool[" + i + "] Type: double, Offset: " + c1);
 					clazz.constPool[i].offset = c1;
 					c1 += Double.SIZE/8;
 				}
@@ -63,10 +74,12 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		}
 		
 		// String pool
+		vrb.println("  2) String pool:");
 		c1 = 0; // offset counter for the constant strings (in byte)
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				if(clazz.constPool[i].type == Type.wellKnownTypes[txString]) {
+					vrb.println("    constPool[=" + i + "] Type: String, Offset: " + c1);
 					clazz.constPool[i].offset = c1;
 					int stringSize = ((StringLiteral)clazz.constPool[i]).string.sizeInByte();
 					c1 += stringHeaderSize + roundUpToNextWord(stringSize);
@@ -76,6 +89,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		}
 		
 		// Class/static fields
+		vrb.println("  3) Class fields:");
 		c1 = 0; // offset counter for static fields (in byte)
 		c2 = 0; // offset counter for instance fields (in byte)
 		c3 = 0; // counter for the number or static fields which are references to objects
@@ -88,12 +102,14 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 				else size /= 8; // bits -> byte
 				if((field.accAndPropFlags & (1 << apfStatic)) > 1) { // static/class fields
 					c1 = getCorrectOffset(c1, size);
+					vrb.println("    Name: " + field.name + ", Static: yes, Type: " + field.type.name + ",Offset: " + c1);
 					field.offset = c1; // save offset
 					c1 += size; // prepare offset counter for next round
 					if(((Type)field.type).category == tcRef) c3++; // count
 				}
 				else { // instance fields
 					c2 = getCorrectOffset(c2, size);
+					vrb.println("    Name: " + field.name + ", Static: no, Type: " + field.type.name + ",Offset: " + c2);
 					field.offset = c2;
 					c2 += size;
 				}
@@ -104,19 +120,27 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		}
 		
 		// Methods
+		vrb.println("  4) Methods:");
 		c1 = 0;
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
+				vrb.println("    Name: " + method.name + ", Offset: " + c1);
 				method.offset = c1;
 				c1 += 4;
 				method = (Method)method.next;
 			}
 		}
+		
+		vrb.println("\n[LINKER] END: calculating offsets for class \"" + clazz.name +"\"\n");
 	}
 	
 	public static void calculateRequiredSize(Class clazz) {
+		
+		vrb.println("[LINKER] START: Calculating required for class \"" + clazz.name +"\":\n");
+		
 		// machine code size
+		vrb.println("  1) Code:");
 		Method m = (Method)clazz.methods;
 		int codeSize = 0;
 		while(m != null) {
@@ -124,15 +148,18 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 			m = (Method)m.next;
 		}
 		clazz.machineCodeSize = codeSize;
+		vrb.println("    Code size: " + codeSize + " byte");
 		
 		// size of class fields --> already set while calculating offsets
 		
+		vrb.println("  2) Constant block:");
 		// constant block size
-		clazz.classDescriptorSize = clazz.nOfMethods + clazz.nOfInterfaces + clazz.nOfBaseClasses + 3;
+		clazz.classDescriptorSize = (clazz.nOfMethods + clazz.nOfInterfaces + clazz.nOfBaseClasses + 3) * 4;
 		clazz.constantBlockSize = 4 // constBlockSize field
 								+ 4 // codeBase field
 								+ 4 // codeSize field
 								+ 4 // varBase field
+								+ 4 // varSize field
 								+ 4 // clinitAddr field
 								+ 4 // nofPtrs field
 								+ 4 * clazz.nOfReferences
@@ -140,34 +167,66 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 								+ clazz.constantPoolSize // size of the constant pool already set while calculating offsets
 								+ clazz.stringPoolSize // size of the string pool already set while calculating offsets
 								+ 4; // Checksum field
+		
+		vrb.println("    Constant block size: " + clazz.constantBlockSize + " byte");
+		
+		vrb.println("\n[LINKER] END: Calculating required for class \"" + clazz.name +"\"\n");
+	}
+	
+	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute) {
+		Segment t = s;
+		while(t != null) {
+			if((t.getAttributes() & (1 << contentAttribute)) == 1) {
+				if(t.subSegments != null) t = getFirstFittingSegment(t.subSegments, contentAttribute);
+				return t;
+			}
+			t = t.next;
+		}
+		return null;
 	}
 	
 	public static void freezeMemoryMap() {
 		
-		// 1) Calculate required size
+		// 1) Set segment for each class and calculate the required size for this segments
 		Class c = Type.classList;
+		Segment s;
 		while(c != null) {
-			c.codeSegment = Configuration.getCodeSegmentOf(c.name);
-			if(c.codeSegment == null) reporter.error(550, "Can't get a memory segment for the code of class " + c.name + "!\n");
-			else c.codeSegment.addToRequiredSize(c.machineCodeSize);
 			
-			c.constSegment = Configuration.getConstSegmentOf(c.name);
-			if(c.constSegment == null) reporter.error(551, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
-			else c.constSegment.addToRequiredSize(c.constantBlockSize);
+			// Code
+			s = Configuration.getCodeSegmentOf(c.name);
+			if(s == null) reporter.error(550, "Can't get a memory segment for the code of class " + c.name + "!\n");
+			else {
+				if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode);
+				s.addToRequiredSize(c.machineCodeSize);
+				c.codeSegment = s;
+			}
 			
-			c.varSegment = Configuration.getVarSegmentOf(c.name);
-			if(c.varSegment == null) reporter.error(552, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
-			else c.varSegment.addToRequiredSize(c.classFieldsSize);
-						
+			// Var
+			s = Configuration.getVarSegmentOf(c.name);
+			if(s == null) reporter.error(551, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
+			else {
+				if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar);
+				s.addToRequiredSize(c.classFieldsSize);
+				c.varSegment = s;
+			}
+			
+			// Const
+			s = Configuration.getConstSegmentOf(c.name);
+			if(s == null) reporter.error(552, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
+			else {
+				if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst);
+				s.addToRequiredSize(c.constantBlockSize);
+				c.constSegment = s;
+				
+			}						
 			c = (Class)c.next;
 		}
 	
-		// 2) Set size for each used segment
+		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
-		Segment s;
 		while(d != null) {
 			System.out.println("Device: " + d.getName() + "\n");
-			setSize(d.lastSegment);
+			if(d.lastSegment != null) setSize(d.lastSegment);
 			d = d.next;
 		}
 	}
@@ -189,7 +248,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 	
 	public static void createConstantBlock(Class clazz) {
+		
+		vrb.println("[LINKER] START: Creating constant block for class \"" + clazz.name +"\":\n");
+		
 		clazz.constantBlock = new int[clazz.constantBlockSize/4];
+		
+		vrb.println("  Constant block size: " + clazz.constantBlockSize + " byte -> array size: " + clazz.constantBlock.length);
+		vrb.println("  Number of references: " + clazz.nOfReferences);
+		vrb.println("  Class descriptor size: " + clazz.classDescriptorSize + " byte");
+		vrb.println("  Number of methods: " + clazz.nOfMethods);
+		vrb.println("  Number of interfaces: " + clazz.nOfInterfaces);
+		
 		
 		// 1) Insert Header
 		clazz.constantBlock[0] = clazz.constantBlockSize;				// constBlockSize
@@ -214,7 +283,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		// 3) Class descriptor 
 		// 3a) Insert method addresses
-		int classDescriptorOffset = 7 + clazz.nOfReferences;
+		int classDescriptorOffset = 6 + clazz.nOfReferences;
 		if(clazz.nOfMethods > 0) {
 			Method m = (Method)clazz.methods;
 			for(int i = 0; i < clazz.nOfMethods; i++) {
@@ -291,6 +360,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 					}	
 				}
 			}
+			
+			vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
+			
 		}
 
 		// 5) Constant pool
@@ -310,6 +382,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		// 6 Checksum
 		clazz.constantBlock[clazz.constantBlock.length - 1] = 0; // TODO implement crc32 checksum
+		
+		// print
+		clazz.printConstantBlock();
 	}
 	
 	public static void calculateAbsoluteAddresses(Class clazz) {
@@ -342,11 +417,22 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 	 * 
 	 */
 	public static void createSystemTable() {
+		
+		vrb.println("[LINKER] START: Creating systemtable:\n");
+		
 		int nOfStacks = Configuration.getNumberOfStacks();
 		int nOfHeaps = Configuration.getNumberOfHeaps();
 		
+		vrb.println("  Number of stacks: " + nOfStacks);
+		vrb.println("  Number of heaps: " + nOfHeaps);
+		vrb.println("  Number of classes: " + Type.nofClasses);
+		
+		
 		// create the systemtable
-		systemTable = new int[6 + 2 * nOfStacks + 2 * nOfHeaps + Type.nofClasses];
+		systemTable = new int[7 + 2 * nOfStacks + 2 * nOfHeaps + Type.nofClasses];
+		
+		vrb.println("  Size of the system table: " + systemTable.length * 4 + " byte  -> array size: " + systemTable.length);
+		
 		
 		// offset to the beginning of the class references
 		systemTable[0] = 5 + 2 * nOfStacks + 2 * nOfHeaps;
@@ -362,8 +448,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		// reference to each stack and the size of each stack
 		for(int i = 0; i < nOfStacks; i++) {
-			systemTable[3 + 2 * i] = Configuration.getStackSegments()[i].getBaseAddress();
-			systemTable[3 + 2 * i + 1] = Configuration.getStackSegments()[i].getSize();
+			systemTable[4 + 2 * i] = Configuration.getStackSegments()[i].getBaseAddress();
+			systemTable[4 + 2 * i + 1] = Configuration.getStackSegments()[i].getSize();
 		}
 		
 		// number of heaps
@@ -371,20 +457,25 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		//reference to each heap and the size of each heap
 		for(int i = 0; i < nOfHeaps; i++) {
-			systemTable[4 + 2 * nOfStacks + 2 * i] = Configuration.getHeapSegments()[i].getBaseAddress();
-			systemTable[4 + 2 * nOfStacks + 2 * i + 1] = Configuration.getHeapSegments()[i].getSize();
+			systemTable[5 + 2 * nOfStacks + 2 * i] = Configuration.getHeapSegments()[i].getBaseAddress();
+			systemTable[5 + 2 * nOfStacks + 2 * i + 1] = Configuration.getHeapSegments()[i].getSize();
 		}
 		
+		systemTable[6 + 2 * nOfStacks + 2 * nOfHeaps] = Type.nofClasses;
+		
 		// reference to the constant block of each class
-		Class clazz = Type.classList; int i = 6 + 2 * nOfStacks + 2 * nOfHeaps + Type.nofClasses;
+		Class clazz = Type.classList; int i = 6 + 2 * nOfStacks + 2 * nOfHeaps;
 		while(clazz != null) {
 			systemTable[i] = clazz.address;
+			System.out.println("       Class: " + clazz.name + " -> Index: " + i);
 			i++;
 			clazz = (Class)clazz.next;
 		}
 		
 		// End of system table -> should always be zero!
 		systemTable[systemTable.length - 1] = 0;
+		
+		vrb.println("[LINKER] END: Creating systemtable\n");
 	}
 	
 	public static void generateTargetImage() {
@@ -413,7 +504,31 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts {
 	
 	/* ---------- debug primitives ---------- */
 	
-	
+	public static void printSystemTable() {
+		int i = 0;
+		int nOfStacks = systemTable[3];
+		int nOfHeaps = systemTable[4 + 2 * nOfStacks];
+		int nOfClasses = Type.nofClasses;
+		vrb.print("System table:\n");
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] classConstOffset\n"); i++;
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] stackOffset\n"); i++;
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] heapOffset\n"); i++;
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofStacks\n"); i++;
+		for(int j = 0; j < nOfStacks; j++) {
+			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] baseStack" + j + "\n"); i++;
+			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] sizeStack" + j + "\n"); i++;
+		}
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofHeaps\n"); i++;
+		for(int j = 0; j < nOfHeaps; j++) {
+			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] baseHeap" + j + "\n"); i++;
+			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] sizeHeap" + j + "\n"); i++;
+		}
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofClasses\n"); i++;
+		for(int j = 0; j < nOfClasses; j++) {
+			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] constBlkBaseClass" + j + "\n"); i++;
+		}
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] endOfSysTab\n"); i++;
+	}
 	
 	/* ---------- this methods were no longer used -> TODO delete it! ---------- */
 	

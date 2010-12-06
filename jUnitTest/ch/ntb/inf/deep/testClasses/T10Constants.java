@@ -16,5 +16,5 @@ public class T10Constants {
 	
 	public static final String s1 = "Hello Tester!";
 	public static final String s2 = "How are you?";
-//	public static final String s3 = "הצüִײÜאיטך"; // TODO why does it crash when using special signs in strings?
+	public static final String s3 = "הצüִײÜאיטך";
 }

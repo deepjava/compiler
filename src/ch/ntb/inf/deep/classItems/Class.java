@@ -1024,4 +1024,40 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 		printFields(indentLevel+1);
 		printMethods(indentLevel+1);
 	}
+	
+	public void printConstantBlock() {
+		printConstantBlock(0);
+	}
+	
+	public void printConstantBlock(int indentLevel) {
+		int i = 0;
+		indent(indentLevel);
+		vrb.print("Constant Block of class " + this.name + ":\n");
+		if(this.constantBlock != null) {
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] constBlockSize\n"); i++;
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] codeBase\n"); i++;
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] codeSize\n"); i++;
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varBase\n"); i++;
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varSize\n"); i++;
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] clinitAddr\n"); i++;
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] nofPtrs\n"); i++;
+			for(int j = 0; j < this.nOfReferences; j++) {
+				indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] ptr" + j + "\n"); i++;
+			}
+			for(int j = 0; j < this.classDescriptorSize / 4; j++) {
+				indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] CD[" + j + "]\n"); i++;
+			}
+			for(int j = 0; j < this.stringPoolSize / 4; j++) {
+				indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] SP[" + j + "]\n"); i++;
+			}
+			for(int j = 0; j < this.constantPoolSize / 4; j++) {
+				indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] CP[" + j + "]\n"); i++;
+			}
+			indent(indentLevel + 1); vrb.printf("> %4d", i); vrb.print("["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] fcs\n");
+		}
+		else {
+			indent(indentLevel + 1);
+			vrb.print("<null>\n");
+		}
+	}
 }
