@@ -1124,7 +1124,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	private void segmentArray(boolean isSubSegment, Segment parent) {
 		int arraySize = 0;
 		int baseAddr = -1;
-		int width = 0;
+		int width = -1;
 		int attributes = 0;
 		int nofSegments = 0;
 
@@ -1237,6 +1237,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			}
 		}
 		// from here is nofSegments != 0
+		if(attributes == 0){
+			attributes = parent.attributes;
+		}
+		if(width == -1){
+			width = parent.width;
+		}
 		Segment root = new Segment(HString.getHString(segName.toString() + 1),
 				baseAddr, segSize, width, attributes);
 		Segment current = root;
