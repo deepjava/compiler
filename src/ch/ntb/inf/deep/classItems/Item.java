@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.classItems;
 import java.io.PrintStream;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
@@ -15,8 +16,7 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 	static StringTable stab;
 
 	public static void indent(int indentLevel){
-		indentLevel = indentLevel*3;
-		while(indentLevel-- > 0) vrb.print(' ');
+		StdStreams.vrbPrintIndent(indentLevel);
 	}
 
 	//--- instance fields

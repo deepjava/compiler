@@ -31,7 +31,7 @@ public interface ICclassFileConsts {
 		apfEnum = 14, // 0x4000, enum (class)
 
 		dpfDeprecated = 13, // deprecated field or method
-		dpfSynthetic = 15; // synthetic field or method (items not in source text, deep inline methods)
+		dpfSynthetic = 15; // synthetic field or method (items not in source text, deep in-line methods)
 
 	byte dpfBase = 16; // base flag number of deep property flags
 	byte// flag numbers of deep property flags,  mnemonics in: debug.IClassFileConstMnemonics
@@ -57,6 +57,14 @@ public interface ICclassFileConsts {
 		dpfNew = dpfBase+14,	// method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 		dpfUnsafe = dpfBase+15;	// method is unsafe
 
+	int dpfSetClassProperties =(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded);
+	int dpfSetMethProperties = (1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfExcHndCall)|(1<<dpfInterfCall)|(1<<dpfCall)|(1<<dpfExcHnd)|(1<<dpfSysPrimitive)|(1<<dpfCommand);
+
+	int sysMethCodeMask = 0xFFF; // 12 least significant bits, the system method code is defined within the configuration specification
+	int dpfSetSysMethProperties = dpfSetMethProperties;
+
+	int dpfSetSysClassProperties = dpfSetClassProperties | dpfSetMethProperties;
+//	int dpfSetSysMethAttributes = dpfSetSysMethProperties | sysMethCodeMask;
 
 	int// deep system primitive identifiers (0xFFFF'FCMM: F= Flags, C= system class number, MM-method number
 		dscUS = 0x000, // deep system class: deep/UNSAFE/US,  dscUS = system class 0

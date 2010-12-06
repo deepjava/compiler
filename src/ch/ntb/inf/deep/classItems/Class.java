@@ -73,7 +73,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 * @param newByteCode  one of {new, newarray, anewarray, multianewarray}
 	 * @return  the reference to the new-method, null for invalid byteCodes
 	 */
-	public Method getNewMemoryMethod(int newByteCode){
+	public static Method getNewMemoryMethod(int newByteCode){
 		int methIndex;
 		switch(newByteCode){
 		case bCnew: methIndex = 0; break;
@@ -284,7 +284,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			 case cptExtSlot: case cptUtf8: // cptExtSlot, Utf8 string
 				 break;
 			case cptInteger: // integer literal
-//				vrb.println("updateInteger: pEntry="+pEntry +", cpIndices[pEntry]="+cpIndices[pEntry]);
 				cpItems[pEntry] = new Constant(hsNumber, wellKnownTypes[txInt], cpIndices[pEntry], 0);
 				nofItems++;
 				break;
@@ -676,13 +675,12 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 				}
 
 //				if(verbose){
-					vrb.println("\n>dump of class: "+name);
-					vrb.println("\nstate: 3");
+					vrb.println("\n>state: 3, dump of class: "+name);
 //					stab.print("String Table in state: 3");
 					printOrigConstPool("state: 3");
 					printReducedConstPool("state: 3");
-					printClassList("state: 3");
-					print(0);
+//					printClassList("state: 3");
+//					print(0);
 					vrb.println("\n<end of dump: "+name);
 //				}
 				
@@ -755,12 +753,15 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 		if(verbose) vrb.println("<loadRootClass");
 	}
 
-	private static Class loadSystemClass(SystemClass sysClass, int userReqAttributes) throws IOException{
+	private static void loadSystemClass(SystemClass sysClass, int userReqAttributes) throws IOException{
+		final boolean verbose = false;
+
 		String systemClassName = sysClass.name;
 		int sysClsAttributes = sysClass.attributes;
+
 		if(verbose) vrb.println(">loadSystemClass: "+systemClassName);
 		if(verbose) vrb.printf("  sysClsAttributes1=0x%1$x\n", sysClsAttributes);
-		
+
 		HString hSysClassName = stab.insertCondAndGetEntry(systemClassName);
 		Class sysCls = (Class)getClassByName(hSysClassName);
 		if(sysCls == null){
@@ -779,13 +780,13 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 					if(method == null){
 						errRep.error("method "+meth.name +" in system class "+sysClass.name + " not found");
 					}else{
-						if(verbose)vrb.printf("method=%1$s, attr=0x%2$x\n", (sysCls.name + "." + method.name), meth.attributes);
+						if(verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (sysCls.name + "." + method.name), meth.attributes);
 						int methIndex  = (meth.attributes-1)&0xFF;
 						if( methIndex >= nofNewMethods ){
 							errRep.error("method id of"+meth.name +" in system class "+sysClass.name + " out of range");
 						}else{
 							newMethods[methIndex] = method;
-							if(verbose)vrb.printf("newMethods[%1$d]: %2$s\n", methIndex, method.name);
+							if(verbose)vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
 						}
 					}
 					meth = meth.next;
@@ -793,12 +794,9 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 			}
 		}
 
-//		vrb.printf("sysClass: %1$s\n\taccAndPropFlags3=0x%2$8x\n\tsysClsAttributes=0x%3$8x\n", sysCls.name, sysCls.accAndPropFlags, sysClsAttributes);
-		sysCls.accAndPropFlags |= (sysClsAttributes & ((1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfSynthetic) ) | (1<<dpfSysPrimitive) );
-//		vrb.printf("\taccAndPropFlags4=0x%1$8x\n", sysCls.accAndPropFlags);
-		int methAttrAddOn = sysCls.accAndPropFlags & ((1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfSynthetic)|(1<<dpfSysPrimitive));
-//		vrb.printf("\t  methAttrAddOn5=0x%1$8x\n", methAttrAddOn);
-		
+		sysCls.accAndPropFlags |= (sysClsAttributes & dpfSetSysClassProperties );
+		int methAttrAddOn = sysCls.accAndPropFlags & dpfSetSysMethProperties ;
+
 		SystemMethod meth = sysClass.methods;
 		while(meth != null){
 			Item method = sysCls.methods.getItemByName(meth.name);
@@ -807,8 +805,8 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 			}
 			meth = meth.next;
 		}
-		
-		if(verbose) vrb.printf("  sysClsAttributes2=0x%1$x\n", sysClsAttributes);
+
+		if(verbose) vrb.printf("lsc: sysCls.accAndPropFlags=0x%1$x\n", sysCls.accAndPropFlags);
 //
 //		if(verbose){
 //			vrb.println(" system class: "+sysCls.name);
@@ -816,35 +814,31 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 //			vrb.println(" end of system class: "+sysCls.name);
 //		}
 		if(verbose) vrb.println("<loadSystemClass");
-		return sysCls;
 	}
 
 	private static void loadSystemClasses(SystemClass sysClasses, int userReqAttributes) throws IOException{
 		while(sysClasses != null){
-			Class sysCls = loadSystemClass(sysClasses, userReqAttributes);
-			if(verbose){
-				vrb.println(" *system class: "+sysCls.name);
-				sysCls.print(0);
-//				printClassList(" *** class list:");
-				vrb.println(" end of *system class: "+sysCls.name);
+			loadSystemClass(sysClasses, userReqAttributes); // Class sysCls = loadSystemClass(sysClasses, userReqAttributes);
+//			if(verbose){
+//				vrb.println(" *system class: "+sysCls.name);
 //				sysCls.print(0);
-			}
+////				printClassList(" *** class list:");
+//				vrb.println(" end of *system class: "+sysCls.name);
+////				sysCls.print(0);
+//			}
 			sysClasses = sysClasses.next;
 		}
 	}
 
 	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
-//		Utilities.setTargetFilesFolder(targetFilesFolder);
 		errRep.nofErrors = 0;
 		Type.nofRootClasses = 0;
 		ClassFileAdmin.registerParentDirs(parentDirsOfClassFiles);
 		
 		int nofRootClasses = rootClassNames.length;
-//		rootClasses = new Class[nofRootClasses];
 		startLoading(nofRootClasses);
 		
 		loadSystemClasses(sysClasses, userReqAttributes);
-//		assert false;
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
@@ -852,8 +846,6 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 			vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
 		}
-
-		if(verbose) printClassList("end state, class list:");
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
@@ -864,6 +856,7 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
 		buildSystem(rootClassNames, new String[] {"bin"}, null, userReqAttributes);
 	}
+
 
 	//--- debug primitives
 	public void printItemCategory(){
