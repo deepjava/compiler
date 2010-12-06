@@ -7,7 +7,7 @@ import java.io.PrintStream;
 import ch.ntb.inf.deep.strings.HString;
 
 public class ClassFileAdmin {
-	public static final String classFileType = Config.classFileType; //  = ".class";
+	public static final String classFileType =  ".class";
 	public static final String errMsgIllegalParentDir = "illegal parent dir of class files";
 
 	private static File[] parentDirs; // parent directories of class files

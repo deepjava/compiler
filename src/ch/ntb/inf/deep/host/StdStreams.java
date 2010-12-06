@@ -7,4 +7,15 @@ public class StdStreams {
 	public static PrintStream out = System.out; // std out
 	public static PrintStream vrb = System.out; // verbose
 	public static PrintStream err = System.err; // error messages
+	
+	
+	public static void printIndent(int indentLevel, PrintStream pstream){
+		indentLevel = indentLevel*3;
+		while(indentLevel-- > 0) pstream.append(' ');
+	}
+
+	public static void vrbPrintIndent(int indentLevel){
+		printIndent(indentLevel, vrb);
+	}
+
 }
