@@ -152,7 +152,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			}
 			node = (SSANode) node.next;
 		}
-		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// auch alle anderen excps
+		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// reset needs no epilog
+
+		} else if (ssa.cfg.method.name.equals(HString.getHString("interrupt"))) {	// alle anderen excps
 			insertEpilogException(stackSize);
 		} else {
 			insertEpilog(stackSize);
@@ -866,8 +868,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					break;
 				case tLong:
 					createIrArSrB(ppcOr, dReg, sReg1, sReg1);
-					createIrArSSH(ppcSrawi, 0, sReg1, 31);
-					createIrArSrB(ppcOr, res.regLong, 0, 0);
+					createIrArSSH(ppcSrawi, res.regLong, sReg1, 31);
 					break;
 				case tFloat:
 					createIrArSuimm(ppcXoris, 0, sReg1, 0x8000);
@@ -1066,7 +1067,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				// ref.accAndProb & 
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-				System.out.println("Call to " + call.item.name);
+//				System.out.println("Call to " + call.item.name);
 //				if (false) {	//SYScall
 				
 					if (call.item.name.equals(HString.getHString("GET1"))) {	//GET1
@@ -1116,8 +1117,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						break;
 					} else if (call.item.name.equals(HString.getHString("ASM"))) {
 					//	int code = InstructionDecoder.getCode(opds[0].toString());
-						System.out.println("asm1 = " + ((StringLiteral)opds[0].constant).string);
-						System.out.println("asm2 = " + InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString()));
+//						System.out.println("asm1 = " + ((StringLiteral)opds[0].constant).string);
+//						System.out.println("asm2 = " + InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString()));
 						instructions[iCount] = InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString());
 						iCount++;
 						int len = instructions.length;
@@ -1572,6 +1573,22 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				newFixups[k] = fixups[k];
 			fixups = newFixups;
 		}		
+	}
+	
+	public void doFixups() {
+		int currInstr = lastFixup;
+		int currFixup = fCount - 1;
+		while (currFixup >= 0) {
+			int addr = fixups[currFixup].address;
+			int low = addr & 0xffff;
+			int high = (addr >> 16) & 0xffff;
+			if ((low >> 15) == 0) high++;
+			int nextInstr = instructions[currInstr] & 0xffff;
+			instructions[currInstr] = (instructions[currInstr] & 0xffff0000) | (low & 0xffff);
+			instructions[currInstr+1] = (instructions[currInstr+1] & 0xffff0000) | (high & 0xffff);
+			currInstr = nextInstr;
+			currFixup--;
+		}
 	}
 
 	private void incInstructionNum() {
