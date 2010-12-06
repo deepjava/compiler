@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.cgPPC;
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.ssa.TestSSA;
 
 public class TestCgPPC implements ICclassFileConsts {
@@ -16,6 +17,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	 *            Java class object
 	 */
 	public static void createCgPPC(Class clazz) {
+		Linker.calculateOffsets(clazz);
 		TestSSA.createSSA(clazz);
 		code = new MachineCode[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
