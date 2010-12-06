@@ -37,11 +37,11 @@ operatingsystem {
                         attributes = new;
                         id = 0x204;
                 }
-                method newReferenceArray {
+                method newRefArray {
                         attributes = new;
                         id = 0x203;
                 }
-                method newPrimitiveArray {
+                method newPrimTypeArray {
                         attributes = new;
                         id = 0x202;
                 }
