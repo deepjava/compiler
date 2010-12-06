@@ -7,30 +7,70 @@ meta {
 	
 }
 
-constants {
-
+sysconst {
+	extRamBase   = 0x800000; # ?????
+	extRamSize   = 0x200000; # ?????
+	extFlashBase = -1; # ?????
+	extFlashSize = -1; # ?????
+	excpCodeSize = 0x1fff;
 }
+
 memorymap{
-    device ExtRam {
+
+    # ===== External RAM =====
+    device ExternalRam {
     	attributes = read, write;
-    	base = 0x800000;
+    	base = extRamBase;
     	width = 4;
-    	size = 0x200000;
-    	
-    	segment S1 {
-              base = 0x5000;
-        }
+    	size = extRamSize;
     }
     
-    device ExtFlash {
+    ExternalRam.ExceptionCode {
+      base = extRamBase;
+      size = excpCodeSize;
+    }
+    
+    ExternalRam.Default {
+      attributes = read, write, const, code, var;
+    }
+    
+    ExternalRam.SHContainer {
+      Stack {
+        attributes = read, write, stack;
+        size = stackSize;
+      }
+      
+      Heap {
+        attributes = read, write, heap;
+        size = heapSize;
+      }
+    }
+    
+    # ===== External Flash =====
+    device ExternalFlash {
     	attributes = read;
     	width = 4;
-    	base = 0x3333;
-    	size = 0x400000;
-    	
+    	base = extFlashBase;
+    	size = extFlashSize;
     }
-    	
+    	segment ExternalFlash.ExceptionCode {
+              base = extFlashBase;
+              size = excpCodeSize;
+      }
+      
+    segment ExternalFlash.SysTab {
+		  attributes = read, write, systab;
+    }
+    
+    segment ExternalFlash.SysTab {
+		  size = 
+    }
+    
+    segmentArray ExternalFlash.S {
+      
+    }
 }
+
 reginit {
     BR0init = 0x01000003;
     OR0init = 0xFFC00020; 
@@ -60,9 +100,8 @@ targetconfiguration BootFromFlash {
 
 targetconfiguration BootFromRam {
     modules {
-            kernel : code@ExtFlash.S1, const@ExtFlash.S1, var@InternalRam.Variables;
-            heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
-            default: code@ExtFlash.S1, const@ExtFlash.S1, var@InternalRam.Variables;
+            kernel, heap, exception : code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables;
+            default: code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables;
             ch.ntb.inf.myProject.package1.Class1,
             ch.ntb.inf.myProject.package1.Class2,
             ch.ntb.inf.myProject.package1.Class3,
