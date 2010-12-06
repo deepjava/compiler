@@ -1,6 +1,11 @@
 package ch.ntb.inf.deep.config;
 
-public class SystemMethod {
+import java.io.PrintStream;
+
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.host.StdStreams;
+
+public class SystemMethod implements ICclassFileConsts{
 	public SystemMethod next;
 	public String name;
 	public int attributes; // e.g. (1<<dpfNew) 
@@ -12,30 +17,17 @@ public class SystemMethod {
 
 	public SystemMethod(String name, int attributes) {
 		this.name = name;
-		this.attributes = attributes;
+		this.attributes = attributes & (dpfSetSysMethProperties | sysMethCodeMask);
 	}
 	
+	//--- debug primitives
 	public void print(int indentLevel){
-		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
-		}
-		System.out.println("method "+name+" {");
-		
-		for(int i = indentLevel+1; i > 0; i--){
-			System.out.print("  ");
-		}
-		System.out.println("attributes: 0x"+Integer.toHexString(attributes));
-		
-		if(addr > -1){
-			for(int i = indentLevel+1; i > 0; i--){
-				System.out.print("  ");
-			}
-			System.out.println("addr: 0x"+Integer.toHexString(addr));
-		}
-		
-		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
-		}
-		System.out.println("}");
+		PrintStream vrb = StdStreams.vrb;
+		StdStreams.vrbPrintIndent(indentLevel);
+		vrb.println("method "+name+" {");
+		StdStreams.vrbPrintIndent(indentLevel+1);
+		vrb.printf("attributes: 0x%1$x\n", attributes);
+		StdStreams.vrbPrintIndent(indentLevel);
+		vrb.println("}");
 	}
 }
