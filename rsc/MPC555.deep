@@ -59,15 +59,17 @@ memorymap {
 		attributes = read, write, var;
 	}
 	
-	segment InternalRam.Stack {
-		attributes = read, write, stack;
-		size = stackSize;
-	}
-	
-	segment InternalRam.Heap {
-		attributes = read, write, stack;
-		size = heapSize;
-	}
+	segment InternalRam.SHContainer {
+        segment Stack {
+        	attributes = read, write, stack;
+        	size = stackSize;
+        }
+        
+        segment Heap {
+        	attributes = read, write, heap;
+        	size = heapSize;
+        }
+    }
 	
 	
 	# ===== Internal Flash =====

@@ -8,11 +8,11 @@ meta {
 }
 
 sysconst {
-	extRamBase   = 0x800000; # ?????
-	extRamSize   = 0x200000; # ?????
-	extFlashBase = -1; # ?????
-	extFlashSize = -1; # ?????
-	excpCodeSize = 0x1fff;
+	extRamBase   = 0x800000;
+	extRamSize   = 0x200000;
+	extFlashBase = 0x1000000;
+	extFlashSize = 0x400000; 
+	excpCodeSize = 0x2000;
 }
 
 memorymap{
@@ -25,22 +25,22 @@ memorymap{
     	size = extRamSize;
     }
     
-    ExternalRam.ExceptionCode {
+    segment ExternalRam.ExceptionCode {
       base = extRamBase;
       size = excpCodeSize;
     }
     
-    ExternalRam.Default {
+    segment ExternalRam.Default {
       attributes = read, write, const, code, var;
     }
     
-    ExternalRam.SHContainer {
-      Stack {
+    segment ExternalRam.SHContainer {
+      segment Stack {
         attributes = read, write, stack;
         size = stackSize;
       }
       
-      Heap {
+      segment Heap {
         attributes = read, write, heap;
         size = heapSize;
       }
@@ -53,21 +53,40 @@ memorymap{
     	base = extFlashBase;
     	size = extFlashSize;
     }
-    	segment ExternalFlash.ExceptionCode {
+    segment ExternalFlash.ExceptionCode {
+    	      attributes = read, code;
               base = extFlashBase;
               size = excpCodeSize;
       }
       
     segment ExternalFlash.SysTab {
-		  attributes = read, write, systab;
+		  attributes = read,  systab;
+		  base = extFlashBase + excpCodeSize;
+		  size = 0x6000;
     }
-    
-    segment ExternalFlash.SysTab {
-		  size = 
-    }
-    
-    segmentArray ExternalFlash.S {
-      
+    segment ExternalFlash.Default{
+        attributes = read, const, code;
+        
+        segment S1{
+            base = extFlashBase + excpCodeSize + 0x6000;
+            size = 0x4000;
+        }
+        
+        segment S2{
+            base = extFlashBase + excpCodeSize + 0xA000;
+            size = 0x4000;
+        }
+        
+        segment S3{
+            base = extFlashBase + excpCodeSize + 0xE000;
+            size = 0x10000;
+        }
+        
+        segmentarray S4 {
+            segmentsize = 0x20000;
+            base = extFlashBase + excpCodeSize + 0x1E000;
+            nofsegments = 31;      
+        }
     }
 }
 
@@ -86,27 +105,16 @@ reginit {
 
 targetconfiguration BootFromFlash {
     modules {
-            kernel : code@ExtFlash.S1, const@ExtFlash, var@InternalRam.Variables;
-            heap, exception : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
-            default: code@ExtFlash.S1, const@ExtFlash, var@InternalRam.Variables;
-            ch/ntb/inf/myProject/package1/Class1,
-            ch/ntb/inf/myProject/package1/Class2,
-            ch/ntb/inf/myProject/package1/Class3,
-            ch/ntb/inf/myProject/package1/Class4,
-            ch/ntb/inf/myProject/package1/Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
-            ch/ntb/inf/myProject/package2/* : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
+            kernel, heap : code@ExternalFlash.Default.S1, const@ExternalFlash.Default, var@InternalRam.Variables;
+            exception : code@ExternalFlash.ExceptionCode, const@ExternalFlash.Default, var@InternalRam.Variables;
+            default: code@ExternalFlash.Default, const@ExternalFlash.Default, var@ExternalRam.Default;
     }
 }
 
 targetconfiguration BootFromRam {
     modules {
-            kernel, heap, exception : code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables;
-            default: code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables;
-            ch.ntb.inf.myProject.package1.Class1,
-            ch.ntb.inf.myProject.package1.Class2,
-            ch.ntb.inf.myProject.package1.Class3,
-            ch.ntb.inf.myProject.package1.Class4,
-            ch.ntb.inf.myProject.package1.Class5 : code@ExternalFlash.S1, const@ExternalFlash, var@InternalRam;
-            ch.ntb.inf.myProject.package2.* : code@InternalFlash.B, const@InternalFlash.B.S2, var@InternalFlash.B;
+            kernel, heap: code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables; 
+            exception: code@ExternalFlash.ExceptionCode, const@ExternalFlash.Default, var@InternalRam.Variables;
+            default: code@ExternalRam.Default, const@ExternalRam.Default, var@ExternalRam.Default;           
     }
 }
