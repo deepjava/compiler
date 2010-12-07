@@ -59,7 +59,7 @@ public interface SSAInstructionOpcs {
 			
 			0x00000000 + sCalength, 	//arrayLength
 			
-			0x00010000 | (1<<ssaApCall) + sCcall, 		//call
+			0x00010000 | (1<<ssaApCall) | (1<<ssaApImmOpd) + sCcall, 		//call
 			0x00000000 | (1<<ssaApCall) + sCnew,
 			0x00000000 + sCreturn, 		
 			0x00000000 + sCthrow, 		

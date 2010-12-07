@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
 import ch.ntb.inf.deep.classItems.Constant;
+import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class NoOpnd extends SSAInstruction {
@@ -41,8 +42,10 @@ public class NoOpnd extends SSAInstruction {
 						System.out.print(Double.longBitsToDouble(value));
 				}
 				System.out.print(" (" + result.typeName() + ")");
-			} else 
-				System.out.print(result.constant + " (" + result.typeName() + ")");
+			} else {
+//				System.out.print(result.constant + " (" + result.typeName() + ")");
+			//TODO	System.out.print(((StringLiteral)result.constant).string);
+			}
 		else
 			System.out.print("(" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end);
