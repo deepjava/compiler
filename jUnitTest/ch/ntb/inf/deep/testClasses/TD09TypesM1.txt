@@ -56,31 +56,31 @@
 SSA for Method: m1
    SSANode 0:
       EntrySet {[ , , , ], [ , , , , , , ]}
-         0: NoOpnd[sCloadConst] -30000 (Long),   end=19, index=1, regLong=2, reg=3
+         0: NoOpnd[sCloadConst] -30000 (Long),   end=19, index=5, regLong=2, reg=3
          1: NoOpnd[sCloadConst] 10000 (Long),   end=2, regLong=4, reg=5
-         2: Dyadic[sCcmpl] {0, 1} (Integer),   end=3, reg=4
+         2: Dyadic[sCcmpl] {0, 1} (Integer),   end=3, reg=6
          3: Branch[sCBranch] {2} (Void)
       ExitSet {[ , , , ], [ , 0 (Long), , , , , ]}
 
    SSANode 1:
       EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
-         4: NoOpnd[sCloadConst] 100 (Integer),   end=5, index=3, reg=4
-         5: Monadic[sCconvInt] {4} (Float),   end=5, index=4, reg=1
+         4: NoOpnd[sCloadConst] 100 (Integer),   end=5, index=7, reg=4
+         5: Monadic[sCconvInt] {4} (Float),   end=5, index=8, reg=1
          6: Branch[sCBranch]  (Void)
       ExitSet {[ , , , ], [ , 0 (Long), , 4 (Integer), 5 (Float), , ]}
 
    SSANode 2:
       EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
-         7: NoOpnd[sCloadConst] 1.0 (Float),   end=7, index=3, reg=1
+         7: NoOpnd[sCloadConst] 1.0 (Float),   end=7, index=7, reg=1
       ExitSet {[ , , , ], [ , 0 (Long), , 7 (Float), , , ]}
 
    SSANode 3:
       EntrySet {[ , , , ], [ , 0 (Long), , , , , ]}
-         8: NoOpnd[sCloadConst] 2 (Long),   end=9
-         9: Dyadic[sCmul] {0, 8} (Long),   end=10, regLong=4, reg=5
-         10: Monadic[sCconvLong] {9} (Float),   end=21, index=3, reg=1
+         8: NoOpnd[sCloadConst] 2 (Long),   end=9, regLong=4, reg=5
+         9: Dyadic[sCmul] {0, 8} (Long),   end=10, regLong=6, reg=7
+         10: Monadic[sCconvLong] {9} (Float),   end=21, index=7, reg=1
          11: NoOpnd[sCloadConst] 0 (Long),   end=12, regLong=4, reg=5
-         12: Dyadic[sCcmpl] {0, 11} (Integer),   end=13, reg=4
+         12: Dyadic[sCcmpl] {0, 11} (Integer),   end=13, reg=6
          13: Branch[sCBranch] {12} (Void)
       ExitSet {[ , , , ], [ , 0 (Long), , 10 (Float), , , ]}
 
@@ -97,37 +97,62 @@ SSA for Method: m1
 
    SSANode 6:
       EntrySet {[ Phi-Function(17), , , ], [ , 0 (Long), , 10 (Float), , , ]}
-         17: PhiFunction[sCPhiFunc] {14, 16} (Phi-Function),   start=14, end=17, index=0, reg=4
-         18: NoOpnd[sCloadConst] 16 (Long),   end=19
-         19: Dyadic[sCmul] {0, 18} (Long),   end=20, regLong=2, reg=3
-         20: Monadic[sCconvLong] {19} (Double),   end=20, index=4, reg=2
-         21: Monadic[sCconvFloat] {10} (Integer),   end=21, index=6, reg=2
+         17: PhiFunction[sCPhiFunc] {14, 16} (Phi-Function),   start=14, end=17, index=4, reg=4
+         18: NoOpnd[sCloadConst] 16 (Long),   end=19, regLong=4, reg=5
+         19: Dyadic[sCmul] {0, 18} (Long),   end=20, regLong=6, reg=7
+         20: Monadic[sCconvLong] {19} (Double),   end=20, index=8, reg=2
+         21: Monadic[sCconvFloat] {10} (Integer),   end=21, index=10, reg=2
          22: Branch[sCreturn]  (Void)
       ExitSet {[ , , , ], [ Phi-Function(17), 0 (Long), , 10 (Float), 20 (Double), , 21 (Integer) ]}
 
 Code for Method: m1
-	9421fff0	[0x0]	stwu  r1, -16(r1)
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
-	9001000c	[0x8]	stw  r0, 12(r1)
+	9001001c	[0x8]	stw  r0, 28(r1)
 	3840ffff	[0xc]	li  r2, -1
 	38608ad0	[0x10]	li  r3, -30000
 	38800000	[0x14]	li  r4, 0
 	38a02710	[0x18]	li  r5, 10000
-	2c040000	[0x1c]	cmpi  crf0, 0, r4, 0
-	409e000c	[0x20]	bc  iffalse, CRF0[GT], 12, [0x2c]	
-	38800064	[0x24]	li  r4, 100
-	48000010	[0x28]	b  16, [0x38]	
-	38800000	[0x2c]	li  r4, 0
-	3c840000	[0x30]	addis  r4, r4, 0
-	c0240018	[0x34]	lfs  fr1, 24(r4)
-	38800000	[0x38]	li  r4, 0
-	38a00000	[0x3c]	li  r5, 0
-	2c040000	[0x40]	cmpi  crf0, 0, r4, 0
-	409e000c	[0x44]	bc  iffalse, CRF0[GT], 12, [0x50]	
-	38800001	[0x48]	li  r4, 1
-	48000008	[0x4c]	b  8, [0x54]	
-	38800000	[0x50]	li  r4, 0
-	8001000c	[0x54]	lwz  r0, 12(r1)
-	7c0803a6	[0x58]	mtspr  LR, r0
-	38210010	[0x5c]	addi  r1, r1, 16
-	4e800020	[0x60]	bclr always, CRF7[SO]
+	409a002c	[0x1c]	bc  iffalse, CRF1[GT], 44, [0x48]	
+	38800064	[0x20]	li  r4, 100
+	6c808000	[0x24]	xoris  r0, r4, 0x8000
+	90010010	[0x28]	stw  r0, 16(r1)
+	38a00000	[0x2c]	li  r5, 0
+	3ca50000	[0x30]	addis  r5, r5, 0
+	c8250020	[0x34]	lfd  fr1, 32(r5)
+	c801000c	[0x38]	lfd  fr0, 12(r1)
+	fc200828	[0x3c]	fsub  fr1, fr0, fr1
+	fc200818	[0x40]	frsp  fr1, fr1
+	48000010	[0x44]	b  16, [0x54]	
+	3880000b	[0x48]	li  r4, 11
+	3c840000	[0x4c]	addis  r4, r4, 0
+	c0240018	[0x50]	lfs  fr1, 24(r4)
+	38800000	[0x54]	li  r4, 0
+	38a00002	[0x58]	li  r5, 2
+	7cc229d6	[0x5c]	mullw  r6, r2, r5
+	7ce321d6	[0x60]	mullw  r7, r3, r4
+	7cc63a14	[0x64]	add  r6, r6, r7
+	7ce32816	[0x68]	mulhwu  r7, r3, r7
+	7ce329d6	[0x6c]	mullw  r7, r3, r5
+	7cc63a14	[0x70]	add  r6, r6, r7
+	38800000	[0x74]	li  r4, 0
+	38a00000	[0x78]	li  r5, 0
+	409a000c	[0x7c]	bc  iffalse, CRF1[GT], 12, [0x88]	
+	38800001	[0x80]	li  r4, 1
+	48000008	[0x84]	b  8, [0x8c]	
+	38800000	[0x88]	li  r4, 0
+	38800000	[0x8c]	li  r4, 0
+	38a00010	[0x90]	li  r5, 16
+	7cc229d6	[0x94]	mullw  r6, r2, r5
+	7ce321d6	[0x98]	mullw  r7, r3, r4
+	7cc63a14	[0x9c]	add  r6, r6, r7
+	7ce32816	[0xa0]	mulhwu  r7, r3, r7
+	7ce329d6	[0xa4]	mullw  r7, r3, r5
+	7cc63a14	[0xa8]	add  r6, r6, r7
+	fc00083c	[0xac]	fnmsub  fr0, fr0, fr0, fr1
+	d801000c	[0xb0]	stfd  fr0, 12(r1)
+	80410010	[0xb4]	lwz  r2, 16(r1)
+	8001001c	[0xb8]	lwz  r0, 28(r1)
+	7c0803a6	[0xbc]	mtspr  LR, r0
+	38210020	[0xc0]	addi  r1, r1, 32
+	4e800020	[0xc4]	bclr always, CRF7[SO]
