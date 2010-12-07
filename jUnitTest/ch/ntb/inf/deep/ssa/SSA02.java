@@ -46,7 +46,7 @@ public class SSA02 extends TestSSA {
 		testNode(nodes[0], 3, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 1, 0, 4);
-		testNode(nodes[3], 3, 1, 4);
+		testNode(nodes[3], 5, 1, 4);
 	}
 
 	@Test
