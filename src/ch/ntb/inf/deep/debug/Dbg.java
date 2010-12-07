@@ -89,11 +89,11 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 	}
 
 	public static void printJavaAccAndPropertyFlags(int flags){
-		vrb.print(setToString(flags&((1<<dpfBase)-1), apfIdents, 0));
+		vrb.print(setToString(flags & apfSetJavaAccAndProperties, apfIdents, 0));
 	}
 
 	public static void printDeepAccAndPropertyFlags(int flags){
-		vrb.print(setToString(flags & -(1<<dpfBase), apfIdents, 0));
+		vrb.print(setToString(flags & dpfSetProperties, apfIdents, 0));
 	}
 
 	public static void printCpTagIdent(int cptNumber, int fieldWidth){

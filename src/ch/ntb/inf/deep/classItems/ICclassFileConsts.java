@@ -57,28 +57,36 @@ public interface ICclassFileConsts {
 		dpfNew = dpfBase+14,	// method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 		dpfUnsafe = dpfBase+15;	// method is unsafe
 
-	int dpfSetClassProperties =(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded);
-	int dpfSetMethProperties = (1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfExcHndCall)|(1<<dpfInterfCall)|(1<<dpfCall)|(1<<dpfExcHnd)|(1<<dpfSysPrimitive)|(1<<dpfCommand);
+	int apfSetJavaAccAndProperties = (1<<dpfBase)-1 & ~( (1<<dpfDeprecated)|(1<<dpfSynthetic) );
+	
+	int dpfSetClassProperties =(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded)|(1<<dpfSynthetic)|(1<<dpfDeprecated);
+
+	int dpfSetFieldProperties = dpfConst | dpfReadAccess | dpfWriteAccess;
+
+	int dpfSetMethProperties = (1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfExcHndCall)|(1<<dpfInterfCall)|(1<<dpfCall)|(1<<dpfExcHnd)|(1<<dpfSysPrimitive)|(1<<dpfCommand)
+		|(1<<dpfSynthetic)|(1<<dpfDeprecated);
 
 	int sysMethCodeMask = 0xFFF; // 12 least significant bits, the system method code is defined within the configuration specification
 	int dpfSetSysMethProperties = dpfSetMethProperties;
 
 	int dpfSetSysClassProperties = dpfSetClassProperties | dpfSetMethProperties;
+	int dpfSetProperties = dpfSetClassProperties|dpfSetSysClassProperties | dpfSetMethProperties | dpfSetSysMethProperties;
 //	int dpfSetSysMethAttributes = dpfSetSysMethProperties | sysMethCodeMask;
 
-	int// deep system primitive identifiers (0xFFFF'FCMM: F= Flags, C= system class number, MM-method number
-		dscUS = 0x000, // deep system class: deep/UNSAFE/US,  dscUS = system class 0
-		dspiPUT1 = dscUS+0x01,
-		dspiPUT2 = dscUS+0x02,
-		dspiPUT4 = dscUS+0x03,
-		dspiPUT8 = dscUS+0x04,
-		dspiGET1 = dscUS+0x05,
-		dspiGET2 = dscUS+0x06,
-		dspiGET4 = dscUS+0x07,
-		dspiGET8 = dscUS+0x08,
-		dspiGETBIT = dscUS+0x09,
-		
-		dspiASM  = dscUS+0x0A;
+// moved to config specification
+//	int// deep system primitive identifiers (0xFFFF'FCMM: F= Flags, C= system class number, MM-method number
+//		dscUS = 0x000, // deep system class: deep/UNSAFE/US,  dscUS = system class 0
+//		dspiPUT1 = dscUS+0x01,
+//		dspiPUT2 = dscUS+0x02,
+//		dspiPUT4 = dscUS+0x03,
+//		dspiPUT8 = dscUS+0x04,
+//		dspiGET1 = dscUS+0x05,
+//		dspiGET2 = dscUS+0x06,
+//		dspiGET4 = dscUS+0x07,
+//		dspiGET8 = dscUS+0x08,
+//		dspiGETBIT = dscUS+0x09,
+//		
+//		dspiASM  = dscUS+0x0A;
 
 	int
 		dscLL = 0x100, // deep system class: deep/lowLevel/LL,  dscLL = system class 1

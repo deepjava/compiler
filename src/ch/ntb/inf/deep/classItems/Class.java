@@ -414,7 +414,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			flags |= field.accAndPropFlags;
 			field.accAndPropFlags = flags;
 			
-vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanceFields +", field.name="+field.name);
+//vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanceFields +", field.name="+field.name);
 			// add field
 			if( (flags & (1<<apfStatic)) != 0 ){ // class field
 				nOfClassFields++;
@@ -632,7 +632,7 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 				
 				if(verbose){
 					printOrigConstPool("state: 0");
-					stab.print("String Table 0");
+//					stab.print("String Table 0");
 					printClassList("state: 0");
 					print(0);
 				}
@@ -674,15 +674,16 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 					this.accAndPropFlags |= (1<<dpfClassLoaded);
 				}
 
-//				if(verbose){
-					vrb.println("\n>state: 3, dump of class: "+name);
+				if(verbose){
+					vrb.println("\n>dump of class: "+name);
+					vrb.println("\nstate: 3");
 //					stab.print("String Table in state: 3");
 					printOrigConstPool("state: 3");
 					printReducedConstPool("state: 3");
 //					printClassList("state: 3");
-//					print(0);
+					print(0);
 					vrb.println("\n<end of dump: "+name);
-//				}
+				}
 				
 				clfInStrm.close();
 			}catch (FileNotFoundException fnfE){
@@ -733,6 +734,7 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 		cpItems = null;  cpStrings = null;  cpIndices = null;  cpTags = null;
 		prevCpLenth = 0;  	constPoolCnt = 0;
 		HString.releaseBuffers();
+		ClassFileAdmin.clear();
 
 //		StringTable.resetTable();
 //		hsNumber = null;
@@ -818,14 +820,14 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 
 	private static void loadSystemClasses(SystemClass sysClasses, int userReqAttributes) throws IOException{
 		while(sysClasses != null){
-			loadSystemClass(sysClasses, userReqAttributes); // Class sysCls = loadSystemClass(sysClasses, userReqAttributes);
-//			if(verbose){
+			loadSystemClass(sysClasses, userReqAttributes); 
+			if(verbose){
 //				vrb.println(" *system class: "+sysCls.name);
 //				sysCls.print(0);
-////				printClassList(" *** class list:");
+//				printClassList(" *** class list:");
 //				vrb.println(" end of *system class: "+sysCls.name);
-////				sysCls.print(0);
-//			}
+//				sysCls.print(0);
+			}
 			sysClasses = sysClasses.next;
 		}
 	}
@@ -837,7 +839,10 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 		
 		int nofRootClasses = rootClassNames.length;
 		startLoading(nofRootClasses);
-		
+	
+		Class clsObject = (Class)wellKnownTypes[txObject];
+		clsObject.loadClass(userReqAttributes);
+
 		loadSystemClasses(sysClasses, userReqAttributes);
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
 
@@ -846,6 +851,8 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 			vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
 		}
+
+		if(verbose) printClassList("end state, class list:");
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
@@ -892,7 +899,7 @@ vrb.println(" nOfClassFields="+nOfClassFields +", nOfInstanceFields="+nOfInstanc
 
 	public void printMethods(int indentLevel){
 		indent(indentLevel);
-		vrb.println("methods:");
+		vrb.println("methods: (#clsMeths="+ nOfClassMethods + ",#InstMeths=" + nOfInstanceMethods +')' );
 		Item item = methods;
 		while(item != null){
 			item.println(indentLevel+1);
