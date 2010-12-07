@@ -79,7 +79,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		assert nofParam <= maxNofParam : "method has too many parameters";
 		
 		System.out.println("build intervals for " + ssa.cfg.method.name);
-		ssa.print(0);
+//		ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
 		
 		System.out.println("assign registers to parameters, nofParam = " + nofParam);
@@ -153,14 +153,15 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			node = (SSANode) node.next;
 		}
 		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// reset needs no epilog
-
+//		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
+//System.out.println("is Exception");
 		} else if (ssa.cfg.method.name.equals(HString.getHString("interrupt"))) {	// alle anderen excps
 			insertEpilogException(stackSize);
 		} else {
 			insertEpilog(stackSize);
 			insertProlog();
 		}
-		print();
+//		print();
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
@@ -1067,9 +1068,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				// ref.accAndProb & 
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-//				System.out.println("Call to " + call.item.name);
-//				if (false) {	//SYScall
-				
+				System.out.println("Call to " + call.item.name);
+				System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
+				//				if (false) {	//SYScall
+				if ((call.item.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 					if (call.item.name.equals(HString.getHString("GET1"))) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 						createIrArS(ppcExtsb, res.reg, res.reg);

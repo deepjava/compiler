@@ -1,3 +1,4 @@
+
 package ch.ntb.inf.deep.cgPPC;
 
 import ch.ntb.inf.deep.classItems.Constant;
@@ -15,6 +16,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	private static final int nofSSAInstr = 256;
 
+	static int maxStackSlots;
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
 	private static int[] regAtIndex = new int[MachineCode.maxNofParam];
@@ -27,6 +29,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 * generates the live ranges of all SSAValues and assigns register to them
 	 */
 	static void buildIntervals(SSA ssa) {
+		maxStackSlots = ssa.cfg.method.maxStackSlots;
 		regsGPR = volRegsGPRinitial | nonVolRegsGPRinitial;
 		regsFPR = volRegsFPRinitial | nonVolRegsFPRinitial;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
@@ -67,7 +70,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAValue res = phi.result;
 				if (res.index != opds[0].index && opds[0].index >= 0) {
 					SSAValue[] newOpds = new SSAValue[opds.length];
-					for (int k = 0; k < b.nofPredecessors; k++) {
+//					for (int k = 0; k < b.nofPredecessors; k++) {
+					for (int k = 0; k < opds.length; k++) {
 						SSANode n = (SSANode)b.predecessors[k];
 						SSAValue r = new SSAValue();
 						r.type = opds[k].type;
@@ -75,7 +79,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						SSAInstruction move = new Monadic(sCregMove, opds[k]);
 						move.result = r;
 						n.addInstruction(move);
-						n.exitSet[b.maxStack - 1 + r.index] = r;
+						n.exitSet[r.index] = r;
 						newOpds[k] = r;
 						phi.print(1);
 					}
@@ -137,7 +141,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (int k = ((PhiFunction)instr).start+1; k < endNo; k++) {
 					if ((scAttrTab[instrs[k].ssaOpcode] & (1 << ssaApCall)) != 0) {
 						instr.result.nonVol = true;
-						MachineCode.paramHasNonVolReg[instr.result.index] = true;
+						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
 				}
 			} else if (instr.ssaOpcode == sCloadLocal) {
@@ -145,7 +149,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (int k = 0; k < endNo; k++) {
 					if ((scAttrTab[instrs[k].ssaOpcode] & (1 << ssaApCall)) != 0) {
 						instr.result.nonVol = true;
-						MachineCode.paramHasNonVolReg[instr.result.index] = true;
+						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
 				}
 			} else {
@@ -169,23 +173,23 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCloadLocal) {
 				int type = instr.result.type;
 				if (type == tLong) {
-					instr.result.regLong = code.paramRegNr[instr.result.index];
-					instr.result.reg = code.paramRegNr[instr.result.index+1];
+					instr.result.regLong = code.paramRegNr[instr.result.index - maxStackSlots];
+					instr.result.reg = code.paramRegNr[instr.result.index+1 - maxStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					instr.result.reg = code.paramRegNr[instr.result.index];
+					instr.result.reg = code.paramRegNr[instr.result.index - maxStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					instr.result.reg = code.paramRegNr[instr.result.index];
+					instr.result.reg = code.paramRegNr[instr.result.index - maxStackSlots];
 				}	
 				if (joinVal != null) {
 					if (instr.result.type == tLong) {
 						joinVal.regLong = instr.result.regLong;
 						joinVal.reg = instr.result.reg;
-						regAtIndex[joinVal.index] = joinVal.regLong;
-						regAtIndex[joinVal.index+1] = joinVal.reg;
+						regAtIndex[joinVal.index - maxStackSlots] = joinVal.regLong;
+						regAtIndex[joinVal.index+1 - maxStackSlots] = joinVal.reg;
 					} else {
 						joinVal.reg = instr.result.reg;
-						regAtIndex[joinVal.index] = joinVal.reg;			
+						regAtIndex[joinVal.index - maxStackSlots] = joinVal.reg;			
 					}
 				}
 			} 
@@ -242,11 +246,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (joinVal.reg < 0) {	// phi function: register not assigned yet
 //				System.out.println("join: assign register to phi-function");
 					// check if other phi-function at same index
-					if (regAtIndex[joinVal.index] > -1) {
+					if (regAtIndex[joinVal.index - maxStackSlots] > -1) {
 //				System.out.println("bereits register bei diesem index " + joinVal.index);
 						if (res.type == tLong) {
-							res.regLong = regAtIndex[joinVal.index];
-							res.reg = regAtIndex[joinVal.index+1];
+							res.regLong = regAtIndex[joinVal.index - maxStackSlots];
+							res.reg = regAtIndex[joinVal.index+1 - maxStackSlots];
 							joinVal.regLong = res.regLong;
 							joinVal.reg = res.reg;
 						} else if ((res.type == tFloat) || (res.type == tDouble)) {
@@ -254,7 +258,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							joinVal.reg = res.reg;
 						} else if (res.type == tVoid) {
 						} else {
-							res.reg = regAtIndex[joinVal.index];
+							res.reg = regAtIndex[joinVal.index - maxStackSlots];
 							joinVal.reg = res.reg;
 //				System.out.println("register has no " + joinVal.reg);
 						}
@@ -264,17 +268,17 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							joinVal.reg = reserveReg(gpr, res.nonVol);
 							res.regLong = joinVal.regLong;
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index] = joinVal.regLong;
-							regAtIndex[joinVal.index+1] = joinVal.reg;
+							regAtIndex[joinVal.index - maxStackSlots] = joinVal.regLong;
+							regAtIndex[joinVal.index+1 - maxStackSlots] = joinVal.reg;
 						} else if ((res.type == tFloat) || (res.type == tDouble)) {
 							joinVal.reg = reserveReg(fpr, res.nonVol);
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index] = joinVal.reg;
+							regAtIndex[joinVal.index - maxStackSlots] = joinVal.reg;
 						} else if (res.type == tVoid) {
 						} else {
 							joinVal.reg = reserveReg(gpr, res.nonVol);
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index] = joinVal.reg;
+							regAtIndex[joinVal.index - maxStackSlots] = joinVal.reg;
 							System.out.println("register reserved for phi function at "+joinVal.n+" reg = " + joinVal.reg);
 						}
 					}
