@@ -2327,7 +2327,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				res |= (1 << atrWrite);
 				break;
 			case sConst:
-				res |= (1 << atrWconst);
+				res |= (1 << atrConst);
 				break;
 			case sCode:
 				res |= (1 << atrCode);
@@ -2342,7 +2342,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				res |= (1 << atrStack);
 				break;
 			case sSysTab:
-				res |= (1 << AtrSysTab);
+				res |= (1 << atrSysTab);
 				break;
 			case sNew:
 				res |= (1 << dpfNew);
