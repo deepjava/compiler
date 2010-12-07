@@ -20,14 +20,14 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
 	
-	private static PrintStream vrb = System.out;
-		
 	private static final int stringHeaderSize = 4; // byte
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
+
+	private static PrintStream vrb = System.out;
+	private static Class object;
 	
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
-	
 	
 	/**
 	 * The target image is a list of target memory segments
@@ -173,30 +173,18 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("\n[LINKER] END: Calculating required for class \"" + clazz.name +"\"\n");
 	}
 	
-	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute) {
-		Segment t = s;
-		while(t != null) {
-			if((t.getAttributes() & (1 << contentAttribute)) == 1) {
-				if(t.subSegments != null) t = getFirstFittingSegment(t.subSegments, contentAttribute);
-				return t;
-			}
-			t = t.next;
-		}
-		return null;
-	}
-	
 	public static void freezeMemoryMap() {
 		
 		// 1) Set segment for each class and calculate the required size for this segments
 		Class c = Type.classList;
 		Segment s;
 		while(c != null) {
-			
+						
 			// Code
 			s = Configuration.getCodeSegmentOf(c.name);
 			if(s == null) reporter.error(550, "Can't get a memory segment for the code of class " + c.name + "!\n");
 			else {
-				if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode);
+				if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
 				s.addToRequiredSize(c.machineCodeSize);
 				c.codeSegment = s;
 			}
@@ -205,8 +193,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			s = Configuration.getVarSegmentOf(c.name);
 			if(s == null) reporter.error(551, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 			else {
-				if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar);
-				s.addToRequiredSize(c.classFieldsSize);
+				if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
+				s.addToRequiredSize(c.classFieldsSize); // TODO move this to getFirstFittingSegment and rename the method
 				c.varSegment = s;
 			}
 			
@@ -214,7 +202,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			s = Configuration.getConstSegmentOf(c.name);
 			if(s == null) reporter.error(552, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 			else {
-				if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst);
+				if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
 				s.addToRequiredSize(c.constantBlockSize);
 				c.constSegment = s;
 				
@@ -226,14 +214,40 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		Device d = Configuration.getFirstDevice();
 		while(d != null) {
 			System.out.println("Device: " + d.getName() + "\n");
-			if(d.lastSegment != null) setSize(d.lastSegment);
+			if(d.lastSegment != null) setSegmentSize(d.lastSegment);
+			d = d.next;
+		}
+		
+		// 3) Set base addresses for each used segment
+		d = Configuration.getFirstDevice();
+		while(d != null) {
+			System.out.println("Device: " + d.getName() + "\n");
+			if(d.segments != null) setBaseAddress(d.segments);
 			d = d.next;
 		}
 	}
 	
-	private static void setSize(Segment s) {
+	private static void setBaseAddress(Segment s) {
+		if(s.subSegments != null) setBaseAddress(s.subSegments);
+		if(s.next != null) setBaseAddress(s.next);
+		//s.setBaseAddress(??????)
+	}
+	
+	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute, int requiredSize) {
+		Segment t = s;
+		while(t != null) {
+			if((t.getAttributes() & (1 << contentAttribute)) != 0) {
+				if(t.subSegments != null) t = getFirstFittingSegment(t.subSegments, contentAttribute, requiredSize);
+				if(t.getSize() <= 0 || t.getSize() - t.getRequiredSize() > requiredSize) return t;
+			}
+			t = t.next;
+		}
+		return null;
+	}
+
+	private static void setSegmentSize(Segment s) {
 		if(s.lastSubSegment != null) {
-			setSize(s.lastSubSegment);
+			setSegmentSize(s.lastSubSegment);
 		}
 		if(s.getSize() <= 0) {
 			s.setSize(s.getRequiredSize());
@@ -243,7 +257,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		System.out.println("  Segment " + s.getName() + ": size = " + s.getSize() + "byte!\n");
 		if(s.prev != null) {
-			setSize(s.prev);
+			setSegmentSize(s.prev);
 		}
 	}
 	
@@ -479,12 +493,18 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void generateTargetImage() {
-		// TODO implement this
+		// TODO implement this...
 	}
 	
 	public static int getSizeOfObject() {
-		// TODO implement this!!!
-		return -1;
+		if(object == null) {
+			Class clazz = Class.classList;
+			while(clazz != null && clazz.name != HString.getHString("java/lang/Object")) {
+				clazz = (Class)clazz.next;
+			}
+			object = clazz;
+		}
+		return object.objectSizeOrDim;
 	}
 		
 		
@@ -501,6 +521,16 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		return val + (4 - (val % 4));
 	}
 	
+	private static void addTargetMemorySegment(TargetMemorySegment tms) {
+		if(targetImage == null) {
+			targetImage = tms;
+			lastTargetMemorySegment = tms;
+		}
+		else {
+			lastTargetMemorySegment.next = tms;
+			lastTargetMemorySegment = lastTargetMemorySegment.next;
+		}
+	}
 	
 	/* ---------- debug primitives ---------- */
 	
@@ -529,118 +559,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] endOfSysTab\n"); i++;
 	}
-	
-	/* ---------- this methods were no longer used -> TODO delete it! ---------- */
-	
-	/**
-	 * Creates the constant pool (containing all constant float and double values) for the target.
-	 * @param clazz is the class to process
-	 */
-/*	public static void createConstantPool(Class clazz) {
-		clazz.targetConstantPool = new int[clazz.constantPoolSize/4];
-		if(clazz.constPool != null) {
-			for(int i = 0; i < clazz.constPool.length; i++) {
-				int index = clazz.constPool[i].offset/4;
-				if(clazz.constPool[i].type == Type.wellKnownTypes[Type.txFloat]) {
-					clazz.targetConstantPool[index] = ((Constant)clazz.constPool[i]).valueH;
-				}
-				else if(clazz.constPool[i].type == Type.wellKnownTypes[Type.txDouble]) {
-					clazz.targetConstantPool[index] = ((Constant)clazz.constPool[i]).valueH;
-					clazz.targetConstantPool[index + 1] = ((Constant)clazz.constPool[i]).valueL;
-				}
-			}
-		}
-	} */
 
-	/**
-	 * Creates the string pool (containing all constant stings) for the target.
-	 * @param clazz is the class to process
-	 */
-/*	public static void createStringPool(Class clazz) {
-		clazz.targetStringPool = new int[clazz.stringPoolSize/4];
-		if(clazz.constPool != null) {
-			for(int i = 0; i < clazz.constPool.length; i++) {
-				int index = clazz.constPool[i].offset/4;
-				if(clazz.constPool[i].type == Type.wellKnownTypes[txString]) {
-					HString s = ((StringLiteral)clazz.constPool[i]).string;
-					sizeInByte = s.sizeInByte();
-					sLength = s.length();
-					if(s.sizeInByte()/s.length() == 1) { // string is a H8String
-						int c = 0, word = 0;
-						clazz.targetStringPool[index++] = (s.length() << 16) + 0x0800; // add string header
-						for(int j = 0; j < s.length(); j++) {
-							word = (word << 8) + s.charAt(j);
-							c++;
-							if(c > 3 || j == s.length() - 1) {
-								clazz.targetStringPool[index] = word;
-								c = 0;
-								word = 0;
-								index++;
-							}
-						}
-					}
-					else { // string is a H16String
-						assert s.sizeInByte()/s.length() == 2: "String is neighter a 8bit nor a 16bit char array!";
-						int c = 0, word = 0;
-						clazz.targetStringPool[index++] = (s.length() << 16) + 0x1000; // add string header
-						for(int j = 0; j < s.length(); j++) {
-							word = (word << 16) + s.charAt(j);
-							c++;
-							if(c > 1 || j == s.length() - 1) {
-								clazz.targetStringPool[index] = word;
-								c = 0;
-								word = 0;
-								index++;
-							}
-						}
-					}	
-				}
-			}
-		}
-	} */
 
-	/**
-	 * Creates the class descriptor for the target.<br /><strong>Remember:</strong> the class descriptor contains absolute addresses, therefore  call {@link #calculateAbsoluteAddresses(Class) calculateAbsoluteAddresses} before calling this method!
-	 * @param clazz is the class to process
-	 */
-/*	public static void createClassDescriptor(Class clazz) {
-		
-		// Create class descriptor
-		clazz.targetClassDescriptor = new int[clazz.classDescriptorSize];
-		
-		// Insert method addresses
-		if(clazz.nOfMethods > 0) {
-			Method m = (Method)clazz.methods;
-			for(int i = 0; i < clazz.nOfMethods; i++) {
-				assert m != null: "ERROR: Method is NULL! Current Method: " + i + "/" + clazz.nOfMethods;
-				clazz.targetClassDescriptor[clazz.classDescriptorSize - clazz.nOfMethods + i] = m.offset;
-				m = (Method)m.next;
-			}
-		}
-		
-		// Insert interfaces
-		if(clazz.nOfInterfaces > 0) {
-			for(int i = 0; i < clazz.nOfInterfaces; i++) {
-				assert clazz.interfaces[i] != null: "ERROR: Interface is NULL! Current Interface: " + i +"/" + clazz.nOfInterfaces;
-				clazz.targetClassDescriptor[clazz.classDescriptorSize - clazz.nOfMethods - clazz.nOfInterfaces + i] = clazz.interfaces[i].address;
-			}
-		}
-		
-		// Insert extension level
-		clazz.targetClassDescriptor[clazz.nOfMethods - clazz.nOfInterfaces - 1] = clazz.nOfBaseClasses;
-		
-		// Insert size
-		clazz.targetClassDescriptor[clazz.nOfMethods - clazz.nOfInterfaces - 2] = clazz.objectSizeOrDim;
-		
-		// Insert base classes
-		if(clazz.nOfBaseClasses > 0) {
-			Class bc = (Class)clazz.type;
-			for(int i = 0; i < clazz.nOfBaseClasses; i++) {
-				assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.nOfBaseClasses;
-				clazz.targetClassDescriptor[i] = bc.address;
-				bc = (Class)bc.type;
-			}
-		}
-	} */
-	
 }
