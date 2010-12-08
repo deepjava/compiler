@@ -221,16 +221,24 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// 3) Set base addresses for each used segment
 		d = Configuration.getFirstDevice();
 		while(d != null) {
-			System.out.println("Device: " + d.getName() + "\n");
-			if(d.segments != null) setBaseAddress(d.segments);
+			vrb.println("Start setting base addresses for segments in device \"" + d.getName() +"\":");
+			//System.out.println("Device: " + d.getName() + "\n");
+			if(d.segments != null) setBaseAddress(d.segments, d.getbaseAddress());
+			vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
 			d = d.next;
 		}
 	}
 	
-	private static void setBaseAddress(Segment s) {
-		if(s.subSegments != null) setBaseAddress(s.subSegments);
-		if(s.next != null) setBaseAddress(s.next);
-		//s.setBaseAddress(??????)
+	private static void setBaseAddress(Segment s, int baseAddress) {
+		//descend
+		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
+		//set baseaddress
+		if(s.getSize()> 0 && s.getRequiredSize() > 0){ 
+			s.setBaseAddress(baseAddress);
+			vrb.println("\t Segment "+s.getName() +" address = "+ baseAddress + ", size = " + s.getSize());
+		}
+		// traverse from left to right
+		if(s.next != null) setBaseAddress(s.next, s.getSize()+ baseAddress);
 	}
 	
 	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute, int requiredSize) {
