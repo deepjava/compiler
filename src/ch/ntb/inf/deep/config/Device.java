@@ -29,6 +29,13 @@ public class Device implements ErrorCodes{
 		this.size = size;
 		this.width = width;
 	}
+	public int getbaseAddress(){
+		return baseAddress;
+	}
+	
+	public int getSize(){
+		return size;
+	}
 
 	public void addSegment(Segment s) {
 		if (s.width == this.width) {
