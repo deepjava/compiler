@@ -4,8 +4,8 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Register {
 	public Register next;
+	public Register nextWithInitValue;
 	HString name;
-	Register nextWithInitValue;
 	int type = -1;
 	int addr = -1;
 	int size = -1;
