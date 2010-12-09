@@ -181,6 +181,11 @@ public class Configuration implements ErrorCodes, IAttributes  {
 		return HString.getHString(os.getHeap().name);
 	}
 	
+	public static HString getKernelClassname(){
+		return HString.getHString(os.getKernel().name);
+	}
+	
+	
 	public static HString getExceptionClassname(){
 		return HString.getHString(os.getExceptionBaseClass().name);
 	}
