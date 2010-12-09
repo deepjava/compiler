@@ -8,9 +8,10 @@ import org.eclipse.core.runtime.Path;
 
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Configuration implements ErrorCodes  {
+public class Configuration implements ErrorCodes, IAttributes  {
 	private static Project project;
 	private static SystemConstants sysConst = SystemConstants.getInstance();
 	private static Consts consts = Consts.getInstance();
@@ -23,10 +24,14 @@ public class Configuration implements ErrorCodes  {
 //	private static Class heap;
 	private static final int maxNumbersOfHeaps = 4;
 	private static final int maxNumbersOfStacks = 4;
+	private static final int defaultLength = 32;
 	private static int nofHeapSegments = 0;
 	private static int nofStackSegments = 0;
 	private static Segment[] heaps = new Segment[maxNumbersOfHeaps];
 	private static Segment[] stacks = new Segment[maxNumbersOfStacks];
+	private static Segment[] segs;
+	private static int segsCount = 0;
+
 
 	/**
 	 * Returns the first Segment which contains the code for the given
@@ -383,7 +388,6 @@ public class Configuration implements ErrorCodes  {
 			fw.close();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -429,8 +433,42 @@ public class Configuration implements ErrorCodes  {
 	}
 
 	public static Segment[] getSysTabSegments() {
-		// TODO implement this!
-		return null;
+		collectSegmentsForAttributes((1 << atrSysTab));		
+		return segs;
+	}
+	
+	private static void collectSegmentsForAttributes(int attributes){
+		segs = new Segment[defaultLength];
+		Device currDev = memoryMap.getDevices();
+		while(currDev != null){
+			Segment currSeg = currDev.segments;
+			while(currSeg != null){
+				findSegment(currSeg, attributes);
+				currSeg = currSeg.next;
+			}
+			currDev = currDev.next;
+		}		
+	}
+	private static void findSegment(Segment s, int attributes) {
+		//descend
+		if(s.subSegments != null) findSegment(s.subSegments, attributes);
+		// traverse from left to right
+		if(s.next != null) findSegment(s.next, attributes);
+		if((s.getAttributes() & (1 << atrSysTab)) != 0){
+			noticeSegment(s);
+		}
+	}
+	
+	private static void noticeSegment(Segment s){
+		if(s == null) return;
+		if(segsCount >= segs.length){
+			Segment[] temp = new Segment[segs.length*2];
+			for(int i = 0; i < segs.length; i++){
+				temp[i] = segs[i]; 
+			}
+			segs = temp;			
+		}
+		segs[segsCount++]= s;
 	}
 
 	public static RegisterMap getRegisterMap(){
