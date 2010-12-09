@@ -427,6 +427,12 @@ public class Configuration implements ErrorCodes  {
 		}
 		return res;
 	}
+
+	public static Segment[] getSysTabSegments() {
+		// TODO implement this!
+		return null;
+	}
+
 	public static RegisterMap getRegisterMap(){
 		return registerMap;
 	}

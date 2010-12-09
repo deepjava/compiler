@@ -49,7 +49,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static SSAValue[] lastExitSet;
 
 	private static SSA ssa;	// reference to the SSA of a method
-	int[] instructions;	//contains machine instructions for the ssa of a method
+	public int[] instructions;	//contains machine instructions for the ssa of a method
 	public int iCount;	//nof instructions for this method
 	
 	Item[] fixups;	// contains all references whose address has to be fixed by the linker

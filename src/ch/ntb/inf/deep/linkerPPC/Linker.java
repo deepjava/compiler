@@ -26,6 +26,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static PrintStream vrb = System.out;
 	private static Class object;
 	
+	private static Segment[] usedSegments = new Segment[100]; // TODO remove this
+	private static int usedSegmentsIndex = 0; // TODO remove this
+	
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
 	
@@ -36,6 +39,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static TargetMemorySegment lastTargetMemorySegment;
 
 	private static int[] systemTable;
+	private static int systemTableSize;
 
 	/**
 	 * Calculates the offsets... <ul>
@@ -174,6 +178,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void freezeMemoryMap() {
+	
+		systemTableSize = 7 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses;
 		
 		// 1) Set segment for each class and calculate the required size for this segments
 		Class c = Type.classList;
@@ -206,9 +212,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				s.addToRequiredSize(c.constantBlockSize);
 				c.constSegment = s;
 				
-			}						
+			}		
+			
 			c = (Class)c.next;
 		}
+		Segment[] sysTabs = Configuration.getSysTabSegments();
+		if(sysTabs != null) {
+			for(int i = 0; i < sysTabs.length; i++) {
+				sysTabs[i].addToRequiredSize(systemTableSize); // TODO don't use the same size for each system table!
+			}
+		}
+		else reporter.error(9445, "Fatal Error: no Systemtable defined!\n"); // TODO define drror number
 	
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
@@ -220,6 +234,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		// 3) Set base addresses for each used segment
 		d = Configuration.getFirstDevice();
+		//usedSegments = new Segment[nOfUsedSegments];
 		while(d != null) {
 			vrb.println("Start setting base addresses for segments in device \"" + d.getName() +"\":");
 			//System.out.println("Device: " + d.getName() + "\n");
@@ -227,15 +242,21 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
 			d = d.next;
 		}
+		vrb.println("USED SEGMENTS:");
+		for(int i = 0; i < usedSegmentsIndex; i++) {
+			vrb.println("  > [" + i + "] " + usedSegments[i].getName());
+		}
 	}
 	
 	private static void setBaseAddress(Segment s, int baseAddress) {
 		//descend
 		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
 		//set baseaddress
-		if(s.getSize()> 0 && s.getRequiredSize() > 0){ 
+		if((s.getSize() > 0 && s.getRequiredSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			s.setBaseAddress(baseAddress);
-			vrb.println("\t Segment "+s.getName() +" address = "+ baseAddress + ", size = " + s.getSize());
+			usedSegments[usedSegmentsIndex++] = s; // TODO remove this
+			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
+			vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
 		}
 		// traverse from left to right
 		if(s.next != null) setBaseAddress(s.next, s.getSize()+ baseAddress);
@@ -432,6 +453,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				method = (Method)method.next;
 			}
 		}
+		
+		
 	}
 		
 	/**
@@ -451,7 +474,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		
 		// create the systemtable
-		systemTable = new int[7 + 2 * nOfStacks + 2 * nOfHeaps + Type.nofClasses];
+		systemTable = new int[systemTableSize];
 		
 		vrb.println("  Size of the system table: " + systemTable.length * 4 + " byte  -> array size: " + systemTable.length);
 		
@@ -487,8 +510,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		// reference to the constant block of each class
 		Class clazz = Type.classList; int i = 6 + 2 * nOfStacks + 2 * nOfHeaps;
+		int offset = 0;
 		while(clazz != null) {
-			systemTable[i] = clazz.address;
+			systemTable[i] = clazz.constSegment.getBaseAddress() + offset;
+			offset += clazz.constantBlockSize;
 			System.out.println("       Class: " + clazz.name + " -> Index: " + i);
 			i++;
 			clazz = (Class)clazz.next;
@@ -501,7 +526,32 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void generateTargetImage() {
-		// TODO implement this...
+		Class clazz = Type.classList;
+		Method m;
+		while(clazz != null) {
+			// code
+			m = (Method)clazz.methods;
+			while(m != null) {
+				clazz.codeSegment.tms.addData(m.machineCode.instructions, m.machineCode.iCount);
+				addTargetMemorySegment(clazz.codeSegment.tms);
+				m = (Method)m.next;
+			}
+			
+			// consts
+			clazz.constSegment.tms.addData(clazz.constantBlock);
+			addTargetMemorySegment(clazz.constSegment.tms);
+			
+			clazz = (Class)clazz.next;
+		}
+		Segment[] s = Configuration.getHeapSegments();
+		for(int i = 0; i < s.length; i++) {
+			addTargetMemorySegment(s[i].tms);
+		}
+		s = Configuration.getStackSegments();
+		for(int i = 0; i < s.length; i++) {
+			addTargetMemorySegment(s[i].tms);
+		}
+		// TODO add Systemtable
 	}
 	
 	public static int getSizeOfObject() {
@@ -535,6 +585,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			lastTargetMemorySegment = tms;
 		}
 		else {
+			TargetMemorySegment current = targetImage;
+			while(current != null) {
+				if(current == tms) return;
+				current = current.next;
+			}
 			lastTargetMemorySegment.next = tms;
 			lastTargetMemorySegment = lastTargetMemorySegment.next;
 		}
@@ -568,5 +623,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] endOfSysTab\n"); i++;
 	}
 
-
+	public static void printTargetImage() {
+		TargetMemorySegment tms = targetImage;
+		while(tms != null) {
+			vrb.print(tms);
+			tms = tms.next;
+		}
+	}
 }

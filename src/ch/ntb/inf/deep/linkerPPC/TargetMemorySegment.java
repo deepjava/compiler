@@ -12,7 +12,7 @@ public class TargetMemorySegment {
 	
 	public TargetMemorySegment(int startAddress, int maxSize) {
 		this.startAddress = startAddress;
-		this.data = new int[maxSize];
+		this.data = new int[maxSize/4];
 	}
 	
 	public TargetMemorySegment(int startAddress, int[]data) {
@@ -21,12 +21,24 @@ public class TargetMemorySegment {
 		this.usedSize = data.length;
 	}
 
-	public void addData(int[] data) {
-		if (data != null && usedSize + data.length < this.data.length) {
-			for (int i = 0; i < data.length; i++) {
+	public void addData(int[] data, int length) {
+		if (data != null && usedSize + length < this.data.length) {
+			for (int i = 0; i < length; i++) {
 				this.data[usedSize + i] = data[i];
 			}
-			this.usedSize += data.length;
+			this.usedSize += length;
 		}
+	}
+	
+	public void addData(int[] data) {
+		addData(data, data.length);
+	}
+	
+	public String toString() {
+		StringBuffer sb = new StringBuffer("Target Memory Segment:\n  Base Address: 0x" + Integer.toHexString(startAddress) + "\n  Size: " + data.length + "\n  Content:\n");
+		for(int i = 0; i < data.length; i++) {
+			sb.append("    0x" + Integer.toHexString((startAddress + i * 4)) + " [" + Integer.toHexString(data[i]) + "]\n");
+		}
+		return sb.toString();
 	}
 }
