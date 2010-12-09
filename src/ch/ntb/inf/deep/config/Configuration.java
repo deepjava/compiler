@@ -8,7 +8,6 @@ import org.eclipse.core.runtime.Path;
 
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
-import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Configuration implements ErrorCodes, IAttributes  {
@@ -433,8 +432,12 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	}
 
 	public static Segment[] getSysTabSegments() {
-		collectSegmentsForAttributes((1 << atrSysTab));		
-		return segs;
+		collectSegmentsForAttributes((1 << atrSysTab));
+		Segment[] sysTabSegs = new Segment[segsCount];
+		for(int i = 0; i < segsCount; i++){
+			sysTabSegs[i] = segs[i];
+		}
+		return sysTabSegs;
 	}
 	
 	private static void collectSegmentsForAttributes(int attributes){
