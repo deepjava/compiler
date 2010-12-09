@@ -60,7 +60,7 @@ public abstract class Downloader {
 	 * 
 	 * @throws DownloaderException
 	 */
-	protected abstract void init() throws DownloaderException;
+	public abstract void init() throws DownloaderException;
 
 
 	/**
