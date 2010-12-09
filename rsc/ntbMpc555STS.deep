@@ -22,14 +22,14 @@ operatingsystem {
         	}
         }
         
-        exception {
-        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
+#        exception {
+#        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
         	
-			method systemCall {
-        		attributes = exchnd;
-        		addr = 0x200;
-        	}
-        }
+#			method systemCall {
+#        		attributes = exchnd;
+#        		addr = 0x200;
+#        	}
+#       }
         
         heap {
                 class = "ch/ntb/inf/deep/runtime/mpc555/heap";

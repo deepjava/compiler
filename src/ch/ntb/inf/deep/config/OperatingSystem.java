@@ -33,6 +33,7 @@ public class OperatingSystem {
 		// add SystemClass
 		exception.next = this.exceptions;
 		this.exceptions = exception;
+		this.addClass(exception);
 
 	}
 
