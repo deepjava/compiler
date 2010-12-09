@@ -148,7 +148,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		Method m = (Method)clazz.methods;
 		int codeSize = 0;
 		while(m != null) {
-			codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
+			if(m.machineCode != null) codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
 			m = (Method)m.next;
 		}
 		clazz.machineCodeSize = codeSize;
