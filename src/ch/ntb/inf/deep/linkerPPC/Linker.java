@@ -179,7 +179,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	
 	public static void freezeMemoryMap() {
 	
-		systemTableSize = 7 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses;
+		systemTableSize = 8 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses;
 		
 		// 1) Set segment for each class and calculate the required size for this segments
 		Class c = Type.classList;
@@ -403,9 +403,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					}	
 				}
 			}
-			
-			vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
-			
 		}
 
 		// 5) Constant pool
@@ -428,9 +425,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		// print
 		clazz.printConstantBlock();
+		
+		vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
 	}
 	
 	public static void calculateAbsoluteAddresses(Class clazz) {
+		vrb.println("\n[LINKER] START: Calculating absolute for class \"" + clazz.name +"\":\n");
+		
 		int varBase = clazz.varSegment.getBaseAddress();
 		int codeBase = clazz.codeSegment.getBaseAddress();
 		
@@ -453,7 +454,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				method = (Method)method.next;
 			}
 		}
-		
+		vrb.println("\n[LINKER] END: Calculating absolute for class \"" + clazz.name +"\"\n");
 		
 	}
 		
@@ -488,28 +489,46 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// offset to the beginning of the
 		systemTable[2] = 2 + 2 * nOfStacks;
 		
+		Item c = Type.classList;
+		
+		HString kernelClassName = Configuration.getKernelClassname();
+		Item kernelClinit = null;
+		int kernelClinitAddr = 0;
+		while(c != null && !c.name.equals(kernelClassName)) {
+			c = c.next;
+		}
+		if(c != null) {
+			System.out.println("Kernel class name: " + c.name);
+			kernelClinit = c.getItemByName("<clinit>");
+			if(kernelClinit != null) {
+				System.out.println("kernelClinit: " + kernelClinit.name);
+				kernelClinitAddr = kernelClinit.address;
+			}
+		}
+		systemTable[3] = kernelClinitAddr;
+		
 		// number of stacks
-		systemTable[3] = nOfStacks;
+		systemTable[4] = nOfStacks;
 		
 		// reference to each stack and the size of each stack
 		for(int i = 0; i < nOfStacks; i++) {
-			systemTable[4 + 2 * i] = Configuration.getStackSegments()[i].getBaseAddress();
-			systemTable[4 + 2 * i + 1] = Configuration.getStackSegments()[i].getSize();
+			systemTable[5 + 2 * i] = Configuration.getStackSegments()[i].getBaseAddress();
+			systemTable[5 + 2 * i + 1] = Configuration.getStackSegments()[i].getSize();
 		}
 		
 		// number of heaps
-		systemTable[4 + 2 * nOfStacks] = nOfHeaps;
+		systemTable[5 + 2 * nOfStacks] = nOfHeaps;
 		
 		//reference to each heap and the size of each heap
 		for(int i = 0; i < nOfHeaps; i++) {
-			systemTable[5 + 2 * nOfStacks + 2 * i] = Configuration.getHeapSegments()[i].getBaseAddress();
-			systemTable[5 + 2 * nOfStacks + 2 * i + 1] = Configuration.getHeapSegments()[i].getSize();
+			systemTable[6 + 2 * nOfStacks + 2 * i] = Configuration.getHeapSegments()[i].getBaseAddress();
+			systemTable[6 + 2 * nOfStacks + 2 * i + 1] = Configuration.getHeapSegments()[i].getSize();
 		}
 		
-		systemTable[6 + 2 * nOfStacks + 2 * nOfHeaps] = Type.nofClasses;
+		systemTable[7 + 2 * nOfStacks + 2 * nOfHeaps] = Type.nofClasses;
 		
 		// reference to the constant block of each class
-		Class clazz = Type.classList; int i = 6 + 2 * nOfStacks + 2 * nOfHeaps;
+		Class clazz = Type.classList; int i = 7 + 2 * nOfStacks + 2 * nOfHeaps;
 		int offset = 0;
 		while(clazz != null) {
 			systemTable[i] = clazz.constSegment.getBaseAddress() + offset;
@@ -532,8 +551,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			// code
 			m = (Method)clazz.methods;
 			while(m != null) {
-				clazz.codeSegment.tms.addData(m.machineCode.instructions, m.machineCode.iCount);
-				addTargetMemorySegment(clazz.codeSegment.tms);
+				if(m.machineCode != null) {
+					clazz.codeSegment.tms.addData(m.machineCode.instructions, m.machineCode.iCount);
+					addTargetMemorySegment(clazz.codeSegment.tms);
+				}
 				m = (Method)m.next;
 			}
 			
@@ -599,13 +620,14 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	
 	public static void printSystemTable() {
 		int i = 0;
-		int nOfStacks = systemTable[3];
-		int nOfHeaps = systemTable[4 + 2 * nOfStacks];
+		int nOfStacks = systemTable[4];
+		int nOfHeaps = systemTable[5 + 2 * nOfStacks];
 		int nOfClasses = Type.nofClasses;
 		vrb.print("System table:\n");
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] classConstOffset\n"); i++;
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] stackOffset\n"); i++;
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] heapOffset\n"); i++;
+		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] kernelClinitAddr\n"); i++;
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofStacks\n"); i++;
 		for(int j = 0; j < nOfStacks; j++) {
 			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] baseStack" + j + "\n"); i++;

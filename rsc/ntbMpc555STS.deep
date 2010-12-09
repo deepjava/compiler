@@ -7,7 +7,7 @@ meta {
 
 operatingsystem {
         kernel {
-        	class = "ch/ntb/inf/deep/runtime/mpc555/kernel";
+        	class = "ch/ntb/inf/deep/runtime/mpc555/Kernel";
         }
         exceptionbaseclass {
         	class = "ch/ntb/inf/deep/runtime/mpc555/PPCException";
@@ -32,7 +32,7 @@ operatingsystem {
 #       }
         
         heap {
-                class = "ch/ntb/inf/deep/runtime/mpc555/heap";
+                class = "ch/ntb/inf/deep/runtime/mpc555/Heap";
                 method newMultiDimArray  {
                         attributes = new;
                         id = 0x204;

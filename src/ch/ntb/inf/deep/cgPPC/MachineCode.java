@@ -48,7 +48,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	
 	private static SSAValue[] lastExitSet;
 
-	private static SSA ssa;	// reference to the SSA of a method
+	public SSA ssa;	// reference to the SSA of a method
 	public int[] instructions;	//contains machine instructions for the ssa of a method
 	public int iCount;	//nof instructions for this method
 	
@@ -57,7 +57,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	int lastFixup;	// instr number where the last fixup is found
 
 	public MachineCode(SSA ssa) {
-		MachineCode.ssa = ssa;
+		this.ssa = ssa;
 		instructions = new int[defaultNofInstr];
 		fixups = new Item[defaultNofFixup];
 		nofParamGPR = 0; nofParamFPR = 0;
@@ -1580,7 +1580,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	public void doFixups() {
 		int currInstr = lastFixup;
 		int currFixup = fCount - 1;
+		System.out.println("########## fCount = " + fCount);
 		while (currFixup >= 0) {
+			if( fixups[currFixup] == null) System.out.println("########## fixups = null");
+			System.out.println("########## fixups.lenght = " + fixups.length);
+			System.out.println("########## currFixup = " + currFixup);
 			int addr = fixups[currFixup].address;
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;

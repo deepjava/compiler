@@ -73,6 +73,12 @@ public class Launcher implements ICclassFileConsts {
 				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
 					method = (Method) clazz.methods;
 					while (method != null) {
+					//	System.out.println("### Method: " + method.name);
+					//	System.out.println("### Method (via SSA): " + method.ssa.cfg.method.name);
+					//	System.out.println("### Method (via MachineCode): " + method.machineCode.ssa.cfg.method.name);
+					//	method.ssa.print(0);
+					//	method.machineCode.print();
+						
 						// 5.2) Code generator: fix up
 						method.machineCode.doFixups();
 	
