@@ -499,7 +499,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		if(c != null) {
 			System.out.println("Kernel class name: " + c.name);
-			kernelClinit = c.getItemByName("<clinit>");
+			kernelClinit = ((Class)c).methods.getItemByName("<clinit>");
 			if(kernelClinit != null) {
 				System.out.println("kernelClinit: " + kernelClinit.name);
 				kernelClinitAddr = kernelClinit.address;
