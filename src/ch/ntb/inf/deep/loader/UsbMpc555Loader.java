@@ -7,11 +7,11 @@ import ch.ntb.inf.deep.config.RegisterMap;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.libusbJava.USBException;
 import ch.ntb.mcdp.bdi.BDIException;
 import ch.ntb.mcdp.targets.mpc555.BDI;
 import ch.ntb.mcdp.usb.Device;
 import ch.ntb.mcdp.usb.DeviceFactory;
-import ch.ntb.usb.USBException;
 
 /**
  * Creates an USB connection to the target.<br>
@@ -36,7 +36,7 @@ public class UsbMpc555Loader extends Downloader {
 	 */
 	@Override
 	public synchronized void init() throws DownloaderException {
-		Configuration.getValueFor(HString.getHString("IMB"));
+		baseAddress = Configuration.getValueFor(HString.getHString("IMB"));
 
 		// open Usb-Connection
 		openConnection();
@@ -120,15 +120,35 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	protected synchronized void writeCode() throws DownloaderException {
 		// get code from the Linker
+		if (!isFreezeAsserted()) {
+			System.out.println("Bdi is not in Debug mode!");
+		}
 		TargetMemorySegment image = Linker.targetImage;
-		while(image != null){
-			try {
-				mpc.startFastDownload(image.startAddress);
-				mpc.fastDownload(image.data, image.data.length);
-				mpc.stopFastDownload();
-			} catch (BDIException e) {
-				e.printStackTrace();
+		while (image != null) {
+			// TODO remove Hack, solve it proper!!!!!
+			int dataSizeToTransfer = image.data.length;
+			int startAddr = image.startAddress;
+			int index = 0;
+			while (dataSizeToTransfer > 0) {
+				//limitation for fast downlod is 101 Words
+				int[] data = new int[100];
+				if(dataSizeToTransfer < 101){
+					data = new int[dataSizeToTransfer];
+				}
+				for(int i = 0; i < data.length; i++){
+					data[i]= image.data[index++];
+				}
+				try {
+					mpc.startFastDownload(startAddr);
+					mpc.fastDownload(data, data.length);
+					mpc.stopFastDownload();
+				} catch (BDIException e) {
+					e.printStackTrace();
+				}
+				dataSizeToTransfer -= data.length;
+				startAddr += data.length * 4;
 			}
+			image = image.next;
 		}
 	}
 
@@ -140,15 +160,17 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	protected synchronized void initRegisters() throws DownloaderException {
 		try {
-			Register root =Configuration.getInitializedRegisters();
+			Register root = Configuration.getInitializedRegisters();
 			Register current = root;
-			while(current != null){
-				switch(current.getType()){
+			while (current != null) {
+				switch (current.getType()) {
 				case Parser.sSPR:
-					mpc.writeSPR(current.getAddress(), current.getInit().getValue());
+					mpc.writeSPR(current.getAddress(), current.getInit()
+							.getValue());
 					break;
 				case Parser.sIOR:
-					mpc.writeMem(current.getAddress(), current.getInit().getValue(), current.getSize());
+					mpc.writeMem(current.getAddress(), current.getInit()
+							.getValue(), current.getSize());
 					break;
 				case Parser.sMSR:
 					mpc.writeMSR(current.getInit().getValue());
@@ -162,18 +184,20 @@ public class UsbMpc555Loader extends Downloader {
 				default:
 					break;
 				}
-				current = current.next;
+				current = current.nextWithInitValue;
 			}
-			
-			//Check if all is set fine
+
+			// Check if all is set fine
 			current = root;
-			while(current != null){
-				switch(current.getType()){
+			while (current != null) {
+				switch (current.getType()) {
 				case Parser.sSPR:
-					checkValue(mpc.readSPR(current.getAddress()), current.getInit().getValue());
+					checkValue(mpc.readSPR(current.getAddress()), current
+							.getInit().getValue());
 					break;
 				case Parser.sIOR:
-					checkValue(mpc.readMem(current.getAddress(), current.getSize()), current.getInit().getValue());
+					checkValue(mpc.readMem(current.getAddress(), current
+							.getSize()), current.getInit().getValue());
 					break;
 				case Parser.sMSR:
 					checkValue(mpc.readMSR(), current.getInit().getValue());
@@ -187,7 +211,8 @@ public class UsbMpc555Loader extends Downloader {
 				default:
 					break;
 				}
-				
+				current = current.nextWithInitValue;
+
 			}
 		} catch (BDIException e) {
 			throw new DownloaderException(e.getMessage(), e);
@@ -272,9 +297,9 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	public synchronized int[] readGPRs() throws DownloaderException {
 		RegisterMap regMap = Configuration.getRegisterMap();
-		int [] gprs = new int[regMap.getNofGprs()];
+		int[] gprs = new int[regMap.getNofGprs()];
 		for (int j = 0; j < gprs.length; j++) {
-			gprs[j]=getGPR(j);
+			gprs[j] = getGPR(j);
 		}
 		return gprs;
 	}
@@ -285,9 +310,9 @@ public class UsbMpc555Loader extends Downloader {
 	 * @see ch.ntb.mpc555.register.controller.javaEnv.crosscompiler.download.Downloader#setGPRs(java.util.Map)
 	 */
 	@Override
-	public synchronized void setGPRs(int[][] gprs)	throws DownloaderException {
+	public synchronized void setGPRs(int[][] gprs) throws DownloaderException {
 		for (int i = 0; i < gprs.length; i++) {
-			setGPR(gprs[i][0],gprs[i][1]);
+			setGPR(gprs[i][0], gprs[i][1]);
 		}
 	}
 
@@ -466,7 +491,8 @@ public class UsbMpc555Loader extends Downloader {
 	 *      int)
 	 */
 	@Override
-	public synchronized int getMem(int addr, int size) throws DownloaderException {
+	public synchronized int getMem(int addr, int size)
+			throws DownloaderException {
 		int value = 0;
 		try {
 			value = mpc.readMem(addr, size);
@@ -502,6 +528,8 @@ public class UsbMpc555Loader extends Downloader {
 	 */
 	private synchronized static void checkValue(int i, int j) {
 		if (i != j) {
+			if ((i == -1 && j == 0) || (i == 0 && j == -1))
+				return;
 			throw new RuntimeException("i (" + i + ") != j (" + j + ")");
 		}
 	}
