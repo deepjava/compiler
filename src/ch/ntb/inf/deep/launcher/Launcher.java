@@ -10,6 +10,9 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.linkerPPC.Linker;
+import ch.ntb.inf.deep.loader.Downloader;
+import ch.ntb.inf.deep.loader.DownloaderException;
+import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.ssa.SSA;
 
 public class Launcher implements ICclassFileConsts {
@@ -105,7 +108,13 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static void downloadTargetImage() {
-		// 8a) download image to target
+		Downloader bdi = new UsbMpc555Loader();
+		try {
+			bdi.init();
+			bdi.startTarget();
+		} catch (DownloaderException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void saveTargetImage2File(String file) {
