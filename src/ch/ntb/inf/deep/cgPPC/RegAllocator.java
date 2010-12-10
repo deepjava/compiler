@@ -2,6 +2,7 @@
 package ch.ntb.inf.deep.cgPPC;
 
 import ch.ntb.inf.deep.classItems.Constant;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
@@ -12,14 +13,16 @@ import ch.ntb.inf.deep.strings.HString;
  * @author graf
  * 
  */
-public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers {
+public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
 
 	private static final int nofSSAInstr = 256;
 
 	static int maxStackSlots;
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
-	private static int[] regAtIndex = new int[MachineCode.maxNofParam];
+	
+	// used for resolving phi-functions
+	private static int[] regAtIndex = new int[64];
 	
 	// local and linear copy of all SSA-instructions of all nodes
 	private static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
@@ -100,6 +103,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAValue val = instr.result;
 				while (val.join != null) val = val.join;
 				for (SSAValue opd : opds) opd.join = val;
+				if (opds[0].type != tPhiFunc) instr.result.type = opds[0].type; 
 			} 
 		}
 	}
@@ -138,24 +142,34 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			int endNo = instr.result.end;
 			if (instr.ssaOpcode == sCPhiFunc) {
 				// check if call instruction between start of phi-function and here
+				// call to inline method is omitted
 				for (int k = ((PhiFunction)instr).start+1; k < endNo; k++) {
-					if ((scAttrTab[instrs[k].ssaOpcode] & (1 << ssaApCall)) != 0) {
+					SSAInstruction instr1 = instrs[k];
+					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
+							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 						instr.result.nonVol = true;
 						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
 				}
 			} else if (instr.ssaOpcode == sCloadLocal) {
 				// check if call instruction between start of method and here
+				// call to inline method is omitted
 				for (int k = 0; k < endNo; k++) {
-					if ((scAttrTab[instrs[k].ssaOpcode] & (1 << ssaApCall)) != 0) {
+					SSAInstruction instr1 = instrs[k];
+					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
+							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
+//					System.out.printf("accAndPropFlags = 0x%1$x\n", ((Call)instrs[k]).item.accAndPropFlags);
 						instr.result.nonVol = true;
 						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
 				}
 			} else {
 				// check if call instruction in live range
+				// call to inline method is omitted
 				for (int k = currNo+1; k < endNo; k++) {
-					if ((scAttrTab[instrs[k].ssaOpcode] & (1 << ssaApCall)) != 0)
+					SSAInstruction instr1 = instrs[k];
+					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
+							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) 
 						instr.result.nonVol = true;
 				}
 			}
@@ -185,11 +199,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (instr.result.type == tLong) {
 						joinVal.regLong = instr.result.regLong;
 						joinVal.reg = instr.result.reg;
-						regAtIndex[joinVal.index - maxStackSlots] = joinVal.regLong;
-						regAtIndex[joinVal.index+1 - maxStackSlots] = joinVal.reg;
+						regAtIndex[joinVal.index] = joinVal.regLong;
+						regAtIndex[joinVal.index+1] = joinVal.reg;
 					} else {
 						joinVal.reg = instr.result.reg;
-						regAtIndex[joinVal.index - maxStackSlots] = joinVal.reg;			
+						regAtIndex[joinVal.index] = joinVal.reg;			
 					}
 				}
 			} 
@@ -246,11 +260,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (joinVal.reg < 0) {	// phi function: register not assigned yet
 //				System.out.println("join: assign register to phi-function");
 					// check if other phi-function at same index
-					if (regAtIndex[joinVal.index - maxStackSlots] > -1) {
+					if (regAtIndex[joinVal.index] > -1) {
 //				System.out.println("bereits register bei diesem index " + joinVal.index);
 						if (res.type == tLong) {
-							res.regLong = regAtIndex[joinVal.index - maxStackSlots];
-							res.reg = regAtIndex[joinVal.index+1 - maxStackSlots];
+							res.regLong = regAtIndex[joinVal.index];
+							res.reg = regAtIndex[joinVal.index+1];
 							joinVal.regLong = res.regLong;
 							joinVal.reg = res.reg;
 						} else if ((res.type == tFloat) || (res.type == tDouble)) {
@@ -258,7 +272,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							joinVal.reg = res.reg;
 						} else if (res.type == tVoid) {
 						} else {
-							res.reg = regAtIndex[joinVal.index - maxStackSlots];
+							res.reg = regAtIndex[joinVal.index];
 							joinVal.reg = res.reg;
 //				System.out.println("register has no " + joinVal.reg);
 						}
@@ -268,17 +282,17 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							joinVal.reg = reserveReg(gpr, res.nonVol);
 							res.regLong = joinVal.regLong;
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index - maxStackSlots] = joinVal.regLong;
-							regAtIndex[joinVal.index+1 - maxStackSlots] = joinVal.reg;
+							regAtIndex[joinVal.index] = joinVal.regLong;
+							regAtIndex[joinVal.index+1] = joinVal.reg;
 						} else if ((res.type == tFloat) || (res.type == tDouble)) {
 							joinVal.reg = reserveReg(fpr, res.nonVol);
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index - maxStackSlots] = joinVal.reg;
+							regAtIndex[joinVal.index] = joinVal.reg;
 						} else if (res.type == tVoid) {
 						} else {
 							joinVal.reg = reserveReg(gpr, res.nonVol);
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index - maxStackSlots] = joinVal.reg;
+							regAtIndex[joinVal.index] = joinVal.reg;
 							System.out.println("register reserved for phi function at "+joinVal.n+" reg = " + joinVal.reg);
 						}
 					}

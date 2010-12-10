@@ -20,13 +20,25 @@ interface InstructionOpcs {
 	final int GT = 2;
 	final int LT = 3;
 	final int LR = 8;
+	final int CTR = 9;
 	final int SRR0 = 26;
 	final int SRR1 = 27;
+	final int EIE = 80;
+	final int EID = 81;
+	final int NRI = 82;
 	
 	final int CRF0SO = 28;
 	final int CRF0EQ = 29;
 	final int CRF0GT = 30;
 	final int CRF0LT = 31;
+	final int CRF1SO = 24;
+	final int CRF1EQ = 25;
+	final int CRF1GT = 26;
+	final int CRF1LT = 27;
+	final int CRF2SO = 20;
+	final int CRF2EQ = 21;
+	final int CRF2GT = 22;
+	final int CRF2LT = 23;
 
 	public static String[] BOstring = {
 		"",
@@ -148,6 +160,16 @@ interface InstructionOpcs {
 		ppcBclr = (0x13 << 26) | (0x10 << 1),
 		ppcCmp = (0x1f << 26),
 		ppcCmpi = (0x0b << 26),
+		ppcCmpl = (0x1f << 26) | (0x20 << 1),
+		ppcCrand = (0x13 << 26) | (0x101 << 1),
+		ppcCrandc = (0x13 << 26) | (0x81 << 1),
+		ppcCreqv = (0x13 << 26) | (0x121 << 1),
+		ppcCrnand = (0x13 << 26) | (0xe1 << 1),
+		ppcCrnor = (0x13 << 26) | (0x21 << 1),
+		ppcCror = (0x13 << 26) | (0x1c1 << 1),
+		ppcCrorc = (0x13 << 26) | (0x1a1 << 1),
+		ppcCrxor = (0x13 << 26) | (0xc1 << 1),
+		ppcDivw = (0x1f << 26) | (0x1eb << 1),
 		ppcExtsb = (0x1f << 26) | (0x3ba << 1),
 		ppcExtsh = (0x1f << 26) | (0x39a << 1),
 		ppcFadd = (0x3f << 26) | (0x15 << 1),
@@ -176,7 +198,9 @@ interface InstructionOpcs {
 		ppcLwzu = (0x21 << 26),
 		ppcLwzux = (0x1f << 26) | (0x37 << 1),
 		ppcLwzx = (0x1f << 26) | (0x17 << 1),
+		ppcMfcr = (0x1f << 26) | (0x13 << 1),
 		ppcMfspr = (0x1f << 26) | (0x153 << 1),
+		ppcMtcrf = (0x1f << 26) | (0x90 << 1),
 		ppcMtspr = (0x1f << 26) | (0x1d3 << 1),
 		ppcMulhw = (0x1f << 26) | (0x4b << 1),
 		ppcMulhwu = (0x1f << 26) | (0x0b << 1),

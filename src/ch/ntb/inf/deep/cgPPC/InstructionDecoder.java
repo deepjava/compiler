@@ -403,65 +403,65 @@ public class InstructionDecoder implements InstructionOpcs {
 		} else if (parts[0].equals("crand")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x202;
 		} else if (parts[0].equals("crandc")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x102;
 		} else if (parts[0].equals("creqv")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x242;
 		} else if (parts[0].equals("crnand")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x1C2;
 		} else if (parts[0].equals("crnor")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x42;
 		} else if (parts[0].equals("cror")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x382;
 		} else if (parts[0].equals("crorc")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x342;
 		} else if (parts[0].equals("crxor")) {
 			String[] param = parts[1].split(",");
 
-			param1 = Integer.parseInt(param[0].substring(3)) & crb;
-			param2 = Integer.parseInt(param[1].substring(3)) & crb;
-			param3 = Integer.parseInt(param[2].substring(3)) & crb;
+			param1 = decodeBI(param[0]);
+			param2 = decodeBI(param[1]);
+			param3 = decodeBI(param[2]);
 
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | (param3 << 11) | 0x182;
 		} else if (parts[0].equals("divw")) {
@@ -2347,7 +2347,23 @@ public class InstructionDecoder implements InstructionOpcs {
 		else if (param.equals("crf0[eq]")) return CRF0EQ;
 		else if (param.equals("crf0[gt]")) return CRF0GT;
 		else if (param.equals("crf0[lt]")) return CRF0LT;
+		else if (param.equals("crf1[so]")) return CRF1SO;
+		else if (param.equals("crf1[eq]")) return CRF1EQ;
+		else if (param.equals("crf1[gt]")) return CRF1GT;
+		else if (param.equals("crf1[lt]")) return CRF1LT;
 		else return 0;
+	}
+
+	private static String getBIString(int BI) {
+		if (BI == CRF0SO) return "CRF0[SO]";
+		else if (BI == CRF0EQ) return "CRF0[EQ]";
+		else if (BI == CRF0GT) return "CRF0[GT]";
+		else if (BI == CRF0LT) return "CRF0[LT]";
+		else if (BI == CRF1SO) return "CRF1[SO]";
+		else if (BI == CRF1EQ) return "CRF1[EQ]";
+		else if (BI == CRF1GT) return "CRF1[GT]";
+		else if (BI == CRF1LT) return "CRF1[LT]";
+		else return "";
 	}
 
 	private static int decodeTO(String param) {
@@ -2461,25 +2477,25 @@ public class InstructionDecoder implements InstructionOpcs {
 						return "bclrl " + BOstring[BO] + ", " + BIstring[BI];
 					}
 				case 0x21:
-					return "crnor  crb" + D + ", crb" + A + ", crb" + B;
+					return "crnor  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0x32:
 					return "rfi";
 				case 0x81:
-					return "crandc  crb" + D + ", crb" + A + ", crb" + B;
+					return "crandc  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0xC1:
-					return "crxor  crb" + D + ", crb" + A + ", crb" + B;
+					return "crxor  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0xE1:
-					return "crnand  crb" + D + ", crb" + A + ", crb" + B;
+					return "crnand  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0x90:
 					return "isync";
 				case 0x101:
-					return "crand  crb" + D + ", crb" + A + ", crb" + B;
+					return "crand  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0x121:
-					return "creqv  crb" + D + ", crb" + A + ", crb" + B;
+					return "creqv  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0x1A1:
-					return "crorc  crb" + D + ", crb" + A + ", crb" + B;
+					return "crorc  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0x1C1:
-					return "cror  crb" + D + ", crb" + A + ", crb" + B;
+					return "cror  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0x210:
 					if (lk == 0) {
 						return "bcctr " + BOstring[BO] + ", " + BIstring[BI];
