@@ -17,7 +17,7 @@ public class cgPPC06 extends TestCgPPC {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T06Operators" };
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -32,8 +32,8 @@ public class cgPPC06 extends TestCgPPC {
 
 //	@Ignore
 	@Test
-	public void conditionalOperator1() {
-		int[] code = getCode(0);
+	public void ConditionalOperator1() {
+		int[] code = getCode("ConditionalOperator1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -71,8 +71,8 @@ public class cgPPC06 extends TestCgPPC {
 	
 //	@Ignore
 	@Test
-	public void conditionalOperator2() {
-		int[] code = getCode(1);
+	public void ConditionalOperator2() {
+		int[] code = getCode("ConditionalOperator2");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);

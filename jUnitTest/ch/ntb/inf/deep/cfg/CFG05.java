@@ -17,22 +17,25 @@ public class CFG05 extends TestCFG implements ICclassFileConsts {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir");
-    	String[] rootClassNames = new String[]{"ch/ntb/inf/deep/testClasses/T05Returns"};
+		String workspace =System.getProperty("user.dir")+ "/bin";
+		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T05Returns" };
 		try {
-			Class.buildSystem(rootClassNames, new String[]{workspace + "/bin"}, null, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
+					| (1 << atxLocalVariableTable)
+					| (1 << atxLineNumberTable)
+					| (1 << atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if(Type.nofRootClasses > 0){
+		if (Type.nofRootClasses > 0) {
 			createCFG(Type.rootClasses[0]);
 		}
 	}
 
 	@Test
 	public void multipleReturns1() {
-		CFGNode[] nodes = getAndTestNodes(0, 3);
+		CFGNode[] nodes = getAndTestNodes("multipleReturns1", 3);
 		testNode(nodes[0], 0, 3, false, null, new int[] {}, new int[] { 10, 6 });
 		testNode(nodes[1], 6, 9, false, nodes[0], new int[] { 0 }, new int[] {});
 		testNode(nodes[2], 10, 14, false, nodes[0], new int[] { 0 }, new int[] {});
@@ -40,7 +43,7 @@ public class CFG05 extends TestCFG implements ICclassFileConsts {
 	
 	@Test
 	public void multipleReturns2() {
-		CFGNode[] nodes = getAndTestNodes(1, 11);
+		CFGNode[] nodes = getAndTestNodes("multipleReturns2", 11);
 		testNode(nodes[0], 0, 5, false, null, new int[] {}, new int[] { 8, 10 });
 		testNode(nodes[1], 8, 9, false, nodes[0], new int[] { 0 }, new int[] {});
 		testNode(nodes[2], 10, 12, false, nodes[0], new int[] { 0 }, new int[] { 17, 15 });

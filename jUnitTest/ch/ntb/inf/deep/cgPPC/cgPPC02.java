@@ -17,7 +17,7 @@ public class cgPPC02 extends TestCgPPC {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T02Branches" };
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -31,8 +31,8 @@ public class cgPPC02 extends TestCgPPC {
 	}
 
 	@Test
-	public void testIf1() {
-		int[] code = getCode(0);
+	public void if1() {
+		int[] code = getCode("if1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -50,8 +50,8 @@ public class cgPPC02 extends TestCgPPC {
 	}
 	
 	@Test
-	public void testIf2() {
-		int[] code = getCode(1);
+	public void if2() {
+		int[] code = getCode("if2");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -73,8 +73,8 @@ public class cgPPC02 extends TestCgPPC {
 	}
 	
 	@Test
-	public void testIf3() {
-		int[] code = getCode(2);
+	public void if3() {
+		int[] code = getCode("if3");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -102,8 +102,8 @@ public class cgPPC02 extends TestCgPPC {
 	}
 	
 	@Test
-	public void testIf4() {
-		int[] code = getCode(4);
+	public void if4() {
+		int[] code = getCode("if4");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -125,8 +125,8 @@ public class cgPPC02 extends TestCgPPC {
 	}
 	
 	@Test
-	public void testIf5() {
-		int[] code = getCode(5);
+	public void if5() {
+		int[] code = getCode("if5");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);

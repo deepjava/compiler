@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.ssa.TestSSA;
+import ch.ntb.inf.deep.strings.HString;
 
 public class TestCgPPC implements ICclassFileConsts {
 
@@ -21,18 +22,19 @@ public class TestCgPPC implements ICclassFileConsts {
 		TestSSA.createSSA(clazz);
 		code = new MachineCode[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
-//			int i = 1;
-			
 			code[i] = new MachineCode(TestSSA.ssa[i]);
 			code[i].print();
 			System.out.println();
 		}
 	}
 
-	public static int[] getCode(int methodNo) {
-		int len = code[methodNo].iCount;
+	public static int[] getCode(String name) {
+		int i = 0;
+		while (i < code.length && ! code[i].ssa.cfg.method.name.equals(HString.getHString(name))) i++;
+
+		int len = code[i].iCount;
 		int[] code1 = new int[len];
-		for (int i = 0; i < len; i++) code1[i] = code[methodNo].instructions[i];
+		for (int k = 0; k < len; k++) code1[k] = code[i].instructions[k];
 		return code1;
 	}
 

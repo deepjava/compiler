@@ -6,7 +6,11 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Vector;
 
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.strings.HString;
 
 public class TestCFG {
 	/**
@@ -44,7 +48,7 @@ public class TestCFG {
 		for (int i = 0; i < count; i++) {
 			cfg[i] = new CFG(m1);
 			m1 = (Method)m1.next;
-			//cfg[i].printToLog();
+			cfg[i].printToLog();
 		}
 	}
 
@@ -56,12 +60,15 @@ public class TestCFG {
 	 * @param nofNodes
 	 *            number of nodes
 	 */
-	static public CFGNode[] getAndTestNodes(int cfgNo, int nofNodes) {
-		assertEquals("number of nodes not as expected", nofNodes, cfg[cfgNo].getNumberOfNodes());
+	static public CFGNode[] getAndTestNodes(String name, int nofNodes) {
+		int i = 0;
+		while (i < cfg.length && !cfg[i].method.name.equals(HString.getHString(name))) i++;
+
+		assertEquals("number of nodes not as expected", nofNodes, cfg[i].getNumberOfNodes());
 		
 		CFGNode[] nodes = new CFGNode[nofNodes];
-		CFGNode node = cfg[cfgNo].rootNode;
-		for (int i = 0; i < nofNodes; i++) { nodes[i] = node; node = node.next; }
+		CFGNode node = cfg[i].rootNode;
+		for (int k = 0; k < nofNodes; k++) { nodes[k] = node; node = node.next; }
 		return nodes;
 	}
 

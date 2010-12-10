@@ -17,7 +17,7 @@ public class cgPPC04 extends TestCgPPC {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T04Loops" };
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -33,7 +33,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void doWhile1() {
-		int[] code = getCode(0);
+		int[] code = getCode("doWhile1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -52,7 +52,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void doWhileIf1() {
-		int[] code = getCode(1);
+		int[] code = getCode("doWhileIf1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -89,7 +89,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void while1() {
-		int[] code = getCode(2);
+		int[] code = getCode("while1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -108,7 +108,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void whileTrue() {
-		int[] code = getCode(3);
+		int[] code = getCode("whileTrue");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -125,7 +125,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void whileTrueBreak() {
-		int[] code = getCode(4);
+		int[] code = getCode("whileTrueBreak");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -141,7 +141,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void whileMultiCond() {
-		int[] code = getCode(5);
+		int[] code = getCode("whileMultiCond");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -162,7 +162,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void for1() {
-		int[] code = getCode(6);
+		int[] code = getCode("for1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -183,7 +183,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void forWhile() {
-		int[] code = getCode(8);
+		int[] code = getCode("forWhile");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -206,7 +206,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void forIfWhile() {
-		int[] code = getCode(9);
+		int[] code = getCode("forIfWhile");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);

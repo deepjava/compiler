@@ -16,22 +16,25 @@ public class CFG06 extends TestCFG implements ICclassFileConsts {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir");
-    	String[] rootClassNames = new String[]{"ch/ntb/inf/deep/testClasses/T06Operators"};
+		String workspace =System.getProperty("user.dir")+ "/bin";
+		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T06Operators" };
 		try {
-			Class.buildSystem(rootClassNames, new String[]{workspace + "/bin"}, null, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
+					| (1 << atxLocalVariableTable)
+					| (1 << atxLineNumberTable)
+					| (1 << atxExceptions));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if(Type.nofRootClasses > 0){
+		if (Type.nofRootClasses > 0) {
 			createCFG(Type.rootClasses[0]);
 		}
 	}
 
 	@Test
 	public void ConditionalOperator1() {
-		CFGNode[] nodes = getAndTestNodes(0, 11);
+		CFGNode[] nodes = getAndTestNodes("ConditionalOperator1", 11);
 		testNode(nodes[0], 0, 11, false, null, new int[] {}, new int[] {14,18});
 		testNode(nodes[1], 14, 15, false, nodes[0], new int[] {0}, new int[] {20});
 		testNode(nodes[2], 18, 18, false, nodes[0], new int[] {0}, new int[] {20});
@@ -47,7 +50,7 @@ public class CFG06 extends TestCFG implements ICclassFileConsts {
 
 	@Test
 	public void ConditionalOperator2() {
-		CFGNode[] nodes = getAndTestNodes(1, 14);
+		CFGNode[] nodes = getAndTestNodes("ConditionalOperator2", 14);
 		testNode(nodes[0], 0, 25, false, null, new int[] {}, new int[] {28,33});
 		testNode(nodes[1], 28, 30, false, nodes[0], new int[] {0}, new int[] {35});
 		testNode(nodes[2], 33, 33, false, nodes[0], new int[] {0}, new int[] {35});

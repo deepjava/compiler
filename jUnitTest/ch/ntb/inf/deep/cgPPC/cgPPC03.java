@@ -17,7 +17,7 @@ public class cgPPC03 extends TestCgPPC {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T03Switch" };
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -32,7 +32,7 @@ public class cgPPC03 extends TestCgPPC {
 
 	@Test
 	public void switchNear1() {
-		int[] code = getCode(0);
+		int[] code = getCode("switchNear1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -59,7 +59,7 @@ public class cgPPC03 extends TestCgPPC {
 	
 	@Test
 	public void switchNear2() {
-		int[] code = getCode(1);
+		int[] code = getCode("switchNear2");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -102,7 +102,7 @@ public class cgPPC03 extends TestCgPPC {
 	
 	@Test
 	public void switchNear3() {
-		int[] code = getCode(2);
+		int[] code = getCode("switchNear3");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -32(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -149,7 +149,7 @@ public class cgPPC03 extends TestCgPPC {
 	
 	@Test
 	public void switchFar1() {
-		int[] code = getCode(3);
+		int[] code = getCode("switchFar1");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
@@ -176,7 +176,7 @@ public class cgPPC03 extends TestCgPPC {
 
 	@Test
 	public void switchFar2() {
-		int[] code = getCode(4);
+		int[] code = getCode("switchFar2");
 		int i = 0;
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
