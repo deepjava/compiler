@@ -100,5 +100,60 @@
          </run>
       </builder>
    </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            id="ch.ntb.inf.deep.ui.registerview"
+            name="Deep Register Views">
+      </category>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.ui.view.UsLeSPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.UsLeSPRView"
+            name="User Level SPR View"
+            restorable="true">
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.ui.view.DeSuSPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.DeSuSPRView"
+            name="Development Support SPR View"
+            restorable="true">
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.ui.view.GprView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.GprView"
+            name="General Purpose Register View"
+            restorable="true">
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.ui.view.FprView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.FprView"
+            name="Floating Point Register View"
+            restorable="true">
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.ui.view.MaStRegView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.MaStRegView"
+            name="Machinestate register View"
+            restorable="true">
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.ui.view.SuLeSPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.SuLeSPRView"
+            name="Support Level SPR View"
+            restorable="true">
+      </view>
+   </extension>
 
 </plugin>
