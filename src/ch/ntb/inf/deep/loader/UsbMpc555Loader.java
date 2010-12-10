@@ -3,7 +3,6 @@ package ch.ntb.inf.deep.loader;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
-import ch.ntb.inf.deep.config.RegisterMap;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
@@ -18,6 +17,9 @@ import ch.ntb.mcdp.usb.DeviceFactory;
  * The USB and MCDP projects have to be in the class path!!
  */
 public class UsbMpc555Loader extends Downloader {
+	
+	
+	private static UsbMpc555Loader loader;
 
 	/**
 	 * Target
@@ -28,6 +30,9 @@ public class UsbMpc555Loader extends Downloader {
 	 * USB Device
 	 */
 	private Device dev;
+	
+	private UsbMpc555Loader(){		
+	}
 
 	/**
 	 * (non-Javadoc)
@@ -37,21 +42,52 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	public synchronized void init() throws DownloaderException {
 		baseAddress = Configuration.getValueFor(HString.getHString("IMB"));
-
-		// open Usb-Connection
-		openConnection();
-
-		// Make a reset on target
-		resetTarget();
+		
+		//check if connection is open
+		if(!this.isConnected()){
+			this.openConnection();
+		}
+		this.resetTarget();
+	
 		// initialize Memory
 		initRegisters();
 
 		// clear the GPRs
 		clearGPRs();
 
+		//TODO remove this its only for testing*****************
+		long b = Long.valueOf(0x4004000000000000l); //2.5 
+		setFPR(0, b);
+		setFPR(1, b);
+		setFPR(2, b);
+		setFPR(3, b);
+		setFPR(4, b);
+		setFPR(5, b);
+		setFPR(6, b);
+		setFPR(7, b);
+		setFPR(8, b);		
+		//********************************************************
+		
 		// Write the code down
 		writeCode();
+		
+		
 
+	}
+	
+	public static UsbMpc555Loader getInstance(){
+		if(loader == null){
+			loader = new UsbMpc555Loader();
+			try {
+				// open Usb-Connection
+				loader.openConnection();
+				// Make a reset on target
+				loader.resetTarget();
+			} catch (DownloaderException e) {
+				e.printStackTrace();
+			}
+		}
+		return loader;
 	}
 
 	// /**
@@ -296,8 +332,9 @@ public class UsbMpc555Loader extends Downloader {
 	 */
 	@Override
 	public synchronized int[] readGPRs() throws DownloaderException {
-		RegisterMap regMap = Configuration.getRegisterMap();
-		int[] gprs = new int[regMap.getNofGprs()];
+		//RegisterMap regMap = Configuration.getRegisterMap();
+		//int[] gprs = new int[regMap.getNofGprs()]; TODO this it the orignal line
+		int[] gprs = new int[32];
 		for (int j = 0; j < gprs.length; j++) {
 			gprs[j] = getGPR(j);
 		}
@@ -354,7 +391,8 @@ public class UsbMpc555Loader extends Downloader {
 	 * @throws DownloaderException
 	 */
 	public synchronized void clearGPRs() throws DownloaderException {
-		for (int i = 0; i < Configuration.getRegisterMap().getNofGprs(); i++) {
+		//for (int i = 0; i < Configuration.getRegisterMap().getNofGprs(); i++) {TODO this it the orignal line
+		for (int i = 0; i < 32; i++){
 			setGPR(i, 0);
 		}
 	}
