@@ -437,6 +437,7 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	}
 
 	public static Segment[] getSysTabSegments() {
+		segsCount = 0;//reset if it was used befor
 		collectSegmentsForAttributes((1 << atrSysTab));
 		Segment[] sysTabSegs = new Segment[segsCount];
 		for(int i = 0; i < segsCount; i++){
@@ -523,6 +524,7 @@ public class Configuration implements ErrorCodes, IAttributes  {
 		nofStackSegments = 0;
 		heaps = new Segment[maxNumbersOfHeaps];
 		stacks = new Segment[maxNumbersOfStacks];
+		
 	}
 	
 	public static SystemClass getSystemPrimitives(){
