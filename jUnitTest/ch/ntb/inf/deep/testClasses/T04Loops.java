@@ -88,5 +88,43 @@ public class T04Loops {
 			
 		}
 	}
+	
+	private void whileAfterWhile(int a) {
+		int b = 10;
+		do a--; while(a < -1);
+		b++;
+		while (b == 0) {
+			int c = a * 2;
+			int d = c - b;
+			if (c > 1) break;
+			int e = c + d;
+			b++;
+		}
+		int f = 2 + b;
+	}
 
+	private void while2() {
+		int a = 10;
+		do a--; while(a > -1);
+		int b = 20;
+		while (b == 0) {
+			int c = a * 2;
+			int d = a -1;
+			int e = a + b;
+			b--;
+		}
+		int f = 2 + b;
+	}
+
+	private void while3() {
+		int a = 10;
+		int b = 20;
+		while (b == 0) {
+			int c = a * 2;
+			int d = a -1;
+			int e = a + b;
+			b--;
+		}
+		int f = 2 + b;
+	}
 }
