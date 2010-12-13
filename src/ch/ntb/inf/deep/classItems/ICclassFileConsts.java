@@ -30,10 +30,9 @@ public interface ICclassFileConsts {
 		apfEnumArray = 12, // 0x1000, flag of enum arrays (Enum[] ENUM$VALUES) and enum switch table (int[] $SWITCH_TABLE$...)
 		apfEnum = 14, // 0x4000, enum (class)
 
-		dpfDeprecated = 13, // deprecated field or method
-		dpfSynthetic = 15; // synthetic field or method (items not in source text, deep in-line methods)
+		dpfDeprecated = 13; // deprecated field or method
 
-	byte dpfBase = 16; // base flag number of deep property flags
+	byte dpfBase = 15; // base flag number of deep property flags
 	byte// flag numbers of deep property flags,  mnemonics in: debug.IClassFileConstMnemonics
 		//--- class flags:
 		dpfClassLoaded = dpfBase+0,	// class loaded
@@ -49,30 +48,34 @@ public interface ICclassFileConsts {
 
 		//--- method flags:
 		dpfCommand = dpfBase+8,	// method is a command, i.e. this method is invoked by an outside client
-		dpfSysPrimitive = dpfBase+9,	// method is a system primitive
-		dpfExcHnd = dpfBase+10,	// method is an exception handler, i.e. this method is invoked by hardware
-		dpfCall = dpfBase+11,	// method gets called by the bc instructions invokestatic or invokevirtual
-		dpfInterfCall = dpfBase+12,	// method gets invoked by the bc instruction invokeinterface
-		dpfExcHndCall = dpfBase+13,	// method gets invoked directly or indirectly by an exception handler method
-		dpfNew = dpfBase+14,	// method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
-		dpfUnsafe = dpfBase+15;	// method is unsafe
+		dpfCall = dpfBase+9,	// method gets called by the bc instructions invokestatic or invokevirtual
+		dpfInterfCall = dpfBase+10,	// method gets invoked by the bc instruction invokeinterface
+		dpfExcHndCall = dpfBase+11,	// method gets invoked directly or indirectly by an exception handler method
+		dpfExcHnd = dpfBase+12,	// method is an exception handler, i.e. this method is invoked by hardware
 
-	int apfSetJavaAccAndProperties = (1<<dpfBase)-1 & ~( (1<<dpfDeprecated)|(1<<dpfSynthetic) );
-	
+		dpfNew = dpfBase+13,	// method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
+		dpfUnsafe = dpfBase+14,	// method is unsafe
+		dpfSysPrimitive = dpfBase+15,	// method is a system primitive
+		dpfSynthetic = dpfBase+16; // synthetic field or method (items not in source text, deep in-line methods)
+
+	int apfSetJavaAccAndProperties = (1<<apfEnum)|(1<<apfEnumArray)|(1<<apfStrict)|(1<<apfAbstract)|(1<<apfInterface)
+			|(1<<apfNative)	|(1<<apfTransient)|(1<<apfVolatile)|(1<<apfSynchronized) |(1<<apfSuper) |(1<<apfFinal)
+			|(1<<apfStatic) |(1<<apfProtected) |(1<<apfPrivate) |(1<<apfPublic);
+
 	int dpfSetClassProperties =(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded)|(1<<dpfSynthetic)|(1<<dpfDeprecated);
 
 	int dpfSetFieldProperties = dpfConst | dpfReadAccess | dpfWriteAccess;
 
-	int dpfSetMethProperties = (1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfExcHndCall)|(1<<dpfInterfCall)|(1<<dpfCall)|(1<<dpfExcHnd)|(1<<dpfSysPrimitive)|(1<<dpfCommand)
+	int dpfSetMethProperties =
+		 (1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfExcHndCall)|(1<<dpfInterfCall)|(1<<dpfCall)|(1<<dpfExcHnd)|(1<<dpfSysPrimitive)|(1<<dpfCommand)
 		|(1<<dpfSynthetic)|(1<<dpfDeprecated);
-
 	int sysMethCodeMask = 0xFFF; // 12 least significant bits, the system method code is defined within the configuration specification
 	int dpfSetSysMethProperties = dpfSetMethProperties;
 
-	int dpfSetSysClassProperties = dpfSetClassProperties | dpfSetMethProperties;
+	int dpfSetSysClassProperties = dpfSetClassProperties | dpfSetSysMethProperties;
 	int dpfSetProperties = dpfSetClassProperties|dpfSetSysClassProperties | dpfSetMethProperties | dpfSetSysMethProperties;
-//	int dpfSetSysMethAttributes = dpfSetSysMethProperties | sysMethCodeMask;
 
+//	int dpfSetSysMethAttributes = dpfSetSysMethProperties | sysMethCodeMask;
 // moved to config specification
 //	int// deep system primitive identifiers (0xFFFF'FCMM: F= Flags, C= system class number, MM-method number
 //		dscUS = 0x000, // deep system class: deep/UNSAFE/US,  dscUS = system class 0
@@ -87,21 +90,21 @@ public interface ICclassFileConsts {
 //		dspiGETBIT = dscUS+0x09,
 //		
 //		dspiASM  = dscUS+0x0A;
-
-	int
-		dscLL = 0x100, // deep system class: deep/lowLevel/LL,  dscLL = system class 1
-		dspiMostSign1BitNr = dscLL+0x01,
-		dspiLeastSign1BitNr = dscLL+0x02,
-		dspiGetBit = dscLL+0x03,
-		dspiIsPowerOf2 = dscLL+0x04,
-		dspiNextPowerOf2 = dscLL+0x05;
-
-	int
-		dscHeap = 0x200, // deep system class: deep/runtime/Heap,  dscHeap = system class 2
-		dspiNewObject = dscHeap+0x01, // bc 187
-		dspiNewPrimitiveArray = dscHeap+0x02, // bc 188
-		dspiNewReferenceArray = dscHeap+0x03, // bc 189
-		dspiNewMultiDimArray = dscHeap+0x04; // bc 197
+//
+//	int
+//		dscLL = 0x100, // deep system class: deep/lowLevel/LL,  dscLL = system class 1
+//		dspiMostSign1BitNr = dscLL+0x01,
+//		dspiLeastSign1BitNr = dscLL+0x02,
+//		dspiGetBit = dscLL+0x03,
+//		dspiIsPowerOf2 = dscLL+0x04,
+//		dspiNextPowerOf2 = dscLL+0x05;
+//
+//	int
+//		dscHeap = 0x200, // deep system class: deep/runtime/Heap,  dscHeap = system class 2
+//		dspiNewObject = dscHeap+0x01, // bc 187
+//		dspiNewPrimitiveArray = dscHeap+0x02, // bc 188
+//		dspiNewReferenceArray = dscHeap+0x03, // bc 189
+//		dspiNewMultiDimArray = dscHeap+0x04; // bc 197
 
 	byte//--- attribute indices, mnemonis in: debug.IClassFileConstMnemonics.attributes
 		atxConstantValue = 0,

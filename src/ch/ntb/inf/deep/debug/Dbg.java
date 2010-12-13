@@ -41,9 +41,6 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 		assert namesStartwithElemNr >= 0 && namesStartwithElemNr < 32: "pre2";
 		StringBuilder sb = new StringBuilder();
 
-//		sb.append("0x");
-//		sb.append(Integer.toHexString(set));
-
 		sb.append('{');
 		if(namesStartwithElemNr > 0) set = set >>> namesStartwithElemNr;
 		int elemNr = 31;

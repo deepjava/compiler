@@ -36,6 +36,12 @@ public class Method extends Item {
 //	public void markCall(){ accAndPropFlags += (1<<dpfCall);  }
 //	public void markInterfaceCall(){ accAndPropFlags += (1<<dpfInterfCall);  }
 
+	void clearCodeAndAssociatedFields(){
+		code = null;
+		localVars  = null;
+		lineNrTab = null;
+	}
+
 	void insertLocalVar(LocalVar locVar){
 		int key = locVar.index;
 		Item lv = localVars[locVar.index], pred = null;
@@ -110,7 +116,9 @@ public class Method extends Item {
 	}
 
 	public void printHeader(){
-		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags);
+		int flags = accAndPropFlags;
+		if( (flags & (1<<dpfSysPrimitive)) != 0 ) flags &=  ~sysMethCodeMask;
+		Dbg.printJavaAccAndPropertyFlags(flags);
 		type.printTypeCategory(); type.printName(); // return type
 		vrb.print(' ');  vrb.print(name);  vrb.print(methDescriptor);
 	}
@@ -126,7 +134,15 @@ public class Method extends Item {
 	public void print(int indentLevel){
 		indent(indentLevel);
 		printHeader();
-		vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags); vrb.println(", nofParams="+nofParams);
+		vrb.print(";//dFlags");
+		if( (accAndPropFlags & (1<<dpfSysPrimitive)) == 0 ) Dbg.printDeepAccAndPropertyFlags(accAndPropFlags);
+		else{
+			Dbg.printDeepAccAndPropertyFlags(accAndPropFlags & ~sysMethCodeMask);
+			vrb.printf("; mAttr=0x%1$3x", accAndPropFlags & sysMethCodeMask);
+		}
+		vrb.println(", nofParams="+nofParams);
+		indent(indentLevel+1);
+		if(this.code == null) vrb.println("- no code"); else vrb.println("code.length="+code.length);
 		printLocalVars(indentLevel+1);
 		printLineNumberTable(indentLevel+1);
 	}

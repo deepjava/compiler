@@ -18,7 +18,7 @@ import ch.ntb.inf.deep.strings.StringTable;
 public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
-	
+
 	// TODO: counting of the methods, fields, interfaces and base classes doas'nt work properly 
 	
 	public Item methods; // list with all methods
@@ -50,9 +50,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //	public int[] targetConstantPool; // pool with float and double constants for the target
 	
 	public Segment codeSegment, varSegment, constSegment; // references to the memory segments for this class
-	
+
 	Class[] imports;
-	
+
 	HString srcFileName; // file ident + ".java", e.g.  String.java  for java/lang/String.java
 	
 	//--- debug fields
