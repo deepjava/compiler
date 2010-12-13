@@ -6,11 +6,12 @@ import java.io.IOException;
 
 import org.eclipse.core.runtime.Path;
 
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Configuration implements ErrorCodes, IAttributes {
+public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts {
 	private static Project project;
 	private static SystemConstants sysConst = SystemConstants.getInstance();
 	private static Consts consts = Consts.getInstance();
@@ -80,7 +81,7 @@ public class Configuration implements ErrorCodes, IAttributes {
 			segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
 		} else {
 			SystemClass tempCls = os.getExceptions();
-			while (tempCls != null) {
+			while (tempCls != null && (tempCls.attributes & (1 << dpfExcHnd)) != 0  && (tempCls != os.getExceptionBaseClass())) {
 				if (tempCls.name.equals(clazz.toString())) {
 					segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
 					break;

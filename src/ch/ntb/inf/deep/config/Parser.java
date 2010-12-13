@@ -57,9 +57,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			sNofsegements = g9 + 10, sKernel = g9 + 11, sExceptionBaseClass = g9 + 12,
 			sUs = g9 + 13, sAddr = g9 + 14, sType = g9 + 15, sRepr = g9 + 16,
 			sLibPath = g9 + 17, sDebugLevel = g9 + 18, sPrintLevel = g9 + 19,
-			sLowlevel = g9 + 20, sClass = g9 + 21, sId = g9 + 22, sException = g9 + 23;
+			sLowlevel = g9 + 20, sClass = g9 + 21, sId = g9 + 22, sException = g9 + 23, sOffset = g9 + 24;
 	// -------- Block keywords: 
-	private static final short g10 = g9 + 24, sMeta = g10,
+	private static final short g10 = g9 + 25, sMeta = g10,
 			sConstants = g10 + 1, sDevice = g10 + 2, sReginit = g10 + 3,
 			sSegment = g10 + 4, sMemorymap = g10 + 5, sMap = g10 + 6,
 			sModules = g10 + 7, sTargetConf = g10 + 8, sProject = g10 + 9,
@@ -365,6 +365,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		case 'o':
 			if (str.equals("operatingsystem")) {
 				sym = sOperatingSystem;
+				return true;
+			}else if(str.equals("offset")){
+				sym = sOffset;
 				return true;
 			}
 		case 'p':
@@ -752,6 +755,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "id";
 		case sException:
 			return "exception";
+		case sOffset:
+			return "offset";
 		case sMeta:
 			return "meta";
 		case sConstants:
@@ -1742,17 +1747,17 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		OperatingSystem os = new OperatingSystem();
 		while (sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException) {
 			if(sym == sException){
-				os.addException(systemClass());
+				os.addException(systemClass(true));
 			}else if (sym == sKernel) {
-				os.setKernel(systemClass());
+				os.setKernel(systemClass(false));
 			} else if (sym == sHeap) {
-				os.setHeap(systemClass());
+				os.setHeap(systemClass(false));
 			} else if (sym == sExceptionBaseClass) {
-				os.setExceptionBaseClass(systemClass());
+				os.setExceptionBaseClass(systemClass(false));
 			} else if (sym == sUs) {
-				os.setUs(systemClass());
+				os.setUs(systemClass(false));
 			} else if (sym == sLowlevel) {
-				os.setLowLevel(systemClass());
+				os.setLowLevel(systemClass(false));
 			}
 		}
 		if (sym != sRBrace) {
@@ -1773,7 +1778,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 	}
 
-	private SystemClass systemClass() {
+	private SystemClass systemClass(boolean isExceptionClass) {
 		boolean isExceptionBase = false;
 		if (!(sym == sKernel || sym == sHeap || sym == sExceptionBaseClass
 				|| sym == sUs || sym == sLowlevel || sym == sException)) {
@@ -1809,6 +1814,10 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			meth = method();
 			clazz.addMethod(meth);
 			clazz.addAttributes(meth.attributes);
+			if(!isExceptionClass && meth.offset != -1){
+				reporter.error("fix addresses for Method are only in exception methods allowed\n");
+				return null;
+			}
 		}
 
 		if (sym != sRBrace) {
@@ -1854,7 +1863,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		next();
-		while (sym == sAttributes || sym == sId || sym  == sAddr) {
+		while (sym == sAttributes || sym == sId || sym  == sOffset) {
 			if (sym == sAttributes) {
 				method.attributes |= attributeAssignment();
 			} else if (sym == sId) {
@@ -1885,8 +1894,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					return null;
 				}
 				next();
-			}else if(sym == sAddr){
-				method.offset = addressAssignment();
+			}else if(sym == sOffset){
+				method.offset = offsetAssignment();
 			}
 		}
 		if (sym != sRBrace) {
@@ -2467,6 +2476,39 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	private int addressAssignment() {
 		int res = Integer.MAX_VALUE;
 		if (sym != sAddr) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFile
+					+ " at Line " + lineNumber
+					+ " expected symbol: addr, received symbol: "
+					+ symToString() + " ");
+			return res;
+		}
+		next();
+		if (sym != sEqualsSign) {
+			nOfErrors++;
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "
+					+ lineNumber + " expected symbol: =, received symbol: "
+					+ symToString() + " ");
+			return res;
+		}
+		next();
+		res = expression();
+
+		if (sym != sSemicolon) {
+			nOfErrors++;
+			reporter.error(errSemicolonMissExp, "in " + currentFile
+					+ " befor Line " + lineNumber
+					+ " expected symbol: ;, received symbol: " + symToString()
+					+ " ");
+			return res;
+		}
+		next();
+		return res;
+	}
+	
+	private int offsetAssignment() {
+		int res = -1;
+		if (sym != sOffset) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber

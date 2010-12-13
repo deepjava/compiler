@@ -1,6 +1,8 @@
 package ch.ntb.inf.deep.config;
 
-public class OperatingSystem {
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+
+public class OperatingSystem implements ICclassFileConsts {
 	private SystemClass kernel;
 	private SystemClass heap;
 	private SystemClass exceptionBaseClass;
@@ -107,7 +109,7 @@ public class OperatingSystem {
 		System.out.println("}");
 
 		SystemClass current = exceptions;
-		while (current != null) {
+		while (current != null && (current.attributes & (1 << dpfExcHnd)) != 0 && (current != exceptionBaseClass)) {
 			for (int i = indentLevel + 1; i > 0; i--) {
 				System.out.print("  ");
 			}
