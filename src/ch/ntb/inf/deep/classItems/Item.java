@@ -28,7 +28,8 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 	
 	public int offset = -1; // relative offset (depends on the type of the item, e.g. the offset of a constant in the constant pool or the offset of a method in the class descriptor)
 	public int address = -1; // the absolute address of this item on the target
-	public int addressOffset = -1; // only used for methods -> TODO @Martin move to Method class and rename
+//	public int addressOffset = -1; // TODO @Martin delete this!
+	public int index = -1; // the index of the item
 	
 	//--- constructors
 	Item(){

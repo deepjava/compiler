@@ -63,13 +63,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(clazz.constPool[i].type == Type.wellKnownTypes[txFloat]) {
 					vrb.println("    constPool[" + i + "] Type: float, Offset: " + c1);
 					clazz.constPool[i].offset = c1;
-					clazz.constPool[i].addressOffset = c1; // TODO @Martin necessary?
 					c1 += Float.SIZE/8;
 				}
 				else if(clazz.constPool[i].type == Type.wellKnownTypes[txDouble]) {
 					vrb.println("    constPool[" + i + "] Type: double, Offset: " + c1);
 					clazz.constPool[i].offset = c1;
-					clazz.constPool[i].addressOffset = c1; // TODO @Martin necessary?
 					c1 += Double.SIZE/8;
 				}
 			}
@@ -129,7 +127,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Method method = (Method)clazz.methods;
 			while(method != null) {
 				vrb.println("    Name: " + method.name + ", Offset: " + c1);
-				method.offset = c1;
+				method.index = c1;
 				c1 += 4;
 				method = (Method)method.next;
 			}
@@ -148,8 +146,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		int codeSize = 0;
 		while(m != null) {
 			if(m.machineCode != null) {
-				m.addressOffset = codeSize;
-				codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
+				if(m.offset <= 0) {
+					m.offset = codeSize;
+					codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
+				}
+				else {
+					codeSize += m.machineCode.iCount * 4; // TODO @Martin: this is not correct, fix it!
+				}
 				vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
 			}
 			m = (Method)m.next;
@@ -266,7 +269,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("  Static fields:");
 			while(field != null) {
 				if((field.accAndPropFlags & (1 << apfStatic)) > 1) { // static/class fields
-					field.address = varBase + field.addressOffset;
+					field.address = varBase + field.offset;
 					vrb.print("    > " + field.name + ": Offset = " + field.offset + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 				}
 				field = field.next;
@@ -278,7 +281,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Method method = (Method)clazz.methods;
 			vrb.println("  Methods:");
 			while(method != null) {
-				method.address = codeBase + method.addressOffset;
+				method.address = codeBase + method.offset;
 				vrb.print("    > " + method.name + ": Offset = " + method.offset + ", Address = 0x" + Integer.toHexString(method.address) + "\n");
 				method = (Method)method.next;
 			}
