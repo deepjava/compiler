@@ -114,7 +114,7 @@ targetconfiguration BootFromFlash {
 targetconfiguration BootFromRam {
     modules {
             kernel, heap: code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables; 
-            exception: code@ExternalFlash.ExceptionCode, const@ExternalFlash.Default, var@InternalRam.Variables;
+            exception: code@InternalFlash.A, const@InternalRam.Constants, var@InternalRam.Variables;
             default: code@ExternalRam.Default, const@ExternalRam.Default, var@ExternalRam.Default;           
     }
 }

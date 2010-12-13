@@ -10,7 +10,7 @@ import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Configuration implements ErrorCodes, IAttributes  {
+public class Configuration implements ErrorCodes, IAttributes {
 	private static Project project;
 	private static SystemConstants sysConst = SystemConstants.getInstance();
 	private static Consts consts = Consts.getInstance();
@@ -20,7 +20,7 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	private static TargetConfiguration activeTarConf;
 	private static OperatingSystem os;
 	private static String location;
-//	private static Class heap;
+	// private static Class heap;
 	private static final int maxNumbersOfHeaps = 4;
 	private static final int maxNumbersOfStacks = 4;
 	private static final int defaultLength = 32;
@@ -30,7 +30,6 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	private static Segment[] stacks = new Segment[maxNumbersOfStacks];
 	private static Segment[] segs;
 	private static int segsCount = 0;
-
 
 	/**
 	 * Returns the first Segment which contains the code for the given
@@ -70,30 +69,39 @@ public class Configuration implements ErrorCodes, IAttributes  {
 
 	private static Segment getSegmentOf(HString clazz, HString contentAttribute) {
 		Segment seg;
-		SegmentAssignment segAss;
-		
+		SegmentAssignment segAss = null;
+
 		// first check if clazz is a system class
-		if (os.getKernel().equals(clazz)) {
-			segAss = activeTarConf
-					.getModuleByName(HString.getHString("kernel"))
-					.getSegmentAssignments();
-		} else if (os.getHeap().equals(clazz)) {
-			segAss = activeTarConf.getModuleByName(HString.getHString("heap"))
-					.getSegmentAssignments();
-		} else if (os.getExceptionBaseClass().equals(clazz)) {
-			segAss = activeTarConf.getModuleByName(
-					HString.getHString("exception")).getSegmentAssignments();
-		} else {// Class is not a system class
-			Module mod =activeTarConf.getModuleByName(clazz);
-			if(mod == null){
-				mod = memoryMap.getModuleByName(clazz);
+		if (os.getKernel().name.equals(clazz)) {
+			segAss = activeTarConf.getModuleByName(HString.getHString("kernel")).getSegmentAssignments();
+		} else if (os.getHeap().name.equals(clazz)) {
+			segAss = activeTarConf.getModuleByName(HString.getHString("heap")).getSegmentAssignments();
+		} else if (os.getExceptionBaseClass().name.equals(clazz)) {
+			segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
+		} else {
+			SystemClass tempCls = os.getExceptions();
+			while (tempCls != null) {
+				if (tempCls.name.equals(clazz.toString())) {
+					segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
+					break;
+				}
+				tempCls = tempCls.next;
 			}
-			if (mod != null) {
-				segAss = mod.getSegmentAssignments();
-			} else {
-				// module for Class not found load default
-				segAss = activeTarConf.getModuleByName(
-						HString.getHString("default")).getSegmentAssignments();
+			if (segAss == null) {
+				// Class is not a system class
+
+				Module mod = activeTarConf.getModuleByName(clazz);
+				if (mod == null) {
+					mod = memoryMap.getModuleByName(clazz);
+				}
+				if (mod != null) {
+					segAss = mod.getSegmentAssignments();
+				} else {
+					// module for Class not found load default
+					segAss = activeTarConf.getModuleByName(
+							HString.getHString("default"))
+							.getSegmentAssignments();
+				}
 			}
 		}
 		while (segAss != null) {
@@ -136,13 +144,14 @@ public class Configuration implements ErrorCodes, IAttributes  {
 		// segment for contentattribute not set
 		return null;
 	}
-	
-	public static Device getFirstDevice(){
+
+	public static Device getFirstDevice() {
 		return memoryMap.getDevices();
 	}
-	
-	public static String[] getSearchPaths(){
-		return new String[]{location + "bin/", project.getLibPath().toString() + "bin/"};
+
+	public static String[] getSearchPaths() {
+		return new String[] { location + "bin/",
+				project.getLibPath().toString() + "bin/" };
 	}
 
 	/**
@@ -176,39 +185,36 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	public static int getNumberOfHeaps() {
 		return nofHeapSegments;
 	}
-	
-	public static HString getHeapClassname(){
+
+	public static HString getHeapClassname() {
 		return HString.getHString(os.getHeap().name);
 	}
-	
-	public static HString getKernelClassname(){
+
+	public static HString getKernelClassname() {
 		return HString.getHString(os.getKernel().name);
 	}
-	
-	
-	public static HString getExceptionClassname(){
+
+	public static HString getExceptionClassname() {
 		return HString.getHString(os.getExceptionBaseClass().name);
 	}
-	
-	
 
-//	public static Class getReferenceToHeapClass() {
-//		if (heap == null) {
-//			HString str = os.getHeap();
-//			int heapHash = str.hashCode();
-//			Class current = Class.classList;
-//			while (current != null) {
-//				if (current.name.hashCode() == heapHash) {
-//					if (current.name.equals(str)) {
-//						heap = current;
-//						break;
-//					}
-//				}
-//				current = (Class) current.next;
-//			}
-//		}
-//		return heap;
-//	}
+	// public static Class getReferenceToHeapClass() {
+	// if (heap == null) {
+	// HString str = os.getHeap();
+	// int heapHash = str.hashCode();
+	// Class current = Class.classList;
+	// while (current != null) {
+	// if (current.name.hashCode() == heapHash) {
+	// if (current.name.equals(str)) {
+	// heap = current;
+	// break;
+	// }
+	// }
+	// current = (Class) current.next;
+	// }
+	// }
+	// return heap;
+	// }
 
 	public static void setOperatingSystem(OperatingSystem os) {
 		Configuration.os = os;
@@ -250,9 +256,9 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	}
 
 	public static void setRegInit(HString name, int initValue) {
-		
+
 		ValueAssignment init = new ValueAssignment(name, initValue);
-		HString register = name.substring(0, name.length()-4);
+		HString register = name.substring(0, name.length() - 4);
 		registerMap.addInitValueFor(register, init);
 	}
 
@@ -271,7 +277,7 @@ public class Configuration implements ErrorCodes, IAttributes  {
 		if (consts == null) {
 			return Integer.MAX_VALUE;
 		}
-		return sysConst.getConstByName(name);		 
+		return sysConst.getConstByName(name);
 	}
 
 	public static int getValueFor(HString constName) {
@@ -280,7 +286,9 @@ public class Configuration implements ErrorCodes, IAttributes  {
 			res = sysConst.getConstByName(constName);
 		}
 		if (res == Integer.MAX_VALUE) {
-			ErrorReporter.reporter.error(errUndefinedConst, constName.toString() + " is not defined\n");
+			ErrorReporter.reporter.error(errUndefinedConst, constName
+					.toString()
+					+ " is not defined\n");
 			Parser.incrementErrors();
 		}
 		return res;
@@ -327,9 +335,9 @@ public class Configuration implements ErrorCodes, IAttributes  {
 				className = fileToCreate.toString();
 				pack = "";
 			}
-			//check if path exists
+			// check if path exists
 			File f = new File(fileToCreate.substring(0, indexOf).toString());
-			if(!f.exists()){
+			if (!f.exists()) {
 				f.mkdirs();
 			}
 			FileWriter fw = new FileWriter(fileToCreate.toString());
@@ -352,26 +360,30 @@ public class Configuration implements ErrorCodes, IAttributes  {
 			}
 			fw.write("\n\t//Registermap GPR\n");
 			Register reg = registerMap.gpr;
-			while(reg != null){
-				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+			while (reg != null) {
+				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
+						+ Integer.toHexString(reg.addr) + ";\n");
 				reg = reg.next;
 			}
 			fw.write("\n\t//Registermap FPR\n");
 			reg = registerMap.fpr;
-			while(reg != null){
-				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+			while (reg != null) {
+				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
+						+ Integer.toHexString(reg.addr) + ";\n");
 				reg = reg.next;
 			}
 			fw.write("\n\t//Registermap SPR\n");
 			reg = registerMap.spr;
-			while(reg != null){
-				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+			while (reg != null) {
+				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
+						+ Integer.toHexString(reg.addr) + ";\n");
 				reg = reg.next;
 			}
 			fw.write("\n\t//Registermap IOR\n");
 			reg = registerMap.ior;
-			while(reg != null){
-				fw.write("\tpublic static final int " +reg.getName() + " = 0x" + Integer.toHexString(reg.addr)+ ";\n");
+			while (reg != null) {
+				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
+						+ Integer.toHexString(reg.addr) + ";\n");
 				reg = reg.next;
 			}
 			fw.write("\n\t//Register inital value\n");
@@ -382,7 +394,7 @@ public class Configuration implements ErrorCodes, IAttributes  {
 						+ Integer.toHexString(initReg.init.getValue()) + ";\n");
 				initReg = initReg.nextWithInitValue;
 			}
-			
+
 			fw.write("}");
 			fw.flush();
 			fw.close();
@@ -433,72 +445,75 @@ public class Configuration implements ErrorCodes, IAttributes  {
 	}
 
 	public static Segment[] getSysTabSegments() {
-		segsCount = 0;//reset if it was used befor
+		segsCount = 0;// reset if it was used befor
 		collectSegmentsForAttributes((1 << atrSysTab));
 		Segment[] sysTabSegs = new Segment[segsCount];
-		for(int i = 0; i < segsCount; i++){
+		for (int i = 0; i < segsCount; i++) {
 			sysTabSegs[i] = segs[i];
 		}
 		return sysTabSegs;
 	}
-	
-	private static void collectSegmentsForAttributes(int attributes){
+
+	private static void collectSegmentsForAttributes(int attributes) {
 		segs = new Segment[defaultLength];
 		Device currDev = memoryMap.getDevices();
-		while(currDev != null){
+		while (currDev != null) {
 			Segment currSeg = currDev.segments;
-			while(currSeg != null){
+			if (currSeg != null) {
 				findSegment(currSeg, attributes);
-				currSeg = currSeg.next;
 			}
 			currDev = currDev.next;
-		}		
+		}
 	}
+
 	private static void findSegment(Segment s, int attributes) {
-		//descend
-		if(s.subSegments != null) findSegment(s.subSegments, attributes);
+		// descend
+		if (s.subSegments != null)
+			findSegment(s.subSegments, attributes);
 		// traverse from left to right
-		if(s.next != null) findSegment(s.next, attributes);
-		if((s.getAttributes() & (1 << atrSysTab)) != 0){
+		if (s.next != null)
+			findSegment(s.next, attributes);
+		if ((s.getAttributes() & (1 << atrSysTab)) != 0) {
 			noticeSegment(s);
 		}
 	}
-	
-	private static void noticeSegment(Segment s){
-		if(s == null) return;
-		if(segsCount >= segs.length){
-			Segment[] temp = new Segment[segs.length*2];
-			for(int i = 0; i < segs.length; i++){
-				temp[i] = segs[i]; 
+
+	private static void noticeSegment(Segment s) {
+		if (s == null)
+			return;
+		if (segsCount >= segs.length) {
+			Segment[] temp = new Segment[segs.length * 2];
+			for (int i = 0; i < segs.length; i++) {
+				temp[i] = segs[i];
 			}
-			segs = temp;			
+			segs = temp;
 		}
-		segs[segsCount++]= s;
+		segs[segsCount++] = s;
 	}
 
-	public static RegisterMap getRegisterMap(){
+	public static RegisterMap getRegisterMap() {
 		return registerMap;
 	}
-	
-	public static String[] getRootClassNames(){
+
+	public static String[] getRootClassNames() {
 		int count = 0;
 		HString classNamesRoot = project.getRootClasses();
 		HString current = classNamesRoot;
-		//count
-		while(current != null){
+		// count
+		while (current != null) {
 			count++;
 			current = current.next;
 		}
-		if(count > 0){
+		if (count > 0) {
 			String[] classNames = new String[count];
-			for(int i = 0; i <count; i++){
-				classNames[i] =classNamesRoot.toString();
+			for (int i = 0; i < count; i++) {
+				classNames[i] = classNamesRoot.toString();
 				classNamesRoot = classNamesRoot.next;
 			}
 			return classNames;
 		}
 		return null;
-		
+
 	}
 
 	public static void clear() {
@@ -515,20 +530,19 @@ public class Configuration implements ErrorCodes, IAttributes  {
 		targetConfig = null;
 		activeTarConf = null;
 		os = null;
-//		heap = null;
+		// heap = null;
 		nofHeapSegments = 0;
 		nofStackSegments = 0;
 		heaps = new Segment[maxNumbersOfHeaps];
 		stacks = new Segment[maxNumbersOfStacks];
-		
+
 	}
-	
-	public static SystemClass getSystemPrimitives(){
+
+	public static SystemClass getSystemPrimitives() {
 		return os.getClassList();
-		}
-	
-	
-	protected static void setActiveTargetConfig(HString targetConfigName){
+	}
+
+	protected static void setActiveTargetConfig(HString targetConfigName) {
 		// determine active configuration if it is not set
 		if (activeTarConf == null) {
 			activeTarConf = targetConfig;
@@ -539,40 +553,45 @@ public class Configuration implements ErrorCodes, IAttributes  {
 				activeTarConf = activeTarConf.next;
 			}
 			if (activeTarConf == null) {
-				ErrorReporter.reporter
-						.error(errInconsistentattributes,
-								"Targetconfiguration which is set is not found\n");
+				ErrorReporter.reporter.error(errInconsistentattributes,
+						"Targetconfiguration which is set is not found\n");
 			}
 		}
-		
+
 	}
-	public static void parseAndCreateConfig(String file, String targetConfigurationName) {
+
+	public static void parseAndCreateConfig(String file,
+			String targetConfigurationName) {
 		int index = file.lastIndexOf('/');
 		HString fileToRead = HString.getHString(file);
 		location = file.substring(0, index + 1);
 		Parser.loc = HString.getHString(location);
 		Parser par = new Parser(fileToRead);
-		//if (importedFiles.size() < 1 || par.hasChanged(file)) {
-			clear();
-			Parser.checksum.add(par.calculateChecksum(fileToRead));
-			Parser.importedFiles.add(fileToRead.substring(index + 1));
-			Parser.locForImportedFiles.add(Parser.loc);
-			par.config();
-		//}
+		// if (importedFiles.size() < 1 || par.hasChanged(file)) {
+		clear();
+		Parser.checksum.add(par.calculateChecksum(fileToRead));
+		Parser.importedFiles.add(fileToRead.substring(index + 1));
+		Parser.locForImportedFiles.add(Parser.loc);
+		par.config();
+		// }
 		setActiveTargetConfig(HString.getHString(targetConfigurationName));
 	}
+
 	public static void main(String[] args) {
-		parseAndCreateConfig("D:/work/Crosssystem/deep/ExampleProject.deep", "BootFromRam");
+		parseAndCreateConfig("D:/work/Crosssystem/deep/ExampleProject.deep",
+				"BootFromRam");
 		Configuration.print();
 		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
-//		String[] names =Configuration.getRootClassNames();
-//		for(int i = 0; i < names.length; i++){
-//			System.out.println(names[i]);
-//		}
-		
+		// String[] names =Configuration.getRootClassNames();
+		// for(int i = 0; i < names.length; i++){
+		// System.out.println(names[i]);
+		// }
+
 		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
-		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
+		Configuration
+				.createInterfaceFile(HString
+						.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
 	}
 }
