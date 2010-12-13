@@ -18,7 +18,7 @@ operatingsystem {
         	class = "ch/ntb/inf/deep/runtime/mpc555/Reset";
         	method reset {
         		attributes = exchnd;
-				addr = 0x100;
+				offset = 0x100;
         	}
         }
         
@@ -27,7 +27,7 @@ operatingsystem {
         	
 #			method systemCall {
 #        		attributes = exchnd;
-#        		addr = 0x200;
+#        		offset = 0x200;
 #        	}
 #       }
         
