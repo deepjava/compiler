@@ -751,66 +751,71 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(verbose) vrb.println("<loadRootClass");
 	}
 
-	private static void loadSystemClass(SystemClass sysClass, int userReqAttributes) throws IOException{
-		final boolean verbose = true;
+	private static int unitedSysMethodFlags(SystemClass systemClass){
+		SystemMethod systemMeth = systemClass.methods;
+		int unitedFlags =  0;
+		if(systemMeth != null)  unitedFlags =  1<<dpfSysPrimitive;
+		while(systemMeth != null){
+			unitedFlags |= (systemMeth.attributes & dpfSetSysMethProperties);
+			systemMeth = systemMeth.next;
+		}
+		return unitedFlags;
+	}
 
-		String systemClassName = sysClass.name;
-		int sysClsAttributes = sysClass.attributes;
+	private static void loadSystemClass(SystemClass systemClass, int userReqAttributes) throws IOException{
+		final boolean verbose = false;
+
+		String systemClassName = systemClass.name;
+		int systemClassAttributes = systemClass.attributes | unitedSysMethodFlags(systemClass);
 
 		if(verbose) vrb.println(">loadSystemClass: "+systemClassName);
-		if(verbose) vrb.printf("  sysClsAttributes1=0x%1$x\n", sysClsAttributes);
+		if(verbose) vrb.printf("  sysClsAttributes1=0x%1$x\n", systemClassAttributes);
 
 		HString hSysClassName = stab.insertCondAndGetEntry(systemClassName);
-		Class sysCls = (Class)getClassByName(hSysClassName);
-		if(sysCls == null){
-			sysCls = new Class(hSysClassName);
-			appendClass(sysCls);
+		Class cls = (Class)getClassByName(hSysClassName);
+		if(cls == null){
+			cls = new Class(hSysClassName);
+			appendClass(cls);
 		}
-		if( (sysClsAttributes & (1<<dpfSynthetic) ) != 0 ){// synthetic class, no loading
-			sysCls.loadClass(0);
-			sysCls.accAndPropFlags &= ~(1<<dpfClassLoaded); // no code loaded
-		}else{//load class and mark methods
-			sysCls.loadClass(userReqAttributes);
-			if( (sysClsAttributes&(1<<dpfNew)) != 0 ){// set up new memory method table
-				SystemMethod meth = sysClass.methods;
-				while(meth != null){
-					Item method = sysCls.methods.getItemByName(meth.name);
-					if(method == null){
-						errRep.error("method "+meth.name +" in system class "+sysClass.name + " not found");
+		cls.loadClass(userReqAttributes);
+		cls.accAndPropFlags |= systemClassAttributes & dpfSetSysClassProperties;
+
+		if( (systemClassAttributes & (1<<dpfNew)) != 0 ){// set up new memory method table
+			SystemMethod systemMeth = systemClass.methods;
+			while(systemMeth != null){
+				Item method = cls.methods.getItemByName(systemMeth.name);
+				if(method == null){
+					errRep.error("method "+systemMeth.name +" in system class "+systemClass.name + " not found");
+				}else{
+					if(verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
+					int methIndex  = (systemMeth.attributes-1)&0xFF;
+					if( methIndex >= nofNewMethods ){
+						errRep.error("method id of"+systemMeth.name +" in system class "+systemClass.name + " out of range");
 					}else{
-						if(verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (sysCls.name + "." + method.name), meth.attributes);
-						int methIndex  = (meth.attributes-1)&0xFF;
-						if( methIndex >= nofNewMethods ){
-							errRep.error("method id of"+meth.name +" in system class "+sysClass.name + " out of range");
-						}else{
-							newMethods[methIndex] = method;
-							if(verbose)vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
-						}
+						if(verbose) vrb.println(" ldSysCls: newMethInx="+methIndex);
+						systemClassAttributes |= method.accAndPropFlags & dpfSetSysMethProperties;
+						newMethods[methIndex] = method;
+						if(verbose)vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
 					}
-					meth = meth.next;
 				}
+				systemMeth = systemMeth.next;
 			}
 		}
 
-		sysCls.accAndPropFlags |= (sysClsAttributes & dpfSetSysClassProperties );
-		int methAttrAddOn = sysCls.accAndPropFlags & dpfSetSysMethProperties ;
-
-		SystemMethod meth = sysClass.methods;
-		while(meth != null){
-			Item method = sysCls.methods.getItemByName(meth.name);
+		//--- update method attributes (with system method attributes)
+		SystemMethod systemMeth = systemClass.methods;
+		Item method = null;
+		while(systemMeth != null){
+			method = cls.methods.getItemByName(systemMeth.name);
 			if(method != null){
-				method.accAndPropFlags |= methAttrAddOn;
+				method.offset = systemMeth.offset;
+				int sysMethAttr = systemMeth.attributes & (dpfSetSysMethProperties | sysMethCodeMask);
+				method.accAndPropFlags =  (method.accAndPropFlags & ~(dpfSetSysMethProperties | sysMethCodeMask) ) |(1<<dpfSysPrimitive) | sysMethAttr;
+				if( (sysMethAttr & (1<<dpfSynthetic)) != 0) ((Method)method).clearCodeAndAssociatedFields();
 			}
-			meth = meth.next;
+			systemMeth = systemMeth.next;
 		}
 
-		if(verbose) vrb.printf("lsc: sysCls.accAndPropFlags=0x%1$x\n", sysCls.accAndPropFlags);
-//
-//		if(verbose){
-//			vrb.println(" system class: "+sysCls.name);
-//			sysCls.print(0);
-//			vrb.println(" end of system class: "+sysCls.name);
-//		}
 		if(verbose) vrb.println("<loadSystemClass");
 	}
 
