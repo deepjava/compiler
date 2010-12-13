@@ -11,9 +11,10 @@ import ch.ntb.inf.deep.classItems.Type;
 public class SSA09 extends TestSSA {
 	@BeforeClass
 	public static void setUp() {
+		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T09Types" };
 		try {
-			Class.buildSystem(rootClassNames, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -28,13 +29,13 @@ public class SSA09 extends TestSSA {
 
 	@Test
 	public void testConstructor() {
-		SSANode[] nodes = getAndTestSSA(1, 1, 0);
+		SSANode[] nodes = getAndTestSSA("<init>", 1, 0);
 		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testM1(){
-		SSANode[] nodes = getAndTestSSA(0, 7, 0);
+		SSANode[] nodes = getAndTestSSA("m1", 7, 0);
 		testNode(nodes[0], 4, 0, 11);
 		testNode(nodes[1], 3, 0, 11);
 		testNode(nodes[2], 1, 0, 11);

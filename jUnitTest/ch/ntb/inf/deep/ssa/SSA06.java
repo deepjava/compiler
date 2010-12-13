@@ -12,9 +12,10 @@ public class SSA06 extends TestSSA {
 
 	@BeforeClass
 	public static void setUp() {
+		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T06Operators" };
 		try {
-			Class.buildSystem(rootClassNames, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -29,13 +30,13 @@ public class SSA06 extends TestSSA {
 
 	@Test
 	public void testConstructor() {
-		SSANode[] nodes = getAndTestSSA(3, 1, 0);
+		SSANode[] nodes = getAndTestSSA("<init>", 1, 0);
 		testNode(nodes[0], 3, 0, 2);
 	}
 	
 	@Test
 	public void testConditionalOperator1() {
-		SSANode[] nodes = getAndTestSSA(0, 11, 0);
+		SSANode[] nodes = getAndTestSSA("ConditionalOperator1", 11, 0);
 		testNode(nodes[0], 5, 0, 6);
 		testNode(nodes[1], 1, 0, 6);
 		testNode(nodes[2], 0, 0, 6);
@@ -51,7 +52,7 @@ public class SSA06 extends TestSSA {
 	
 	@Test
 	public void testConditionalOperator2() {
-		SSANode[] nodes = getAndTestSSA(1, 14, 0);
+		SSANode[] nodes = getAndTestSSA("ConditionalOperator2", 14, 0);
 		testNode(nodes[0], 9, 0, 11);
 		testNode(nodes[1], 1, 0, 11);
 		testNode(nodes[2], 0, 0, 11);

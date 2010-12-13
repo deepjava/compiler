@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.strings.HString;
 
 public class TestSSA implements ICclassFileConsts{
 
@@ -55,10 +56,13 @@ public class TestSSA implements ICclassFileConsts{
 	 * @param nofLoopheaders
 	 * 			  expected number of loop headers in this ssa
 	 */
-	public static SSANode[] getAndTestSSA(int ssaNo, int nofNodes, int nofLoopheaders) {
-		assertEquals("number of nodes not as expected", nofNodes, ssa[ssaNo].getNofNodes());
-		assertEquals("number of loopheaders not as expected",nofLoopheaders,ssa[ssaNo].nofLoopheaders);
-		return ssa[ssaNo].getNodes();
+	public static SSANode[] getAndTestSSA(String methodName, int nofNodes, int nofLoopheaders) {
+		int i = 0;
+		while (i < ssa.length && ! ssa[i].cfg.method.name.equals(HString.getHString(methodName))) i++;
+		assertEquals("number of nodes not as expected", nofNodes, ssa[i].getNofNodes());
+		assertEquals("number of loopheaders not as expected",nofLoopheaders,ssa[i].nofLoopheaders);
+		return ssa[i].getNodes();
 	}
+
 
 }
