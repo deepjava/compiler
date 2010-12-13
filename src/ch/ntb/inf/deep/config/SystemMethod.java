@@ -9,7 +9,7 @@ public class SystemMethod implements ICclassFileConsts{
 	public SystemMethod next;
 	public String name;
 	public int attributes; // e.g. (1<<dpfNew) 
-	public int addr = -1;
+	public int offset = -1;
 
 	public SystemMethod(String name) {
 		this.name = name;

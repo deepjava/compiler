@@ -1886,7 +1886,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				}
 				next();
 			}else if(sym == sAddr){
-				method.addr = addressAssignment();
+				method.offset = addressAssignment();
 			}
 		}
 		if (sym != sRBrace) {
