@@ -41,6 +41,12 @@ public class SSA implements ICclassFileConsts{
 		for (int i = 0; i < nofLoopheaders; i++) {
 			loopHeaders[i].mergeAndDetermineStateArray(this);
 		}
+		//clean up PhiFunctions
+		for (int i = 0; i < nofSortedNodes; i++) {
+			if(!sortedNodes[i].isLoopHeader()){
+				sortedNodes[i].eliminateRedundantPhiFunc();
+			}
+		}
 
 	}
 

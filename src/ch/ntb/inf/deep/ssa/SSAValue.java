@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 
 /**
  * @author   millischer
@@ -19,6 +20,8 @@ public class SSAValue implements SSAValueType {
 	public int memorySlot = -1;
 	public SSAValue join;	// for resolving phi functions
 	public boolean nonVol;	// value resides in volatile or nonvolatile register
+	public PhiFunction owner = null; //only set if the Value is a result of a phiFunction.
+	
 	
 	public SSAValue(){
 	}

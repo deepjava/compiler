@@ -106,6 +106,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 						result.type = SSAValue.tPhiFunc;
 						result.index = i;
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
+						result.owner = phi; 
 						phi.result = result;
 						if(entrySet[i] != null){
 							phi.addOperand(entrySet[i]);
@@ -150,6 +151,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 										result.type = SSAValue.tPhiFunc;
 										result.index = j;
 										PhiFunction phi = new PhiFunction(sCPhiFunc);
+										result.owner = phi; 
 										phi.result = result;
 										entrySet[j]= result;
 										//generate for all already proceed predecessors a loadParameter 
@@ -178,6 +180,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 														result.type = SSAValue.tPhiFunc;
 														result.index = j;
 														PhiFunction phi = new PhiFunction(sCPhiFunc);
+														result.owner = phi; 
 														phi.result = result;
 														phi.addOperand(entrySet[j]);
 														phi.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
@@ -192,6 +195,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 													result.type = SSAValue.tPhiFunc;
 													result.index = j;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
+													result.owner = phi; 
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
 													phi.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
@@ -216,6 +220,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 													result.type = SSAValue.tPhiFunc;
 													result.index = j;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
+													result.owner = phi; 
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
 													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
@@ -249,6 +254,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 													result.type = SSAValue.tPhiFunc;
 													result.index = j;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
+													result.owner = phi; 
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
 													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
@@ -2437,7 +2443,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	 * <pre>  x = [x,x,...,x]</pre>
 	 * can be replaced by x.<p>
 	 */
-	private void eliminateRedundantPhiFunc(){
+	public void eliminateRedundantPhiFunc(){
 		SSAValue tempRes;
 		SSAValue[] tempOperands;
 		int indexOfDiff;
@@ -2454,7 +2460,12 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			//Compare result with operands.
 			//determine if the function is redundant
 			for(int j = 0;j < tempOperands.length; j++){
-				if(!tempRes.equals(tempOperands[j])){
+				if(tempOperands[j].owner != null){// Don't regard virtual deleted PhiFunctions
+					if(tempOperands[j].owner.deleted){
+						continue;
+					}
+				}
+				if(tempRes != (tempOperands[j])){
 					if(diffAlreadyOccured){
 						redundant= false;
 						break;
