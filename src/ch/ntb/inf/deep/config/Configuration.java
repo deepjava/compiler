@@ -269,17 +269,17 @@ public class Configuration implements ErrorCodes, IAttributes  {
 
 	public static int getSysConstValue(HString name) {
 		if (consts == null) {
-			return -1;
+			return Integer.MAX_VALUE;
 		}
 		return sysConst.getConstByName(name);		 
 	}
 
 	public static int getValueFor(HString constName) {
 		int res = consts.getConstByName(constName);
-		if (res == -1) {
+		if (res == Integer.MAX_VALUE) {
 			res = sysConst.getConstByName(constName);
 		}
-		if (res == -1) {
+		if (res == Integer.MAX_VALUE) {
 			ErrorReporter.reporter.error(errUndefinedConst, constName.toString() + " is not defined\n");
 			Parser.incrementErrors();
 		}

@@ -2098,7 +2098,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	}
 
 	private int baseAssignment() {
-		int res = Integer.MAX_VALUE;
+		int res = -1;
 		if (sym != sBase) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
@@ -2117,6 +2117,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		res = expression();
+		if(res == Integer.MAX_VALUE){
+			res = -1;
+		}
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
