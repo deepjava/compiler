@@ -26,8 +26,9 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 	public Item type; // base type for objects of "Class" or "Type" or null
 	public int accAndPropFlags; // access and property flags (see ClassFileConsts)
 	
-	public int offset = -1; // the offset in the data segment on the target, e.g. the offset of a constant in the constant pool or the offset of a method in the class descriptor
+	public int offset = -1; // relative offset (depends on the type of the item, e.g. the offset of a constant in the constant pool or the offset of a method in the class descriptor)
 	public int address = -1; // the absolute address of this item on the target
+	public int addressOffset = -1; // only used for methods -> TODO @Martin move to Method class and rename
 	
 	//--- constructors
 	Item(){
@@ -114,5 +115,14 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 	
 	public void printOffset(){
 		vrb.print("offset = " + offset);
+	}
+	
+	public void printAddress(int indentLevel){
+		indent(indentLevel);
+		printAddress();
+	}
+	
+	public void printAddress(){
+		vrb.print("address = " + address);
 	}
 }
