@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.config.Configuration;
 
 /**
  * @author millischer
@@ -121,8 +122,8 @@ public class SSA implements ICclassFileConsts{
 		int index = cfg.method.getMaxStckSlots();
 		isParam = new boolean[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
 		paramType = new int[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
-		
-		if((flags & (1 << apfStatic)) == 0){//method isn't static
+		//TODO Configuration.isSystemClass is a workaround solve it properly
+		if(((flags & (1 << apfStatic)) == 0) && !Configuration.isSystemClass(cfg.method.owner.name)){//method isn't static
 			isParam[index] = true;
 			paramType[index++] = SSAValue.tRef;
 		}
