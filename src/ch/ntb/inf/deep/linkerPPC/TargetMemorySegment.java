@@ -22,11 +22,19 @@ public class TargetMemorySegment {
 	}
 
 	public void addData(int[] data, int length) {
-		if (data != null && usedSize + length < this.data.length) {
+		if (data != null && usedSize + length <= this.data.length) {
 			for (int i = 0; i < length; i++) {
 				this.data[usedSize + i] = data[i];
 			}
 			this.usedSize += length;
+		}
+		else {
+			System.out.println("++++++++++ NO DATA ADDED ++++++++++");
+			if(data == null) System.out.println("    data is null!");
+			if(data.length == 0) System.out.println("    param: data.length is 0!");
+			System.out.println("    this.usedSize = " + usedSize);
+			System.out.println("    this.data.length = " + this.data.length);
+			System.out.println("    param: length = " + length);
 		}
 	}
 	

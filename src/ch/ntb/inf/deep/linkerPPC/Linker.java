@@ -184,7 +184,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	
 	public static void freezeMemoryMap() {
 	
-		systemTableSize = 9 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses; // TODO @Martin this should'nt be here! Move it to a better place...
+		systemTableSize = 8 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses; // TODO @Martin this should'nt be here! Move it to a better place...
 		
 		// 1) Set a segment for the code, the static fields and the constant block for each class
 		Class c = Type.classList;
@@ -453,13 +453,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		
 		// offset to the beginning of the class references
-		systemTable[0] = 5 + 2 * nOfStacks + 2 * nOfHeaps;
+		systemTable[0] = 6 + 2 * nOfStacks + 2 * nOfHeaps;
 		
 		// offset to the beginning of the stack information 
-		systemTable[1] = 3;
+		systemTable[1] = 4;
 		
-		// offset to the beginning of the
-		systemTable[2] = 2 + 2 * nOfStacks;
+		// offset to the beginning of the heap information
+		systemTable[2] = 3 + 2 * nOfStacks;
 		
 		Item c = Type.classList;
 		
@@ -537,18 +537,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			clazz = (Class)clazz.next;
 		}
-		Segment[] s = Configuration.getHeapSegments();
-		for(int i = 0; i < s.length; i++) {
-			addTargetMemorySegment(s[i].tms);
-		}
-		s = Configuration.getStackSegments();
-		for(int i = 0; i < s.length; i++) {
-			addTargetMemorySegment(s[i].tms);
-		}
-		s = Configuration.getSysTabSegments();
-		for(int i = 0; i < s.length; i++) {
-			addTargetMemorySegment(s[i].tms);
-		}
+	//	Segment[] s = Configuration.getHeapSegments();
+	//	for(int i = 0; i < s.length; i++) {
+	//		addTargetMemorySegment(s[i].tms);
+	//	}
+	//	s = Configuration.getStackSegments();
+	//	for(int i = 0; i < s.length; i++) {
+	//		addTargetMemorySegment(s[i].tms);
+	//	}
+		Segment[] s = Configuration.getSysTabSegments();
+		s[0].tms.addData(systemTable);
+		addTargetMemorySegment(s[0].tms);
 	}
 	
 	public static int getSizeOfObject() {
