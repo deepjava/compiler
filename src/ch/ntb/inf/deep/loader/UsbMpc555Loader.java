@@ -42,20 +42,23 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	public synchronized void init() throws DownloaderException {
 		baseAddress = Configuration.getValueFor(HString.getHString("IMB"));
+		System.out.println("++++++++ Open Device!+++++++++");
 		
 		//check if connection is open
 		if(!this.isConnected()){
 			this.openConnection();
 		}
+		System.out.println("++++++++ Reset Target!+++++++++");
 		this.resetTarget();
 	
+		System.out.println("++++++++ init Registers and write Code!+++++++++");
 		// initialize Memory
 		initRegisters();
 
 		// clear the GPRs
 		clearGPRs();
 
-		//TODO remove this its only for testing*****************
+		/*//TODO remove this its only for testing*****************
 		long b = Long.valueOf(0x4004000000000000l); //2.5 
 		setFPR(0, b);
 		setFPR(1, b);
@@ -67,9 +70,10 @@ public class UsbMpc555Loader extends Downloader {
 		setFPR(7, b);
 		setFPR(8, b);		
 		//********************************************************
-		
+		*/
 		// Write the code down
 		writeCode();
+		System.out.println("++++++++ Download finished!+++++++++");
 		
 		
 
@@ -290,6 +294,7 @@ public class UsbMpc555Loader extends Downloader {
 	 */
 	@Override
 	public synchronized void startTarget() throws DownloaderException {
+		System.out.println("++++++++ Start Target!+++++++++");
 		try {
 			mpc.go();
 		} catch (BDIException e) {
