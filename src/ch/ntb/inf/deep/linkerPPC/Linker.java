@@ -366,7 +366,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		
 		// 4) String pool
-		int stringPoolOffset = classDescriptorOffset + clazz.classDescriptorSize / 4;
+		int stringPoolOffset = classDescriptorOffset + clazz.classDescriptorSize / 4 + 1;
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				int index = clazz.constPool[i].offset/4;
@@ -677,7 +677,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		Item f;
 		int cc = 0, mc = 0, fc = 0;
 		while(c != null) {
-			vrb.println("  Class: " + c.name + " (" + cc++ + ")");
+			vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
 			vrb.println("    Number of class methods: " + c.nOfClassMethods);
 			vrb.println("    Number of instance methods: " + c.nOfInstanceMethods);
 			vrb.println("    Number of class fields: " + c.nOfClassFields);
@@ -701,7 +701,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(m == null) vrb.println("      No methods in this class");
 			else {
 				while(m != null) {
-					vrb.println("      > Method: " + m.name + " (" + mc++ + ")");
+					vrb.println("      > Method: " + m.name + " (#" + mc++ + ")");
 					vrb.println("        Access and property flags: 0x" + Integer.toHexString(m.accAndPropFlags));
 					vrb.println("        Absolute address: 0x" + Integer.toHexString(m.address));
 					vrb.println("        Address offset: 0x" + Integer.toHexString(m.offset));
@@ -716,7 +716,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(f == null) vrb.println("      No fields in this class");
 			else {
 				while(f != null) {
-					vrb.println("      > Field: " + f.name + " (" + fc++ + ")");
+					vrb.println("      > Field: " + f.name + " (#" + fc++ + ")");
 					vrb.println("        Access and property flags: 0x" + Integer.toHexString(f.accAndPropFlags));
 					vrb.println("        Absolute address: 0x" + Integer.toHexString(f.address));
 					vrb.println("        Address offset: 0x" + Integer.toHexString(f.offset));
