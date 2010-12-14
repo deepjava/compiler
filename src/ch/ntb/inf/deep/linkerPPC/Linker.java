@@ -126,7 +126,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
-				vrb.println("    Name: " + method.name + ", Offset: " + c1);
+				vrb.println("    Name: " + method.name + ", Index: " + c1);
 				method.index = c1;
 				c1 += 4;
 				method = (Method)method.next;
@@ -426,7 +426,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		clazz.constantBlock[clazz.constantBlock.length - 1] = 0; // TODO implement crc32 checksum
 		
 		// print
-		clazz.printConstantBlock();
+	//	clazz.printConstantBlock();
 		
 		vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
 	}
@@ -669,4 +669,71 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			tms = tms.next;
 		}
 	}
+
+	public static void printClassList() {
+		vrb.println("\n[LINKER] PRINT: This is a list of all classes with their methodes, fields and constant blocks\n");
+		Class c = Type.classList;
+		Method m;
+		Item f;
+		int cc = 0, mc = 0, fc = 0;
+		while(c != null) {
+			vrb.println("  Class: " + c.name + " (" + cc++ + ")");
+			vrb.println("    Number of class methods: " + c.nOfClassMethods);
+			vrb.println("    Number of instance methods: " + c.nOfInstanceMethods);
+			vrb.println("    Number of class fields: " + c.nOfClassFields);
+			vrb.println("    Number of instance fields: " + c.nOfInstanceFields);
+			vrb.println("    Number of interfaces: " + c.nOfInterfaces);
+			vrb.println("    Number of base classes: " + c.nOfBaseClasses);
+			vrb.println("    Number of references: " + c.nOfReferences);
+			vrb.println("    Machine code size: " + c.machineCodeSize + " byte");
+			vrb.println("    Constant block size: " + c.constantBlockSize + " byte");
+			vrb.println("    Class fields size: " + c.classFieldsSize + " byte");
+			vrb.println("    Code offset: 0x" + Integer.toHexString(c.codeOffset));
+			vrb.println("    Var offset: 0x" + Integer.toHexString(c.varOffset));
+			vrb.println("    Const offset: 0x" + Integer.toHexString(c.constOffset));
+			vrb.println("    Code segment: " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
+			vrb.println("    Var segment: " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
+			vrb.println("    Const segment: " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
+			
+			vrb.println("    Method list:");
+			m = (Method)c.methods;
+			mc = 0;
+			if(m == null) vrb.println("      No methods in this class");
+			else {
+				while(m != null) {
+					vrb.println("      > Method: " + m.name + " (" + mc++ + ")");
+					vrb.println("        Access and property flags: 0x" + Integer.toHexString(m.accAndPropFlags));
+					vrb.println("        Absolute address: 0x" + Integer.toHexString(m.address));
+					vrb.println("        Address offset: 0x" + Integer.toHexString(m.offset));
+					vrb.println("        CD offset: 0x" + Integer.toHexString(m.index));
+					m = (Method)m.next;
+				}
+			}
+			
+			vrb.println("    Field list:");
+			f = c.fields;
+			fc = 0;
+			if(f == null) vrb.println("      No fields in this class");
+			else {
+				while(f != null) {
+					vrb.println("      > Field: " + f.name + " (" + fc++ + ")");
+					vrb.println("        Access and property flags: 0x" + Integer.toHexString(f.accAndPropFlags));
+					vrb.println("        Absolute address: 0x" + Integer.toHexString(f.address));
+					vrb.println("        Address offset: 0x" + Integer.toHexString(f.offset));
+					f = f.next;
+				}
+			}
+			
+			vrb.println("    Constant block:");
+			c.printConstantBlock(2);
+			
+			c = (Class)c.next;
+			
+			vrb.println("  ----------------------------------------------------------------------");
+		}
+		
+		vrb.println("\n[LINKER] PRINT: End of class list\n");
+	}
+
+
 }
