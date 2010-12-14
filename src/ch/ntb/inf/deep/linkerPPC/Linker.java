@@ -23,6 +23,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
 
+	public static TargetMemorySegment targetImage;
+	private static TargetMemorySegment lastTargetMemorySegment;
+
 	private static final int stringHeaderSize = 4; // byte
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 
@@ -32,10 +35,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static Segment[] usedSegments = new Segment[100]; // TODO remove this
 	private static int usedSegmentsIndex = 0; // TODO remove this
 	
-	
-	public static TargetMemorySegment targetImage;
-	private static TargetMemorySegment lastTargetMemorySegment;
-
 	private static int[] systemTable;
 	private static int systemTableSize;
 
@@ -269,7 +268,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("  Static fields:");
 			while(field != null) {
 				if((field.accAndPropFlags & (1 << apfStatic)) > 1) { // static/class fields
-					field.address = varBase + field.offset;
+					if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 					vrb.print("    > " + field.name + ": Offset = " + field.offset + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 				}
 				field = field.next;
@@ -281,7 +280,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Method method = (Method)clazz.methods;
 			vrb.println("  Methods:");
 			while(method != null) {
-				method.address = codeBase + method.offset;
+				if(codeBase != -1 && method.offset != -1) method.address = codeBase + method.offset;
 				vrb.print("    > " + method.name + ": Offset = " + method.offset + ", Address = 0x" + Integer.toHexString(method.address) + "\n");
 				method = (Method)method.next;
 			}
@@ -561,7 +560,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	
-	/* ---------- private helper methods ---------- */	
+	/* ---------- private helper methods ---------- */
 	
 	private static void setBaseAddress(Segment s, int baseAddress) {
 		//descend
@@ -734,6 +733,5 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		vrb.println("\n[LINKER] PRINT: End of class list\n");
 	}
-
 
 }
