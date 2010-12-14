@@ -184,7 +184,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	
 	public static void freezeMemoryMap() {
 	
-		systemTableSize = 8 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses;
+		systemTableSize = 9 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses; // TODO @Martin this should'nt be here! Move it to a better place...
 		
 		// 1) Set a segment for the code, the static fields and the constant block for each class
 		Class c = Type.classList;
@@ -227,7 +227,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		Segment[] sysTabs = Configuration.getSysTabSegments();
 		if(sysTabs != null) {
 			for(int i = 0; i < sysTabs.length; i++) {
-				sysTabs[i].addToRequiredSize(systemTableSize); // TODO don't use the same size for each system table!
+				sysTabs[i].addToRequiredSize(systemTableSize * 4); // TODO @Martin: don't use the same size for each system table!
 			}
 		}
 		else reporter.error(9445, "Fatal Error: no Systemtable defined!\n"); // TODO define drror number
@@ -545,7 +545,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		for(int i = 0; i < s.length; i++) {
 			addTargetMemorySegment(s[i].tms);
 		}
-		// TODO add Systemtable
+		s = Configuration.getSysTabSegments();
+		for(int i = 0; i < s.length; i++) {
+			addTargetMemorySegment(s[i].tms);
+		}
 	}
 	
 	public static int getSizeOfObject() {
