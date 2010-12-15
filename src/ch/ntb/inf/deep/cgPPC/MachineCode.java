@@ -95,7 +95,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		
 		System.out.println("allocate registers");
 		RegAllocator.assignRegisters(this);
-		ssa.print(0);
+//		ssa.print(0);
 		
 		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// no prolog
 		} else if (ssa.cfg.method.name.equals(HString.getHString("interrupt"))) {
@@ -163,7 +163,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			insertEpilog(stackSize);
 			insertProlog();
 		}
-		print();
+//		print();
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
@@ -274,7 +274,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
-			System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode]);
+//			System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -1621,12 +1621,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	public void doFixups() {
 		int currInstr = lastFixup;
 		int currFixup = fCount - 1;
-		System.out.println("########## fCount = " + fCount);
+//		System.out.println("########## fCount = " + fCount);
 		while (currFixup >= 0) {
-			if( fixups[currFixup] == null) System.out.println("########## fixups = null");
-			System.out.println("########## fixups.lenght = " + fixups.length);
-			System.out.println("########## currFixup = " + currFixup);
-			int addr = fixups[currFixup].address;
+//			if( fixups[currFixup] == null) System.out.println("########## fixups = null");
+//			System.out.println("########## fixups.lenght = " + fixups.length);
+//			System.out.println("########## currFixup = " + currFixup);
+			Item item = fixups[currFixup];
+			int addr;
+			if (item == null) // item is null if constant is null is loaded (aconst_null) 
+				addr = 0;
+			else 
+				addr = fixups[currFixup].address;
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
 			if ((low >> 15) == 0) high++;

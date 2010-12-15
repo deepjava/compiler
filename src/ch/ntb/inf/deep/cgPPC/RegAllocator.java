@@ -293,7 +293,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							joinVal.reg = reserveReg(gpr, res.nonVol);
 							res.reg = joinVal.reg;
 							regAtIndex[joinVal.index] = joinVal.reg;
-							System.out.println("register reserved for phi function at "+joinVal.n+" reg = " + joinVal.reg);
+//							System.out.println("register reserved for phi function at "+joinVal.n+" reg = " + joinVal.reg);
 						}
 					}
 				} else // assign same register as phi function

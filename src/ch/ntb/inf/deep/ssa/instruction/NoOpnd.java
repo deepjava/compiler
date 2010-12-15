@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.ssa.instruction;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.SSAValue;
+import ch.ntb.inf.deep.strings.HString;
 
 public class NoOpnd extends SSAInstruction {
 	
@@ -43,8 +44,9 @@ public class NoOpnd extends SSAInstruction {
 				}
 				System.out.print(" (" + result.typeName() + ")");
 			} else {
-//				System.out.print(result.constant + " (" + result.typeName() + ")");
-			//TODO	System.out.print(((StringLiteral)result.constant).string);
+				StringLiteral str = (StringLiteral)result.constant;
+				if (str != null) System.out.print(str.string);
+				System.out.print(" (" + result.typeName() + ")");
 			}
 		else
 			System.out.print("(" + result.typeName() + ")");
