@@ -150,7 +150,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
 				}
 				else {
-					codeSize += m.machineCode.iCount * 4; // TODO @Martin: this is not correct, fix it!
+					if(codeSize < m.machineCode.iCount * 4 + m.offset) codeSize = m.machineCode.iCount * 4 + m.offset;
 				}
 				vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
 			}
@@ -163,7 +163,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		vrb.print("  2) Constant block: ");
 		// constant block size
-		clazz.classDescriptorSize = (clazz.nOfMethods + clazz.nOfInterfaces + clazz.nOfBaseClasses + 3) * 4;
+		clazz.classDescriptorSize = (clazz.nOfInstanceMethods + clazz.nOfInterfaces + clazz.nOfBaseClasses + 3) * 4;
 		clazz.constantBlockSize = 4 // constBlockSize field
 								+ 4 // codeBase field
 								+ 4 // codeSize field
@@ -298,7 +298,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("  Constant block size: " + clazz.constantBlockSize + " byte -> array size: " + clazz.constantBlock.length);
 		vrb.println("  Number of references: " + clazz.nOfReferences);
 		vrb.println("  Class descriptor size: " + clazz.classDescriptorSize + " byte");
-		vrb.println("  Number of methods: " + clazz.nOfMethods);
+		vrb.println("  Number of instance methods: " + clazz.nOfInstanceMethods);
 		vrb.println("  Number of interfaces: " + clazz.nOfInterfaces);
 		
 		
@@ -326,13 +326,16 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		
 		// 3) Class descriptor 
-		// 3a) Insert method addresses
+		// 3a) Insert instance method addresses
 		int classDescriptorOffset = 6 + clazz.nOfReferences;
-		if(clazz.nOfMethods > 0) {
+		int imc = 0;
+		if(clazz.nOfInstanceMethods > 0) {
 			Method m = (Method)clazz.methods;
-			for(int i = 0; i < clazz.nOfMethods; i++) {
-				assert m != null: "ERROR: Method is NULL! Current Method: " + i + "/" + clazz.nOfMethods;
-				clazz.constantBlock[classDescriptorOffset + clazz.nOfMethods - i] = m.address;
+			while(m != null) {
+				if((m.accAndPropFlags & (1 << apfStatic)) == 0 && (m.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+					clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods - imc] = m.address;
+					imc++;
+				}
 				m = (Method)m.next;
 			}
 		}
@@ -341,25 +344,25 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(clazz.nOfInterfaces > 0) {
 			for(int i = 0; i < clazz.nOfInterfaces; i++) {
 				assert clazz.interfaces[i] != null: "ERROR: Interface is NULL! Current Interface: " + i +"/" + clazz.nOfInterfaces;
-				clazz.constantBlock[classDescriptorOffset + clazz.nOfMethods + clazz.nOfInterfaces - i] = clazz.interfaces[i].address;
+				clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces - i] = clazz.interfaces[i].address;
 			}
 		}
 		
 		// 3c) Insert extension level
-		clazz.constantBlock[classDescriptorOffset + clazz.nOfMethods + clazz.nOfInterfaces + 1] = clazz.nOfBaseClasses;
+		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 1] = clazz.nOfBaseClasses;
 		
 		// 3d) Insert size
-		clazz.constantBlock[classDescriptorOffset + clazz.nOfMethods + clazz.nOfInterfaces + 2] = clazz.objectSizeOrDim;
+		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 2] = clazz.objectSizeOrDim;
 		
 		// 3e) Insert class name address
-		clazz.constantBlock[classDescriptorOffset + clazz.nOfMethods + clazz.nOfInterfaces + 3] = 0x12345678; // TODO set the right value here!
+		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 3] = 0x12345678; // TODO set the right value here!
 		
 		// 3f) Insert base classes
 		if(clazz.nOfBaseClasses > 0) {
 			Class bc = (Class)clazz.type;
 			for(int i = 0; i < clazz.nOfBaseClasses; i++) {
 				assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.nOfBaseClasses;
-				clazz.constantBlock[classDescriptorOffset + clazz.nOfMethods + clazz.nOfInterfaces + 3 + i] = bc.address;
+				clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 3 + i] = bc.address;
 				bc = (Class)bc.type;
 			}
 		}
@@ -456,10 +459,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		systemTable[0] = 6 + 2 * nOfStacks + 2 * nOfHeaps;
 		
 		// offset to the beginning of the stack information 
-		systemTable[1] = 4;
+		systemTable[1] = 5;
 		
 		// offset to the beginning of the heap information
-		systemTable[2] = 3 + 2 * nOfStacks;
+		systemTable[2] = 5 + 2 * nOfStacks;
 		
 		Item c = Type.classList;
 		
@@ -518,36 +521,39 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void generateTargetImage() {
+		
+		vrb.println("[LINKER] START: Generating target image:\n");
+		
 		Class clazz = Type.classList;
 		Method m;
 		while(clazz != null) {
+			vrb.println("  Proceeding class \"" + clazz.name + "\":");
 			// code
 			m = (Method)clazz.methods;
+			vrb.println("    1) Code:");
 			while(m != null) {
 				if(m.machineCode != null) {
-					clazz.codeSegment.tms.addData(m.machineCode.instructions, m.machineCode.iCount);
+					vrb.println("         > Method \"" + m.name + "\":");
+					clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions);
 					addTargetMemorySegment(clazz.codeSegment.tms);
 				}
 				m = (Method)m.next;
 			}
 			
 			// consts
-			clazz.constSegment.tms.addData(clazz.constantBlock);
+			vrb.println("    2) Constantblock:");
+			clazz.constSegment.tms.addData(clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock);
 			addTargetMemorySegment(clazz.constSegment.tms);
 			
 			clazz = (Class)clazz.next;
 		}
-	//	Segment[] s = Configuration.getHeapSegments();
-	//	for(int i = 0; i < s.length; i++) {
-	//		addTargetMemorySegment(s[i].tms);
-	//	}
-	//	s = Configuration.getStackSegments();
-	//	for(int i = 0; i < s.length; i++) {
-	//		addTargetMemorySegment(s[i].tms);
-	//	}
+
+		vrb.println("  Proceeding system table:");
 		Segment[] s = Configuration.getSysTabSegments();
-		s[0].tms.addData(systemTable);
+		s[0].tms.addData(s[0].getBaseAddress(), systemTable);
 		addTargetMemorySegment(s[0].tms);
+		
+		vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
 	public static int getSizeOfObject() {
