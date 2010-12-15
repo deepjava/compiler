@@ -48,6 +48,10 @@ public class SSA implements ICclassFileConsts{
 				sortedNodes[i].eliminateRedundantPhiFunc();
 			}
 		}
+		// clean up PhiFunctins in loop headers
+		for (int i = 0; i < nofLoopheaders; i++) {
+			loopHeaders[i].eliminateRedundantPhiFunc();
+		}
 
 	}
 
