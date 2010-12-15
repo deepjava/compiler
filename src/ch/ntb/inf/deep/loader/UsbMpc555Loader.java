@@ -6,7 +6,6 @@ import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
-import ch.ntb.inf.deep.ui.view.USBLog;
 import ch.ntb.inf.libusbJava.USBException;
 import ch.ntb.mcdp.bdi.BDIException;
 import ch.ntb.mcdp.targets.mpc555.BDI;
@@ -211,7 +210,6 @@ public class UsbMpc555Loader extends Downloader {
 							.getValue());
 					break;
 				case Parser.sIOR:
-					if(!current.getName().equals(HString.getHString("RSR")))
 					mpc.writeMem(current.getAddress(), current.getInit()
 							.getValue(), current.getSize());
 					break;
@@ -239,6 +237,7 @@ public class UsbMpc555Loader extends Downloader {
 							.getInit().getValue());
 					break;
 				case Parser.sIOR:
+					if(!current.getName().equals(HString.getHString("RSR")))
 					checkValue(mpc.readMem(current.getAddress(), current
 							.getSize()), current.getInit().getValue());
 					break;
