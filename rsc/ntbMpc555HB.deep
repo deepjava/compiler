@@ -12,7 +12,6 @@ sysconst {
 	extRamSize   = 0x200000;
 	extFlashBase = 0x1000000;
 	extFlashSize = 0x400000; 
-	excpCodeSize = 0x2000;
 }
 
 memorymap{
@@ -114,7 +113,7 @@ targetconfiguration BootFromFlash {
 targetconfiguration BootFromRam {
     modules {
             kernel, heap: code@InternalRam.Code, const@InternalRam.Constants, var@InternalRam.Variables; 
-            exception: code@InternalFlash.A, const@InternalRam.Constants, var@InternalRam.Variables;
+            exception: code@InternalFlash.A.ExceptionCode, const@InternalRam.Constants, var@InternalRam.Variables;
             default: code@ExternalRam.Default, const@ExternalRam.Default, var@ExternalRam.Default;           
     }
 }
