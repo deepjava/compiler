@@ -130,7 +130,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		// Methods
 		vrb.println("  4) Methods:");
-		c1 = (3 + clazz.nOfInterfaces) * 4; // constant offset for all methods
+		c1 = (2 + clazz.nOfInterfaces) * 4; // constant offset for all methods
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
