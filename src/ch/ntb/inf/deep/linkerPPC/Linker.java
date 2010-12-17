@@ -31,10 +31,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 
 	private static PrintStream vrb = System.out;
 	private static Class object;
-	
-	private static Segment[] usedSegments = new Segment[100]; // TODO remove this
-	private static int usedSegmentsIndex = 0; // TODO remove this
-	
+		
 	private static int[] systemTable;
 	private static int systemTableSize;
 
@@ -54,42 +51,53 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		vrb.println("[LINKER] START: Calculating offsets for class \"" + clazz.name +"\":\n");
 		
-		// Constant pool
+		// TODO @Martin: set all necessary indexes for all fields in a single loop!
+		
+		// Constant Fields (for the constant pool)
 		vrb.println("  1) Constant pool:");
 		c1 = 0; // offset counter for the constant floating point numbers (in byte)
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				if(clazz.constPool[i].type == Type.wellKnownTypes[txFloat]) {
 					vrb.println("    constPool[" + i + "] Type: float, Offset: " + c1);
-					clazz.constPool[i].offset = c1;
+					clazz.constPool[i].index = c1;
 					c1 += Float.SIZE/8;
 				}
 				else if(clazz.constPool[i].type == Type.wellKnownTypes[txDouble]) {
 					vrb.println("    constPool[" + i + "] Type: double, Offset: " + c1);
-					clazz.constPool[i].offset = c1;
+					clazz.constPool[i].index = c1;
 					c1 += Double.SIZE/8;
 				}
 			}
-			clazz.constantPoolSize = roundUpToNextWord(c1);
+			clazz.constantPoolSize = roundUpToNextWord(c1); // set the size of the constant pool of this class
 		}
 		
-		// String pool
+		// Constant strings (for the string pool)
 		vrb.println("  2) String pool:");
 		c1 = 0; // offset counter for the constant strings (in byte)
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				if(clazz.constPool[i].type == Type.wellKnownTypes[txString]) {
 					vrb.println("    constPool[=" + i + "] Type: String, Offset: " + c1);
-					clazz.constPool[i].offset = c1;
+					clazz.constPool[i].index = c1;
 					int stringSize = ((StringLiteral)clazz.constPool[i]).string.sizeInByte();
 					c1 += stringHeaderSize + roundUpToNextWord(stringSize);
 				}
 			}
-			clazz.stringPoolSize = roundUpToNextWord(c1);
+			clazz.stringPoolSize = roundUpToNextWord(c1); // set the size of the constant pool of this class
 		}
 		
-		// Class/static fields
-		vrb.println("  3) Class fields:");
+		// Calculate the total size of all instance fields of all base classes
+		vrb.println("  3a) Calculating the total size of all instance fields of all base classes:");
+		int bcifs = 0;
+		Class bc = (Class)clazz.type;
+		while(bc != null) {
+			bcifs += bc.instanceFieldsSize;
+			bc = (Class)bc.type;
+		}
+		
+		// Fields (the two upper blocks should be integrated here...)
+		vrb.println("  3b) Fields (rest):");
 		c1 = 0; // offset counter for static fields (in byte)
 		c2 = 0; // offset counter for instance fields (in byte)
 		c3 = 0; // counter for the number or static fields which are references to objects
@@ -99,29 +107,30 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			while(field != null) {
 				size = ((Type)field.type).sizeInBits; // size in bits
 				if(size < 8) size = 1; // use one byte even if the size is smaller (e.g. for a boolean)
-				else size /= 8; // bits -> byte
-				if((field.accAndPropFlags & (1 << apfStatic)) > 1) { // static/class fields
+				else size /= 8; // convert from bits to bytes
+				if((field.accAndPropFlags & (1 << apfStatic)) != 0 && (field.accAndPropFlags & (1 << dpfConst)) == 0) { // class field, but not constant!
 					c1 = getCorrectOffset(c1, size);
-					vrb.println("    Name: " + field.name + ", Static: yes, Type: " + field.type.name + ",Offset: " + c1);
+					vrb.println("    Name: " + field.name + ", Static: yes, Type: " + field.type.name + ", Offset: " + c1);
 					field.offset = c1; // save offset
 					c1 += size; // prepare offset counter for next round
-					if(((Type)field.type).category == tcRef) c3++; // count
+					if(((Type)field.type).category == tcRef) c3++; // count references
 				}
-				else { // instance fields
+				else { // instance field
 					c2 = getCorrectOffset(c2, size);
-					vrb.println("    Name: " + field.name + ", Static: no, Type: " + field.type.name + ",Offset: " + c2);
-					field.offset = c2;
+					vrb.println("    Name: " + field.name + ", Static: no, Type: " + field.type.name + ", Index: " + c2);
+					field.index = c2 + bcifs;
 					c2 += size;
 				}
 				field = field.next;
 			}
 			clazz.classFieldsSize = roundUpToNextWord(c1);
+			clazz.instanceFieldsSize = roundUpToNextWord(c2);
 			clazz.nOfReferences = c3;
 		}
 		
 		// Methods
 		vrb.println("  4) Methods:");
-		c1 = 0;
+		c1 = 3 + clazz.nOfInterfaces; // constant offset for all methods
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
@@ -145,11 +154,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		int codeSize = 0;
 		while(m != null) {
 			if(m.machineCode != null) {
-				if(m.offset <= 0) {
+				if(m.offset <= 0) { // offset not given by configuration
 					m.offset = codeSize;
 					codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
 				}
-				else {
+				else { // offset given by configuration
 					if(codeSize < m.machineCode.iCount * 4 + m.offset) codeSize = m.machineCode.iCount * 4 + m.offset;
 				}
 				vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
@@ -196,7 +205,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(s == null) reporter.error(550, "Can't get a memory segment for the code of class " + c.name + "!\n");
 			else {
 				if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
-				c.codeOffset = s.getRequiredSize(); // TODO better to use a own counter for this?
+				c.codeOffset = s.getRequiredSize();
 				s.addToRequiredSize(c.machineCodeSize); // TODO move this to getFirstFittingSegment and rename the method
 				c.codeSegment = s;
 			}
@@ -206,7 +215,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(s == null) reporter.error(551, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 			else {
 				if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
-				c.varOffset = s.getRequiredSize(); // TODO better to use a own counter for this?
+				c.varOffset = s.getRequiredSize();
 				s.addToRequiredSize(c.classFieldsSize); // TODO move this to getFirstFittingSegment and rename the method
 				c.varSegment = s;
 			}
@@ -216,7 +225,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(s == null) reporter.error(552, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 			else {
 				if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
-				c.constOffset = s.getRequiredSize(); // TODO better to use a own counter for this?
+				c.constOffset = s.getRequiredSize();
 				s.addToRequiredSize(c.constantBlockSize); // TODO move this to getFirstFittingSegment and rename the method
 				c.constSegment = s;
 				
@@ -224,13 +233,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			c = (Class)c.next;
 		}
-		Segment[] sysTabs = Configuration.getSysTabSegments();
-		if(sysTabs != null) {
+		Segment[] sysTabs = Configuration.getSysTabSegments(); // TODO @Martin: implement this for more than one system table!
+		if(sysTabs != null && sysTabs.length > 0) {
 			for(int i = 0; i < sysTabs.length; i++) {
-				sysTabs[i].addToRequiredSize(systemTableSize * 4); // TODO @Martin: don't use the same size for each system table!
+				sysTabs[i].addToRequiredSize(systemTableSize * 4); 
 			}
 		}
-		else reporter.error(9445, "Fatal Error: no Systemtable defined!\n"); // TODO define drror number
+		else reporter.error(9445, "Error: no Systemtable defined!"); // TODO define drror number
 	
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
@@ -250,10 +259,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
 			d = d.next;
 		}
-		vrb.println("USED SEGMENTS:");
-		for(int i = 0; i < usedSegmentsIndex; i++) {
-			vrb.println("  > [" + i + "] " + usedSegments[i].getName());
-		}
 	}
 	
 	public static void calculateAbsoluteAddresses(Class clazz) {
@@ -267,9 +272,19 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Item field = clazz.fields;
 			vrb.println("  Static fields:");
 			while(field != null) {
-				if((field.accAndPropFlags & (1 << apfStatic)) > 1) { // static/class fields
-					if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
-					vrb.print("    > " + field.name + ": Offset = " + field.offset + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
+				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field
+					if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // constant field -> constant pool if float or double
+						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) {
+							field.address = clazz.constSegment.getBaseAddress() + 7 + clazz.nOfReferences * 4 + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
+						}
+						else if(field.type == Type.wellKnownTypes[txString]) {
+							field.address = clazz.constSegment.getBaseAddress() + 7 + clazz.nOfReferences * 4 + clazz.classDescriptorSize + field.index;
+						}
+					}
+					else { // non constant field -> var section
+						if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
+						vrb.print("    > " + field.name + ": Offset = " + field.offset + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
+					}
 				}
 				field = field.next;
 			}
@@ -371,7 +386,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		int stringPoolOffset = classDescriptorOffset + clazz.classDescriptorSize / 4 + 1;
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
-				int index = clazz.constPool[i].offset/4;
+				int index = clazz.constPool[i].index/4;
 				if(clazz.constPool[i].type == Type.wellKnownTypes[txString]) {
 					HString s = ((StringLiteral)clazz.constPool[i]).string;
 					sizeInByte = s.sizeInByte();
@@ -413,7 +428,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		int constantPoolOffset = stringPoolOffset + clazz.stringPoolSize / 4;
 		if(clazz.constPool != null) {
 			for(int i = 0; i < clazz.constPool.length; i++) {
-				int index = clazz.constPool[i].offset/4;
+				int index = clazz.constPool[i].index/4;
 				if(clazz.constPool[i].type == Type.wellKnownTypes[Type.txFloat]) {
 					clazz.constantBlock[constantPoolOffset + index] = ((Constant)clazz.constPool[i]).valueH;
 				}
@@ -576,7 +591,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		//set baseaddress
 		if((s.getSize() > 0 && s.getRequiredSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			s.setBaseAddress(baseAddress);
-			usedSegments[usedSegmentsIndex++] = s; // TODO remove this
+//			usedSegments[usedSegmentsIndex++] = s; // TODO remove this
 			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
 			vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
 		}
@@ -713,6 +728,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					vrb.println("        Absolute address: 0x" + Integer.toHexString(m.address));
 					vrb.println("        Address offset: 0x" + Integer.toHexString(m.offset));
 					vrb.println("        CD offset: 0x" + Integer.toHexString(m.index));
+					if(m.machineCode != null)
+						vrb.println("        Code size: 0x" + Integer.toHexString(m.machineCode.iCount * 4) + " (" + m.machineCode.iCount * 4 +" byte)");
 					m = (Method)m.next;
 				}
 			}
