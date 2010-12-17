@@ -454,19 +454,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		}
 		return sysTabSegs;
 	}
-	public static boolean isSystemClass(HString clazz){
-		SystemClass sysCls = os.getClassList();
-		while(sysCls != null){
-			if(sysCls.name.hashCode() == clazz.hashCode()){
-				if(sysCls.name.equals(clazz.toString())){
-					return true;
-				}
-			}
-			sysCls = sysCls.next;
-		}
-		return false;
-	}
-
+	
 	private static void collectSegmentsForAttributes(int attributes) {
 		segs = new Segment[defaultLength];
 		Device currDev = memoryMap.getDevices();
