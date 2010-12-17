@@ -18,8 +18,6 @@ import ch.ntb.inf.deep.strings.StringTable;
 public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
-
-	// TODO: counting of the methods, fields, interfaces and base classes doas'nt work properly 
 	
 	public Item methods; // list with all methods
 	public int nOfMethods; // number of methods
@@ -42,7 +40,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public int classDescriptorSize = 0; // size of the class descriptor on the target (in byte)
 	
 	public int machineCodeSize = 0; // size of the machine code on the target (in byte)
-	public int classFieldsSize = 0; // size of all class/static fields on the target
+	public int classFieldsSize = 0; // size of all non constant class fields on the target
+	public int instanceFieldsSize = 0;
 	
 	public Segment codeSegment, varSegment, constSegment; // references to the memory segments for this class
 	public int codeOffset, varOffset, constOffset; // the offset of the code/class fields/constant block in the dedicated segment
