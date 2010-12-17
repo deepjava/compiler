@@ -130,7 +130,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		// Methods
 		vrb.println("  4) Methods:");
-		c1 = 3 + clazz.nOfInterfaces; // constant offset for all methods
+		c1 = (3 + clazz.nOfInterfaces) * 4; // constant offset for all methods
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
@@ -283,6 +283,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					}
 					else { // non constant field -> var section
 						if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
+						else reporter.error(9999, "varBase of class " + clazz.name + " not set or offset of field " + field.name + " not set!");
 						vrb.print("    > " + field.name + ": Offset = " + field.offset + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 					}
 				}
@@ -370,7 +371,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 2] = clazz.objectSizeOrDim;
 		
 		// 3e) Insert class name address
-		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 3] = 0x12345678; // TODO set the right value here!
+		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 3] = 0x12345678; // TODO set the right value here! -> address of the first entrie of the const/string pool?
 		
 		// 3f) Insert base classes
 		if(clazz.nOfBaseClasses > 0) {
@@ -725,9 +726,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(m != null) {
 					vrb.println("      > Method: " + m.name + " (#" + mc++ + ")");
 					vrb.println("        Access and property flags: 0x" + Integer.toHexString(m.accAndPropFlags));
-					vrb.println("        Absolute address: 0x" + Integer.toHexString(m.address));
-					vrb.println("        Address offset: 0x" + Integer.toHexString(m.offset));
-					vrb.println("        CD offset: 0x" + Integer.toHexString(m.index));
+					if((m.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static: yes"); else vrb.println("        Static: no");
+					vrb.println("        address: 0x" + Integer.toHexString(m.address));
+					vrb.println("        offset: 0x" + Integer.toHexString(m.offset));
+					vrb.println("        index: 0x" + Integer.toHexString(m.index));
 					if(m.machineCode != null)
 						vrb.println("        Code size: 0x" + Integer.toHexString(m.machineCode.iCount * 4) + " (" + m.machineCode.iCount * 4 +" byte)");
 					m = (Method)m.next;
@@ -742,8 +744,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(f != null) {
 					vrb.println("      > Field: " + f.name + " (#" + fc++ + ")");
 					vrb.println("        Access and property flags: 0x" + Integer.toHexString(f.accAndPropFlags));
-					vrb.println("        Absolute address: 0x" + Integer.toHexString(f.address));
-					vrb.println("        Address offset: 0x" + Integer.toHexString(f.offset));
+					if((f.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static: yes"); else vrb.println("        Static: no");
+					vrb.println("        address: 0x" + Integer.toHexString(f.address));
+					vrb.println("        offset: 0x" + Integer.toHexString(f.offset));
+					vrb.println("        index: 0x" + Integer.toHexString(f.index));
 					f = f.next;
 				}
 			}
