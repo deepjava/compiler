@@ -73,6 +73,13 @@ public class UsbMpc555Loader extends Downloader {
 		*/
 		// Write the code down
 		writeCode();
+//		try {
+//			mpc.writeMem(0x3f9800, 0x22334455, 4);
+//			mpc.writeMem(0x3fa000, 0x55AA, 4);
+//		} catch (BDIException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		System.out.println("++++++++ Download finished!+++++++++");
 		
 		
@@ -85,7 +92,6 @@ public class UsbMpc555Loader extends Downloader {
 			try {
 				// open Usb-Connection
 				loader.openConnection();
-				
 				// Make a reset on target
 				loader.resetTarget();
 			} catch (DownloaderException e) {
@@ -94,7 +100,7 @@ public class UsbMpc555Loader extends Downloader {
 		}
 		return loader;
 	}
-	
+
 	// /**
 	// * Parse a Ramimage and write the code into the memory
 	// *
@@ -169,15 +175,19 @@ public class UsbMpc555Loader extends Downloader {
 			// TODO remove Hack, solve it proper!!!!!
 			int dataSizeToTransfer = image.data.length;
 			int startAddr = image.startAddress;
+			
+//			System.out.println("start: 0x"+Integer.toHexString(startAddr) + " Size: "+ dataSizeToTransfer);
+			
 			int index = 0;
 			while (dataSizeToTransfer > 0) {
-				//limitation for fast downlod is 101 Words
+				//limitation for fast download is 101 Words
 				int[] data = new int[100];
 				if(dataSizeToTransfer < 101){
 					data = new int[dataSizeToTransfer];
 				}
 				for(int i = 0; i < data.length; i++){
 					data[i]= image.data[index++];
+//					System.out.println("Addr: "+ Integer.toHexString(startAddr+i*4) + " Data: " +Integer.toHexString(data[i]));
 				}
 				try {
 					mpc.startFastDownload(startAddr);
@@ -212,6 +222,7 @@ public class UsbMpc555Loader extends Downloader {
 				case Parser.sIOR:
 					mpc.writeMem(current.getAddress(), current.getInit()
 							.getValue(), current.getSize());
+//					System.out.println(current.getName() + " = " + Integer.toHexString(current.getInit().getValue()));
 					break;
 				case Parser.sMSR:
 					mpc.writeMSR(current.getInit().getValue());
@@ -227,6 +238,7 @@ public class UsbMpc555Loader extends Downloader {
 				}
 				current = current.nextWithInitValue;
 			}
+			
 
 			// Check if all is set fine
 			current = root;
@@ -238,8 +250,7 @@ public class UsbMpc555Loader extends Downloader {
 					break;
 				case Parser.sIOR:
 					if(!current.getName().equals(HString.getHString("RSR")))
-					checkValue(mpc.readMem(current.getAddress(), current
-							.getSize()), current.getInit().getValue());
+					checkValue(mpc.readMem(current.getAddress(), current.getSize()), current.getInit().getValue());
 					break;
 				case Parser.sMSR:
 					checkValue(mpc.readMSR(), current.getInit().getValue());
