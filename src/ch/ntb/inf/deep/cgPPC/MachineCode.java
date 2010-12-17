@@ -95,7 +95,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		
 		System.out.println("allocate registers");
 		RegAllocator.assignRegisters(this);
-//		ssa.print(0);
+		ssa.print(0);
 		
 		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// no prolog
 		} else if (ssa.cfg.method.name.equals(HString.getHString("interrupt"))) {
@@ -345,11 +345,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				if (opds == null) {	// getstatic
 					sReg1 = instr.result.regAux1;
 					Item field = ((NoOpndRef)instr).field;
-					offset = field.offset;
+					offset = 0;			
 					loadConstantAndFixup(sReg1, field);
 				} else {	// getfield
 					sReg1 = opds[0].reg;
-					offset = ((MonadicRef)instr).item.offset;
+					offset = ((MonadicRef)instr).item.index;
 					createItrap(ppcTwi, TOifequal, opds[0].reg, 0);
 				}
 				switch (res.type) {
@@ -436,14 +436,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					refReg = res.regAux1;
 					type = opds[0].type;
 					Item item = ((MonadicRef)instr).item;
-					offset = item.offset;
+					offset = 0;
 					loadConstantAndFixup(res.regAux1, item);
 				} else {	// putfield
 					refReg = opds[0].reg;
 					sReg1 = opds[1].reg;
 					sReg2 = opds[1].regLong;
 					type = opds[1].type;
-					offset = ((DyadicRef)instr).field.offset;
+					offset = ((DyadicRef)instr).field.index;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}
 				switch (type) {
@@ -1148,7 +1148,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 					} else if ((call.item.accAndPropFlags & (1<<apfInterface)) != 0) {	// invokeinterface
 						refReg = opds[0].reg;
-						offset = call.item.offset;
+						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
@@ -1156,7 +1156,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 					} else {	// invokevirtual and invokespecial
 						refReg = opds[0].reg;
-						offset = call.item.offset;
+						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
@@ -1208,7 +1208,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 							}
 						}
 					}
-					createIBOBI(ppcBclr, BOalways, 0);
+					createIBOBILK(ppcBclr, BOalways, 0, true);
 					type = res.type;
 					if (type == tLong) {
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
@@ -1229,7 +1229,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						loadConstantAndFixup(paramStartGPR, item);	// addr of new
 						createIrSspr(ppcMtspr, LR, paramStartGPR);
 						loadConstantAndFixup(paramStartGPR, item);	// ref
-						createIBOBI(ppcBclr, BOalways, 0);
+						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
 						break;
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
@@ -1240,7 +1240,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						loadConstantAndFixup(paramStartGPR + 1, item);	// addr of newarray
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, instr.result.type - 10);	// type
-						createIBOBI(ppcBclr, BOalways, 0);
+						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
 						break;
 					case tAref:	// bCanewarray
@@ -1250,7 +1250,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						loadConstantAndFixup(paramStartGPR + 1, item);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
 						loadConstantAndFixup(paramStartGPR + 1, item);	// ref
-						createIBOBI(ppcBclr, BOalways, 0);
+						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
 						break;
 					default:
@@ -1349,30 +1349,30 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 					if (!inverted) {
 						if (bci == bCif_icmpeq) 
-							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 						else if (bci == bCif_icmpne)
-							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);
 						else if (bci == bCif_icmplt)
-							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);
 						else if (bci == bCif_icmpge)
-							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);
 						else if (bci == bCif_icmpgt)
-							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 0);
 						else if (bci == bCif_icmple)
-							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 0);
 					} else {
 						if (bci == bCif_icmpeq) 
-							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 						else if (bci == bCif_icmpne)
-							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);
 						else if (bci == bCif_icmplt)
-							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 0);
 						else if (bci == bCif_icmpge)
-							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 0);
 						else if (bci == bCif_icmpgt)
-							createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);
 						else if (bci == bCif_icmple)
-							createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);
 					}
 					break;
 				case bCifeq:
@@ -1386,17 +1386,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 //					assertEquals("cg: wrong type", opds[0].type, tInteger);
 					createICRFrASimm(ppcCmpi, CRF0, sReg1, 0);
 					if (bci == bCifeq) 
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					else if (bci == bCifne)
-						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);
 					else if (bci == bCiflt)
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+LT), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);
 					else if (bci == bCifge)
-						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+LT), 0);
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);
 					else if (bci == bCifgt)
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+GT), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 0);
 					else if (bci == bCifle)
-						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+GT), 0);
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 0);
 					break;
 				case bCifnonnull:
 				case bCifnull:
@@ -1404,9 +1404,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					sReg1 = opds[0].reg;
 					createICRFrASimm(ppcCmpi, CRF0, sReg1, 0);
 					if (bci == bCifnonnull)
-						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);
 					else
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					break;
 				case bCtableswitch:
 					opds = instr.getOperands();
@@ -1419,7 +1419,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					int nofCases = high - low + 1;
 					for (int k = 0; k < nofCases; k++) {
 						createICRFrASimm(ppcCmpi, CRF0, sReg1, low + k);
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					}
 					createIli(ppcB, nofCases, false);
 					break;
@@ -1433,7 +1433,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					for (int k = 0; k < nofPairs; k++) {
 						int key = getInt(ssa.cfg.code, addr + 4 + k * 8);
 						createICRFrASimm(ppcCmpi, CRF0, sReg1, key);
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					}
 					createIli(ppcB, nofPairs, true);
 					break;
@@ -1542,8 +1542,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		incInstructionNum();
 	}
 
-	private void createIBOBI(int opCode, int BO, int BI) {
-		instructions[iCount] = opCode | (BO << 21) | (BI << 16);
+	private void createIBOBILK(int opCode, int BO, int BI, boolean link) {
+		instructions[iCount] = opCode | (BO << 21) | (BI << 16) | (link?1:0);
 		incInstructionNum();
 	}
 
@@ -1593,9 +1593,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		int low = val & 0xffff;
 		int high = (val >> 16) & 0xffff;
 		if ((low >> 15) == 0) {
-			if (low != 0) createIrDrAsimm(ppcAddi, reg, 0, low);
-			if (high != 0) createIrDrAsimm(ppcAddis, reg, reg, high);
-			if ((low == 0) && (high == 0)) createIrDrAsimm(ppcAddi, reg, 0, 0);
+			if (low != 0 && high != 0) {
+				createIrDrAsimm(ppcAddi, reg, 0, low);
+				createIrDrAsimm(ppcAddis, reg, reg, high);
+			} else if (low == 0 && high != 0) {
+				createIrDrAsimm(ppcAddis, reg, 0, high);		
+			} else if (low != 0 && high == 0) {
+				createIrDrAsimm(ppcAddi, reg, 0, low);
+			} else createIrDrAsimm(ppcAddi, reg, 0, 0);
 		} else {
 			if (low != 0) createIrDrAsimm(ppcAddi, reg, 0, low);
 			if (((high + 1) & 0xffff) != 0) createIrDrAsimm(ppcAddis, reg, reg, high + 1);
@@ -1634,7 +1639,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				addr = fixups[currFixup].address;
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
-			if ((low >> 15) == 0) high++;
+			if (!((low >> 15) == 0)) high++;
 			int nextInstr = instructions[currInstr] & 0xffff;
 			instructions[currInstr] = (instructions[currInstr] & 0xffff0000) | (low & 0xffff);
 			instructions[currInstr+1] = (instructions[currInstr+1] & 0xffff0000) | (high & 0xffff);
@@ -1702,7 +1707,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
 		createIrSspr(ppcMtspr, LR, 0);
 		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
-		createIBOBI(ppcBclr, BOalways, 0);
+		createIBOBILK(ppcBclr, BOalways, 0, false);
 	}
 
 	private void insertEpilogException(int stackSize) {

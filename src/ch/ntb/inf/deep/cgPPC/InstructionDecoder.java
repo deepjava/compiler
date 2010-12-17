@@ -297,7 +297,7 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
-			assert param2 != 0 : "wrong BI field";
+			assert param2 != -1 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x0;
 		} else if (parts[0].equals("bca")) {
@@ -305,7 +305,7 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
-			assert param2 != 0 : "wrong BI field";
+			assert param2 != -1 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x2;
 		} else if (parts[0].equals("bcl")) {
@@ -313,7 +313,7 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
-			assert param2 != 0 : "wrong BI field";
+			assert param2 != -1 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x1;
 		} else if (parts[0].equals("bcla")) {
@@ -321,7 +321,7 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
-			assert param2 != 0 : "wrong BI field";
+			assert param2 != -1 : "wrong BI field";
 			param3 = Integer.decode(param[2]) & BD;
 			res = (0x10 << 26) | (param1 << 21) | (param2 << 16) | param3 | 0x3;
 		} else if (parts[0].equals("bcctr")) {
@@ -329,26 +329,28 @@ public class InstructionDecoder implements InstructionOpcs {
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
-			assert param2 != 0 : "wrong BI field";
+			assert param2 != -1 : "wrong BI field";
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0420;
 		} else if (parts[0].equals("bcctrl")) {
 			String[] param = parts[1].split(",");
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
-			assert param2 != 0 : "wrong BI field";
+			assert param2 != -1 : "wrong BI field";
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0421;
 		} else if (parts[0].equals("bclr")) {
 			String[] param = parts[1].split(",");
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
+			assert param2 != -1 : "wrong BI field";
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0020;
 		} else if (parts[0].equals("bclrl")) {
 			String[] param = parts[1].split(",");
 			param1 = decodeBO(param[0]);
 			assert param1 != 0 : "wrong BO field";
 			param2 = decodeBI(param[1]);
+			assert param2 != -1 : "wrong BI field";
 			res = (0x13 << 26) | (param1 << 21) | (param2 << 16) | 0x0021;
 		} else if (parts[0].equals("cmp")) {
 			String[] param = parts[1].split(",");
@@ -2343,7 +2345,8 @@ public class InstructionDecoder implements InstructionOpcs {
 	}
 
 	private static int decodeBI(String param) {
-		if (param.equals("crf0[so]")) return CRF0SO;
+		if (param.equals("0")) return 0;
+		else if (param.equals("crf0[so]")) return CRF0SO;
 		else if (param.equals("crf0[eq]")) return CRF0EQ;
 		else if (param.equals("crf0[gt]")) return CRF0GT;
 		else if (param.equals("crf0[lt]")) return CRF0LT;
@@ -2351,7 +2354,7 @@ public class InstructionDecoder implements InstructionOpcs {
 		else if (param.equals("crf1[eq]")) return CRF1EQ;
 		else if (param.equals("crf1[gt]")) return CRF1GT;
 		else if (param.equals("crf1[lt]")) return CRF1LT;
-		else return 0;
+		else return -1;
 	}
 
 	private static String getBIString(int BI) {

@@ -16,9 +16,9 @@ interface InstructionOpcs {
 	final int CRF5 = 5;
 	final int CRF6 = 6;
 	final int CRF7 = 7;
-	final int EQ = 1;
-	final int GT = 2;
-	final int LT = 3;
+	final int LT = 0;
+	final int GT = 1;
+	final int EQ = 2;
 	final int LR = 8;
 	final int CTR = 9;
 	final int SRR0 = 26;
@@ -27,18 +27,18 @@ interface InstructionOpcs {
 	final int EID = 81;
 	final int NRI = 82;
 	
-	final int CRF0SO = 28;
-	final int CRF0EQ = 29;
-	final int CRF0GT = 30;
-	final int CRF0LT = 31;
-	final int CRF1SO = 24;
-	final int CRF1EQ = 25;
-	final int CRF1GT = 26;
-	final int CRF1LT = 27;
-	final int CRF2SO = 20;
-	final int CRF2EQ = 21;
-	final int CRF2GT = 22;
-	final int CRF2LT = 23;
+	final int CRF0SO = 3;
+	final int CRF0EQ = 2;
+	final int CRF0GT = 1;
+	final int CRF0LT = 0;
+	final int CRF1SO = 7;
+	final int CRF1EQ = 6;
+	final int CRF1GT = 5;
+	final int CRF1LT = 4;
+	final int CRF2SO = 11;
+	final int CRF2EQ = 10;
+	final int CRF2GT = 9;
+	final int CRF2LT = 8;
 
 	public static String[] BOstring = {
 		"",
@@ -76,38 +76,38 @@ interface InstructionOpcs {
 	};
 
 	public static String[] BIstring = {
-		"CRF7[SO]",
-		"CRF7[EQ]",
-		"CRF7[GT]",
-		"CRF7[LT]",
-		"CRF6[SO]",
-		"CRF6[EQ]",
-		"CRF6[GT]",
-		"CRF6[LT]",
-		"CRF5[SO]",
-		"CRF5[EQ]",
-		"CRF5[GT]",
-		"CRF5[LT]",
-		"CRF4[SO]",
-		"CRF4[EQ]",
-		"CRF4[GT]",
-		"CRF4[LT]",
-		"CRF3[SO]",
-		"CRF3[EQ]",
-		"CRF3[GT]",
-		"CRF3[LT]",
-		"CRF2[SO]",
-		"CRF2[EQ]",
-		"CRF2[GT]",
-		"CRF2[LT]",
-		"CRF1[SO]",
-		"CRF1[EQ]",
-		"CRF1[GT]",
-		"CRF1[LT]",
-		"CRF0[SO]",
-		"CRF0[EQ]",
+		"CRF0[LT]",
 		"CRF0[GT]",
-		"CRF0[LT]"
+		"CRF0[EQ]",
+		"CRF0[SO]",
+		"CRF1[LT]",
+		"CRF1[GT]",
+		"CRF1[EQ]",
+		"CRF1[SO]",
+		"CRF2[LT]",
+		"CRF2[GT]",
+		"CRF2[EQ]",
+		"CRF2[SO]",
+		"CRF3[LT]",
+		"CRF3[GT]",
+		"CRF3[EQ]",
+		"CRF3[SO]",
+		"CRF4[LT]",
+		"CRF4[GT]",
+		"CRF4[EQ]",
+		"CRF4[SO]",
+		"CRF5[LT]",
+		"CRF5[GT]",
+		"CRF5[EQ]",
+		"CRF5[SO]",
+		"CRF6[LT]",
+		"CRF6[GT]",
+		"CRF6[EQ]",
+		"CRF6[SO]",
+		"CRF7[LT]",
+		"CRF7[GT]",
+		"CRF7[EQ]",
+		"CRF7[SO]"
 	};
 
 	public static String[] TOstring = {

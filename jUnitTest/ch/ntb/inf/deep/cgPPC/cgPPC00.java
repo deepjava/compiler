@@ -41,7 +41,7 @@ public class cgPPC00 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  R3, -4(r2)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  R3, 1(r3)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr LR, r3"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);

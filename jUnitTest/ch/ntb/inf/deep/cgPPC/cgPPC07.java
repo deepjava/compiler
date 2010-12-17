@@ -44,7 +44,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r3, r3, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
@@ -67,7 +67,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r3, r3, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  36"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("add  r4, r3, r31"), code[i++]);
@@ -111,7 +111,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 5"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r3, r3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 8"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r4, r4, 0"), code[i++]);
@@ -185,7 +185,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 6"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r3, r3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r31, r2"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r30, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 9"), code[i++]);
@@ -193,14 +193,14 @@ public class cgPPC07 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r2"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 14"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r2, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r29, r2"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("twi  ifequal, r29, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  R2, -4(r29)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  R2, 1(r2)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr LR, r2"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r29"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("twi  ifequal, r31, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lha  r2, -6(r31)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("tw  ifgeU, r30, r2"), code[i++]);

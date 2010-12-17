@@ -155,7 +155,7 @@ public class cgPPC01 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r2, r2, -2"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, -21888"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r2, r2, -32767"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r2, r2, -32768"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lis  r2, -32768"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
