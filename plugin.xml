@@ -154,6 +154,18 @@
             name="Support Level SPR View"
             restorable="true">
       </view>
+      <category
+            id="ch.ntb.inf.deep.targetManipulation"
+            name="Deep Target Actions">
+      </category>
+      <view
+            category="ch.ntb.inf.deep.targetManipulation"
+            class="ch.ntb.inf.deep.ui.view.MemoryView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.view.MemoryView"
+            name="Selected Memory View"
+            restorable="true">
+      </view>
    </extension>
 
 </plugin>
