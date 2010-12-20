@@ -312,6 +312,10 @@ public class GprView extends ViewPart implements ISelectionListener {
 					module = UsbMpc555Loader.getInstance();
 				}
 				try {
+					if(module.isConnected()){//reopen
+						module.closeConnection();
+						module.openConnection();
+					}
 					if(!module.isFreezeAsserted()){
 						module.stopTarget();
 					}
@@ -331,6 +335,10 @@ public class GprView extends ViewPart implements ISelectionListener {
 					module = UsbMpc555Loader.getInstance();
 				}
 				try {
+					if(module.isConnected()){//reopen
+						module.closeConnection();
+						module.openConnection();
+					}
 					if(module.isFreezeAsserted()){
 						module.startTarget();
 					}

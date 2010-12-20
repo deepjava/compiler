@@ -51,9 +51,11 @@ public class RegModel  {
 		deSuSPR = new Register[16];
 	
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -91,9 +93,11 @@ public class RegModel  {
 	public void creatSuLeSPRMod() {
 		suLeSPR = new Register[11];
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -128,9 +132,11 @@ public class RegModel  {
 	public void creatMaStRegMod() {
 		maStReg = new Register[1];
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -150,9 +156,11 @@ public class RegModel  {
 	public void creatUsLeSPRMod() {
 		usLeSPR = new Register[6];
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -178,9 +186,11 @@ public class RegModel  {
 		floPoiReg = new FloRegister[32];
 		FPSCR = new Register[1];
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -204,9 +214,11 @@ public class RegModel  {
 		int[] temp = null;
 
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -229,9 +241,11 @@ public class RegModel  {
 
 	public void updateDeSuSPRMod() {
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -252,9 +266,11 @@ public class RegModel  {
 
 	public void updateSuLeSPRMod() {
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -290,9 +306,11 @@ public class RegModel  {
 	public void updateMaStRegMod() {
 
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -310,9 +328,11 @@ public class RegModel  {
 
 	public void updateUsLeSPRMod() {
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -336,9 +356,11 @@ public class RegModel  {
 	public void updateFprMod() {
 
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();
@@ -360,9 +382,11 @@ public class RegModel  {
 	public void updateGprMod() {
 		int[] temp = null;
 		try {
-			if(!module.isConnected()){
-				module.openConnection();
+			if(module.isConnected()){
+				module.closeConnection();
 			}
+			module.openConnection();
+			
 			wasFreezeAsserted = module.isFreezeAsserted();
 			if(!wasFreezeAsserted){
 				module.stopTarget();

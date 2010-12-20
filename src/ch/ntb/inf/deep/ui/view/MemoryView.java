@@ -203,6 +203,14 @@ public class MemoryView extends ViewPart implements Listener {
 			if (bdi == null) {
 				bdi = UsbMpc555Loader.getInstance();
 			}
+			if(bdi.isConnected()){//reopen
+				bdi.closeConnection();
+				try {
+					bdi.openConnection();
+				} catch (DownloaderException e) {
+					e.printStackTrace();
+				}
+			}
 			if (size > 0) {
 				MemorySegment[] segs = new MemorySegment[size];
 				try {
