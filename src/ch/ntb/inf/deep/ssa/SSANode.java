@@ -24,13 +24,14 @@ import ch.ntb.inf.deep.ssa.instruction.Branch;
 import ch.ntb.inf.deep.strings.HString;
 
 /**
- * @author  millischer
+ * @author millischer
  */
-public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstructionOpcs, ICdescAndTypeConsts {
+public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
+		SSAInstructionOpcs, ICdescAndTypeConsts {
 	boolean traversed;
 	public int nofInstr;
 	public int nofPhiFunc;
-	public int nofDeletedPhiFunc; //its used for junit tests
+	public int nofDeletedPhiFunc; // its used for junit tests
 	public int maxLocals;
 	public int maxStack;
 	private int stackpointer;
@@ -39,7 +40,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
 	public int codeStartAddr, codeEndAddr;
-	
+
 	public SSANode() {
 		super();
 		instructions = new SSAInstruction[4];
@@ -54,10 +55,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	}
 
 	/**
-	 * The state arrays of the predecessors nodes of this node are merged into the new entry set.
-	 * phi-functions are created, if there is more then one predecessor.
-	 * iterates over all the bytecode instructions, emits SSA instructions and 
-	 * modifies the state array
+	 * The state arrays of the predecessors nodes of this node are merged into
+	 * the new entry set. phi-functions are created, if there is more then one
+	 * predecessor. iterates over all the bytecode instructions, emits SSA
+	 * instructions and modifies the state array
 	 */
 	public void mergeAndDetermineStateArray(SSA ssa) {
 
@@ -86,52 +87,67 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			// multiple predecessors --> merge necessary
 			if (isLoopHeader()) {
 				// if true --> generate phi functions for all locals
-				// if we have redundant phi functions, we eliminate it later 
+				// if we have redundant phi functions, we eliminate it later
 				if (!traversed) {
-					// first visit --> insert phi function with 1 parameter					
+					// first visit --> insert phi function with 1 parameter
 
-					//swap on the index 0 a predecessor thats already processed
-					for(int i = 0;i < nofPredecessors; i++){
-						if(((SSANode)predecessors[i]).exitSet != null){
-							SSANode temp = (SSANode)predecessors[i];
+					// swap on the index 0 a predecessor thats already processed
+					for (int i = 0; i < nofPredecessors; i++) {
+						if (((SSANode) predecessors[i]).exitSet != null) {
+							SSANode temp = (SSANode) predecessors[i];
 							predecessors[i] = predecessors[0];
-							predecessors[0] = temp;							
+							predecessors[0] = temp;
 						}
 					}
-					
-					entrySet = ((SSANode)predecessors[0]).exitSet.clone();
-					
-					for(int i = 0; i < maxStack+maxLocals;i++){
+
+					entrySet = ((SSANode) predecessors[0]).exitSet.clone();
+
+					for (int i = 0; i < maxStack + maxLocals; i++) {
 						SSAValue result = new SSAValue();
 						result.type = SSAValue.tPhiFunc;
 						result.index = i;
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
-						result.owner = phi; 
+						result.owner = phi;
 						phi.result = result;
-						if(entrySet[i] != null){
+						if (entrySet[i] != null) {
 							phi.addOperand(entrySet[i]);
 						}
 						addPhiFunction(phi);
-						if(i >= maxStack || entrySet[i] != null){//Stack will be set when it is necessary;
-							entrySet[i]=result;
+						if (i >= maxStack || entrySet[i] != null) {// Stack will
+																	// be set
+																	// when it
+																	// is
+																	// necessary;
+							entrySet[i] = result;
 						}
-					}					
+					}
 				} else {
-					for (int i=1; i < nofPredecessors; i++){//skip the first already processed predecessor  
-						for (int j = 0; j < maxStack+maxLocals; j++){
-							SSAValue param = ((SSANode)predecessors[i]).exitSet[j];
-							
-							//Check if it need a loadParam instruction
-							if(ssa.isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)){
-								param = generateLoadParameter((SSANode)idom, j, ssa);			
-							}							
-							if(param != null){//stack could be empty
+					for (int i = 1; i < nofPredecessors; i++) {// skip the first
+																// already
+																// processed
+																// predecessor
+						for (int j = 0; j < maxStack + maxLocals; j++) {
+
+							SSAValue param = ((SSANode) predecessors[i]).exitSet[j];
+							// TODO Test
+							SSAValue temp = param; // store
+
+							// Check if it need a loadParam instruction
+							if (ssa.isParam[j]
+									&& (phiFunctions[j].nofOperands == 0 || param == null)) {
+								param = generateLoadParameter((SSANode) idom,
+										j, ssa);
+							}
+							if (temp != null && temp != param) {
+								phiFunctions[j].addOperand(temp);
+							}
+							if (param != null) {// stack could be empty
 								phiFunctions[j].addOperand(param);
 							}
 						}
 					}
-					//second visit, merge is finished
-					//eliminate redundant PhiFunctions
+					// second visit, merge is finished
+					// eliminate redundant PhiFunctions
 					eliminateRedundantPhiFunc();
 				}
 			} else {
@@ -142,125 +158,184 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 						entrySet = ((SSANode) predecessors[i]).exitSet.clone();
 					} else {
 						// all other predecessors --> merge
-						for (int j = 0; j < maxStack+maxLocals; j++){
-							if (entrySet[j] != null ||((SSANode) predecessors[i]).exitSet[j] != null ){//if both null, do nothing
-								if(entrySet[j] == null){//predecessor is set
-									if(ssa.isParam[j]){
-										//create phi function
+						for (int j = 0; j < maxStack + maxLocals; j++) {
+							if (entrySet[j] != null
+									|| ((SSANode) predecessors[i]).exitSet[j] != null) {// if
+																						// both
+																						// null,
+																						// do
+																						// nothing
+								if (entrySet[j] == null) {// predecessor is set
+									if (ssa.isParam[j]) {
+										// create phi function
 										SSAValue result = new SSAValue();
 										result.type = SSAValue.tPhiFunc;
 										result.index = j;
-										PhiFunction phi = new PhiFunction(sCPhiFunc);
-										result.owner = phi; 
+										PhiFunction phi = new PhiFunction(
+												sCPhiFunc);
+										result.owner = phi;
 										phi.result = result;
-										entrySet[j]= result;
-										//generate for all already proceed predecessors a loadParameter 
-										//and add their results to the phi function
-										for (int x = 0; x < i;x++ ){
-											phi.addOperand(generateLoadParameter((SSANode)predecessors[x], j, ssa));
+										entrySet[j] = result;
+										// generate for all already proceed
+										// predecessors a loadParameter
+										// and add their results to the phi
+										// function
+										for (int x = 0; x < i; x++) {
+											phi
+													.addOperand(generateLoadParameter(
+															(SSANode) predecessors[x],
+															j, ssa));
 										}
-										phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+										phi
+												.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 										addPhiFunction(phi);
 									}
-								}else{//entrySet[j] != null
-									if(!(entrySet[j].equals(((SSANode) predecessors[i]).exitSet[j]))){//if both equals, do nothing
-										if(((SSANode) predecessors[i]).exitSet[j] == null){
-											if(ssa.isParam[j]){
-												if(entrySet[j].type == SSAValue.tPhiFunc){
+								} else {// entrySet[j] != null
+									if (!(entrySet[j]
+											.equals(((SSANode) predecessors[i]).exitSet[j]))) {// if
+																								// both
+																								// equals,
+																								// do
+																								// nothing
+										if (((SSANode) predecessors[i]).exitSet[j] == null) {
+											if (ssa.isParam[j]) {
+												if (entrySet[j].type == SSAValue.tPhiFunc) {
 													PhiFunction func = null;
-													//func == null if the phi functions are created by the predecessor
-													for (int y = 0; y < nofPhiFunc; y++){
-														if (entrySet[j].equals(phiFunctions[y].result)){
+													// func == null if the phi
+													// functions are created by
+													// the predecessor
+													for (int y = 0; y < nofPhiFunc; y++) {
+														if (entrySet[j]
+																.equals(phiFunctions[y].result)) {
 															func = phiFunctions[y];
 															break;
 														}
 													}
-													if(func == null){
+													if (func == null) {
 														SSAValue result = new SSAValue();
 														result.type = SSAValue.tPhiFunc;
 														result.index = j;
-														PhiFunction phi = new PhiFunction(sCPhiFunc);
-														result.owner = phi; 
+														PhiFunction phi = new PhiFunction(
+																sCPhiFunc);
+														result.owner = phi;
 														phi.result = result;
-														phi.addOperand(entrySet[j]);
-														phi.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
-														entrySet[j]= result;
+														phi
+																.addOperand(entrySet[j]);
+														phi
+																.addOperand(generateLoadParameter(
+																		(SSANode) predecessors[i],
+																		j, ssa));
+														entrySet[j] = result;
 														addPhiFunction(phi);
+													} else {// phi functions are
+															// created in this
+															// node
+														func
+																.addOperand(generateLoadParameter(
+																		(SSANode) predecessors[i],
+																		j, ssa));
 													}
-													else{//phi functions are created in this node
-														func.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
-													}
-												}else{//entrySet[j] != SSAValue.tPhiFunc
+												} else {// entrySet[j] !=
+														// SSAValue.tPhiFunc
 													SSAValue result = new SSAValue();
 													result.type = SSAValue.tPhiFunc;
 													result.index = j;
-													PhiFunction phi = new PhiFunction(sCPhiFunc);
-													result.owner = phi; 
+													PhiFunction phi = new PhiFunction(
+															sCPhiFunc);
+													result.owner = phi;
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
-													phi.addOperand(generateLoadParameter((SSANode) predecessors[i], j, ssa));
-													entrySet[j]= result;
+													phi
+															.addOperand(generateLoadParameter(
+																	(SSANode) predecessors[i],
+																	j, ssa));
+													entrySet[j] = result;
 													addPhiFunction(phi);
 												}
-											}else{
+											} else {
 												entrySet[j] = null;
 											}
-										}else{//entrySet[j] != null  && ((SSANode) predecessors[i]).exitSet[j] != null
-											if(entrySet[j].type == SSAValue.tPhiFunc){
+										} else {// entrySet[j] != null &&
+												// ((SSANode)
+												// predecessors[i]).exitSet[j]
+												// != null
+											if (entrySet[j].type == SSAValue.tPhiFunc) {
 												PhiFunction func = null;
-												//func == null if the phi functions are created by the predecessor
-												for (int y = 0; y < nofPhiFunc; y++){
-													if (entrySet[j].equals(phiFunctions[y].result)){
+												// func == null if the phi
+												// functions are created by the
+												// predecessor
+												for (int y = 0; y < nofPhiFunc; y++) {
+													if (entrySet[j]
+															.equals(phiFunctions[y].result)) {
 														func = phiFunctions[y];
 														break;
 													}
 												}
-												if(func == null){
+												if (func == null) {
 													SSAValue result = new SSAValue();
 													result.type = SSAValue.tPhiFunc;
 													result.index = j;
-													PhiFunction phi = new PhiFunction(sCPhiFunc);
-													result.owner = phi; 
+													PhiFunction phi = new PhiFunction(
+															sCPhiFunc);
+													result.owner = phi;
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
-													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-													entrySet[j]= result;
+													phi
+															.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													entrySet[j] = result;
 													addPhiFunction(phi);
-												}
-												else{//phi functions are created in this node
-													//check if operands are from same type or from type tPhiFunc
-													SSAValue[] opnd = func.getOperands();
-													
-													//determine type
+												} else {// phi functions are
+														// created in this node
+													// check if operands are
+													// from same type or from
+													// type tPhiFunc
+													SSAValue[] opnd = func
+															.getOperands();
+
+													// determine type
 													int type = opnd[0].type;
-													for(int y = 0; y < opnd.length-1 && opnd[y].type == SSAValue.tPhiFunc; y++ ){
-														type = opnd[y+1].type;
+													for (int y = 0; y < opnd.length - 1
+															&& opnd[y].type == SSAValue.tPhiFunc; y++) {
+														type = opnd[y + 1].type;
 													}
-													if(type != SSAValue.tPhiFunc && ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tPhiFunc){
-														if(type == ((SSANode) predecessors[i]).exitSet[j].type){
-															func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-														}else{
-															//delete all Operands so the function will be deleted in the method eleminateRedundantPhiFunc()
-															func.setOperands(new SSAValue[0]);
-															entrySet[j]= null;
+													if (type != SSAValue.tPhiFunc
+															&& ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tPhiFunc) {
+														if (type == ((SSANode) predecessors[i]).exitSet[j].type) {
+															func
+																	.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+														} else {
+															// delete all
+															// Operands so the
+															// function will be
+															// deleted in the
+															// method
+															// eleminateRedundantPhiFunc()
+															func
+																	.setOperands(new SSAValue[0]);
+															entrySet[j] = null;
 														}
-													}else{														
-														func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													} else {
+														func
+																.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 													}
 												}
-											}else{//entrySet[j] != SSAValue.tPhiFunc
-												if(((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tPhiFunc || entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type){
+											} else {// entrySet[j] !=
+													// SSAValue.tPhiFunc
+												if (((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tPhiFunc
+														|| entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type) {
 													SSAValue result = new SSAValue();
 													result.type = SSAValue.tPhiFunc;
 													result.index = j;
-													PhiFunction phi = new PhiFunction(sCPhiFunc);
-													result.owner = phi; 
+													PhiFunction phi = new PhiFunction(
+															sCPhiFunc);
+													result.owner = phi;
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
-													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-													entrySet[j]= result;
+													phi
+															.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													entrySet[j] = result;
 													addPhiFunction(phi);
-												}else{
+												} else {
 													entrySet[j] = null;
 												}
 											}
@@ -271,8 +346,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 						}
 					}
 				}
-				//isn't a loop header and merge is finished.
-				//eliminate redundant phiFunctins
+				// isn't a loop header and merge is finished.
+				// eliminate redundant phiFunctins
 				eliminateRedundantPhiFunc();
 			}
 		}
@@ -293,7 +368,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		boolean wide = false;
 		exitSet = entrySet.clone();// Don't change the entry set
 		// determine top of the stack
-		for (stackpointer = maxStack-1; stackpointer >= 0 && exitSet[stackpointer] == null; stackpointer--);
+		for (stackpointer = maxStack - 1; stackpointer >= 0
+				&& exitSet[stackpointer] == null; stackpointer--)
+			;
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
 			switch (ssa.cfg.code[bca] & 0xff) {
@@ -431,7 +508,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCdconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
-				result.constant = new Constant((int)(Double.doubleToLongBits(0.0)>>32), (int)(Double.doubleToLongBits(0.0)));
+				result.constant = new Constant((int) (Double
+						.doubleToLongBits(0.0) >> 32), (int) (Double
+						.doubleToLongBits(0.0)));
 				result.constant.type = Type.wellKnownTypes[txDouble];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -441,7 +520,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCdconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
-				result.constant = new Constant((int)(Double.doubleToLongBits(1.0)>>32), (int)(Double.doubleToLongBits(1.0)));
+				result.constant = new Constant((int) (Double
+						.doubleToLongBits(1.0) >> 32), (int) (Double
+						.doubleToLongBits(1.0)));
 				result.constant.type = Type.wellKnownTypes[txDouble];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -464,7 +545,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCsipush:
 				// get short from Bytecode
 				bca++;
-				short sval =(short) (((ssa.cfg.code[bca++] & 0xff) << 8) | (ssa.cfg.code[bca] & 0xff));
+				short sval = (short) (((ssa.cfg.code[bca++] & 0xff) << 8) | (ssa.cfg.code[bca] & 0xff));
 				val = sval;// sign-extended to int
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
@@ -479,31 +560,34 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca++;
 				val = ssa.cfg.code[bca];
 				result = new SSAValue();
-				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
-					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					if(constant.type.name.charAt(0)== 'I'){//is a int
+				if (ssa.cfg.method.owner.constPool[val] instanceof Constant) {
+					Constant constant = (Constant) ssa.cfg.method.owner.constPool[val];
+					if (constant.type.name.charAt(0) == 'I') {// is a int
 						result.type = SSAValue.tInteger;
 						result.constant = constant;
-					}else{
-						if(constant.type.name.charAt(0)== 'F'){ //is a float
+					} else {
+						if (constant.type.name.charAt(0) == 'F') { // is a float
 							result.type = SSAValue.tFloat;
 							result.constant = constant;
-//							result.constant = Float.intBitsToFloat(constant.valueH);
-						}else{
+							// result.constant =
+							// Float.intBitsToFloat(constant.valueH);
+						} else {
 							assert false : "Wrong Constant type";
 						}
 					}
-				}else{
-					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
-						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
+				} else {
+					if (ssa.cfg.method.owner.constPool[val] instanceof StringLiteral) {// is
+																						// a
+																						// String
+						StringLiteral literal = (StringLiteral) ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tRef;
 						result.constant = literal;
-//						result.constant = literal.string;
-					}else{
+						// result.constant = literal.string;
+					} else {
 						assert false : "Wrong DataItem type";
 						break;
 					}
-				}				
+				}
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -511,33 +595,36 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCldc_w:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
-					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					if(constant.type.name.charAt(0)== 'I'){//is a int
+				if (ssa.cfg.method.owner.constPool[val] instanceof Constant) {
+					Constant constant = (Constant) ssa.cfg.method.owner.constPool[val];
+					if (constant.type.name.charAt(0) == 'I') {// is a int
 						result.type = SSAValue.tInteger;
 						result.constant = constant;
-					}else{
-						if(constant.type.name.charAt(0)== 'F'){ //is a float
+					} else {
+						if (constant.type.name.charAt(0) == 'F') { // is a float
 							result.type = SSAValue.tFloat;
 							result.constant = constant;
-//							result.constant = Float.intBitsToFloat(constant.valueH);
-						}else{
+							// result.constant =
+							// Float.intBitsToFloat(constant.valueH);
+						} else {
 							assert false : "Wrong Constant type";
 						}
 					}
-				}else{
-					if(ssa.cfg.method.owner.constPool[val] instanceof StringLiteral){//is a String
-						StringLiteral literal =(StringLiteral) ssa.cfg.method.owner.constPool[val];
+				} else {
+					if (ssa.cfg.method.owner.constPool[val] instanceof StringLiteral) {// is
+																						// a
+																						// String
+						StringLiteral literal = (StringLiteral) ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tRef;
 						result.constant = literal;
-//						result.constant = literal.string;
-					}else{
+						// result.constant = literal.string;
+					} else {
 						assert false : "Wrong DataItem type";
 						break;
 					}
-				}				
+				}
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -545,25 +632,25 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCldc2_w:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				if(ssa.cfg.method.owner.constPool[val] instanceof Constant){
-					Constant constant = (Constant)ssa.cfg.method.owner.constPool[val];
-					if(constant.type.name.charAt(0)== 'D'){//is a Double
+				if (ssa.cfg.method.owner.constPool[val] instanceof Constant) {
+					Constant constant = (Constant) ssa.cfg.method.owner.constPool[val];
+					if (constant.type.name.charAt(0) == 'D') {// is a Double
 						result.type = SSAValue.tDouble;
 						result.constant = constant;
-					}else{
-						if(constant.type.name.charAt(0)== 'J'){ //is a Long
+					} else {
+						if (constant.type.name.charAt(0) == 'J') { // is a Long
 							result.type = SSAValue.tLong;
 							result.constant = constant;
-						}else{
+						} else {
 							assert false : "Wrong Constant type";
 						}
 					}
-				}else{
+				} else {
 					assert false : "Wrong DataItem type";
 					break;
-				}				
+				}
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
 				addInstruction(instr);
@@ -572,7 +659,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCiload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get index
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -582,7 +670,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bClload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get index
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -592,7 +681,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCfload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get index
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -602,7 +692,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCdload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get index
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -612,7 +703,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCaload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get index
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -730,7 +822,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				pushToStack(result);
 				break;
 			case bCbaload:
-				// Remember the result type isn't set here (it could be boolean or byte)
+				// Remember the result type isn't set here (it could be boolean
+				// or byte)
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
@@ -764,7 +857,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -776,7 +869,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -788,7 +881,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -800,7 +893,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -812,7 +905,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -838,7 +931,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bClstore_0:
 				exitSet[maxStack] = popFromStack();
-				exitSet[maxStack].index = maxStack ;
+				exitSet[maxStack].index = maxStack;
 				break;
 			case bClstore_1:
 				exitSet[maxStack + 1] = popFromStack();
@@ -906,8 +999,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -917,8 +1009,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -928,8 +1019,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -939,8 +1029,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -950,8 +1039,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -961,8 +1049,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -972,8 +1059,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -983,8 +1069,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
-				instr = new StoreToArray(sCstoreToArray, value1, value2,
-						value3);
+				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
 				addInstruction(instr);
 				break;
@@ -994,17 +1079,17 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCpop2:
 				value1 = popFromStack();
 				if (!((value1.type == SSAValue.tLong) || (value1.type == SSAValue.tDouble))) {// false
-																								// if
-																								// value1
-																								// is
-																								// a
-																								// value
-																								// of
-																								// a
-																								// category
-																								// 2
-																								// computational
-																								// type
+					// if
+					// value1
+					// is
+					// a
+					// value
+					// of
+					// a
+					// category
+					// 2
+					// computational
+					// type
 					popFromStack();
 				}
 				break;
@@ -1025,11 +1110,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value2 = popFromStack();
 				if ((value2.type == SSAValue.tLong)
 						|| (value2.type == SSAValue.tDouble)) {// true if
-																// value2 is a
-																// value of a
-																// category 2
-																// computational
-																// type
+					// value2 is a
+					// value of a
+					// category 2
+					// computational
+					// type
 					pushToStack(value1);
 					pushToStack(value2);
 					pushToStack(value1);
@@ -1045,11 +1130,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				if ((value1.type == SSAValue.tLong)
 						|| (value1.type == SSAValue.tDouble)) {// true if
-																// value1 is a
-																// value of a
-																// category 2
-																// computational
-																// type
+					// value1 is a
+					// value of a
+					// category 2
+					// computational
+					// type
 					pushToStack(value1);
 					pushToStack(value1);
 				} else {
@@ -1065,11 +1150,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value2 = popFromStack();
 				if ((value1.type == SSAValue.tLong)
 						|| (value1.type == SSAValue.tDouble)) {// true if
-																// value1 is a
-																// value of a
-																// category 2
-																// computational
-																// type
+					// value1 is a
+					// value of a
+					// category 2
+					// computational
+					// type
 					pushToStack(value1);
 					pushToStack(value2);
 					pushToStack(value1);
@@ -1087,20 +1172,20 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value2 = popFromStack();
 				if ((value1.type == SSAValue.tLong)
 						|| (value1.type == SSAValue.tDouble)) {// true if
-																// value1 is a
-																// value of a
-																// category 2
-																// computational
-																// type
+					// value1 is a
+					// value of a
+					// category 2
+					// computational
+					// type
 					if ((value2.type == SSAValue.tLong)
 							|| (value2.type == SSAValue.tDouble)) {// true if
-																	// value2 is
-																	// a value
-																	// of a
-																	// category
-																	// 2
-																	// computational
-																	// type
+						// value2 is
+						// a value
+						// of a
+						// category
+						// 2
+						// computational
+						// type
 						// Form4 (the java virtual Machine Specification second
 						// edition, Tim Lindholm, Frank Yellin, page 223)
 						pushToStack(value1);
@@ -1117,13 +1202,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					}
 				} else {
 					value3 = popFromStack();
-					if ((value3.type == SSAValue.tLong)	|| (value3.type == SSAValue.tDouble)) {// true if value3 is
-																	// a value
-																	// of a
-																	// category
-																	// 2
-																	// computational
-																	// type
+					if ((value3.type == SSAValue.tLong)
+							|| (value3.type == SSAValue.tDouble)) {// true if
+																	// value3 is
+						// a value
+						// of a
+						// category
+						// 2
+						// computational
+						// type
 						// Form 3 (the java virtual Machine Specification second
 						// edition, Tim Lindholm, Frank Yellin, page 223)
 						pushToStack(value2);
@@ -1509,8 +1596,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			case bCiinc:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get index
-					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get const
+					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get
+																						// index
+					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+																						// const
 					wide = false;
 				} else {
 					val = ssa.cfg.code[bca++];// get index
@@ -1733,7 +1822,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				bca = bca+2; //step over branchbyte1 and branchbyte2
+				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCif_icmpeq:
 			case bCif_icmpne:
@@ -1748,25 +1837,26 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCbranch, value1, value2);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				bca = bca+2; //step over branchbyte1 and branchbyte2
+				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto:
-//				val = (short) (ssa.cfg.code[bca + 1] & 0xff << 8 | ssa.cfg.code[bca + 2]);
+				// val = (short) (ssa.cfg.code[bca + 1] & 0xff << 8 |
+				// ssa.cfg.code[bca + 2]);
 				instr = new Branch(sCbranch);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				bca = bca+2; //step over branchbyte1 and branchbyte2
+				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCjsr:
 				// I think it isn't necessary to push the address onto the stack
-				bca = bca+2; //step over branchbyte1 and branchbyte2
+				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCret:
 				if (wide) {
-					bca = bca+2; //step over indexbyte1 and indexbyte2
+					bca = bca + 2; // step over indexbyte1 and indexbyte2
 					wide = false;
 				} else {
-					bca++;//step over index
+					bca++;// step over index
 				}
 				break;
 			case bCtableswitch:
@@ -1774,48 +1864,54 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//Step over whole bytecode instruction
+				// Step over whole bytecode instruction
 				bca++;
-				//pad bytes
-				while((bca & 0x03) != 0){
+				// pad bytes
+				while ((bca & 0x03) != 0) {
 					bca++;
 				}
-				//default jump address
-				bca = bca+4;
-				//we need the low and high
-				int low1 = (ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
-				int high1 =(ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
-				int nofPair1 = high1-low1+1;
-				
-				//jump offsets
-				bca = bca + 4*nofPair1 - 1;
+				// default jump address
+				bca = bca + 4;
+				// we need the low and high
+				int low1 = (ssa.cfg.code[bca++] << 24)
+						| (ssa.cfg.code[bca++] << 16)
+						| (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				int high1 = (ssa.cfg.code[bca++] << 24)
+						| (ssa.cfg.code[bca++] << 16)
+						| (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				int nofPair1 = high1 - low1 + 1;
+
+				// jump offsets
+				bca = bca + 4 * nofPair1 - 1;
 				break;
 			case bClookupswitch:
 				value1 = popFromStack();
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//Step over whole bytecode instruction
+				// Step over whole bytecode instruction
 				bca++;
-				//pad bytes
-				while((bca & 0x03) != 0){
+				// pad bytes
+				while ((bca & 0x03) != 0) {
 					bca++;
 				}
-				//default jump adress
-				bca = bca+4;
-				//npairs
-				int nofPair2 = (ssa.cfg.code[bca++]<<24)|(ssa.cfg.code[bca++]<<16)|(ssa.cfg.code[bca++]<<8)|ssa.cfg.code[bca++];
-				//jump offsets
-				bca = bca + 8*nofPair2 - 1;
+				// default jump adress
+				bca = bca + 4;
+				// npairs
+				int nofPair2 = (ssa.cfg.code[bca++] << 24)
+						| (ssa.cfg.code[bca++] << 16)
+						| (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				// jump offsets
+				bca = bca + 8 * nofPair2 - 1;
 				break;
 			case bCireturn:
 				value1 = popFromStack();
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//discard Stack
-				while(stackpointer >= 0){
-					exitSet[stackpointer]= null;
+				// discard Stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				break;
@@ -1824,9 +1920,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//discard Stack
-				while(stackpointer >= 0){
-					exitSet[stackpointer]= null;
+				// discard Stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				break;
@@ -1835,9 +1931,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//discard Stack
-				while(stackpointer >= 0){
-					exitSet[stackpointer]= null;
+				// discard Stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				break;
@@ -1846,9 +1942,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//discard Stack
-				while(stackpointer >= 0){
-					exitSet[stackpointer]= null;
+				// discard Stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				break;
@@ -1857,9 +1953,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//discard Stack
-				while(stackpointer >= 0){
-					exitSet[stackpointer]= null;
+				// discard Stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				break;
@@ -1867,85 +1963,85 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Branch(sCreturn);
 				instr.result = new SSAValue();
 				addInstruction(instr);
-				//discard Stack
-				while(stackpointer >= 0){
-					exitSet[stackpointer]= null;
+				// discard Stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				break;
 			case bCgetstatic:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				//determine the type of the field
-				if(!(ssa.cfg.method.owner.constPool[val] instanceof DataItem)){
+				// determine the type of the field
+				if (!(ssa.cfg.method.owner.constPool[val] instanceof DataItem)) {
 					assert false : "Constantpool entry isn't a DataItem. Used in getstatic";
 				}
-				field =(DataItem) ssa.cfg.method.owner.constPool[val];
-				if(field.type.name.charAt(0) == '['){
-					switch(field.type.name.charAt(0)){
+				field = (DataItem) ssa.cfg.method.owner.constPool[val];
+				if (field.type.name.charAt(0) == '[') {
+					switch (field.type.name.charAt(0)) {
 					case 'B':
 						result.type = SSAValue.tAbyte;
-					break;
+						break;
 					case 'C':
 						result.type = SSAValue.tAchar;
-					break;
+						break;
 					case 'D':
 						result.type = SSAValue.tAdouble;
-					break;
+						break;
 					case 'F':
 						result.type = SSAValue.tAfloat;
-					break;
+						break;
 					case 'I':
 						result.type = SSAValue.tAinteger;
-					break;
+						break;
 					case 'J':
 						result.type = SSAValue.tAlong;
-					break;
+						break;
 					case 'S':
 						result.type = SSAValue.tAshort;
-					break;
+						break;
 					case 'Z':
 						result.type = SSAValue.tAboolean;
-					break;
+						break;
 					case 'L':
 						result.type = SSAValue.tAref;
-					break;
+						break;
 					default:
 						result.type = SSAValue.tAref;
-					}					
-				}else{
-					switch(field.type.name.charAt(0)){
+					}
+				} else {
+					switch (field.type.name.charAt(0)) {
 					case 'B':
 						result.type = SSAValue.tByte;
-					break;
+						break;
 					case 'C':
 						result.type = SSAValue.tChar;
-					break;
+						break;
 					case 'D':
 						result.type = SSAValue.tDouble;
-					break;
+						break;
 					case 'F':
 						result.type = SSAValue.tFloat;
-					break;
+						break;
 					case 'I':
 						result.type = SSAValue.tInteger;
-					break;
+						break;
 					case 'J':
 						result.type = SSAValue.tLong;
-					break;
+						break;
 					case 'S':
 						result.type = SSAValue.tShort;
-					break;
+						break;
 					case 'Z':
 						result.type = SSAValue.tBoolean;
-					break;
+						break;
 					case 'L':
 						result.type = SSAValue.tRef;
-					break;
+						break;
 					default:
 						result.type = SSAValue.tVoid;
-					}					
+					}
 				}
 				instr = new NoOpndRef(sCloadFromField, field);
 				instr.result = result;
@@ -1954,13 +2050,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCputstatic:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				value1 = popFromStack();
-				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new MonadicRef(sCstoreToField, (DataItem)ssa.cfg.method.owner.constPool[val], value1);
-				}else{
+				if (ssa.cfg.method.owner.constPool[val] instanceof DataItem) {
+					instr = new MonadicRef(sCstoreToField,
+							(DataItem) ssa.cfg.method.owner.constPool[val],
+							value1);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in putstatic";
 				}
@@ -1969,79 +2067,81 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCgetfield:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				//determine the type of the field
-				field =(DataItem) ssa.cfg.method.owner.constPool[val];
-				if(field.name.charAt(0) == '['){
-					switch(field.type.name.charAt(0)){
+				// determine the type of the field
+				field = (DataItem) ssa.cfg.method.owner.constPool[val];
+				if (field.name.charAt(0) == '[') {
+					switch (field.type.name.charAt(0)) {
 					case 'B':
 						result.type = SSAValue.tAbyte;
-					break;
+						break;
 					case 'C':
 						result.type = SSAValue.tAchar;
-					break;
+						break;
 					case 'D':
 						result.type = SSAValue.tAdouble;
-					break;
+						break;
 					case 'F':
 						result.type = SSAValue.tAfloat;
-					break;
+						break;
 					case 'I':
 						result.type = SSAValue.tAinteger;
-					break;
+						break;
 					case 'J':
 						result.type = SSAValue.tAlong;
-					break;
+						break;
 					case 'S':
 						result.type = SSAValue.tAshort;
-					break;
+						break;
 					case 'Z':
 						result.type = SSAValue.tAboolean;
-					break;
+						break;
 					case 'L':
 						result.type = SSAValue.tAref;
-					break;
+						break;
 					default:
 						result.type = SSAValue.tAref;
-					}					
-				}else{
-					switch(field.type.name.charAt(0)){
+					}
+				} else {
+					switch (field.type.name.charAt(0)) {
 					case 'B':
 						result.type = SSAValue.tByte;
-					break;
+						break;
 					case 'C':
 						result.type = SSAValue.tChar;
-					break;
+						break;
 					case 'D':
 						result.type = SSAValue.tDouble;
-					break;
+						break;
 					case 'F':
 						result.type = SSAValue.tFloat;
-					break;
+						break;
 					case 'I':
 						result.type = SSAValue.tInteger;
-					break;
+						break;
 					case 'J':
 						result.type = SSAValue.tLong;
-					break;
+						break;
 					case 'S':
 						result.type = SSAValue.tShort;
-					break;
+						break;
 					case 'Z':
 						result.type = SSAValue.tBoolean;
-					break;
+						break;
 					case 'L':
 						result.type = SSAValue.tRef;
-					break;
+						break;
 					default:
 						result.type = SSAValue.tVoid;
-					}					
+					}
 				}
 				value1 = popFromStack();
-				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new MonadicRef(sCloadFromField, (DataItem)ssa.cfg.method.owner.constPool[val], value1);
-				}else{
+				if (ssa.cfg.method.owner.constPool[val] instanceof DataItem) {
+					instr = new MonadicRef(sCloadFromField,
+							(DataItem) ssa.cfg.method.owner.constPool[val],
+							value1);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in getfield";
 				}
@@ -2051,14 +2151,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCputfield:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				value2 = popFromStack();
 				value1 = popFromStack();
-				if(ssa.cfg.method.owner.constPool[val] instanceof DataItem){
-					instr = new DyadicRef(sCstoreToField,(DataItem)ssa.cfg.method.owner.constPool[val], value1, value2);
-				}else{
+				if (ssa.cfg.method.owner.constPool[val] instanceof DataItem) {
+					instr = new DyadicRef(sCstoreToField,
+							(DataItem) ssa.cfg.method.owner.constPool[val],
+							value1, value2);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a DataItem. Used in putfield";
 				}
@@ -2067,105 +2169,148 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCinvokevirtual:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];//index into cp
-				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
-				operands = new SSAValue[val1+1];//objectref + nargs
-				for(int i = operands.length-1; i > -1; i--){
-					operands[i]= popFromStack();
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];// index
+																		// into
+																		// cp
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
+																				// entry
+																				// must
+																				// be
+																				// a
+																				// MethodItem
+				operands = new SSAValue[val1 + 1];// objectref + nargs
+				for (int i = operands.length - 1; i > -1; i--) {
+					operands[i] = popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
+				result.type = decodeReturnDesc(
+						((Method) ssa.cfg.method.owner.constPool[val]).methDescriptor,
+						ssa);
+				instr = new Call(sCcall,
+						((Method) ssa.cfg.method.owner.constPool[val]),
+						operands);
 				instr.result = result;
 				addInstruction(instr);
-				if(result.type != SSAValue.tVoid){
+				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
 				break;
 			case bCinvokespecial:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
-				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
-				operands = new SSAValue[val1+1];//objectref + nargs
-				for(int i = operands.length-1; i > -1; i--){
-					operands[i]= popFromStack();
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
+																				// entry
+																				// must
+																				// be
+																				// a
+																				// MethodItem
+				operands = new SSAValue[val1 + 1];// objectref + nargs
+				for (int i = operands.length - 1; i > -1; i--) {
+					operands[i] = popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
+				result.type = decodeReturnDesc(
+						((Method) ssa.cfg.method.owner.constPool[val]).methDescriptor,
+						ssa);
+				instr = new Call(sCcall,
+						((Method) ssa.cfg.method.owner.constPool[val]),
+						operands);
 				instr.result = result;
 				addInstruction(instr);
-				if(result.type != SSAValue.tVoid){
+				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
 				break;
 			case bCinvokestatic:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
-				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
-				operands = new SSAValue[val1];//nargs
-				for(int i = operands.length-1; i > -1; i--){
-					operands[i]= popFromStack();
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
+																				// entry
+																				// must
+																				// be
+																				// a
+																				// MethodItem
+				operands = new SSAValue[val1];// nargs
+				for (int i = operands.length - 1; i > -1; i--) {
+					operands[i] = popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall,((Method)ssa.cfg.method.owner.constPool[val]), operands);
+				result.type = decodeReturnDesc(
+						((Method) ssa.cfg.method.owner.constPool[val]).methDescriptor,
+						ssa);
+				instr = new Call(sCcall,
+						((Method) ssa.cfg.method.owner.constPool[val]),
+						operands);
 				instr.result = result;
 				addInstruction(instr);
-				if(result.type != SSAValue.tVoid){
+				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
 				break;
 			case bCinvokeinterface:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
-				bca = bca+2;//step over count and zero byte
-				val1 =((Method)ssa.cfg.method.owner.constPool[val]).nofParams;//cp entry must be a MethodItem
-				operands = new SSAValue[val1+1];//objectref + nargs
-				for(int i = operands.length-1; i > -1; i--){
-					operands[i]= popFromStack();
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				bca = bca + 2;// step over count and zero byte
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
+																				// entry
+																				// must
+																				// be
+																				// a
+																				// MethodItem
+				operands = new SSAValue[val1 + 1];// objectref + nargs
+				for (int i = operands.length - 1; i > -1; i--) {
+					operands[i] = popFromStack();
 				}
 				result = new SSAValue();
-				result.type = decodeReturnDesc(((Method)ssa.cfg.method.owner.constPool[val]).methDescriptor, ssa);
-				instr = new Call(sCcall, ((Method)ssa.cfg.method.owner.constPool[val]), operands);
+				result.type = decodeReturnDesc(
+						((Method) ssa.cfg.method.owner.constPool[val]).methDescriptor,
+						ssa);
+				instr = new Call(sCcall,
+						((Method) ssa.cfg.method.owner.constPool[val]),
+						operands);
 				instr.result = result;
 				addInstruction(instr);
-				if(result.type != SSAValue.tVoid){
+				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
 				break;
 			case bCnew:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				value1 = new SSAValue();
 				result = new SSAValue();
-				if(ssa.cfg.method.owner.constPool[val] instanceof Class){
+				if (ssa.cfg.method.owner.constPool[val] instanceof Class) {
 					Item clazz = ssa.cfg.method.owner.constPool[val];
 					value1.type = SSAValue.tRef;
 					value1.constant = clazz;
-				}else{
-					if(ssa.cfg.method.owner.constPool[val] instanceof Type){//it is a Array of objects
+				} else {
+					if (ssa.cfg.method.owner.constPool[val] instanceof Type) {// it
+																				// is
+																				// a
+																				// Array
+																				// of
+																				// objects
 						Item type = ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tAref;
 						result.constant = type.type;
-					}else{
+					} else {
 						assert false : "Unknown Parametertype for new";
 						break;
 					}
-				}				
+				}
 				result.type = SSAValue.tRef;
-				instr = new Call(sCnew, new SSAValue[]{value1});
+				instr = new Call(sCnew, new SSAValue[] { value1 });
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
 			case bCnewarray:
 				bca++;
-				val = ssa.cfg.code[bca] & 0xff;//atype
+				val = ssa.cfg.code[bca] & 0xff;// atype
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = val+10;
-				SSAValue[] operand = {value1};
+				result.type = val + 10;
+				SSAValue[] operand = { value1 };
 				instr = new Call(sCnew, operand);
 				instr.result = result;
 				addInstruction(instr);
@@ -2173,14 +2318,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCanewarray:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
 				result.type = SSAValue.tAref;
 				value1 = popFromStack();
-				SSAValue[] opnd = {value1};
-				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]), opnd);
-				}else{
+				SSAValue[] opnd = { value1 };
+				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
+					instr = new Call(sCnew,
+							((Type) ssa.cfg.method.owner.constPool[val]), opnd);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in anewarray";
 				}
@@ -2203,21 +2349,22 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				instr = new Monadic(sCthrow, value1);
 				instr.result = result;
 				addInstruction(instr);
-				//clear stack
-				while(stackpointer >=0){
-					exitSet[stackpointer]=null;
+				// clear stack
+				while (stackpointer >= 0) {
+					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
 				pushToStack(result);
 				break;
 			case bCcheckcast:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				value1 = popFromStack();
 				result = value1;
-				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new MonadicRef(sCthrow, (Type)ssa.cfg.method.owner.constPool[val], value1);
-				}else{
+				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
+					instr = new MonadicRef(sCthrow,
+							(Type) ssa.cfg.method.owner.constPool[val], value1);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in checkcast";
 				}
@@ -2227,13 +2374,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCinstanceof:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new MonadicRef(sCinstanceof, ((Type)ssa.cfg.method.owner.constPool[val]), value1);
-				}else{
+				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
+					instr = new MonadicRef(sCinstanceof,
+							((Type) ssa.cfg.method.owner.constPool[val]),
+							value1);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in instanceof";
 				}
@@ -2252,17 +2401,19 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCmultianewarray:
 				bca++;
-				val = (ssa.cfg.code[bca++]<<8) | ssa.cfg.code[bca++];
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
 				val1 = ssa.cfg.code[bca];
 				result = new SSAValue();
 				result.type = SSAValue.tAref;
 				operands = new SSAValue[val1];
-				for(int i = 0; i < operands.length; i++){
+				for (int i = 0; i < operands.length; i++) {
 					operands[i] = popFromStack();
 				}
-				if(ssa.cfg.method.owner.constPool[val] instanceof Type){
-					instr = new Call(sCnew, ((Type)ssa.cfg.method.owner.constPool[val]), operands);
-				}else{
+				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
+					instr = new Call(sCnew,
+							((Type) ssa.cfg.method.owner.constPool[val]),
+							operands);
+				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in multianewarray";
 				}
@@ -2275,14 +2426,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value1 = popFromStack();
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
-				bca = bca+2; //step over branchbyte1 and branchbyte2
+				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto_w:
-				bca = bca+4; //step over branchbyte1 and branchbyte2...
+				bca = bca + 4; // step over branchbyte1 and branchbyte2...
 				break;
 			case bCjsr_w:
-				//I think it isn't necessary to push the adress onto the stack
-				bca = bca+4; //step over branchbyte1 and branchbyte2...
+				// I think it isn't necessary to push the adress onto the stack
+				bca = bca + 4; // step over branchbyte1 and branchbyte2...
 				break;
 			case bCbreakpoint:
 				// do nothing
@@ -2323,10 +2474,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			instructions = newArray;
 
 		}
-		if ((nofInstr > 0) && (instructions[nofInstr-1].ssaOpcode == sCbranch)) { // insert before branch instruction
-			instructions[nofInstr] = instructions[nofInstr-1];
-			instructions[nofInstr-1] = instr;
-		} else 
+		if ((nofInstr > 0)
+				&& (instructions[nofInstr - 1].ssaOpcode == sCbranch)) { // insert
+																			// before
+																			// branch
+																			// instruction
+			instructions[nofInstr] = instructions[nofInstr - 1];
+			instructions[nofInstr - 1] = instr;
+		} else
 			instructions[nofInstr] = instr;
 		nofInstr++;
 	}
@@ -2343,7 +2498,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		phiFunctions[nofPhiFunc] = func;
 		nofPhiFunc++;
 	}
-	
+
 	private void load(int index, int type) {
 		SSAValue result = exitSet[maxStack + index];
 
@@ -2360,48 +2515,54 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		pushToStack(result);
 
 	}
-	
-	private SSAValue generateLoadParameter(SSANode predecessor, int index, SSA ssa){
+
+	private SSAValue generateLoadParameter(SSANode predecessor, int index,
+			SSA ssa) {
 		boolean needsNewNode = false;
 		SSANode node = predecessor;
-		for(int i = 0; i < this.nofPredecessors;i++){
-			if(!this.predecessors[i].equals(predecessor) && !needsNewNode){
-				needsNewNode = this.idom.equals(predecessor)&& !(this.equals(this.predecessors[i].idom)) && !isLoopHeader(); 
+		for (int i = 0; i < this.nofPredecessors; i++) {
+			if (!this.predecessors[i].equals(predecessor) && !needsNewNode) {
+				needsNewNode = this.idom.equals(predecessor)
+						&& !(this.equals(this.predecessors[i].idom))
+						&& !isLoopHeader();
 			}
 		}
-		if (needsNewNode){
+		if (needsNewNode) {
 			node = this.insertNode(predecessor, ssa);
 		}
-		
+
 		SSAValue result = new SSAValue();
-		result.index = index; 
+		result.index = index;
 		result.type = ssa.paramType[index];
 		SSAInstruction instr = new NoOpnd(sCloadLocal);
 		instr.result = result;
 		node.addInstruction(instr);
-		node.exitSet[index]= result;
-		
+		node.exitSet[index] = result;
+
 		return result;
 	}
+
 	/**
 	 * 
-	 * @param base SSANode that immediate follow of predecessor
-	 * @param predecessor SSANode that is immediate for the base node
-	 * @return on success the inserted SSANode, otherwise null 
+	 * @param base
+	 *            SSANode that immediate follow of predecessor
+	 * @param predecessor
+	 *            SSANode that is immediate for the base node
+	 * @return on success the inserted SSANode, otherwise null
 	 */
-	public SSANode insertNode(SSANode predecessor, SSA ssa){
+	public SSANode insertNode(SSANode predecessor, SSA ssa) {
 		int index = -1;
 		SSANode node = null;
 		// check if base follows predecessor immediately a save index
-		for(int i = 0; i < nofPredecessors; i++ ){
-			if (predecessors[i].equals(predecessor)){
+		for (int i = 0; i < nofPredecessors; i++) {
+			if (predecessors[i].equals(predecessor)) {
 				index = i;
 				break;
 			}
 		}
-		if (index >= 0){
+		if (index >= 0) {
 			node = new SSANode();
-						
+
 			node.firstBCA = -1;
 			node.lastBCA = -1;
 			node.maxLocals = this.maxLocals;
@@ -2409,190 +2570,236 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			node.idom = idom;
 			node.entrySet = predecessor.exitSet.clone();
 			node.exitSet = node.entrySet.clone();
-			
+
 			node.addSuccessor(this);
 			predecessors[index] = node;
-			
+
 			node.addPredecessor(predecessor);
-			for(int i = 0;i < predecessor.successors.length;i++){
-				if (predecessor.successors[i].equals(this)){
-					predecessor.successors[i]=node;
+			for (int i = 0; i < predecessor.successors.length; i++) {
+				if (predecessor.successors[i].equals(this)) {
+					predecessor.successors[i] = node;
 					break;
 				}
-			}			
+			}
 		}
 		// insert node
-		SSANode lastNode = (SSANode)ssa.cfg.rootNode;
-		while ((lastNode.next != null ) && (lastNode.next != this)){
-			lastNode = (SSANode)lastNode.next;
+		SSANode lastNode = (SSANode) ssa.cfg.rootNode;
+		while ((lastNode.next != null) && (lastNode.next != this)) {
+			lastNode = (SSANode) lastNode.next;
 		}
 		lastNode.next = node;
 		node.next = this;
-		
+
 		return node;
 	}
+
 	/**
-	 * Eliminate phi functions that was unnecessarily generated.
-	 * There are tow Cases in which a phi function becomes redundant.<p>
+	 * Eliminate phi functions that was unnecessarily generated. There are tow
+	 * Cases in which a phi function becomes redundant.
+	 * <p>
 	 * <b>Case 1:</b><br>
 	 * Phi functions of the form
-	 * <pre>  x = [y,x,x,...,x]</pre>
-	 * can be replaced by y.<p>
+	 * 
+	 * <pre>
+	 * x = [y,x,x,...,x]
+	 * </pre>
+	 * 
+	 * can be replaced by y.
+	 * <p>
 	 * <b>Case 2:</b><br>
 	 * Phi functions of the form
-	 * <pre>  x = [x,x,...,x]</pre>
-	 * can be replaced by x.<p>
+	 * 
+	 * <pre>
+	 * x = [x,x,...,x]
+	 * </pre>
+	 * 
+	 * can be replaced by x.
+	 * <p>
 	 */
-	public void eliminateRedundantPhiFunc(){
+	public void eliminateRedundantPhiFunc() {
 		SSAValue tempRes;
 		SSAValue[] tempOperands;
 		int indexOfDiff;
 		boolean redundant, diffAlreadyOccured;
 		int count = 0;
 		PhiFunction[] temp = new PhiFunction[nofPhiFunc];
-		//Traverse phiFunctions  
-		for (int i = 0; i < nofPhiFunc; i++){
+		// Traverse phiFunctions
+		for (int i = 0; i < nofPhiFunc; i++) {
 			indexOfDiff = 0;
 			redundant = true;
 			diffAlreadyOccured = false;
 			tempRes = phiFunctions[i].result;
 			tempOperands = phiFunctions[i].getOperands();
-			//Compare result with operands.
-			//determine if the function is redundant
-			for(int j = 0;j < tempOperands.length; j++){
-				if(tempOperands[j].owner != null){// Don't regard virtual deleted PhiFunctions
-					if(tempOperands[j].owner.deleted){
-						continue;
+			// Compare result with operands.
+			// determine if the function is redundant
+			for (int j = 0; j < tempOperands.length; j++) {
+				if (tempOperands[j].owner != null) {// handle virtual
+													// deleted PhiFunctions special
+					if (tempOperands[j].owner.deleted) {
+						SSAValue res = tempOperands[j].owner.getOperands()[0];
+						while(res.owner != null){//if is a phiFunction too
+							if(res.owner.deleted){
+								if(res == res.owner.getOperands()[0]){//it is the same phiFunction
+									break;
+								}
+								res = res.owner.getOperands()[0];
+							}else{
+								break;
+							}
+						}
+						if(res == tempOperands[j] || res.owner == null){
+							//ignore operand he have no parent PhiFunctions that lives
+							continue;
+						}else{
+							tempOperands[j] = res;//protect for cycles
+						}
+						
 					}
 				}
-				if(tempRes != (tempOperands[j])){
-					if(diffAlreadyOccured){
-						redundant= false;
+				if (tempRes != (tempOperands[j])) {
+					if (diffAlreadyOccured) {
+						redundant = false;
 						break;
 					}
 					diffAlreadyOccured = true;
 					indexOfDiff = j;
 				}
 			}
-			if(redundant){
-				//if the Phifunc has no parameter so delete it real
-				if(phiFunctions[i].nofOperands > 0){
-					//delete it virtually an set the operand for replacement 
-					phiFunctions[i].deleted = true;
-					phiFunctions[i].setOperands(new SSAValue[]{tempOperands[indexOfDiff]});
-					nofDeletedPhiFunc++;
-					temp[count++]= phiFunctions[i];
+			if (redundant) {
+				// if the Phifunc has no parameter so delete it real
+				if (phiFunctions[i].nofOperands > 0) {
+					if (!phiFunctions[i].deleted) {
+						// delete it virtually an set the operand for
+						// replacement
+						phiFunctions[i].deleted = true;
+						phiFunctions[i].setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
+						nofDeletedPhiFunc++;
+					}
+					temp[count++] = phiFunctions[i];
 				}
-			}else{
-				temp[count++]= phiFunctions[i];
+			} else {
+				temp[count++] = phiFunctions[i];
 			}
 		}
 		phiFunctions = temp;
-		nofPhiFunc = count;		
+		nofPhiFunc = count;
 	}
-	
 
-	
-	private int decodeReturnDesc(HString methodDescriptor, SSA ssa){
+	private int decodeReturnDesc(HString methodDescriptor, SSA ssa) {
 		int type, i;
 		char ch = methodDescriptor.charAt(0);
-		for(i = 0; ch != ')'; i++){//travers  (....) we need only the Returnvalue;
+		for (i = 0; ch != ')'; i++) {// travers (....) we need only the
+										// Returnvalue;
 			ch = methodDescriptor.charAt(i);
 		}
 		ch = methodDescriptor.charAt(i++);
-		if(ch == '['){
-			while(ch == '['){
+		if (ch == '[') {
+			while (ch == '[') {
 				i++;
 				ch = methodDescriptor.charAt(i);
 			}
-			type = ssa.decodeFieldType(ch)+10;//+10 is for Arrays
-		
-		}else{
+			type = ssa.decodeFieldType(ch) + 10;// +10 is for Arrays
+
+		} else {
 			type = ssa.decodeFieldType(ch);
 		}
-		return type;		
+		return type;
 	}
-	
+
 	/**
-	 * Prints out the SSANode readable.<p>
-	 * <b>Example:</b><p>
+	 * Prints out the SSANode readable.
+	 * <p>
+	 * <b>Example:</b>
+	 * <p>
+	 * 
 	 * <pre>
 	 * SSANode 0:
-      EntrySet {[ , ], [ ,  ]}
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-         Dyadic[sCadd] ( Integer, Integer )
-         Dyadic[sCadd] ( Integer, Integer )
-         Monadic[sCloadVar] ( Void )
-         NoOpnd[sCloadConst]
-         Dyadic[sCadd] ( Integer, Integer )
-      ExitSet {[ , ], [ Integer (null), Integer (null) ]}
+	 *       EntrySet {[ , ], [ ,  ]}
+	 *          NoOpnd[sCloadConst]
+	 *          Dyadic[sCadd] ( Integer, Integer )
+	 *          Dyadic[sCadd] ( Integer, Integer )
+	 *          Dyadic[sCadd] ( Integer, Integer )
+	 *          Monadic[sCloadVar] ( Void )
+	 *          NoOpnd[sCloadConst]
+	 *          Dyadic[sCadd] ( Integer, Integer )
+	 *       ExitSet {[ , ], [ Integer (null), Integer (null) ]}
 	 * </pre>
-	 *  
-	 * @param level defines how much to indent
-	 * @param nodeNr the Number of the node in this SSA
+	 * 
+	 * @param level
+	 *            defines how much to indent
+	 * @param nodeNr
+	 *            the Number of the node in this SSA
 	 */
 	public void print(int level, int nodeNr) {
-		
-		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.println("SSANode "+ nodeNr +":");
-		
-		//Print EntrySet with Stack and Locals
-		for (int i = 0; i < (level+1)*3; i++)System.out.print(" ");
+
+		for (int i = 0; i < level * 3; i++)
+			System.out.print(" ");
+		System.out.println("SSANode " + nodeNr + ":");
+
+		// Print EntrySet with Stack and Locals
+		for (int i = 0; i < (level + 1) * 3; i++)
+			System.out.print(" ");
 		System.out.print("EntrySet {");
-		if(entrySet.length > 0 ) System.out.print("[ ");
-		for (int i = 0; i < entrySet.length-1; i++){
-			
-			if(entrySet[i] != null)	System.out.print(entrySet[i].toString());
-			
-			if(i == maxStack-1){
+		if (entrySet.length > 0)
+			System.out.print("[ ");
+		for (int i = 0; i < entrySet.length - 1; i++) {
+
+			if (entrySet[i] != null)
+				System.out.print(entrySet[i].toString());
+
+			if (i == maxStack - 1) {
 				System.out.print("], [ ");
-			}else{
+			} else {
 				System.out.print(", ");
-			}			
+			}
 		}
-		if(entrySet.length > 0){
-			if(entrySet[entrySet.length-1] != null){
-				System.out.println(entrySet[entrySet.length-1].toString()+" ]}");
-			}else{
+		if (entrySet.length > 0) {
+			if (entrySet[entrySet.length - 1] != null) {
+				System.out.println(entrySet[entrySet.length - 1].toString()
+						+ " ]}");
+			} else {
 				System.out.println("]}");
 			}
-		}else{
+		} else {
 			System.out.println("}");
 		}
-		
-		//Print Phifunctions
-		for (int i = 0; i < nofPhiFunc; i++){
-			phiFunctions[i].print(level+2);
+
+		// Print Phifunctions
+		for (int i = 0; i < nofPhiFunc; i++) {
+			phiFunctions[i].print(level + 2);
 		}
-		//Print Instructions
-		for (int i = 0; i < nofInstr; i++){
-			instructions[i].print(level+2);
+		// Print Instructions
+		for (int i = 0; i < nofInstr; i++) {
+			instructions[i].print(level + 2);
 		}
-		
-		//Print ExitSet with Stack and Locals
-		for (int i = 0; i < (level+1)*3; i++)System.out.print(" ");
+
+		// Print ExitSet with Stack and Locals
+		for (int i = 0; i < (level + 1) * 3; i++)
+			System.out.print(" ");
 		System.out.print("ExitSet {");
-		if(exitSet.length > 0 ) System.out.print("[ ");
-		
-		for (int i = 0; i < exitSet.length-1; i++){
-					
-			if(exitSet[i] != null) System.out.print(exitSet[i].toString());
-			
-			if(i == maxStack-1){
+		if (exitSet.length > 0)
+			System.out.print("[ ");
+
+		for (int i = 0; i < exitSet.length - 1; i++) {
+
+			if (exitSet[i] != null)
+				System.out.print(exitSet[i].toString());
+
+			if (i == maxStack - 1) {
 				System.out.print("], [ ");
-			}else{
+			} else {
 				System.out.print(", ");
-			}			
-			
+			}
+
 		}
-		if(exitSet.length > 0){
-			if(exitSet[exitSet.length-1] != null){
-				System.out.println(exitSet[exitSet.length-1].toString()+" ]}");
-			}else{
+		if (exitSet.length > 0) {
+			if (exitSet[exitSet.length - 1] != null) {
+				System.out.println(exitSet[exitSet.length - 1].toString()
+						+ " ]}");
+			} else {
 				System.out.println("]}");
 			}
-		}else{
+		} else {
 			System.out.println("}");
 		}
 	}
