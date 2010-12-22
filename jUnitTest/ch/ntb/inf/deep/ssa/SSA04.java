@@ -108,7 +108,7 @@ public class SSA04 extends TestSSA {
 		testNode(nodes[1], 2, 0, 5);
 		testNode(nodes[2], 2, 1, 5);
 		testNode(nodes[3], 2, 0, 5);
-		testNode(nodes[4], 1, 1, 5);
+		testNode(nodes[4], 1, 2, 5);
 		testNode(nodes[5], 1, 0, 5);
 	}
 	
@@ -121,7 +121,7 @@ public class SSA04 extends TestSSA {
 		testNode(nodes[3], 2, 0, 4);
 		testNode(nodes[4], 2, 1, 4);
 		testNode(nodes[5], 2, 2, 4);
-		testNode(nodes[6], 2, 1, 4);
+		testNode(nodes[6], 2, 2, 4);
 		testNode(nodes[7], 1, 0, 4);
 	}
 }
