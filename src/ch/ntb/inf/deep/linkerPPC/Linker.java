@@ -20,6 +20,8 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
 	
+	protected static final boolean dbg = true;
+	
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
 
@@ -35,17 +37,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static int[] systemTable;
 	private static int systemTableSize;
 
-	/**
-	 * Calculates the offsets... <ul>
-	 * <li>of the constant float and double values in the constant pool</li>
-	 * <li>of the constant stings in the string pool</li>
-	 * <li>of the class/static fields</li>
-	 * <li>of the instance fields</li>
-	 * <li>of the methods</li>
-	 * from the given class.
-	 * </ul>
-	 * @param clazz is the class to process
-	 */
 	public static void calculateOffsets(Class clazz) {
 		int c1, c2, c3;
 		
@@ -301,8 +292,12 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				method = (Method)method.next;
 			}
 		}
-		vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
 		
+		
+		// Class descriptor
+		clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4 * (6 + clazz.nOfReferences);
+		
+		vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
 	}
 		
 	public static void createConstantBlock(Class clazz) {
@@ -449,10 +444,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
 	}
 
-	/**
-	 * Creates the system table for the target
-	 * 
-	 */
 	public static void createSystemTable() {
 		
 		vrb.println("[LINKER] START: Creating systemtable:\n");
@@ -521,11 +512,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		// reference to the constant block of each class
 		Class clazz = Type.classList; int i = 7 + 2 * nOfStacks + 2 * nOfHeaps;
-		int offset = 0;
 		while(clazz != null) {
-			systemTable[i] = clazz.constSegment.getBaseAddress() + offset;
-			offset += clazz.constantBlockSize;
-//			System.out.println("       Class: " + clazz.name + " -> Index: " + i);
+			systemTable[i] = clazz.address;
 			i++;
 			clazz = (Class)clazz.next;
 		}
@@ -717,6 +705,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("    Code segment: " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
 			vrb.println("    Var segment: " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
 			vrb.println("    Const segment: " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
+			vrb.println("    Class descriptor address: 0x" + c.address);
+			vrb.println("    Base address of the constant block: 0x" + (c.constSegment.getBaseAddress() + c.constOffset));
+			vrb.println("    Base address of the code: 0x" + (c.codeSegment.getBaseAddress() + c.codeOffset));
+			vrb.println("    Base address of the non constant class fields: 0x" + (c.varSegment.getBaseAddress() + c.varOffset));
 			
 			vrb.println("    Method list:");
 			m = (Method)c.methods;
