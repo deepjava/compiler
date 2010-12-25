@@ -13,7 +13,7 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * @author buesser 23.2.2010, graf
  */
 public class CFG implements ICjvmInstructionOpcs {
-	private static final boolean debug = false;
+	private static final boolean debug = true;
 
 	/**
 	 * Start-node of the CFG.
@@ -83,6 +83,7 @@ public class CFG implements ICjvmInstructionOpcs {
 
 		CFGNode startNode = new SSANode();
 		rootNode = startNode;
+		rootNode.root = true;
 		code = method.code;
 
 		int len = code.length;
@@ -100,6 +101,7 @@ public class CFG implements ICjvmInstructionOpcs {
 		int bca = 0;
 		while (bca < len) {
 			int bci = code[bca] & 0xff;
+			if (debug) System.out.println("code at " + bca + ": " + bci);
 			int entry = bcAttrTab[bci];
 			int instrLen = (entry >> 8) & 0xF;
 			if (instrLen == 0) {
@@ -137,17 +139,22 @@ public class CFG implements ICjvmInstructionOpcs {
 			bca += instrLen;
 		}
 		assert (bca == len) : "last instruction not at end of method";
+		if (debug) System.out.println("marking loop headers");
 		markLoopHeaders(rootNode);
+		if (debug) System.out.println("eliminating dead nodes");
 		eliminateDeadNodes(this);
+		if (debug) System.out.println("enter predecessors");
 		enterPredecessors(this);
-		CFGNode current = this.rootNode;	// prepare for finding dominators
+		CFGNode current = this.rootNode;	// prepare to find dominators
 		while (current != null) {
 			current.visited = false;
 			current = current.next;
 		}
 		rootNode.idom = null;
+		if (debug) System.out.println("build dom");
 		for (int i = 0; i < rootNode.nofSuccessors; i++)
 			visitDom(rootNode.successors[i], rootNode);
+		if (debug) System.out.println("cfg done");
 		if (debug)
 			printToLog();
 	}
@@ -341,10 +348,12 @@ public class CFG implements ICjvmInstructionOpcs {
 		if (b.idom == null)
 			b.idom = predecessor;
 		else
-			b.idom = commonDom(b.idom, predecessor);
-		if (b.ref == b.nofBackwardBranches)
-			for (int i = 0; i < b.nofSuccessors; i++)
+			if (b.idom.root == false) b.idom = commonDom(b.idom, predecessor);
+		if (b.ref == b.nofBackwardBranches) {
+			for (int i = 0; i < b.nofSuccessors; i++) {
 				visitDom(b.successors[i], b);
+			}
+		}
 	}
 
 	private static CFGNode commonDom(CFGNode a, CFGNode b) {

@@ -18,6 +18,7 @@ public class CFGNode {
 	 * used for calculating dominator tree.
 	 */
 	int ref;
+	boolean root = false;
 
 	/**
 	 * Bytecode address of the first bytecode instruction in this node.
