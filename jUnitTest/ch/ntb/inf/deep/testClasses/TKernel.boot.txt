@@ -1,0 +1,215 @@
+	private static void boot() {
+		blink(1);
+		int reg;
+		do reg = FCS(1,2); while ((reg & (1 << 16)) == 0);	// wait for PLL to lock
+		short reset = FCS(3,4);
+		if ((reset & (1<<5 | 1<<15)) != 0) {	// boot from flash
+			blink(2);
+		}
+		blink(1);
+		int classConstOffset = FCS(5,6) * 4 + 4;
+		int state = 0;
+		int kernelClinitAddr = FCS(7,8);
+		while (true) {
+			blink(2);
+			int constBlkBase = classConstOffset * 8;
+			int varBase = constBlkBase + cblkVarBaseOffset;
+			int varSize = constBlkBase + cblkVarSizeOffset;
+			int begin = varBase;
+			int end = varBase + varSize;
+			while (begin < end) {FCS(begin, 0); begin += 4;}
+			int clinitAddr = constBlkBase + cblkClinitAddrOffset;
+			blink(state + 2);
+			if (clinitAddr == -1) {	// skip kernel
+			if (clinitAddr != kernelClinitAddr) {	// skip kernel
+				blink(6);
+			} else {	// kernel
+			}
+			}
+			state++; //modNr++;
+			constBlkBase += 4;
+		}
+	}
+
+SSA for Method: boot
+   SSANode 0:
+      EntrySet {[ , ], [ , , , , , , , , , , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=1, reg=2
+         1: Call[sCcall] {0} (Void),   blink,   end=1
+         2: NoOpnd[sCloadConst] 3129344 (Integer),   end=4, reg=2
+         3: NoOpnd[sCloadConst] 262144 (Integer),   end=4, reg=3
+         4: Call[sCcall] {2, 3} (Void),   PUT4,   end=4
+         5: NoOpnd[sCloadConst] 3129988 (Integer),   end=7, reg=2
+         6: NoOpnd[sCloadConst] 9437184 (Integer),   end=7, reg=3
+         7: Call[sCcall] {5, 6} (Void),   PUT4,   end=7
+      ExitSet {[ , ], [ , , , , , , , , , , ]}
+
+   SSANode 1:  loop header
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+         8: PhiFunction[sCPhiFunc] {20} (Phi-Function),   start=8, end=23, index=2, last=23 del
+         9: PhiFunction[sCPhiFunc] {9} (Phi-Function),   start=9, end=23, index=3, last=23 del
+         10: PhiFunction[sCPhiFunc] {10} (Phi-Function),   start=10, end=23, index=4, last=23 del
+         11: PhiFunction[sCPhiFunc] {11} (Phi-Function),   start=11, end=23, index=5, last=23 del
+         12: PhiFunction[sCPhiFunc] {12} (Phi-Function),   start=12, end=23, index=6, last=23 del
+         13: PhiFunction[sCPhiFunc] {13} (Phi-Function),   start=13, end=23, index=7, last=23 del
+         14: PhiFunction[sCPhiFunc] {14} (Phi-Function),   start=14, end=23, index=8, last=23 del
+         15: PhiFunction[sCPhiFunc] {15} (Phi-Function),   start=15, end=23, index=9, last=23 del
+         16: PhiFunction[sCPhiFunc] {16} (Phi-Function),   start=16, end=23, index=10, last=23 del
+         17: PhiFunction[sCPhiFunc] {17} (Phi-Function),   start=17, end=23, index=11, last=23 del
+         18: PhiFunction[sCPhiFunc] {18} (Phi-Function),   start=18, end=23, index=12, last=23 del
+         19: NoOpnd[sCloadConst] 3129988 (Integer),   end=20, reg=2
+         20: Call[sCcall] {19} (Integer),   GET4,   end=22, index=2, reg=2
+         21: NoOpnd[sCloadConst] 65536 (Integer),   end=22, reg=3
+         22: Dyadic[sCand] {20, 21} (Integer),   end=23, reg=2
+         23: Branch[sCBranch] {22} (Void)
+      ExitSet {[ , ], [ 20 (Integer), Phi-Function(9), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 20 (Integer), Phi-Function(9), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+         24: NoOpnd[sCloadConst] 3178368 (Integer),   end=26, reg=2
+         25: NoOpnd[sCloadConst] 0 (Integer),   end=26, reg=3
+         26: Call[sCcall] {24, 25} (Void),   PUT4,   end=26
+         27: NoOpnd[sCloadConst] 158 (Integer),   end=29
+         28: NoOpnd[sCloadConst] 2048 (Integer),   end=29, reg=2
+         29: Call[sCcall] {27, 28} (Void),   PUTSPR,   end=29
+         30: NoOpnd[sCloadConst] 638 (Integer),   end=32
+         31: NoOpnd[sCloadConst] 2048 (Integer),   end=32, reg=2
+         32: Call[sCcall] {30, 31} (Void),   PUTSPR,   end=32
+         33: NoOpnd[sCloadConst] 3129600 (Integer),   end=35, reg=2
+         34: NoOpnd[sCloadConst] 16777219 (Integer),   end=35, reg=3
+         35: Call[sCcall] {33, 34} (Void),   PUT4,   end=35
+         36: NoOpnd[sCloadConst] 3129604 (Integer),   end=38, reg=2
+         37: NoOpnd[sCloadConst] -4194272 (Integer),   end=38, reg=3
+         38: Call[sCcall] {36, 37} (Void),   PUT4,   end=38
+         39: NoOpnd[sCloadConst] 3129608 (Integer),   end=41, reg=2
+         40: NoOpnd[sCloadConst] 8388611 (Integer),   end=41, reg=3
+         41: Call[sCcall] {39, 40} (Void),   PUT4,   end=41
+         42: NoOpnd[sCloadConst] 3129612 (Integer),   end=44, reg=2
+         43: NoOpnd[sCloadConst] -2097120 (Integer),   end=44, reg=3
+         44: Call[sCcall] {42, 43} (Void),   PUT4,   end=44
+         45: NoOpnd[sCloadConst] 3129404 (Integer),   end=47, reg=2
+         46: NoOpnd[sCloadConst] 0 (Integer),   end=47, reg=3
+         47: Call[sCcall] {45, 46} (Void),   PUT2,   end=47
+         48: NoOpnd[sCloadConst] 3129984 (Integer),   end=50, reg=2
+         49: NoOpnd[sCloadConst] -2128542976 (Integer),   end=50, reg=3
+         50: Call[sCcall] {48, 49} (Void),   PUT4,   end=50
+         51: NoOpnd[sCloadConst] 3129856 (Integer),   end=53, reg=2
+         52: NoOpnd[sCloadConst] 1 (Integer),   end=53, reg=3
+         53: Call[sCcall] {51, 52} (Void),   PUT2,   end=53
+         54: NoOpnd[sCloadConst] 3129992 (Integer),   end=55, reg=2
+         55: Call[sCcall] {54} (Short),   GET2,   end=57, index=3, reg=2
+         56: NoOpnd[sCloadConst] 32800 (Integer),   end=57, reg=3
+         57: Dyadic[sCand] {55, 56} (Integer),   end=58, reg=2
+         58: Branch[sCBranch] {57} (Void)
+      ExitSet {[ , ], [ 20 (Integer), 55 (Short), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 20 (Integer), 55 (Short), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+         59: NoOpnd[sCloadConst] 3129348 (Integer),   end=61, reg=2
+         60: NoOpnd[sCloadConst] 0 (Integer),   end=61, reg=3
+         61: Call[sCcall] {59, 60} (Void),   PUT4,   end=61
+      ExitSet {[ , ], [ 20 (Integer), 55 (Short), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 20 (Integer), 55 (Short), Phi-Function(10), Phi-Function(11), Phi-Function(12), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+         62: NoOpnd[sCloadConst] 1 (Integer),   end=63, reg=2
+         63: Call[sCcall] {62} (Void),   blink,   end=63
+         64: NoOpnd[sCloadConst] 4167680 (Integer),   end=65, reg=2
+         65: Call[sCcall] {64} (Integer),   GET4,   end=67, reg=2
+         66: NoOpnd[sCloadConst] 4 (Integer),   end=67
+         67: Dyadic[sCmul] {65, 66} (Integer),   end=69, reg=2
+         68: NoOpnd[sCloadConst] 4 (Integer),   end=69
+         69: Dyadic[sCadd] {67, 68} (Integer),   end=69, index=4, reg=2, join={75}
+         70: NoOpnd[sCloadConst] 0 (Integer),   end=70, index=5, reg=3, join={76}
+         71: NoOpnd[sCloadConst] 4167692 (Integer),   end=72, reg=4
+         72: Call[sCcall] {71} (Integer),   GET4,   end=72, index=6, reg=4, join={77}
+      ExitSet {[ , ], [ 20 (Integer), 55 (Short), 69 (Integer), 70 (Integer), 72 (Integer), Phi-Function(13), Phi-Function(14), Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
+
+   SSANode 5:  loop header
+      EntrySet {[ , ], [ Phi-Function(73), Phi-Function(74), Phi-Function(75), Phi-Function(76), Phi-Function(77), Phi-Function(78), Phi-Function(79), Phi-Function(80), Phi-Function(81), Phi-Function(82), Phi-Function(83) ]}
+         73: PhiFunction[sCPhiFunc] {20} (Phi-Function),   start=73, end=133, index=2, last=133 del
+         74: PhiFunction[sCPhiFunc] {55} (Phi-Function),   start=74, end=133, index=3, last=133 del
+         75: PhiFunction[sCPhiFunc] {69} (Phi-Function),   start=69, end=133, index=4, reg=2, last=133 del u
+         76: PhiFunction[sCPhiFunc] {70, 130} (Phi-Function),   start=70, end=133, index=5, reg=3, last=133
+         77: PhiFunction[sCPhiFunc] {72} (Phi-Function),   start=72, end=133, index=6, reg=4, last=133 del u
+         78: PhiFunction[sCPhiFunc] {132} (Phi-Function),   start=78, end=133, index=7, last=133 del
+         79: PhiFunction[sCPhiFunc] {108} (Phi-Function),   start=79, end=133, index=8, last=133 del
+         80: PhiFunction[sCPhiFunc] {109} (Phi-Function),   start=80, end=133, index=9, last=133 del
+         81: PhiFunction[sCPhiFunc] {110} (Phi-Function),   start=81, end=133, index=10, last=133 del
+         82: PhiFunction[sCPhiFunc] {111} (Phi-Function),   start=82, end=133, index=11, last=133 del
+         83: PhiFunction[sCPhiFunc] {118} (Phi-Function),   start=83, end=133, index=12, last=133 del
+         84: NoOpnd[sCloadConst] 2 (Integer),   end=85, reg=5
+         85: Call[sCcall] {84} (Void),   blink,   end=85
+         86: Call[sCcall] {75} (Integer),   GET4,   end=133, index=7, reg=31, join={107}
+         87: NoOpnd[sCloadConst] 1 (Integer),   end=88, reg=5
+         88: Call[sCcall] {87} (Void),   blink,   end=88
+         89: NoOpnd[sCloadConst] 12 (Integer),   end=90
+         90: Dyadic[sCadd] {86, 89} (Integer),   end=91, reg=5
+         91: Call[sCcall] {90} (Integer),   GET4,   end=96, index=10, reg=5, join={110}
+         92: NoOpnd[sCloadConst] 16 (Integer),   end=93
+         93: Dyadic[sCadd] {86, 92} (Integer),   end=94, reg=6
+         94: Call[sCcall] {93} (Integer),   GET4,   end=95, index=9, reg=6
+         95: Dyadic[sCadd] {91, 94} (Integer),   end=95, index=11, reg=6, join={111}
+         96: Monadic[sCRegMove] {91} (Integer),   end=96, index=8, reg=7
+         97: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ Phi-Function(73), Phi-Function(74), Phi-Function(75), Phi-Function(76), Phi-Function(77), 86 (Integer), 96 (Integer), 94 (Integer), 91 (Integer), 95 (Integer), Phi-Function(83) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), Phi-Function(112) ]}
+         98: NoOpnd[sCloadConst] 0 (Integer),   end=99, reg=7
+         99: Call[sCcall] {110, 98} (Void),   PUT4,   end=113
+         100: NoOpnd[sCloadConst] 4 (Integer),   end=101
+         101: Dyadic[sCadd] {110, 100} (Integer),   end=113, index=10, reg=5, join={110}
+      ExitSet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), 101 (Integer), Phi-Function(111), Phi-Function(112) ]}
+
+   SSANode 7:  loop header
+      EntrySet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), Phi-Function(112) ]}
+         102: PhiFunction[sCPhiFunc] {73} (Phi-Function),   start=102, end=113, index=2, last=113 del
+         103: PhiFunction[sCPhiFunc] {74} (Phi-Function),   start=103, end=113, index=3, last=113 del
+         104: PhiFunction[sCPhiFunc] {75} (Phi-Function),   start=104, end=113, index=4, last=113 del
+         105: PhiFunction[sCPhiFunc] {76} (Phi-Function),   start=105, end=113, index=5, reg=3, join={76}, last=113 del u
+         106: PhiFunction[sCPhiFunc] {77} (Phi-Function),   start=106, end=113, index=6, reg=4, join={77}, last=113 del u
+         107: PhiFunction[sCPhiFunc] {86} (Phi-Function),   start=86, end=132, index=7, reg=31, last=113 del u
+         108: PhiFunction[sCPhiFunc] {96} (Phi-Function),   start=108, end=113, index=8, last=113 del
+         109: PhiFunction[sCPhiFunc] {94} (Phi-Function),   start=109, end=113, index=9, last=113 del
+         110: PhiFunction[sCPhiFunc] {91, 101} (Phi-Function),   start=91, end=113, index=10, reg=5, last=113
+         111: PhiFunction[sCPhiFunc] {95} (Phi-Function),   start=95, end=113, index=11, reg=6, last=113 del u
+         112: PhiFunction[sCPhiFunc] {83} (Phi-Function),   start=112, end=113, index=12, last=113 del
+         113: Branch[sCBranch] {111, 110} (Void)
+      ExitSet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), Phi-Function(112) ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), Phi-Function(112) ]}
+         114: NoOpnd[sCloadConst] 1 (Integer),   end=115, reg=5
+         115: Call[sCcall] {114} (Void),   blink,   end=115
+         116: NoOpnd[sCloadConst] 20 (Integer),   end=117
+         117: Dyadic[sCadd] {107, 116} (Integer),   end=118, reg=5
+         118: Call[sCcall] {117} (Integer),   GET4,   end=126, index=12, reg=30
+         119: NoOpnd[sCloadConst] 2 (Integer),   end=120
+         120: Dyadic[sCadd] {105, 119} (Integer),   end=121, reg=5
+         121: Call[sCcall] {120} (Void),   blink,   end=121
+         122: NoOpnd[sCloadConst] -1 (Integer),   end=123
+         123: Branch[sCBranch] {122, 118} (Void)
+      ExitSet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}
+         124: Branch[sCBranch] {106, 118} (Void)
+      ExitSet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}
+
+   SSANode 10:
+      EntrySet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}
+         125: NoOpnd[sCloadConst] 8 (Integer),   end=126
+         126: Call[sCcall] {125, 118} (Void),   PUTSPR,   end=126
+         127: NoOpnd[sCloadConst] bclrl always, 0 (Ref),   end=128, reg=5
+         128: Call[sCcall] {127} (Void),   ASM,   end=128
+      ExitSet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}
+
+   SSANode 11:
+      EntrySet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), Phi-Function(105), Phi-Function(106), Phi-Function(107), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}
+         129: NoOpnd[sCloadConst] 1 (Integer),   end=130
+         130: Dyadic[sCadd] {105, 129} (Integer),   end=130, index=5, reg=3, join={76}
+         131: NoOpnd[sCloadConst] 4 (Integer),   end=132
+         132: Dyadic[sCadd] {107, 131} (Integer),   end=132, index=7, reg=5
+         133: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ Phi-Function(102), Phi-Function(103), Phi-Function(104), 130 (Integer), Phi-Function(106), 132 (Integer), Phi-Function(108), Phi-Function(109), Phi-Function(110), Phi-Function(111), 118 (Integer) ]}

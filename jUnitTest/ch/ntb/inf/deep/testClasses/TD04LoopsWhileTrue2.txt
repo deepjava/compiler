@@ -1,0 +1,93 @@
+	private void whileTrue2() {
+		while (true) {
+			whileAfterWhile(65);
+			for (int i = 0; i < 1000000; i++);
+		}
+	}
+
+	"private void whileTrue2()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=23
+	{
+		  0 aload_0 [this]
+		  1 bipush 65
+		  3 invokespecial ch/ntb/inf/deep/testClasses/T04Loops(int): void
+		  6 iconst_0
+		  7 istore_1 [i]
+		  8 goto 14
+		 11 iinc i, 1
+		 14 iload_1 [i]
+		 15 ldc 1000000
+		 17 if_icmplt 11
+		 20 goto 0
+
+		assert (bca == len) : "last instruction not at end of method";
+		if (debug) System.out.println("marking loop headers");
+		markLoopHeaders(rootNode);
+		if (debug) System.out.println("eliminating dead nodes");
+		eliminateDeadNodes(this);
+		if (debug) System.out.println("enter predecessors");
+		enterPredecessors(this);
+		CFGNode current = this.rootNode;	// prepare to find dominators
+		while (current != null) {
+			current.visited = false;
+			current = current.next;
+		}
+		rootNode.idom = null;
+		if (debug) System.out.println("build dom");
+		for (int i = 0; i < rootNode.nofSuccessors; i++)
+			visitDom(rootNode.successors[i], rootNode);
+		if (debug) System.out.println("cfg done");
+
+code of method whileTrue2
+42  16  65  183  0  3  3  60
+167  0  6  132  1  1  27  18
+4  161  255  250  167  255  236
+code at 0: 42
+code at 1: 16
+code at 3: 183
+code at 6: 3
+code at 7: 60
+code at 8: 167
+code at 11: 132
+code at 14: 27
+code at 15: 18
+code at 17: 161
+code at 20: 167
+marking loop headers
+eliminating dead nodes
+enter predecessors
+build dom
+
+	private static void visitDom(CFGNode b, CFGNode predecessor) {
+		b.ref--;
+		if (b.idom == null)
+			b.idom = predecessor;
+		else
+			b.idom = commonDom(b.idom, predecessor);
+		if (b.ref == b.nofBackwardBranches)
+			for (int i = 0; i < b.nofSuccessors; i++)
+				visitDom(b.successors[i], b);
+	}
+
+	private static CFGNode commonDom(CFGNode a, CFGNode b) {
+		CFGNode aa = a;
+		CFGNode bb = b;
+		do {
+			a.visited = true;
+			a = a.idom;
+		} while (a != null);
+		do {
+			if (b.visited) break;
+			b.visited = true;
+			b = b.idom;
+		} while (b != null);
+		while (aa != null) {
+			aa.visited = false;
+			aa = aa.idom;
+		}
+		while (bb != null) {
+			bb.visited = false;
+			bb = bb.idom;
+		}
+		return b;
+	}

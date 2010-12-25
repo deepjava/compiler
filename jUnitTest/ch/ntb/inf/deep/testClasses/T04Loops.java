@@ -38,7 +38,7 @@ public class T04Loops {
 		return i;
 	}
 
-    public static void whileTrue() {
+   public static void whileTrue() {
     	int a = 10;
         while(true) {
         	int b = a + 1;
@@ -89,7 +89,7 @@ public class T04Loops {
 		}
 	}
 	
-	private void whileAfterWhile(int a) {
+ 	private void whileAfterWhile(int a) {
 		int b = 10;
 		do a--; while(a < -1);
 		b++;
@@ -118,13 +118,20 @@ public class T04Loops {
 
 	private void while3() {
 		int a = 10;
+		while (a < 15) a++;
 		int b = 20;
-		while (b == 0) {
-			int c = a * 2;
-			int d = a -1;
-			int e = a + b;
-			b--;
+		while (b > 10) {
+			int c = b + 1;
 		}
-		int f = 2 + b;
+		if (a < b) a += 10;
+		int c = 2 + a;
 	}
+	
+	private void whileTrue2() {
+		while (true) {
+			whileAfterWhile(65);
+			for (int i = 0; i < 1000000; i++);
+		}
+	}
+
 }
