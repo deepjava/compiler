@@ -20,7 +20,7 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
 	
-	protected static final boolean dbg = true;
+	protected static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
@@ -513,7 +513,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// reference to the constant block of each class
 		Class clazz = Type.classList; int i = 7 + 2 * nOfStacks + 2 * nOfHeaps;
 		while(clazz != null) {
-			systemTable[i] = clazz.address;
+			//systemTable[i] = clazz.address;
+			systemTable[i] = clazz.constSegment.getBaseAddress() + clazz.constOffset;
+			
 			i++;
 			clazz = (Class)clazz.next;
 		}
@@ -706,9 +708,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("    Var segment: " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
 			vrb.println("    Const segment: " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
 			vrb.println("    Class descriptor address: 0x" + c.address);
-			vrb.println("    Base address of the constant block: 0x" + (c.constSegment.getBaseAddress() + c.constOffset));
-			vrb.println("    Base address of the code: 0x" + (c.codeSegment.getBaseAddress() + c.codeOffset));
-			vrb.println("    Base address of the non constant class fields: 0x" + (c.varSegment.getBaseAddress() + c.varOffset));
+			vrb.println("    Base address of the constant block: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
+			vrb.println("    Base address of the code: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
+			vrb.println("    Base address of the non constant class fields: 0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
 			
 			vrb.println("    Method list:");
 			m = (Method)c.methods;
