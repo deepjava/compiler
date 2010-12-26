@@ -73,12 +73,20 @@ public class Launcher implements ICclassFileConsts {
 			while (clazz != null) {
 				// 5.1) Linker: calculate absolute addresses
 				Linker.calculateAbsoluteAddresses(clazz);
+
+				clazz = (Class) clazz.next;
+			}
+			clazz = Type.classList;
+			while (clazz != null) {
+				// 5.3) Linker: Create constant block
+				Linker.createConstantBlock(clazz);
+
 				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
 					method = (Method) clazz.methods;
 					while (method != null) {
 					//	System.out.println("### Method: " + method.name);
 					//	System.out.println("### Method (via SSA): " + method.ssa.cfg.method.name);
-					//	System.out.println("### Method (via MachineCode): " + method.machineCode.ssa.cfg.method.name);
+						System.out.println("### Method (via MachineCode): " + method.machineCode.ssa.cfg.method.name);
 					//	method.ssa.print(0);
 					//	method.machineCode.print();
 						
@@ -89,14 +97,13 @@ public class Launcher implements ICclassFileConsts {
 					}
 				}
 					
-				// 5.3) Linker: Create constant block
-				Linker.createConstantBlock(clazz);
-
 				clazz = (Class) clazz.next;
 			}
 
 			// 6) Linker: Create system table
 			Linker.createSystemTable();
+			Linker.printClassList();
+			Linker.printSystemTable();
 
 			// 7) Linker: Create target image
 			Linker.generateTargetImage();
