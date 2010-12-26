@@ -264,11 +264,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("  Static fields:");
 			while(field != null) {
 				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field
-					if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // constant field -> constant pool if float or double
-						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) {
+					if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
+						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) { // constant pool if float or double
 							field.address = clazz.constSegment.getBaseAddress() + 7 + clazz.nOfReferences * 4 + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
 						}
-						else if(field.type == Type.wellKnownTypes[txString]) {
+						else if(field.type == Type.wellKnownTypes[txString]) { // string pool
 							field.address = clazz.constSegment.getBaseAddress() + 7 + clazz.nOfReferences * 4 + clazz.classDescriptorSize + field.index;
 						}
 					}
