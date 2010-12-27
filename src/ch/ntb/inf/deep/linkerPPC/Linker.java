@@ -320,7 +320,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		clazz.constantBlock[3] = clazz.varSegment.getBaseAddress() + clazz.varOffset;	// varBase
 		clazz.constantBlock[4] = clazz.classFieldsSize;									// varSize
 		Method clinit = clazz.getClassConstructor();									// clinitAddr
-		if(clinit != null) clazz.constantBlock[5] = clinit.address;
+		if(clinit != null) {
+			clazz.constantBlock[5] = clinit.address;
+			//vrb.println(" ***************** <clinit> of class " + clazz.name + ": " + clinit.name);
+		}
 		else clazz.constantBlock[5] = -1; // TODO @Urs is this ok?
 		
 		// 2) Insert References (Pointers)
@@ -343,8 +346,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(clazz.nOfInstanceMethods > 0) {
 			Method m = (Method)clazz.methods;
 			while(m != null) {
-				if((m.accAndPropFlags & (1 << apfStatic)) == 0 && (m.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+				if((m.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (m.accAndPropFlags & (1 << apfStatic)) == 0) {
 					clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods - imc] = m.address;
+					//vrb.println(" ***************** : Instance Method #" + imc + ": " + m.name);
 					imc++;
 				}
 				m = (Method)m.next;
@@ -720,7 +724,24 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(m != null) {
 					vrb.println("      > Method: " + m.name + " (#" + mc++ + ")");
 					vrb.println("        Access and property flags: 0x" + Integer.toHexString(m.accAndPropFlags));
-					if((m.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static: yes"); else vrb.println("        Static: no");
+					if((m.accAndPropFlags & ((1 << dpfNew) | (1 << dpfUnsafe) | (1 << dpfSysPrimitive) | (1 << dpfSynthetic))) != 0) {	
+						if((m.accAndPropFlags & (1 << dpfNew)) != 0) {
+							vrb.println("        Special: New");
+						}
+						if((m.accAndPropFlags & (1 << dpfUnsafe)) != 0) {
+							vrb.println("        Special: Unsafe");
+						}
+						if((m.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) {
+							vrb.println("        Special: System primitive");
+						}
+						if((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+							vrb.println("        Special: Synthetic");
+						}
+						vrb.println("        Static: yes");
+					}
+					else {
+						if((m.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static: yes"); else vrb.println("        Static: no");
+					}
 					vrb.println("        address: 0x" + Integer.toHexString(m.address));
 					vrb.println("        offset: 0x" + Integer.toHexString(m.offset));
 					vrb.println("        index: 0x" + Integer.toHexString(m.index));
