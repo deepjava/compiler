@@ -78,7 +78,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			entrySet = new SSAValue[maxStack + maxLocals];
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
-			if (this.equals(predecessors[0])) {// equal by "while(true){}
+			if (this.equals(predecessors[0]) || ((SSANode)predecessors[0]).exitSet == null) {// equal by "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
