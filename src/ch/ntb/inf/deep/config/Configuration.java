@@ -495,6 +495,24 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	public static RegisterMap getRegisterMap() {
 		return registerMap;
 	}
+	
+	public static int getSystemMethodIdOf(String name){
+		int hash = name.hashCode();
+		SystemClass clazz = os.getClassList();
+		while(clazz != null){
+			SystemMethod meth = clazz.methods;
+			while(meth != null){
+				if(hash == meth.name.hashCode()){
+					if(name.equals(meth.name)){
+						return 0xFFF & meth.attributes;
+					}
+				}
+				meth = meth.next;
+			}
+			clazz = clazz.next;			
+		}		
+		return 0;
+	}
 
 	public static String[] getRootClassNames() {
 		int count = 0;
@@ -591,8 +609,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
 		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
-		Configuration
-				.createInterfaceFile(HString
-						.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
+		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
 	}
 }
