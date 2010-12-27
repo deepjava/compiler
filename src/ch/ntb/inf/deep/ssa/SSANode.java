@@ -2038,9 +2038,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						break;
 					case 'L':
 						result.type = SSAValue.tRef;
+						// TODO mit Ernst besprechen, wiso field.type.name nie mit einem L beginnt?
 						break;
 					default:
-						result.type = SSAValue.tVoid;
+						result.type = SSAValue.tRef;
 					}
 				}
 				instr = new NoOpndRef(sCloadFromField, field);
@@ -2131,9 +2132,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						break;
 					case 'L':
 						result.type = SSAValue.tRef;
+						// TODO mit Ernst besprechen, wiso field.type.name nie mit einem L beginnt?
 						break;
 					default:
-						result.type = SSAValue.tVoid;
+						result.type = SSAValue.tRef;
 					}
 				}
 				value1 = popFromStack();
