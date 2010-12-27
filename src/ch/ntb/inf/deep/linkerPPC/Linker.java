@@ -125,9 +125,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
-				vrb.println("    Name: " + method.name + ", Index: " + c1);
-				method.index = c1;
-				c1 += 4;
+				if((method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (method.accAndPropFlags & (1 << apfStatic)) == 0) { // TODO @Urs: is this correct?
+					method.index = c1;
+					c1 += 4;
+				}
+				vrb.println("    Name: " + method.name + ", Index: " + method.index);
 				method = (Method)method.next;
 			}
 		}
@@ -711,7 +713,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			vrb.println("    Code segment: " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
 			vrb.println("    Var segment: " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
 			vrb.println("    Const segment: " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
-			vrb.println("    Class descriptor address: 0x" + c.address);
+			vrb.println("    Class descriptor address: 0x" + Integer.toHexString(c.address));
 			vrb.println("    Base address of the constant block: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
 			vrb.println("    Base address of the code: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
 			vrb.println("    Base address of the non constant class fields: 0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
