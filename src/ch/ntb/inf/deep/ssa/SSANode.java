@@ -2218,6 +2218,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						((Method) ssa.cfg.method.owner.constPool[val]),
 						operands);
 				instr.result = result;
+				((Call)instr).invokespecial = true;
 				addInstruction(instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
@@ -2279,12 +2280,13 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCnew:
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
-				value1 = new SSAValue();
+//				value1 = new SSAValue();
 				result = new SSAValue();
+				Item type = null;
 				if (ssa.cfg.method.owner.constPool[val] instanceof Class) {
-					Item clazz = ssa.cfg.method.owner.constPool[val];
-					value1.type = SSAValue.tRef;
-					value1.constant = clazz;
+					type = ssa.cfg.method.owner.constPool[val];
+//					value1.type = SSAValue.tRef;
+//					value1.constant = clazz;
 				} else {
 					if (ssa.cfg.method.owner.constPool[val] instanceof Type) {// it
 																				// is
@@ -2292,16 +2294,18 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 																				// Array
 																				// of
 																				// objects
-						Item type = ssa.cfg.method.owner.constPool[val];
-						result.type = SSAValue.tAref;
-						result.constant = type.type;
+						assert false : "why a type?";
+//						Item type = ssa.cfg.method.owner.constPool[val];
+//						result.type = SSAValue.tAref;
+//						result.constant = type.type;
 					} else {
 						assert false : "Unknown Parametertype for new";
 						break;
 					}
 				}
 				result.type = SSAValue.tRef;
-				instr = new Call(sCnew, new SSAValue[] { value1 });
+//				instr = new Call(sCnew, new SSAValue[] { value1 });
+				instr = new Call(sCnew, type);
 				instr.result = result;
 				addInstruction(instr);
 				pushToStack(result);
