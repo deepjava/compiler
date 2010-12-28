@@ -1,23 +1,31 @@
 package ch.ntb.inf.deep.cgPPC;
 
-import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.cfg.*;
+import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 import static org.junit.Assert.*;
 import ch.ntb.inf.deep.classItems.*;
+import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
+	private static final boolean dbg = false;
+
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
 	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
 
-	private static final int arrayFirstOffset = 12; // Linker.getSizeOfObject() benutzen
-	private static final int cppOffset = 24;
-	private static final int constForDoubleConv = 32;
+	private static final int arrayFirstOffset = 12; //Linker.getSizeOfObject();
+	private static final int cppOffset = 24;	// für float convert, kommt weg
+	private static final int constForDoubleConv = 32;// für double convert, kommt weg
+	private static final int idGET1 = Configuration.getSystemMethodIdOf("GET1");
+	private static final int idGET2 = Configuration.getSystemMethodIdOf("GET2");
+	private static final int idGET4 = Configuration.getSystemMethodIdOf("GET4");
+	private static final int idGET8 = Configuration.getSystemMethodIdOf("GET8");
 	
 	private static int LRoffset;	
 	private static int CTRoffset;	
@@ -80,9 +88,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		nofParam = i - maxStackSlots;
 		assert nofParam <= maxNofParam : "method has too many parameters";
 		
-		System.out.println("build intervals for " + ssa.cfg.method.name);
+		if (dbg) System.out.println("build intervals for " + ssa.cfg.method.name);
+		ssa.cfg.printToLog();
 //		ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
+//		ssa.print(0);
 		
 		System.out.println("assign registers to parameters, nofParam = " + nofParam);
 		SSANode b = (SSANode) ssa.cfg.rootNode;
@@ -95,7 +105,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		
 		System.out.println("allocate registers");
 		RegAllocator.assignRegisters(this);
-		ssa.print(0);
+		if (dbg) ssa.print(0);
 		
 		if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// no prolog
 		} else if (ssa.cfg.method.name.equals(HString.getHString("interrupt"))) {
@@ -163,7 +173,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			insertEpilog(stackSize);
 			insertProlog();
 		}
-//		print();
+		if (dbg) print();
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
@@ -274,7 +284,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
-//			System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode]);
+			if (dbg) System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -1092,17 +1102,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			case sCcall:
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-				//				System.out.println("Call to " + call.item.name);
-				//				System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
+//System.out.println("Call to " + call.item.name);
+//System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
-					if (call.item.name.equals(HString.getHString("GET1"))) {	//GET1
+					if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET1) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 						createIrArS(ppcExtsb, res.reg, res.reg);
-					} else if (call.item.name.equals(HString.getHString("GET2"))) { // GET2
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET2) { // GET2
 						createIrDrAd(ppcLha, res.reg, opds[0].reg, 0);
-					} else if (call.item.name.equals(HString.getHString("GET4"))) { // GET4
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == 7) { // GET4
 						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
-					} else if (call.item.name.equals(HString.getHString("GET8"))) {
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == 8) {
 						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
 					} else if (call.item.name.equals(HString.getHString("PUT1"))) {
 						createIrSrAd(ppcStb, opds[1].reg, opds[0].reg, 0);
@@ -1143,10 +1153,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 				} else {
 					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
-
 						loadConstantAndFixup(res.regAux1, call.item);	// addr of method
 						createIrSspr(ppcMtspr, LR, res.regAux1);
-					} else if ((call.item.accAndPropFlags & (1<<apfInterface)) != 0) {	// invokeinterface
+					} else if ((call.item.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						refReg = opds[0].reg;
 						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -1154,7 +1163,12 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, 0);
 						createIrSspr(ppcMtspr, LR, res.regAux1);
-					} else {	// invokevirtual and invokespecial
+					} else if (call.invokespecial) {	// invokespecial
+						refReg = opds[0].reg;
+						createItrap(ppcTwi, TOifequal, refReg, 0);
+						loadConstantAndFixup(res.regAux1, call.item);	// addr of init method
+						createIrSspr(ppcMtspr, LR, res.regAux1);
+					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -1221,12 +1235,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				}
 				break;
 			case sCnew:
-				opds = instr.getOperands();
-				if (opds.length == 1) {
-					Item item = null;// item = ref
+//				opds = instr.getOperands();
+//				if (opds.length == 1) {
+					Item item = ((Call)instr).item;	// item = ref
+					Item method;
 					switch (res.type) {
 					case tRef:	// bCnew
-						loadConstantAndFixup(paramStartGPR, item);	// addr of new
+						method = Class.getNewMemoryMethod(bCnew);
+						loadConstantAndFixup(paramStartGPR, method);	// addr of new
 						createIrSspr(ppcMtspr, LR, paramStartGPR);
 						loadConstantAndFixup(paramStartGPR, item);	// ref
 						createIBOBILK(ppcBclr, BOalways, 0, true);
@@ -1237,7 +1253,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						opds = instr.getOperands();
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
-						loadConstantAndFixup(paramStartGPR + 1, item);	// addr of newarray
+						method = Class.getNewMemoryMethod(bCnewarray);
+						loadConstantAndFixup(paramStartGPR + 1, method);	// addr of newarray
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, instr.result.type - 10);	// type
 						createIBOBILK(ppcBclr, BOalways, 0, true);
@@ -1247,7 +1264,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						opds = instr.getOperands();
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
-						loadConstantAndFixup(paramStartGPR + 1, item);	// addr of anewarray
+						method = Class.getNewMemoryMethod(bCanewarray);
+						loadConstantAndFixup(paramStartGPR + 1, method);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
 						loadConstantAndFixup(paramStartGPR + 1, item);	// ref
 						createIBOBILK(ppcBclr, BOalways, 0, true);
@@ -1256,9 +1274,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					default:
 						assert false : "cg: instruction not implemented";
 					}
-				} else { // bCmultianewarray:
+//				} else { // bCmultianewarray:
 //					assert false : "cg: instruction not implemented";
-				}
+//				}
 				break;
 			case sCreturn:
 				opds = instr.getOperands();
@@ -1602,7 +1620,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				createIrDrAsimm(ppcAddi, reg, 0, low);
 			} else createIrDrAsimm(ppcAddi, reg, 0, 0);
 		} else {
-			if (low != 0) createIrDrAsimm(ppcAddi, reg, 0, low);
+			createIrDrAsimm(ppcAddi, reg, 0, low);
 			if (((high + 1) & 0xffff) != 0) createIrDrAsimm(ppcAddis, reg, reg, high + 1);
 		}
 	}
@@ -1613,6 +1631,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		createIrDrAsimm(ppcAddis, reg, reg, 0);
 		lastFixup = iCount - 2;
 		fixups[fCount] = item;
+//		System.out.print("insert fixup, item = "); item.printName(); System.out.println();
 		fCount++;
 		int len = fixups.length;
 		if (fCount == len) {
@@ -1626,17 +1645,19 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	public void doFixups() {
 		int currInstr = lastFixup;
 		int currFixup = fCount - 1;
-//		System.out.println("########## fCount = " + fCount);
+//		System.out.println("########## start fixing");
 		while (currFixup >= 0) {
 //			if( fixups[currFixup] == null) System.out.println("########## fixups = null");
 //			System.out.println("########## fixups.lenght = " + fixups.length);
-//			System.out.println("########## currFixup = " + currFixup);
+			System.out.print("\t########## currFixup = " + currFixup);
 			Item item = fixups[currFixup];
 			int addr;
-			if (item == null) // item is null if constant is null is loaded (aconst_null) 
+			if (item == null) // item is null if constant null is loaded (aconst_null) 
 				addr = 0;
 			else 
 				addr = fixups[currFixup].address;
+			System.out.print("\t fix item "); item.printName(); 
+			System.out.println(" at address = " + Integer.toHexString(addr));
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
 			if (!((low >> 15) == 0)) high++;

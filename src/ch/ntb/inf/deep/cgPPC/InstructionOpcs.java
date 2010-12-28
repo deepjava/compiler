@@ -175,7 +175,7 @@ interface InstructionOpcs {
 		ppcFadd = (0x3f << 26) | (0x15 << 1),
 		ppcFadds = (0x3b << 26) | (0x15 << 1),
 		ppcFcmpu = (0x3f << 26) | (0x00 << 1),
-		ppcFctiw = (0x3f << 26) | (0x1e << 1),
+		ppcFctiw = (0x3f << 26) | (0x0e << 1),
 		ppcFdiv = (0x3f << 26) | (0x12 << 1),
 		ppcFdivs = (0x3b << 26) | (0x12 << 1),
 		ppcFmr = (0x3f << 26) | (0x48 << 1),

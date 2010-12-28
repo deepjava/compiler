@@ -1,6 +1,7 @@
 
 package ch.ntb.inf.deep.cgPPC;
 
+import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.ssa.*;
@@ -14,9 +15,10 @@ import ch.ntb.inf.deep.strings.HString;
  * 
  */
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
+	private static final boolean dbg = false;
 
 	private static final int nofSSAInstr = 256;
-
+	
 	static int maxStackSlots;
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
@@ -39,9 +41,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		for (int i = 0; i < regAtIndex.length; i++) regAtIndex[i] = -1;
 		
 		insertRegMoves(ssa);
+		nofInstructions = SSA.renumberInstructions(ssa.cfg);
+		findLastNodeOfPhi(ssa);
 		
 		// copy into local array for faster access
-		nofInstructions = SSA.renumberInstructions(ssa.cfg);
+//		nofInstructions = SSA.renumberInstructions(ssa.cfg);
 		if (nofInstructions > instrs.length) {
 			instrs = new SSAInstruction[nofInstructions];
 		}
@@ -58,13 +62,15 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		}	
 		
 		resolvePhiFunctions();	
-		calcLiveRange();	// compute live intervals
+//		ssa.print(1);
+		calcLiveRange(ssa);	// compute live intervals
 		assignRegType();	// assign volatile or nonvolatile type
 	}
 
 	// Inserts register moves for phi functions in case that opnd and 
 	// result of phi function have different index
 	private static void insertRegMoves(SSA ssa) {
+		if (dbg) System.out.println("inserting reg moves");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b != null) {
 			for (int i = 0; i < b.nofPhiFunc; i++) {
@@ -75,6 +81,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					SSAValue[] newOpds = new SSAValue[opds.length];
 //					for (int k = 0; k < b.nofPredecessors; k++) {
 					for (int k = 0; k < opds.length; k++) {
+						if (dbg) System.out.println("\t move at " + res.n + "inserted");
 						SSANode n = (SSANode)b.predecessors[k];
 						SSAValue r = new SSAValue();
 						r.type = opds[k].type;
@@ -93,48 +100,166 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		}	
 	}
 
+	private static void findLastNodeOfPhi(SSA ssa) {
+		if (dbg) System.out.println("determine end of range for phi functions in loop headers");
+		SSANode b = (SSANode) ssa.cfg.rootNode;
+		int last;
+		while (b != null) {
+			last = 0;
+			if (b.isLoopHeader()) {
+				// set variable last to last instruction of this node
+				SSAValue val = b.instructions[b.nofInstr - 1].result;
+				if (val != null) last = val.n;
+				// check if predecessor is further down the code and set last
+				CFGNode[] pred = b.predecessors;
+				for (int i = 0; i < b.nofPredecessors; i++) {
+					SSANode n = (SSANode)pred[i];
+					val = n.instructions[n.nofInstr - 1].result;
+					if (val != null) {
+						int end = val.n;
+						if (end > last) last = end;
+					}
+				}
+				for (int i = 0; i < b.nofPhiFunc; i++) {
+					PhiFunction phi = b.phiFunctions[i];
+					phi.last = last;
+				}
+			}
+			b = (SSANode) b.next;
+		}			
+	}
+
 	// Resolve phi functions 
 	private static void resolvePhiFunctions() {
+		if (dbg) System.out.println("resolving phi functions");
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+//			if (dbg) System.out.println("\t resolve at " + instr.result.n);
+			SSAValue[] opds = instr.getOperands();
+			if (instr.ssaOpcode != sCPhiFunc && opds != null) {
+				for (SSAValue opd : opds) {
+//					if (opd.n < 0) continue;
+					SSAInstruction opdInstr = instrs[opd.n];
+					if (opdInstr.ssaOpcode == sCPhiFunc) {	// iterativ machen!!!
+						PhiFunction phi = (PhiFunction)opdInstr;
+						if (phi.deleted) {
+							phi.used = true;
+							SSAValue delPhiOpd = phi.getOperands()[0];
+							opdInstr = instrs[delPhiOpd.n];
+							if (opdInstr.ssaOpcode == sCPhiFunc) {	// iterativ machen!!!
+								phi = (PhiFunction)opdInstr;
+								if (phi.deleted) {
+									phi.used = true;
+								}
+							}
+						}
+					}
+				}	
+			} 
+		}
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			if (instr.ssaOpcode == sCPhiFunc) {
-				((PhiFunction)instr).start = instr.result.n;
+				PhiFunction phi = (PhiFunction)instr;
+				((PhiFunction)instr).start = instr.result.n;		// schon hier???????
 				SSAValue[] opds = instr.getOperands();
-				SSAValue val = instr.result;
-				while (val.join != null) val = val.join;
-				for (SSAValue opd : opds) opd.join = val;
-				if (opds[0].type != tPhiFunc) instr.result.type = opds[0].type; 
+				SSAValue res = instr.result;
+//		if (dbg) System.out.println("instr : " + res.n);
+				//					while (res.join != null) res = res.join;
+				for (SSAValue opd : opds) {
+//		if (dbg) System.out.println("\topd : " + opd.n);
+					if (phi.deleted && opd.n == res.n) continue;
+					if (phi.deleted && !phi.used ) continue;
+					if (phi.deleted && instrs[opd.n].ssaOpcode != sCPhiFunc && opd.n > res.n) continue;
+					if (instrs[opd.n].ssaOpcode != sCPhiFunc)	// opd is regular SSA instruction
+						if (opd.join == null)
+							opd.join = res;	// opd now points to phi function
+						else {	//opd already points to other phi function
+							SSAValue val = opd;
+							while (val.join != null) val = val.join;
+							if (val != res) res.join = val; // no circle
+						}
+					else {	// opd of phi function is phi function again
+						SSAValue val = opd;
+						while (val.join != null) val = val.join;
+						if (val != res) res.join = val; // no circle
+					}
+				}
+				//					if (opds[0].type != tPhiFunc) res.type = opds[0].type;
 			} 
 		}
-	}
-
-	// Computes the live ranges of all SSAValues 
-	private static void calcLiveRange() {
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
+			if (res.join != null) {
+				if (res.join.join != null) res.join = res.join.join;
+			} 
+		}
+/*else {
+				SSAValue[] opds = instr.getOperands();
+				if (opds != null) {
+					for (SSAValue opd : opds) {
+						if (instrs[opd.n].ssaOpcode == sCPhiFunc) {
+							PhiFunction phi = (PhiFunction)instrs[opd.n];
+							if (phi.deleted) {
+								SSAValue val = phi.getOperands()[0];
+								val.join = phi.result;
+							}
+						}
+					}
+				}
+			}*/
+		
+	}
+
+	// computes the live ranges of all SSAValues 
+	private static void calcLiveRange(SSA ssa) {
+		if (dbg) System.out.println("calculating live ranges");
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+			SSAValue res = instr.result;
+			if (dbg) System.out.println("instr : " + res.n);
 			int currNo = res.n;
 			res.end = currNo;
 			SSAValue[] opds = instr.getOperands();
-			if (opds != null) { 
+//			if (opds == null) continue;
+			if (instr.ssaOpcode == sCPhiFunc) {
+				int last = ((PhiFunction)instr).last;
+				if (res.end < last) res.end = last;
+				if (res.join != null) {	// phi function points to other phi function
+					PhiFunction joinPhi = ((PhiFunction)instrs[res.join.n]);
+					if (joinPhi.start > ((PhiFunction)instr).start) joinPhi.start = ((PhiFunction)instr).start;
+					if (joinPhi.result.end < res.end) joinPhi.result.end = res.end;
+				}
+				continue;
+			}
+			if (opds != null) {
 				for (SSAValue opd : opds) {
-					if (opd.end < currNo) {
-						opd.end = currNo;
-						if (opd.join != null) {
-							if (opd.end > opd.join.end) opd.join.end = opd.end;
-						}
+					if (dbg) System.out.println("\topd : " + opd.n);
+					if (instrs[opd.n].ssaOpcode == sCPhiFunc) {
+						int last = ((PhiFunction)instrs[opd.n]).last;
+						if (!((PhiFunction)instrs[opd.n]).deleted && res.n < last) res.end = last;
+						SSAValue val = opd;
+						while (val.join != null) val = val.join;
+						PhiFunction phi = (PhiFunction)instrs[val.n];
+						if (res.end > phi.result.end) phi.result.end = res.end;
+						if (res.n < phi.start) phi.start = res.n;
+					} else {
+						if (opd.end < currNo) opd.end = currNo;
 					}
 				}
 			}
 			if (res.join != null) {
-				int start = ((PhiFunction)instrs[res.join.n]).start;
-				if (res.n < start) ((PhiFunction)instrs[res.join.n]).start = res.n;
-				if (res.end > res.join.end) res.join.end = res.end;
+				SSAValue val = res.join;
+				while (val.join != null) val = val.join;
+				int start = ((PhiFunction)instrs[val.n]).start;
+				if (res.end > val.end) val.end = res.end;
+				if (res.n < start) ((PhiFunction)instrs[val.n]).start = res.n;
 			}
 		}
 	}
 
-	// Assign volatile or nonvolatile register 
+	// assign volatile or nonvolatile register 
 	private static void assignRegType() {
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
@@ -211,8 +336,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
+			if (dbg) {System.out.print("assign register for instr: "); instr.print(0);}
+			if (instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted && ((PhiFunction)instr).start >= i && instr.result.join == null) continue; 
 			SSAValue res = instr.result;
-//			System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode] + " regsGPR="+Integer.toHexString(regsGPR));
+			System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode] + " regsGPR="+Integer.toHexString(regsGPR));
 			// reserve auxiliary register for this instruction
 			int nofAuxReg = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
 			if (nofAuxReg == 4 && res.type == tLong) nofAuxReg = 2;
@@ -224,8 +351,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				res.regAux1 = reserveReg(gpr, false);
 				res.regAux2 = reserveReg(gpr, false);
 			}
-			if (res.regAux1 != -1) freeReg(gpr, res.regAux1);
-			if (res.regAux2 != -1) freeReg(gpr, res.regAux2);
+			if (res.regAux1 != -1) {	System.out.println("freeing aux reg1");freeReg(gpr, res.regAux1);}
+			if (res.regAux2 != -1) {System.out.println("freeing aux reg2");freeReg(gpr, res.regAux2);	}
 //			System.out.println("at pos 1: regsGPR="+Integer.toHexString(regsGPR));
 
 			// free registers of operands if end of live range reached 
@@ -235,6 +362,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
+						System.out.println("freeing operands at end live range");
 						if (opd.type == tLong) {
 						} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
 							freeReg(fpr, opd.reg);
@@ -242,6 +370,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							freeReg(gpr, opd.reg);
 						}
 					}
+				}
+			}
+			// check if phi functions further up stop at this instruction
+			for (int k = 0; k < res.n; k++) {
+				SSAInstruction instr1 = instrs[k];
+				if (instr1.ssaOpcode == sCPhiFunc && instr1.result.end == res.n && instr1.result.join == null) {
+					if (dbg) System.out.println("free reg for phi function in this node at " + k);
+					if (instr1.result.reg > -1) freeReg(gpr, instr1.result.reg);
 				}
 			}
 			
@@ -254,14 +390,16 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 			// reserve register for result of instruction
 			SSAValue joinVal = res.join;
+//			if (joinVal != null) while (joinVal.join != null) joinVal = joinVal.join;
 			if (instr.ssaOpcode == sCloadLocal) {
 				// already done
 			} else if (joinVal != null) {
+				System.out.println("joinVal != null");
 				if (joinVal.reg < 0) {	// phi function: register not assigned yet
-//				System.out.println("join: assign register to phi-function");
+				System.out.println("join: assign register to phi-function");
 					// check if other phi-function at same index
-					if (regAtIndex[joinVal.index] > -1) {
-//				System.out.println("bereits register bei diesem index " + joinVal.index);
+/*					if (regAtIndex[joinVal.index] > -1) {
+				System.out.println("bereits register bei diesem index " + joinVal.index);
 						if (res.type == tLong) {
 							res.regLong = regAtIndex[joinVal.index];
 							res.reg = regAtIndex[joinVal.index+1];
@@ -274,30 +412,31 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						} else {
 							res.reg = regAtIndex[joinVal.index];
 							joinVal.reg = res.reg;
-//				System.out.println("register has no " + joinVal.reg);
+				System.out.println("register has no " + joinVal.reg);
 						}
-					} else {	// reserve register for phi-function						
+					} else {*/	// reserve register for phi-function						
 						if (res.type == tLong) {
-							joinVal.regLong = reserveReg(gpr, res.nonVol);
-							joinVal.reg = reserveReg(gpr, res.nonVol);
+							joinVal.regLong = reserveReg(gpr, joinVal.nonVol);
+							joinVal.reg = reserveReg(gpr, joinVal.nonVol);
 							res.regLong = joinVal.regLong;
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index] = joinVal.regLong;
-							regAtIndex[joinVal.index+1] = joinVal.reg;
+//							regAtIndex[joinVal.index] = joinVal.regLong;
+//							regAtIndex[joinVal.index+1] = joinVal.reg;
 						} else if ((res.type == tFloat) || (res.type == tDouble)) {
-							joinVal.reg = reserveReg(fpr, res.nonVol);
+							joinVal.reg = reserveReg(fpr, joinVal.nonVol);
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index] = joinVal.reg;
+//							regAtIndex[joinVal.index] = joinVal.reg;
 						} else if (res.type == tVoid) {
 						} else {
-							joinVal.reg = reserveReg(gpr, res.nonVol);
+							joinVal.reg = reserveReg(gpr, joinVal.nonVol);
 							res.reg = joinVal.reg;
-							regAtIndex[joinVal.index] = joinVal.reg;
+//							regAtIndex[joinVal.index] = joinVal.reg;
 //							System.out.println("register reserved for phi function at "+joinVal.n+" reg = " + joinVal.reg);
 						}
-					}
+				//	}
 				} else // assign same register as phi function
 					// hier fehlt long
+					res.regLong = joinVal.regLong;	
 					res.reg = joinVal.reg;	
 			} else if (instr.ssaOpcode == sCloadConst) {
 				// check if operand is immediate
@@ -357,17 +496,21 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			}
 			// free registers of result if end of live range is current instruction
 			if (res != null) {
-				if (res.end == i && res.reg > -1) {	
-					if (res.type == tLong) {
-						freeReg(gpr, res.regLong);
-						freeReg(gpr, res.reg);
-					} else if ((res.type == tFloat) || (res.type == tDouble)) {
-						freeReg(fpr, res.reg);
+				SSAValue val = res;
+				while (val.join != null) val = val.join;
+				if (val.end == i && val.reg > -1) {	
+					System.out.println("freeing result at end of live range");
+					if (val.type == tLong) {
+						freeReg(gpr, val.regLong);
+						freeReg(gpr, val.reg);
+					} else if ((val.type == tFloat) || (val.type == tDouble)) {
+						freeReg(fpr, val.reg);
 					} else {
-						freeReg(gpr, res.reg);
+						freeReg(gpr, val.reg);
 					}
 				}
 			}
+			System.out.println("at end of " + instr.scMnemonics[instr.ssaOpcode] + " regsGPR="+Integer.toHexString(regsGPR));
 		}
 		MachineCode.nofNonVolGPR = nofNonVolGPR;
 		MachineCode.nofNonVolFPR = nofNonVolFPR;
@@ -458,6 +601,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	private static void freeReg(boolean isGPR, int reg) {
+		if (dbg) System.out.println("\tfree reg " + reg);
 		if (isGPR) {
 			regsGPR |= 1 << reg;
 		} else {

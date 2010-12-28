@@ -2749,9 +2749,9 @@ public class InstructionDecoder implements InstructionOpcs {
 					break;
 				case 0x0B:
 					if (Rc == 0) {
-						return "mulhwu  r" + D + ", r" + A + ", r" + S;
+						return "mulhwu  r" + D + ", r" + A + ", r" + B;
 					} else {
-						return "mulhwu.  r" + D + ", r" + A + ", r" + S;
+						return "mulhwu.  r" + D + ", r" + A + ", r" + B;
 					}
 				case 0x28:
 					if (OE == 0 && Rc == 0) {
