@@ -99,8 +99,13 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 							predecessors[0] = temp;
 						}
 					}
-
-					entrySet = ((SSANode) predecessors[0]).exitSet.clone();
+					
+					if(((SSANode)predecessors[0]).exitSet == null){
+						//if this ist the root node and this is a loopheader from case while(true){..}
+						entrySet = new SSAValue[maxStack + maxLocals];
+					}else{						
+						entrySet = ((SSANode) predecessors[0]).exitSet.clone();
+					}
 
 					for (int i = 0; i < maxStack + maxLocals; i++) {
 						SSAValue result = new SSAValue();
