@@ -1,7 +1,10 @@
 package ch.ntb.inf.deep.cfg;
 
+import java.io.PrintStream;
+
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.ssa.SSANode;
 
 
@@ -13,7 +16,13 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * @author buesser 23.2.2010, graf
  */
 public class CFG implements ICjvmInstructionOpcs {
-	private static final boolean debug = true;
+	static final boolean verbose = Dbg.verbose;
+	static PrintStream vrb = Dbg.vrb;
+	
+	static PrintStream log = System.out;
+	static ErrorReporter errRep = ErrorReporter.reporter;
+	
+	private static final boolean debug = false;
 
 	/**
 	 * Start-node of the CFG.
@@ -87,21 +96,11 @@ public class CFG implements ICjvmInstructionOpcs {
 		code = method.code;
 
 		int len = code.length;
-		if (debug) {
-			System.out.println("code of method "+method.name);			
-			for (int i = 0; i < len; i++) {
-				System.out.print((code[i] & 0xff) + "  ");
-				if ((i % 8) == 7)
-					System.out.println();
-			}
-			System.out.println();
-		}
 		startNode.firstBCA = 0;
 		startNode.lastBCA = findLastBcaInNode(this, startNode, len);
 		int bca = 0;
 		while (bca < len) {
 			int bci = code[bca] & 0xff;
-			if (debug) System.out.println("code at " + bca + ": " + bci);
 			int entry = bcAttrTab[bci];
 			int instrLen = (entry >> 8) & 0xF;
 			if (instrLen == 0) {
@@ -139,7 +138,7 @@ public class CFG implements ICjvmInstructionOpcs {
 			bca += instrLen;
 		}
 		assert (bca == len) : "last instruction not at end of method";
-		if (debug) System.out.println("marking loop headers");
+		if (debug) vrb.println("marking loop headers");
 		markLoopHeaders(rootNode);
 		if (debug) System.out.println("eliminating dead nodes");
 		eliminateDeadNodes(this);
@@ -154,9 +153,7 @@ public class CFG implements ICjvmInstructionOpcs {
 		if (debug) System.out.println("build dom");
 		for (int i = 0; i < rootNode.nofSuccessors; i++)
 			visitDom(rootNode.successors[i], rootNode);
-		if (debug) System.out.println("cfg done");
-		if (debug)
-			printToLog();
+		if (debug) printToLog();
 	}
 
 	/**
@@ -344,11 +341,12 @@ public class CFG implements ICjvmInstructionOpcs {
 	}
 
 	private static void visitDom(CFGNode b, CFGNode predecessor) {
+		if (b.root) return; 
 		b.ref--;
 		if (b.idom == null)
 			b.idom = predecessor;
 		else
-			if (b.idom.root == false) b.idom = commonDom(b.idom, predecessor);
+			b.idom = commonDom(b.idom, predecessor);
 		if (b.ref == b.nofBackwardBranches) {
 			for (int i = 0; i < b.nofSuccessors; i++) {
 				visitDom(b.successors[i], b);
@@ -405,8 +403,11 @@ public class CFG implements ICjvmInstructionOpcs {
 			sb.append("\tnodeNr:" + i + " from " + node.firstBCA + " to "
 					+ node.lastBCA + "\t");
 			if (node.isLoopHeader())
-				sb.append("is loop header ");
-			sb.append("visited: "+node.visited);
+				sb.append("is loop header");
+			if (node.nofBackwardBranches > 0)
+				sb.append(", bckwd branches=" + node.nofBackwardBranches);
+			sb.append(", ref="+node.ref);
+			sb.append(", visited:"+node.visited);
 			sb.append("\n\t\tpredecessor: ");
 			for (int k = 0; (k < node.predecessors.length)
 					&& (node.predecessors[k] != null); k++) {
@@ -432,6 +433,6 @@ public class CFG implements ICjvmInstructionOpcs {
 	 */
 	public void printToLog() {
 		// System.out.println(CFGPrinter.getCFGString(this));
-		System.out.println(this.cfgToString());
+		vrb.println(this.cfgToString());
 	}
 }
