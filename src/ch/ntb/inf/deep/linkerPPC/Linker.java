@@ -569,13 +569,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static int getSizeOfObject() {
-		if(object == null) {
-			Class clazz = Class.classList;
-			while(clazz != null && clazz.name != HString.getHString("java/lang/Object")) {
-				clazz = (Class)clazz.next;
-			}
-			object = clazz;
-		}
+		if(object == null) object = (Class)Class.classList.getItemByName("java/lang/Object");
+		if(dbg) vrb.println("[Linker] Size of object (" + object.name + "): " + (int)object.objectSizeOrDim + " byte");
 		return object.objectSizeOrDim;
 	}
 	
