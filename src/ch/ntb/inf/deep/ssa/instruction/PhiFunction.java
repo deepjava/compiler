@@ -6,8 +6,9 @@ public class PhiFunction extends SSAInstruction {
 	public int nofOperands;
 	public boolean deleted = false;
 	public boolean visited = false;
+	public boolean used = false;
 	public int start;
-	
+	public int last;	
 
 	public PhiFunction(int opCode) {
 		this.ssaOpcode = opCode;
@@ -61,18 +62,22 @@ public class PhiFunction extends SSAInstruction {
 				System.out.print("null, ");
 			}
 		}
+		if (nofOperands > 0) {
 		if(operands[nofOperands-1] != null){
 			System.out.print(operands[nofOperands-1].n + "}");
 		}else{
 			System.out.print("null)");
-		}	
+		}}	
 		System.out.print(" (" + result.typeName() + ")");
 		System.out.print(",   start=" + start + ", end=" + result.end);
 		if (result.index != -1) System.out.print(", index=" + result.index);
 		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);
+		if (result.nonVol) System.out.print(", nonVol"); else System.out.print(", vol");
 		if (result.reg != -1) System.out.print(", reg=" + result.reg);
 		if (result.join != null) System.out.print(", join={" + result.join.n + "}");
-		if (deleted) System.out.print(" deleted");
+		if (last != 0) System.out.print(", last=" + last);
+		if (deleted) System.out.print(" del");
+		if (used) System.out.print(" u");
 		System.out.println();
 	}
 }
