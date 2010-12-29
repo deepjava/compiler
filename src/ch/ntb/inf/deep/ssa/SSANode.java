@@ -1984,7 +1984,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				field = (DataItem) ssa.cfg.method.owner.constPool[val];
 				if (field.type.name.charAt(0) == '[') {
-					switch (field.type.name.charAt(0)) {
+					switch (field.type.name.charAt(1)) {
 					case 'B':
 						result.type = SSAValue.tAbyte;
 						break;
@@ -2013,7 +2013,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tAref;
 						break;
 					default:
-						result.type = SSAValue.tAref;
+						result.type = SSAValue.tVoid;
 					}
 				} else {
 					switch (field.type.name.charAt(0)) {
@@ -2046,7 +2046,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// TODO mit Ernst besprechen, wiso field.type.name nie mit einem L beginnt?
 						break;
 					default:
-						result.type = SSAValue.tRef;
+						result.type = SSAValue.tVoid;
 					}
 				}
 				instr = new NoOpndRef(sCloadFromField, field);
@@ -2077,8 +2077,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				// determine the type of the field
 				field = (DataItem) ssa.cfg.method.owner.constPool[val];
-				if (field.name.charAt(0) == '[') {
-					switch (field.type.name.charAt(0)) {
+				if (field.type.name.charAt(0) == '[') {
+					switch (field.type.name.charAt(1)) {
 					case 'B':
 						result.type = SSAValue.tAbyte;
 						break;
@@ -2107,7 +2107,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tAref;
 						break;
 					default:
-						result.type = SSAValue.tAref;
+						result.type = SSAValue.tVoid;
 					}
 				} else {
 					switch (field.type.name.charAt(0)) {
@@ -2140,7 +2140,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// TODO mit Ernst besprechen, wiso field.type.name nie mit einem L beginnt?
 						break;
 					default:
-						result.type = SSAValue.tRef;
+						result.type = SSAValue.tVoid;
 					}
 				}
 				value1 = popFromStack();
