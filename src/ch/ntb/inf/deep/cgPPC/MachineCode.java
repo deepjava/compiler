@@ -293,18 +293,18 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 //System.out.println("dReg = " + dReg);
 					switch (res.type) {
 					case tByte: case tShort: case tInteger:
-						int immVal = ((Constant)res.constant).valueH;
+						int immVal = ((StdConstant)res.constant).valueH;
 						loadConstant(immVal, dReg);
 					break;
 					case tLong:	
-						Constant constant = (Constant)res.constant;
+						StdConstant constant = (StdConstant)res.constant;
 						long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
 //						System.out.println("sdfsdge " + immValLong);
 						loadConstant((int)(immValLong >> 32), res.regLong);
 						loadConstant((int)immValLong, dReg);
 						break;	
 					case tFloat:	// load from const pool
-						constant = (Constant)res.constant;
+						constant = (StdConstant)res.constant;
 						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
 							createIrDrAsimm(ppcAddi, res.regAux1, 0, 0);
 							createIrSrAd(ppcStw, res.regAux1, stackPtr, tempStorageOffset);
@@ -323,7 +323,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						}
 						break;
 					case tDouble:
-						constant = (Constant)res.constant;
+						constant = (StdConstant)res.constant;
 						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
 							createIrDrAsimm(ppcAddi, res.regAux1, 0, 0);
 							createIrSrAd(ppcStw, res.regAux1, stackPtr, tempStorageOffset);
@@ -544,10 +544,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				switch (res.type) {
 				case tInteger:
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueH;
+						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrDrAsimm(ppcAddi, dReg, sReg2, immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH;
+						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrDrAsimm(ppcAddi, dReg, sReg1, immVal);
 					} else {
 						createIrDrArB(ppcAdd, dReg, sReg1, sReg2);
@@ -575,10 +575,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				switch (res.type) {
 				case tInteger:
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueH;
+						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrDrAsimm(ppcAddi, dReg, sReg2, -immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH;
+						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrDrAsimm(ppcAddi, dReg, sReg1, -immVal);
 					} else {
 						createIrDrArB(ppcSubf, dReg, sReg2, sReg1);
@@ -606,10 +606,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				switch (res.type) {
 				case tInteger:
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueH;
+						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrDrAsimm(ppcMulli, dReg, sReg2, immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH;
+						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrDrAsimm(ppcMulli, dReg, sReg1, immVal);
 					} else {
 						createIrDrArB(ppcMullw, dReg, sReg1, sReg2);
@@ -704,7 +704,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				type = res.type;
 				if (type == tInteger) {
 					if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH % 32;
+						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
 						createIrArSSHMBME(ppcRlwinm, dReg, sReg1, immVal, 0, 31-immVal);
 					} else {
 						createIrArSSHMBME(ppcRlwinm, 0, sReg2, 0, 27, 31);
@@ -712,7 +712,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 				} else if (type == tLong) {
 					if (sReg2 < 0) {	
-						int immVal = ((Constant)opds[1].constant).valueH % 64;
+						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
 						if (immVal < 32) {
 							createIrArSSHMBME(ppcRlwinm, res.regLong, sReg1, immVal, 32-immVal, 31);
 							createIrArSSHMBME(ppcRlwimi, res.regLong, opds[0].regLong, immVal, 0, 31-immVal);
@@ -739,7 +739,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				type = res.type;
 				if (type == tInteger) {
 					if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH % 32;
+						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
 						createIrArSSH(ppcSrawi, dReg, sReg1, immVal);
 					} else {
 						createIrArSSHMBME(ppcRlwinm, 0, sReg2, 0, 27, 31);
@@ -747,7 +747,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 				} else if (type == tLong) {
 					if (sReg2 < 0) {	// gibt Problem wenn shift > 32
-						int immVal = ((Constant)opds[1].constant).valueH % 64;
+						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
 						createIrArSSHMBME(ppcRlwinm, dReg, sReg1, 32-immVal, immVal, 31);
 						createIrArSSHMBME(ppcRlwimi, dReg, opds[0].regLong, 32-immVal, 0, immVal-1);
 						createIrArSSH(ppcSrawi, res.regLong, opds[0].regLong, immVal);
@@ -769,7 +769,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				type = res.type;
 				if (type == tInteger) {
 					if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH % 32;
+						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
 						createIrArSSHMBME(ppcRlwinm, dReg, sReg1, 32-immVal, immVal, 31);
 					} else {
 						createIrArSSHMBME(ppcRlwinm, 0, sReg2, 0, 27, 31);
@@ -777,7 +777,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 				} else if (type == tLong) {
 					if (sReg2 < 0) {	// gibt Problem wenn shift > 32
-						int immVal = ((Constant)opds[1].constant).valueH % 64;
+						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
 						createIrArSSHMBME(ppcRlwinm, dReg, sReg1, 32-immVal, immVal, 31);
 						createIrArSSHMBME(ppcRlwimi, dReg, opds[0].regLong, 32-immVal, 0, immVal-1);
 						createIrArSSH(ppcSrawi, res.regLong, opds[0].regLong, immVal);
@@ -798,20 +798,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				dReg = res.reg;
 				if (res.type == tInteger) {
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueH;
+						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrArSuimm(ppcAndi, dReg, sReg2, immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH;
+						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrArSuimm(ppcAndi, dReg, sReg1, immVal);
 					} else
 						createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
 				} else if (res.type == tLong) {
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueL;
+						int immVal = ((StdConstant)opds[0].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
 						createIrArSuimm(ppcAndi, dReg, sReg2, (int)immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueL;
+						int immVal = ((StdConstant)opds[1].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
 						createIrArSuimm(ppcAndi, dReg, sReg1, (int)immVal);
 					} else {
@@ -828,20 +828,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				dReg = res.reg;
 				if (res.type == tInteger) {
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueH;
+						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrArSuimm(ppcOri, dReg, sReg2, immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH;
+						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrArSuimm(ppcOri, dReg, sReg1, immVal);
 					} else
 						createIrArSrB(ppcOr, dReg, sReg1, sReg2);
 				} else if (res.type == tLong) {
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueL;
+						int immVal = ((StdConstant)opds[0].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
 						createIrArSuimm(ppcOri, dReg, sReg2, (int)immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueL;
+						int immVal = ((StdConstant)opds[1].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
 						createIrArSuimm(ppcOri, dReg, sReg1, (int)immVal);
 					} else {
@@ -858,20 +858,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				dReg = res.reg;
 				if (res.type == tInteger) {
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueH;
+						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrArSuimm(ppcXori, dReg, sReg2, immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueH;
+						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrArSuimm(ppcXori, dReg, sReg1, immVal);
 					} else
 						createIrArSrB(ppcXor, dReg, sReg1, sReg2);
 				} else if (res.type == tLong) {
 					if (sReg1 < 0) {
-						int immVal = ((Constant)opds[0].constant).valueL;
+						int immVal = ((StdConstant)opds[0].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
 						createIrArSuimm(ppcXori, dReg, sReg2, (int)immVal);
 					} else if (sReg2 < 0) {
-						int immVal = ((Constant)opds[1].constant).valueL;
+						int immVal = ((StdConstant)opds[1].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
 						createIrArSuimm(ppcXori, dReg, sReg1, (int)immVal);
 					} else {
@@ -1125,17 +1125,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					} else if (call.item.name.equals(HString.getHString("GETFPR"))) {
 						createIrDrB(ppcFmr, res.reg, opds[0].reg);
 					} else if (call.item.name.equals(HString.getHString("GETSPR"))) {
-						int spr = ((Constant)opds[0].constant).valueH;
+						int spr = ((StdConstant)opds[0].constant).valueH;
 						//						System.out.println("spr = " + spr);
 						createIrSspr(ppcMfspr, spr, res.reg);
 					} else if (call.item.name.equals(HString.getHString("PUTGPR"))) {
-						int gpr = ((Constant)opds[0].constant).valueH;
+						int gpr = ((StdConstant)opds[0].constant).valueH;
 						createIrArSrB(ppcOr, gpr, opds[1].reg, opds[1].reg);
 					} else if (call.item.name.equals(HString.getHString("PUTFPR"))) {
 						createIrDrB(ppcFmr, opds[1].reg, opds[0].reg);
 					} else if (call.item.name.equals(HString.getHString("PUTSPR"))) {
 						createIrArSrB(ppcOr, 0, opds[1].reg, opds[1].reg);
-						int spr = ((Constant)opds[0].constant).valueH;
+						int spr = ((StdConstant)opds[0].constant).valueH;
 						createIrSspr(ppcMtspr, spr, 0);
 					} else if (call.item.name.equals(HString.getHString("ASM"))) {
 						//	int code = InstructionDecoder.getCode(opds[0].toString());
@@ -1345,7 +1345,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					if (sReg1 < 0) {
 						if (opds[0].constant != null) {
 //							System.out.println("constant is not null");
-							int immVal = ((Constant)opds[0].constant).valueH;
+							int immVal = ((StdConstant)opds[0].constant).valueH;
 							if ((immVal >= -32768) && (immVal <= 32767))
 								createICRFrASimm(ppcCmpi, CRF0, sReg2, immVal);
 							else
@@ -1354,7 +1354,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 								createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);					
 					} else if (sReg2 < 0) {
 						if (opds[1].constant != null) {
-							int immVal = ((Constant)opds[1].constant).valueH;
+							int immVal = ((StdConstant)opds[1].constant).valueH;
 							if ((immVal >= -32768) && (immVal <= 32767)) {
 								inverted = true;
 								createICRFrASimm(ppcCmpi, CRF0, sReg1, immVal);
