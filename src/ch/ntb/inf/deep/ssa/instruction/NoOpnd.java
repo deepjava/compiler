@@ -1,6 +1,6 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.classItems.Constant;
+import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.SSAValue;
 import ch.ntb.inf.deep.strings.HString;
@@ -26,8 +26,8 @@ public class NoOpnd extends SSAInstruction {
 		System.out.print(result.n + ": ");
 		System.out.print("NoOpnd["+ scMnemonics[ssaOpcode]+"] ");
 		if (ssaOpcode == sCloadConst) 
-			if (result.constant instanceof Constant) {
-				Constant constant = (Constant)result.constant;
+			if (result.constant instanceof StdConstant) {
+				StdConstant constant = (StdConstant)result.constant;
 				if (constant.name == null) {
 					System.out.print(constant.valueH);
 				} else {
