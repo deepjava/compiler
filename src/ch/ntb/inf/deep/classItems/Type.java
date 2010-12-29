@@ -121,7 +121,7 @@ public class Type extends Item {
 		return cls;
 	}
 
-	protected static int getPrimitiveTypeIndex(char charName){
+	public static int getPrimitiveTypeIndex(char charName){
 		int ptIndex;
 		switch(charName){
 		case tdVoid: ptIndex = txVoid; break;
@@ -144,7 +144,7 @@ public class Type extends Item {
 		if(index < 0) return null; else return wellKnownTypes[index];
 	}
 	
-	protected static Type getPrimitiveTypeByCharName(char charName){
+	public static Type getPrimitiveTypeByCharName(char charName){
 		int typeIndex = getPrimitiveTypeIndex(charName);
 		assert typeIndex >= 0 && typeIndex < nofWellKnownTypes;
 		return wellKnownTypes[typeIndex];
