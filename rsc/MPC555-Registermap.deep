@@ -624,7 +624,7 @@ registermap {
 		 addr = 268;
 		 size = 4;
 	}
-	 register TBL {
+	 register TBLread {
 		 type = SPR;
 		 addr = 268;
 		 size = 4;
@@ -634,7 +634,7 @@ registermap {
 		 addr = 269;
 		 size = 4;
 	}
-	 register TBU {
+	 register TBUread {
 		 type = SPR;
 		 addr = 269;
 		 size = 4;
@@ -684,7 +684,7 @@ registermap {
 		 addr = 284;
 		 size = 4;
 	}
-	 register TBL {
+	 register TBLwrite {
 		 type = SPR;
 		 addr = 284;
 		 size = 4;
@@ -694,7 +694,7 @@ registermap {
 		 addr = 285;
 		 size = 4;
 	}
-	 register TBU {
+	 register TBUwrite {
 		 type = SPR;
 		 addr = 285;
 		 size = 4;
