@@ -6,6 +6,7 @@ import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.MachineCode;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
@@ -34,70 +35,76 @@ public class Launcher implements ICclassFileConsts {
 					attributes);
 
 			// 3) Loop One
-			Class clazz = Type.classList;
+			Item item = Type.classList;
 			Method method;
-			while (clazz != null) {
-				System.out.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
-				
-				// 3.1) Linker: calculate offsets
-				Linker.calculateOffsets(clazz);
-
-				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
-					method = (Method) clazz.methods;
-					while (method != null) {
-						System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-						// 3.2) Create CFG
-						method.cfg = new CFG(method);
-
-						// 3.3) Create SSA
-						method.ssa = new SSA(method.cfg);
-
-						// 3.4) Create machine code
-						method.machineCode = new MachineCode(method.ssa);
-						
-						method = (Method) method.next;
+			while (item != null) {
+				if( item instanceof Class){
+					Class clazz = (Class)item;
+					System.out.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
+					
+					// 3.1) Linker: calculate offsets
+					Linker.calculateOffsets(clazz);
+	
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+						method = (Method) clazz.methods;
+						while (method != null) {
+							System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+							// 3.2) Create CFG
+							method.cfg = new CFG(method);
+	
+							// 3.3) Create SSA
+							method.ssa = new SSA(method.cfg);
+	
+							// 3.4) Create machine code
+							method.machineCode = new MachineCode(method.ssa);
+							
+							method = (Method) method.next;
+						}
 					}
+	
+					// 3.5) Linker: calculate required size
+					Linker.calculateRequiredSize(clazz);
 				}
-
-				// 3.5) Linker: calculate required size
-				Linker.calculateRequiredSize(clazz);
-
-				clazz = (Class) clazz.next;
+				item = item.next;
 			}
 
 			// 4) Linker: freeze memory map
 			Linker.freezeMemoryMap();
 
 			// 5) Loop Two
-			clazz = Type.classList;
-			while (clazz != null) {
+			item = Type.classList;
+			while (item != null) {
 				// 5.1) Linker: calculate absolute addresses
-				Linker.calculateAbsoluteAddresses(clazz);
-
-				clazz = (Class) clazz.next;
+				if( item instanceof Class){
+					Linker.calculateAbsoluteAddresses( (Class)item );
+				}
+				item = item.next;
 			}
-			clazz = Type.classList;
-			while (clazz != null) {
+			item = Type.classList;
+			while (item != null) {
 				// 5.3) Linker: Create constant block
-				Linker.createConstantBlock(clazz);
-
-				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
-					method = (Method) clazz.methods;
-					while (method != null) {
-					//	System.out.println("### Method: " + method.name);
-					//	System.out.println("### Method (via SSA): " + method.ssa.cfg.method.name);
-						System.out.println("### Method (via MachineCode): " + method.machineCode.ssa.cfg.method.name);
-					//	method.ssa.print(0);
-					//	method.machineCode.print();
-						
-						// 5.2) Code generator: fix up
-						method.machineCode.doFixups();
+				if( item instanceof Class){
+					Class clazz = (Class)item;
+					Linker.createConstantBlock(clazz);
 	
-						method = (Method) method.next;
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+						method = (Method) clazz.methods;
+						while (method != null) {
+						//	System.out.println("### Method: " + method.name);
+						//	System.out.println("### Method (via SSA): " + method.ssa.cfg.method.name);
+							System.out.println("### Method (via MachineCode): " + method.machineCode.ssa.cfg.method.name);
+						//	method.ssa.print(0);
+						//	method.machineCode.print();
+							
+							// 5.2) Code generator: fix up
+							method.machineCode.doFixups();
+		
+							method = (Method) method.next;
+						}
 					}
 				}
 					
-				clazz = (Class) clazz.next;
+				item = item.next;
 			}
 
 			// 6) Linker: Create system table
@@ -145,59 +152,64 @@ public class Launcher implements ICclassFileConsts {
 					.getSearchPaths(), null, attributes);
 
 			// 3) Loop One
-			Class clazz = Type.classList;
+			Item item = Type.classList;
 			Method method;
-			while (clazz != null) {
-				System.out.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
-				
-				// 3.1) Linker: calculate offsets
-				Linker.calculateOffsets(clazz);
-
-				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
-					method = (Method) clazz.methods;
-					while (method != null) {
-						System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-						// 3.2) Create CFG
-						method.cfg = new CFG(method);
-
-						// 3.3) Create SSA
-						method.ssa = new SSA(method.cfg);
-
-						// 3.4) Create machine code
-						method.machineCode = new MachineCode(method.ssa);
-						
-						method = (Method) method.next;
+			while (item != null) {
+				if (item instanceof Class){
+					Class clazz = (Class) item;
+					System.out.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
+					
+					// 3.1) Linker: calculate offsets
+					Linker.calculateOffsets(clazz);
+	
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+						method = (Method) clazz.methods;
+						while (method != null) {
+							System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+							// 3.2) Create CFG
+							method.cfg = new CFG(method);
+	
+							// 3.3) Create SSA
+							method.ssa = new SSA(method.cfg);
+	
+							// 3.4) Create machine code
+							method.machineCode = new MachineCode(method.ssa);
+							
+							method = (Method) method.next;
+						}
 					}
+	
+					// 3.5) Linker: calculate required size
+					Linker.calculateRequiredSize(clazz);
 				}
 
-				// 3.5) Linker: calculate required size
-				Linker.calculateRequiredSize(clazz);
-
-				clazz = (Class) clazz.next;
+				item = item.next;
 			}
 
 			// 4) Linker: freeze memory map
 			Linker.freezeMemoryMap();
 
 			// 5) Loop Two
-			clazz = Type.classList;
-			while (clazz != null) {
-				// 5.1) Linker: calculate absolute addresses
-				Linker.calculateAbsoluteAddresses(clazz);
-				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
-					method = (Method) clazz.methods;
-					while (method != null) {
-						// 5.2) Code generator: fix up
-						method.machineCode.doFixups();
-	
-						method = (Method) method.next;
+			item = Type.classList;
+			while (item != null) {
+				if (item instanceof Class){
+					Class clazz = (Class) item;
+					// 5.1) Linker: calculate absolute addresses
+					Linker.calculateAbsoluteAddresses(clazz);
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+						method = (Method) clazz.methods;
+						while (method != null) {
+							// 5.2) Code generator: fix up
+							method.machineCode.doFixups();
+		
+							method = (Method) method.next;
+						}
 					}
+						
+					// 5.3) Linker: Create constant block
+					Linker.createConstantBlock(clazz);
 				}
-					
-				// 5.3) Linker: Create constant block
-				Linker.createConstantBlock(clazz);
-
-				clazz = (Class) clazz.next;
+				item = item.next;
 			}
 
 			// 6) Linker: Create system table
