@@ -374,7 +374,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 1] = clazz.nOfBaseClasses;
 		
 		// 3d) Insert size
-		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 2] = clazz.objectSizeOrDim;
+		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 2] = clazz.objectSize;
 		
 		// 3e) Insert class name address
 		clazz.constantBlock[classDescriptorOffset + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 3] = 0x12345678; // TODO set the right value here! -> address of the first entrie of the const/string pool?
@@ -581,11 +581,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
-	public static int getSizeOfObject() {
-		if(object == null) object = (Class)Class.classList.getItemByName("java/lang/Object");
-		if(dbg) vrb.println("[Linker] Size of object (" + object.name + "): " + (int)object.objectSizeOrDim + " byte");
-		return object.objectSizeOrDim;
-	}
+//	public static int getSizeOfObject() {
+//		if(object == null) object = (Class)Class.classList.getItemByName("java/lang/Object");
+//		if(dbg) vrb.println("[Linker] Size of object (" + object.name + "): " + (int)object.objectSizeOrDim + " byte");
+//		return object.objectSizeOrDim;
+//	}
 	
 	
 	/* ---------- private helper methods ---------- */
