@@ -2618,6 +2618,8 @@ public class InstructionDecoder implements InstructionOpcs {
 					return "mfspr  r" + D + ", " + SPRname(SPR);
 				case 0x157:
 					return "lhax  r" + D + ", r" + A + ", r" + B;
+				case 0x173:
+					return "mftb  r" + D + ", " + SPRname(SPR);
 				case 0x177:
 					return "lhaux  r" + D + ", r" + A + ", r" + B;
 				case 0x197:
