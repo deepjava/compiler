@@ -34,7 +34,6 @@ public class Type extends Item {
 	//--- instance fields
 	public char category; // { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
 	public byte sizeInBits;// { 1..8, 16, 32, 64 }
-	public char objectSizeOrDim; // [Byte],  if(category == 'L') object size in Byte,   if(category == '[') dimension of the array
 
 	public int objectSize;
 	public int classFieldsSize = -1; // [Byte], size of all non constant class fields on the target, rounded to the next multiple of "fieldSizeUnit" ( -1 => size not yet calculated)
@@ -278,7 +277,7 @@ public class Type extends Item {
 		Type type = classList;
 		while(type != null){
 			int objSize = type.getObjectSize();
-			vrb.printf("Type %1$s: clsFieldsSize=%2$d, instFieldsSize=%3$d, objSize=%4$d <%5$s>\n", type.name, type.classFieldsSize, type.instanceFieldsSize, objSize, type.getClass().getName());
+//			vrb.printf("Type %1$s: clsFieldsSize=%2$d, instFieldsSize=%3$d, objSize=%4$d <%5$s>\n", type.name, type.classFieldsSize, type.instanceFieldsSize, objSize, type.getClass().getName());
 			
 			type = (Type)type.next;
 		}
