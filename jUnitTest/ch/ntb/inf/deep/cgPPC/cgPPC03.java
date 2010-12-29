@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Configuration;
 
 public class cgPPC03 extends TestCgPPC {
 
@@ -16,8 +17,9 @@ public class cgPPC03 extends TestCgPPC {
 	public static void setUp() {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T03Switch" };
+		Configuration.parseAndCreateConfig("C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam");
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},Configuration.getSystemPrimitives(), (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -83,17 +85,17 @@ public class cgPPC03 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  48"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r2, 1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  36"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 3"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r3"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 3"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r4"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  28"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 5"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r2, 5"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  12"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, -1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 3"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r3, 3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);

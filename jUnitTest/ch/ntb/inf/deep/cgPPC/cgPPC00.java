@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Configuration;
 
 public class cgPPC00 extends TestCgPPC {
 
@@ -16,8 +17,9 @@ public class cgPPC00 extends TestCgPPC {
 	public static void setUp() {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T00EmptyClass" };
+		Configuration.parseAndCreateConfig("C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam");
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},Configuration.getSystemPrimitives(), (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));
@@ -38,8 +40,8 @@ public class cgPPC00 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("twi  ifequal, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  R3, -4(r2)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  R3, 1(r3)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  R3, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  R3, R3, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr LR, r3"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);

@@ -23,8 +23,8 @@ public class TestCgPPC implements ICclassFileConsts {
 		code = new MachineCode[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
 			code[i] = new MachineCode(TestSSA.ssa[i]);
-			code[i].print();
-			System.out.println();
+//			code[i].print();
+//			System.out.println();
 		}
 	}
 

@@ -26,12 +26,10 @@ public class TKernel implements ntbMpc555HB {
 		if ((reset & (1<<5 | 1<<15)) != 0) {	// boot from flash
 			blink(2);
 		}
-		blink(1);
 		int classConstOffset = FCS(5,6) * 4 + 4;
 		int state = 0;
 		int kernelClinitAddr = FCS(7,8); 
 		while (true) {
-			blink(2);
 			int constBlkBase = classConstOffset * 8;
 			int varBase = constBlkBase + cblkVarBaseOffset;
 			int varSize = constBlkBase + cblkVarSizeOffset;
@@ -40,11 +38,11 @@ public class TKernel implements ntbMpc555HB {
 			while (begin < end) {FCS(begin, 0); begin += 4;}
 			int clinitAddr = constBlkBase + cblkClinitAddrOffset;
 			blink(state + 2);
-			if (clinitAddr == -1) {	// skip kernel 
-			if (clinitAddr != kernelClinitAddr) {	// skip kernel 
-				blink(6);
-			} else {	// kernel
-			}
+			if (clinitAddr == -1) {	// skip empty constructors 
+				if (clinitAddr != kernelClinitAddr) {	// skip kernel 
+					blink(6);
+				} else {	// kernel
+				}
 			}
 			state++; //modNr++;
 			constBlkBase += 4;
