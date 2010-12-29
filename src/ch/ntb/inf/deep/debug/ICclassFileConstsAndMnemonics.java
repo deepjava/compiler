@@ -29,7 +29,7 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 			"abstract", // 10
 			"strict", // 11
 			"enumArray", // 12
-			"deprecated", // 13
+			"deprecated", // 13, dpfDeprecated
 			"enum", // 14
 			
 			//---- deep properties
