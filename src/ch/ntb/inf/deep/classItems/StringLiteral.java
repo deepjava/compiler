@@ -2,7 +2,7 @@ package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.strings.HString;
 
-public class StringLiteral extends DataItem {
+public class StringLiteral extends Constant {
 	public HString string;
 	
 	StringLiteral(HString name, HString string){

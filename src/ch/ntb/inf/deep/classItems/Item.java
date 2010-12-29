@@ -43,6 +43,11 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		this.type = type;
 	}
 
+	//--- instance methods
+	public int getObjectSize(){
+		return -1;
+	}
+
 	public Item getItemByName(HString name){
 		Item item = this;
 		while(item != null && name != item.name)  item = item.next;
@@ -80,6 +85,10 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 
 	public void printTypeCategory(){
 		if(type != null) type.printTypeCategory(); else  vrb.print("(-)");
+	}
+	
+	public void printSize() {
+		vrb.print("<?>");
 	}
 
 	public void printName(){

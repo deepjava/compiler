@@ -6,12 +6,12 @@ import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Method extends Item {
+public class Method extends ClassMember {
 
 	//--- instance fields
 	public HString methDescriptor;
 
-	public Class owner;
+//	public Class owner;
 	public byte[] code; // java byte code of this method
 	
 	public MachineCode machineCode; // machine code of this method
@@ -61,9 +61,9 @@ public class Method extends Item {
 		return code;
 	}
 
-	public Class getOwner(){
-		return owner;
-	}
+//	public Class getOwner(){
+//		return owner;
+//	}
 	
 	public int getMaxLocals(){
 		return maxLocals;
@@ -95,10 +95,11 @@ public class Method extends Item {
 
 	public void printLineNumberTable(int indentLevel){
 		indent(indentLevel);
-		if(lineNrTab == null) vrb.println("- no LineNumberTable -");
+		vrb.print("line numbers: ");
+		if(lineNrTab == null) vrb.println("none");
 		else{
 			int length = lineNrTab.length;
-			vrb.printf("line numbers: %1$d pairs of (PC : line#):", length);
+			vrb.printf("%1$d pairs of (PC : line#):", length);
 			for(int index = 0; index < length; index++){
 				if( (index&(8-1)) == 0) {
 					vrb.println();
@@ -109,10 +110,6 @@ public class Method extends Item {
 			}
 			if( (length&(8-1)) != 0) vrb.println();
 		}
-	}
-	
-	public void printOwner(){
-		owner.printName();
 	}
 
 	public void printHeader(){
@@ -142,7 +139,8 @@ public class Method extends Item {
 		}
 		vrb.println(", nofParams="+nofParams);
 		indent(indentLevel+1);
-		if(this.code == null) vrb.println("- no code"); else vrb.println("code.length="+code.length);
+		vrb.print("code: ");
+		if(this.code == null) vrb.println("none"); else vrb.printf("%1$d B\n", code.length);
 		printLocalVars(indentLevel+1);
 		printLineNumberTable(indentLevel+1);
 	}

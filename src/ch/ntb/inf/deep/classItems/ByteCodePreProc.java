@@ -10,8 +10,8 @@ import ch.ntb.inf.deep.debug.Dbg;
  * <br>sets access and property flags {dpfReadAccess, dpfWriteAccess, dpfCall, dpfInterfCall, dpfNew, dpfTypeTest} accordingly
  */
 public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs {
-	static final boolean verbose = false, assertions = true;
-	static PrintStream vrb = Item.vrb;
+	private static final boolean verbose = false, assertions = true;
+	private static PrintStream vrb = Item.vrb;
 
 	/*attribute table (classItems.ICjvmInstructionOpcs.bcAttrTab)
 	 * format B:	0xsFFF'owLcc, binary: ssss ' ffff | ffff'ffff | oo ww ' LLLL 	| cccc'cccc
@@ -98,7 +98,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 						int high = getInt(byteCode, addr+4);
 						instrLength = ((high-low) + 3) * 4 + addr - instrAddr;
 					}else{// opc == bClookupswitch
-						int nofPairs = getInt(byteCode, addr);//+4 is wrong
+						int nofPairs = getInt(byteCode, addr);
 						instrLength = (nofPairs * 2 + 2) * 4	 + (addr - instrAddr);
 					}
 				}else{// (opc != bCtableswitch & opc != bClookupswitch)
@@ -207,7 +207,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfTypeTest);
 					if(assertions) {
 						assert item != null;
-						assert item instanceof Class;
+						assert item instanceof Type;
 					}
 					break;
 

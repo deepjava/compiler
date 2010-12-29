@@ -8,18 +8,20 @@ import ch.ntb.inf.deep.strings.StringTable;
 
 public class Type extends Item {
 	//--- class (static) fields
+	public static final int fieldSizeUnit = 4; // 
 	public static final byte nofNewMethods = 4; // bc instructions: {new[0], newarray[1], anewarray[2], multianewarray[3]}
 	public static final Item[] newMethods = new Item[nofNewMethods];
 
 	static HString[] classFileAttributeTable;// well known attributes
 //	static final byte[] primitveTypeChars = { 'D', 'F', 'J', 'Z', 'B', 'S', 'C', 'I', 'V' }; // inclusive 'V'
-	public static Type[] wellKnownTypes;;
+	public static Type[] wellKnownTypes;
+	public static Type wktObject;
 	static HString hsNumber, hsString;
 
 	public static Class[] rootClasses;
 	public static int nofRootClasses;
 
-	public static Class classList, classListTail;
+	public static Type classList, classListTail;
 	public static int nofClasses = 0;
 
 	//-- const pool arrays
@@ -30,14 +32,18 @@ public class Type extends Item {
 	static int prevCpLenth, constPoolCnt;
 
 	//--- instance fields
-	public byte category; // { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
+	public char category; // { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
 	public byte sizeInBits;// { 1..8, 16, 32, 64 }
 	public char objectSizeOrDim; // [Byte],  if(category == 'L') object size in Byte,   if(category == '[') dimension of the array
 
+	public int objectSize;
+	public int classFieldsSize = -1; // [Byte], size of all non constant class fields on the target, rounded to the next multiple of "fieldSizeUnit" ( -1 => size not yet calculated)
+	public int instanceFieldsSize = -1; // [Byte], size of all instance fields on the target, rounded to the next multiple of "fieldSizeUnit" ( -1 => size not yet calculated)
+
 	//--- class (static) methods
-	protected static void appendClass(Class newClass){
-		if(classListTail == null) classList = newClass;  else  classListTail.next = newClass;
-		classListTail = newClass;
+	protected static void appendClass(Type newType){
+		if(classListTail == null) classList = newType;  else  classListTail.next = newType;
+		classListTail = newType;
 	}
 
 	protected static void appendRootClass(Class newRootClass){
@@ -75,6 +81,8 @@ public class Type extends Item {
 
 		registerWellKnownClasses(txObject, "java/lang/Object");
 		registerWellKnownClasses(txString, "java/lang/String");
+		
+		wktObject = wellKnownTypes[txObject];
 }
 
 	protected static void setClassFileAttributeTable(StringTable stab){
@@ -159,8 +167,12 @@ public class Type extends Item {
 			type.category = tcRef;
 			if(baseType != null) type.type = baseType;
 		}else if(typeCategory == tcArray){
-			type = new Type(registredTypeName, baseType);
-			type.category = tcArray;
+			Item cls = getClassByName(registredTypeName);
+			if( cls != null) type = (Type)cls;
+			else{
+				type = new Array(registredTypeName);
+				appendClass(type);				
+			}
 		}else
 			assert false;
 		return type;
@@ -192,32 +204,29 @@ public class Type extends Item {
 		return nofParams;
 	}
 
-	protected Type getTypeByDescriptor(HString singleTypeDescriptor){// syntax in EBNF: singleTypeDescriptor = "L" SName ";".
+	protected static Type getTypeByDescriptor(HString singleTypeDescriptor){// syntax in EBNF: singleTypeDescriptor = "L" SName ";".
+//		final boolean verbose = true;
+		if(verbose) vrb.printf(">getTypeByDescriptor: descriptor=%1$s\n", singleTypeDescriptor);
+
 		int length = singleTypeDescriptor.length();
 		char category = singleTypeDescriptor.charAt(0);
 		Type type = null;
+		
 		if(length == 1) type = getPrimitiveTypeByCharName(category);
 		else if( category == tcRef ){// singleTypeDescriptor = "L" SName ";".  (EBNF)
 			HString sname = singleTypeDescriptor.substring(1, length-1); // assert: sname = class name
 			sname = stab.insertCondAndGetEntry(sname);
 			type = getTypeByNameAndUpdate(tcRef, sname, null);
 		}else if( category == tcArray ){// singleTypeDescriptor = "[" { "[" } ( BaseTypeCategory |  ( "L" SName ";" ) ).  (EBNF)
-			int dim = 1;
-			while(singleTypeDescriptor.charAt(dim) == tcArray) dim++;
-			HString sname = singleTypeDescriptor.substring(dim, length);
-			sname = stab.insertCondAndGetEntry(sname);
-			Type baseType = getTypeByDescriptor(sname);
+			type = getTypeByNameAndUpdate(tcArray, singleTypeDescriptor, null);
+		}else
+			assert false;
 
-			sname = singleTypeDescriptor.substring(0, dim);
-			sname = stab.insertCondAndGetEntry(sname);
-			type = getTypeByNameAndUpdate(tcArray, sname, baseType);
-			type.objectSizeOrDim = (char)dim;
-		}else assert false;
-//vrb.println("<getTypeByDescriptor 99: type.name="+type.name +", length="+length +", category="+category);
+		if(verbose) vrb.printf("<getTypeByDescriptor: type.name=%1$s\n", type.name);
 		return type;
 	}
 
-	protected Type getReturnType(HString methodDescriptor){// syntax in EBNF: methodDescriptor = "(" FormalParDesc ")" ReturnTypeDesc.
+	protected static Type getReturnType(HString methodDescriptor){// syntax in EBNF: methodDescriptor = "(" FormalParDesc ")" ReturnTypeDesc.
 		int rparIndex = methodDescriptor.lastIndexOf(')');
 		assert rparIndex > 0;
 		HString retDesc = methodDescriptor.substring(rparIndex+1);
@@ -245,23 +254,39 @@ public class Type extends Item {
 
 	protected Type(HString registeredName, char category, int sizeInBits){
 		super(registeredName, null); // no base type
-		assert category == (byte)category: "pre2";
 		assert sizeInBits == (byte)sizeInBits: "pre3";
-		this.category = (byte)category;
+		this.category = category;
 		this.sizeInBits = (byte)sizeInBits;
-		// this.objectSizeOrDim = 0;
 	}
 
-	protected Type(HString regName, Type baseType, char category, int sizeInBits, int objectSizeOrDim){
-		super(regName, baseType);
-		assert category == (byte)category: "pre3";
-		assert sizeInBits == (byte)sizeInBits: "pre4";
-		assert objectSizeOrDim == (char)objectSizeOrDim: "pre5";
-		this.category = (byte)category;
-		this.sizeInBits = (byte)sizeInBits;
-		this.objectSizeOrDim = (char)objectSizeOrDim;
+	//--- instance methods
+	public int getObjectSize(){
+		int baseSize = -1;
+		if( instanceFieldsSize >= 0 ){
+			if( type == null ){
+				 if( this == wktObject) baseSize = 0;
+			}else{
+				baseSize = type.getObjectSize();
+			}
+			if( baseSize >= 0) objectSize = baseSize + instanceFieldsSize;
+		}
+		return objectSize;
 	}
 
+	static void completeLoading(){
+		if(verbose) vrb.println(">completeLoading");
+		Type type = classList;
+		while(type != null){
+			int objSize = type.getObjectSize();
+			vrb.printf("Type %1$s: clsFieldsSize=%2$d, instFieldsSize=%3$d, objSize=%4$d <%5$s>\n", type.name, type.classFieldsSize, type.instanceFieldsSize, objSize, type.getClass().getName());
+			
+			type = (Type)type.next;
+		}
+		if(verbose) vrb.println("<completeLoading");
+	}
+
+
+	//--- debug primitives
 	public void printTypeCategory() {
 		vrb.print("(" + (char)category + ')');
 	}

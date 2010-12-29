@@ -52,11 +52,15 @@ public interface ICclassFileConsts {
 		dpfInterfCall = dpfBase+10,	// method gets invoked by the bc instruction invokeinterface
 		dpfExcHndCall = dpfBase+11,	// method gets invoked directly or indirectly by an exception handler method
 		dpfExcHnd = dpfBase+12,	// method is an exception handler, i.e. this method is invoked by hardware
+		//--- shared flag positions with fields:
+		dpfDone = dpfBase+6,	// for class constructors only
 
-		dpfNew = dpfBase+13,	// method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
+		//--- class and method flags:
+		//--- meaning as class flag: class has method(s) with this flag (at least one)
+		dpfNew = dpfBase+13, // method flag: method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 		dpfUnsafe = dpfBase+14,	// method is unsafe
 		dpfSysPrimitive = dpfBase+15,	// method is a system primitive
-		dpfSynthetic = dpfBase+16; // synthetic field or method (items not in source text, deep in-line methods)
+		dpfSynthetic = dpfBase+16; // synthetic field or method (items not in source text, or deep in-line methods)
 
 	int apfSetJavaAccAndProperties = (1<<apfEnum)|(1<<apfEnumArray)|(1<<apfStrict)|(1<<apfAbstract)|(1<<apfInterface)
 			|(1<<apfNative)	|(1<<apfTransient)|(1<<apfVolatile)|(1<<apfSynchronized) |(1<<apfSuper) |(1<<apfFinal)
@@ -64,8 +68,8 @@ public interface ICclassFileConsts {
 
 	int dpfSetClassProperties =(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded)|(1<<dpfSynthetic)|(1<<dpfDeprecated);
 
-	int dpfSetFieldProperties = dpfConst | dpfReadAccess | dpfWriteAccess;
-
+	int dpfSetFieldProperties = (1<<dpfConst)|(1<<dpfReadAccess)|(1<<dpfWriteAccess);
+	
 	int dpfSetMethProperties =
 		 (1<<dpfUnsafe)|(1<<dpfNew)|(1<<dpfExcHndCall)|(1<<dpfInterfCall)|(1<<dpfCall)|(1<<dpfExcHnd)|(1<<dpfSysPrimitive)|(1<<dpfCommand)
 		|(1<<dpfSynthetic)|(1<<dpfDeprecated);
@@ -73,38 +77,8 @@ public interface ICclassFileConsts {
 	int dpfSetSysMethProperties = dpfSetMethProperties;
 
 	int dpfSetSysClassProperties = dpfSetClassProperties | dpfSetSysMethProperties;
-	int dpfSetProperties = dpfSetClassProperties|dpfSetSysClassProperties | dpfSetMethProperties | dpfSetSysMethProperties;
+	int dpfSetProperties = dpfSetClassProperties|dpfSetSysClassProperties | dpfSetMethProperties | dpfSetSysMethProperties | dpfSetFieldProperties;
 
-//	int dpfSetSysMethAttributes = dpfSetSysMethProperties | sysMethCodeMask;
-// moved to config specification
-//	int// deep system primitive identifiers (0xFFFF'FCMM: F= Flags, C= system class number, MM-method number
-//		dscUS = 0x000, // deep system class: deep/UNSAFE/US,  dscUS = system class 0
-//		dspiPUT1 = dscUS+0x01,
-//		dspiPUT2 = dscUS+0x02,
-//		dspiPUT4 = dscUS+0x03,
-//		dspiPUT8 = dscUS+0x04,
-//		dspiGET1 = dscUS+0x05,
-//		dspiGET2 = dscUS+0x06,
-//		dspiGET4 = dscUS+0x07,
-//		dspiGET8 = dscUS+0x08,
-//		dspiGETBIT = dscUS+0x09,
-//		
-//		dspiASM  = dscUS+0x0A;
-//
-//	int
-//		dscLL = 0x100, // deep system class: deep/lowLevel/LL,  dscLL = system class 1
-//		dspiMostSign1BitNr = dscLL+0x01,
-//		dspiLeastSign1BitNr = dscLL+0x02,
-//		dspiGetBit = dscLL+0x03,
-//		dspiIsPowerOf2 = dscLL+0x04,
-//		dspiNextPowerOf2 = dscLL+0x05;
-//
-//	int
-//		dscHeap = 0x200, // deep system class: deep/runtime/Heap,  dscHeap = system class 2
-//		dspiNewObject = dscHeap+0x01, // bc 187
-//		dspiNewPrimitiveArray = dscHeap+0x02, // bc 188
-//		dspiNewReferenceArray = dscHeap+0x03, // bc 189
-//		dspiNewMultiDimArray = dscHeap+0x04; // bc 197
 
 	byte//--- attribute indices, mnemonis in: debug.IClassFileConstMnemonics.attributes
 		atxConstantValue = 0,

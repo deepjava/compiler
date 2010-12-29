@@ -1,10 +1,10 @@
 package ch.ntb.inf.deep.classItems;
 
-public class LocalVar extends DataItem {
+public class LocalVar extends Item {
 
 	//--- instance fields
 	int startPc, length; // life range: [startPc, startPc+length]
-	int index; // starts at this slot, long and double occupy this slot and next slot (index+1)
+//	int index; // starts at this slot, long and double occupy this slot and next slot (index+1)
 
 	//--- constructors
 	LocalVar(){
