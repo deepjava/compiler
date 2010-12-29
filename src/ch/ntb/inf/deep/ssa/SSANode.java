@@ -4,7 +4,7 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.Constant;
+import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
@@ -393,7 +393,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_m1:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(-1, 0);
+				result.constant = new StdConstant(-1, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -403,7 +403,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(0, 0);
+				result.constant = new StdConstant(0, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -413,7 +413,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(1, 0);
+				result.constant = new StdConstant(1, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -423,7 +423,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_2:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(2, 0);
+				result.constant = new StdConstant(2, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -433,7 +433,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_3:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(3, 0);
+				result.constant = new StdConstant(3, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -443,7 +443,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_4:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(4, 0);
+				result.constant = new StdConstant(4, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -453,7 +453,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiconst_5:
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(5, 0);
+				result.constant = new StdConstant(5, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -463,7 +463,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
-				result.constant = new Constant(0, 0);
+				result.constant = new StdConstant(0, 0);
 				result.constant.type = Type.wellKnownTypes[txLong];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -473,7 +473,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
-				result.constant = new Constant(0, 1);
+				result.constant = new StdConstant(0, 1);
 				result.constant.type = Type.wellKnownTypes[txLong];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -483,7 +483,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
-				result.constant = new Constant(Float.floatToIntBits(0.0f), 0);
+				result.constant = new StdConstant(Float.floatToIntBits(0.0f), 0);
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -493,7 +493,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
-				result.constant = new Constant(Float.floatToIntBits(1.0f), 0);
+				result.constant = new StdConstant(Float.floatToIntBits(1.0f), 0);
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -503,7 +503,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfconst_2:
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
-				result.constant = new Constant(Float.floatToIntBits(2.0f), 0);
+				result.constant = new StdConstant(Float.floatToIntBits(2.0f), 0);
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -513,7 +513,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdconst_0:
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
-				result.constant = new Constant((int) (Double
+				result.constant = new StdConstant((int) (Double
 						.doubleToLongBits(0.0) >> 32), (int) (Double
 						.doubleToLongBits(0.0)));
 				result.constant.type = Type.wellKnownTypes[txDouble];
@@ -525,7 +525,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdconst_1:
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
-				result.constant = new Constant((int) (Double
+				result.constant = new StdConstant((int) (Double
 						.doubleToLongBits(1.0) >> 32), (int) (Double
 						.doubleToLongBits(1.0)));
 				result.constant.type = Type.wellKnownTypes[txDouble];
@@ -540,7 +540,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = ssa.cfg.code[bca];// sign-extended
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(val, 0);
+				result.constant = new StdConstant(val, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -554,7 +554,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = sval;// sign-extended to int
 				result = new SSAValue();
 				result.type = SSAValue.tInteger;
-				result.constant = new Constant(val, 0);
+				result.constant = new StdConstant(val, 0);
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -565,8 +565,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = ssa.cfg.code[bca];
 				result = new SSAValue();
-				if (ssa.cfg.method.owner.constPool[val] instanceof Constant) {
-					Constant constant = (Constant) ssa.cfg.method.owner.constPool[val];
+				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
+					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
 					if (constant.type.name.charAt(0) == 'I') {// is a int
 						result.type = SSAValue.tInteger;
 						result.constant = constant;
@@ -602,8 +602,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				if (ssa.cfg.method.owner.constPool[val] instanceof Constant) {
-					Constant constant = (Constant) ssa.cfg.method.owner.constPool[val];
+				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
+					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
 					if (constant.type.name.charAt(0) == 'I') {// is a int
 						result.type = SSAValue.tInteger;
 						result.constant = constant;
@@ -639,8 +639,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				result = new SSAValue();
-				if (ssa.cfg.method.owner.constPool[val] instanceof Constant) {
-					Constant constant = (Constant) ssa.cfg.method.owner.constPool[val];
+				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
+					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
 					if (constant.type.name.charAt(0) == 'D') {// is a Double
 						result.type = SSAValue.tDouble;
 						result.constant = constant;
@@ -1616,7 +1616,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 				value2 = new SSAValue();
 				value2.type = SSAValue.tInteger;
-				value2.constant = new Constant(val1, 0);
+				value2.constant = new StdConstant(val1, 0);
 				value2.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = value2;
