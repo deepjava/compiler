@@ -16,18 +16,36 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 
 class WizPage1 extends WizardPage {
 	
-	private Combo processor, board;
+	private Combo processor, board, rts;
+	private Button check, browse;
+	private Text path;
+	private final String defaultPath = "I:/eclipse/bsp";//TODO set right path
+	private String lastChoise = "";
 	
 	private SelectionAdapter selectionListener = new SelectionAdapter() {
 		public void widgetSelected(SelectionEvent e){
+			if (e.widget.equals(check)){
+				if(check.getSelection()){
+					path.setEnabled(false);
+					path.setText(defaultPath);
+				}else{
+					path.setEnabled(true);
+					path.setText(lastChoise);
+				}
+			}
 			setPageComplete((ValidatePage()));
 		}
 	};
@@ -44,20 +62,12 @@ class WizPage1 extends WizardPage {
 	@Override
 	public void createControl(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
-		RowLayout rowLayout = new RowLayout();
-		rowLayout.justify = true;
-		rowLayout.marginLeft = 5;
-		rowLayout.marginRight = 5;
-		rowLayout.spacing = 5;
-		composite.setLayout(rowLayout);
-		
+		GridLayout gridLayout = new GridLayout(2, false);
+		composite.setLayout(gridLayout);
+
 		Group group1 = new Group(composite, SWT.NONE);
 		group1.setText("Processor");
 		RowLayout rowLayout2 = new RowLayout(SWT.VERTICAL);
-		rowLayout2.justify = true;
-		rowLayout2.marginLeft = 5;
-		rowLayout2.marginRight = 5;
-		rowLayout2.spacing = 5;
 		group1.setLayout(rowLayout2);
 		Label label = new Label(group1, SWT.NONE);
 		label.setText("Select a processor");
@@ -69,10 +79,6 @@ class WizPage1 extends WizardPage {
 		Group group2 = new Group(composite, SWT.NONE);
 		group2.setText("Configuration");
 		RowLayout rowLayout3 = new RowLayout(SWT.VERTICAL);
-		rowLayout3.justify = true;
-		rowLayout3.marginLeft = 5;
-		rowLayout3.marginRight = 5;
-		rowLayout3.spacing = 5;
 		group2.setLayout(rowLayout3);
 		Label label1 = new Label(group2, SWT.NONE);
 		label1.setText("Select a configuration");
@@ -81,6 +87,45 @@ class WizPage1 extends WizardPage {
 		board.select(0);
 		board.addSelectionListener(selectionListener);
 		
+		
+		Group group3 = new Group(composite, SWT.NONE);
+		group3.setText("Runtime-System");
+		GridLayout gridLayout2 = new GridLayout(2, false);
+		group3.setLayout(gridLayout2);
+		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+		gridData.horizontalSpan = 2;
+		group3.setLayoutData(gridData);
+		Label label2 = new Label(group3,SWT.NONE);
+		label2.setText("Select a runtime system");
+		label2.setLayoutData(gridData);
+		rts = new Combo(group3, SWT.BORDER);
+		rts.setItems(new String[]{"Simple tasking system", "uCos"});
+		rts.select(0);
+		rts.addSelectionListener(selectionListener);
+		rts.setLayoutData(gridData);
+		Label dummy = new Label(group3, SWT.NONE);
+		dummy.setLayoutData(gridData);
+		check = new Button(group3, SWT.CHECK);
+		check.setText("use default library path");
+		check.setSelection(true);
+		check.addSelectionListener(selectionListener);
+		check.setLayoutData(gridData);
+		path = new Text(group3, SWT.SINGLE | SWT.BORDER);
+		GridData gridData2 = new GridData();
+		gridData2.horizontalAlignment = SWT.FILL;
+		gridData2.grabExcessHorizontalSpace = true;
+		path.setLayoutData(gridData2);
+		path.setText(defaultPath);
+		path.setEnabled(false);
+		browse = new Button(group3, SWT.PUSH);
+		browse.setText("Browse...");
+		browse.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e){
+			if(!check.getSelection()){	
+				openDirectoryDialog();
+			}
+		}});
+	
 		setControl(composite);
 
 	}
@@ -90,9 +135,52 @@ class WizPage1 extends WizardPage {
 	public String getBoardValue(){
 		return board.getItem(board.getSelectionIndex());
 	}
+	public String getRunTimeSystemValue(){
+		return rts.getItem(rts.getSelectionIndex());
+	}
+	
+	public boolean useDefaultLibPath(){
+		return check.getSelection();
+	}
+	
+	public String getDefaultLibPath(){
+		return defaultPath;
+	}
+	
+	public String getChosenLibPath(){
+		return path.getText();
+	}
+	
+	/**
+	 * Open a resource chooser to select a program
+	 */
+	protected void openDirectoryDialog() {
+		DirectoryDialog dlg = new DirectoryDialog(getShell());
+
+        // Set the initial filter path according
+        // to anything they've selected or typed in
+        dlg.setFilterPath(path.getText());
+
+        // Change the title bar text
+        dlg.setText("Deep Library Path Selection");
+
+        // Customizable message displayed in the dialog
+        dlg.setMessage("Select a directory");
+
+        // Calling open() will open and run the dialog.
+        // It will return the selected directory, or
+        // null if user cancels
+        String dir = dlg.open();
+        if (dir != null) {
+          // Set the text box to the new selection
+        	path.setText(dir);
+        	lastChoise = dir;
+        }
+
+	}
 	
 	private boolean ValidatePage() {
-		if(processor.getSelectionIndex() == -1 || board.getSelectionIndex() == -1){
+		if(processor.getSelectionIndex() == -1 || board.getSelectionIndex() == -1 || rts.getSelectionIndex() == -1){
 			return false;
 		}
 		return true;

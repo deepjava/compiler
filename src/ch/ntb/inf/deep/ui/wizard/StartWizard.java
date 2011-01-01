@@ -12,11 +12,15 @@
  */
 package ch.ntb.inf.deep.ui.wizard;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -123,8 +127,7 @@ public class StartWizard extends Wizard implements INewWizard{
 		sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
 		sb.append("<classpath>\n");
 		sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
-		sb
-				.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
+		sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
 		sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
 		sb.append("</classpath>\n");
 		return new ByteArrayInputStream(sb.toString().getBytes());
@@ -137,6 +140,71 @@ public class StartWizard extends Wizard implements INewWizard{
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void createDeepFile(){
+//		File file = new File(project.getLocation() + "/" + project.getName() + ".deep");
+		IFile file = project.getFile(project.getName() +".deep");
+		   try{
+			   file.create(getDeepFileContent(), false, null);
+		   } catch(CoreException e){
+			   e.printStackTrace();
+		   }
+//			    // Create file 
+//			    FileWriter fstream = new FileWriter(project.getLocation() + "/" + project.getName() + ".deep");
+//			        BufferedWriter out = new BufferedWriter(fstream);
+//			    out.write(getDeepFileContent());
+//			    //Close the output stream
+//			    out.close();
+//			    }catch (Exception e){//Catch exception if any
+//			      System.err.println("Error: " + e.getMessage());
+//			    }
+	}
+	
+	private InputStream getDeepFileContent(){
+		String board, processor, rts;
+		GregorianCalendar cal = new GregorianCalendar();
+		StringBuffer sb = new StringBuffer();
+		sb.append("#deep-0\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
+		sb.append("\tdescription = \"Deep project file for " + project.getName() + "\";\n");
+		sb.append("\timport = ");
+		
+		processor = wizPage1.getProcessorValue();
+		board = wizPage1.getBoardValue();
+		rts = wizPage1.getRunTimeSystemValue();
+		
+		if(processor.equals("MPC555")){
+			if(board.equals("NTB MPC555 Headerboard")){
+				sb.append("\"ntbMpc555HB.deep\"");
+				if(rts.equals("Simple tasking system")){
+					sb.append(", \"ntbMpc555STS\"");
+				}else if(rts.equals("uCos")){
+					sb.append(", \"ntbMpc555uCOS\"");
+				}	 
+			}else if(board.equals("phyCORE-mpc555")){
+				sb.append("\"phyMpc555Core.deep\"");
+				if(rts.equals("Simple tasking system")){
+					sb.append(", \"ntbMpc555STS\"");
+				}else if(rts.equals("uCos")){
+					sb.append(", \"ntbMpc555uCOS\"");
+				}					 
+			}
+			sb.append(";\n}\n\n");
+		}else{
+			sb.append("\"\";\n}\n\n");
+		}
+		
+		sb.append("project {\n\tlibpath = ");
+		if(wizPage1.useDefaultLibPath()){
+			sb.append("\"" + wizPage1.getDefaultLibPath() + "\";\n");		
+		}else{
+			sb.append("\"" + wizPage1.getChosenLibPath() + "\";\n");
+		}
+		
+		sb.append("\trootclasses = \"\";\n}\n");
+		
+		System.out.println(sb.toString());
+		return new ByteArrayInputStream(sb.toString().getBytes());
 	}
 
 	private void createFolders(IProject project) {
@@ -178,6 +246,7 @@ public class StartWizard extends Wizard implements INewWizard{
 		}finally{
 			createFolders(project);
 			createClassPath(project);
+			createDeepFile();
 			monitor.done();
 		}
 	}
@@ -187,11 +256,20 @@ public class StartWizard extends Wizard implements INewWizard{
 		IEclipsePreferences pref = scope.getNode("deepStart");//TODO überprüfen ob es diesen Node gibt
 		pref.put("proc", wizPage1.getProcessorValue());
 		pref.put("board", wizPage1.getBoardValue());
+		pref.put("rts", wizPage1.getRunTimeSystemValue());
+		if(wizPage1.useDefaultLibPath()){
+			pref.putBoolean("useDefault", true);
+			pref.put("libPath", wizPage1.getDefaultLibPath());
+		}else{
+			pref.putBoolean("useDefault", false);
+			pref.put("libPath", wizPage1.getChosenLibPath());			
+		}
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
+		
 	}
 	/**
 	 * Displays an error that occured during the project creation.
@@ -208,7 +286,7 @@ public class StartWizard extends Wizard implements INewWizard{
 		if (x instanceof CoreException) {
 			return ((CoreException) x).getStatus();
 		} else {
-			return new Status(IStatus.ERROR, "ch.ntb.cross", IStatus.ERROR, x.getMessage() != null ? x.getMessage() : x.toString(), x);
+			return new Status(IStatus.ERROR, "ch.ntb.inf.deep", IStatus.ERROR, x.getMessage() != null ? x.getMessage() : x.toString(), x);
 		}
 	}
 	
