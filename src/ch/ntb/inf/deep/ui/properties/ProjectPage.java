@@ -16,38 +16,41 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchPropertyPage;
 import org.eclipse.ui.dialogs.PropertyPage;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage {
-	private Combo processor,board;
+	private Combo processor, board, rts;
+	private Button check, browse;
+	private Text path;
+	private final String defaultPath = "I:/eclipse/bsp";//TODO set right path
+	private String lastChoise = "";
 	private IEclipsePreferences pref;
 	
 	@Override
 	protected Control createContents(Composite parent) {
 		pref = getPref();
 		Composite composite = new Composite(parent, SWT.NONE);
-		RowLayout rowLayout = new RowLayout();
-		rowLayout.justify = true;
-		rowLayout.marginLeft = 5;
-		rowLayout.marginRight = 5;
-		rowLayout.spacing = 5;
-		composite.setLayout(rowLayout);
-		
+		GridLayout gridLayout = new GridLayout(2, false);
+		composite.setLayout(gridLayout);
+
 		Group group1 = new Group(composite, SWT.NONE);
 		group1.setText("Processor");
 		RowLayout rowLayout2 = new RowLayout(SWT.VERTICAL);
-		rowLayout2.justify = true;
-		rowLayout2.marginLeft = 5;
-		rowLayout2.marginRight = 5;
-		rowLayout2.spacing = 5;
 		group1.setLayout(rowLayout2);
 		Label label = new Label(group1, SWT.NONE);
 		label.setText("Select a processor");
@@ -58,18 +61,92 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		Group group2 = new Group(composite, SWT.NONE);
 		group2.setText("Configuration");
 		RowLayout rowLayout3 = new RowLayout(SWT.VERTICAL);
-		rowLayout3.justify = true;
-		rowLayout3.marginLeft = 5;
-		rowLayout3.marginRight = 5;
-		rowLayout3.spacing = 5;
 		group2.setLayout(rowLayout3);
 		Label label1 = new Label(group2, SWT.NONE);
 		label1.setText("Select a configuration");
 		board = new Combo(group2, SWT.BORDER);
 		board.setItems(new String[]{"NTB MPC555 Headerboard", "phyCORE-mpc555"});
-		board.setText(pref.get("board",""));
+		board.setText(pref.get("board", ""));
+		
+		
+		Group group3 = new Group(composite, SWT.NONE);
+		group3.setText("Runtime-System");
+		GridLayout gridLayout2 = new GridLayout(2, false);
+		group3.setLayout(gridLayout2);
+		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+		gridData.horizontalSpan = 2;
+		group3.setLayoutData(gridData);
+		Label label2 = new Label(group3,SWT.NONE);
+		label2.setText("Select a runtime system");
+		label2.setLayoutData(gridData);
+		rts = new Combo(group3, SWT.BORDER);
+		rts.setItems(new String[]{"Simple tasking system", "uCos"});
+		rts.setText(pref.get("rts", ""));
+		rts.setLayoutData(gridData);
+		Label dummy = new Label(group3, SWT.NONE);
+		dummy.setLayoutData(gridData);
+		check = new Button(group3, SWT.CHECK);
+		check.setText("use default library path");
+		check.setSelection(pref.getBoolean("useDefault", true));
+		check.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e){
+				if(check.getSelection()){
+					path.setEnabled(false);
+					path.setText(defaultPath);
+				}else{
+					path.setEnabled(true);
+					path.setText(lastChoise);
+				}
+			}});
+		check.setLayoutData(gridData);
+		path = new Text(group3, SWT.SINGLE | SWT.BORDER);
+		GridData gridData2 = new GridData();
+		gridData2.horizontalAlignment = SWT.FILL;
+		gridData2.grabExcessHorizontalSpace = true;
+		path.setLayoutData(gridData2);
+		path.setText(pref.get("libPath", defaultPath));
+		path.setEnabled(!check.getSelection());
+		if(!check.getSelection()){
+			lastChoise = path.getText();
+		}
+		browse = new Button(group3, SWT.PUSH);
+		browse.setText("Browse...");
+		browse.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e){
+			if(!check.getSelection()){	
+				openDirectoryDialog();
+			}
+		}});
 		
 		return composite;
+
+	}
+	
+	/**
+	 * Open a resource chooser to select a program
+	 */
+	protected void openDirectoryDialog() {
+		DirectoryDialog dlg = new DirectoryDialog(getShell());
+
+        // Set the initial filter path according
+        // to anything they've selected or typed in
+        dlg.setFilterPath(path.getText());
+
+        // Change the title bar text
+        dlg.setText("Deep Library Path Selection");
+
+        // Customizable message displayed in the dialog
+        dlg.setMessage("Select a directory");
+
+        // Calling open() will open and run the dialog.
+        // It will return the selected directory, or
+        // null if user cancels
+        String dir = dlg.open();
+        if (dir != null) {
+          // Set the text box to the new selection
+        	path.setText(dir);
+        	lastChoise = dir;
+        }
 
 	}
 	
@@ -92,11 +169,23 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 	protected void performDefaults(){
 		processor.setText("MPC555");
 		board.setText("NTB MPC555 Headerboard");
+		check.setSelection(true);
+		path.setEnabled(false);
+		path.setText(defaultPath);
+		rts.setText("Simple tasking system");
 	}
 	
 	private void save(){
 		pref.put("proc", processor.getText());
 		pref.put("board", board.getText());
+		pref.put("rts", rts.getText());
+		if(check.getSelection()){
+			pref.putBoolean("useDefault", true);
+			pref.put("libPath",defaultPath);
+		}else{
+			pref.putBoolean("useDefault", false);
+			pref.put("libPath", path.getText());			
+		}
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
