@@ -94,7 +94,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 * @param fieldName
 	 * @return  the selected field or null if not found
 	 */
-	private DataItem getAndExtractField(HString fieldName){
+	private Item getAndExtractField(HString fieldName){
 		Item item = fields, pred = null;
 		while(item != null && item.name != fieldName) {
 			pred = item;
@@ -104,7 +104,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			if(pred == null) fields = item.next; else  pred.next = item.next;
 			item.next = null;
 		}
-		return (DataItem)item;
+		return item;
 	}
 
 	/**
@@ -491,7 +491,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 						flags |= (1<<dpfConst);
 					}else{// field != null: field was already referenced from other class
 						assert (cpField.accAndPropFlags & dpfSetProperties) == 0;
-						((DataItem)field).initialValue = (Constant)cpField;
+//						((DataItem)field).initialValue = (Constant)cpField;	// Original
+//						Item asd = (StdConstant)cpField;
+//						Constant ds = null;
+//						cpField = field;
+//						((DataItem)field).initialValue = ds;
+//						((DataItem)field).initialValue = (StdConstant)cpField;
 						flags |= (1<<apfFinal);
 					}
 					break;

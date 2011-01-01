@@ -183,7 +183,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfInstances);
 					if(assertions) {
 						assert item != null;
-						assert item instanceof Class;
+						assert item instanceof Type;
 					}
 					break;
 					
@@ -191,7 +191,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfInstances);
 					if(assertions) {
 						assert item != null;
-						assert item instanceof Class;
+						assert item instanceof Type;
 					}
 					break;
 
@@ -199,7 +199,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfInstances);
 					if(assertions) {
 						assert item != null;
-						assert item instanceof Class;
+						assert item instanceof Type;
 					}
 					break;
 
