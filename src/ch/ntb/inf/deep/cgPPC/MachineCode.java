@@ -12,7 +12,7 @@ import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -459,14 +459,21 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					sReg2 = opds[0].regLong;
 					refReg = res.regAux1;
 					Item item = ((MonadicRef)instr).item;
-					type = Type.getPrimitiveTypeIndex(item.type.name.charAt(0));
+					if (item.type.name.charAt(0) == '[')
+						type = tRef;
+					else
+						type = Type.getPrimitiveTypeIndex(item.type.name.charAt(0));
 					offset = 0;
 					loadConstantAndFixup(res.regAux1, item);
 				} else {	// putfield
 					refReg = opds[0].reg;
 					sReg1 = opds[1].reg;
 					sReg2 = opds[1].regLong;
-					type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
+					if (((DyadicRef)instr).field.type.name.charAt(0) == '[')
+						type = tRef;
+					else
+						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
+//					type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
 					offset = ((DyadicRef)instr).field.index;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}
@@ -474,7 +481,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case tBoolean: case tByte: 
 					createIrSrAd(ppcStb, sReg1, refReg, offset);
 					break;
-				case tShort: case tChar: case -1:	// flicken!!!
+				case tShort: case tChar:
 					createIrSrAd(ppcSth, sReg1, refReg, offset);
 					break;
 				case tInteger: case tRef: case tAref: case tAboolean:
@@ -517,7 +524,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
 					createIrSrArB(ppcSthx, valReg, res.regAux1, res.regAux2);
 					break;
-				case tAref: case tAinteger: case tRef:
+				case tAref: case tAinteger:
 					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
 					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
 					createIrSrArB(ppcStwx, valReg, res.regAux1, res.regAux2);
