@@ -12,7 +12,7 @@ import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = false;
+	private static final boolean dbg = true;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -106,7 +106,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		RegAllocator.buildIntervals(ssa);
 //		ssa.print(0);
 		
-		System.out.println("assign registers to parameters, nofParam = " + nofParam);
+		if(dbg) System.out.println("assign registers to parameters, nofParam = " + nofParam);
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b.next != null) {
 			b = (SSANode) b.next;
@@ -115,7 +115,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		// determine, which parameters go into which register
 		parseExitSet(lastExitSet, maxStackSlots);
 		
-		System.out.println("allocate registers");
+		if(dbg) System.out.println("allocate registers");
 		RegAllocator.assignRegisters(this);
 		if (dbg) ssa.print(0);
 		
@@ -191,13 +191,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
 		nofParamGPR = 0; nofParamFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
-		System.out.print("[");
+		if(dbg) System.out.print("[");
 		for (int i = 0; i < nofParam; i++) {
 			int type = paramType[i];
-			System.out.print("(" + svNames[type] + ")");
+			if(dbg) System.out.print("(" + svNames[type] + ")");
 			if (type == tLong) {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
-					System.out.print("r");
+					if(dbg) System.out.print("r");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(gpr, true);
 						int regLong = RegAllocator.reserveReg(gpr, true);
@@ -206,54 +206,54 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						nofMoveGPR += 2;
 						paramRegNr[i] = reg;
 						paramRegNr[i+1] = regLong;
-						System.out.print(reg + ",r" + regLong);
+						if(dbg) System.out.print(reg + ",r" + regLong);
 					} else {
 						RegAllocator.reserveReg(gpr, paramStartGPR + nofParamGPR);
 						RegAllocator.reserveReg(gpr, paramStartGPR + nofParamGPR + 1);
 						paramRegNr[i] = paramStartGPR + nofParamGPR;
 						paramRegNr[i+1] = paramStartGPR + nofParamGPR + 1;
-						System.out.print((paramStartGPR + nofParamGPR) + ",r" + (paramStartGPR + nofParamGPR + 1));
+						if(dbg) System.out.print((paramStartGPR + nofParamGPR) + ",r" + (paramStartGPR + nofParamGPR + 1));
 					}
 				}
 				nofParamGPR += 2;
 				i++;
 			} else if (type == tFloat || type == tDouble) {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
-					System.out.print("fr");
+					if(dbg) System.out.print("fr");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(fpr, true);
 						moveFPR[nofMoveFPR] = nofParamFPR;
 						nofMoveFPR++;
 						paramRegNr[i] = reg;
-						System.out.print(reg);
+						if(dbg) System.out.print(reg);
 					} else {
 						RegAllocator.reserveReg(fpr, paramStartFPR + nofParamFPR);
 						paramRegNr[i] = paramStartFPR + nofParamFPR;
-						System.out.print(paramStartFPR + nofParamFPR);
+						if(dbg) System.out.print(paramStartFPR + nofParamFPR);
 					}
 				}
 				nofParamFPR++;
 				if (type == tDouble) i++;
 			} else {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
-					System.out.print("r");
+					if(dbg) System.out.print("r");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(gpr, true);
 						moveGPR[nofMoveGPR] = nofParamGPR;
 						nofMoveGPR++;
 						paramRegNr[i] = reg;
-						System.out.print(reg);
+						if(dbg) System.out.print(reg);
 					} else {
 						RegAllocator.reserveReg(gpr, paramStartGPR + nofParamGPR);
 						paramRegNr[i] = paramStartGPR + nofParamGPR;
-						System.out.print(paramStartGPR + nofParamGPR);
+						if(dbg) System.out.print(paramStartGPR + nofParamGPR);
 					}
 				}
 				nofParamGPR++;
 			}
 			if (i < nofParam - 1) System.out.print(", ");
 		}
-		System.out.println("]");
+		if(dbg) System.out.println("]");
 	}
 
 	private static int calcStackSize() {
@@ -391,8 +391,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					assert false : "cg: type not implemented";
 					break;
 				case tLong:
-					createIrDrAd(ppcLwzu, res.regLong, sReg1, offset);
-					createIrDrAd(ppcLwz, res.reg, sReg1, 4);
+					createIrDrAd(ppcLwz, res.regLong, sReg1, offset);
+					createIrDrAd(ppcLwz, res.reg, sReg1, offset + 4);
 					break;
 				case tFloat: 
 					createIrDrAd(ppcLfs, res.reg, sReg1, offset);
@@ -463,6 +463,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						type = tRef;
 					else
 						type = Type.getPrimitiveTypeIndex(item.type.name.charAt(0));
+						if (type == -1) type = tRef;
 					offset = 0;
 					loadConstantAndFixup(res.regAux1, item);
 				} else {	// putfield
@@ -490,8 +491,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrSrAd(ppcStw, sReg1, refReg, offset);
 					break;
 				case tLong:
-					createIrSrAd(ppcStwu, sReg2, refReg, offset);
-					createIrSrAd(ppcStw, sReg1, refReg, 4);
+					createIrSrAd(ppcStw, sReg2, refReg, offset);
+					createIrSrAd(ppcStw, sReg1, refReg, offset + 4);
 					break;
 				case tFloat: 
 					createIrSrAd(ppcStfs, sReg1, refReg, offset);
@@ -633,8 +634,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrDrArB(ppcMullw, res.regAux2, sReg1, opds[1].regLong);
 					createIrDrArB(ppcAdd, res.regAux1, res.regAux1, res.regAux2);
 					createIrDrArB(ppcMulhwu, res.regAux2, sReg1, sReg2);
-					createIrDrArB(ppcMullw, res.reg, sReg1, sReg2);
 					createIrDrArB(ppcAdd, res.regLong, res.regAux1, res.regAux2);
+					createIrDrArB(ppcMullw, res.reg, sReg1, sReg2);
 					break;
 				case tFloat:
 					createIrDrArC(ppcFmuls, dReg, sReg1, sReg2);
@@ -1050,6 +1051,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createICRFrArB(ppcCmp, CRF0, sReg1L, sReg2L);
 					createICRFrArB(ppcCmpl, CRF1, sReg1, sReg2);
 					instr = node.instructions[i+1];
+					if (instr.ssaOpcode == sCregMove) {i++; instr = node.instructions[i+1];}
 					assert instr.ssaOpcode == sCbranch : "sCcompl is not followed by branch instruction";
 					bci = ssa.cfg.code[node.lastBCA] & 0xff;
 					if (bci == bCifeq) {
@@ -1132,9 +1134,11 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT4) { // PUT4
 						createIrSrAd(ppcStw, opds[1].reg, opds[0].reg, 0);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETGPR) { // GETGPR
-						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
+						int gpr = ((StdConstant)opds[0].constant).valueH;
+						createIrArSrB(ppcOr, res.reg, gpr, gpr);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETFPR) { // GETFPR
-						createIrDrB(ppcFmr, res.reg, opds[0].reg);
+						int fpr = ((StdConstant)opds[0].constant).valueH;
+						createIrDrB(ppcFmr, res.reg, fpr);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETSPR) { // GETSPR
 						int spr = ((StdConstant)opds[0].constant).valueH;
 						createIrSspr(ppcMfspr, spr, res.reg);
@@ -1178,7 +1182,6 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 						offset = call.item.index;
-System.out.println("offset = " + offset) ;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
@@ -1233,8 +1236,19 @@ System.out.println("offset = " + offset) ;
 					createIBOBILK(ppcBclr, BOalways, 0, true);
 					type = res.type;
 					if (type == tLong) {
-						createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
-						createIrArSrB(ppcOr, res.reg, returnGPR2, returnGPR2);
+						if (res.regLong == returnGPR2) {
+							if (res.reg == returnGPR1) {	// returnGPR2 -> r0, returnGPR1 -> r3, r0 -> r2
+								createIrArSrB(ppcOr, 0, returnGPR2, returnGPR2);
+								createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
+								createIrArSrB(ppcOr, res.reg, 0, 0);
+							} else {	// returnGPR2 -> reg, returnGPR1 -> r3
+								createIrArSrB(ppcOr, res.reg, returnGPR2, returnGPR2);
+								createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
+							}
+						} else { // returnGPR1 -> regLong, returnGPR2 -> reg
+							createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
+							createIrArSrB(ppcOr, res.reg, returnGPR2, returnGPR2);
+						}
 					} else if (type == tFloat || type == tDouble) {
 						createIrDrB(ppcFmr, res.reg, returnFPR);
 					} else if (type == tVoid) {
@@ -1665,8 +1679,8 @@ System.out.println("offset = " + offset) ;
 				addr = 0;
 			else 
 				addr = fixups[currFixup].address;
-//			System.out.print("\t fix item "); item.printName(); 
-//			System.out.println(" at address = " + Integer.toHexString(addr));
+			if (dbg) System.out.print("\t fix item "); item.printName(); 
+			if (dbg) System.out.println(" at address = " + Integer.toHexString(addr));
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
 			if (!((low >> 15) == 0)) high++;

@@ -351,8 +351,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				res.regAux1 = reserveReg(gpr, false);
 				res.regAux2 = reserveReg(gpr, false);
 			}
-			if (res.regAux1 != -1) freeReg(gpr, res.regAux1);	//System.out.println("freeing aux reg1");
-			if (res.regAux2 != -1) freeReg(gpr, res.regAux2);	// System.out.println("freeing aux reg2")
+			if (res.regAux1 != -1 && res.type != tLong) freeReg(gpr, res.regAux1);	//System.out.println("freeing aux reg1");
+			if (res.regAux2 != -1 && res.type != tLong) freeReg(gpr, res.regAux2);	// System.out.println("freeing aux reg2")
 //			System.out.println("at pos 1: regsGPR="+Integer.toHexString(regsGPR));
 
 			// free registers of operands if end of live range reached 
@@ -449,9 +449,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| (instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)
-							|| (instr1.ssaOpcode == sCshl)
-							|| (instr1.ssaOpcode == sCshr)
-							|| (instr1.ssaOpcode == sCushr)
+							|| (instr1.ssaOpcode == sCshl) && (res == instr1.getOperands()[1])
+							|| (instr1.ssaOpcode == sCshr) && (res == instr1.getOperands()[1])
+							|| (instr1.ssaOpcode == sCushr) && (res == instr1.getOperands()[1])
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETGPR")))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETFPR")))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETSPR")))
@@ -510,6 +510,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					}
 				}
 			}
+			// free aux registers if type long
+			if (res.regAux1 != -1 && res.type == tLong) freeReg(gpr, res.regAux1);	//System.out.println("freeing aux reg1");
+			if (res.regAux2 != -1 && res.type == tLong) freeReg(gpr, res.regAux2);	// System.out.println("freeing aux reg2")
 //			System.out.println("at end of " + instr.scMnemonics[instr.ssaOpcode] + " regsGPR="+Integer.toHexString(regsGPR));
 		}
 		MachineCode.nofNonVolGPR = nofNonVolGPR;
