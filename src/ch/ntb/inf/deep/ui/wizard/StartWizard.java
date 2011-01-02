@@ -143,22 +143,12 @@ public class StartWizard extends Wizard implements INewWizard{
 	}
 	
 	private void createDeepFile(){
-//		File file = new File(project.getLocation() + "/" + project.getName() + ".deep");
 		IFile file = project.getFile(project.getName() +".deep");
 		   try{
 			   file.create(getDeepFileContent(), false, null);
 		   } catch(CoreException e){
 			   e.printStackTrace();
 		   }
-//			    // Create file 
-//			    FileWriter fstream = new FileWriter(project.getLocation() + "/" + project.getName() + ".deep");
-//			        BufferedWriter out = new BufferedWriter(fstream);
-//			    out.write(getDeepFileContent());
-//			    //Close the output stream
-//			    out.close();
-//			    }catch (Exception e){//Catch exception if any
-//			      System.err.println("Error: " + e.getMessage());
-//			    }
 	}
 	
 	private InputStream getDeepFileContent(){
@@ -203,7 +193,6 @@ public class StartWizard extends Wizard implements INewWizard{
 		
 		sb.append("\trootclasses = \"\";\n}\n");
 		
-		System.out.println(sb.toString());
 		return new ByteArrayInputStream(sb.toString().getBytes());
 	}
 
