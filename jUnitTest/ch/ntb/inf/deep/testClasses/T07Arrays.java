@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.testClasses;
 
 public class T07Arrays {
 	static short[] s1 = new short[3];
+	byte[] b1 = new byte[12];
 	
 	public static void emptyIntArray(){
 		int[] a = new int[5];
@@ -41,6 +42,9 @@ public class T07Arrays {
 	static {
 		s1[1] = 22;
 		int a = s1[1];
+		T07Arrays obj = null;
+		obj.b1[7] = 32;
+		a = obj.b1[2];		
 	}
 
 }
