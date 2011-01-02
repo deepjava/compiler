@@ -519,7 +519,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		
 		if(verbose) vrb.println(">readFields: "+name);
 		clearFieldLists();
-		assert fields == null;
+//		assert fields == null;
+		fields = null;
 		
 		int fieldCnt = clfInStrm.readUnsignedShort();
 		while(fieldCnt > 0){
@@ -1052,10 +1053,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			loadRootClass( sname, userReqAttributes);
 		}
 
-		printClassList("DbG: state 4, class list:");
+//		printClassList("DbG: state 4, class list:");
 //		printConstPools();
 		repalceConstPoolStubs();
-		printClassList("DbG: state 4, class list:");
+//		printClassList("DbG: state 4, class list:");
 //		assert false;
 
 		completeLoading();
