@@ -36,7 +36,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 
 	private static PrintStream vrb = System.out;
-	private static Class object;
 		
 	private static int[] systemTable;
 	private static int systemTableSize;
@@ -123,13 +122,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			clazz.nOfReferences = c3;
 		}
 		
-		// Methods
+		// Instance methods (for instance methods, index is the byte offset of a method in the class descriptor starting at the size entry)
 		vrb.println("  4) Methods:");
-		c1 = (2 + clazz.nOfInterfaces) * 4; // constant offset for all methods
+		c1 = (2 + clazz.nOfInterfaces) * 4; // constant offset for all instance methods
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
 			while(method != null) {
-				if((method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (method.accAndPropFlags & (1 << apfStatic)) == 0) { // TODO @Urs: is this correct?
+				if((method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (method.accAndPropFlags & (1 << apfStatic)) == 0) {
 					method.index = c1;
 					c1 += 4;
 				}
@@ -203,7 +202,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
 					c.codeOffset = s.getRequiredSize();
-					s.addToRequiredSize(c.machineCodeSize); // TODO move this to getFirstFittingSegment and rename the method
+					if(c.machineCodeSize > 0) s.addToRequiredSize(c.machineCodeSize);
 					c.codeSegment = s;
 				}
 				
@@ -213,7 +212,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
 					c.varOffset = s.getRequiredSize();
-					s.addToRequiredSize(c.classFieldsSize); // TODO move this to getFirstFittingSegment and rename the method
+					if(c.classFieldsSize > 0) s.addToRequiredSize(c.classFieldsSize);
 					c.varSegment = s;
 				}
 				
@@ -223,7 +222,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
 					c.constOffset = s.getRequiredSize();
-					s.addToRequiredSize(c.constantBlockSize); // TODO move this to getFirstFittingSegment and rename the method
+					if(c.constantBlockSize > 0) s.addToRequiredSize(c.constantBlockSize);
 					c.constSegment = s;
 					
 				}		
@@ -237,7 +236,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				sysTabs[i].addToRequiredSize(systemTableSize * 4); 
 			}
 		}
-		else reporter.error(9445, "Error: no Systemtable defined!"); // TODO define drror number
+		else reporter.error(9445, "Error: no Systemtable defined!"); // TODO @Martin: set correct error number
 	
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
@@ -331,7 +330,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			clazz.constantBlock[5] = clinit.address;
 			//vrb.println(" ***************** <clinit> of class " + clazz.name + ": " + clinit.name);
 		}
-		else clazz.constantBlock[5] = -1; // TODO @Urs is this ok?
+		else clazz.constantBlock[5] = -1; // the address of the class constructor is set to -1 if there is no one in this class
 		
 		// 2) Insert References (Pointers)
 		clazz.constantBlock[6] = clazz.nOfReferences;
@@ -581,13 +580,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
-//	public static int getSizeOfObject() {
-//		if(object == null) object = (Class)Class.classList.getItemByName("java/lang/Object");
-//		if(dbg) vrb.println("[Linker] Size of object (" + object.name + "): " + (int)object.objectSizeOrDim + " byte");
-//		return object.objectSizeOrDim;
-//	}
-	
-	
 	/* ---------- private helper methods ---------- */
 	
 	private static void setBaseAddress(Segment s, int baseAddress) {
@@ -596,7 +588,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		//set baseaddress
 		if((s.getSize() > 0 && s.getRequiredSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			s.setBaseAddress(baseAddress);
-//			usedSegments[usedSegmentsIndex++] = s; // TODO remove this
 			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
 			vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
 		}
