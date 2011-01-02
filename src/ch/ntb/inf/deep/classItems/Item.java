@@ -48,6 +48,10 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return -1;
 	}
 
+	Item getReplacedStub(){
+		return this;
+	}
+
 	public Item getItemByName(HString name){
 		Item item = this;
 		while(item != null && name != item.name)  item = item.next;

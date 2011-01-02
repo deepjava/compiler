@@ -144,7 +144,7 @@ public class Type extends Item {
 		if(index < 0) return null; else return wellKnownTypes[index];
 	}
 	
-	public static Type getPrimitiveTypeByCharName(char charName){
+	protected static Type getPrimitiveTypeByCharName(char charName){
 		int typeIndex = getPrimitiveTypeIndex(charName);
 		assert typeIndex >= 0 && typeIndex < nofWellKnownTypes;
 		return wellKnownTypes[typeIndex];
@@ -217,7 +217,8 @@ public class Type extends Item {
 			sname = stab.insertCondAndGetEntry(sname);
 			type = getTypeByNameAndUpdate(tcRef, sname, null);
 		}else if( category == tcArray ){// singleTypeDescriptor = "[" { "[" } ( BaseTypeCategory |  ( "L" SName ";" ) ).  (EBNF)
-			type = getTypeByNameAndUpdate(tcArray, singleTypeDescriptor, null);
+			HString sname = stab.insertCondAndGetEntry(singleTypeDescriptor);
+			type = getTypeByNameAndUpdate(tcArray, sname, null);
 		}else
 			assert false;
 
@@ -274,6 +275,7 @@ public class Type extends Item {
 
 	static void completeLoading(){
 		if(verbose) vrb.println(">completeLoading");
+		
 		Type type = classList;
 		while(type != null){
 			int objSize = type.getObjectSize();
@@ -289,7 +291,6 @@ public class Type extends Item {
 	public void printTypeCategory() {
 		vrb.print("(" + (char)category + ')');
 	}
-
 //	public void print(int indentLevel){
 //		indent(indentLevel);
 ////		printJavaAccAndPropertyFlags(1);

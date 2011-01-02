@@ -16,7 +16,6 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
 public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
-
 	//--- static fields
 	private static final int fieldListArrayLength = 9;
 	private static final Item[] instFieldLists = new Item[fieldListArrayLength]; // instance field lists, used by method readFields
@@ -94,16 +93,24 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 * @param fieldName
 	 * @return  the selected field or null if not found
 	 */
-	private Item getAndExtractField(HString fieldName){
-		Item item = fields, pred = null;
-		while(item != null && item.name != fieldName) {
-			pred = item;
-			item = item.next;
-		}
-		if(item != null){
-			if(pred == null) fields = item.next; else  pred.next = item.next;
-			item.next = null;
-		}
+//	private Item getAndExtractField(HString fieldName){
+//		assert false;
+//		Item item = fields, pred = null;
+//		while(item != null && item.name != fieldName) {
+//			pred = item;
+//			item = item.next;
+//		}
+//		if(item != null){
+//			if(pred == null) fields = item.next; else  pred.next = item.next;
+//			item.next = null;
+//		}
+//		return item;
+//	}
+
+	Item getField(HString fieldName){
+		Item item = fields;
+		while(item != null && item.name != fieldName) item = item.next;
+		if(item == null && type != null) item = ((Class)type).getField(fieldName);
 		return item;
 	}
 
@@ -113,17 +120,25 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 * @param methDescriptor
 	 * @return the selected method or null if not found
 	 */
-	private Method getAndExtractMethod(HString methName, HString methDescriptor){
-		Item item = methods, pred = null;
-		while(item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) {
-			pred = item;
-			item = item.next;
-		}
-		if(item != null){
-			if(pred == null) methods = item.next; else pred.next = item.next;
-			item.next = null;
-		}
-		return (Method)item;
+//	private Method getAndExtractMethod(HString methName, HString methDescriptor){
+//		assert false;
+//		Item item = methods, pred = null;
+//		while(item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) {
+//			pred = item;
+//			item = item.next;
+//		}
+//		if(item != null){
+//			if(pred == null) methods = item.next; else pred.next = item.next;
+//			item.next = null;
+//		}
+//		return (Method)item;
+//	}
+
+	Item getMethod(HString name, HString descriptor){
+		Item item = methods;
+		while(item != null && item.name != name) item = item.next;
+		if(item == null && type != null) item = ((Class)type).getMethod(name, descriptor);
+		return item;
 	}
 
 	/**
@@ -195,7 +210,29 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 * @param cpFieldInfoIndex index of FieldRefInfo entry
 	 * @return object of this type Class
 	 */
-	Item updateAndGetCpFieldEntry(int cpFieldInfoIndex){
+//	private Item updateAndGetCpFieldEntry(int cpFieldInfoIndex){
+//		//pre: all strings in the const are already registered in the proper hash table.
+//		Item field = cpItems[cpFieldInfoIndex];
+//		if(field == null){
+//			int csx = cpIndices[cpFieldInfoIndex]; // get class and signature indices
+//			Class cls = (Class)updateAndGetCpClassEntry(csx>>>16);
+//			int sx = cpIndices[csx & 0xFFFF];
+//			HString fieldName = cpStrings[sx>>>16];
+//			HString fieldDesc  = cpStrings[sx & 0xFFFF];
+//			Type fieldType = getTypeByDescriptor(fieldDesc);
+//			field = cls.insertCondAndGetField( fieldName, fieldType);
+//			cpItems[cpFieldInfoIndex] = field;
+//		}
+//		return field;
+//	}
+
+	private Item getFieldOrStub(HString fieldName, Type fieldType){
+		Item field = getField(fieldName);
+		if( field == null ) field = new ItemStub(this, fieldName, fieldType);
+		return field;
+	}
+		
+	private Item getFieldOrStub(int cpFieldInfoIndex){
 		//pre: all strings in the const are already registered in the proper hash table.
 		Item field = cpItems[cpFieldInfoIndex];
 		if(field == null){
@@ -205,8 +242,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			HString fieldName = cpStrings[sx>>>16];
 			HString fieldDesc  = cpStrings[sx & 0xFFFF];
 			Type fieldType = getTypeByDescriptor(fieldDesc);
-			field = cls.insertCondAndGetField( fieldName, fieldType);
-			cpItems[cpFieldInfoIndex] = field;
+			
+			field = cls.getFieldOrStub(fieldName, fieldType);
 		}
 		return field;
 	}
@@ -217,9 +254,32 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 * @param cpMethInfoIndex index of MethRefInfo entry
 	 * @return object of this type Class
 	 */
-	Item updateAndGetCpMethodEntry(int cpMethInfoIndex){
+//	private Item updateAndGetCpInterfaceMethodEntry(int cpMethInfoIndex){
+//		//pre: all strings in the const are already registered in the proper hash table.
+//		Method method = null;
+//		if(cpItems[cpMethInfoIndex] == null){
+//			int csx = cpIndices[cpMethInfoIndex]; // get class and signature indices
+//			Class cls = (Class)updateAndGetCpClassEntry(csx>>>16);
+//			int sx = cpIndices[csx & 0xFFFF];
+//
+//			HString methName = cpStrings[sx>>>16];
+//			HString methDesc  = cpStrings[sx & 0xFFFF];
+//			method = cls.insertCondAndGetMethod( methName, methDesc);
+//			method.owner = cls;
+//			cpItems[cpMethInfoIndex] = method;
+//		}
+//		return method;
+//	}
+
+	private Item getMethodOrStub(HString name, HString descriptor){
+		Item meth = getMethod(name, descriptor);
+		if( meth == null ) meth = new ItemStub(this, name, descriptor);
+		return meth;
+	}
+
+	private Item getMethodOrStub(int cpMethInfoIndex){
 		//pre: all strings in the const are already registered in the proper hash table.
-		Method method = null;
+		Item method = null;
 		if(cpItems[cpMethInfoIndex] == null){
 			int csx = cpIndices[cpMethInfoIndex]; // get class and signature indices
 			Class cls = (Class)updateAndGetCpClassEntry(csx>>>16);
@@ -227,9 +287,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 			HString methName = cpStrings[sx>>>16];
 			HString methDesc  = cpStrings[sx & 0xFFFF];
-			method = cls.insertCondAndGetMethod( methName, methDesc);
-			method.owner = cls;
-			cpItems[cpMethInfoIndex] = method;
+
+			method = cls.getMethodOrStub( methName, methDesc);
 		}
 		return method;
 	}
@@ -314,16 +373,19 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				nofItems++;
 				break;
 			case cptFieldRef:
-				updateAndGetCpFieldEntry(pEntry);
+//				updateAndGetCpFieldEntry(pEntry);
+				cpItems[pEntry] = getFieldOrStub(pEntry);
 				nofItems++;
 				break;
 			case cptMethRef:
-				updateAndGetCpMethodEntry(pEntry);
+//				updateAndGetCpMethodEntry(pEntry);
+				cpItems[pEntry] = getMethodOrStub(pEntry);
 				nofItems++;
 				break;
 			case cptIntfMethRef:
-				Item meth = updateAndGetCpMethodEntry(pEntry);
-				meth.accAndPropFlags |= (1<<dpfInterfCall);
+//				Item meth = updateAndGetCpInterfaceMethodEntry(pEntry);
+//				meth.accAndPropFlags |= (1<<dpfInterfCall);
+				cpItems[pEntry] = getMethodOrStub(pEntry);
 				nofItems++;
 				break;
 			case cptNameAndType: break;// (name index) <<16, descriptor index
@@ -453,9 +515,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	}
 
 	private void readFields(DataInputStream clfInStrm) throws IOException{
+		final boolean verbose = false;
+		
 		if(verbose) vrb.println(">readFields: "+name);
 		clearFieldLists();
-
+		assert fields == null;
+		
 		int fieldCnt = clfInStrm.readUnsignedShort();
 		while(fieldCnt > 0){
 			int flags;
@@ -465,10 +530,13 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			//--- read name and descriptor
 			int index = clfInStrm.readUnsignedShort();
 			name = cpStrings[index];
-			Item field = getAndExtractField(name);
+//			Item field = getAndExtractField(name);
 			index = clfInStrm.readUnsignedShort();
 			descriptor = cpStrings[index];
 
+			DataItem field = null;
+
+			if(verbose) vrb.printf(" readFields: cls=%1$s, desc=%2$s\n", name, descriptor);
 			//--- read field attributes {ConstantValue, Deprecated, Synthetic}
 			int attrCnt = clfInStrm.readUnsignedShort();
 			while(attrCnt-- > 0){
@@ -478,27 +546,15 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				switch(attr){
 				case atxConstantValue:
 					index = clfInStrm.readUnsignedShort();
-					int rcpIndex =  cpIndices[index];
+					int rcpIndex = cpIndices[index];
 					Item cpField = constPool[rcpIndex];
-					if(field == null){
-						if( cpField.next == null && (cpField.name == hsNumber || cpField.name == hsString) ){
-							cpField.name = name;
-							field = cpField;
-						}else{// cpField.next != null || (cpField.name != hsNumber && cpField.name != hsString)
-							field = cpField.clone(); field.next = null;
-							field.name = name;
-						}
-						flags |= (1<<dpfConst);
-					}else{// field != null: field was already referenced from other class
-						assert (cpField.accAndPropFlags & dpfSetProperties) == 0;
-//						((DataItem)field).initialValue = (Constant)cpField;	// Original
-//						Item asd = (StdConstant)cpField;
-//						Constant ds = null;
-//						cpField = field;
-//						((DataItem)field).initialValue = ds;
-//						((DataItem)field).initialValue = (StdConstant)cpField;
-						flags |= (1<<apfFinal);
-					}
+
+					Type type = getTypeByDescriptor(descriptor);
+					if(verbose) vrb.printf("   readFields: field.desc=%1$s, const: name=%2$s, type=%3$s\n", descriptor, cpField.name, cpField.type.name);
+
+					assert cpField instanceof Constant;
+					field = new NamedConst(name, type, (Constant)cpField);
+					if( (flags & (1<<apfStatic) ) != 0) flags |= (1<<dpfConst);
 					break;
 				case atxDeprecated:
 					flags |= (1<<dpfDeprecated);
@@ -511,18 +567,32 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				}
 			}
 
-			Type type = getTypeByDescriptor(descriptor);
-			if(field == null) field = new DataItem(name, type);  else field.type = type;
+			if(field == null){
+				Type type = getTypeByDescriptor(descriptor);
+				field = new DataItem(name, type);
+			}
 			
 			flags |= field.accAndPropFlags;
 			field.accAndPropFlags = flags;
 
 			addItemToFieldList(field);
-
+			((ClassMember)field).owner = this;
+			
 			fieldCnt--;
 		}
+		
 		assert fields == null;
-
+//		if(fields != null){
+//			Item item = fields;
+//			while(item != null){
+//				vrb.print("("+item.name +") ");
+//				item.println(1);
+//				item = item.next;
+//			}
+//			vrb.println(" Class.readFieldsE-end");
+//		}
+		
+		
 		Item clsFields = getFieldListAndUpdate(classFieldLists);
 		Item instFields = getFieldListAndUpdate(instFieldLists);
 		if(clsFields == null) clsFields = instFields;
@@ -540,7 +610,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private void readMethods(DataInputStream clfInStrm, int userReqAttributes) throws IOException{
 		int methodCnt = clfInStrm.readUnsignedShort();
 		nOfMethods = methodCnt;
-
+		assert methods == null;
+		
 		int nofClsMeths = 0,  nofInstMeths = 0;
 		Item clsMethHead = null, clsMethTail = null;
 		Item instMethHead = null, instMethTail = null;
@@ -556,14 +627,16 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			index = clfInStrm.readUnsignedShort();
 			descriptor = cpStrings[index];
 			Type returnType = getReturnType(descriptor);
-			Method method = getAndExtractMethod(name, descriptor);
-			if(method == null){
-				method = new Method(name, returnType, descriptor);
-			}else{
-				method.type = returnType;
-			}
+//			Method method = getAndExtractMethod(name, descriptor);
+//			if(method == null){
+//				method = new Method(name, returnType, descriptor);
+//			}else{
+//				method.type = returnType;
+//			}
+//			method.owner = this;
+//			assert method.type == returnType;
+			Method method = new Method(name, returnType, descriptor);
 			method.owner = this;
-			assert method.type == returnType;
 			
 			//--- read method attributes {Code, Deprecated, Synthetic}
 			int attrCnt = clfInStrm.readUnsignedShort();
@@ -777,6 +850,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 					print(0);
 					vrb.println("\n<end of dump: "+name);
 				}
+//				printReducedConstPool("reduced cp, state: 3");
 				
 				clfInStrm.close();
 			}catch (FileNotFoundException fnfE){
@@ -930,6 +1004,34 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 	}
 
+	private static void printConstPools(){
+		Item type = classList;
+		while(type != null){
+			if(type instanceof Class){
+				Class cls = (Class)type;
+				if( cls.constPool != null) cls.printReducedConstPool(cls.name.toString());
+			}
+			type = type.next;
+		}
+	}
+
+	private static void repalceConstPoolStubs(){
+		final boolean verbose = true;
+		if(verbose) vrb.println(">repalceConstPoolStubs:");
+		Item type = classList;
+		while(type != null){
+			if(type instanceof Class){
+				Class cls = (Class)type;
+				if( cls.constPool != null) {
+					Item[] cp = cls.constPool;
+					for(int cpx = cp.length-1; cpx >= 0; cpx--) 	cp[cpx] = cp[cpx].getReplacedStub();
+				}
+			}
+			type = type.next;
+		}
+		if(verbose) vrb.println("<repalceConstPoolStubs");
+	}
+
 	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
 		errRep.nofErrors = 0;
 		Type.nofRootClasses = 0;
@@ -949,6 +1051,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
 		}
+
+		printClassList("DbG: state 4, class list:");
+//		printConstPools();
+		repalceConstPoolStubs();
+		printClassList("DbG: state 4, class list:");
+//		assert false;
 
 		completeLoading();
 		if(verbose) printClassList("end state, class list:");
