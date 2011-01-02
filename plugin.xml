@@ -166,6 +166,14 @@
             name="Selected Memory View"
             restorable="true">
       </view>
+      <view
+            category="ch.ntb.inf.deep.targetManipulation"
+            class="ch.ntb.inf.deep.ui.view.ReadVariableView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.view.ReadVariableView"
+            name="Read Variable"
+            restorable="true">
+      </view>
    </extension>
 
 </plugin>
