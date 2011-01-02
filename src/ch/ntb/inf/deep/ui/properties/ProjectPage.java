@@ -12,6 +12,10 @@
  */
 package ch.ntb.inf.deep.ui.properties;
 
+import java.io.IOException;
+import java.util.GregorianCalendar;
+
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -37,10 +41,10 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 	private Combo processor, board, rts;
 	private Button check, browse;
 	private Text path;
-	private final String defaultPath = "I:/eclipse/bsp";//TODO set right path
+	private final String defaultPath = "I:/eclipse/bsp";// TODO set right path
 	private String lastChoise = "";
 	private IEclipsePreferences pref;
-	
+
 	@Override
 	protected Control createContents(Composite parent) {
 		pref = getPref();
@@ -55,9 +59,9 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		Label label = new Label(group1, SWT.NONE);
 		label.setText("Select a processor");
 		processor = new Combo(group1, SWT.BORDER);
-		processor.setItems(new String[]{"MPC555"});
+		processor.setItems(new String[] { "MPC555" });
 		processor.setText(pref.get("proc", ""));
-		
+
 		Group group2 = new Group(composite, SWT.NONE);
 		group2.setText("Configuration");
 		RowLayout rowLayout3 = new RowLayout(SWT.VERTICAL);
@@ -65,22 +69,23 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		Label label1 = new Label(group2, SWT.NONE);
 		label1.setText("Select a configuration");
 		board = new Combo(group2, SWT.BORDER);
-		board.setItems(new String[]{"NTB MPC555 Headerboard", "phyCORE-mpc555"});
+		board.setItems(new String[] { "NTB MPC555 Headerboard",
+				"phyCORE-mpc555" });
 		board.setText(pref.get("board", ""));
-		
-		
+
 		Group group3 = new Group(composite, SWT.NONE);
 		group3.setText("Runtime-System");
 		GridLayout gridLayout2 = new GridLayout(2, false);
 		group3.setLayout(gridLayout2);
-		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true,
+				false);
 		gridData.horizontalSpan = 2;
 		group3.setLayoutData(gridData);
-		Label label2 = new Label(group3,SWT.NONE);
+		Label label2 = new Label(group3, SWT.NONE);
 		label2.setText("Select a runtime system");
 		label2.setLayoutData(gridData);
 		rts = new Combo(group3, SWT.BORDER);
-		rts.setItems(new String[]{"Simple tasking system", "uCos"});
+		rts.setItems(new String[] { "Simple tasking system", "uCos" });
 		rts.setText(pref.get("rts", ""));
 		rts.setLayoutData(gridData);
 		Label dummy = new Label(group3, SWT.NONE);
@@ -89,15 +94,16 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		check.setText("use default library path");
 		check.setSelection(pref.getBoolean("useDefault", true));
 		check.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e){
-				if(check.getSelection()){
+			public void widgetSelected(SelectionEvent e) {
+				if (check.getSelection()) {
 					path.setEnabled(false);
 					path.setText(defaultPath);
-				}else{
+				} else {
 					path.setEnabled(true);
 					path.setText(lastChoise);
 				}
-			}});
+			}
+		});
 		check.setLayoutData(gridData);
 		path = new Text(group3, SWT.SINGLE | SWT.BORDER);
 		GridData gridData2 = new GridData();
@@ -106,67 +112,69 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		path.setLayoutData(gridData2);
 		path.setText(pref.get("libPath", defaultPath));
 		path.setEnabled(!check.getSelection());
-		if(!check.getSelection()){
+		if (!check.getSelection()) {
 			lastChoise = path.getText();
 		}
 		browse = new Button(group3, SWT.PUSH);
 		browse.setText("Browse...");
 		browse.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e){
-			if(!check.getSelection()){	
-				openDirectoryDialog();
+			public void widgetSelected(SelectionEvent e) {
+				if (!check.getSelection()) {
+					openDirectoryDialog();
+				}
 			}
-		}});
-		
+		});
+
 		return composite;
 
 	}
-	
+
 	/**
 	 * Open a resource chooser to select a program
 	 */
 	protected void openDirectoryDialog() {
 		DirectoryDialog dlg = new DirectoryDialog(getShell());
 
-        // Set the initial filter path according
-        // to anything they've selected or typed in
-        dlg.setFilterPath(path.getText());
+		// Set the initial filter path according
+		// to anything they've selected or typed in
+		dlg.setFilterPath(path.getText());
 
-        // Change the title bar text
-        dlg.setText("Deep Library Path Selection");
+		// Change the title bar text
+		dlg.setText("Deep Library Path Selection");
 
-        // Customizable message displayed in the dialog
-        dlg.setMessage("Select a directory");
+		// Customizable message displayed in the dialog
+		dlg.setMessage("Select a directory");
 
-        // Calling open() will open and run the dialog.
-        // It will return the selected directory, or
-        // null if user cancels
-        String dir = dlg.open();
-        if (dir != null) {
-          // Set the text box to the new selection
-        	path.setText(dir);
-        	lastChoise = dir;
-        }
+		// Calling open() will open and run the dialog.
+		// It will return the selected directory, or
+		// null if user cancels
+		String dir = dlg.open();
+		if (dir != null) {
+			// Set the text box to the new selection
+			path.setText(dir);
+			lastChoise = dir;
+		}
 
 	}
-	
-	private IEclipsePreferences getPref(){
-		IProject project = (IProject)getElement();
+
+	private IEclipsePreferences getPref() {
+		IProject project = (IProject) getElement();
 		ProjectScope scope = new ProjectScope(project);
 		return scope.getNode("deepStart");
 	}
-	
-	protected void performApply(){
+
+	protected void performApply() {
 		save();
 		super.performApply();
 	}
-	
-	public boolean performOk(){
+
+	public boolean performOk() {
 		save();
 		return true;
 	}
+
 	@Override
-	protected void performDefaults(){
+	protected void performDefaults() {
 		processor.setText("MPC555");
 		board.setText("NTB MPC555 Headerboard");
 		check.setSelection(true);
@@ -174,22 +182,61 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		path.setText(defaultPath);
 		rts.setText("Simple tasking system");
 	}
-	
-	private void save(){
+
+	private void save() {
 		pref.put("proc", processor.getText());
 		pref.put("board", board.getText());
 		pref.put("rts", rts.getText());
-		if(check.getSelection()){
+		if (check.getSelection()) {
 			pref.putBoolean("useDefault", true);
-			pref.put("libPath",defaultPath);
-		}else{
+			pref.put("libPath", defaultPath);
+		} else {
 			pref.putBoolean("useDefault", false);
-			pref.put("libPath", path.getText());			
+			pref.put("libPath", path.getText());
 		}
+		performChanges();
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void performChanges() {
+		GregorianCalendar cal = new GregorianCalendar();
+		IProject project = (IProject) getElement();
+		ConfigFileChanger cfc = new ConfigFileChanger(project.getLocation()
+				+ "/" + project.getName() + ".deep");
+		try {
+			cfc.changeContent("version", "\"" + cal.getTime().toString() + "\"");
+
+			StringBuffer sb = new StringBuffer();
+			if (processor.getText().equals("MPC555")) {
+				if (board.getText().equals("NTB MPC555 Headerboard")) {
+					sb.append("\"ntbMpc555HB.deep\"");
+					if (rts.getText().equals("Simple tasking system")) {
+						sb.append(", \"ntbMpc555STS\"");
+					} else if (rts.getText().equals("uCos")) {
+						sb.append(", \"ntbMpc555uCOS\"");
+					}
+				} else if (board.getText().equals("phyCORE-mpc555")) {
+					sb.append("\"phyMpc555Core.deep\"");
+					if (rts.getText().equals("Simple tasking system")) {
+						sb.append(", \"ntbMpc555STS\"");
+					} else if (rts.getText().equals("uCos")) {
+						sb.append(", \"ntbMpc555uCOS\"");
+					}
+				}
+			} else {
+				sb.append("\"\"");
+			}
+			cfc.changeContent("import", sb.toString());
+			cfc.changeContent("libpath", "\"" + path.getText() + "\"");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		cfc.save();
+		cfc.close();
 	}
 }
