@@ -519,8 +519,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		
 		if(verbose) vrb.println(">readFields: "+name);
 		clearFieldLists();
-//		assert fields == null;
-		fields = null;
+		assert fields == null;
 		
 		int fieldCnt = clfInStrm.readUnsignedShort();
 		while(fieldCnt > 0){
@@ -840,6 +839,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 					analyseByteCode();
 					this.accAndPropFlags |= (1<<dpfClassLoaded);
 				}else if( (accAndPropFlags & (1<<apfInterface)) != 0)  this.accAndPropFlags |= (1<<dpfClassLoaded);
+				else if( (accAndPropFlags & (1<<apfInterface)) != 0){
+					this.accAndPropFlags |= (1<<dpfClassLoaded);
+				}
 
 				if(verbose){
 					vrb.println("\n>dump of class: "+name);
