@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.StdConstant;
+import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
@@ -73,27 +74,29 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b != null) {
 			for (int i = 0; i < b.nofPhiFunc; i++) {
-				SSAInstruction phi = b.phiFunctions[i];
-				SSAValue[] opds = phi.getOperands();
-				SSAValue res = phi.result;
-				if (res.index != opds[0].index && opds[0].index >= 0) {
-					SSAValue[] newOpds = new SSAValue[opds.length];
-//					for (int k = 0; k < b.nofPredecessors; k++) {
-					for (int k = 0; k < opds.length; k++) {
-						if (dbg) System.out.println("\t move at " + res.n + "inserted");
-						SSANode n = (SSANode)b.predecessors[k];
-						SSAValue r = new SSAValue();
-						r.type = opds[k].type;
-						r.index = res.index;
-						SSAInstruction move = new Monadic(sCregMove, opds[k]);
-						move.result = r;
-						n.addInstruction(move);
-						n.exitSet[r.index] = r;
-						newOpds[k] = r;
-						phi.print(1);
+				PhiFunction phi = b.phiFunctions[i];
+//				if (!phi.deleted) {
+					SSAValue[] opds = phi.getOperands();
+					SSAValue res = phi.result;
+					if (res.index != opds[0].index && opds[0].index >= 0) {
+						SSAValue[] newOpds = new SSAValue[opds.length];
+						//					for (int k = 0; k < b.nofPredecessors; k++) {
+						for (int k = 0; k < opds.length; k++) {
+							if (dbg) System.out.println("\t move at " + res.n + "inserted");
+							SSANode n = (SSANode)b.predecessors[k];
+							SSAValue r = new SSAValue();
+							r.type = opds[k].type;
+							r.index = res.index;
+							SSAInstruction move = new Monadic(sCregMove, opds[k]);
+							move.result = r;
+							n.addInstruction(move);
+							n.exitSet[r.index] = r;
+							newOpds[k] = r;
+							//						phi.print(1);
+						}
+						phi.setOperands(newOpds);
 					}
-					phi.setOperands(newOpds);
-				}
+//				}
 			}
 			b = (SSANode) b.next;
 		}	
@@ -193,6 +196,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue res = instr.result;
 			if (res.join != null) {
 				if (res.join.join != null) res.join = res.join.join;
+//				if (res.join.join != null && instrs[res.join.n].ssaOpcode != sCregMove) res.join = res.join.join;
 			} 
 		}
 /*else {
@@ -363,7 +367,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
 //						System.out.println("freeing operands at end live range");
-						if (opd.type == tLong) {
+						if (opd.type == tLong || res.type == tLong) {
 						} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
 							freeReg(fpr, opd.reg);
 						} else {
@@ -471,7 +475,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							} else 
 								findReg(res);
 						}
-					} else {	// opd has index != -1 or cannot be used as immediate opd	
+					} else if ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("ASM"))) {
+						// asm instruction
+					} 
+					else {	// opd has index != -1 or cannot be used as immediate opd	
 						findReg(res);			
 					}
 				} else 
@@ -487,13 +494,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
-						if (opd.type == tLong) {
+						if (opd.type == tLong || res.type == tLong) {
 							freeReg(gpr, opd.regLong);
 							freeReg(gpr, opd.reg);
 						}
 					}
 				}
 			}
+
 			// free registers of result if end of live range is current instruction
 			if (res != null) {
 				SSAValue val = res;

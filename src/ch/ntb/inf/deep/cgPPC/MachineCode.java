@@ -12,7 +12,7 @@ import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -102,7 +102,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		
 		if (dbg) System.out.println("build intervals for " + ssa.cfg.method.name);
 //		ssa.cfg.printToLog();
-//		ssa.print(0);
+		ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
 //		ssa.print(0);
 		
@@ -1117,8 +1117,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			case sCcall:
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-System.out.println("Call to " + call.item.name);
-System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
+//System.out.println("Call to " + call.item.name);
+//System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
 					if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET1) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
@@ -1188,7 +1188,7 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 					}
 					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
-					for (int k = 0; k < nofGPR; k++) destFPR[k] = 0;
+					for (int k = 0; k < nofFPR; k++) destFPR[k] = 0;
 					for (int k = 0; k < opds.length; k++) {
 						type = opds[k].type;
 						if (type == tLong) {
@@ -1207,13 +1207,13 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 								createIrArSrB(ppcOr, destGPR[k], k, k);
 								destGPR[k] = 0;
 							} else {
-								createIrArSrB(ppcOr, 0, destGPR[destGPR[k]], destGPR[destGPR[k]]);
-								createIrArSrB(ppcOr, destGPR[destGPR[k]], destGPR[k], destGPR[k]);
-								createIrArSrB(ppcOr, destGPR[k], 0, 0);
+								createIrArSrB(ppcOr, 0, destGPR[k], destGPR[k]);
+								createIrArSrB(ppcOr, destGPR[k], k, k);
+								createIrArSrB(ppcOr, k, 0, 0);
 								int temp = destGPR[k];
-								destGPR[k] = destGPR[destGPR[k]];
-								destGPR[destGPR[k]] = temp;
-								//							k--;
+								destGPR[k] = destGPR[temp];
+								destGPR[temp] = temp;
+								k--;
 							}
 						}
 					}
@@ -1223,13 +1223,13 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 								createIrDrB(ppcFmr, destFPR[k], k);
 								destGPR[k] = 0;
 							} else {
-								createIrDrB(ppcFmr, 0, destFPR[destFPR[k]]);
-								createIrDrB(ppcFmr, destFPR[destFPR[k]], destFPR[k]);
-								createIrDrB(ppcFmr, destFPR[k], 0);
+								createIrDrB(ppcFmr, 0, destFPR[k]);
+								createIrDrB(ppcFmr, destFPR[k], k);
+								createIrDrB(ppcFmr, k, 0);
 								int temp = destFPR[k];
-								destFPR[k] = destFPR[destFPR[k]];
-								destFPR[destFPR[k]] = temp;
-								//							k--;
+								destFPR[k] = destFPR[temp];
+								destFPR[temp] = temp;
+								k--;
 							}
 						}
 					}
