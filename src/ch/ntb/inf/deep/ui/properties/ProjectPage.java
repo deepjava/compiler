@@ -215,16 +215,16 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 				if (board.getText().equals("NTB MPC555 Headerboard")) {
 					sb.append("\"ntbMpc555HB.deep\"");
 					if (rts.getText().equals("Simple tasking system")) {
-						sb.append(", \"ntbMpc555STS\"");
+						sb.append(", \"ntbMpc555STS.deep\"");
 					} else if (rts.getText().equals("uCos")) {
-						sb.append(", \"ntbMpc555uCOS\"");
+						sb.append(", \"ntbMpc555uCOS.deep\"");
 					}
 				} else if (board.getText().equals("phyCORE-mpc555")) {
 					sb.append("\"phyMpc555Core.deep\"");
 					if (rts.getText().equals("Simple tasking system")) {
-						sb.append(", \"ntbMpc555STS\"");
+						sb.append(", \"ntbMpc555STS.deep\"");
 					} else if (rts.getText().equals("uCos")) {
-						sb.append(", \"ntbMpc555uCOS\"");
+						sb.append(", \"ntbMpc555uCOS.deep\"");
 					}
 				}
 			} else {

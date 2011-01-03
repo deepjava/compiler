@@ -167,16 +167,16 @@ public class StartWizard extends Wizard implements INewWizard{
 			if(board.equals("NTB MPC555 Headerboard")){
 				sb.append("\"ntbMpc555HB.deep\"");
 				if(rts.equals("Simple tasking system")){
-					sb.append(", \"ntbMpc555STS\"");
+					sb.append(", \"ntbMpc555STS.deep\"");
 				}else if(rts.equals("uCos")){
-					sb.append(", \"ntbMpc555uCOS\"");
+					sb.append(", \"ntbMpc555uCOS.deep\"");
 				}	 
 			}else if(board.equals("phyCORE-mpc555")){
 				sb.append("\"phyMpc555Core.deep\"");
 				if(rts.equals("Simple tasking system")){
-					sb.append(", \"ntbMpc555STS\"");
+					sb.append(", \"ntbMpc555STS.deep\"");
 				}else if(rts.equals("uCos")){
-					sb.append(", \"ntbMpc555uCOS\"");
+					sb.append(", \"ntbMpc555uCOS.deep\"");
 				}					 
 			}
 			sb.append(";\n}\n\n");
