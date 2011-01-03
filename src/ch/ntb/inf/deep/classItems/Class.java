@@ -839,7 +839,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				if( (accAndPropFlags & ((1<<apfInterface)|(1<<apfEnum))) == 0){
 					analyseByteCode();
 					this.accAndPropFlags |= (1<<dpfClassLoaded);
-				}
+				}else if( (accAndPropFlags & (1<<apfInterface)) != 0)  this.accAndPropFlags |= (1<<dpfClassLoaded);
 
 				if(verbose){
 					vrb.println("\n>dump of class: "+name);
