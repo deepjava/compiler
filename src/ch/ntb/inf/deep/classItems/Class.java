@@ -135,8 +135,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //	}
 
 	Item getMethod(HString name, HString descriptor){
-		Item item = methods;
-		while(item != null && item.name != name) item = item.next;
+		Item item = ((Method)methods).getMethod(name, descriptor);
 		if(item == null && type != null) item = ((Class)type).getMethod(name, descriptor);
 		return item;
 	}
@@ -835,11 +834,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //					print(0);
 //				}
 				
-				if( (accAndPropFlags & ((1<<apfInterface)|(1<<apfEnum))) == 0){
+				if( (accAndPropFlags & (1<<apfEnum)) == 0){
 					analyseByteCode();
-					this.accAndPropFlags |= (1<<dpfClassLoaded);
-				}else if( (accAndPropFlags & (1<<apfInterface)) != 0)  this.accAndPropFlags |= (1<<dpfClassLoaded);
-				else if( (accAndPropFlags & (1<<apfInterface)) != 0){
 					this.accAndPropFlags |= (1<<dpfClassLoaded);
 				}
 
