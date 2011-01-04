@@ -61,22 +61,22 @@ public class RegModel  {
 				module.stopTarget();
 			}
 			
-			deSuSPR[0] = new Register("CMPA",module.getSPR(144),0);
-			deSuSPR[1] = new Register("CMPB",module.getSPR(145),0);
-			deSuSPR[2] = new Register("CMPC",module.getSPR(146),0);
-			deSuSPR[3] = new Register("CMPD",module.getSPR(147),0);
-			deSuSPR[4] = new Register("ECR",module.getSPR(148),0);
-			deSuSPR[5] = new Register("DER",module.getSPR(149),0);
-			deSuSPR[6] = new Register("COUNTA",module.getSPR(150),0);
-			deSuSPR[7] = new Register("COUNTB",module.getSPR(151),0);
-			deSuSPR[8] = new Register("CMPE",module.getSPR(152),0);
-			deSuSPR[9] = new Register("CMPF",module.getSPR(153),0);
-			deSuSPR[10] = new Register("CMPG",module.getSPR(154),0);
-			deSuSPR[11] = new Register("CMPH",module.getSPR(155),0);
-			deSuSPR[12] = new Register("LCTRL1",module.getSPR(156),0);
-			deSuSPR[13] = new Register("LCTRL2",module.getSPR(157),0);
-			deSuSPR[14] = new Register("ICTRL",module.getSPR(158),0);
-			deSuSPR[15] = new Register("BAR",module.getSPR(159),0);
+			deSuSPR[0] = new Register("CMPA",module.getSPR(144),1);
+			deSuSPR[1] = new Register("CMPB",module.getSPR(145),1);
+			deSuSPR[2] = new Register("CMPC",module.getSPR(146),1);
+			deSuSPR[3] = new Register("CMPD",module.getSPR(147),1);
+			deSuSPR[4] = new Register("ECR",module.getSPR(148),1);
+			deSuSPR[5] = new Register("DER",module.getSPR(149),1);
+			deSuSPR[6] = new Register("COUNTA",module.getSPR(150),1);
+			deSuSPR[7] = new Register("COUNTB",module.getSPR(151),1);
+			deSuSPR[8] = new Register("CMPE",module.getSPR(152),1);
+			deSuSPR[9] = new Register("CMPF",module.getSPR(153),1);
+			deSuSPR[10] = new Register("CMPG",module.getSPR(154),1);
+			deSuSPR[11] = new Register("CMPH",module.getSPR(155),1);
+			deSuSPR[12] = new Register("LCTRL1",module.getSPR(156),1);
+			deSuSPR[13] = new Register("LCTRL2",module.getSPR(157),1);
+			deSuSPR[14] = new Register("ICTRL",module.getSPR(158),1);
+			deSuSPR[15] = new Register("BAR",module.getSPR(159),1);
 
 			/*the mcdp-lib dosent support access to Development Port Data Register
 			deSuSPR[16] = new Register("DPDR",module.getSPR(630),0);*/
@@ -102,23 +102,23 @@ public class RegModel  {
 			if(!wasFreezeAsserted){
 				module.stopTarget();
 			}
-			suLeSPR[0] = new Register("DSISR",module.getSPR(18),0);
-			suLeSPR[1]= new Register("DAR",module.getSPR(19),0);
-			suLeSPR[2]= new Register("DEC",module.getSPR(22),0);
-			suLeSPR[3]= new Register("SSR0",module.getSPR(26),0);
-			suLeSPR[4]= new Register("SSR1",module.getSPR(27),0);
+			suLeSPR[0] = new Register("DSISR",module.getSPR(18),1);
+			suLeSPR[1]= new Register("DAR",module.getSPR(19),1);
+			suLeSPR[2]= new Register("DEC",module.getSPR(22),1);
+			suLeSPR[3]= new Register("SSR0",module.getSPR(26),1);
+			suLeSPR[4]= new Register("SSR1",module.getSPR(27),1);
 			
 			/*results a software emulation exception, see Users Manuel p.3-26
 			suLeSPR[]= new Register("EIE",module.getSPR(80),0);
 			suLeSPR[]= new Register("EID",module.getSPR(81),0);
 			suLeSPR[]= new Register("NRI",module.getSPR(82),0);*/
 			
-			suLeSPR[5]= new Register("SPRG0",module.getSPR(272),0);
-			suLeSPR[6]= new Register("SPRG1",module.getSPR(273),0);
-			suLeSPR[7]= new Register("SPRG2",module.getSPR(274),0);
-			suLeSPR[8]= new Register("SPRG3",module.getSPR(275),0);
-			suLeSPR[9]= new Register("PVR",module.getSPR(287),0);
-			suLeSPR[10]= new Register("FPECR",module.getSPR(1022),0);
+			suLeSPR[5]= new Register("SPRG0",module.getSPR(272),1);
+			suLeSPR[6]= new Register("SPRG1",module.getSPR(273),1);
+			suLeSPR[7]= new Register("SPRG2",module.getSPR(274),1);
+			suLeSPR[8]= new Register("SPRG3",module.getSPR(275),1);
+			suLeSPR[9]= new Register("PVR",module.getSPR(287),1);
+			suLeSPR[10]= new Register("FPECR",module.getSPR(1022),1);
 
 			if(!wasFreezeAsserted){
 				module.startTarget();
@@ -142,7 +142,7 @@ public class RegModel  {
 				module.stopTarget();
 			}
 			
-			maStReg[0] = new Register("MSR",module.getMSR(),0);
+			maStReg[0] = new Register("MSR",module.getMSR(),1);
 			if(!wasFreezeAsserted){
 				module.startTarget();
 			}
@@ -165,12 +165,12 @@ public class RegModel  {
 			if(!wasFreezeAsserted){
 				module.stopTarget();
 			}
-			usLeSPR[0] = new Register("XER",module.getSPR(1),0);
-			usLeSPR[1] = new Register("LR",module.getSPR(8),0);
-			usLeSPR[2] = new Register("CTR",module.getSPR(9),0);
-			usLeSPR[3] = new Register("TBL",module.getSPR(268),0);
-			usLeSPR[4] = new Register("TBU",module.getSPR(269),0);
-			usLeSPR[5] = new Register("CR",module.getCR(),0);
+			usLeSPR[0] = new Register("XER",module.getSPR(1),1);
+			usLeSPR[1] = new Register("LR",module.getSPR(8),1);
+			usLeSPR[2] = new Register("CTR",module.getSPR(9),1);
+			usLeSPR[3] = new Register("TBL",module.getSPR(268),1);
+			usLeSPR[4] = new Register("TBU",module.getSPR(269),1);
+			usLeSPR[5] = new Register("CR",module.getCR(),1);
 
 			if(!wasFreezeAsserted){
 				module.startTarget();
@@ -198,7 +198,7 @@ public class RegModel  {
 			for (int i = 0; i < 32; i++) {
 				floPoiReg[i] = new FloRegister("FPR"+i,module.getFPR(i),3);
 			}
-			FPSCR[0] = new Register("FPSCR",module.getFPSCR(),0);
+			FPSCR[0] = new Register("FPSCR",module.getFPSCR(),1);
 			
 			if(!wasFreezeAsserted){
 				module.startTarget();
@@ -234,7 +234,7 @@ public class RegModel  {
 
 		// Load GPR data
 		for (int i = 0; i < 32; i++) {
-			genPurReg[i] = new Register("GPR"+i,temp[i],0);//Default Binary
+			genPurReg[i] = new Register("GPR"+i,temp[i],1);//Default Hex
 		}
 
 	}
