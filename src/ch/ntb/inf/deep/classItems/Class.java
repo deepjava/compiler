@@ -135,7 +135,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //	}
 
 	Item getMethod(HString name, HString descriptor){
-		Item item = ((Method)methods).getMethod(name, descriptor);
+		Item item = null;
+		if(methods != null)item = ((Method)methods).getMethod(name, descriptor);
 		if(item == null && type != null) item = ((Class)type).getMethod(name, descriptor);
 		return item;
 	}
@@ -1059,6 +1060,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 		completeLoading();
 		if(verbose) printClassList("end state, class list:");
+
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
