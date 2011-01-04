@@ -1,8 +1,15 @@
 package ch.ntb.inf.deep.ui.view;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ICellModifier;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
@@ -11,26 +18,45 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Item;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.part.ViewPart;
 
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
+import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.loader.Downloader;
+import ch.ntb.inf.deep.loader.DownloaderException;
+import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.ui.model.ReadVariableElement;
 
-public class ReadVariableView extends ViewPart {
+public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.view.ReadVariableView";
 	private TableViewer viewer;
 	private ReadVariableElement[] elements;
+	private Downloader bdi;
+	private Action toHex;
+	private Action toDez;
+	private Action toDouble;
+	private Action read;
+
+	static final byte slotSize = 4; // 4 bytes
+	static {
+		assert (slotSize & (slotSize - 1)) == 0; // assert: slotSize == power of
+													// 2
+	}
 
 	class ViewLabelProvider extends LabelProvider implements
 			ITableLabelProvider {
 
 		public String getColumnText(Object obj, int index) {
-			if(!(obj instanceof ReadVariableElement)){
+			if (!(obj instanceof ReadVariableElement)) {
 				return "";
 			}
 			switch (index) {
@@ -40,19 +66,17 @@ public class ReadVariableView extends ViewPart {
 				if (!((ReadVariableElement) obj).isReaded) {
 					return "";
 				}
-				switch(((ReadVariableElement) obj).representation){
-				case 0:
-					return Integer.toBinaryString((int)((ReadVariableElement) obj).result);
+				switch (((ReadVariableElement) obj).representation) {
 				case 1:
-					return Integer.toHexString((int)((ReadVariableElement) obj).result);
+					return "0x" + Integer.toHexString((int) ((ReadVariableElement) obj).result);
 				case 2:
-					return Integer.toString((int)((ReadVariableElement) obj).result);
+					return Integer.toString((int) ((ReadVariableElement) obj).result);
 				case 3:
 					return Double.toString(Double.longBitsToDouble(((ReadVariableElement) obj).result));
 				default:
-					return Integer.toString((int)((ReadVariableElement) obj).result);
+					return Integer.toString((int) ((ReadVariableElement) obj).result);
 				}
-				
+
 			default:
 				throw new RuntimeException("Should not happen");
 			}
@@ -66,10 +90,10 @@ public class ReadVariableView extends ViewPart {
 	@Override
 	public void createPartControl(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
-	    composite.setLayout(new GridLayout(1, false));
-				
+		composite.setLayout(new GridLayout(1, false));
+
 		viewer = new TableViewer(composite, SWT.MULTI | SWT.H_SCROLL
-				| SWT.V_SCROLL |SWT.FULL_SELECTION | SWT.BORDER);
+				| SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		String[] titels = { "Variable to read", "Result" };
 		int[] bounds = { 230, 100 };
 		for (int i = 0; i < titels.length; i++) {
@@ -83,23 +107,26 @@ public class ReadVariableView extends ViewPart {
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
-		
-		//create the cell editors
-		CellEditor[] editors = new CellEditor[1];
-	    editors[0] = new TextCellEditor(table);
 
-	    viewer.setColumnProperties(titels);
-	    viewer.setCellEditors(editors);
-	    viewer.setCellModifier(new ReadVarCellModifier(viewer));
+		// create the cell editors
+		CellEditor[] editors = new CellEditor[1];
+		editors[0] = new TextCellEditor(table);
+
+		viewer.setColumnProperties(titels);
+		viewer.setCellEditors(editors);
+		viewer.setCellModifier(new ReadVarCellModifier(viewer));
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
 		elements = new ReadVariableElement[32];
-		for(int i = 0; i < 32; i++){
+		for (int i = 0; i < 32; i++) {
 			elements[i] = new ReadVariableElement();
 		}
 		viewer.setInput(elements);
+
+		createActions();
+		hookContextMenu();
 	}
 
 	@Override
@@ -107,76 +134,176 @@ public class ReadVariableView extends ViewPart {
 		viewer.getControl().setFocus();
 
 	}
-	
+
+	private void hookContextMenu() {
+		MenuManager menuMgr = new MenuManager("#PopupMenu");
+		menuMgr.setRemoveAllWhenShown(true);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager manager) {
+				ReadVariableView.this.fillContextMenu(manager);
+			}
+		});
+		Menu menu = menuMgr.createContextMenu(viewer.getControl());
+		viewer.getControl().setMenu(menu);
+		getSite().registerContextMenu(menuMgr, viewer);
+	}
+
+	protected void fillContextMenu(IMenuManager menu) {
+		menu.add(read);
+		menu.add(toHex);
+		menu.add(toDez);
+		menu.add(toDouble);
+		// Other plug-ins can contribute there actions here
+		menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+	}
+
+	protected void createActions() {
+		toHex =  new Action(){
+					public void run() {
+						ISelection selection = viewer.getSelection();
+						Object obj = ((IStructuredSelection) selection).getFirstElement();
+						if(obj instanceof ReadVariableElement){
+							((ReadVariableElement)obj).representation = 1;
+						}
+						viewer.refresh();
+					}
+		};
+		toHex.setText("ToHex");
+		toDez = new Action(){
+					public void run() {
+						ISelection selection = viewer.getSelection();
+						Object obj = ((IStructuredSelection) selection).getFirstElement();
+						if(obj instanceof ReadVariableElement){
+							((ReadVariableElement)obj).representation = 2;
+						}
+						viewer.refresh();
+					}
+		};
+		toDez.setText("ToDez");
+		toDouble = new Action(){
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection).getFirstElement();
+				if(obj instanceof ReadVariableElement){
+					((ReadVariableElement)obj).representation = 3;
+				}
+				viewer.refresh();
+			}
+		};
+		toDouble.setText("ToDouble");
+		read = new Action(){
+			public void run(){
+				ISelection selection = viewer.getSelection();
+				boolean wasFreezeAsserted;
+				Object obj = ((IStructuredSelection) selection).getFirstElement();
+				if(obj instanceof ReadVariableElement){
+					int lastDot =((ReadVariableElement)obj).fullQualifiedName.lastIndexOf(".");
+					String clazzName = ((ReadVariableElement)obj).fullQualifiedName.substring(0, lastDot);
+					clazzName = clazzName.replace('.', '/');
+					String varName = ((ReadVariableElement)obj).fullQualifiedName.substring(lastDot + 1);
+					Class clazz = (Class)Type.classList.getItemByName(clazzName);
+					if(clazz != null){
+						DataItem var = (DataItem)clazz.fields.getItemByName(varName);
+						if(var != null){
+							if(bdi == null){
+								bdi = UsbMpc555Loader.getInstance();
+							}
+							try{
+								wasFreezeAsserted = bdi.isFreezeAsserted();
+								if(!wasFreezeAsserted){
+									bdi.stopTarget();
+								}
+								((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize);
+								System.out.println("High: " +Long.toHexString(((ReadVariableElement)obj).result));
+								if(((Type)var.type).sizeInBits > 8 * slotSize) {
+									((ReadVariableElement)obj).result = (((ReadVariableElement)obj).result << (8 * slotSize)) | bdi.getMem(var.address + slotSize, slotSize);
+								}
+								if(!wasFreezeAsserted){
+									bdi.startTarget();
+								}
+								((ReadVariableElement)obj).isReaded = true;
+							}catch(DownloaderException e){
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+				viewer.refresh();
+			}
+		};
+		read.setText("Read");
+		
+	}
+
 	/**
-	 * This class represents the cell modifier for the PersonEditor program
+	 * This class represents the cell modifier for the ReadVariable View
 	 */
 
 	class ReadVarCellModifier implements ICellModifier {
-	  private Viewer viewer;
+		private Viewer viewer;
 
-	  public ReadVarCellModifier(Viewer viewer) {
-	    this.viewer = viewer;
-	  }
+		public ReadVarCellModifier(Viewer viewer) {
+			this.viewer = viewer;
+		}
 
-	  /**
-	   * Returns whether the property can be modified
-	   * 
-	   * @param element
-	   *            the element
-	   * @param property
-	   *            the property
-	   * @return boolean
-	   */
-	  public boolean canModify(Object element, String property) {
-	   if(property.equals("Variable to read")){
-	    return true;
-	   }
-	   return false;
-	  }
+		/**
+		 * Returns whether the property can be modified
+		 * 
+		 * @param element
+		 *            the element
+		 * @param property
+		 *            the property
+		 * @return boolean
+		 */
+		public boolean canModify(Object element, String property) {
+			if (property.equals("Variable to read")) {
+				return true;
+			}
+			return false;
+		}
 
-	  /**
-	   * Returns the value for the property
-	   * 
-	   * @param element
-	   *            the element
-	   * @param property
-	   *            the property
-	   * @return Object
-	   */
-	  public Object getValue(Object element, String property) {
-	    ReadVariableElement p = (ReadVariableElement) element;
-	    if ("Variable to read".equals(property))
-	      return p.fullQualifiedName;
-	    else if ("Result".equals(property))
-	      return Long.toString(p.result);
-	    else
-	      return null;
-	  }
+		/**
+		 * Returns the value for the property
+		 * 
+		 * @param element
+		 *            the element
+		 * @param property
+		 *            the property
+		 * @return Object
+		 */
+		public Object getValue(Object element, String property) {
+			ReadVariableElement p = (ReadVariableElement) element;
+			if ("Variable to read".equals(property))
+				return p.fullQualifiedName;
+			else if ("Result".equals(property))
+				return Long.toString(p.result);
+			else
+				return null;
+		}
 
-	  /**
-	   * Modifies the element
-	   * 
-	   * @param element
-	   *            the element
-	   * @param property
-	   *            the property
-	   * @param value
-	   *            the value
-	   */
-	  public void modify(Object element, String property, Object value) {
-	    if (element instanceof Item)
-	      element = ((Item) element).getData();
+		/**
+		 * Modifies the element
+		 * 
+		 * @param element
+		 *            the element
+		 * @param property
+		 *            the property
+		 * @param value
+		 *            the value
+		 */
+		public void modify(Object element, String property, Object value) {
+			if (element instanceof Item)
+				element = ((Item) element).getData();
 
-	    ReadVariableElement p = (ReadVariableElement) element;
-	    if ("Variable to read".equals(property))
-	      p.setFullQualifiedName((String) value);
-	    else if ("Result".equals(property))
-	      p.setResult(((Integer) value).intValue());
-	    
-	    // Force the viewer to refresh
-	    viewer.refresh();
-	  }
+			ReadVariableElement p = (ReadVariableElement) element;
+			if ("Variable to read".equals(property))
+				p.setFullQualifiedName((String) value);
+			else if ("Result".equals(property))
+				p.setResult(((Integer) value).intValue());
+
+			// Force the viewer to refresh
+			viewer.refresh();
+		}
 	}
 
 }
