@@ -126,7 +126,6 @@ public class SSA implements ICclassFileConsts{
 		int index = cfg.method.getMaxStckSlots();
 		isParam = new boolean[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
 		paramType = new int[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
-		//TODO Configuration.isSystemClass is a workaround solve it properly
 		if(((flags & (1 << apfStatic)) == 0) && ((flags & (1 << dpfSysPrimitive)) == 0)){//method isn't static
 			isParam[index] = true;
 			paramType[index++] = SSAValue.tRef;
