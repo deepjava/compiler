@@ -867,7 +867,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				exitSet[maxStack + val] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bClstore:
@@ -879,7 +880,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				exitSet[maxStack + val] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCfstore:
@@ -891,7 +893,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				exitSet[maxStack + val] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCdstore:
@@ -903,7 +906,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				exitSet[maxStack + val] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCastore:
@@ -915,87 +919,109 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				exitSet[maxStack + val] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCistore_0:
-				exitSet[maxStack] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCistore_1:
-				exitSet[maxStack + 1] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 1);
+				
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCistore_2:
-				exitSet[maxStack + 2] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCistore_3:
-				exitSet[maxStack + 3] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bClstore_0:
-				exitSet[maxStack] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bClstore_1:
-				exitSet[maxStack + 1] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bClstore_2:
-				exitSet[maxStack + 2] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bClstore_3:
-				exitSet[maxStack + 3] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCfstore_0:
-				exitSet[maxStack] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCfstore_1:
-				exitSet[maxStack + 1] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCfstore_2:
-				exitSet[maxStack + 2] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCfstore_3:
-				exitSet[maxStack + 3] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCdstore_0:
-				exitSet[maxStack] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCdstore_1:
-				exitSet[maxStack + 1] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCdstore_2:
-				exitSet[maxStack + 2] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCdstore_3:
-				exitSet[maxStack + 3] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCastore_0:
-				exitSet[maxStack] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCastore_1:
-				exitSet[maxStack + 1] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCastore_2:
-				exitSet[maxStack + 2] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCastore_3:
-				exitSet[maxStack + 3] = popFromStack();
+				//create register moves in creating of SSA was wished by U.Graf
+				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCiastore:
@@ -2813,5 +2839,29 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		} else {
 			System.out.println("}");
 		}
+	}
+	
+	private void insertRegMoves(int index){
+		//create register moves in creating of SSA was wished by U.Graf
+		SSAValue value1 = popFromStack();
+		if(value1.type == SSAValue.tPhiFunc && value1.index > -1 && value1.index != index){
+			SSAValue[] opds = value1.owner.getOperands();
+			SSAValue[] newOpds = new SSAValue[opds.length];
+			for (int k = 0; k < opds.length; k++) {
+				SSANode n = (SSANode)this.predecessors[k];
+				SSAValue r = new SSAValue();
+				r.type = opds[k].type;
+				r.index = index;
+				SSAInstruction move = new Monadic(sCregMove, opds[k]);
+				move.result = r;
+				n.addInstruction(move);
+				n.exitSet[r.index] = r;
+				newOpds[k] = r;
+
+			}
+			value1.owner.setOperands(newOpds);
+			
+		}
+		exitSet[index] = value1;
 	}
 }
