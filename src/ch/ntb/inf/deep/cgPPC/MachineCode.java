@@ -102,9 +102,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		
 		if (dbg) System.out.println("build intervals for " + ssa.cfg.method.name);
 //		ssa.cfg.printToLog();
-		ssa.print(0);
-		RegAllocator.buildIntervals(ssa);
 //		ssa.print(0);
+		RegAllocator.buildIntervals(ssa);
+		ssa.print(0);
 		
 		if(dbg) System.out.println("assign registers to parameters, nofParam = " + nofParam);
 		SSANode b = (SSANode) ssa.cfg.rootNode;
