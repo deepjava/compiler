@@ -16,13 +16,19 @@ public class Type extends Item {
 //	static final byte[] primitveTypeChars = { 'D', 'F', 'J', 'Z', 'B', 'S', 'C', 'I', 'V' }; // inclusive 'V'
 	public static Type[] wellKnownTypes;
 	public static Type wktObject;
-	static HString hsNumber, hsString;
+	
+	//-- registered well known names
+	static HString hsNumber, hsString; // names for number and literal string objects (objects of type Constant, i.e. StdConstant, StringLiteral)
+	static HString hsClassConstrName;// name of the class constructor method
+	static HString hsCommandDescriptor;// descriptor of a command method
 
 	public static Class[] rootClasses;
 	public static int nofRootClasses;
 
-	public static Type classList, classListTail;
-	public static int nofClasses = 0;
+	public static Type classList, classInitListTail, classListTail; // currently objects of type Class or Array
+	public static int nofClasses, nofInitClasses;
+//	public static Array arrayList;
+	public static int nofArrays;
 
 	//-- const pool arrays
 	static Item[] cpItems;
@@ -41,8 +47,36 @@ public class Type extends Item {
 
 	//--- class (static) methods
 	protected static void appendClass(Type newType){
-		if(classListTail == null) classList = newType;  else  classListTail.next = newType;
+		if(enAssertion) assert classList != null && classListTail != null;
+
+		classListTail.next = newType;
 		classListTail = newType;
+		if(newType.category == tcRef) nofClasses++;   else nofArrays++;
+	}
+
+	protected void moveThisClassToInitList(){
+		Item pred = classInitListTail, item = pred.next;
+		while(item != null && item != this){
+			pred = item;
+			item = item.next;
+		}
+		if(enAssertion){
+			assert item != null;
+			assert item == this;
+		}
+		if(this == classListTail) classListTail = (Type)pred;
+		pred.next = item.next;
+		this.next = classInitListTail.next;
+		classInitListTail.next = this;
+		if(classInitListTail == classListTail)  classListTail = this;
+		classInitListTail = this;
+		nofInitClasses++;
+	}
+
+	protected static void fixUpClassList(){
+		//-- delete front stub
+		if( classList == classInitListTail )  classInitListTail = null;
+		classList = (Type)classList.next;
 	}
 
 	protected static void appendRootClass(Class newRootClass){
@@ -50,8 +84,15 @@ public class Type extends Item {
 		appendClass(newRootClass);
 	}
 
+	protected static void registerWellKnownNames(){
+		hsNumber = stab.insertCondAndGetEntry("#");
+		hsString = stab.insertCondAndGetEntry("\"\"");
+		hsClassConstrName = stab.insertCondAndGetEntry("<clinit>");
+		hsCommandDescriptor = stab.insertCondAndGetEntry("()V");
+	}
+
 	private static void registerWellKnownClasses(int tabIndex, String sname){
-		assert wellKnownTypes[tabIndex] == null;
+		if(enAssertion) assert wellKnownTypes[tabIndex] == null;
 		HString hname = stab.insertCondAndGetEntry(sname);
 		Class cls = new Class(hname);
 		wellKnownTypes[tabIndex] = cls;
@@ -59,7 +100,7 @@ public class Type extends Item {
 	}
 
 	private static void registerPrimitiveType(int tabIndex, char[] sname, int sizeInBits){
-		assert wellKnownTypes[tabIndex] == null;
+		if(enAssertion) assert wellKnownTypes[tabIndex] == null;
 		HString hname = stab.insertCondAndGetEntry(sname, 1); // register category as HString of length 1
 		Type type = new Type(hname, tcPrimitive, sizeInBits); // category = 'P' (primitive)
 		wellKnownTypes[tabIndex] = type;
@@ -254,7 +295,7 @@ public class Type extends Item {
 
 	protected Type(HString registeredName, char category, int sizeInBits){
 		super(registeredName, null); // no base type
-		assert sizeInBits == (byte)sizeInBits: "pre3";
+		if(enAssertion) assert sizeInBits == (byte)sizeInBits: "pre3";
 		this.category = category;
 		this.sizeInBits = (byte)sizeInBits;
 	}
@@ -273,14 +314,11 @@ public class Type extends Item {
 		return objectSize;
 	}
 
-	static void completeLoading(){
+	protected static void fixUpObjectSize(){
 		if(verbose) vrb.println(">completeLoading");
-		
 		Type type = classList;
 		while(type != null){
-			int objSize = type.getObjectSize();
-//			vrb.printf("Type %1$s: clsFieldsSize=%2$d, instFieldsSize=%3$d, objSize=%4$d <%5$s>\n", type.name, type.classFieldsSize, type.instanceFieldsSize, objSize, type.getClass().getName());
-			
+			type.getObjectSize();
 			type = (Type)type.next;
 		}
 		if(verbose) vrb.println("<completeLoading");
@@ -291,9 +329,4 @@ public class Type extends Item {
 	public void printTypeCategory() {
 		vrb.print("(" + (char)category + ')');
 	}
-//	public void print(int indentLevel){
-//		indent(indentLevel);
-////		printJavaAccAndPropertyFlags(1);
-//		vrb.print("\t("+ (char)category +')' + name);
-//	}
 }

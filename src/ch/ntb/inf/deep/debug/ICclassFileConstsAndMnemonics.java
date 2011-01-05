@@ -41,7 +41,7 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 			"typeTest", // 19 there are type tests with this type (instructions: checkcast, instanceof)
 
 			//--- field flags:
-			"const", // 20 constant field
+			"const|mark", // 20 constant field, marked class
 			"readAccess", // 21 one or more read accesses to this item
 			"writeAccess", // 22 one or more write accesses to this item
 			//"Synthetic", //31 synthetic field or method (items not in source text

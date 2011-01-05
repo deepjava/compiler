@@ -67,8 +67,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		name = registeredCpClassName;
 		category = tcRef;
 		sizeInBits = 32;
-		if(classList == null) classList = this;
-		nofClasses++;
 	}
 
 	/**
@@ -134,11 +132,16 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //		return (Method)item;
 //	}
 
-	Item getMethod(HString name, HString descriptor){
+	protected Item getMethod(HString name, HString descriptor){
 		Item item = null;
-		if(methods != null)item = ((Method)methods).getMethod(name, descriptor);
-		if(item == null && type != null) item = ((Class)type).getMethod(name, descriptor);
+		if(methods != null)  item = methods.getMethod(name, descriptor);
+		if(item == null && type != null) item = type.getMethod(name, descriptor);
 		return item;
+	}
+
+	public Method getClassConstructor() {
+		if(this.methods != null) return (Method)this.methods.getItemByName("<clinit>");
+		return null;
 	}
 
 	/**
@@ -626,15 +629,11 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			name = cpStrings[index];
 			index = clfInStrm.readUnsignedShort();
 			descriptor = cpStrings[index];
+			if(descriptor == hsCommandDescriptor && name != hsClassConstrName && (flags & (1<<apfStatic)) != 0){
+				flags |= (1<<dpfCommand);
+//				vrb.printf(">command: %1$s%2$s\n", name, descriptor);
+			}
 			Type returnType = getReturnType(descriptor);
-//			Method method = getAndExtractMethod(name, descriptor);
-//			if(method == null){
-//				method = new Method(name, returnType, descriptor);
-//			}else{
-//				method.type = returnType;
-//			}
-//			method.owner = this;
-//			assert method.type == returnType;
 			Method method = new Method(name, returnType, descriptor);
 			method.owner = this;
 			
@@ -835,7 +834,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //					print(0);
 //				}
 				
-				if( (accAndPropFlags & (1<<apfEnum)) == 0){
+				if( (accAndPropFlags & (1<<apfEnum)) == 0){// if class or interface but not an enum
 					analyseByteCode();
 					this.accAndPropFlags |= (1<<dpfClassLoaded);
 				}
@@ -879,7 +878,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		rootClasses = new Class[nofRootClasses];
 		nofRootClasses = 0;
 		
-		classList = null; classListTail = null;  nofClasses = 0;
 		prevCpLenth = 0;  constPoolCnt = 0;
 
 		if(StringTable.getInstance() != null) StringTable.resetTable();
@@ -888,8 +886,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			stab = StringTable.getInstance();
 			HString.setStringTable(stab);
 		}
-		hsNumber = stab.insertCondAndGetEntry("#");
-		hsString = stab.insertCondAndGetEntry("\"\"");
+		registerWellKnownNames();
+		Class cls = new Class(hsClassConstrName); // currently insert stub, later on root class referencing all classes with a calss constructor
+		classList = cls; classInitListTail = cls; classListTail = cls;
+		nofClasses = 0;
 		
 		setUpBaseTypeTable();
 		setClassFileAttributeTable(stab);
@@ -993,30 +993,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private static void loadSystemClasses(SystemClass sysClasses, int userReqAttributes) throws IOException{
 		while(sysClasses != null){
 			loadSystemClass(sysClasses, userReqAttributes); 
-			if(verbose){
-//				vrb.println(" *system class: "+sysCls.name);
-//				sysCls.print(0);
-//				printClassList(" *** class list:");
-//				vrb.println(" end of *system class: "+sysCls.name);
-//				sysCls.print(0);
-			}
 			sysClasses = sysClasses.next;
 		}
 	}
 
-	private static void printConstPools(){
-		Item type = classList;
-		while(type != null){
-			if(type instanceof Class){
-				Class cls = (Class)type;
-				if( cls.constPool != null) cls.printReducedConstPool(cls.name.toString());
-			}
-			type = type.next;
-		}
-	}
-
 	private static void repalceConstPoolStubs(){
-		final boolean verbose = true;
+//		final boolean verbose = true;
 		if(verbose) vrb.println(">repalceConstPoolStubs:");
 		Item type = classList;
 		while(type != null){
@@ -1032,6 +1014,43 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(verbose) vrb.println("<repalceConstPoolStubs");
 	}
 
+	protected void selectAndMoveInitClasses(){
+		if( (accAndPropFlags & 1<<dpfClassMark) == 0 ){
+			accAndPropFlags |= 1<<dpfClassMark;
+			if(type != null) type.selectAndMoveInitClasses();
+			if(interfaces != null){
+				for(int index = interfaces.length-1; index >= 0; index--) interfaces[index].selectAndMoveInitClasses();
+			}
+			if(imports != null){
+				for(int index = imports.length-1; index >= 0; index--) imports[index].selectAndMoveInitClasses();
+			}
+//			vrb.printf(">>init class: %1$s //dpfs=", name); Dbg.printAccAndPropertyFlags(accAndPropFlags);
+			ClassMember clsInit = null;
+			if(methods != null){
+				clsInit = (ClassMember)methods.getItemByName(hsClassConstrName);
+				if(clsInit != null){
+					moveThisClassToInitList();
+//					vrb.printf(" <<#%1$d, meth: %2$s, owner: %3$s>\n", nofInitClasses, clsInit.name, clsInit.owner.name);
+				}
+			}
+//			vrb.println();
+		}
+	}
+
+	private static void selectClassesToMove(){
+		Item item = classInitListTail.next;
+		while(item != null){
+			item.selectAndMoveInitClasses();
+			item = item.next;
+		}
+	}
+
+	private static void comleteLoadingOfClassSet(){
+		repalceConstPoolStubs();
+		fixUpObjectSize();
+		selectClassesToMove();
+	}
+
 	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
 		errRep.nofErrors = 0;
 		Type.nofRootClasses = 0;
@@ -1042,25 +1061,23 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	
 		Class clsObject = (Class)wellKnownTypes[txObject];
 		clsObject.loadClass(userReqAttributes);
+		comleteLoadingOfClassSet();
 
 		loadSystemClasses(sysClasses, userReqAttributes);
+		comleteLoadingOfClassSet();
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
 			String sname = rootClassNames[rc];
 			vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
+			comleteLoadingOfClassSet();
 		}
 
-//		printClassList("DbG: state 4, class list:");
-//		printConstPools();
-		repalceConstPoolStubs();
-//		printClassList("DbG: state 4, class list:");
-//		assert false;
-
-		completeLoading();
+		fixUpClassList();
+		
+		boolean verbose = true;
 		if(verbose) printClassList("end state, class list:");
-
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
@@ -1068,14 +1085,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
-	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
-		buildSystem(rootClassNames, new String[] {"bin"}, null, userReqAttributes);
-	}
-
-	public Method getClassConstructor() {
-		if(this.methods != null) return (Method)this.methods.getItemByName("<clinit>");
-		return null;
-	}
+//	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
+//		buildSystem(rootClassNames, new String[] {"bin"}, null, userReqAttributes);
+//	}
 
 	//--- debug primitives
 	public void printItemCategory(){
@@ -1083,16 +1095,20 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	}
 
 	public static void printClassList(String title){
-		vrb.println("\nclass list: (nofClasses="+nofClasses +')');
-		vrb.println(title);
-		if(verbose) vrb.println("\n<class list:");
+		if(title != null) vrb.println(title);
+		vrb.printf("\nclass list: nofClasses=%1$d (with class constr. %2$d), nofArrays=%3$d\n", nofClasses, nofInitClasses, nofArrays);
+		vrb.printf("\tclassListHead=%1$s", classList.name);
+		if(nofInitClasses > 0) vrb.printf(", classInitListTail=%1$s", classInitListTail.name);
+		vrb.printf(", classListTail=%1$s\n", classListTail.name);
+		vrb.println("//--- a) classes with class constructor");
 		Item cls = classList;
 		while(cls != null){
 			Dbg.indent(1);
-			Dbg.printJavaAccAndPropertyFlags(cls.accAndPropFlags);  vrb.print(cls.name);
+			Dbg.printJavaAccAndPropertyFlags(cls.accAndPropFlags);  vrb.printf("class %1$s", cls.name);
 			vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(cls.accAndPropFlags); vrb.println();
 			cls.printFields(2);
 			cls.printMethods(2);
+			if(cls == classInitListTail) vrb.println("//--- b) classes without class constructor");
 			cls = cls.next;
 			vrb.println();
 		}
@@ -1116,6 +1132,17 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		while(item != null){
 			item.println(indentLevel+1);
 			item = item.next;
+		}
+	}
+
+	private static void printConstPools(){
+		Item type = classList;
+		while(type != null){
+			if(type instanceof Class){
+				Class cls = (Class)type;
+				if( cls.constPool != null) cls.printReducedConstPool(cls.name.toString());
+			}
+			type = type.next;
 		}
 	}
 

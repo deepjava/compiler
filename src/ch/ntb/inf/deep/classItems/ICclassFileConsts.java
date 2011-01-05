@@ -41,8 +41,10 @@ public interface ICclassFileConsts {
 		dpfInstances = dpfBase+3,	// there might be objects of this class in the running system
 		dpfTypeTest = dpfBase+4,	// there are type tests with this type (instructions: checkcast, instanceof)
 
+		dpfClassMark = dpfBase+5, // mark flag during traverses (dpfConst = dpfClassMark !)
+
 		//--- field flags:
-		dpfConst = dpfBase+5,	// constant field
+		dpfConst = dpfBase+5,	// constant field (dpfConst = dpfClassMark !)
 		dpfReadAccess = dpfBase+6,	// one or more read accesses to this item
 		dpfWriteAccess = dpfBase+7,	// one or more write accesses to this item
 

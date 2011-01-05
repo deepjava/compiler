@@ -4,7 +4,6 @@ import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class DataItem extends ClassMember {
-	Constant initialValue;
 
 	//--- constructors
 	DataItem(){

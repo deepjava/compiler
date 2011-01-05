@@ -37,7 +37,7 @@ public class Method extends ClassMember {
 //	public void markInterfaceCall(){ accAndPropFlags += (1<<dpfInterfCall);  }
 
 
-	Method getMethod(HString name, HString descriptor){
+	protected Method getMethod(HString name, HString descriptor){
 		Method item = this;
 		while(item != null && (item.name != name || item.methDescriptor != descriptor) ) item = (Method)item.next;
 		return item;

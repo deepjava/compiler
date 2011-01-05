@@ -7,6 +7,7 @@ public class Constant extends Item {
 
 	Constant(HString name, Type type){
 		super(name,  type);
+		accAndPropFlags |= 1<<dpfConst;
 	}
 
 	//--- debug primitives

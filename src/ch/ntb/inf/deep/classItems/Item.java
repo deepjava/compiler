@@ -48,6 +48,11 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return -1;
 	}
 
+	protected Item getMethod(HString name, HString descriptor){
+		assert false : "override this method at class: "+ getClass().getName();
+		return null;
+	}
+
 	Item getReplacedStub(){
 		return this;
 	}
@@ -73,7 +78,9 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return cln;
 	}
 
-	//--- instance methods
+	protected void selectAndMoveInitClasses(){
+		assert false : "override this method at class: "+ getClass().getName();
+	}
 
 
 	//--- debug primitives

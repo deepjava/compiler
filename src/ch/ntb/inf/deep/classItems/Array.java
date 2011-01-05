@@ -20,6 +20,8 @@ public class Array extends Type {
 		componentType = getTypeByDescriptor(sname);
 	}
 
+	protected void selectAndMoveInitClasses(){
+	}
 
 	//--- debug primitives
 	

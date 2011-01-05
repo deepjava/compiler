@@ -27,8 +27,8 @@ public class ItemStub extends Item {
 		Item item;
 		if( type == null) item = owner.getMethod(name, descriptor);
 		else  item = owner.getField(name);
+		if(enAssertion) assert item != null;
 		item.accAndPropFlags |= this.accAndPropFlags;
-		assert item != null;
 		return item;
 	}
 
