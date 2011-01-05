@@ -42,7 +42,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		for (int i = 0; i < regAtIndex.length; i++) regAtIndex[i] = -1;
 		
-		insertRegMoves(ssa);
+		//insertRegMoves(ssa);
 		nofInstructions = SSA.renumberInstructions(ssa.cfg);
 		findLastNodeOfPhi(ssa);
 		
@@ -82,7 +82,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						SSAValue[] newOpds = new SSAValue[opds.length];
 						//					for (int k = 0; k < b.nofPredecessors; k++) {
 						for (int k = 0; k < opds.length; k++) {
-							if (dbg) System.out.println("\t move at " + res.n + "inserted");
+							if (dbg) System.out.println("\t move at " + res.n + " inserted");
 							SSANode n = (SSANode)b.predecessors[k];
 							SSAValue r = new SSAValue();
 							r.type = opds[k].type;
