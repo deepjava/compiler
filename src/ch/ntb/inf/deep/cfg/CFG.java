@@ -396,7 +396,7 @@ public class CFG implements ICjvmInstructionOpcs {
 
 	private String cfgToString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("CFG of method " + method.name + "\n");
+		sb.append("CFG of method " + method.owner.name + "." + method.name + "\n");
 		int i = 0;
 		CFGNode node = this.rootNode;
 		while (node != null) {

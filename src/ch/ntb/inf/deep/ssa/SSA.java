@@ -225,7 +225,7 @@ public class SSA implements ICclassFileConsts{
 
 		for (int i = 0; i < level; i++)
 			System.out.print("\t");
-		System.out.println("SSA for Method: " + cfg.method.name);
+		System.out.println("SSA for Method: " + cfg.method.owner.name + "." + cfg.method.name);
 		
 		SSA.renumberInstructions(cfg);
 
