@@ -78,7 +78,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			entrySet = new SSAValue[maxStack + maxLocals];
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
-			if (this.equals(predecessors[0]) || ((SSANode)predecessors[0]).exitSet == null) {// equal by "while(true){}
+			if (this.equals(predecessors[0])
+					|| ((SSANode) predecessors[0]).exitSet == null) {// equal by
+				// "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
@@ -99,55 +101,50 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 							predecessors[0] = temp;
 						}
 					}
-					
-					if(((SSANode)predecessors[0]).exitSet == null){
-						//if this ist the root node and this is a loopheader from case while(true){..}
+
+					if (((SSANode) predecessors[0]).exitSet == null) {
+						// if this ist the root node and this is a loopheader
+						// from case while(true){..}
 						entrySet = new SSAValue[maxStack + maxLocals];
-					}else{						
+					} else {
 						entrySet = ((SSANode) predecessors[0]).exitSet.clone();
 					}
 
 					for (int i = 0; i < maxStack + maxLocals; i++) {
 						SSAValue result = new SSAValue();
-						result.type = SSAValue.tPhiFunc;
 						result.index = i;
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
 						result.owner = phi;
 						phi.result = result;
 						if (entrySet[i] != null) {
+							phi.result.type = entrySet[i].type;
 							phi.addOperand(entrySet[i]);
 						}
 						addPhiFunction(phi);
-						if (i >= maxStack || entrySet[i] != null) {// Stack will
-																	// be set
-																	// when it
-																	// is
-																	// necessary;
+						// Stack will be set when it is necessary;
+						if (i >= maxStack || entrySet[i] != null) {
 							entrySet[i] = result;
 						}
 					}
 				} else {
-					for (int i = 1; i < nofPredecessors; i++) {// skip the first
-																// already
-																// processed
-																// predecessor
+					// skip the first already processed predecessor
+					for (int i = 1; i < nofPredecessors; i++) {
 						for (int j = 0; j < maxStack + maxLocals; j++) {
 
 							SSAValue param = ((SSANode) predecessors[i]).exitSet[j];
-							// TODO Test
 							SSAValue temp = param; // store
 
 							// Check if it need a loadParam instruction
-							if (ssa.isParam[j]
-									&& (phiFunctions[j].nofOperands == 0 || param == null)) {
-								param = generateLoadParameter((SSANode) idom,
-										j, ssa);
+							if (ssa.isParam[j]&& (phiFunctions[j].nofOperands == 0 || param == null)) {
+								param = generateLoadParameter((SSANode) idom, j, ssa);
 							}
 							if (temp != null && temp != param) {
 								phiFunctions[j].addOperand(temp);
+								phiFunctions[j].result.type = temp.type;
 							}
 							if (param != null) {// stack could be empty
 								phiFunctions[j].addOperand(param);
+								phiFunctions[j].result.type = param.type;
 							}
 						}
 					}
@@ -164,20 +161,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					} else {
 						// all other predecessors --> merge
 						for (int j = 0; j < maxStack + maxLocals; j++) {
-							if (entrySet[j] != null
-									|| ((SSANode) predecessors[i]).exitSet[j] != null) {// if
-																						// both
-																						// null,
-																						// do
-																						// nothing
+							// if both null, do nothing
+							if (entrySet[j] != null	|| ((SSANode) predecessors[i]).exitSet[j] != null) {
 								if (entrySet[j] == null) {// predecessor is set
 									if (ssa.isParam[j]) {
 										// create phi function
 										SSAValue result = new SSAValue();
-										result.type = SSAValue.tPhiFunc;
 										result.index = j;
-										PhiFunction phi = new PhiFunction(
-												sCPhiFunc);
+										PhiFunction phi = new PhiFunction(sCPhiFunc);
 										result.owner = phi;
 										phi.result = result;
 										entrySet[j] = result;
@@ -186,160 +177,118 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 										// and add their results to the phi
 										// function
 										for (int x = 0; x < i; x++) {
-											phi
-													.addOperand(generateLoadParameter(
-															(SSANode) predecessors[x],
-															j, ssa));
+											phi.addOperand(generateLoadParameter((SSANode) predecessors[x],j, ssa));
 										}
-										phi
-												.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+										phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+										result.type = ((SSANode) predecessors[i]).exitSet[j].type;
 										addPhiFunction(phi);
 									}
 								} else {// entrySet[j] != null
-									if (!(entrySet[j]
-											.equals(((SSANode) predecessors[i]).exitSet[j]))) {// if
-																								// both
-																								// equals,
-																								// do
-																								// nothing
+									// if both equals, do nothing
+									if (!(entrySet[j].equals(((SSANode) predecessors[i]).exitSet[j]))) {
 										if (((SSANode) predecessors[i]).exitSet[j] == null) {
 											if (ssa.isParam[j]) {
-												if (entrySet[j].type == SSAValue.tPhiFunc) {
+												if (entrySet[j].owner.ssaOpcode == sCPhiFunc) {
 													PhiFunction func = null;
-													// func == null if the phi
-													// functions are created by
-													// the predecessor
+													// func == null if the phi functions are created by the predecessor
 													for (int y = 0; y < nofPhiFunc; y++) {
-														if (entrySet[j]
-																.equals(phiFunctions[y].result)) {
+														if (entrySet[j].equals(phiFunctions[y].result)) {
 															func = phiFunctions[y];
 															break;
 														}
 													}
 													if (func == null) {
 														SSAValue result = new SSAValue();
-														result.type = SSAValue.tPhiFunc;
 														result.index = j;
-														PhiFunction phi = new PhiFunction(
-																sCPhiFunc);
+														PhiFunction phi = new PhiFunction(sCPhiFunc);
 														result.owner = phi;
 														phi.result = result;
-														phi
-																.addOperand(entrySet[j]);
-														phi
-																.addOperand(generateLoadParameter(
-																		(SSANode) predecessors[i],
-																		j, ssa));
+														phi.addOperand(entrySet[j]);
+														phi.result.type = entrySet[j].type;
+														phi.addOperand(generateLoadParameter((SSANode) predecessors[i],	j, ssa));
 														entrySet[j] = result;
 														addPhiFunction(phi);
-													} else {// phi functions are
-															// created in this
-															// node
-														func
-																.addOperand(generateLoadParameter(
-																		(SSANode) predecessors[i],
-																		j, ssa));
+													} else {
+														// phi functions are created in this node
+														SSAValue temp = generateLoadParameter((SSANode) predecessors[i],j, ssa);
+														func.result.type = temp.type;
+														func.addOperand(temp);
 													}
-												} else {// entrySet[j] !=
-														// SSAValue.tPhiFunc
+												} else {
+													// entrySet[j] != SSAValue.tPhiFunc
 													SSAValue result = new SSAValue();
-													result.type = SSAValue.tPhiFunc;
 													result.index = j;
-													PhiFunction phi = new PhiFunction(
-															sCPhiFunc);
+													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
-													phi
-															.addOperand(generateLoadParameter(
-																	(SSANode) predecessors[i],
-																	j, ssa));
+													phi.result.type = entrySet[j].type;
+													phi.addOperand(generateLoadParameter((SSANode) predecessors[i],	j, ssa));
 													entrySet[j] = result;
 													addPhiFunction(phi);
 												}
 											} else {
 												entrySet[j] = null;
 											}
-										} else {// entrySet[j] != null &&
-												// ((SSANode)
-												// predecessors[i]).exitSet[j]
-												// != null
-											if (entrySet[j].type == SSAValue.tPhiFunc) {
+										} else {
+											// entrySet[j] != null && ((SSANode) predecessors[i]).exitSet[j] != null
+											if (entrySet[j].owner.ssaOpcode == sCPhiFunc) {
 												PhiFunction func = null;
-												// func == null if the phi
-												// functions are created by the
-												// predecessor
+												// func == null if the phi functions are created by the predecessor
 												for (int y = 0; y < nofPhiFunc; y++) {
-													if (entrySet[j]
-															.equals(phiFunctions[y].result)) {
+													if (entrySet[j].equals(phiFunctions[y].result)) {
 														func = phiFunctions[y];
 														break;
 													}
 												}
 												if (func == null) {
 													SSAValue result = new SSAValue();
-													result.type = SSAValue.tPhiFunc;
 													result.index = j;
-													PhiFunction phi = new PhiFunction(
-															sCPhiFunc);
+													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
-													phi
-															.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													phi.result.type = entrySet[j].type;
+													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 													entrySet[j] = result;
 													addPhiFunction(phi);
-												} else {// phi functions are
-														// created in this node
-													// check if operands are
-													// from same type or from
-													// type tPhiFunc
-													SSAValue[] opnd = func
-															.getOperands();
+												} else {
+													// phi functions are created in this node 
+													//check if operands are from same type
+													SSAValue[] opnd = func.getOperands();
 
 													// determine type
-													int type = opnd[0].type;
-													for (int y = 0; y < opnd.length - 1
-															&& opnd[y].type == SSAValue.tPhiFunc; y++) {
-														type = opnd[y + 1].type;
-													}
-													if (type != SSAValue.tPhiFunc
-															&& ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tPhiFunc) {
-														if (type == ((SSANode) predecessors[i]).exitSet[j].type) {
-															func
-																	.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-														} else {
-															// delete all
-															// Operands so the
-															// function will be
-															// deleted in the
-															// method
-															// eleminateRedundantPhiFunc()
-															func
-																	.setOperands(new SSAValue[0]);
-															entrySet[j] = null;
-														}
+//													int type = opnd[0].type;
+//													for (int y = 0; y < opnd.length - 1	&& opnd[y].owner.ssaOpcode == sCPhiFunc; y++) {
+//														type = opnd[y + 1].type;
+//													}
+//													if (type != SSAValue.tPhiFunc && ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tPhiFunc) {
+													if (opnd[0].type == ((SSANode) predecessors[i]).exitSet[j].type) {
+														func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 													} else {
-														func
-																.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+														// delete all Operands so the function will be deleted in the
+														// method eleminateRedundantPhiFunc()
+														func.setOperands(new SSAValue[0]);
+														func.result.type = -1;
+														entrySet[j] = null;
 													}
+//													} else {
+//														func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+//													}
 												}
-											} else {// entrySet[j] !=
-													// SSAValue.tPhiFunc
-												if (((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tPhiFunc
-														|| entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type) {
+											} else {
+												// entrySet[j].owner.ssaOpcode != sCPhiFunc
+												if (entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type) {
 													SSAValue result = new SSAValue();
-													result.type = SSAValue.tPhiFunc;
 													result.index = j;
-													PhiFunction phi = new PhiFunction(
-															sCPhiFunc);
+													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
 													phi.addOperand(entrySet[j]);
-													phi
-															.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-													entrySet[j] = result;
+													phi.result.type = entrySet[j].type;
+													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 													addPhiFunction(phi);
+													entrySet[j] = result;
 												} else {
 													entrySet[j] = null;
 												}
@@ -387,6 +336,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant = null;
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -397,6 +347,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -407,6 +358,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -417,6 +369,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -427,6 +380,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -437,6 +391,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -447,6 +402,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -457,6 +413,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -467,6 +424,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txLong];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -477,6 +435,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txLong];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -487,6 +446,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -497,6 +457,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -507,6 +468,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -519,6 +481,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txDouble];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -531,6 +494,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txDouble];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -544,6 +508,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -558,6 +523,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -582,8 +548,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					}
 				} else {
 					if (ssa.cfg.method.owner.constPool[val] instanceof StringLiteral) {// is
-																						// a
-																						// String
+						// a
+						// String
 						StringLiteral literal = (StringLiteral) ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tRef;
 						result.constant = literal;
@@ -595,6 +561,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -619,8 +586,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					}
 				} else {
 					if (ssa.cfg.method.owner.constPool[val] instanceof StringLiteral) {// is
-																						// a
-																						// String
+						// a
+						// String
 						StringLiteral literal = (StringLiteral) ssa.cfg.method.owner.constPool[val];
 						result.type = SSAValue.tRef;
 						result.constant = literal;
@@ -632,6 +599,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -658,6 +626,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -665,7 +634,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -676,7 +645,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -687,7 +656,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -698,7 +667,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -709,7 +678,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																					// index
+					// index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -783,6 +752,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -793,6 +763,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -803,6 +774,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -813,6 +785,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -823,6 +796,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tRef;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -835,6 +809,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tByte;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -845,6 +820,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tChar;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -855,6 +831,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tShort;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -867,7 +844,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
@@ -880,7 +857,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
@@ -893,7 +870,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
@@ -906,7 +883,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
@@ -919,108 +896,108 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + val);
 				exitSet[maxStack + val].index = maxStack + val;
 				break;
 			case bCistore_0:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCistore_1:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 1);
-				
+
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCistore_2:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCistore_3:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bClstore_0:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bClstore_1:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bClstore_2:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bClstore_3:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCfstore_0:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCfstore_1:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCfstore_2:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCfstore_3:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCdstore_0:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCdstore_1:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCdstore_2:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCdstore_3:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
 			case bCastore_0:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack);
 				exitSet[maxStack].index = maxStack;
 				break;
 			case bCastore_1:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 1);
 				exitSet[maxStack + 1].index = maxStack + 1;
 				break;
 			case bCastore_2:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 2);
 				exitSet[maxStack + 2].index = maxStack + 2;
 				break;
 			case bCastore_3:
-				//create register moves in creating of SSA was wished by U.Graf
+				// create register moves in creating of SSA was wished by U.Graf
 				insertRegMoves(maxStack + 3);
 				exitSet[maxStack + 3].index = maxStack + 3;
 				break;
@@ -1032,6 +1009,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bClastore:
@@ -1042,6 +1020,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCfastore:
@@ -1052,6 +1031,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCdastore:
@@ -1062,6 +1042,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCaastore:
@@ -1072,6 +1053,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCbastore:
@@ -1082,6 +1064,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCcastore:
@@ -1092,6 +1075,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCsastore:
@@ -1102,6 +1086,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCpop:
@@ -1109,18 +1094,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCpop2:
 				value1 = popFromStack();
-				if (!((value1.type == SSAValue.tLong) || (value1.type == SSAValue.tDouble))) {// false
-					// if
-					// value1
-					// is
-					// a
-					// value
-					// of
-					// a
-					// category
-					// 2
-					// computational
-					// type
+				// false if value1 is a value of a category 2 computational type
+				if (!((value1.type == SSAValue.tLong) || (value1.type == SSAValue.tDouble))) {
 					popFromStack();
 				}
 				break;
@@ -1139,13 +1114,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdup_x2:
 				value1 = popFromStack();
 				value2 = popFromStack();
+				// true if value2 is a value of a category 2 computational type
 				if ((value2.type == SSAValue.tLong)
-						|| (value2.type == SSAValue.tDouble)) {// true if
-					// value2 is a
-					// value of a
-					// category 2
-					// computational
-					// type
+						|| (value2.type == SSAValue.tDouble)) {
 					pushToStack(value1);
 					pushToStack(value2);
 					pushToStack(value1);
@@ -1159,13 +1130,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCdup2:
 				value1 = popFromStack();
-				if ((value1.type == SSAValue.tLong)
-						|| (value1.type == SSAValue.tDouble)) {// true if
-					// value1 is a
-					// value of a
-					// category 2
-					// computational
-					// type
+				// true if value1 is a value of a category 2 computational type
+				if ((value1.type == SSAValue.tLong)	|| (value1.type == SSAValue.tDouble)) {
 					pushToStack(value1);
 					pushToStack(value1);
 				} else {
@@ -1179,13 +1145,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdup2_x1:
 				value1 = popFromStack();
 				value2 = popFromStack();
-				if ((value1.type == SSAValue.tLong)
-						|| (value1.type == SSAValue.tDouble)) {// true if
-					// value1 is a
-					// value of a
-					// category 2
-					// computational
-					// type
+				// true if value1 is a value of a category 2 computational type
+				if ((value1.type == SSAValue.tLong)	|| (value1.type == SSAValue.tDouble)) {
 					pushToStack(value1);
 					pushToStack(value2);
 					pushToStack(value1);
@@ -1201,24 +1162,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdup2_x2:
 				value1 = popFromStack();
 				value2 = popFromStack();
-				if ((value1.type == SSAValue.tLong)
-						|| (value1.type == SSAValue.tDouble)) {// true if
-					// value1 is a
-					// value of a
-					// category 2
-					// computational
-					// type
-					if ((value2.type == SSAValue.tLong)
-							|| (value2.type == SSAValue.tDouble)) {// true if
-						// value2 is
-						// a value
-						// of a
-						// category
-						// 2
-						// computational
-						// type
-						// Form4 (the java virtual Machine Specification second
-						// edition, Tim Lindholm, Frank Yellin, page 223)
+				// true if value1 is a value of a category 2 computational type
+				if ((value1.type == SSAValue.tLong)	|| (value1.type == SSAValue.tDouble)) {
+					// true if value2 is a value of a category 2 computational type 
+					//Form4 (the java virtual Machine Specification secondedition, Tim Lindholm, Frank Yellin, page 223)
+					if ((value2.type == SSAValue.tLong)	|| (value2.type == SSAValue.tDouble)) {
 						pushToStack(value1);
 						pushToStack(value2);
 						pushToStack(value1);
@@ -1233,17 +1181,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					}
 				} else {
 					value3 = popFromStack();
-					if ((value3.type == SSAValue.tLong)
-							|| (value3.type == SSAValue.tDouble)) {// true if
-																	// value3 is
-						// a value
-						// of a
-						// category
-						// 2
-						// computational
-						// type
-						// Form 3 (the java virtual Machine Specification second
-						// edition, Tim Lindholm, Frank Yellin, page 223)
+					// true if value3 is a value of a category 2 computational type
+					// Form 3 (the java virtual Machine Specification second
+					// edition, Tim Lindholm, Frank Yellin, page 223)
+					if ((value3.type == SSAValue.tLong) || (value3.type == SSAValue.tDouble)) {
 						pushToStack(value2);
 						pushToStack(value1);
 						pushToStack(value3);
@@ -1275,6 +1216,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCadd, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1285,6 +1227,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCadd, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1295,6 +1238,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCadd, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1305,6 +1249,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCadd, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1315,6 +1260,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCsub, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1325,6 +1271,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCsub, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1335,6 +1282,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCsub, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1345,6 +1293,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCsub, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1355,6 +1304,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCmul, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1365,6 +1315,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCmul, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1375,6 +1326,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCmul, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1385,6 +1337,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCmul, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1395,6 +1348,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCdiv, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1405,6 +1359,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCdiv, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1415,6 +1370,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCdiv, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1425,6 +1381,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCdiv, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1435,6 +1392,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCrem, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1445,6 +1403,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCrem, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1455,6 +1414,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCrem, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1465,6 +1425,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCrem, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1474,6 +1435,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCneg, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1483,6 +1445,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCneg, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1492,6 +1455,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCneg, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1501,6 +1465,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCneg, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1511,6 +1476,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCshl, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1521,6 +1487,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCshl, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1531,6 +1498,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCshr, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1541,6 +1509,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCshr, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1551,6 +1520,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCushr, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1561,6 +1531,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCushr, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1571,6 +1542,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCand, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1581,6 +1553,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCand, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1591,6 +1564,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCor, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1601,6 +1575,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCor, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1611,6 +1586,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCxor, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1621,6 +1597,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCxor, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1628,9 +1605,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get
-																						// index
+					// index
 					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-																						// const
+					// const
 					wide = false;
 				} else {
 					val = ssa.cfg.code[bca++];// get index
@@ -1646,6 +1623,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value2.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = value2;
+				instr.result.owner = instr;
 				addInstruction(instr);
 
 				result = new SSAValue();
@@ -1653,6 +1631,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 				instr = new Dyadic(sCadd, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 
 				exitSet[maxStack + val] = result;
@@ -1664,6 +1643,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCconvInt, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1673,6 +1653,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCconvInt, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1682,6 +1663,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCconvInt, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1691,6 +1673,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCconvLong, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1700,6 +1683,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCconvLong, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1709,6 +1693,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCconvLong, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1718,6 +1703,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCconvFloat, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1727,6 +1713,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCconvFloat, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1736,6 +1723,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tDouble;
 				instr = new Monadic(sCconvFloat, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1745,6 +1733,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Monadic(sCconvDouble, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1754,6 +1743,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tLong;
 				instr = new Monadic(sCconvDouble, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1763,6 +1753,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tFloat;
 				instr = new Monadic(sCconvDouble, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1772,6 +1763,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tByte;
 				instr = new Monadic(sCconvInt, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1781,6 +1773,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tChar;
 				instr = new Monadic(sCconvInt, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1790,6 +1783,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tShort;
 				instr = new Monadic(sCconvInt, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1800,6 +1794,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpl, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1810,6 +1805,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpl, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1820,6 +1816,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpg, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1830,6 +1827,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpl, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1840,6 +1838,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new Dyadic(sCcmpg, value1, value2);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -1852,6 +1851,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
@@ -1867,6 +1867,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value2 = popFromStack();
 				instr = new Branch(sCbranch, value1, value2);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
@@ -1875,6 +1876,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// ssa.cfg.code[bca + 2]);
 				instr = new Branch(sCbranch);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
@@ -1894,6 +1896,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// Step over whole bytecode instruction
 				bca++;
@@ -1919,6 +1922,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// Step over whole bytecode instruction
 				bca++;
@@ -1939,6 +1943,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// discard Stack
 				while (stackpointer >= 0) {
@@ -1950,6 +1955,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// discard Stack
 				while (stackpointer >= 0) {
@@ -1961,6 +1967,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// discard Stack
 				while (stackpointer >= 0) {
@@ -1972,6 +1979,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// discard Stack
 				while (stackpointer >= 0) {
@@ -1983,6 +1991,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCreturn, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// discard Stack
 				while (stackpointer >= 0) {
@@ -1993,6 +2002,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCreturn:
 				instr = new Branch(sCreturn);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// discard Stack
 				while (stackpointer >= 0) {
@@ -2069,7 +2079,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						break;
 					case 'L':
 						result.type = SSAValue.tRef;
-						// TODO mit Ernst besprechen, wiso field.type.name nie mit einem L beginnt?
+						// TODO mit Ernst besprechen, wiso field.type.name nie
+						// mit einem L beginnt?
 						break;
 					default:
 						result.type = SSAValue.tRef;
@@ -2077,6 +2088,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				instr = new NoOpndRef(sCloadFromField, field);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2095,6 +2107,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a DataItem. Used in putstatic";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCgetfield:
@@ -2163,7 +2176,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						break;
 					case 'L':
 						result.type = SSAValue.tRef;
-						// TODO mit Ernst besprechen, wiso field.type.name nie mit einem L beginnt?
+						// TODO mit Ernst besprechen, wiso field.type.name nie
+						// mit einem L beginnt?
 						break;
 					default:
 						result.type = SSAValue.tVoid;
@@ -2179,6 +2193,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a DataItem. Used in getfield";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2198,19 +2213,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a DataItem. Used in putfield";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				break;
 			case bCinvokevirtual:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];// index
-																		// into
-																		// cp
-				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
-																				// entry
-																				// must
-																				// be
-																				// a
-																				// MethodItem
+				// index into cp
+				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				// cp entry must be a MethodItem
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1 + 1];// objectref + nargs
 				for (int i = operands.length - 1; i > -1; i--) {
 					operands[i] = popFromStack();
@@ -2223,6 +2234,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						((Method) ssa.cfg.method.owner.constPool[val]),
 						operands);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
@@ -2231,12 +2243,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCinvokespecial:
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
-				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
-																				// entry
-																				// must
-																				// be
-																				// a
-																				// MethodItem
+				// cp entry must be a MethodItem
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1 + 1];// objectref + nargs
 				for (int i = operands.length - 1; i > -1; i--) {
 					operands[i] = popFromStack();
@@ -2249,7 +2257,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						((Method) ssa.cfg.method.owner.constPool[val]),
 						operands);
 				instr.result = result;
-				((Call)instr).invokespecial = true;
+				instr.result.owner = instr;
+				((Call) instr).invokespecial = true;
 				addInstruction(instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
@@ -2258,12 +2267,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCinvokestatic:
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
-				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
-																				// entry
-																				// must
-																				// be
-																				// a
-																				// MethodItem
+				// cp entry must be a MethodItem
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1];// nargs
 				for (int i = operands.length - 1; i > -1; i--) {
 					operands[i] = popFromStack();
@@ -2276,6 +2281,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						((Method) ssa.cfg.method.owner.constPool[val]),
 						operands);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
@@ -2285,12 +2291,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
 				bca = bca + 2;// step over count and zero byte
-				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;// cp
-																				// entry
-																				// must
-																				// be
-																				// a
-																				// MethodItem
+				// cp entry must be a MethodItem
+				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1 + 1];// objectref + nargs
 				for (int i = operands.length - 1; i > -1; i--) {
 					operands[i] = popFromStack();
@@ -2303,6 +2305,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						((Method) ssa.cfg.method.owner.constPool[val]),
 						operands);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
@@ -2311,33 +2314,30 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCnew:
 				bca++;
 				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
-//				value1 = new SSAValue();
+				// value1 = new SSAValue();
 				result = new SSAValue();
 				Item type = null;
 				if (ssa.cfg.method.owner.constPool[val] instanceof Class) {
 					type = ssa.cfg.method.owner.constPool[val];
-//					value1.type = SSAValue.tRef;
-//					value1.constant = clazz;
+					// value1.type = SSAValue.tRef;
+					// value1.constant = clazz;
 				} else {
-					if (ssa.cfg.method.owner.constPool[val] instanceof Type) {// it
-																				// is
-																				// a
-																				// Array
-																				// of
-																				// objects
+					// it is a Array of objects
+					if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
 						assert false : "why a type?";
-//						Item type = ssa.cfg.method.owner.constPool[val];
-//						result.type = SSAValue.tAref;
-//						result.constant = type.type;
+						// Item type = ssa.cfg.method.owner.constPool[val];
+						// result.type = SSAValue.tAref;
+						// result.constant = type.type;
 					} else {
 						assert false : "Unknown Parametertype for new";
 						break;
 					}
 				}
 				result.type = SSAValue.tRef;
-//				instr = new Call(sCnew, new SSAValue[] { value1 });
+				// instr = new Call(sCnew, new SSAValue[] { value1 });
 				instr = new Call(sCnew, type);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2350,6 +2350,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				SSAValue[] operand = { value1 };
 				instr = new Call(sCnew, operand);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2368,6 +2369,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in anewarray";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2377,6 +2379,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tInteger;
 				instr = new MonadicRef(sCalength, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2385,6 +2388,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = value1;
 				instr = new Monadic(sCthrow, value1);
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				// clear stack
 				while (stackpointer >= 0) {
@@ -2406,6 +2410,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in checkcast";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				pushToStack(value1);
 				addInstruction(instr);
 				break;
@@ -2424,6 +2429,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in instanceof";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2455,6 +2461,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in multianewarray";
 				}
 				instr.result = result;
+				instr.result.owner = instr;
 				addInstruction(instr);
 				pushToStack(result);
 				break;
@@ -2463,6 +2470,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
+				instr.result.owner = instr;
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto_w:
@@ -2513,9 +2521,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		}
 		if ((nofInstr > 0)
 				&& (instructions[nofInstr - 1].ssaOpcode == sCbranch)) { // insert
-																			// before
-																			// branch
-																			// instruction
+			// before
+			// branch
+			// instruction
 			instructions[nofInstr] = instructions[nofInstr - 1];
 			instructions[nofInstr - 1] = instr;
 		} else
@@ -2545,6 +2553,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			result.index = index + maxStack;
 			SSAInstruction instr = new NoOpnd(sCloadLocal);
 			instr.result = result;
+			instr.result.owner = instr;
 			addInstruction(instr);
 			exitSet[maxStack + index] = result;
 		}
@@ -2573,6 +2582,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		result.type = ssa.paramType[index];
 		SSAInstruction instr = new NoOpnd(sCloadLocal);
 		instr.result = result;
+		instr.result.owner = instr;
 		node.addInstruction(instr);
 		node.exitSet[index] = result;
 
@@ -2670,27 +2680,28 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			// Compare result with operands.
 			// determine if the function is redundant
 			for (int j = 0; j < tempOperands.length; j++) {
-				if (tempOperands[j].owner != null) {// handle virtual
-													// deleted PhiFunctions special
-					if (tempOperands[j].owner.deleted) {
+				if (tempOperands[j].owner.ssaOpcode == sCPhiFunc) {
+					// handle virtual deleted PhiFunctions special
+					if (((PhiFunction) tempOperands[j].owner).deleted) {
 						SSAValue res = tempOperands[j].owner.getOperands()[0];
-						while(res.owner != null){//if is a phiFunction too
-							if(res.owner.deleted){
+						while(res.owner.ssaOpcode == sCPhiFunc){//if is a phiFunction too
+							if(((PhiFunction)res.owner).deleted){
 								if(res == res.owner.getOperands()[0]){//it is the same phiFunction
 									break;
 								}
 								res = res.owner.getOperands()[0];
-							}else{
+							} else {
 								break;
 							}
 						}
-						if(res == tempOperands[j] || res.owner == null){
-							//ignore operand he have no parent PhiFunctions that lives
+						if (res == tempOperands[j] || res.owner.ssaOpcode != sCPhiFunc) {
+							// ignore operand he have no parent PhiFunctions
+							// that lives
 							continue;
-						}else{
-							tempOperands[j] = res;//protect for cycles
+						} else {
+							tempOperands[j] = res;// protect for cycles
 						}
-						
+
 					}
 				}
 				if (tempRes != (tempOperands[j])) {
@@ -2709,7 +2720,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// delete it virtually an set the operand for
 						// replacement
 						phiFunctions[i].deleted = true;
-						phiFunctions[i].setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
+						phiFunctions[i]
+								.setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
 						nofDeletedPhiFunc++;
 					}
 					temp[count++] = phiFunctions[i];
@@ -2726,7 +2738,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		int type, i;
 		char ch = methodDescriptor.charAt(0);
 		for (i = 0; ch != ')'; i++) {// travers (....) we need only the
-										// Returnvalue;
+			// Returnvalue;
 			ch = methodDescriptor.charAt(i);
 		}
 		ch = methodDescriptor.charAt(i++);
@@ -2840,28 +2852,23 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			System.out.println("}");
 		}
 	}
-	
-	private void insertRegMoves(int index){
-		//create register moves in creating of SSA was wished by U.Graf
-		SSAValue value1 = popFromStack();
-		if(value1.type == SSAValue.tPhiFunc && value1.index > -1 && value1.index != index){
-			SSAValue[] opds = value1.owner.getOperands();
-			SSAValue[] newOpds = new SSAValue[opds.length];
-			for (int k = 0; k < opds.length; k++) {
-				SSANode n = (SSANode)this.predecessors[k];
-				SSAValue r = new SSAValue();
-				r.type = opds[k].type;
-				r.index = index;
-				SSAInstruction move = new Monadic(sCregMove, opds[k]);
-				move.result = r;
-				n.addInstruction(move);
-				n.exitSet[r.index] = r;
-				newOpds[k] = r;
 
-			}
-			value1.owner.setOperands(newOpds);
-			
+	private void insertRegMoves(int index) {
+		// create register moves in creating of SSA was wished by U.Graf
+		SSAValue value1 = popFromStack();
+		// if(value1.type == SSAValue.tPhiFunc && value1.index > -1 &&
+		// value1.index != index){
+		if (value1.index > -1 && value1.index != index) {
+			SSAValue r = new SSAValue();
+			r.type = value1.type;
+			r.index = index;
+			SSAInstruction move = new Monadic(sCregMove, value1);
+			move.result = r;
+			move.result.owner = move;
+			addInstruction(move);
+			exitSet[index] = r;
+		}else{
+			exitSet[index] = value1;
 		}
-		exitSet[index] = value1;
-	}
+	}	
 }
