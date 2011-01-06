@@ -121,9 +121,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		// read first Symbol
 		next();
 
-		meta();
+		if(reporter.nofErrors <= 0) meta();
 
-		while (sym != sEndOfFile) {
+		while (sym != sEndOfFile && reporter.nofErrors <= 0) {
 			switch (sym) {
 			case sConstants:
 				constants();
@@ -151,15 +151,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				break;
 			default:
 				nOfErrors++;
-				reporter
-						.error(
-								errUnexpectetSymExp,
-								"in "
-										+ currentFile
-										+ " at Line "
-										+ lineNumber
-										+ " expectet symbol : constants | sysconst | memorymap | registermap | targetconfiguration | reginit | project | operatingsystem, received symbol: "
-										+ symToString() + "\n");
+				reporter.error(errUnexpectetSymExp,	"in "+ currentFile+ " at Line "+ lineNumber+ " expectet symbol : constants | sysconst | memorymap | registermap | targetconfiguration | reginit | project | operatingsystem, received symbol: "
+								+ symToString() + "\n");
 				next();
 			}
 		}
@@ -839,7 +832,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					break;
 				}
 			}
-			if (!contains) {
+			if (!contains && reporter.nofErrors <= 0) {
 				File f = new File(loc.toString() + toCmp.toString());
 				if (f.exists()) {
 					parseImport(loc, toCmp);
@@ -1683,11 +1676,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (proj.getRootClasses() == null || proj.getLibPath() == null) {
 			nOfErrors++;
-			reporter
-					.error(
-							errMissingTag,
-							"in "
-									+ currentFile
+			reporter.error(	errMissingTag,"in "	+ currentFile
 									+ " \"project\" tags \"rootclasses and libpath\" must be defined");
 			return;
 
@@ -1716,7 +1705,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					break;
 				}
 			}
-			if (!contains) {
+			if (!contains && reporter.nofErrors <= 0) {
 				parseImport(libPath, toCmp);
 			}
 		}

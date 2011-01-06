@@ -41,17 +41,17 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	public synchronized void init() throws DownloaderException {
 		baseAddress = Configuration.getValueFor(HString.getHString("IMB"));
-		System.out.println("++++++++ Open Device!+++++++++");
+//		System.out.println("++++++++ Open Device!+++++++++");
 
 		// check if connection is open
 		if (this.isConnected()) {
 			this.closeConnection();
 		}
 		this.openConnection();
-		System.out.println("++++++++ Reset Target!+++++++++");
+//		System.out.println("++++++++ Reset Target!+++++++++");
 		this.resetTarget();
 
-		System.out.println("++++++++ init Registers and write Code!+++++++++");
+//		System.out.println("++++++++ init Registers and write Code!+++++++++");
 		// initialize Memory
 		initRegisters();
 
@@ -61,7 +61,7 @@ public class UsbMpc555Loader extends Downloader {
 		// Write the code down
 		writeCode();
 		
-		System.out.println("++++++++ Download finished!+++++++++");
+		System.out.println("Download successfully finished");
 
 	}
 

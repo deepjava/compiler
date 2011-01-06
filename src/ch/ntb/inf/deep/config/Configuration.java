@@ -7,7 +7,6 @@ import java.io.IOException;
 import org.eclipse.core.runtime.Path;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -579,8 +578,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	}
 
-	public static void parseAndCreateConfig(String file,
-			String targetConfigurationName) {
+	public static void parseAndCreateConfig(String file, String targetConfigurationName) {
 		int index = file.lastIndexOf('/');
 		HString fileToRead = HString.getHString(file);
 		location = file.substring(0, index + 1);
@@ -593,22 +591,22 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		Parser.locForImportedFiles.add(Parser.loc);
 		par.config();
 		// }
-		setActiveTargetConfig(HString.getHString(targetConfigurationName));
+		if(ErrorReporter.reporter.nofErrors <=0) setActiveTargetConfig(HString.getHString(targetConfigurationName));
 	}
 
-	public static void main(String[] args) {
-		parseAndCreateConfig("D:/work/Crosssystem/deep/ExampleProject.deep",
-				"BootFromRam");
-		Configuration.print();
-		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
-		// String[] names =Configuration.getRootClassNames();
-		// for(int i = 0; i < names.length; i++){
-		// System.out.println(names[i]);
-		// }
-
-		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
-		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
-		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
-		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
-	}
+//	public static void main(String[] args) {
+//		parseAndCreateConfig("D:/work/Crosssystem/deep/ExampleProject.deep",
+//				"BootFromRam");
+//		Configuration.print();
+//		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
+//		// String[] names =Configuration.getRootClassNames();
+//		// for(int i = 0; i < names.length; i++){
+//		// System.out.println(names[i]);
+//		// }
+//
+//		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+//		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
+//		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
+//		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
+//	}
 }
