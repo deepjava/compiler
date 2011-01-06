@@ -32,12 +32,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static final int idPUT8 = Configuration.getSystemMethodIdOf("PUT8");
 	private static final int idGETBIT = Configuration.getSystemMethodIdOf("GETBIT");
 	private static final int idASM = Configuration.getSystemMethodIdOf("ASM");
-	private static final int idGETGPR = Configuration.getSystemMethodIdOf("GETGPR");
-	private static final int idGETFPR = Configuration.getSystemMethodIdOf("GETFPR");
-	private static final int idGETSPR = Configuration.getSystemMethodIdOf("GETSPR");
-	private static final int idPUTGPR = Configuration.getSystemMethodIdOf("PUTGPR");
-	private static final int idPUTFPR = Configuration.getSystemMethodIdOf("PUTFPR");
-	private static final int idPUTSPR = Configuration.getSystemMethodIdOf("PUTSPR");
+	static final int idGETGPR = Configuration.getSystemMethodIdOf("GETGPR");
+	static final int idGETFPR = Configuration.getSystemMethodIdOf("GETFPR");
+	static final int idGETSPR = Configuration.getSystemMethodIdOf("GETSPR");
+	static final int idPUTGPR = Configuration.getSystemMethodIdOf("PUTGPR");
+	static final int idPUTFPR = Configuration.getSystemMethodIdOf("PUTFPR");
+	static final int idPUTSPR = Configuration.getSystemMethodIdOf("PUTSPR");
+	private static final int idADR_OF_METHOD = Configuration.getSystemMethodIdOf("ADR_OF_METHOD");
 
 	private static int LRoffset;	
 	private static int CTRoffset;	
@@ -100,11 +101,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		nofParam = i - maxStackSlots;
 		assert nofParam <= maxNofParam : "method has too many parameters";
 		
-		if (dbg) System.out.println("build intervals for " + ssa.cfg.method.name);
+		if (dbg) System.out.println("build intervals for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 //		ssa.cfg.printToLog();
-//		ssa.print(0);
-		RegAllocator.buildIntervals(ssa);
 		ssa.print(0);
+		RegAllocator.buildIntervals(ssa);
+//		ssa.print(0);
 		
 		if(dbg) System.out.println("assign registers to parameters, nofParam = " + nofParam);
 		SSANode b = (SSANode) ssa.cfg.rootNode;
@@ -1161,6 +1162,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 								newInstructions[k] = instructions[k];
 							instructions = newInstructions;
 						}
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idADR_OF_METHOD) { // ADR_OF_METHOD
+						HString name = ((StringLiteral)opds[0].constant).string;
+						int last = name.lastIndexOf('/');
+						HString className = name.substring(0, last);
+						HString methName = name.substring(last + 1);
+						Class clazz = (Class)(Type.classList.getItemByName(className.toString()));
+						Item method = clazz.methods.getItemByName(methName.toString());
+						loadConstantAndFixup(res.reg, method);	// addr of method
 					}
 				} else {
 					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
@@ -1348,9 +1357,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					sReg2 = opds[1].reg;
 					createICRFrArB(ppcCmp, CRF0, sReg2, sReg1);
 					if (bci == bCif_acmpeq)
-						createIBOBIBD(ppcBc, BOtrue, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					else
-						createIBOBIBD(ppcBc, BOfalse, (28-4*CRF0+EQ), 0);
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);
 					break;
 				case bCif_icmpeq:
 				case bCif_icmpne:
@@ -1779,7 +1788,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 //		System.out.println("Method uses " + nofNonVolGPR + " GPR and " + nofNonVolFPR + " FPR for locals where " + nofParamGPR + " GPR and " + nofParamFPR + " FPR are for parameters");
 //		System.out.println();
 		
-		System.out.println("Code for Method: " + ssa.cfg.method.name);
+		System.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 		
 		for (int i = 0; i < iCount; i++){
 			System.out.print("\t" + Integer.toHexString(instructions[i]));
