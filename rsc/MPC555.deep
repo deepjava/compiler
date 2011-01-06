@@ -29,7 +29,7 @@ sysconst {
     cblkNofPtrsOffset = 24;
     stStackOffset = 4;
     stHeapOffset = 8;
-    stNofStacksOffset = 12;
+    stKernelClinitAddr = 12;
 	
 	sysTabBaseAddr = SRAMA_BaseAddr;				# Base address of the system table segment
 	stackSize = 0x2000;								# Default stack size

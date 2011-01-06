@@ -116,6 +116,10 @@ operatingsystem {
                     attributes = unsafe, synthetic;
                     id = 0x010;
                 }                
+                method ADR_OF_METHOD {
+                    attributes = unsafe, synthetic;
+                    id = 0x011;
+                }                
         }
         lowlevel {
                 class = "ch/ntb/inf/deep/lowLevel/LL";
