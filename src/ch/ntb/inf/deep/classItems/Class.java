@@ -37,6 +37,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		
 	public Class[] interfaces;
 	public int nOfInterfaces; // number of interfaces
+
+	Class[] imports;
+	public int nOfImports; // number of imports
 	
 	public int nOfBaseClasses; // number of base classes
 	
@@ -52,8 +55,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	
 	public Segment codeSegment, varSegment, constSegment; // references to the memory segments for this class
 	public int codeOffset, varOffset, constOffset; // the offset of the code/class fields/constant block in the dedicated segment
-
-	Class[] imports;
 
 	HString srcFileName; // file ident + ".java", e.g.  String.java  for java/lang/String.java
 	
@@ -325,7 +326,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				cpTags[pEntry] = cptExtSlot;  cpItems[pEntry] = null;  cpStrings[pEntry] = null;
 				break;
 			
-			case cptClass: cpIndices[pEntry] = clfInStrm.readUnsignedShort(); break; // class index
+			case cptClass:
+				cpIndices[pEntry] = clfInStrm.readUnsignedShort(); 
+				nOfImports++;
+				break; // class index
 			case cptString: cpIndices[pEntry] = clfInStrm.readUnsignedShort(); break; // string index
 			
 			case cptFieldRef: cpIndices[pEntry] = clfInStrm.readInt(); break; // (class index) <<16, nameAndType index
@@ -859,10 +863,14 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		//--- load referenced classes
 		if( (accAndPropFlags & (1<<dpfClassLoaded)) != 0){
+			nOfImports--;
+			imports = new Class[nOfImports];
+			int impIndex = nOfImports;
 			for(int cpx = constPool.length-1; cpx >= 0; cpx--){
 				Item item = constPool[cpx];
 				if(item instanceof Class){
 					Class refClass = (Class) item;
+					if(impIndex > 0) imports[--impIndex] = refClass; // without first entry (this class)
 					if( (refClass.accAndPropFlags & ((1<<dpfClassLoaded)|(1<<dpfSynthetic)) ) == 0) {
 						refClass.loadClass(userReqAttributes);
 					}
@@ -918,6 +926,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		root.accAndPropFlags |= (1<<dpfRootClass);
 		assert root.next == null;
 		root.loadClass(userReqAttributes);
+		root.comleteLoadingOfRootClass();
 		
 		if(verbose) vrb.println("<loadRootClass");
 	}
@@ -950,6 +959,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		cls.loadClass(userReqAttributes);
 		cls.accAndPropFlags |= systemClassAttributes & dpfSetSysClassProperties;
+		cls.comleteLoadingOfRootClass();
 
 		if( (systemClassAttributes & (1<<dpfNew)) != 0 ){// set up new memory method table
 			SystemMethod systemMeth = systemClass.methods;
@@ -1017,14 +1027,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	protected void selectAndMoveInitClasses(){
 		if( (accAndPropFlags & 1<<dpfClassMark) == 0 ){
 			accAndPropFlags |= 1<<dpfClassMark;
+
 			if(type != null) type.selectAndMoveInitClasses();
-			if(interfaces != null){
-				for(int index = interfaces.length-1; index >= 0; index--) interfaces[index].selectAndMoveInitClasses();
-			}
 			if(imports != null){
-				for(int index = imports.length-1; index >= 0; index--) imports[index].selectAndMoveInitClasses();
+				for(int index = imports.length-1; index >= 0; index--)  imports[index].selectAndMoveInitClasses();
 			}
-//			vrb.printf(">>init class: %1$s //dpfs=", name); Dbg.printAccAndPropertyFlags(accAndPropFlags);
+
 			ClassMember clsInit = null;
 			if(methods != null){
 				clsInit = (ClassMember)methods.getItemByName(hsClassConstrName);
@@ -1033,22 +1041,13 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //					vrb.printf(" <<#%1$d, meth: %2$s, owner: %3$s>\n", nofInitClasses, clsInit.name, clsInit.owner.name);
 				}
 			}
-//			vrb.println();
 		}
 	}
 
-	private static void selectClassesToMove(){
-		Item item = classInitListTail.next;
-		while(item != null){
-			item.selectAndMoveInitClasses();
-			item = item.next;
-		}
-	}
-
-	private static void comleteLoadingOfClassSet(){
+	private void comleteLoadingOfRootClass(){
 		repalceConstPoolStubs();
 		fixUpObjectSize();
-		selectClassesToMove();
+		selectAndMoveInitClasses();
 	}
 
 	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
@@ -1061,23 +1060,25 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	
 		Class clsObject = (Class)wellKnownTypes[txObject];
 		clsObject.loadClass(userReqAttributes);
-		comleteLoadingOfClassSet();
+		clsObject.comleteLoadingOfRootClass();
 
 		loadSystemClasses(sysClasses, userReqAttributes);
-		comleteLoadingOfClassSet();
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
 			String sname = rootClassNames[rc];
 			vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
-			comleteLoadingOfClassSet();
+			if(errRep.nofErrors > 0) break;
 		}
 
 		fixUpClassList();
 		
-		boolean verbose = true;
-		if(verbose) printClassList("end state, class list:");
+//		boolean verbose = true;
+		if(verbose) {
+//			printClassList("end state, class list:");
+//			printConstPools();
+		}
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
@@ -1100,12 +1101,14 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		vrb.printf("\tclassListHead=%1$s", classList.name);
 		if(nofInitClasses > 0) vrb.printf(", classInitListTail=%1$s", classInitListTail.name);
 		vrb.printf(", classListTail=%1$s\n", classListTail.name);
-		vrb.println("//--- a) classes with class constructor");
+		if(nofInitClasses > 0) vrb.println("//--- a) classes with class constructor");
 		Item cls = classList;
 		while(cls != null){
 			Dbg.indent(1);
-			Dbg.printJavaAccAndPropertyFlags(cls.accAndPropFlags);  vrb.printf("class %1$s", cls.name);
-			vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(cls.accAndPropFlags); vrb.println();
+			Dbg.printJavaAccAndPropertyFlags(cls.accAndPropFlags, 'C');  vrb.printf("class %1$s", cls.name);
+			if(cls.type != null)  vrb.printf(" extends %1$s", cls.type.name);
+			vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(cls.accAndPropFlags, 'C'); vrb.println();
+			if (cls instanceof Class) ((Class)cls).printImports(2);
 			cls.printFields(2);
 			cls.printMethods(2);
 			if(cls == classInitListTail) vrb.println("//--- b) classes without class constructor");
@@ -1149,8 +1152,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private void printRedCpEntry(int redCpInd){
 		Item item = constPool[redCpInd];
 		item.printShort(0);
-		Dbg.printSpace(); Dbg.printJavaAccAndPropertyFlags(item.accAndPropFlags);
-		Dbg.print('+'); Dbg.printDeepAccAndPropertyFlags(item.accAndPropFlags);
+		vrb.printf(" <%1$s>", item.getClass().getName());
 	}
 
 	private void printRedCpEntryCond(int cpIndex, int tag){
@@ -1207,11 +1209,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printImports(int indentLevel){
 		if(imports != null){
-			indent(indentLevel);
-			vrb.print("imports: "); vrb.print(imports[0].name);
-			int nofImp = imports.length;
-			for(int imp = 1; imp < nofImp; imp++){
-				vrb.print(", ");  vrb.print(imports[imp].name);
+			indent(indentLevel); 	vrb.printf("imports: %1$d\n", nOfImports);
+			for(int imp = 0; imp < imports.length; imp++){
+				indent(indentLevel+1); vrb.println(imports[imp].name);
 			}
 		}
 	}
@@ -1235,7 +1235,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	}
 
 	private void printReducedConstPool(String title){
-		vrb.println("\nreduced constant pool:"); vrb.println(title);
+		vrb.printf("\nreduced constant pool: %1$s (nOfImports=%2$d)\n", title, nOfImports);
 		for(int pe = 0; pe < constPool.length; pe++){
 			vrb.printf("  [%1$3d] ", pe);
 			printRedCpEntry(pe);
@@ -1245,20 +1245,17 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printShort(int indentLevel){
 		indent(indentLevel);
-		vrb.print("class ");  vrb.print(name);
-		if(type != null) {
-			vrb.print(" extends "); vrb.print(type.name);
-		}
+		vrb.printf("class %1$s, flags=", name);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'C');
 	}
 
 	public void print(int indentLevel){
 		indent(indentLevel);
-		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags);
+		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags, 'C');
 		vrb.print("class ");  vrb.print(name);
 		if(type != null) {
 			vrb.print(" extends "); vrb.print(type.name);
 		}
-		vrb.print("\n\t// dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags);
+		vrb.print("\n\t// dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C');
 		vrb.print("\n\t// category: ");  vrb.print((char)category);
 		vrb.print("\n\t// source file: ");  vrb.println(srcFileName);
 

@@ -122,26 +122,23 @@ public class Method extends ClassMember {
 	public void printHeader(){
 		int flags = accAndPropFlags;
 		if( (flags & (1<<dpfSysPrimitive)) != 0 ) flags &=  ~sysMethCodeMask;
-		Dbg.printJavaAccAndPropertyFlags(flags);
+		Dbg.printJavaAccAndPropertyFlags(flags, 'M');
 		type.printTypeCategory(); type.printName(); // return type
 		vrb.print(' ');  vrb.print(name);  vrb.print(methDescriptor);
 	}
 
 	public void printShort(int indentLevel){
 		indent(indentLevel);
-		vrb.print("meth  ");
-		vrb.print(this.owner.name); vrb.print(":: ");
-		super.printShort(0);
-		vrb.print(methDescriptor);
+		vrb.printf("meth  %1$s. %2$s%3$s", owner.name, name, methDescriptor);  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
 	}
 
 	public void print(int indentLevel){
 		indent(indentLevel);
 		printHeader();
 		vrb.print(";//dFlags");
-		if( (accAndPropFlags & (1<<dpfSysPrimitive)) == 0 ) Dbg.printDeepAccAndPropertyFlags(accAndPropFlags);
+		if( (accAndPropFlags & (1<<dpfSysPrimitive)) == 0 ) Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
 		else{
-			Dbg.printDeepAccAndPropertyFlags(accAndPropFlags & ~sysMethCodeMask);
+			Dbg.printDeepAccAndPropertyFlags(accAndPropFlags & ~sysMethCodeMask, 'M');
 			vrb.printf("; mAttr=0x%1$3x", accAndPropFlags & sysMethCodeMask);
 		}
 		vrb.println(", nofParams="+nofParams);

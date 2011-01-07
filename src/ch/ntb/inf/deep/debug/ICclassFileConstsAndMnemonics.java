@@ -21,7 +21,7 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 			"protected", // 2
 			"static", // 3
 			"final", // 4
-			"(super|synch)", // 5, "super" for class objects, "synchronized" for methods
+			"|Csuper|Msynch", // 5, "super" for class objects, "synchronized" for methods
 			"volatile", // 6
 			"transient", // 7
 			"native", // 8
@@ -41,7 +41,7 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 			"typeTest", // 19 there are type tests with this type (instructions: checkcast, instanceof)
 
 			//--- field flags:
-			"const|mark", // 20 constant field, marked class
+			"|Cmark|Fconst", // 20 constant field, marked class
 			"readAccess", // 21 one or more read accesses to this item
 			"writeAccess", // 22 one or more write accesses to this item
 			//"Synthetic", //31 synthetic field or method (items not in source text

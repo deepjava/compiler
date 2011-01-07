@@ -10,6 +10,7 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 	public static final boolean verbose = false;
 
 	public static final  char newLineChar = '\n';	
+	public static final  char categroySeparator = '|';
 
 	public void SetPrintStream(PrintStream verboseStream){
 		vrb = verboseStream;
@@ -35,14 +36,28 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 	public static void print(char ch){
 		vrb.print(ch);
 	}
+
+	private static String getElementName( String elemName, char category){
+		if( elemName.charAt(0) == categroySeparator ){
+			int pos = 0, endPos = 0;
+			char cat = 0;
+			do{
+				pos = endPos + 1;
+				cat = elemName.charAt(pos);
+				endPos = elemName.indexOf(categroySeparator, pos);
+			}while(cat != category && pos > 0);
+			if( endPos < 0 ) endPos = elemName.length();
+			if(cat == category) elemName = elemName.substring(pos+1, endPos);
+		}
+		return elemName;
+	}
 	
-	private static String setToString(int set, String[] elemNames, int namesStartwithElemNr){
-		assert elemNames != null: "pre2";
-		assert namesStartwithElemNr >= 0 && namesStartwithElemNr < 32: "pre2";
+	private static String setToString(int set, String[] elemNames, char itemCategory){
+		// itemCategory = {'C', 'F', 'M'} (for {Class, Field, Method})
 		StringBuilder sb = new StringBuilder();
 
 		sb.append('{');
-		if(namesStartwithElemNr > 0) set = set >>> namesStartwithElemNr;
+//		if(namesStartwithElemNr > 0) set = set >>> namesStartwithElemNr;
 		int elemNr = 31;
 		if( (set& -0x10000) == 0) {
 			elemNr = 15;  set = set << 16;
@@ -60,11 +75,11 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 				elemNr -= diff;
 			}
 
-			if(set < 0) sb.append(elemNames[elemNr]);
+			if(set < 0) sb.append( getElementName(elemNames[elemNr], itemCategory ) );
 			set = set << 1; elemNr--;
 			while(set != 0){
 				if(set < 0){
-					sb.append(',');  sb.append(elemNames[elemNr]);
+					sb.append(',');  sb.append( getElementName(elemNames[elemNr], itemCategory ) );
 				}
 				set = set << 1; elemNr--;
 			}
@@ -78,19 +93,32 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 	public static void printJvmInstr(int instrAddr, int opc){
 		vrb.printf("  @%1$4d,%2$3d \t%3$s ", instrAddr, opc, bcMnemonics[opc]);
 		int bcAttrSet =( bcAttrTab[opc] >> bcapBase) & 0xFFF;
-		vrb.println(setToString(bcAttrSet, bcAttributes, 0));
+		vrb.println(setToString(bcAttrSet, bcAttributes, '?'));
 	}
 
+	public static void printFlags(int flags, char category){
+		vrb.print(setToString(flags, apfIdents, category));
+	}
+	
+	public static void printAccAndPropertyFlags(int flags, char category){
+		printFlags(flags, category);
+	}
 	public static void printAccAndPropertyFlags(int flags){
-		vrb.print(setToString(flags, apfIdents, 0));
+		printFlags(flags, '?');
 	}
 
+	public static void printJavaAccAndPropertyFlags(int flags, char category){
+		printFlags(flags & apfSetJavaAccAndProperties, category);
+	}
 	public static void printJavaAccAndPropertyFlags(int flags){
-		vrb.print(setToString(flags & apfSetJavaAccAndProperties, apfIdents, 0));
+		printFlags(flags & apfSetJavaAccAndProperties, '?');
 	}
 
+	public static void printDeepAccAndPropertyFlags(int flags, char category){
+		printFlags(flags & dpfSetProperties, category);
+	}
 	public static void printDeepAccAndPropertyFlags(int flags){
-		vrb.print(setToString(flags & dpfSetProperties, apfIdents, 0));
+		printFlags(flags & dpfSetProperties, '?');
 	}
 
 	public static void printCpTagIdent(int cptNumber, int fieldWidth){
@@ -117,13 +145,13 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 		vrb.print( new String(printDigits) );
 	}
 
-	public static void main(String[] args){
-		for(int elem = 0; elem < bcAttributes.length; elem++){
-			int set = 1<<elem;
-			vrb.println(setToString(set, bcAttributes, 0));
-		}
-		vrb.println(setToString(7, bcAttributes, 0));
-	}
+//	public static void main(String[] args){
+//		for(int elem = 0; elem < bcAttributes.length; elem++){
+//			int set = 1<<elem;
+//			vrb.println(setToString(set, bcAttributes, '\0'));
+//		}
+//		vrb.println(setToString(7, bcAttributes, '\0') );
+//	}
 }
 /*Output:
 */

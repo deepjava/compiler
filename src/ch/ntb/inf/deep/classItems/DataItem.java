@@ -19,16 +19,15 @@ public class DataItem extends ClassMember {
 	//--- debug primitives
 	public void printShort(int indentLevel){
 		indent(indentLevel);
-		vrb.print("field ");
-		super.printShort(0);
+		vrb.printf("field %1$s %2$s, flags=", type.name, name);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'F');
 	}
 
 	public void print(int indentLevel){
 		indent(indentLevel);
-		Dbg.printJavaAccAndPropertyFlags(this.accAndPropFlags);
+		Dbg.printJavaAccAndPropertyFlags(this.accAndPropFlags, 'F');
 		type.printTypeCategory(); type.printName();
 		vrb.print(' '); printName(); vrb.print(';'); type.printSize();
-		vrb.print(", dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags);
+		vrb.print(", dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags, 'F');
 	}
 
 	public void println(int indentLevel){

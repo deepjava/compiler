@@ -315,13 +315,13 @@ public class Type extends Item {
 	}
 
 	protected static void fixUpObjectSize(){
-		if(verbose) vrb.println(">completeLoading");
+		if(verbose) vrb.println(">fixUpObjectSize");
 		Type type = classList;
 		while(type != null){
 			type.getObjectSize();
 			type = (Type)type.next;
 		}
-		if(verbose) vrb.println("<completeLoading");
+		if(verbose) vrb.println("<fixUpObjectSize");
 	}
 
 

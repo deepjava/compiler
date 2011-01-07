@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Array extends Type {
@@ -24,6 +25,11 @@ public class Array extends Type {
 	}
 
 	//--- debug primitives
+	
+	public void printShort(int indentLevel){
+		indent(indentLevel);
+		vrb.printf("array %1$s, flags=", name);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'C');
+	}
 	
 	public void printFields(int indentLevel){
 		indent(indentLevel);

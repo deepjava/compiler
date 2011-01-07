@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class StdConstant extends Constant {
@@ -9,7 +10,7 @@ public class StdConstant extends Constant {
 		super(name, type);
 		this.valueH = valueHigh;
 		this.valueL = valueLow;
-		this.accAndPropFlags = (1<<apfFinal);
+		this.accAndPropFlags |= (1<<apfFinal);
 	}
 
 	public StdConstant(int valueHigh, int valueLow){
@@ -33,6 +34,7 @@ public class StdConstant extends Constant {
 		}else{// typeDesc == {tdInt, tdShort, tdByte, tdChar, tdBool}
 			vrb.printf("=0x%1$x = %2$d", valueH, valueH);
 		}
+		vrb.print(", flags=");  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'F');
 	}
 
 	private void printConstVal(Item type, int valueH, int valueL){
