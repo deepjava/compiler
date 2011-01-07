@@ -39,7 +39,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public int nOfInterfaces; // number of interfaces
 
 	Class[] imports;
-	public int nOfImports; // number of imports
+	public int nOfImports; // number of imports (without arrays)
 	
 	public int nOfBaseClasses; // number of base classes
 	
@@ -372,7 +372,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				pEntry++; 
 				break;
 			case cptClass: // class index
-				updateAndGetCpClassEntry(pEntry);
+//				updateAndGetCpClassEntry(pEntry);
+				Item item = updateAndGetCpClassEntry(pEntry);
+				cpItems[pEntry] = item;
+				if( item instanceof Array) nOfImports--; // arrays get not included in imports
 				nofItems++;
 				break;
 			case cptString: 
