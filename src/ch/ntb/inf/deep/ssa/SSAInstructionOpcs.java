@@ -26,7 +26,7 @@ public interface SSAInstructionOpcs {
 					aa	attributes
 					cc	operation code (opc)
 			*/
-			0x00010000 + sCloadConst,	//load 
+			0x00070000 + sCloadConst,	//load 
 			0x00000000 | (1<<ssaApLoadLocal) + sCloadLocal,
 			0x00010000 + sCloadFromField,
 			0x00020000 + sCloadFromArray,
