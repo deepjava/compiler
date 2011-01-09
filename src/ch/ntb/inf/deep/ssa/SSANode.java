@@ -1,15 +1,16 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
-import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.StdConstant;
-import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.ssa.instruction.Branch;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
 import ch.ntb.inf.deep.ssa.instruction.DyadicRef;
@@ -20,7 +21,6 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.StoreToArray;
-import ch.ntb.inf.deep.ssa.instruction.Branch;
 import ch.ntb.inf.deep.strings.HString;
 
 /**
@@ -2680,11 +2680,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				if (tempRes != (tempOperands[j])) {
 					if (diffAlreadyOccured) {
-						redundant = false;
-						break;
+						if(tempOperands[indexOfDiff] != tempOperands[j]){
+							redundant = false;
+							break;
+						}
+					}else{
+						diffAlreadyOccured = true;
+						indexOfDiff = j;
 					}
-					diffAlreadyOccured = true;
-					indexOfDiff = j;
 				}
 			}
 			if (redundant) {
@@ -2694,8 +2697,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// delete it virtually an set the operand for
 						// replacement
 						phiFunctions[i].deleted = true;
-						phiFunctions[i]
-								.setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
+						phiFunctions[i].setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
 						nofDeletedPhiFunc++;
 					}
 					temp[count++] = phiFunctions[i];
