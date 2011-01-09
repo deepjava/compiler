@@ -1,7 +1,6 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.classItems.Item;
-import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 /**
