@@ -683,7 +683,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				load(val, SSAValue.tRef);
+				if(ssa.isParam[val + maxStack]){//TODO check this
+					load(val, ssa.paramType[val + maxStack]);
+				}else{
+					load(val, SSAValue.tRef);
+				}
 				break;
 			case bCiload_0:
 				load(0, SSAValue.tInteger);
@@ -734,17 +738,31 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				load(3, SSAValue.tDouble);
 				break;
 			case bCaload_0:
-				load(0, SSAValue.tRef);
+				if(ssa.isParam[maxStack]){
+					load(0, ssa.paramType[maxStack]);
+				}else{
+					load(0, SSAValue.tRef);
+				}
 				break;
 			case bCaload_1:
-				load(1, SSAValue.tRef);
+				if(ssa.isParam[1 + maxStack]){
+					load(1, ssa.paramType[1 + maxStack]);
+				}else{
+					load(1, SSAValue.tRef);
+				}
 				break;
 			case bCaload_2:
-				load(2, SSAValue.tRef);
-				break;
+				if(ssa.isParam[2 + maxStack]){
+					load(2, ssa.paramType[2 + maxStack]);
+				}else{
+					load(2, SSAValue.tRef);
+				}				break;
 			case bCaload_3:
-				load(3, SSAValue.tRef);
-				break;
+				if(ssa.isParam[3 + maxStack]){
+					load(3, ssa.paramType[3 + maxStack]);
+				}else{
+					load(3, SSAValue.tRef);
+				}				break;
 			case bCiaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
