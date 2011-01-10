@@ -118,7 +118,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						phi.result = result;
 						if (entrySet[i] != null) {
 							phi.result.type = entrySet[i].type;
-							phi.addOperand(entrySet[i]);
+							SSAValue opd = entrySet[i];
+							opd = insertRegMoves((SSANode) predecessors[0], i, opd);
+							phi.addOperand(opd);
 						}
 						addPhiFunction(phi);
 						// Stack will be set when it is necessary;
@@ -139,12 +141,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 								param = generateLoadParameter((SSANode) idom, j, ssa);
 							}
 							if (temp != null && temp != param) {
-								phiFunctions[j].addOperand(temp);
 								phiFunctions[j].result.type = temp.type;
+								SSAValue opd = temp;
+								opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+								phiFunctions[j].addOperand(opd);
 							}
 							if (param != null) {// stack could be empty
-								phiFunctions[j].addOperand(param);
 								phiFunctions[j].result.type = param.type;
+								SSAValue opd = param;
+								opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+								phiFunctions[j].addOperand(opd);
 							}
 						}
 					}
@@ -179,8 +185,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 										for (int x = 0; x < i; x++) {
 											phi.addOperand(generateLoadParameter((SSANode) predecessors[x],j, ssa));
 										}
-										phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
 										result.type = ((SSANode) predecessors[i]).exitSet[j].type;
+										SSAValue opd = ((SSANode) predecessors[i]).exitSet[j];
+										opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+										phiFunctions[j].addOperand(opd);
 										addPhiFunction(phi);
 									}
 								} else {// entrySet[j] != null
@@ -199,12 +207,22 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 													}
 													if (func == null) {
 														SSAValue result = new SSAValue();
+														SSAValue opd = entrySet[j];
 														result.index = j;
 														PhiFunction phi = new PhiFunction(sCPhiFunc);
 														result.owner = phi;
-														phi.result = result;
-														phi.addOperand(entrySet[j]);
 														phi.result.type = entrySet[j].type;
+														phi.result = result;
+														int predNo = 0;
+														for(int k = 0; k < nofPredecessors; k++){
+															if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
+																predNo = k;
+																break;
+															}
+														}
+														assert predNo != -1 : "predecessor for entrySet not found";
+														opd = insertRegMoves((SSANode) predecessors[predNo], j, opd);//entrySet[j]
+														phi.addOperand(opd);
 														phi.addOperand(generateLoadParameter((SSANode) predecessors[i],	j, ssa));
 														entrySet[j] = result;
 														addPhiFunction(phi);
@@ -217,12 +235,22 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 												} else {
 													// entrySet[j] != SSAValue.tPhiFunc
 													SSAValue result = new SSAValue();
+													SSAValue opd = entrySet[j];
 													result.index = j;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
-													phi.addOperand(entrySet[j]);
 													phi.result.type = entrySet[j].type;
+													int predNo = 0;
+													for(int k = 0; k < nofPredecessors; k++){
+														if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
+															predNo = k;
+															break;
+														}
+													}
+													assert predNo != -1 : "predecessor for entrySet not found";
+													opd = insertRegMoves((SSANode) predecessors[predNo], j, opd);//entrySet[j]
+													phi.addOperand(opd);
 													phi.addOperand(generateLoadParameter((SSANode) predecessors[i],	j, ssa));
 													entrySet[j] = result;
 													addPhiFunction(phi);
@@ -243,13 +271,25 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 												}
 												if (func == null) {
 													SSAValue result = new SSAValue();
+													SSAValue opd = entrySet[j];
 													result.index = j;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
-													phi.addOperand(entrySet[j]);
 													phi.result.type = entrySet[j].type;
-													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													int predNo = 0;
+													for(int k = 0; k < nofPredecessors; k++){
+														if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
+															predNo = k;
+															break;
+														}
+													}
+													assert predNo != -1 : "predecessor for entrySet not found";
+													opd = insertRegMoves((SSANode) predecessors[predNo], j, opd);//entrySet[j]
+													phi.addOperand(opd);
+													opd = ((SSANode) predecessors[i]).exitSet[j];
+													opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+													phi.addOperand(opd);
 													entrySet[j] = result;
 													addPhiFunction(phi);
 												} else {
@@ -258,13 +298,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 													SSAValue[] opnd = func.getOperands();
 
 													// determine type
-//													int type = opnd[0].type;
-//													for (int y = 0; y < opnd.length - 1	&& opnd[y].owner.ssaOpcode == sCPhiFunc; y++) {
-//														type = opnd[y + 1].type;
-//													}
-//													if (type != SSAValue.tPhiFunc && ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tPhiFunc) {
 													if (opnd[0].type == ((SSANode) predecessors[i]).exitSet[j].type) {
-														func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+														SSAValue opd = ((SSANode) predecessors[i]).exitSet[j];
+														opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+														func.addOperand(opd);
 													} else {
 														// delete all Operands so the function will be deleted in the
 														// method eleminateRedundantPhiFunc()
@@ -272,21 +309,30 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 														func.result.type = -1;
 														entrySet[j] = null;
 													}
-//													} else {
-//														func.addOperand(((SSANode) predecessors[i]).exitSet[j]);
-//													}
 												}
 											} else {
 												// entrySet[j].owner.ssaOpcode != sCPhiFunc
 												if (entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type) {
 													SSAValue result = new SSAValue();
+													SSAValue opd = entrySet[j];
 													result.index = j;
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
-													phi.addOperand(entrySet[j]);
 													phi.result.type = entrySet[j].type;
-													phi.addOperand(((SSANode) predecessors[i]).exitSet[j]);
+													int predNo = 0;
+													for(int k = 0; k < nofPredecessors; k++){
+														if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
+															predNo = k;
+															break;
+														}
+													}
+													assert predNo != -1 : "predecessor for entrySet not found";
+													opd = insertRegMoves((SSANode) predecessors[predNo], j, opd);//entrySet[j]
+													phi.addOperand(opd);
+													opd = ((SSANode) predecessors[i]).exitSet[j];
+													opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+													phi.addOperand(opd);
 													addPhiFunction(phi);
 													entrySet[j] = result;
 												} else {
@@ -2850,18 +2896,25 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	private void storeAndInsertRegMoves(int index) {
 		// create register moves in creating of SSA was wished by U.Graf
 		SSAValue value1 = popFromStack();
-		if (value1.index > -1 && value1.index != index) {
-			SSAValue r = new SSAValue();
-			r.type = value1.type;
-			r.index = index;
-			SSAInstruction move = new Monadic(sCregMove, value1);
-			move.result = r;
-			move.result.owner = move;
-			addInstruction(move);
-			exitSet[index] = r;
-		}else{
+		SSAValue value2 = insertRegMoves(this, index, value1);
+		if (value1 == value2) {
 			exitSet[index] = value1;
 			exitSet[index].index = index;
 		}
-	}	
+	}
+	
+	private SSAValue insertRegMoves(SSANode addTo, int index, SSAValue val){
+		if(val.index > -1 && val.index != index){
+			SSAValue r = new SSAValue();
+			r.type = val.type;
+			r.index = index;
+			SSAInstruction move = new Monadic(sCregMove, val);
+			move.result = r;
+			move.result.owner = move;
+			addTo.addInstruction(move);
+			addTo.exitSet[index] = r;
+			return r;			
+		}		
+		return val;
+	}
 }

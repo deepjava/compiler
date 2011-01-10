@@ -30,7 +30,6 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		determineParam();
 		sortNodes((SSANode)cfg.rootNode);
 		determineStateArray();
-		insertRegMoves();
 		renumberInstructions(cfg);
 	}
 
