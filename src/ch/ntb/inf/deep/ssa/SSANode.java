@@ -188,7 +188,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 										result.type = ((SSANode) predecessors[i]).exitSet[j].type;
 										SSAValue opd = ((SSANode) predecessors[i]).exitSet[j];
 										opd = insertRegMoves((SSANode) predecessors[i], j, opd);
-										phiFunctions[j].addOperand(opd);
+										phi.addOperand(opd);
 										addPhiFunction(phi);
 									}
 								} else {// entrySet[j] != null
