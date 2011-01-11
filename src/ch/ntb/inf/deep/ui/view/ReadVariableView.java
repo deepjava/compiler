@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.ui.view;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -26,7 +28,9 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.part.ViewPart;
+import org.osgi.service.prefs.BackingStoreException;
 
+import ch.ntb.inf.deep.DeepPlugin;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
@@ -35,6 +39,7 @@ import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.ui.model.ReadVariableElement;
+import ch.ntb.inf.deep.ui.view.TargetCMDView.MethodCall;
 
 public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.view.ReadVariableView";
@@ -45,6 +50,7 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 	private Action toDez;
 	private Action toDouble;
 	private Action read;
+	private IEclipsePreferences prefs;
 
 	static final byte slotSize = 4; // 4 bytes
 	static {
@@ -89,6 +95,7 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 
 	@Override
 	public void createPartControl(Composite parent) {
+		prefs = new InstanceScope().getNode(DeepPlugin.PLUGIN_ID);
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(1, false));
 
@@ -117,12 +124,20 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 		viewer.setCellModifier(new ReadVarCellModifier(viewer));
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
+		
+		String storedVariables = prefs.get("storedVars", "");
+		String[] vars = storedVariables.split(";");
+		
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
 		elements = new ReadVariableElement[32];
-		for (int i = 0; i < 32; i++) {
-			elements[i] = new ReadVariableElement();
+		for (int i = 0; i < vars.length; i++) {
+			elements[i] = new ReadVariableElement(vars[i]);
 		}
+		for (int i = vars.length; i < 32; i++) {
+			elements[i] = new ReadVariableElement("");
+		}
+
 		viewer.setInput(elements);
 
 		createActions();
@@ -296,8 +311,19 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 				element = ((Item) element).getData();
 
 			ReadVariableElement p = (ReadVariableElement) element;
-			if ("Variable to read".equals(property))
+			if ("Variable to read".equals(property)){
 				p.setFullQualifiedName((String) value);
+				StringBuffer sb = new StringBuffer();
+				for(int i = 0; i < elements.length; i++){
+					sb.append(elements[i].fullQualifiedName + ";");
+				}
+				prefs.put("storedVars", sb.toString());
+				try {
+					prefs.flush();
+				} catch (BackingStoreException e) {
+					e.printStackTrace();
+				}
+			}
 			else if ("Result".equals(property))
 				p.setResult(((Integer) value).intValue());
 
