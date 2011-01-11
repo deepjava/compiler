@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.ui.view;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -26,7 +28,9 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.part.ViewPart;
+import org.osgi.service.prefs.BackingStoreException;
 
+import ch.ntb.inf.deep.DeepPlugin;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
@@ -45,6 +49,7 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 	private MethodCall[] elements;
 	private Downloader bdi;
 	private Action send;
+	private IEclipsePreferences prefs;
 
 	
 
@@ -65,6 +70,8 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 
 	@Override
 	public void createPartControl(Composite parent) {
+		prefs = new InstanceScope().getNode(DeepPlugin.PLUGIN_ID);
+
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(1, false));
 
@@ -93,17 +100,26 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 		viewer.setCellModifier(new TargetCmdCellModifier(viewer));
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
+		
+		String storedCalles = prefs.get("storedCalls", "");
+		String[] calls = storedCalles.split(";");
+		
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
 		elements = new MethodCall[32];
-		for (int i = 0; i < 32; i++) {
+
+		for (int i = 0; i < calls.length; i++) {
+			elements[i] = new MethodCall(calls[i]);
+		}
+		for (int i = calls.length; i < 32; i++) {
 			elements[i] = new MethodCall("");
 		}
 		viewer.setInput(elements);
 
 		createActions();
-		hookContextMenu();
+		hookContextMenu();	
 	}
+	
 
 	@Override
 	public void setFocus() {
@@ -228,9 +244,19 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 				element = ((Item) element).getData();
 
 			
-			if ("Method to call".equals(property))
+			if ("Method to call".equals(property)){
 				((MethodCall)element).fullQualifiedName = (String) value;
-			
+				StringBuffer sb = new StringBuffer();
+				for(int i = 0; i < elements.length; i++){
+					sb.append(elements[i].fullQualifiedName + ";");
+				}
+				prefs.put("storedCalls", sb.toString());
+				try {
+					prefs.flush();
+				} catch (BackingStoreException e) {
+					e.printStackTrace();
+				}
+			}
 			// Force the viewer to refresh
 			viewer.refresh();
 		}
