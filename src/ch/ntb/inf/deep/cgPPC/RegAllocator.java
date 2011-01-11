@@ -355,8 +355,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					res.reg = joinVal.reg;	
 			} else if (instr.ssaOpcode == sCloadConst) {
 				// check if operand is immediate
-// call.item.accAndPropFlags & sysMethCodeMask) == idGET2
-				SSAInstruction instr1 = res.owner;
+				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {
 					if (((instr1.ssaOpcode == sCadd) && (res.type == tInteger || res.type == tLong))
