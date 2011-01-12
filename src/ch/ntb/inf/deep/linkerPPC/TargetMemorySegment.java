@@ -18,26 +18,8 @@ public class TargetMemorySegment {
 		this.startAddress = startAddress;
 		this.data = data;
 	}
-
-/*	public void addData(int[] data, int length) {
-		if (data != null && usedSize + length <= this.data.length) {
-			for (int i = 0; i < length; i++) {
-				this.data[usedSize + i] = data[i];
-			}
-			this.usedSize += length;
-		}
-		else {
-			System.out.println("++++++++++ NO DATA ADDED ++++++++++");
-			if(data == null) System.out.println("    data is null!");
-			if(data.length == 0) System.out.println("    param: data.length is 0!");
-			System.out.println("    this.usedSize = " + usedSize);
-			System.out.println("    this.data.length = " + this.data.length);
-			System.out.println("    param: length = " + length);
-		}
-	}*/
 	
-	
-	public void addData(int addr, int[] d) {
+	public void addData(int addr, int[] d, int length) {
 		if(d != null && d.length > 0 && addr >= this.startAddress && addr + d.length * 4 <= this.startAddress + this.data.length * 4) {
 			for(int i = 0; i < d.length; i++) {
 				this.data[(addr - this.startAddress) / 4 + i] = d[i];
@@ -65,6 +47,10 @@ public class TargetMemorySegment {
 			}
 			
 		}
+	}
+	
+	public void addData(int addr, int[] d) {
+		addData(addr, d, d.length);
 	}
 	
 /*	public void addData(int[] data) {

@@ -1,7 +1,6 @@
 package ch.ntb.inf.deep.linkerPPC;
 
 import java.io.PrintStream;
-
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.StdConstant;
@@ -17,7 +16,6 @@ import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
-
 
 public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
 	static final byte slotSize = 4; // 4 bytes
@@ -66,7 +64,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					}
 					else if(cpe instanceof StringLiteral) { // string literal -> string pool
 						size = roundUpToNextWord(((StringLiteral)cpe).string.sizeInByte()); // use the size of the string not of the reference!
-						//c2 = getCorrectOffset(c2, size);
 						cpe.index = c2;// save index
 						c2 += stringHeaderSize + size; // prepare counter for next round
 					}
@@ -103,25 +100,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(size < 8) size = 1; // use one byte even if the size is smaller (e.g. for a boolean)
 				else size /= 8; // convert from bits to bytes
 				
-				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field
-//					if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
-//						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble] ) { // float or double -> constant pool
-//							c1 = getCorrectOffset(c1, size);
-//							field.index = c1; // save index
-//							c1 += size; // prepare counter for next round
-//						}
-//						else if(field.type == Type.wellKnownTypes[txString] ) {	// string literal -> string pool 
-//							c2 = getCorrectOffset(c2, size);
-//							field.index = c2;// save index
-//							size = ((StringLiteral)field).string.sizeInByte(); // use the size of the string not of the reference!
-//							c2 += stringHeaderSize + roundUpToNextWord(size); // prepare counter for next round
-//						}
-//						// constant static fields which are not float, double or string literals doesn't need any offset or index
-//					}
-//					else { // non constant field
-					
-					// constant field doesn't get an id or an offset!
-					
+				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field					
 					if((field.accAndPropFlags & (1 << dpfConst)) == 0) { // non constant field
 						c3 = getCorrectOffset(c3, size);
 						field.offset = c3;// save offset
@@ -179,15 +158,15 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(dbg) vrb.println("     <none>");
 		}
 		
-		vrb.println("\n[LINKER] END: calculating offsets and indexes for class \"" + clazz.name +"\"\n");
+		if(dbg) vrb.println("\n[LINKER] END: calculating offsets and indexes for class \"" + clazz.name +"\"\n");
 	}
 	
 	public static void calculateRequiredSize(Class clazz) {
 		
-		vrb.println("[LINKER] START: Calculating required size for class \"" + clazz.name +"\":\n");
+		if(dbg) vrb.println("[LINKER] START: Calculating required size for class \"" + clazz.name +"\":\n");
 		
 		// machine code size
-		vrb.print("  1) Code:");
+		if(dbg) vrb.print("  1) Code:");
 		Method m = (Method)clazz.methods;
 		int codeSize = 0;
 		while(m != null) {
@@ -199,16 +178,16 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				else { // offset given by configuration
 					if(codeSize < m.machineCode.iCount * 4 + m.offset) codeSize = m.machineCode.iCount * 4 + m.offset;
 				}
-				vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
+				if(dbg) vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
 			}
 			m = (Method)m.next;
 		}
 		clazz.machineCodeSize = codeSize;
-		vrb.println("    Total code size: " + codeSize + " byte");
+		if(dbg) vrb.println("    Total code size: " + codeSize + " byte");
 		
 		// size of class fields --> already set while calculating offsets
 		
-		vrb.print("  2) Constant block: ");
+		if(dbg) vrb.print("  2) Constant block: ");
 		// constant block size
 		clazz.classDescriptorSize = (clazz.nOfInstanceMethods + clazz.nOfInterfaces + clazz.nOfBaseClasses + 3) * 4;
 		clazz.constantBlockSize = 4 // constBlockSize field
@@ -224,9 +203,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 								+ clazz.stringPoolSize // size of the string pool already set while calculating offsets
 								+ 4; // Checksum field
 		
-		vrb.println(clazz.constantBlockSize + " byte");
+		if(dbg) vrb.println(clazz.constantBlockSize + " byte");
 		
-		vrb.println("\n[LINKER] END: Calculating required size for class \"" + clazz.name +"\"\n");
+		if(dbg) vrb.println("\n[LINKER] END: Calculating required size for class \"" + clazz.name +"\"\n");
 	}
 	
 	public static void freezeMemoryMap() {
@@ -240,7 +219,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if( item instanceof Class){
 				Class c = (Class)item;
 				s = Configuration.getCodeSegmentOf(c.name);
-				if(s == null) reporter.error(550, "Can't get a memory segment for the code of class " + c.name + "!\n");
+				if(s == null) reporter.error(731, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
 					c.codeOffset = s.getRequiredSize();
@@ -250,7 +229,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				
 				// Var
 				s = Configuration.getVarSegmentOf(c.name);
-				if(s == null) reporter.error(551, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
+				if(s == null) reporter.error(731, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
 					c.varOffset = s.getRequiredSize();
@@ -260,7 +239,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				
 				// Const
 				s = Configuration.getConstSegmentOf(c.name);
-				if(s == null) reporter.error(552, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
+				if(s == null) reporter.error(731, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
 					c.constOffset = s.getRequiredSize();
@@ -278,7 +257,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				sysTabs[i].addToRequiredSize(systemTableSize * 4); 
 			}
 		}
-		else reporter.error(9445, "Error: no Systemtable defined!"); // TODO @Martin: set correct error number
+		else reporter.error(731, "Can't get a memory segment for the systemtable!");
 	
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
@@ -613,7 +592,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(m != null) {
 					if(m.machineCode != null) {
 						vrb.println("         > Method \"" + m.name + "\":");
-						clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions);
+						clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);
 						addTargetMemorySegment(clazz.codeSegment.tms);
 					}
 					m = (Method)m.next;
