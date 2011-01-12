@@ -84,42 +84,6 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 	}
 	
-	// Inserts register moves for phi functions in case that opnd and 
-	// result of phi function have different index
-	private void insertRegMoves() {
-		SSANode b = (SSANode) cfg.rootNode;
-		while (b != null) {
-			for (int i = 0; i < b.nofPhiFunc; i++) {
-				PhiFunction phi = b.phiFunctions[i];
-				if (!phi.deleted) {
-					SSAValue[] opds = phi.getOperands();
-					SSAValue res = phi.result;
-					boolean insert = false;
-					for (int k = 0; k < opds.length; k++) {
-						if (res.index != opds[k].index && opds[k].index >= 0) insert = true;
-					}
-					if (insert) {
-						SSAValue[] newOpds = new SSAValue[opds.length];
-						for (int k = 0; k < opds.length; k++) {
-							System.out.println("\t move at " + opds[k].n + "inserted");
-							SSANode n = (SSANode)b.predecessors[k];
-							SSAValue r = new SSAValue();
-							r.type = opds[k].type;
-							r.index = res.index;
-							SSAInstruction move = new Monadic(sCregMove, opds[k]);
-							move.result = r;
-							n.addInstruction(move);
-							n.exitSet[r.index] = r;
-							newOpds[k] = r;
-						}
-						phi.setOperands(newOpds);
-					}
-				}
-			}
-			b = (SSANode) b.next;
-		}	
-	}
-
 	public SSANode[] getNodes(){
 		SSANode current = (SSANode) this.cfg.rootNode;
 		SSANode[] nodes = new SSANode[this.getNofNodes()];
