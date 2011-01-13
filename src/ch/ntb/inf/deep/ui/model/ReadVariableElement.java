@@ -9,13 +9,13 @@ public class ReadVariableElement {
 	 */
 	public int representation;
 	
-	public ReadVariableElement(){
-		fullQualifiedName = "";
+	public ReadVariableElement(String fullQualifiedName){
+		this.fullQualifiedName = fullQualifiedName;
 		result = 0;
 		isReaded = false;
 		representation = 1;
 	}
-	
+		
 	public void setResult(int result){
 		this.result = result;		
 	}
