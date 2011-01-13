@@ -26,13 +26,14 @@ public class T01SimpleMethods {
         a = 1 + 2;
         a = b; 
         a = a + b;
+        b = a + 1;
     }
     
     public static void simple3() {
         int x = 1;
         int y = 2;
         x = x + y;
-        y = x + x;        
+        y = x + y;        
     }
 
     public static void simple4() {
@@ -63,6 +64,12 @@ public class T01SimpleMethods {
         a = -1;
         a = 0x2233445566778899L;
         a = 0x9988776655443322L;
+    }
+    
+    public static void simple6() {
+        float a = 1.5f;
+        double b = 2.5;
+        String c = "abc";
     }
 
 }

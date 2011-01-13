@@ -17,7 +17,7 @@ public class cgPPC03 extends TestCgPPC {
 	public static void setUp() {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T03Switch" };
-		Configuration.parseAndCreateConfig("C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam");
+		Configuration.parseAndCreateConfig(config[0], config[1]);
 		try {
 			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},Configuration.getSystemPrimitives(), (1 << atxCode)
 					| (1 << atxLocalVariableTable)
@@ -134,12 +134,12 @@ public class cgPPC03 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("fsub  fr1, fr0, fr1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mulli  r2, r2, 2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("xoris  r0, r2, 0x8000"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("mulli  r3, r2, 2"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("xoris  r0, r3, 0x8000"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 21"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r3, r3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lfd  fr1, 32(r3)"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 21"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r2, r2, 0"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("lfd  fr1, 32(r2)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lfd  fr0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("fsub  fr1, fr0, fr1"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("frsp  fr1, fr1"), code[i++]);

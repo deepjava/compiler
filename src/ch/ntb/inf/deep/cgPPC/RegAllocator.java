@@ -140,7 +140,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (instrs[opd.n].ssaOpcode != sCPhiFunc)	// opd is regular SSA instruction
 						if (opd.join == null) {
 							opd.join = res;	// opd now points to phi function
-							res.type = opd.type;
+//							res.type = opd.type;
 						} else {	//opd already points to other phi function
 							SSAValue val = opd;
 							while (val.join != null) val = val.join;
@@ -313,11 +313,19 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (nofAuxReg == 4 && res.type == tLong) nofAuxReg = 2;
 			else if ((nofAuxReg == 5 && res.type == tLong)
 					|| (nofAuxReg == 6 && (res.type == tFloat)||(res.type == tDouble))) nofAuxReg = 1;
+			else if (nofAuxReg == 7) {
+				if (res.type == tFloat && res.type == tFloat) nofAuxReg = 1;
+				else nofAuxReg = 0;
+			}
 			if (nofAuxReg == 1)
 				res.regAux1 = reserveReg(gpr, false);
 			else if (nofAuxReg == 2) {
 				res.regAux1 = reserveReg(gpr, false);
 				res.regAux2 = reserveReg(gpr, false);
+			}
+			if (dbg) {
+				if (res.regAux1 != -1) System.out.print("\tauxReg1 = " + res.regAux1);
+				if (res.regAux2 != -1) System.out.print("\tauxReg2 = " + res.regAux2);
 			}
 			
 			// reserve temporary storage on the stack for certain fpr operations
@@ -355,6 +363,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					res.reg = joinVal.reg;	
 			} else if (instr.ssaOpcode == sCloadConst) {
 				// check if operand is immediate
+// call.item.accAndPropFlags & sysMethCodeMask) == idGET2
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {

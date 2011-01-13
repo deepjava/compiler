@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.cgPPC;
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.ssa.TestSSA;
 import ch.ntb.inf.deep.strings.HString;
@@ -10,21 +11,17 @@ import ch.ntb.inf.deep.strings.HString;
 public class TestCgPPC implements ICclassFileConsts {
 
 	static MachineCode[] code;
+	static String[] config = new String[] {"C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
 
-    /**
-	 * Creates code for all methods of a class
-	 * 
-	 * @param clazz
-	 *            Java class object
-	 */
 	public static void createCgPPC(Class clazz) {
 		Linker.calculateOffsets(clazz);
 		TestSSA.createSSA(clazz);
 		code = new MachineCode[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
 			code[i] = new MachineCode(TestSSA.ssa[i]);
-//			code[i].print();
-//			System.out.println();
+			TestSSA.ssa[i].print(0);
+			code[i].print();
+			System.out.println();
 		}
 	}
 

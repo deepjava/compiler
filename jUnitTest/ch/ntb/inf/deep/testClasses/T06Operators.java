@@ -3,7 +3,7 @@ package ch.ntb.inf.deep.testClasses;
 
 public class T06Operators {
 
-	public static boolean ConditionalOperator1() {
+	public static boolean conditionalOperator1() {
 		// example, where operand stack is not empty at end of node
 		int mark;
 		boolean bRes;
@@ -16,7 +16,7 @@ public class T06Operators {
 		return bRes;
 	}
 	
-	public static boolean ConditionalOperator2() {
+	public static boolean conditionalOperator2() {
 		int mark;
 		boolean bRes = false;
 		boolean a = false, b = true, c = false;
@@ -30,11 +30,10 @@ public class T06Operators {
 		return (mark > iRes) && bRes;
 	}
 
-	public static byte m3(short a, char b, long c, byte d) {
-		int x = a << 6;
-		x = a << 33;
-		x = a << b;
-		return (byte)(x << d);
+	public static boolean conditionalOperator3() {
+		boolean bRes = false; boolean a = false, b = true;
+		bRes = a && bRes ? a != b : bRes;
+		return bRes;
 	}
 
 }

@@ -33,8 +33,8 @@ public class CFG06 extends TestCFG implements ICclassFileConsts {
 	}
 
 	@Test
-	public void ConditionalOperator1() {
-		CFGNode[] nodes = getAndTestNodes("ConditionalOperator1", 11);
+	public void conditionalOperator1() {
+		CFGNode[] nodes = getAndTestNodes("conditionalOperator1", 11);
 		testNode(nodes[0], 0, 11, false, null, new int[] {}, new int[] {14,18});
 		testNode(nodes[1], 14, 15, false, nodes[0], new int[] {0}, new int[] {20});
 		testNode(nodes[2], 18, 18, false, nodes[0], new int[] {0}, new int[] {20});
@@ -49,8 +49,8 @@ public class CFG06 extends TestCFG implements ICclassFileConsts {
 	}
 
 	@Test
-	public void ConditionalOperator2() {
-		CFGNode[] nodes = getAndTestNodes("ConditionalOperator2", 14);
+	public void conditionalOperator2() {
+		CFGNode[] nodes = getAndTestNodes("conditionalOperator2", 14);
 		testNode(nodes[0], 0, 25, false, null, new int[] {}, new int[] {28,33});
 		testNode(nodes[1], 28, 30, false, nodes[0], new int[] {0}, new int[] {35});
 		testNode(nodes[2], 33, 33, false, nodes[0], new int[] {0}, new int[] {35});
