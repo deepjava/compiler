@@ -168,7 +168,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// all other predecessors --> merge
 						for (int j = 0; j < maxStack + maxLocals; j++) {
 							// if both null, do nothing
-							if (entrySet[j] != null	|| ((SSANode) predecessors[i]).exitSet[j] != null) {
+							if ((entrySet[j] != null && entrySet[j].type != SSAValue.tVoid)	|| (((SSANode) predecessors[i]).exitSet[j] != null && ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tVoid)){
 								if (entrySet[j] == null) {// predecessor is set
 									if (ssa.isParam[j]) {
 										// create phi function
@@ -2755,17 +2755,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 			}
 			if (redundant) {
-				// if the Phifunc has no parameter so delete it real
+				// if the Phifunc has no parameter or it has only itself as paramter so delete it real 
 				if (phiFunctions[i].nofOperands > 0) {
-					if (!phiFunctions[i].deleted) {
-						// delete it virtually an set the operand for
-						// replacement
-						phiFunctions[i].deleted = true;
-						phiFunctions[i].setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
-						nofDeletedPhiFunc++;
+						if (!phiFunctions[i].deleted) {
+							// delete it virtually an set the operand for replacement
+							phiFunctions[i].deleted = true;
+							phiFunctions[i].setOperands(new SSAValue[] { tempOperands[indexOfDiff] });
+							nofDeletedPhiFunc++;
+						}
+						temp[count++] = phiFunctions[i];
 					}
-					temp[count++] = phiFunctions[i];
-				}
 			} else {
 				temp[count++] = phiFunctions[i];
 			}
