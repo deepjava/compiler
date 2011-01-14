@@ -91,8 +91,24 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// if true --> generate phi functions for all locals
 				// if we have redundant phi functions, we eliminate it later
 				if (!traversed) {
-					// first visit --> insert phi function 
-					entrySet = new SSAValue[maxStack + maxLocals];
+					// first visit --> insert phi function   
+
+					// swap on the index 0 a predecessor thats already processed
+					for (int i = 0; i < nofPredecessors; i++) {
+						if (((SSANode) predecessors[i]).exitSet != null) {
+							SSANode temp = (SSANode) predecessors[i];
+							predecessors[i] = predecessors[0];
+							predecessors[0] = temp;
+						}
+					}
+
+					if (((SSANode) predecessors[0]).exitSet == null) {
+						// if this ist the root node and this is a loopheader
+						// from case while(true){..}
+						entrySet = new SSAValue[maxStack + maxLocals];
+					} else {
+						entrySet = ((SSANode) predecessors[0]).exitSet.clone();
+					}
 
 					for (int i = 0; i < maxStack + maxLocals; i++) {
 						SSAValue result = new SSAValue();
@@ -100,26 +116,28 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
 						result.owner = phi;
 						phi.result = result;
+						if (entrySet[i] != null) {
+							phi.result.type = entrySet[i].type;
+							SSAValue opd = entrySet[i];
+							opd = insertRegMoves((SSANode) predecessors[0], i, opd);
+							phi.addOperand(opd);
+						}
 						addPhiFunction(phi);
-						
 						// Stack will be set when it is necessary;
-						if (i >= maxStack ) {
+						if (i >= maxStack || entrySet[i] != null) {
 							entrySet[i] = result;
 						}
 					}
 				} else {
-					for (int i = 0; i < nofPredecessors; i++) {
+					// skip the first already processed predecessor
+					for (int i = 1; i < nofPredecessors; i++) {
 						for (int j = 0; j < maxStack + maxLocals; j++) {
+
 							SSAValue param = ((SSANode) predecessors[i]).exitSet[j];
 							SSAValue temp = param; // store
-							
-							//Stack is not null so set it in the entrySet
-							if(j < maxStack && param != null){
-								entrySet[j] = phiFunctions[j].result;
-							}
-							
+
 							// Check if it need a loadParam instruction
-							if (ssa.isParam[j]&& (phiFunctions[j].nofOperands == 0 && param == null)) {
+							if (ssa.isParam[j]&& (phiFunctions[j].nofOperands == 0 || param == null)) {
 								param = generateLoadParameter((SSANode) idom, j, ssa);
 							}
 							if (temp != null && temp != param) {

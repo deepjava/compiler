@@ -67,6 +67,9 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			if (rootNode.isLoopHeader()) {
 				// mark loop headers for traverse a second time
 				loopHeaders[nofLoopheaders++] = rootNode;
+
+				if(rootNode.idom != null) sortNodes((SSANode)rootNode.idom);
+				
 				sortedNodes[nofSortedNodes++] = rootNode;
 			} else {
 				for (int i = 0; i < rootNode.nofPredecessors; i++) {
