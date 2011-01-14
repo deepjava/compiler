@@ -20,8 +20,15 @@ public class TargetMemorySegment {
 	}
 	
 	public void addData(int addr, int[] d, int length) {
-		if(d != null && d.length > 0 && addr >= this.startAddress && addr + d.length * 4 <= this.startAddress + this.data.length * 4) {
-			for(int i = 0; i < d.length; i++) {
+		System.out.println("DBG: addr = " + addr + ", d.length = " + d.length + ", length = " + length);
+		if(d != null && 
+				d.length > 0 && 
+				length > 0 && 
+				length <= d.length && 
+				addr >= this.startAddress && 
+				addr + length * 4 <= this.startAddress + this.data.length * 4) {
+			
+			for(int i = 0; i < length; i++) {
 				this.data[(addr - this.startAddress) / 4 + i] = d[i];
 			}
 		}
@@ -30,21 +37,14 @@ public class TargetMemorySegment {
 			System.out.println("            > Cound not add the data to the target memory segment.");
 			System.out.print("            > The error was: ");
 			if(d == null) System.out.println("the given data array (d) was null!");
-			else if(d.length <= 0) System.out.println("he array length (of d) was zero!");
-			else if(addr < this.startAddress || addr + d.length * 4 > this.startAddress + this.data.length * 4) {
-				System.out.println("out of range!");
-				System.out.println("              Start address of tms: 0x" + Integer.toHexString(this.startAddress));
-				System.out.println("              End address of tms: 0x" + Integer.toHexString((this.startAddress + this.data.length * 4)));
-				System.out.println("              Address for inserting data: 0x" + Integer.toHexString(addr));
-				System.out.println("              Size of the data to insert: " + d.length * 4 + " byte (0x" + Integer.toHexString(d.length * 4) + " byte)");
-			}
-			else {
-				System.out.println("<unknown>");
-				System.out.println("              Start address of tms: 0x" + Integer.toHexString(this.startAddress));
-				System.out.println("              End address of tms: 0x" + Integer.toHexString((this.startAddress + this.data.length * 4)));
-				System.out.println("              Address for inserting data: 0x" + Integer.toHexString(addr));
-				System.out.println("              Size of the data to insert: " + d.length * 4 + " byte (0x" + Integer.toHexString(d.length * 4) + " byte)");
-			}
+			else if(d.length <= 0 || length <= 0) System.out.println("the array length or the given length was zero!");
+			else if(addr < this.startAddress || addr + length * 4 > this.startAddress + this.data.length * 4) System.out.println("out of range!");
+			else if(length > d.length) System.out.println("length > d.length");
+			else System.out.println("<unknown>");
+			System.out.println("              Start address of tms: 0x" + Integer.toHexString(this.startAddress));
+			System.out.println("              End address of tms: 0x" + Integer.toHexString((this.startAddress + this.data.length * 4)));
+			System.out.println("              Address for inserting data: 0x" + Integer.toHexString(addr));
+			System.out.println("              Size of the data to insert: " + d.length * 4 + " byte (0x" + Integer.toHexString(d.length * 4) + " byte)");
 			
 		}
 	}
