@@ -367,9 +367,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {
-					if (((instr1.ssaOpcode == sCadd) && (res.type == tInteger || res.type == tLong))
-							|| ((instr1.ssaOpcode == sCsub) && (res.type == tInteger || res.type == tLong))
-							|| ((instr1.ssaOpcode == sCmul) && (res.type == tInteger ))
+					if (((instr1.ssaOpcode == sCadd) && ((res.type & 0x7fffffff) == tInteger || res.type == tLong))
+							|| ((instr1.ssaOpcode == sCsub) && ((res.type & 0x7fffffff) == tInteger || res.type == tLong))
+							|| ((instr1.ssaOpcode == sCmul) && ((res.type & 0x7fffffff) == tInteger ))
 							|| (instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)
@@ -382,7 +382,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTGPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTFPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((((Call)instr1).item.accAndPropFlags & sysMethCodeMask) == MachineCode.idPUTSPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCbranch) && (res.type == tInteger ))) {
+							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger ))) {
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
 							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);

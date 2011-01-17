@@ -146,7 +146,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 					i++;
 					ch = descriptor.charAt(i);
 				}
-				paramType[index++] = decodeFieldType(ch)+10;//+10 is for Arrays
+				paramType[index++] = (decodeFieldType(ch) & 0x7fffffff) + 10;//+10 is for Arrays
 				
 			}else{				
 				paramType[index] = decodeFieldType(ch);
@@ -170,10 +170,10 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		int type;;
 		switch(character){
 		case 'B':
-			type = SSAValue.tByte;
+			type = SSAValue.tByte | (1 <<SSAValue.ssaTaFitIntoInt);
 			break;
 		case 'C':
-			type = SSAValue.tChar;
+			type = SSAValue.tChar | (1 <<SSAValue.ssaTaFitIntoInt);
 			break;
 		case 'D':
 			type = SSAValue.tDouble;
@@ -182,7 +182,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			type = SSAValue.tFloat;
 			break;
 		case 'I':
-			type = SSAValue.tInteger;
+			type = SSAValue.tInteger | (1 <<SSAValue.ssaTaFitIntoInt);
 			break;
 		case 'J':
 			type = SSAValue.tLong;
@@ -191,10 +191,10 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			type = SSAValue.tRef;
 			break;
 		case 'S':
-			type = SSAValue.tShort;
+			type = SSAValue.tShort | (1 <<SSAValue.ssaTaFitIntoInt);
 			break;
 		case 'Z':
-			type = SSAValue.tBoolean;
+			type = SSAValue.tBoolean | (1 <<SSAValue.ssaTaFitIntoInt);
 			break;
 		default:
 			type = SSAValue.tVoid;

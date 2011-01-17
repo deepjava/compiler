@@ -27,14 +27,14 @@ public class SSAValue implements SSAValueType {
 	}
 	
 	public String typeName(){
-		return svNames[type];
+		return svNames[type & 0x7fffffff];
 	}
 	
 	@Override
 	public String toString(){
-		String r = svNames[type];
+		String r = svNames[type & 0x7fffffff];
 		
-		switch(type){
+		switch(type & 0x7fffffff){
 		case tVoid://void
 			r = n + " (" + r + ")";
 			break;

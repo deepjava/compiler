@@ -8,6 +8,10 @@ public interface SSAValueType {
 	tAchar = 15, tAfloat = 16, tAdouble = 17, tAbyte = 18,
 	tAshort = 19, tAinteger = 20, tAlong = 21;
 	
+	public static byte //attributes of types
+	ssaTaFitIntoInt = 31;
+	
+	
 	public static String[] svNames = {
 		
 		"Void",
