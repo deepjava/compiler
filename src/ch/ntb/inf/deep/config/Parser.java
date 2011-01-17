@@ -83,7 +83,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	protected static ArrayList<HString> locForImportedFiles = new ArrayList<HString>();
 	protected static ArrayList<Long> checksum = new ArrayList<Long>();
 	protected static HString loc;
-	private static HString libPath;
+	private static HString libPaths;
 
 	private BufferedReader configFile;
 	private ArrayList<HString> importList;
@@ -837,8 +837,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				if (f.exists()) {
 					parseImport(loc, toCmp);
 				} else {
-					if (libPath != null) {
-						parseImport(libPath, toCmp);
+					if (libPaths != null) {
+						parseImport(libPaths, toCmp);
 					} else {
 						toImport.add(toCmp);
 					}
@@ -1660,7 +1660,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				proj.setRootClasses(classes);
 			} else if (sym == sLibPath) {
 				proj.setLibPath(libPathAssignment());
-				libPath = proj.getLibPath();
+				libPaths = proj.getLibPaths();
 			} else if (sym == sDebugLevel) {
 				proj.setDebugLevel(debugLevelAssignment());
 			} else if (sym == sPrintLevel) {
@@ -1674,7 +1674,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ symToString() + " ");
 			return;
 		}
-		if (proj.getRootClasses() == null || proj.getLibPath() == null) {
+		if (proj.getRootClasses() == null || proj.getLibPaths() == null) {
 			nOfErrors++;
 			reporter.error(	errMissingTag,"in "	+ currentFile
 									+ " \"project\" tags \"rootclasses and libpath\" must be defined");
@@ -1706,7 +1706,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				}
 			}
 			if (!contains && reporter.nofErrors <= 0) {
-				parseImport(libPath, toCmp);
+				parseImport(libPaths, toCmp);
 			}
 		}
 		// reset toImport after traversing
@@ -2666,6 +2666,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 	private HString libPathAssignment() {
 		HString s = HString.getHString("");
+		HString tempList = null;
+		HString current = null;
 		if (sym != sLibPath) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
@@ -2682,12 +2684,21 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ symToString() + " ");
 			return s;
 		}
-		next();
-		String str = readString();
-		if (str.length() > 0 && str.charAt(str.length() - 1) != '/') {
-			str = str + '/';
-		}
-		s = HString.getHString(str);
+		String str;
+		do {
+			next();
+			str = readString();
+			if (str.length() > 0 && str.charAt(str.length() - 1) != '/') {
+				str = str + '/';
+			}
+			if (tempList == null) {
+				tempList = HString.getHString(str);
+				current = tempList;
+			} else {
+				current.next = HString.getHString(str);
+				current = current.next;
+			}
+		} while (sym == sComma);
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
@@ -2697,7 +2708,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return s;
 		}
 		next();
-		return s;
+		return tempList;
 	}
 
 	private int debugLevelAssignment() {
@@ -2819,7 +2830,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		nOfErrors = 0;
 		chBuffer = 0;
 		intNumber = 0;
-		libPath = null;
+		libPaths = null;
 		importedFiles = new ArrayList<HString>();
 		locForImportedFiles = new ArrayList<HString>();
 		toImport = new ArrayList<HString>();

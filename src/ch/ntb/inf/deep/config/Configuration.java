@@ -150,8 +150,22 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 
 	public static String[] getSearchPaths() {
-		return new String[] { location + "bin/",
-				project.getLibPath().toString() + "bin/" };
+		int count = 0;
+		HString libPaths = project.getLibPaths();
+		HString current = libPaths;
+		// count
+		while (current != null) {
+			count++;
+			current = current.next;
+		}
+
+		String[] paths = new String[count + 1];
+		paths[0] = location + "bin/";
+		for (int i = 1; i <= count; i++) {
+			paths[i] = libPaths.toString() + "bin/";
+			libPaths = libPaths.next;
+		}
+		return paths;
 	}
 
 	/**

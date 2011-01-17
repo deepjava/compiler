@@ -38,7 +38,7 @@ public class Project {
 		return rootClasses;
 	}
 
-	public HString getLibPath() {
+	public HString getLibPaths() {
 		return libPath;
 	}
 
