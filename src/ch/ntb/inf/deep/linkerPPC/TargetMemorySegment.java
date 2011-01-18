@@ -19,8 +19,9 @@ public class TargetMemorySegment {
 		this.data = data;
 	}
 	
+	// TODO @Martin: add return value (boolean)
 	public void addData(int addr, int[] d, int length) {
-		System.out.println("DBG: addr = " + addr + ", d.length = " + d.length + ", length = " + length);
+	//	System.out.println("DBG: addr = " + addr + ", d.length = " + d.length + ", length = " + length);
 		if(d != null && 
 				d.length > 0 && 
 				length > 0 && 
@@ -32,7 +33,7 @@ public class TargetMemorySegment {
 				this.data[(addr - this.startAddress) / 4 + i] = d[i];
 			}
 		}
-		else {
+		else { // TODO @Martin: remove all debung outputs!
 			System.out.println("          ++++++++++ ERROR ++++++++++");
 			System.out.println("            > Cound not add the data to the target memory segment.");
 			System.out.print("            > The error was: ");
@@ -52,10 +53,6 @@ public class TargetMemorySegment {
 	public void addData(int addr, int[] d) {
 		addData(addr, d, d.length);
 	}
-	
-/*	public void addData(int[] data) {
-		addData(data, data.length);
-	}*/
 	
 	public String toString() {
 		StringBuffer sb = new StringBuffer("Target Memory Segment:\n  Base Address: 0x" + Integer.toHexString(startAddress) + "\n  Size: " + data.length * 4 + " byte\n  Content:\n");

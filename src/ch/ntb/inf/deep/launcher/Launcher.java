@@ -40,26 +40,26 @@ public class Launcher implements ICclassFileConsts {
 			// 3) Loop One
 			Item item = Type.classList;
 			Method method;
-			while (item != null && reporter.nofErrors <= 0) {
-				if( item instanceof Class){
+			while(item != null && reporter.nofErrors <= 0) {
+				if(item instanceof Class){
 					Class clazz = (Class)item;
 					System.out.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
 					
 					// 3.1) Linker: calculate offsets
-					if (reporter.nofErrors <= 0) Linker.calculateOffsets(clazz);
+					if(reporter.nofErrors <= 0) Linker.calculateOffsets(clazz);
 	
-					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+					if((clazz.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
 						method = (Method) clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
 							System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 							// 3.2) Create CFG
-							if (reporter.nofErrors <= 0) method.cfg = new CFG(method);
+							if(reporter.nofErrors <= 0) method.cfg = new CFG(method);
 	
 							// 3.3) Create SSA
-							if (reporter.nofErrors <= 0) method.ssa = new SSA(method.cfg);
+							if(reporter.nofErrors <= 0) method.ssa = new SSA(method.cfg);
 	
 							// 3.4) Create machine code
-							if (reporter.nofErrors <= 0) method.machineCode = new MachineCode(method.ssa);
+							if(reporter.nofErrors <= 0) method.machineCode = new MachineCode(method.ssa);
 							
 							method = (Method) method.next;
 						}
@@ -90,7 +90,7 @@ public class Launcher implements ICclassFileConsts {
 					Class clazz = (Class)item;
 					Linker.createConstantBlock(clazz);
 	
-					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {
+					if((clazz.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
 						method = (Method) clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
 						//	System.out.println("### Method: " + method.name);
@@ -112,8 +112,6 @@ public class Launcher implements ICclassFileConsts {
 
 			// 6) Linker: Create system table
 			if (reporter.nofErrors <= 0) Linker.createSystemTable();
-			if (reporter.nofErrors <= 0) Linker.printClassList();
-			if (reporter.nofErrors <= 0) Linker.printSystemTable();
 
 			// 7) Linker: Create target image
 			if (reporter.nofErrors <= 0) Linker.generateTargetImage();

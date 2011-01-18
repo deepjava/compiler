@@ -71,8 +71,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(dbg) { // Output if debugging is enabled
 					vrb.println("     > Entry: " + cpe.name);
 					if(cpe.type != null) vrb.println("       Type: " + cpe.type.name); else vrb.println("       Type: unkown");
-					vrb.println("       Index: " + cpe.index);
-					vrb.println("       Offset: " + cpe.offset);
+					vrb.println("       Index: 0x" + Integer.toHexString(cpe.index));
+					vrb.println("       Offset: 0x" + Integer.toHexString(cpe.offset));
 				}
 			}
 			clazz.constantPoolSize = roundUpToNextWord(c1); // set the size of the constant pool of this class
@@ -119,8 +119,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					vrb.println("       AccAndPropFlags: 0x" + Integer.toHexString(field.accAndPropFlags));
 					if((field.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("       Static: yes"); else vrb.println("       Static: no");
 					if((field.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("       Constant: yes"); else vrb.println("       Constant: no");
-					vrb.println("       Index: " + field.index);
-					vrb.println("       Offset: " + field.offset);
+					vrb.println("       Index: 0x" + Integer.toHexString(field.index));
+					vrb.println("       Offset: 0x" + Integer.toHexString(field.offset));
 				}
 				
 				field = field.next;
@@ -148,8 +148,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					vrb.println("       AccAndPropFlags: 0x" + Integer.toHexString(method.accAndPropFlags));
 					if((method.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("       Static: yes"); else vrb.println("       Static: no");
 					if((method.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) vrb.println("       System primitive: yes"); else vrb.println("       System primitive: no");
-					vrb.println("       Index: " + method.index);
-					vrb.println("       Offset: " + method.offset);
+					vrb.println("       Index: 0x" + Integer.toHexString(method.index));
+					vrb.println("       Offset: 0x" + Integer.toHexString(method.offset));
 				}
 				method = (Method)method.next;
 			}
@@ -168,15 +168,15 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// machine code size
 		if(dbg) vrb.print("  1) Code:");
 		Method m = (Method)clazz.methods;
-		int codeSize = 0;
+		int codeSize = 0; // machine code size for the hole class
 		while(m != null) {
 			if(m.machineCode != null) {
-				if(m.offset <= 0) { // offset not given by configuration
+				if(m.offset < 0) { // offset not given by configuration
 					m.offset = codeSize;
 					codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
 				}
 				else { // offset given by configuration
-					if(codeSize < m.machineCode.iCount * 4 + m.offset) codeSize = m.machineCode.iCount * 4 + m.offset;
+					if(codeSize < m.machineCode.iCount * 4 + m.offset) codeSize = m.offset + m.machineCode.iCount * 4;
 				}
 				if(dbg) vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
 			}
@@ -280,31 +280,36 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void calculateAbsoluteAddresses(Class clazz) {
-		vrb.println("\n[LINKER] START: Calculating absolute addresses for class \"" + clazz.name +"\":\n");
+		if(dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for class \"" + clazz.name +"\":\n");
 		
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
+		int stringPoolBase = clazz.constSegment.getBaseAddress() + (7 + clazz.nOfReferences) * 4 + clazz.classDescriptorSize;
+		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		
 		// Class/static fields
 		if(clazz.nOfClassFields > 0) {
 			Item field = clazz.fields;
-			vrb.println("  Static fields:");
+			if(dbg) vrb.println("  Static fields:");
 			while(field != null) {
 				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field
 					if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
-						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) { // constant pool if float or double
+						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) { // float or double -> constant pool
 							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
 						}
-						else if(field.type == Type.wellKnownTypes[txString]) { // string pool
+						else if(field.type == Type.wellKnownTypes[txString]) { // literal string -> string pool
 							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + field.index;
+						}
+						else if(((Type)field.type).category == tcRef) { // reference but not literal string
+							if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 						}
 					}
 					else { // non constant field -> var section
 						if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 						else reporter.error(9999, "varBase of class " + clazz.name + " not set or offset of field " + field.name + " not set!");
-						vrb.print("    > " + field.name + ": Offset = " + field.offset + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 					}
 				}
+				if(dbg) vrb.print("    > " + field.name + ": Offset = 0x" + Integer.toHexString(field.offset) + ", Index = 0x" + Integer.toHexString(field.index) + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 				field = field.next;
 			}
 		}
@@ -312,14 +317,34 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// Methods
 		if(clazz.nOfMethods > 0) {
 			Method method = (Method)clazz.methods;
-			vrb.println("  Methods:");
+			if(dbg) vrb.println("  Methods:");
 			while(method != null) {
 				if(codeBase != -1 && method.offset != -1) method.address = codeBase + method.offset;
-				vrb.print("    > " + method.name + ": Offset = " + method.offset + ", Address = 0x" + Integer.toHexString(method.address) + "\n");
+				if(dbg) vrb.print("    > " + method.name + ": Offset = 0x" + Integer.toHexString(method.offset) + ", Index = 0x" + Integer.toHexString(method.index) + ", Address = 0x" + Integer.toHexString(method.address) + "\n");
 				method = (Method)method.next;
 			}
 		}
 		
+		// Constants
+		if(clazz.constPool != null && clazz.constPool.length > 0) {
+			Item cpe;
+			if(dbg) vrb.println("  Constant pool:");
+			for(int i = 0; i < clazz.constPool.length; i++) {
+				cpe = clazz.constPool[i];
+				if(cpe instanceof StdConstant && (cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble])) { // constant float or double value -> constant pool
+					if(cpe.index != -1) cpe.address = constPoolBase + cpe.index;
+					else reporter.error(9999, "Index of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
+				}
+				else if(cpe instanceof StringLiteral) { // string literal -> string pool
+					if(cpe.index != -1) cpe.address = stringPoolBase + cpe.index;
+					else reporter.error(9999, "Index of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
+				}
+				if(dbg) {
+					if(cpe.type != null) vrb.print("    > #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
+					else vrb.print("    > #" + i + ": Type = <unknown>, Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
+				}
+			}
+		}
 		
 		// Class descriptor
 		clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4 * (6 + clazz.nOfReferences + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 2);
