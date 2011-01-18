@@ -47,38 +47,38 @@ CFG of method forWhile
 SSA for Method: forWhile
    SSANode 0:
       EntrySet {[ , ], [ , , ]}
-         0: NoOpnd[sCloadConst] 0 (Integer),   end=15, index=2, reg=4, join={8}
-         1: NoOpnd[sCloadLocal] (Ref),   end=13, index=0, reg=2, join={6}
-         2: NoOpnd[sCloadLocal] (Integer),   end=14, index=1, reg=3, join={7}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=4
+         1: NoOpnd[sCloadLocal] (Ref),   end=0, index=2
+         2: NoOpnd[sCloadLocal] (Integer),   end=0, index=3
          3: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ 1 (Ref), 2 (Integer), 0 (Integer) ]}
 
    SSANode 1:
       EntrySet {[ , ], [ Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
-         4: NoOpnd[sCloadConst] -1 (Integer),   end=5
-         5: Dyadic[sCadd] {7, 4} (Integer),   end=7, index=1, reg=3, join={7}
+         4: NoOpnd[sCloadConst] -1 (Integer),   end=0
+         5: Dyadic[sCadd] {7, 4} (Integer),   end=0, index=3
       ExitSet {[ , ], [ Phi-Function(6), 5 (Integer), Phi-Function(8) ]}
 
    SSANode 2:
       EntrySet {[ , ], [ Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
-         6: PhiFunction[sCPhiFunc] {13} (Phi-Function),   start=1, end=13, index=0, reg=2 deleted
-         7: PhiFunction[sCPhiFunc] {14, 5} (Phi-Function),   start=2, end=17, index=1, reg=3
-         8: PhiFunction[sCPhiFunc] {15} (Phi-Function),   start=0, end=16, index=2, reg=4 deleted
-         9: NoOpnd[sCloadConst] 4 (Integer),   end=10
+         6: PhiFunction[sCPhiFunc] {13} (Phi-Function),   start=0, end=0, index=2 deleted
+         7: PhiFunction[sCPhiFunc] {5} (Phi-Function),   start=0, end=0, index=3 deleted
+         8: PhiFunction[sCPhiFunc] {15} (Phi-Function),   start=0, end=0, index=4 deleted
+         9: NoOpnd[sCloadConst] 4 (Integer),   end=0
          10: Branch[sCBranch] {9, 7} (Void)
       ExitSet {[ , ], [ Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
 
    SSANode 3:
       EntrySet {[ , ], [ Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
-         11: NoOpnd[sCloadConst] 1 (Integer),   end=12
-         12: Dyadic[sCadd] {8, 11} (Integer),   end=15, index=2, reg=4, join={8}
+         11: NoOpnd[sCloadConst] 1 (Integer),   end=0
+         12: Dyadic[sCadd] {8, 11} (Integer),   end=0, index=4
       ExitSet {[ , ], [ Phi-Function(6), Phi-Function(7), 12 (Integer) ]}
 
    SSANode 4:
       EntrySet {[ , ], [ Phi-Function(13), Phi-Function(14), Phi-Function(15) ]}
-         13: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=13, end=13, index=0, reg=2, join={6} deleted
-         14: PhiFunction[sCPhiFunc] {2} (Phi-Function),   start=14, end=17, index=1, reg=3, join={7} deleted
-         15: PhiFunction[sCPhiFunc] {0, 12} (Phi-Function),   start=15, end=16, index=2, reg=4, join={8}
+         13: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=0, end=0, index=2 deleted
+         14: PhiFunction[sCPhiFunc] {2} (Phi-Function),   start=0, end=0, index=3 deleted
+         15: PhiFunction[sCPhiFunc] {0, 12} (Phi-Function),   start=0, end=0, index=4
          16: Branch[sCBranch] {14, 15} (Void)
       ExitSet {[ , ], [ Phi-Function(13), Phi-Function(14), Phi-Function(15) ]}
 

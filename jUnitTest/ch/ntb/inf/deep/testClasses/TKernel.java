@@ -1,7 +1,5 @@
 package ch.ntb.inf.deep.testClasses;
 
-import ch.ntb.inf.deep.testClasses.ntbMpc555HB;
-
 public class TKernel implements ntbMpc555HB {
 
 	public static void blink(int nTimes) { 

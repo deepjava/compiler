@@ -9,120 +9,68 @@
 		int c = 2 + a;
 	}
 
-	"private void while3()"
-	//nofStackSlots=2, nofLocalSlots=4, codeLen=44
-	{
-		  0 bipush 10
-		  2 istore_1 [a]
-		  3 goto 9
-		  6 iinc a, 1
-		  9 iload_1 [a]
-		 10 bipush 15
-		 12 if_icmplt 6
-		 15 bipush 20
-		 17 istore_2 [b]
-		 18 goto 25
-		 21 iload_2 [b]
-		 22 iconst_1
-		 23 iadd
-		 24 istore_3 [c]
-		 25 iload_2 [b]
-		 26 bipush 10
-		 28 if_icmpgt 21
-		 31 iload_1 [a]
-		 32 iload_2 [b]
-		 33 if_icmpge 39
-		 36 iinc a, 10
-		 39 iconst_2
-		 40 iload_1 [a]
-		 41 iadd
-		 42 istore_3 [c]
-		 43 return
 
 SSA for Method: while3
    SSANode 0:
       EntrySet {[ , ], [ , , , ]}
-         0: NoOpnd[sCloadConst] 10 (Integer),   end=0, index=3, reg=3, join={6}
-         1: NoOpnd[sCloadLocal] (Ref),   end=1, index=2, reg=2
+         0: NoOpnd[sCloadConst] 10 (Integer),   end=26, index=3, reg=3, join={6}
+         1: NoOpnd[sCloadLocal] (Ref),   end=5, index=2, reg=2
          2: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ 1 (Ref), 0 (Integer), , ]}
 
    SSANode 1:
       EntrySet {[ , ], [ Phi-Function(5), Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
          3: NoOpnd[sCloadConst] 1 (Integer),   end=4
-         4: Dyadic[sCadd] {6, 3} (Integer),   end=10, index=3, reg=3, join={6}
+         4: Dyadic[sCadd] {6, 3} (Integer),   end=6, index=3, reg=3, join={6}
       ExitSet {[ , ], [ Phi-Function(5), 4 (Integer), Phi-Function(7), Phi-Function(8) ]}
 
-   SSANode 2:  loop header
+   SSANode 2:
       EntrySet {[ , ], [ Phi-Function(5), Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
-         5: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=5, end=10, index=2, vol, last=10 del
-         6: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   start=0, end=26, index=3, vol, reg=3, last=10
-         7: PhiFunction[sCPhiFunc] {7} (Phi-Function),   start=7, end=10, index=4, vol, last=10 del
-         8: PhiFunction[sCPhiFunc] {8} (Phi-Function),   start=8, end=10, index=5, vol, last=10 del
+         5: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=0, end=15, index=2, reg=2 deleted
+         6: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   start=0, end=26, index=3, reg=3
+         7: PhiFunction[sCPhiFunc] {7} (Phi-Function),   start=0, end=7, index=4, reg=4 deleted
+         8: PhiFunction[sCPhiFunc] {8} (Phi-Function),   start=0, end=8, index=5, reg=4 deleted
          9: NoOpnd[sCloadConst] 15 (Integer),   end=10
          10: Branch[sCBranch] {9, 6} (Void)
       ExitSet {[ , ], [ Phi-Function(5), Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
 
    SSANode 3:
       EntrySet {[ , ], [ Phi-Function(5), Phi-Function(6), Phi-Function(7), Phi-Function(8) ]}
-         11: NoOpnd[sCloadConst] 20 (Integer),   end=11, index=4, reg=2, join={17}
+         11: NoOpnd[sCloadConst] 20 (Integer),   end=20, index=4, reg=4
          12: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ Phi-Function(5), Phi-Function(6), 11 (Integer), Phi-Function(8) ]}
 
    SSANode 4:
       EntrySet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
          13: NoOpnd[sCloadConst] 1 (Integer),   end=14
-         14: Dyadic[sCadd] {17, 13} (Integer),   end=20, index=5, reg=4
+         14: Dyadic[sCadd] {11, 13} (Integer),   end=18, index=5, reg=5
       ExitSet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), 14 (Integer) ]}
 
-   SSANode 5:  loop header
+   SSANode 5:
       EntrySet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
-         15: PhiFunction[sCPhiFunc] {5} (Phi-Function),   start=15, end=20, index=2, vol, last=20 del
-         16: PhiFunction[sCPhiFunc] {6} (Phi-Function),   start=16, end=20, index=3, vol, reg=3, join={6}, last=20 del u
-         17: PhiFunction[sCPhiFunc] {11} (Phi-Function),   start=11, end=21, index=4, vol, reg=2, last=20 del u
-         18: PhiFunction[sCPhiFunc] {14} (Phi-Function),   start=18, end=20, index=5, vol, last=20 del
+         15: PhiFunction[sCPhiFunc] {5} (Phi-Function),   start=0, end=15, index=2, reg=2 deleted
+         16: PhiFunction[sCPhiFunc] {6} (Phi-Function),   start=0, end=16, index=3, reg=2 deleted
+         17: PhiFunction[sCPhiFunc] {11} (Phi-Function),   start=0, end=21, index=4, reg=2 deleted
+         18: PhiFunction[sCPhiFunc] {14} (Phi-Function),   start=0, end=18, index=5, reg=5 deleted
          19: NoOpnd[sCloadConst] 10 (Integer),   end=20
-         20: Branch[sCBranch] {19, 17} (Void)
+         20: Branch[sCBranch] {19, 11} (Void)
       ExitSet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
 
    SSANode 6:
       EntrySet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
-         21: Branch[sCBranch] {17, 16} (Void)
+         21: Branch[sCBranch] {17, 0} (Void)
       ExitSet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
 
    SSANode 7:
       EntrySet {[ , ], [ Phi-Function(15), Phi-Function(16), Phi-Function(17), Phi-Function(18) ]}
          22: NoOpnd[sCloadConst] 10 (Integer),   end=23
-         23: Dyadic[sCadd] {16, 22} (Integer),   end=23, index=3, reg=3, join={6}
+         23: Dyadic[sCadd] {0, 22} (Integer),   end=24, index=3, reg=2
       ExitSet {[ , ], [ Phi-Function(15), 23 (Integer), Phi-Function(17), Phi-Function(18) ]}
 
    SSANode 8:
       EntrySet {[ , ], [ Phi-Function(15), Phi-Function(24), Phi-Function(17), Phi-Function(18) ]}
-         24: PhiFunction[sCPhiFunc] {16, 23} (Phi-Function),   start=24, end=24, index=3, vol, reg=3, join={6}
+         24: PhiFunction[sCPhiFunc] {23} (Phi-Function),   start=0, end=24, index=3, reg=2 deleted
          25: NoOpnd[sCloadConst] 2 (Integer),   end=26
-         26: Dyadic[sCadd] {25, 24} (Integer),   end=26, index=5, reg=2
+         26: Dyadic[sCadd] {25, 0} (Integer),   end=26, index=5, reg=2
          27: Branch[sCreturn]  (Void)
       ExitSet {[ , ], [ Phi-Function(15), Phi-Function(24), Phi-Function(17), 26 (Integer) ]}
-
-Code for Method: while3
-	9421fff0	[0x0]	stwu  r1, -16(r1)
-	7c0802a6	[0x4]	mfspr  r0, LR
-	9001000c	[0x8]	stw  r0, 12(r1)
-	3860000a	[0xc]	li  r3, 10
-	48000008	[0x10]	b  8, [0x18]
-	38630001	[0x14]	addi  r3, r3, 1
-	2c03000f	[0x18]	cmpi  crf0, 0, r3, 15
-	4180fff8	[0x1c]	bc  iftrue, CRF0[LT], -8, [0x14]
-	38400014	[0x20]	li  r2, 20
-	48000008	[0x24]	b  8, [0x2c]
-	38820001	[0x28]	addi  r4, r2, 1
-	2c02000a	[0x2c]	cmpi  crf0, 0, r2, 10
-	4181fff8	[0x30]	bc  iftrue, CRF0[GT], -8, [0x28]
-	7c031000	[0x34]	cmp crf0, 0, r3, r2
-	40800008	[0x38]	bc  iffalse, CRF0[LT], 8, [0x40]
-	3863000a	[0x3c]	addi  r3, r3, 10
-	38430002	[0x40]	addi  r2, r3, 2
-	8001000c	[0x44]	lwz  r0, 12(r1)
-	7c0803a6	[0x48]	mtspr  LR, r0
-	38210010	[0x4c]	addi  r1, r1, 16
-	4e800020	[0x50]	bclr always, CRF0[LT]
