@@ -28,6 +28,7 @@ import ch.ntb.inf.deep.strings.HString;
  */
 public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		SSAInstructionOpcs, ICdescAndTypeConsts {
+	private static boolean dbg = false;
 	boolean traversed;
 	public int nofInstr;
 	public int nofPhiFunc;
@@ -376,11 +377,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		boolean wide = false;
 		exitSet = entrySet.clone();// Don't change the entry set
 		// determine top of the stack
-		for (stackpointer = maxStack - 1; stackpointer >= 0
-				&& exitSet[stackpointer] == null; stackpointer--)
-			;
-
+		for (stackpointer = maxStack - 1; stackpointer >= 0	&& exitSet[stackpointer] == null; stackpointer--);
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
+			if(dbg)System.out.println("BCA: " + bca + ", nofStackItems: " + (stackpointer + 1));
 			switch (ssa.cfg.code[bca] & 0xff) {
 			case bCnop:
 				break;
@@ -599,7 +598,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCldc:
 				bca++;
-				val = ssa.cfg.code[bca];
+				val = (ssa.cfg.code[bca] & 0xFF);
 				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
 					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
@@ -637,7 +636,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCldc_w:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | (ssa.cfg.code[bca] & 0xFF);
 				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
 					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
@@ -675,7 +674,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCldc2_w:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | (ssa.cfg.code[bca] & 0xFF);
 				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
 					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
@@ -1668,16 +1667,25 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				if (wide) {
 					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get
 					// index
-					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]);// get
 					// const
 					wide = false;
 				} else {
-					val = ssa.cfg.code[bca++];// get index
+					val = ssa.cfg.code[bca++] & 0xFF;// get index
 					val1 = ssa.cfg.code[bca];// get const
 				}
-
-				load(val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
-				value1 = popFromStack();
+				if(exitSet[maxStack + val] == null){
+					value1 = new SSAValue();
+					value1.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
+					value1.index = val + maxStack;
+					SSAInstruction loadInstr = new NoOpnd(sCloadLocal);
+					loadInstr.result = value1;
+					loadInstr.result.owner = loadInstr;
+					addInstruction(loadInstr);
+				}else{					
+					value1 = exitSet[maxStack + val];
+				}
+//				load(val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 
 				value2 = new SSAValue();
 				value2.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
@@ -2075,7 +2083,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCgetstatic:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				// determine the type of the field
 				if (!(ssa.cfg.method.owner.constPool[val] instanceof DataItem)) {
@@ -2155,7 +2163,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCputstatic:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				value1 = popFromStack();
@@ -2173,7 +2181,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCgetfield:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				// determine the type of the field
 				field = (DataItem) ssa.cfg.method.owner.constPool[val];
@@ -2258,7 +2266,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCputfield:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				value2 = popFromStack();
@@ -2278,7 +2286,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCinvokevirtual:
 				bca++;
 				// index into cp
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				// cp entry must be a MethodItem
 				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1 + 1];// objectref + nargs
@@ -2301,7 +2309,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCinvokespecial:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				// cp entry must be a MethodItem
 				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1 + 1];// objectref + nargs
@@ -2325,7 +2333,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCinvokestatic:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				// cp entry must be a MethodItem
 				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
 				operands = new SSAValue[val1];// nargs
@@ -2348,7 +2356,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCinvokeinterface:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				bca = bca + 2;// step over count and zero byte
 				// cp entry must be a MethodItem
 				val1 = ((Method) ssa.cfg.method.owner.constPool[val]).nofParams;
@@ -2372,7 +2380,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCnew:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				// value1 = new SSAValue();
 				result = new SSAValue();
 				Item type = null;
@@ -2415,7 +2423,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCanewarray:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				result.type = SSAValue.tAref;
 				value1 = popFromStack();
@@ -2458,7 +2466,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCcheckcast:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				value1 = popFromStack();
 				result = value1;
 				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
@@ -2475,7 +2483,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCinstanceof:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
@@ -2503,8 +2511,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCmultianewarray:
 				bca++;
-				val = (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
-				val1 = ssa.cfg.code[bca];
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
+				val1 = ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				result.type = SSAValue.tAref;
 				operands = new SSAValue[val1];
