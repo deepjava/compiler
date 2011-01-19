@@ -102,10 +102,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		assert nofParam <= maxNofParam : "method has too many parameters";
 		
 		if (dbg) System.out.println("build intervals for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
-//		ssa.cfg.printToLog();
-		ssa.print(0);
+//		if(dbg) ssa.cfg.printToLog();
+		if(dbg) ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
-//		ssa.print(0);
+//		if(dbg) ssa.print(0);
 		
 		if(dbg) System.out.println("assign registers to parameters, nofParam = " + nofParam);
 		SSANode b = (SSANode) ssa.cfg.rootNode;
@@ -252,7 +252,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				}
 				nofParamGPR++;
 			}
-			if (i < nofParam - 1) System.out.print(", ");
+			if (i < nofParam - 1) if(dbg) System.out.print(", ");
 		}
 		if(dbg) System.out.println("]");
 	}
@@ -502,9 +502,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrSrAd(ppcStfd, sReg1, refReg, offset);
 					break;
 				default:
-//					System.out.println(instr.toString());
-//					System.out.println(instr.result.n);
-					System.out.println(type);
+//					if(dbg) System.out.println(instr.toString());
+//					if(dbg) System.out.println(instr.result.n);
+					if(dbg) System.out.println(type);
 					assert false : "cg: wrong type";
 				}
 				break;	// sCstoreToField
@@ -1788,22 +1788,24 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 //		System.out.println("Method uses " + nofNonVolGPR + " GPR and " + nofNonVolFPR + " FPR for locals where " + nofParamGPR + " GPR and " + nofParamFPR + " FPR are for parameters");
 //		System.out.println();
 		
-		System.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
+		if(dbg) System.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 		
 		for (int i = 0; i < iCount; i++){
-			System.out.print("\t" + Integer.toHexString(instructions[i]));
-			System.out.print("\t[0x");
-			System.out.print(Integer.toHexString(i*4));
-			System.out.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+			if(dbg) {
+				System.out.print("\t" + Integer.toHexString(instructions[i]));
+				System.out.print("\t[0x");
+				System.out.print(Integer.toHexString(i*4));
+				System.out.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+			}
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
 			if (opcode == 0x10) {
 				int BD = (short)(instructions[i] & 0xFFFC);
-				System.out.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+				if(dbg) System.out.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
 			} else if (opcode == 0x12) {
 				int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-				System.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+				if(dbg) System.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
 			}
-			System.out.println();
+			if(dbg) System.out.println();
 			}
 	}
 
