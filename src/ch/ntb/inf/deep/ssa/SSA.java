@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFG;
+import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 
 /**
@@ -8,7 +9,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
  */
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
-	private static boolean dbg = true;
+	private static boolean dbg = false;
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
@@ -26,6 +27,15 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		
 		determineParam();
 		sortNodes((SSANode)cfg.rootNode);
+		
+		if(dbg){
+			System.out.print("Node order: ");
+			for(int i = 0; i < nofSortedNodes - 1; i++){
+				System.out.print("[" + sortedNodes[i].firstBCA + ":"+ sortedNodes[i].lastBCA + "], ");
+			}
+			System.out.println("[" + sortedNodes[nofSortedNodes-1].firstBCA + ":"+ sortedNodes[nofSortedNodes-1].lastBCA + "]");
+		}
+		
 		determineStateArray();
 		renumberInstructions(cfg);
 		if(dbg)print(0);
@@ -34,6 +44,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public void determineStateArray() {		
 		// visit all
 		for (int i = 0; i < nofSortedNodes; i++) {
+			if(dbg)System.out.println(((CFGNode)sortedNodes[i]).toString());
 			//reset traversed for next use
 			sortedNodes[i].traversed = false;
 			sortedNodes[i].mergeAndDetermineStateArray(this);
