@@ -23,7 +23,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	protected static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	protected static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
@@ -349,24 +349,25 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// Class descriptor
 		clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4 * (6 + clazz.nOfReferences + clazz.nOfInstanceMethods + clazz.nOfInterfaces + 2);
 		
-		vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
+		if(dbg) vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
 	}
 		
 	public static void createConstantBlock(Class clazz) {
 		
-		vrb.println("[LINKER] START: Creating constant block for class \"" + clazz.name +"\":\n");
+		if(dbg) vrb.println("[LINKER] START: Creating constant block for class \"" + clazz.name +"\":\n");
 		
 		clazz.constantBlock = new int[clazz.constantBlockSize/4];
 		
-		vrb.println("  Constant block size: " + clazz.constantBlockSize + " byte -> " + clazz.constantBlock.length);
-		vrb.println("    Constantblock header: 28 byte -> 7");
-		vrb.println("    Number of references: " + clazz.nOfReferences + " (" + clazz.nOfReferences * 4 + " byte)");
-		vrb.println("    Class descriptor size: " + clazz.classDescriptorSize + " byte -> " + clazz.classDescriptorSize / 4);
-		vrb.println("    String pool size: " + clazz.stringPoolSize + " byte -> " + clazz.stringPoolSize / 4);
-		vrb.println("    Constant pool size: " + clazz.constantPoolSize + " byte -> " + clazz.constantPoolSize / 4);
-		vrb.println("  Number of instance methods: " + clazz.nOfInstanceMethods);
-		vrb.println("  Number of interfaces: " + clazz.nOfInterfaces);
-		
+		if(dbg) {
+			vrb.println("  Constant block size: " + clazz.constantBlockSize + " byte -> " + clazz.constantBlock.length);
+			vrb.println("    Constantblock header: 28 byte -> 7");
+			vrb.println("    Number of references: " + clazz.nOfReferences + " (" + clazz.nOfReferences * 4 + " byte)");
+			vrb.println("    Class descriptor size: " + clazz.classDescriptorSize + " byte -> " + clazz.classDescriptorSize / 4);
+			vrb.println("    String pool size: " + clazz.stringPoolSize + " byte -> " + clazz.stringPoolSize / 4);
+			vrb.println("    Constant pool size: " + clazz.constantPoolSize + " byte -> " + clazz.constantPoolSize / 4);
+			vrb.println("  Number of instance methods: " + clazz.nOfInstanceMethods);
+			vrb.println("  Number of interfaces: " + clazz.nOfInterfaces);
+		}
 		
 		// 1) Insert Header
 		clazz.constantBlock[0] = clazz.constantBlockSize;								// constBlockSize
@@ -488,17 +489,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Item cpe;
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				cpe = clazz.constPool[i];
-				vrb.println(" ************ Proceeding const pool entry #" + i + " " + cpe.name + ":");
-				if(cpe.type != null) vrb.println("              - Type: " + cpe.type.name); else vrb.println("              - Type: <null>");
+				if(dbg) vrb.println(" ************ Proceeding const pool entry #" + i + " " + cpe.name + ":");
+				if(dbg) if(cpe.type != null) vrb.println("              - Type: " + cpe.type.name); else vrb.println("              - Type: <null>");
 				if((cpe.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("              - Constant: yes"); else vrb.println("              - Constant: no");
 				
 				index = cpe.index/4;
 				if(cpe.type == Type.wellKnownTypes[Type.txFloat] && (cpe.accAndPropFlags & (1 << dpfConst)) != 0 && cpe instanceof StdConstant) { // TODO @Martin: is this correct???
-					vrb.println(" ************ Inserting Float into CP: " + cpe.name);
+					if(dbg) vrb.println(" ************ Inserting Float into CP: " + cpe.name);
 					clazz.constantBlock[constantPoolOffset + index] = ((StdConstant)cpe).valueH;
 				}
 				else if(cpe.type == Type.wellKnownTypes[Type.txDouble]  && (cpe.accAndPropFlags & (1 << dpfConst)) != 0 && cpe instanceof StdConstant) { // TODO @Martin: is this correct???
-					vrb.println(" ************ Inserting Double into CP: " + cpe.name);
+					if(dbg) vrb.println(" ************ Inserting Double into CP: " + cpe.name);
 					clazz.constantBlock[constantPoolOffset + index] = ((StdConstant)cpe).valueH;
 					clazz.constantBlock[constantPoolOffset + index + 1] = ((StdConstant)cpe).valueL;
 				}
@@ -511,25 +512,25 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// print
 	//	clazz.printConstantBlock();
 		
-		vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
+		if(dbg) vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
 	}
 
 	public static void createSystemTable() {
 		
-		vrb.println("[LINKER] START: Creating systemtable:\n");
+		if(dbg) vrb.println("[LINKER] START: Creating systemtable:\n");
 		
 		int nOfStacks = Configuration.getNumberOfStacks();
 		int nOfHeaps = Configuration.getNumberOfHeaps();
 		
-		vrb.println("  Number of stacks: " + nOfStacks);
-		vrb.println("  Number of heaps: " + nOfHeaps);
-		vrb.println("  Number of classes: " + Type.nofClasses);
+		if(dbg) vrb.println("  Number of stacks: " + nOfStacks);
+		if(dbg) vrb.println("  Number of heaps: " + nOfHeaps);
+		if(dbg) vrb.println("  Number of classes: " + Type.nofClasses);
 		
 		
 		// create the systemtable
 		systemTable = new int[systemTableSize];
 		
-		vrb.println("  Size of the system table: " + systemTable.length * 4 + " byte  -> array size: " + systemTable.length);
+		if(dbg) vrb.println("  Size of the system table: " + systemTable.length * 4 + " byte  -> array size: " + systemTable.length);
 		
 		
 		// offset to the beginning of the class references
@@ -598,25 +599,25 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// End of system table -> should always be zero!
 		systemTable[systemTable.length - 1] = 0;
 		
-		vrb.println("[LINKER] END: Creating systemtable\n");
+		if(dbg) vrb.println("[LINKER] END: Creating systemtable\n");
 	}
 	
 	public static void generateTargetImage() {
 		
-		vrb.println("[LINKER] START: Generating target image:\n");
+		if(dbg) vrb.println("[LINKER] START: Generating target image:\n");
 		
 		Item item = Type.classList;
 		Method m;
 		while(item != null) {
 			if( item instanceof Class){
 				Class clazz = (Class)item;
-				vrb.println("  Proceeding class \"" + clazz.name + "\":");
+				if(dbg) vrb.println("  Proceeding class \"" + clazz.name + "\":");
 				// code
 				m = (Method)clazz.methods;
-				vrb.println("    1) Code:");
+				if(dbg) vrb.println("    1) Code:");
 				while(m != null) {
 					if(m.machineCode != null) {
-						vrb.println("         > Method \"" + m.name + "\":");
+						if(dbg) vrb.println("         > Method \"" + m.name + "\":");
 						clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);
 						addTargetMemorySegment(clazz.codeSegment.tms);
 					}
@@ -624,7 +625,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				}
 				
 				// consts
-				vrb.println("    2) Constantblock:");
+				if(dbg) vrb.println("    2) Constantblock:");
 				clazz.constSegment.tms.addData(clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock);
 				addTargetMemorySegment(clazz.constSegment.tms);
 			}
@@ -632,12 +633,12 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			item = item.next;
 		}
 
-		vrb.println("  Proceeding system table:");
+		if(dbg) vrb.println("  Proceeding system table:");
 		Segment[] s = Configuration.getSysTabSegments();
 		s[0].tms.addData(s[0].getBaseAddress(), systemTable);
 		addTargetMemorySegment(s[0].tms);
 		
-		vrb.println("[LINKER] END: Generating target image\n");
+		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
 	/* ---------- private helper methods ---------- */
