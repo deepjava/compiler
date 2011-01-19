@@ -1688,8 +1688,12 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				addr = 0;
 			else 
 				addr = fixups[currFixup].address;
-			if (dbg) System.out.print("\t fix item "); item.printName(); 
-			if (dbg) System.out.println(" at address = " + Integer.toHexString(addr));
+			if (dbg) { 
+				System.out.print("\t fix item ");
+				if(item == null) System.out.print("null"); 
+				else item.printName();
+				System.out.println(" at address = " + Integer.toHexString(addr));
+			}
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
 			if (!((low >> 15) == 0)) high++;
