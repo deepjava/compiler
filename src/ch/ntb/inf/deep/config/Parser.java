@@ -542,15 +542,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			default:
 				String s;
 				StringBuffer sb;
-				if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
-						|| ch == '_') {// Designator or Keyword
+				if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_' || ch == '<' || ch == '>') {// Designator or Keyword
 					sb = new StringBuffer();
 					do {
 						sb.append((char) ch);
 						ch = configFile.read();
 					} while ((ch >= 'a' && ch <= 'z')
 							|| (ch >= 'A' && ch <= 'Z')
-							|| (ch >= '0' && ch <= '9') || ch == '_');
+							|| (ch >= '0' && ch <= '9') || ch == '_' || ch == '<' || ch == '>');
 					chBuffer = ch;
 					s = sb.toString();
 					if (!isKeyword(s)) {
