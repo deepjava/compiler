@@ -6,34 +6,43 @@ meta {
 }
 
 operatingsystem {
-        kernel {
+		kernel {
         	class = "ch/ntb/inf/deep/runtime/mpc555/Kernel";
         }
+        
         exceptionbaseclass {
         	class = "ch/ntb/inf/deep/runtime/mpc555/PPCException";
         }
         
-
-       exception {
+		exception {
         	class = "ch/ntb/inf/deep/runtime/mpc555/Reset";
         	method reset {
         		attributes = exchnd;
 				offset = 0x100;
         	}
-        	
         	method <init> {
         		attributes = synthetic;
         	}
         }
         
-#        exception {
-#        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
-        	
-#			method systemCall {
-#        		attributes = exchnd;
-#        		offset = 0x200;
-#        	}
-#       }
+        exception {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/SystemCall";
+			method systemCall {
+        		attributes = exchnd;
+        		offset = 0x800;
+        	}
+         	method <init> {
+        		attributes = synthetic;
+        	}
+       }
+
+		exception {
+        	class = "ch/ntb/inf/deep/runtime/mpc555/Decrementer";
+        	method decrementer {
+        		attributes = exchnd;
+				offset = 0x900;
+        	}
+        }
         
         heap {
                 class = "ch/ntb/inf/deep/runtime/mpc555/Heap";
