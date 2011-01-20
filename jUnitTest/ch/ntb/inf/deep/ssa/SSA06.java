@@ -36,7 +36,7 @@ public class SSA06 extends TestSSA {
 	
 	@Test
 	public void testConditionalOperator1() {
-		SSANode[] nodes = getAndTestSSA("ConditionalOperator1", 11, 0);
+		SSANode[] nodes = getAndTestSSA("conditionalOperator1", 11, 0);
 		testNode(nodes[0], 5, 0, 6);
 		testNode(nodes[1], 1, 0, 6);
 		testNode(nodes[2], 0, 0, 6);
@@ -52,7 +52,7 @@ public class SSA06 extends TestSSA {
 	
 	@Test
 	public void testConditionalOperator2() {
-		SSANode[] nodes = getAndTestSSA("ConditionalOperator2", 14, 0);
+		SSANode[] nodes = getAndTestSSA("conditionalOperator2", 14, 0);
 		testNode(nodes[0], 9, 0, 11);
 		testNode(nodes[1], 1, 0, 11);
 		testNode(nodes[2], 0, 0, 11);
