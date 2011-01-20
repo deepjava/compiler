@@ -1978,12 +1978,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// default jump address
 				bca = bca + 4;
 				// we need the low and high
-				int low1 = (ssa.cfg.code[bca++] << 24)
-						| (ssa.cfg.code[bca++] << 16)
-						| (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
-				int high1 = (ssa.cfg.code[bca++] << 24)
-						| (ssa.cfg.code[bca++] << 16)
-						| (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				int low1 = (ssa.cfg.code[bca++] << 24) | (ssa.cfg.code[bca++] << 16) | (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				int high1 = (ssa.cfg.code[bca++] << 24)	| (ssa.cfg.code[bca++] << 16) | (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
 				int nofPair1 = high1 - low1 + 1;
 
 				// jump offsets
@@ -2511,7 +2507,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCmultianewarray:
 				bca++;
-				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
+				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
 				val1 = ssa.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				result.type = SSAValue.tAref;
