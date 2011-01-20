@@ -1,6 +1,8 @@
 package ch.ntb.inf.deep.linkerPPC;
 
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -298,8 +300,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
-		int stringPoolBase = clazz.constSegment.getBaseAddress() + (7 + clazz.nOfReferences) * 4 + clazz.classDescriptorSize;
+		int stringPoolBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + (7 + clazz.nOfReferences) * 4 + clazz.classDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
+		
+		if(dbg) {
+			vrb.println("  String pool base: " + Integer.toHexString(stringPoolBase));
+			vrb.println("  Const pool base: " + Integer.toHexString(constPoolBase));
+		}
 		
 		// Class/static fields
 		if(clazz.nOfClassFields > 0) {
@@ -670,10 +677,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
-	public static void writeTargetImageToFile(String timFileName) throws IOException {
-		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + timFileName +"\":\n");
+	public static void writeTargetImageToFile(String fileName) throws IOException {
+		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
-		FileOutputStream timFile = new FileOutputStream(timFileName); // TODO @Martin: use DataOutputStream!!!
+		FileOutputStream timFile = new FileOutputStream(fileName); // TODO @Martin: use DataOutputStream!!!
 			
 		timFile.write("#dtim-0\n".getBytes()); // Header (8 Byte)
 		
@@ -692,6 +699,36 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		timFile.close();
 		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+	}
+	
+	public static void writeCommandTableToFile(String fileName) throws IOException {
+		if(dbg) vrb.println("[LINKER] START: Writing command table to file: \"" + fileName +"\":\n");
+		
+        BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
+        out.write("#dtct-0\n\n");
+        
+        Class kernel = (Class)Type.classList.getItemByName(Configuration.getKernelClassname().toString());
+        
+     //   out.write("cmdAddr@" + );
+        
+        Class clazz = (Class)Type.classList;
+        Method method;
+        
+        while(clazz != null) {
+        	method = (Method)clazz.methods;
+        	
+        	
+        	
+        	while(method != null) {
+        		
+        		
+        		method = (Method)method.next;
+        	}
+        	
+        	clazz = (Class)clazz.next;
+        }
+	
+		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
 	}
 	
 	/* ---------- private helper methods ---------- */
