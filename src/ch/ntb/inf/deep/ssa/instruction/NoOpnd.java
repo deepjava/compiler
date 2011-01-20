@@ -45,7 +45,8 @@ public class NoOpnd extends SSAInstruction {
 				System.out.print(" (" + result.typeName() + ")");
 			} else {
 				StringLiteral str = (StringLiteral)result.constant;
-				if (str != null) System.out.print(str.string);
+				if (str != null) System.out.print("\"" + str.string + "\"");
+				else System.out.print("null");
 				System.out.print(" (" + result.typeName() + ")");
 			}
 		else
