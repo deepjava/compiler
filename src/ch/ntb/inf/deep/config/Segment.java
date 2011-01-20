@@ -15,7 +15,7 @@ public class Segment implements IAttributes {
 	int attributes = 0;
 	int baseAddress = -1;
 	int size = 0;
-	int requiredSize = 0;
+	int usedSize = 0;
 	int width = 0;
 	
 	public Segment(HString name){
@@ -121,20 +121,21 @@ public class Segment implements IAttributes {
 	}
 	
 	/**
-	 * Add Size to requiredSize.
+	 * Add Size to usedSize.
 	 * @param size
 	 */
-	public void addToRequiredSize(int size){
-		requiredSize += size;
+	public void addToUsedSize(int size){
+		usedSize += size;
 	}
 	
 	
 	/**
-	 * @return the required size of the Segement.
+	 * @return the used size of the segment.
 	 */
-	public int getRequiredSize(){
-		return requiredSize;
+	public int getUsedSize(){
+		return usedSize;
 	}
+	
 	public Segment getSubSegmentByName(HString name){
 		int segHash = name.hashCode();
 		Segment current = subSegments;
