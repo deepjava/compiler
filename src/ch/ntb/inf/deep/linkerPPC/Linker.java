@@ -726,33 +726,33 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
         tctFile.write(String.valueOf(cmdAddr));
         tctFile.write("\n\n");
         
-        Class clazz = (Class)Type.classList;
+        Item clazz = Type.classList;
         Method method;
         
         while(clazz != null) {
-        	method = (Method)clazz.methods;
-        	
-        	tctFile.write('>');
-        	tctFile.write(clazz.name.toString());
-        	tctFile.write('@');
-        	tctFile.write(String.valueOf(clazz.address));
-        	tctFile.write(" {\n");
-        	
-        	while(method != null) {
-        		if((method.accAndPropFlags & (1 << dpfCommand)) != 0) {
-	        		tctFile.write("\t!");
-	        		tctFile.write(method.name.toString());
-	        		tctFile.write('@');
-	        		tctFile.write(String.valueOf(method.address));
-	        		tctFile.write('\n');
-        		}
-        		method = (Method)method.next;
-        	}
-        	tctFile.write("}\n\n");
-        	
-        	clazz = (Class)clazz.next;
+        	if(clazz instanceof Class) {
+	        	method = (Method)((Class)clazz).methods;
+	        	
+	        	tctFile.write('>');
+	        	tctFile.write(clazz.name.toString());
+	        	tctFile.write('@');
+	        	tctFile.write(String.valueOf(clazz.address));
+	        	tctFile.write(" {\n");
+	        	
+	        	while(method != null) {
+	        		if((method.accAndPropFlags & (1 << dpfCommand)) != 0) {
+		        		tctFile.write("\t!");
+		        		tctFile.write(method.name.toString());
+		        		tctFile.write('@');
+		        		tctFile.write(String.valueOf(method.address));
+		        		tctFile.write('\n');
+	        		}
+	        		method = (Method)method.next;
+	        	}
+	        	tctFile.write("}\n\n");
+	        }
+        	clazz = clazz.next;
         }
-        
         tctFile.close();
 	
 		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
