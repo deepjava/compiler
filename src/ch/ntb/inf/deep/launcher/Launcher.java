@@ -166,9 +166,28 @@ public class Launcher implements ICclassFileConsts {
 		String timDirName = "tim";
 		File timDir = new File(timDirName);
 		if(!timDir.isDirectory()) {
-			
+			timDir.mkdir();
 		}
-		saveTargetImageToFile("2011-01-11-0747.dtim");
+		saveTargetImageToFile(timDirName + "/targetimage.dtim");
+	}
+	
+	public static void saveCommandTableToFile(String fileName) {
+		if (reporter.nofErrors <= 0){
+			try {
+				Linker.writeCommandTableToFile(fileName);
+			} catch (IOException e) { 
+				e.printStackTrace();
+			}
+		}
+		
 	}
 
+	public static void saveCommandTableToFile() {
+		String tctDirName = "tct";
+		File tctDir = new File(tctDirName);
+		if(!tctDir.isDirectory()) {
+			tctDir.mkdir();
+		}
+		saveCommandTableToFile(tctDirName + "/commandTable.dtct");
+	}
 }

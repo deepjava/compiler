@@ -8,6 +8,7 @@ import java.io.PrintStream;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
+import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
@@ -704,12 +705,26 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	public static void writeCommandTableToFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing command table to file: \"" + fileName +"\":\n");
 		
-        BufferedWriter out = new BufferedWriter(new FileWriter(fileName));
-        out.write("#dtct-0\n\n");
+        BufferedWriter tctFile = new BufferedWriter(new FileWriter(fileName));
+        tctFile.write("#dtct-0\n\n");
         
+        DataItem cmdAddrField;
+        int cmdAddr = -1;
         Class kernel = (Class)Type.classList.getItemByName(Configuration.getKernelClassname().toString());
+        if(kernel != null) {
+        	if(dbg) vrb.println("  Kernel: " + kernel.name);
+        	cmdAddrField = (DataItem)kernel.fields.getItemByName("cmdAddr");
+        	if(cmdAddrField != null) {
+        		if(dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
+        		cmdAddr = cmdAddrField.address;
+        	}
+        	else reporter.error(9999, "cmdAddrField is null"); // TODO set correct error number and message
+        }
+        else reporter.error(9999, "kernel is null"); // TODO set correct error number and message
         
-     //   out.write("cmdAddr@" + );
+        tctFile.write("cmdAddr@");
+        tctFile.write(String.valueOf(cmdAddr));
+        tctFile.write("\n\n");
         
         Class clazz = (Class)Type.classList;
         Method method;
@@ -717,16 +732,28 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
         while(clazz != null) {
         	method = (Method)clazz.methods;
         	
-        	
+        	tctFile.write('>');
+        	tctFile.write(clazz.name.toString());
+        	tctFile.write('@');
+        	tctFile.write(String.valueOf(clazz.address));
+        	tctFile.write(" {\n");
         	
         	while(method != null) {
-        		
-        		
+        		if((method.accAndPropFlags & (1 << dpfCommand)) != 0) {
+	        		tctFile.write("\t!");
+	        		tctFile.write(method.name.toString());
+	        		tctFile.write('@');
+	        		tctFile.write(String.valueOf(method.address));
+	        		tctFile.write('\n');
+        		}
         		method = (Method)method.next;
         	}
+        	tctFile.write("}\n\n");
         	
         	clazz = (Class)clazz.next;
         }
+        
+        tctFile.close();
 	
 		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
 	}
