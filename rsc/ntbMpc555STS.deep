@@ -20,6 +20,10 @@ operatingsystem {
         		attributes = exchnd;
 				offset = 0x100;
         	}
+        	
+        	method <init> {
+        		attributes = synthetic;
+        	}
         }
         
 #        exception {
