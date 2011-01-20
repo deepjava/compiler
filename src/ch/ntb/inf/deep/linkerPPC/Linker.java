@@ -333,7 +333,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Method method = (Method)clazz.methods;
 			if(dbg) vrb.println("  Methods:");
 			while(method != null) {
-				if((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {
+				if((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) { // TODO @Martin: Hack!!!
 					if(method.offset != -1) method.address = clazz.codeSegment.getBaseAddress() + method.offset;
 				//	else reporter.error(9999, "Error while calculating absolute address of fix set method " + method.name + ". Offset: " + method.offset + ", Segment: " + clazz.codeSegment.getName() + ", Base address of Segment: " + clazz.codeSegment.getBaseAddress());
 				}
@@ -642,7 +642,12 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(m != null) {
 					if(m.machineCode != null) {
 						if(dbg) vrb.println("         > Method \"" + m.name + "\":");
-						clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);
+						if((m.accAndPropFlags & (1 << dpfExcHnd)) != 0) { // TODO @Martin: Hack!!!
+							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + m.offset, m.machineCode.instructions, m.machineCode.iCount);
+						}
+						else {
+							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);							
+						}
 						addTargetMemorySegment(clazz.codeSegment.tms);
 					}
 					m = (Method)m.next;
