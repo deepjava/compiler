@@ -44,41 +44,41 @@ method intArray
 		predecessor: CFG-Node [18:21]	
 		successor: 
 
-SSA for Method: intArray
+SSA for Method: ch/ntb/inf/deep/testClasses/T07Arrays.intArray(I)I
    SSANode 0:
       EntrySet {[ , , , ], [ , , ]}
          0: NoOpnd[sCloadConst] 5 (Integer),   end=1, reg=2
-         1: Call[sCnew] {0} (Integer-Array),   5,   end=10, index=1, reg=2, join={10}
-         2: NoOpnd[sCloadConst] 0 (Integer),   end=11, index=2, reg=3, join={11}
-         3: NoOpnd[sCloadLocal] (Integer),   end=9, index=0, reg=31, join={9}
+         1: Call[sCnew] {0} (Integer-Array) ,   end=1, index=5, reg=3, join={10}
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=2, index=6, reg=2, join={11}
+         3: NoOpnd[sCloadLocal] (Integer),   end=3, index=4, reg=31, join={9}
          4: Branch[sCBranch]  (Void)
       ExitSet {[ , , , ], [ 3 (Integer), 1 (Integer-Array), 2 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
-         5: Dyadic[sCadd] {11, 9} (Integer),   end=6, reg=4
-         6: StoreToArray[sCstoreToArray] {10, 11, 5} (Void),   end=6
+      EntrySet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+         5: Dyadic[sCadd] {11, 9} (Integer),   end=13, reg=4
+         6: StoreToArray[sCstoreToArray] {10, 11, 5} (Void),   end=13
          7: NoOpnd[sCloadConst] 1 (Integer),   end=8
-         8: Dyadic[sCadd] {11, 7} (Integer),   end=11, index=2, reg=3, join={11}
-      ExitSet {[ , , , ], [ Phi-Function(9), Phi-Function(10), 8 (Integer) ]}
+         8: Dyadic[sCadd] {11, 7} (Integer),   end=13, index=6, reg=2, join={11}
+      ExitSet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 8 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
-         9: PhiFunction[sCPhiFunc] {3} (Phi-Function),   start=3, end=9, index=0, reg=31 deleted
-         10: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=1, end=15, index=1, reg=2 deleted
-         11: PhiFunction[sCPhiFunc] {2, 8} (Phi-Function),   start=2, end=13, index=2, reg=3
-         12: MonadicRef[sCalength] {10} (Integer),   end=13, reg=4
+      EntrySet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+         9: PhiFunction[sCPhiFunc] {3} (Integer),   start=3, end=13, index=4, vol, reg=31, last=13 del u
+         10: PhiFunction[sCPhiFunc] {1} (Integer-Array),   start=1, end=15, index=5, vol, reg=3, last=13 del u
+         11: PhiFunction[sCPhiFunc] {2, 8} (Integer),   start=2, end=13, index=6, vol, reg=2, last=13
+         12: MonadicRef[sCalength] {10} (Integer),   end=13, reg=5
          13: Branch[sCBranch] {12, 11} (Void)
-      ExitSet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+      ExitSet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
 
    SSANode 3:
-      EntrySet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
-         14: NoOpnd[sCloadConst] 2 (Integer),   end=15, reg=3
-         15: Dyadic[sCloadFromArray] {10, 14} (Integer),   end=16, reg=2
+      EntrySet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
+         14: NoOpnd[sCloadConst] 2 (Integer),   end=15, reg=2
+         15: Dyadic[sCloadFromArray] {10, 14} (Integer),   end=16, reg=7
          16: Branch[sCreturn] {15} (Void)
-      ExitSet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+      ExitSet {[ , , , ], [ 9 (Integer), 10 (Integer-Array), 11 (Integer) ]}
 
-Code for Method: intArray
+Code for Method: ch/ntb/inf/deep/testClasses/T07Arrays.intArray
 	9421ffe0	[0x0]	stwu  r1, -32(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001001c	[0x8]	stw  r0, 28(r1)
@@ -90,30 +90,32 @@ Code for Method: intArray
 	3c630000	[0x20]	addis  r3, r3, 0
 	7c6803a6	[0x24]	mtspr  LR, r3
 	3860000a	[0x28]	li  r3, 10
-	4e800020	[0x2c]	bclr always, CRF7[SO]
-	38600000	[0x30]	li  r3, 0
-	48000024	[0x34]	b  36, [0x58]	
-	7c83fa14	[0x38]	add  r4, r3, r31
-	c820000	[0x3c]	twi  ifequal, r2, 0
-	a8a20008	[0x40]	lha  r5, 8(r2)
-	7ca32808	[0x44]	tw  ifgeU, r3, r5
-	5465103a	[0x48]	rlwinm  r5, r3, 2, 0, 29
-	38c2000c	[0x4c]	addi  r6, r2, 12
-	7c85312e	[0x50]	stwx  r4, r5, r6
-	38630001	[0x54]	addi  r3, r3, 1
-	c820000	[0x58]	twi  ifequal, r2, 0
-	a8820008	[0x5c]	lha  r4, 8(r2)
-	7c032000	[0x60]	cmp crf0, 0, r3, r4
-	419fffd4	[0x64]	bc  iftrue, CRF0[LT], -44, [0x38]	
-	38600002	[0x68]	li  r3, 2
-	c820000	[0x6c]	twi  ifequal, r2, 0
-	a8820008	[0x70]	lha  r4, 8(r2)
-	7ca32008	[0x74]	tw  ifgeU, r3, r4
-	5464103a	[0x78]	rlwinm  r4, r3, 2, 0, 29
-	38a2000c	[0x7c]	addi  r5, r2, 12
-	7c44282e	[0x80]	lwzx  r2, r4, r5
-	bbe10010	[0x84]	lmw  r31, 16(r1)
-	8001001c	[0x88]	lwz  r0, 28(r1)
-	7c0803a6	[0x8c]	mtspr  LR, r0
-	38210020	[0x90]	addi  r1, r1, 32
-	4e800020	[0x94]	bclr always, CRF7[SO]
+	4e800021	[0x2c]	bclrl always, CRF0[LT]
+	7c431378	[0x30]	lr  r3, r2
+	38400000	[0x34]	li  r2, 0
+	48000024	[0x38]	b  36, [0x5c]	
+	7c82fa14	[0x3c]	add  r4, r2, r31
+	c830000	[0x40]	twi  ifequal, r3, 0
+	a8a3fffa	[0x44]	lha  r5, -6(r3)
+	7ca22808	[0x48]	tw  ifgeU, r2, r5
+	5445103a	[0x4c]	rlwinm  r5, r2, 2, 0, 29
+	38c30000	[0x50]	addi  r6, r3, 0
+	7c85312e	[0x54]	stwx  r4, r5, r6
+	38420001	[0x58]	addi  r2, r2, 1
+	c830000	[0x5c]	twi  ifequal, r3, 0
+	a8a3fffa	[0x60]	lha  r5, -6(r3)
+	7c022800	[0x64]	cmp crf0, 0, r2, r5
+	4180ffd4	[0x68]	bc  iftrue, CRF0[LT], -44, [0x3c]	
+	38400002	[0x6c]	li  r2, 2
+	c830000	[0x70]	twi  ifequal, r3, 0
+	a8a3fffa	[0x74]	lha  r5, -6(r3)
+	7ca22808	[0x78]	tw  ifgeU, r2, r5
+	5445103a	[0x7c]	rlwinm  r5, r2, 2, 0, 29
+	38c30000	[0x80]	addi  r6, r3, 0
+	7ce5302e	[0x84]	lwzx  r7, r5, r6
+	7ce23b78	[0x88]	lr  r2, r7
+	bbe10010	[0x8c]	lmw  r31, 16(r1)
+	8001001c	[0x90]	lwz  r0, 28(r1)
+	7c0803a6	[0x94]	mtspr  LR, r0
+	38210020	[0x98]	addi  r1, r1, 32
+	4e800020	[0x9c]	bclr always, CRF0[LT]

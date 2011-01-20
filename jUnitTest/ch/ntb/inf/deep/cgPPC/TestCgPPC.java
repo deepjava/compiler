@@ -11,7 +11,8 @@ import ch.ntb.inf.deep.strings.HString;
 public class TestCgPPC implements ICclassFileConsts {
 
 	static MachineCode[] code;
-	static String[] config = new String[] {"C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
+//	static String[] config = new String[] {"C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
+	static String[] config = new String[] {"M:/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
 
 	public static void createCgPPC(Class clazz) {
 		Linker.calculateOffsets(clazz);

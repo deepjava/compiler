@@ -69,7 +69,10 @@ public class T01SimpleMethods {
     public static void simple6() {
         float a = 1.5f;
         double b = 2.5;
+        b = ExampleInterface.d;
         String c = "abc";
+        Object d = null;
+        d = ExampleInterface.o;
     }
 
 }

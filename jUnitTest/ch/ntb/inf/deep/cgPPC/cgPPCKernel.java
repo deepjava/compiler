@@ -62,8 +62,8 @@ public class cgPPCKernel extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 16960"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r4, r4, 15"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mulli  r5, r2, 10000"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("subf  r4, r5, r4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmp  crf0, 0, r3, r4"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("subf  r6, r5, r4"), code[i++]);
+		assertEquals("wrong instruction", InstructionDecoder.getCode("cmp  crf0, 0, r3, r6"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -24"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
 		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
