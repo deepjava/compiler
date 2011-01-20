@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.launcher;
 
+import java.io.File;
 import java.io.IOException;
 
 import ch.ntb.inf.deep.cfg.CFG;
@@ -93,11 +94,6 @@ public class Launcher implements ICclassFileConsts {
 					if((clazz.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
 						method = (Method) clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
-						//	System.out.println("### Method: " + method.name);
-						//	System.out.println("### Method (via SSA): " + method.ssa.cfg.method.name);
-							System.out.println("### Method (via MachineCode): " + method.machineCode.ssa.cfg.method.name);
-						//	method.ssa.print(0);
-						//	method.machineCode.print();
 							
 							// 5.2) Code generator: fix up
 							method.machineCode.doFixups();
@@ -141,11 +137,23 @@ public class Launcher implements ICclassFileConsts {
 		}
 	}
 
-	public static void saveTargetImage2File(String file) {
-		// 8b) save target image to a file
+	public static void saveTargetImageToFile(String fileName) {
 		if (reporter.nofErrors <= 0){
+			try {
+				Linker.writeTargetImageToFile(fileName);
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void saveTargetImageToFile() {
+		String timDirName = "tim";
+		File timDir = new File(timDirName);
+		if(!timDir.isDirectory()) {
 			
 		}
+		saveTargetImageToFile("2011-01-11-0747.dtim");
 	}
 
 }
