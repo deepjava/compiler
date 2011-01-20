@@ -26,7 +26,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	protected static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	protected static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	public static int sizeInByte = 0;
 	public static int sLength = 0;
@@ -149,7 +149,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(dbg) {
 					vrb.println("     > Method: " + method.name);
 					vrb.println("       AccAndPropFlags: 0x" + Integer.toHexString(method.accAndPropFlags));
-					if((method.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("       Static: yes"); else vrb.println("       Static: no");
+					if((method.accAndPropFlags & (1 << dpfSysPrimitive)) != 0 || (method.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("       Static: yes"); else vrb.println("       Static: no");
 					if((method.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) vrb.println("       System primitive: yes"); else vrb.println("       System primitive: no");
 					vrb.println("       Index: 0x" + Integer.toHexString(method.index));
 					vrb.println("       Offset: 0x" + Integer.toHexString(method.offset));
@@ -212,6 +212,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void freezeMemoryMap() {
+		if(dbg) vrb.println("[LINKER] START: Freeze memory map:\n");
+		
 		systemTableSize = 8 + 2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses; // TODO @Martin this should'nt be here! Move it to a better place...
 		
 		// 1) Set a segment for the code, the static fields and the constant block for each class
@@ -222,12 +224,18 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if( item instanceof Class){
 				Class c = (Class)item;
 				s = Configuration.getCodeSegmentOf(c.name);
+				if(dbg) vrb.println("  Proceeding Class " + c.name);
+				
 				if(s == null) reporter.error(731, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
-					c.codeOffset = s.getRequiredSize();
-					if(c.machineCodeSize > 0) s.addToRequiredSize(c.machineCodeSize);
+					c.codeOffset = s.getUsedSize();
+					if(c.machineCodeSize > 0) s.addToUsedSize(c.machineCodeSize);
 					c.codeSegment = s;
+					if(dbg) {
+						vrb.println("    Code-Segment: " + c.codeSegment.getName());
+						vrb.println("    Code-Offset: " + Integer.toHexString(c.codeOffset));
+					}
 				}
 				
 				// Var
@@ -235,9 +243,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(s == null) reporter.error(731, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
-					c.varOffset = s.getRequiredSize();
-					if(c.classFieldsSize > 0) s.addToRequiredSize(c.classFieldsSize);
+					c.varOffset = s.getUsedSize();
+					if(c.classFieldsSize > 0) s.addToUsedSize(c.classFieldsSize);
 					c.varSegment = s;
+					if(dbg) vrb.println("    Var-Segment: " + c.varSegment.getName());
 				}
 				
 				// Const
@@ -245,10 +254,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(s == null) reporter.error(731, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
-					c.constOffset = s.getRequiredSize();
-					if(c.constantBlockSize > 0) s.addToRequiredSize(c.constantBlockSize);
+					c.constOffset = s.getUsedSize();
+					if(c.constantBlockSize > 0) s.addToUsedSize(c.constantBlockSize);
 					c.constSegment = s;
-					
+					if(dbg) vrb.println("    Const-Segment: " + c.constSegment.getName());
 				}		
 			}
 			item = item.next;
@@ -257,7 +266,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		Segment[] sysTabs = Configuration.getSysTabSegments(); // TODO @Martin: implement this for more than one system table!
 		if(sysTabs != null && sysTabs.length > 0) {
 			for(int i = 0; i < sysTabs.length; i++) {
-				sysTabs[i].addToRequiredSize(systemTableSize * 4); 
+				sysTabs[i].addToUsedSize(systemTableSize * 4); 
 			}
 		}
 		else reporter.error(731, "Can't get a memory segment for the systemtable!");
@@ -280,6 +289,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(dbg) vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
 			d = d.next;
 		}
+		
+		if(dbg) vrb.println("[LINKER] END: Freeze memory map.");
 	}
 	
 	public static void calculateAbsoluteAddresses(Class clazz) {
@@ -322,7 +333,14 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Method method = (Method)clazz.methods;
 			if(dbg) vrb.println("  Methods:");
 			while(method != null) {
-				if(codeBase != -1 && method.offset != -1) method.address = codeBase + method.offset;
+				if((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {
+					if(method.offset != -1) method.address = clazz.codeSegment.getBaseAddress() + method.offset;
+				//	else reporter.error(9999, "Error while calculating absolute address of fix set method " + method.name + ". Offset: " + method.offset + ", Segment: " + clazz.codeSegment.getName() + ", Base address of Segment: " + clazz.codeSegment.getBaseAddress());
+				}
+				else {
+					if(codeBase != -1 && method.offset != -1) method.address = codeBase + method.offset;
+				//	else reporter.error(9999, "Error while calculating absolute address of method " + method.name + ". Offset: " + method.offset + ", Codebase of Class " + clazz.name + ": " + codeBase);
+				}
 				if(dbg) vrb.print("    > " + method.name + ": Offset = 0x" + Integer.toHexString(method.offset) + ", Index = 0x" + Integer.toHexString(method.index) + ", Address = 0x" + Integer.toHexString(method.address) + "\n");
 				method = (Method)method.next;
 			}
@@ -686,7 +704,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		//descend
 		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
 		//set baseaddress
-		if((s.getSize() > 0 && s.getRequiredSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
+		if((s.getSize() > 0 && s.getUsedSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			s.setBaseAddress(baseAddress);
 			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
 			if(dbg) vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
@@ -700,7 +718,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		while(t != null) {
 			if((t.getAttributes() & (1 << contentAttribute)) != 0) {
 				if(t.subSegments != null) t = getFirstFittingSegment(t.subSegments, contentAttribute, requiredSize);
-				if(t.getSize() <= 0 || t.getSize() - t.getRequiredSize() > requiredSize) return t;
+				if(t.getSize() <= 0 || t.getSize() - t.getUsedSize() > requiredSize) return t;
 			}
 			t = t.next;
 		}
@@ -712,10 +730,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			setSegmentSize(s.lastSubSegment);
 		}
 		if(s.getSize() <= 0) {
-			s.setSize(roundUpToNextWord(s.getRequiredSize()));
+			s.setSize(roundUpToNextWord(s.getUsedSize()));
 		}
-		else if(s.getSize() < s.getRequiredSize()) { 
-			reporter.error(560, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getRequiredSize() + " byte!\n");
+		else if(s.getSize() < s.getUsedSize()) { 
+			reporter.error(560, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getUsedSize() + " byte!\n");
 		}
 //		System.out.println("  Segment " + s.getName() + ": size = " + s.getSize() + "byte!\n");
 		if(s.prev != null) {
