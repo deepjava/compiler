@@ -1,19 +1,22 @@
 package ch.ntb.inf.deep.linkerPPC;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Constant;
-import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.IAttributes;
 import ch.ntb.inf.deep.config.Segment;
-import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -40,11 +43,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static int systemTableSize;
 
 	public static void calculateOffsets(Class clazz) {
-		int c1 = 0,	// index for: constant, float or double
-			c2 = 0,	// index for: constant, string literal
-			c3 = 0,	// offset for: class field, not constant
+		int c1 = 0,	// index for: constant (float or double)
+			c2 = 0,	// index for: constant (string literal)
+			c3 = 0,	// offset for: class field (not constant) and class field (constant but reference)
 			c4 = 0,	// index for: instance field
-			c5 = 0,	// counter for: class field, reference (global pointers)
+			c5 = 0,	// counter for: class field (reference -> global pointers)
 			c6 = 0; // index for: instance method
 		
 		if(dbg) vrb.println("[LINKER] START: Calculating offsets and indexes for class \"" + clazz.name +"\":\n");
@@ -101,7 +104,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				else size /= 8; // convert from bits to bytes
 				
 				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field					
-					if((field.accAndPropFlags & (1 << dpfConst)) == 0) { // non constant field
+					if(((field.accAndPropFlags & (1 << dpfConst)) == 0) || ((field.accAndPropFlags & (1 << dpfConst)) != 0 && ((Type)field.type).category == tcRef )) { // non constant field or constant reference field
 						c3 = getCorrectOffset(c3, size);
 						field.offset = c3;// save offset
 						c3 += size; // prepare counter for next round
@@ -271,10 +274,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		d = Configuration.getFirstDevice();
 		//usedSegments = new Segment[nOfUsedSegments];
 		while(d != null) {
-			vrb.println("Start setting base addresses for segments in device \"" + d.getName() +"\":");
+			if(dbg) vrb.println("Start setting base addresses for segments in device \"" + d.getName() +"\":");
 			//System.out.println("Device: " + d.getName() + "\n");
 			if(d.segments != null) setBaseAddress(d.segments, d.getbaseAddress());
-			vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
+			if(dbg) vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
 			d = d.next;
 		}
 	}
@@ -489,10 +492,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Item cpe;
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				cpe = clazz.constPool[i];
-				if(dbg) vrb.println(" ************ Proceeding const pool entry #" + i + " " + cpe.name + ":");
-				if(dbg) if(cpe.type != null) vrb.println("              - Type: " + cpe.type.name); else vrb.println("              - Type: <null>");
-				if((cpe.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("              - Constant: yes"); else vrb.println("              - Constant: no");
-				
+				if(dbg) {
+					vrb.println(" ************ Proceeding const pool entry #" + i + " " + cpe.name + ":");
+					if(cpe.type != null) vrb.println("              - Type: " + cpe.type.name);
+					else vrb.println("              - Type: <null>");
+					if((cpe.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("              - Constant: yes");
+					else vrb.println("              - Constant: no");
+				}
 				index = cpe.index/4;
 				if(cpe.type == Type.wellKnownTypes[Type.txFloat] && (cpe.accAndPropFlags & (1 << dpfConst)) != 0 && cpe instanceof StdConstant) { // TODO @Martin: is this correct???
 					if(dbg) vrb.println(" ************ Inserting Float into CP: " + cpe.name);
@@ -641,7 +647,40 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
+	public static void writeTargetImageToFile(String timFileName) throws IOException {
+		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + timFileName +"\":\n");
+		
+		FileOutputStream timFile = new FileOutputStream(timFileName); // TODO @Martin: use DataOutputStream!!!
+			
+		timFile.write("#dtim-0\n".getBytes()); // Header (8 Byte)
+		
+		TargetMemorySegment tms = targetImage;
+		int i = 0;
+		while(tms != null) {
+			if(dbg) vrb.println("TMS #" + i + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4));
+			timFile.write(getBytes(tms.startAddress));
+			timFile.write(getBytes(tms.data.length*4));
+			for(int j = 0; j < tms.data.length; j++) {
+				timFile.write(getBytes(tms.data[j]));
+			}
+			i++;
+			tms = tms.next;
+		}
+		
+		timFile.close();
+		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+	}
+	
 	/* ---------- private helper methods ---------- */
+	
+	private static byte[] getBytes(int number) {
+		byte[] barray = new byte[4];
+		for (int i = 0; i < 4; ++i) {
+		    int shift = i << 3;
+		    barray[3-i] = (byte)((number & (0xff << shift)) >>> shift);
+		}
+		return barray;
+	}
 	
 	private static void setBaseAddress(Segment s, int baseAddress) {
 		//descend
@@ -650,7 +689,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if((s.getSize() > 0 && s.getRequiredSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			s.setBaseAddress(baseAddress);
 			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
-			vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
+			if(dbg) vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
 		}
 		// traverse from left to right
 		if(s.next != null) setBaseAddress(s.next, s.getSize()+ baseAddress);
