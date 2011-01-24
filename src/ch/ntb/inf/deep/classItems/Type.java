@@ -16,6 +16,7 @@ public class Type extends Item {
 //	static final byte[] primitveTypeChars = { 'D', 'F', 'J', 'Z', 'B', 'S', 'C', 'I', 'V' }; // inclusive 'V'
 	public static Type[] wellKnownTypes;
 	public static Type wktObject;
+	public static Type wktString;
 	
 	//-- registered well known names
 	static HString hsNumber, hsString; // names for number and literal string objects (objects of type Constant, i.e. StdConstant, StringLiteral)
@@ -123,6 +124,7 @@ public class Type extends Item {
 		registerWellKnownClasses(txString, "java/lang/String");
 		
 		wktObject = wellKnownTypes[txObject];
+		wktString = wellKnownTypes[txString];
 }
 
 	protected static void setClassFileAttributeTable(StringTable stab){
