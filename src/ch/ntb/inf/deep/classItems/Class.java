@@ -25,12 +25,15 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		assert fieldSizeUnit >= 4 && (fieldSizeUnit & (fieldSizeUnit-1)) == 0;
 	}
 
+	public int highestIndex = -1;
+	
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
 	
 	public Item methods; // list with all methods
 	public int nOfMethods; // number of methods
 	public int nOfClassMethods, nOfInstanceMethods; // number of methods
+	public int nOfInstanceMethodsInCD = 0;
 	
 	public Item fields; // list with all fields
 	public int nOfClassFields, nOfInstanceFields; // number of fields
@@ -50,6 +53,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public int constantPoolSize; // size of this pool on the target (in byte)
 	public int stringPoolSize; // size of this pool on the target (in byte)
 	public int classDescriptorSize; // size of the class descriptor on the target (in byte)
+	public int classDescriptorOffset = 0;
 
 	public int machineCodeSize; // size of the machine code on the target (in byte)
 	

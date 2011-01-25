@@ -26,8 +26,7 @@ public class Launcher implements ICclassFileConsts {
 
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable)
 				| (1 << atxExceptions) | (1 << atxLineNumberTable);
-		reporter.nofErrors = 0;// TODO add this to a method who reset all static
-								// stuff
+		reporter.nofErrors = 0;// TODO add this to a method who reset all static stuff
 
 		// 1) Read configuration
 		Configuration.parseAndCreateConfig(projectConfigFile,
@@ -41,14 +40,12 @@ public class Launcher implements ICclassFileConsts {
 								.getSystemPrimitives(), attributes);
 
 			// 3) Loop One
+			clearVisitedFlagsForAllClasses();
 			Item item = Type.classList;
 			Method method;
 			while (item != null && reporter.nofErrors <= 0) {
 				if (item instanceof Class) {
 					Class clazz = (Class) item;
-					System.out.println(">>>> Class: " + clazz.name
-							+ ", accAndPropFlags: "
-							+ Integer.toHexString(clazz.accAndPropFlags));
 
 					// 3.1) Linker: calculate offsets
 					if (reporter.nofErrors <= 0)
@@ -84,10 +81,12 @@ public class Launcher implements ICclassFileConsts {
 			}
 
 			// 4) Linker: freeze memory map
-			if (reporter.nofErrors <= 0)
+			if (reporter.nofErrors <= 0) {
+				Linker.calculateSizeOfSystemTable();
 				Linker.freezeMemoryMap();
+			}
 
-			// 5) Loop Two
+			// 5) Loop Two 
 			item = Type.classList;
 			while (item != null && reporter.nofErrors <= 0) {
 				// 5.1) Linker: calculate absolute addresses
@@ -96,8 +95,10 @@ public class Launcher implements ICclassFileConsts {
 				}
 				item = item.next;
 			}
+			
+			clearVisitedFlagsForAllClasses();
 			item = Type.classList;
-			while (item != null && reporter.nofErrors <= 0) {
+			while (item != null && reporter.nofErrors <= 0) { // TODO: why is here another loop??? -> move to loop two?
 				// 5.3) Linker: Create constant block
 				if (item instanceof Class) {
 					Class clazz = (Class) item;
@@ -136,7 +137,7 @@ public class Launcher implements ICclassFileConsts {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static void downloadTargetImage() {
 		if (reporter.nofErrors <= 0) {
 			Downloader bdi = UsbMpc555Loader.getInstance();
@@ -189,5 +190,15 @@ public class Launcher implements ICclassFileConsts {
 			tctDir.mkdir();
 		}
 		saveCommandTableToFile(tctDirName + "/commandTable.dtct");
+	}
+	
+	private static void clearVisitedFlagsForAllClasses() {
+		Item item = Type.classList;
+		while(item != null) {
+			if((item.accAndPropFlags & 1<<dpfClassMark) != 0 ) { // if visited flag is set
+				item.accAndPropFlags &= ~(1<<dpfClassMark);		 // delete it
+			}
+			item = item.next;
+		}
 	}
 }

@@ -2,16 +2,21 @@ package ch.ntb.inf.deep.testClasses.inheritanceTest;
 
 public class ClassA {
 
-	public static int a = 12;
+	public static int cVar0 = 12;
+	public static float cVar1 = 3.1415926535897932384626433832795f; // 40 49 0f db
 		
-	public short b = 14;
+	public short iVar0 = 0;
 	
 	public int methodA() {
-		return a + b;
+		return cVar0 + iVar0;
 	}
 	
 	public float methodB() {
 		return 0;
+	}
+	
+	public void add(int y) {
+		iVar0 += y;
 	}
 	
 }
