@@ -16,10 +16,46 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
 
+	static { // TODO move to init
+		final Class stringClass = (Class)Type.wktString;
+		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname());
+		final Method newstringMethod;
+		final Method heapnewstringMethod;
+		final Method stringInitC;
+		final Method stringInitCII;
+		final Method stringAllocateC;
+		final Method stringAllocateCII;
+		if(stringClass != null) {
+			newstringMethod = (Method)stringClass.getItemByName("newstring"); // TODO improve this
+			Method m = (Method)stringClass.methods;
+			
+			while(m != null && !m.methDescriptor.equals(HString.getHString("([C)V")) && !m.name.equals(HString.getHString("<init>")))  m = (Method)m.next;
+			stringInitC = m;
+			if(dbg) if(m != null) System.out.println("stringInitC = " + m.name + m.methDescriptor); else System.out.println("stringInitC: not found");
+			
+			m = (Method)stringClass.methods;
+			while(m != null && !m.name.equals(HString.getHString("<init>")) && !m.methDescriptor.equals(HString.getHString("([CII)V"))) m = (Method)m.next;
+			stringInitCII = m;
+			if(dbg) if(m != null) System.out.println("stringInitCII = " + m.name + m.methDescriptor); else System.out.println("stringInitCII: not found");
+			
+			m = (Method)stringClass.methods;
+			while(m != null && !m.name.equals(HString.getHString("allocateString")) && !m.methDescriptor.equals(HString.getHString("(I[C)V"))) m = (Method)m.next;
+			stringAllocateC = m;
+			if(dbg) if(m != null) System.out.println("allocateStringC = " + m.name + m.methDescriptor); else System.out.println("allocateStringC: not found");
+			
+			m = (Method)stringClass.methods;
+			while(m != null && !m.name.equals(HString.getHString("allocateString")) && !m.methDescriptor.equals(HString.getHString("(I[CII)V"))) m = (Method)m.next;
+			stringAllocateCII = m;
+			if(dbg) if(m != null) System.out.println("allocateStringCII = " + m.name + m.methDescriptor); else System.out.println("allocateStringCII: not found");
+		}
+		if(heapClass != null) {
+			heapnewstringMethod = (Method)heapClass.getItemByName("newstring"); // TODO improve this
+		}
+	}
 	private static final int objectSize = Type.wktObject.getObjectSize();
 	private static final int stringSize = Type.wktString.getObjectSize();
 	private static final int constForDoubleConv = 32;// für double convert, kommt weg
-	private static final int idGET1 = Configuration.getSystemMethodIdOf("GET1");
+	private static final int idGET1 = Configuration.getSystemMethodIdOf("GET1"); // TODO don't use method names here
 	private static final int idGET2 = Configuration.getSystemMethodIdOf("GET2");
 	private static final int idGET4 = Configuration.getSystemMethodIdOf("GET4");
 	private static final int idGET8 = Configuration.getSystemMethodIdOf("GET8");
