@@ -9,14 +9,15 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = false;
+	private static final boolean dbg = true;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
 	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
 
-	private static final int arrayFirstOffset = Type.wktObject.getObjectSize();
+	private static final int objectSize = Type.wktObject.getObjectSize();
+	private static final int stringSize = Type.wktString.getObjectSize();
 	private static final int constForDoubleConv = 32;// für double convert, kommt weg
 	private static final int idGET1 = Configuration.getSystemMethodIdOf("GET1");
 	private static final int idGET2 = Configuration.getSystemMethodIdOf("GET2");
@@ -66,6 +67,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static int[] destFPR = new int[nofFPR];
 	
 	private static SSAValue[] lastExitSet;
+	private static boolean newString;
+	private static Item stringRef;
 
 	public SSA ssa;	// reference to the SSA of a method
 	public int[] instructions;	//contains machine instructions for the ssa of a method
@@ -291,7 +294,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 
 	private void translateSSA (SSANode node) {
 		SSAValue[] opds;
-		int sReg1, sReg2, dReg, refReg, indexReg, valReg, bci, offset, type;
+		int sReg1, sReg2, dReg, refReg, indexReg, valReg, bci, offset, type, charOffset, stringRefReg = 0;
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
@@ -366,15 +369,22 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				break;	// sCloadLocal
 			case sCloadFromField:
 				opds = instr.getOperands();
+				offset = 0;			
 				if (opds == null) {	// getstatic
-					sReg1 = instr.result.regAux1;
+					sReg1 = res.regAux1;
 					Item field = ((NoOpndRef)instr).field;
-					offset = 0;			
 					loadConstantAndFixup(sReg1, field);
 				} else {	// getfield
-					sReg1 = opds[0].reg;
-					offset = ((MonadicRef)instr).item.index;
-					createItrap(ppcTwi, TOifequal, opds[0].reg, 0);
+					if ((ssa.cfg.method.owner == Type.wktString) &&	// string access needs special treatment
+							((MonadicRef)instr).item.name.equals(HString.getHString("value"))) {
+						stringRefReg = opds[0].reg;
+						charOffset = ((MonadicRef)instr).item.index;	// offset is start of char array
+						break;	
+					} else {
+						sReg1 = opds[0].reg;
+						offset = ((MonadicRef)instr).item.index;
+						createItrap(ppcTwi, TOifequal, sReg1, 0);
+					}
 				}
 				switch (res.type & 0x7fffffff) {
 				case tBoolean: case tByte:
@@ -408,50 +418,70 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				break;	// sCloadFromField
 			case sCloadFromArray:
 				opds = instr.getOperands();
-				refReg = opds[0].reg;	// ref to array
-				indexReg = opds[1].reg;	// index into array
-				createItrap(ppcTwi, TOifequal, refReg, 0);
-				createIrDrAd(ppcLha, res.regAux1, refReg, -arrayLenOffset);
-				createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
-				switch (res.type & 0x7fffffff) {	// type to read
-				case tByte: case tBoolean:
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLbzx, res.reg, res.regAux2, indexReg);
-					createIrArS(ppcExtsb, res.reg, res.reg);
-					break;
-				case tShort: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLhax, res.reg, res.regAux1, res.regAux2);
-					break;
-				case tInteger: case tRef:
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLwzx, res.reg, res.regAux1, res.regAux2);
-					break;
-				case tLong: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLwzux, res.regLong, res.regAux1, res.regAux2);
-					createIrDrAd(ppcLwz, res.reg, res.regAux1, 4);
-					break;
-				case tFloat:
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLfsx, res.reg, res.regAux1, res.regAux2);
-					break;
-				case tDouble: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLfdx, res.reg, res.regAux1, res.regAux2);
-					break;
-				case tChar: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
-					break;
-				default:
-					assert false : "cg: type not implemented";
+				if (ssa.cfg.method.owner == Type.wktString) {	// string access needs special treatment
+					indexReg = opds[1].reg;	// index into array
+					createIrDrAd(ppcLha, res.regAux1, stringRefReg, stringSize - 4);
+					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
+					switch (res.type & 0x7fffffff) {	// type to read
+					case tByte:
+						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrDrArB(ppcLbzx, res.reg, res.regAux2, indexReg);
+						createIrArS(ppcExtsb, res.reg, res.reg);
+						break;
+					case tChar: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
+						break;
+					default:
+						assert false : "cg: type not implemented";
+					}
+				} else {
+					refReg = opds[0].reg;	// ref to array
+					indexReg = opds[1].reg;	// index into array
+					createItrap(ppcTwi, TOifequal, refReg, 0);
+					createIrDrAd(ppcLha, res.regAux1, refReg, -arrayLenOffset);
+					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
+					switch (res.type & 0x7fffffff) {	// type to read
+					case tByte: case tBoolean:
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLbzx, res.reg, res.regAux2, indexReg);
+						createIrArS(ppcExtsb, res.reg, res.reg);
+						break;
+					case tShort: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLhax, res.reg, res.regAux1, res.regAux2);
+						break;
+					case tInteger: case tRef:
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLwzx, res.reg, res.regAux1, res.regAux2);
+						break;
+					case tLong: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLwzux, res.regLong, res.regAux1, res.regAux2);
+						createIrDrAd(ppcLwz, res.reg, res.regAux1, 4);
+						break;
+					case tFloat:
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLfsx, res.reg, res.regAux1, res.regAux2);
+						break;
+					case tDouble: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLfdx, res.reg, res.regAux1, res.regAux2);
+						break;
+					case tChar: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
+						break;
+					default:
+						assert false : "cg: type not implemented";
+					}
 				}
 				break;	// sCloadFromArray
 			case sCstoreToField:
@@ -476,7 +506,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						type = tRef;
 					else
 						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
-//					type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
 					offset = ((DyadicRef)instr).field.index;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}
@@ -514,42 +543,61 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				refReg = opds[0].reg;	// ref to array
 				indexReg = opds[1].reg;	// index into array
 				valReg = opds[2].reg;	// value to store
-				createItrap(ppcTwi, TOifequal, refReg, 0);
-				createIrDrAd(ppcLha, res.regAux1, refReg, -arrayLenOffset);
-				createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
-				switch (opds[0].type  & 0x7fffffff) {
-				case tAbyte: case tAboolean:
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
-					break;
-				case tAshort: case tAchar: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcSthx, valReg, res.regAux1, res.regAux2);
-					break;
-				case tAref: case tAinteger:
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStwx, valReg, res.regAux1, res.regAux2);
-					break;
-				case tAlong: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStwux, opds[2].regLong, res.regAux1, res.regAux2);
-					createIrSrAd(ppcStw, valReg, res.regAux1, 4);
-					break;
-				case tAfloat:  
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStfsx, valReg, res.regAux1, res.regAux2);
-					break;
-				case tAdouble: 
-					createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
-					createIrDrAsimm(ppcAddi, res.regAux2, refReg, arrayFirstOffset);
-					createIrSrArB(ppcStfdx, valReg, res.regAux1, res.regAux2);
-					break;
-				default:
-					assert false : "cg: type not implemented";
+				if (ssa.cfg.method.owner == Type.wktString) {	// string access needs special treatment
+					indexReg = opds[1].reg;	// index into array
+					createIrDrAd(ppcLha, res.regAux1, stringRefReg, stringSize - 4);
+					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
+					switch (opds[0].type  & 0x7fffffff) {
+					case tAbyte:
+						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
+						break;
+					case tAchar: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrSrArB(ppcSthx, valReg, res.regAux1, res.regAux2);
+						break;
+					default:
+						assert false : "cg: type not implemented";
+					}
+				} else {
+					createItrap(ppcTwi, TOifequal, refReg, 0);
+					createIrDrAd(ppcLha, res.regAux1, refReg, -arrayLenOffset);
+					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
+					switch (opds[0].type  & 0x7fffffff) {
+					case tAbyte: case tAboolean:
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
+						break;
+					case tAshort: case tAchar: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrSrArB(ppcSthx, valReg, res.regAux1, res.regAux2);
+						break;
+					case tAref: case tAinteger:
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrSrArB(ppcStwx, valReg, res.regAux1, res.regAux2);
+						break;
+					case tAlong: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrSrArB(ppcStwux, opds[2].regLong, res.regAux1, res.regAux2);
+						createIrSrAd(ppcStw, valReg, res.regAux1, 4);
+						break;
+					case tAfloat:  
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrSrArB(ppcStfsx, valReg, res.regAux1, res.regAux2);
+						break;
+					case tAdouble: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrSrArB(ppcStfdx, valReg, res.regAux1, res.regAux2);
+						break;
+					default:
+						assert false : "cg: type not implemented";
+					}
 				}
 				break;	// sCstoreToArray
 			case sCadd:
@@ -1185,10 +1233,15 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, 0);
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 					} else if (call.invokespecial) {	// invokespecial
-						refReg = opds[0].reg;
-						createItrap(ppcTwi, TOifequal, refReg, 0);
-						loadConstantAndFixup(res.regAux1, call.item);	// addr of init method
-						createIrSspr(ppcMtspr, LR, res.regAux1);
+						if (newString) {	// special treatment for strings
+							loadConstantAndFixup(res.regAux1, call.item);	// addr of corresponding allocate method
+							createIrSspr(ppcMtspr, LR, res.regAux1);
+						} else {
+							refReg = opds[0].reg;
+							createItrap(ppcTwi, TOifequal, refReg, 0);
+							loadConstantAndFixup(res.regAux1, call.item);	// addr of init method
+							createIrSspr(ppcMtspr, LR, res.regAux1);
+						}
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 						offset = call.item.index;
@@ -1209,8 +1262,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						} else
 							destGPR[opds[k].reg] = k + paramStartGPR;
 					}
-					//				System.out.println("move before call");
-					//				for (int k = 0; k < nofGPR; k++) System.out.println("destGPR["+k+"]="+destGPR[k]);
 					for (int k = 0; k < nofGPR; k++) {
 						if (destGPR[k] != 0 && destGPR[k] != k) {
 							if (destGPR[destGPR[k]] == 0) {
@@ -1243,6 +1294,12 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 							}
 						}
 					}
+					if (newString) {
+						newString = false;
+						loadConstantAndFixup(paramStartGPR, stringRef);	// first reg contains ref to string
+						int sizeOfObject = Type.wktObject.getObjectSize();
+						createIrDrAsimm(ppcAddi, paramStartGPR+opds.length, 0, sizeOfObject); // reg after last parameter
+					}
 					createIBOBILK(ppcBclr, BOalways, 0, true);
 					type = res.type & 0x7fffffff;
 					if (type == tLong) {
@@ -1273,12 +1330,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					Item method;
 					switch (res.type & 0x7fffffff) {
 					case tRef:	// bCnew
-						method = Class.getNewMemoryMethod(bCnew);
-						loadConstantAndFixup(paramStartGPR, method);	// addr of new
-						createIrSspr(ppcMtspr, LR, paramStartGPR);
-						loadConstantAndFixup(paramStartGPR, item);	// ref
-						createIBOBILK(ppcBclr, BOalways, 0, true);
-						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+						if (item == Type.wktString) {
+							newString = true;	// allocation for strings is postponed
+							stringRef = item;
+						} else {
+							method = Class.getNewMemoryMethod(bCnew);
+							loadConstantAndFixup(paramStartGPR, method);	// addr of new
+							createIrSspr(ppcMtspr, LR, paramStartGPR);
+							loadConstantAndFixup(paramStartGPR, item);	// ref
+							createIBOBILK(ppcBclr, BOalways, 0, true);
+							createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+						}
 						break;
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
 					case tAbyte: case tAshort: case tAinteger: case tAlong:	// bCnewarray
@@ -1789,25 +1851,23 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 //		System.out.println("Method uses " + nofNonVolGPR + " GPR and " + nofNonVolFPR + " FPR for locals where " + nofParamGPR + " GPR and " + nofParamFPR + " FPR are for parameters");
 //		System.out.println();
 		
-		if(dbg) System.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
-		
+		System.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor);
+
 		for (int i = 0; i < iCount; i++){
-			if(dbg) {
-				System.out.print("\t" + Integer.toHexString(instructions[i]));
-				System.out.print("\t[0x");
-				System.out.print(Integer.toHexString(i*4));
-				System.out.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
-			}
+			System.out.print("\t" + Integer.toHexString(instructions[i]));
+			System.out.print("\t[0x");
+			System.out.print(Integer.toHexString(i*4));
+			System.out.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
-			if (opcode == 0x10) {
-				int BD = (short)(instructions[i] & 0xFFFC);
-				if(dbg) System.out.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
-			} else if (opcode == 0x12) {
-				int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-				if(dbg) System.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
-			}
-			if(dbg) System.out.println();
-			}
+		if (opcode == 0x10) {
+			int BD = (short)(instructions[i] & 0xFFFC);
+			System.out.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+		} else if (opcode == 0x12) {
+			int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+			System.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+		}
+		System.out.println();
+		}
 	}
 
 }

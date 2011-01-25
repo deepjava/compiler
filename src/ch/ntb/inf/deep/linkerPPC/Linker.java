@@ -1050,7 +1050,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(m == null) vrb.println("      No methods in this class");
 				else {
 					while(m != null) {
-						vrb.println("      > Method: " + m.name + " (#" + mc++ + ")");
+						vrb.println("      > Method: " + m.name +  m.methDescriptor + " (#" + mc++ + ")");
 						vrb.println("        Access and property flags: 0x" + Integer.toHexString(m.accAndPropFlags));
 						if((m.accAndPropFlags & ((1 << dpfNew) | (1 << dpfUnsafe) | (1 << dpfSysPrimitive) | (1 << dpfSynthetic))) != 0) {	
 							if((m.accAndPropFlags & (1 << dpfNew)) != 0) {

@@ -62,7 +62,7 @@ public class Call extends SSAInstruction {
 		if (item != null) { 
 			if (item instanceof Method) {
 				System.out.print(((Method)item).owner.name);
-				System.out.print("." + item.name);
+				System.out.print("." + item.name + ((Method)item).methDescriptor);
 			} else
 				System.out.print(item.name);
 		}
