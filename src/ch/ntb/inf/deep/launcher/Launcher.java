@@ -27,18 +27,21 @@ public class Launcher implements ICclassFileConsts {
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable)
 				| (1 << atxExceptions) | (1 << atxLineNumberTable);
 		reporter.nofErrors = 0;// TODO add this to a method who reset all static stuff
-
+		
 		// 1) Read configuration
 		Configuration.parseAndCreateConfig(projectConfigFile,
 				targetConfiguration);
-
+		
 		try {
 			// 2) Read requiered classes
 			if (reporter.nofErrors <= 0)
 				Class.buildSystem(Configuration.getRootClassNames(),
 						Configuration.getSearchPaths(), Configuration
 								.getSystemPrimitives(), attributes);
-
+			
+			// 2a) Initialize linker
+			Linker.init();
+			
 			// 3) Loop One
 			clearVisitedFlagsForAllClasses();
 			Item item = Type.classList;

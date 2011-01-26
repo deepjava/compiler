@@ -29,42 +29,47 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
-	private static final int cblkConstBlockSizeOffset = 0;
-	private static final int cblkCodeBaseOffset = 1 * 4;
-	private static final int cblkCodeSizeOffset = 2 * 4;
-	private static final int cblkVarBaseOffset = 3 * 4;
-	private static final int cblkVarSizeOffset = 4 * 4;
-	private static final int cblkClinitAddrOffset = 5 * 4;
-	private static final int cblkNofPtrsOffset = 6 * 4;
-	private static final int cblkPtrAddr0Offset = 7 * 4;
+	public static final int cblkConstBlockSizeOffset = 0;
+	public static final int cblkCodeBaseOffset = 1 * 4;
+	public static final int cblkCodeSizeOffset = 2 * 4;
+	public static final int cblkVarBaseOffset = 3 * 4;
+	public static final int cblkVarSizeOffset = 4 * 4;
+	public static final int cblkClinitAddrOffset = 5 * 4;
+	public static final int cblkNofPtrsOffset = 6 * 4;
+	public static final int cblkPtrAddr0Offset = 7 * 4;
 	
 	// Class descriptor:
-	private static final int cdInterface0AddrOffset = 2 * 4;
-	private static final int cdExtensionLevelOffset = 1 * 4;
-	private static final int cdSizeOffset = 0;
-	private static final int cdClassNameAddrOffset = 1 * 4;
-	private static final int cdBaseClass0Offset = 2 * 4;
-	private static final int cdConstantSize = 3 * 4;
-	private static final int cblkConstantSize = 8 * 4 + cdConstantSize;
+	public static final int cdInterface0AddrOffset = 2 * 4;
+	public static final int cdExtensionLevelOffset = 1 * 4;
+	public static final int cdSizeOffset = 0;
+	public static final int cdClassNameAddrOffset = 1 * 4;
+	public static final int cdBaseClass0Offset = 2 * 4;
+	public static final int cdConstantSize = 3 * 4;
+	public static final int cblkConstantSize = 8 * 4 + cdConstantSize;
 	
 	// System table:
-	private static final int stStackOffset = 1 * 4;
-	private static final int stHeepOffset = 2 * 4;
-	private static final int stKernelClinitAddr = 3 * 4;
-	private static final int stConstantSize = 8 * 4;
+	public static final int stStackOffset = 1 * 4;
+	public static final int stHeepOffset = 2 * 4;
+	public static final int stKernelClinitAddr = 3 * 4;
+	public static final int stConstantSize = 8 * 4;
 	
 	// String pool:
-	private static final int stringHeaderSize = 4; // byte
+	public static final int stringHeaderConstSize = 3 * 4; // byte
+	public static final int spTagIndex = 1;
+	public static final int spTagOffset = spTagIndex * 4;
+	public static int stringHeaderSize = -1; // byte
+	public static Class stringClass;
+	
 	
 	// Error reporter:
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 	
 	
-	public static int sizeInByte = 0;
-	public static int sLength = 0;
+	public static int sizeInByte = 0; // TODO remove this!
+	public static int sLength = 0; // TODO remove this!
 
 	public static TargetMemorySegment targetImage;
 	private static TargetMemorySegment lastTargetMemorySegment;
@@ -75,11 +80,29 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static int[] systemTable;
 	private static int systemTableSize;
 
+	public static void init() {
+		if(dbg) vrb.println("[LINKER] START: Initializing:");
+		
+		if(dbg) vrb.print("  a) Setting size of string header: ");
+		stringHeaderSize = stringHeaderConstSize + Type.wktObject.getObjectSize();
+		if(dbg) vrb.println( stringHeaderSize + " byte");
+		
+		if(dbg) vrb.println("  b) Looking for String class: ");
+		stringClass = (Class)Type.wktString;
+		if(stringClass != null) if(dbg) vrb.println("     -> found: " + stringClass.name);
+		else reporter.error(9999, "String class not found!");
+		
+		if(dbg) vrb.println("  c) Deleting old target image... ");
+		targetImage = null;
+		lastTargetMemorySegment = null;
+		
+		if(dbg) vrb.println("[LINKER] END: Initializing.\n");
+	}
 	
 	public static void calculateOffsets(Class clazz) {
 			
-		if(dbg) vrb.println("[LINKER] START: Calculating offsets and indexes for class \"" + clazz.name +"\":\n");
-		
+		if(dbg) vrb.println("[LINKER] START: Calculating offsets and indexes for class \"" + clazz.name +"\":");
+				
 		if((clazz.accAndPropFlags & 1<<dpfClassMark) == 0 ){
 			clazz.accAndPropFlags |= 1<<dpfClassMark;
 			
@@ -98,7 +121,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			}
 			
 			if(dbg) vrb.println("  1) Calculating indexes and offsets for the constant- and string pool:");
-			
+						
 			if(clazz.constPool != null && clazz.constPool.length > 0) {
 				Item cpe;
 				int size = 0;
@@ -106,13 +129,14 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					cpe = clazz.constPool[i];
 					if(cpe instanceof Constant) { // constant field or constant value or string literal
 						if(cpe instanceof StdConstant && (cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble])) { // constant float or double value -> constant pool
-							size = ((Type)cpe.type).sizeInBits / 8; // size in bits
+							size = ((Type)cpe.type).sizeInBits / 8; // size in byte
 							c1 = getCorrectOffset(c1, size);
 							cpe.index = c1; // save index
 							c1 += size; // prepare counter for next round
 						}
 						else if(cpe instanceof StringLiteral) { // string literal -> string pool
-							size = roundUpToNextWord(((StringLiteral)cpe).string.sizeInByte()); // use the size of the string not of the reference!
+//							size = roundUpToNextWord(((StringLiteral)cpe).string.sizeInByte()); // use the size of the string not of the reference!
+							size = roundUpToNextWord(((StringLiteral)cpe).string.length() * 2); // use the size of the string not of the reference! -> 2 byte per character
 							cpe.index = c2;// save index
 							c2 += stringHeaderSize + size; // prepare counter for next round
 						}
@@ -603,39 +627,60 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				for(int i = 0; i < clazz.constPool.length; i++) {
 					int index = clazz.constPool[i].index/4;
 					if(clazz.constPool[i].type == Type.wellKnownTypes[txString] && (clazz.constPool[i].accAndPropFlags & (1 << dpfConst)) != 0) {
-					//if(clazz.constPool[i] instanceof StringLiteral) {
-						HString s = ((StringLiteral)clazz.constPool[i]).string;
-						sizeInByte = s.sizeInByte();
-						sLength = s.length();
-						if(s.sizeInByte()/s.length() == 1) { // string is a H8String
-							int c = 0, word = 0;
-							clazz.constantBlock[stringPoolOffset + index++] = (s.length() << 16) + 0x0800; // add string header
-							for(int j = 0; j < s.length(); j++) {
-								word = (word << 8) + s.charAt(j);
-								c++;
-								if(c > 3 || j == s.length() - 1) {
-									clazz.constantBlock[stringPoolOffset + index] = word;
-									c = 0;
-									word = 0;
-									index++;
-								}
-							}
+
+					HString s = ((StringLiteral)clazz.constPool[i]).string;
+					
+					if(dbg) vrb.println("     > Proceeding String \"" + s + "\"");
+					if(dbg) vrb.println("       Inserting Header:");
+					if(dbg) vrb.println("         <" + index + "> ???");
+					clazz.constantBlock[stringPoolOffset + index++] = 0x55555555; // Header: ??? TODO what the hell should be here???
+					if(dbg) vrb.println("         <" + index + "> Tag");
+					clazz.constantBlock[stringPoolOffset + index++] = stringClass.address; // Header: Tag -> Reference to string class
+					index += (stringHeaderSize - stringHeaderConstSize) / 4; // Header: Object -> zero at the moment...
+					if(dbg) vrb.println("         <" + index + "> Count");
+					clazz.constantBlock[stringPoolOffset + index++] = s.length(); // Header: Count -> number of characters
+					int word = 0, c = 0;
+					if(dbg) vrb.println("       Inserting characters:");
+					for(int j = 0; j < s.length(); j++) {
+						if(dbg) vrb.println("         <" + index + "> " + s.charAt(j));
+						word = (word << 16) + s.charAt(j);
+						c++;
+						if(c > 1 || j == s.length() - 1) {
+							clazz.constantBlock[stringPoolOffset + index] = word;
+							c = 0;
+							word = 0;
+							index++;
 						}
-						else { // string is a H16String
-							assert s.sizeInByte()/s.length() == 2: "String is neighter a 8bit nor a 16bit char array!";
-							int c = 0, word = 0;
-							clazz.constantBlock[stringPoolOffset + index++] = (s.length() << 16) + 0x1000; // add string header
-							for(int j = 0; j < s.length(); j++) {
-								word = (word << 16) + s.charAt(j);
-								c++;
-								if(c > 1 || j == s.length() - 1) {
-									clazz.constantBlock[stringPoolOffset + index] = word;
-									c = 0;
-									word = 0;
-									index++;
-								}
-							}
-						}	
+					}
+//						if(s.sizeInByte()/s.length() == 1) { // string is a H8String
+//							int c = 0, word = 0;
+//							clazz.constantBlock[stringPoolOffset + index++] = (s.length() << 16) + 0x0800; // add string header
+//							for(int j = 0; j < s.length(); j++) {
+//								word = (word << 8) + s.charAt(j);
+//								c++;
+//								if(c > 3 || j == s.length() - 1) {
+//									clazz.constantBlock[stringPoolOffset + index] = word;
+//									c = 0;
+//									word = 0;
+//									index++;
+//								}
+//							}
+//						}
+//						else { // string is a H16String
+//							assert s.sizeInByte()/s.length() == 2: "String is neighter a 8bit nor a 16bit char array!";
+//							int c = 0, word = 0;
+//							clazz.constantBlock[stringPoolOffset + index++] = (s.length() << 16) + 0x1000; // add string header
+//							for(int j = 0; j < s.length(); j++) {
+//								word = (word << 16) + s.charAt(j);
+//								c++;
+//								if(c > 1 || j == s.length() - 1) {
+//									clazz.constantBlock[stringPoolOffset + index] = word;
+//									c = 0;
+//									word = 0;
+//									index++;
+//								}
+//							}
+//						}	
 					}
 				}
 			}
