@@ -330,7 +330,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 
 	private void translateSSA (SSANode node) {
 		SSAValue[] opds;
-		int sReg1, sReg2, dReg, refReg, indexReg, valReg, bci, offset, type, charOffset, stringRefReg = 0;
+		int sReg1, sReg2, dReg, refReg, indexReg, valReg, bci, offset, type, stringCharOffset;
+		Item stringCharRef = null;
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
@@ -413,8 +414,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				} else {	// getfield
 					if ((ssa.cfg.method.owner == Type.wktString) &&	// string access needs special treatment
 							((MonadicRef)instr).item.name.equals(HString.getHString("value"))) {
-						stringRefReg = opds[0].reg;
-						charOffset = ((MonadicRef)instr).item.index;	// offset is start of char array
+						System.out.println("*****");
+						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
+						stringCharRef = ((MonadicRef)instr).item;
+						stringCharOffset = ((MonadicRef)instr).item.index;	// offset is start of char array
 						break;	
 					} else {
 						sReg1 = opds[0].reg;
@@ -454,19 +457,19 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				break;	// sCloadFromField
 			case sCloadFromArray:
 				opds = instr.getOperands();
-				if (ssa.cfg.method.owner == Type.wktString) {	// string access needs special treatment
+				if (ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
 					indexReg = opds[1].reg;	// index into array
-					createIrDrAd(ppcLha, res.regAux1, stringRefReg, stringSize - 4);
+					createIrDrAd(ppcLwz, res.regAux1, opds[0].reg, stringSize - 8);
 					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
-						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);
 						createIrDrArB(ppcLbzx, res.reg, res.regAux2, indexReg);
 						createIrArS(ppcExtsb, res.reg, res.reg);
 						break;
 					case tChar: 
 						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
 						break;
 					default:
@@ -579,18 +582,18 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				refReg = opds[0].reg;	// ref to array
 				indexReg = opds[1].reg;	// index into array
 				valReg = opds[2].reg;	// value to store
-				if (ssa.cfg.method.owner == Type.wktString) {	// string access needs special treatment
+				if (ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
 					indexReg = opds[1].reg;	// index into array
-					createIrDrAd(ppcLha, res.regAux1, stringRefReg, stringSize - 4);
+					createIrDrAd(ppcLha, res.regAux1, opds[0].owner.getOperands()[0].reg, stringSize - 4);
 					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
-					switch (opds[0].type  & 0x7fffffff) {
-					case tAbyte:
-						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+					switch (opds[2].type  & 0x7fffffff) {
+					case tByte:
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].owner.getOperands()[0].reg, stringSize - 4);
 						createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
 						break;
-					case tAchar: 
+					case tChar: 
 						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-						createIrDrAsimm(ppcAddi, res.regAux2, stringRefReg, stringSize - 4);
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].owner.getOperands()[0].reg, stringSize - 4);
 						createIrSrArB(ppcSthx, valReg, res.regAux1, res.regAux2);
 						break;
 					default:
@@ -1203,8 +1206,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			case sCcall:
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-//System.out.println("Call to " + call.item.name);
-//System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
+System.out.println("Call to " + call.item.name);
+System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
 					if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET1) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
@@ -1279,12 +1282,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 							createIrSspr(ppcMtspr, LR, res.regAux1);
 						}
 					} else {	// invokevirtual 
+						System.out.println("invokeviretual");
 						refReg = opds[0].reg;
 						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
 						createIrSspr(ppcMtspr, LR, res.regAux1);
+						System.out.println("offset = " + offset);
 					}
 					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
 					for (int k = 0; k < nofFPR; k++) destFPR[k] = 0;
@@ -1332,7 +1337,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 					if (newString) {
 						newString = false;
-						loadConstantAndFixup(paramStartGPR, stringRef);	// first reg contains ref to string
+//						loadConstantAndFixup(paramStartGPR, stringRef);	// first reg contains ref to string
 						int sizeOfObject = Type.wktObject.getObjectSize();
 						createIrDrAsimm(ppcAddi, paramStartGPR+opds.length, 0, sizeOfObject); // reg after last parameter
 					}
@@ -1368,7 +1373,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					case tRef:	// bCnew
 						if (item == Type.wktString) {
 							newString = true;	// allocation for strings is postponed
-							stringRef = item;
+//							stringRef = item;
 						} else {
 							method = Class.getNewMemoryMethod(bCnew);
 							loadConstantAndFixup(paramStartGPR, method);	// addr of new
