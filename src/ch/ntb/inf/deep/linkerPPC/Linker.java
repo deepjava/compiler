@@ -482,7 +482,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					else reporter.error(9999, "Index of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
 				}
 				else if(cpe instanceof StringLiteral) { // string literal -> string pool
-					if(cpe.index != -1) cpe.address = stringPoolBase + cpe.index;
+					if(cpe.index != -1) cpe.address = stringPoolBase + cpe.index + 8;
 					else reporter.error(9999, "Index of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
 				}
 				if(dbg) {
