@@ -437,7 +437,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
 						}
 						else if(field.type == Type.wellKnownTypes[txString]) { // literal string -> string pool
-							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + field.index;
+							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + field.index + 8;
 						}
 						else if(((Type)field.type).category == tcRef) { // reference but not literal string
 							if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
