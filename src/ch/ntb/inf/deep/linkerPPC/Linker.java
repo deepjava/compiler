@@ -646,6 +646,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 						word = (word << 16) + s.charAt(j);
 						c++;
 						if(c > 1 || j == s.length() - 1) {
+							if(j == s.length() - 1) word = word << 16;
 							clazz.constantBlock[stringPoolOffset + index] = word;
 							c = 0;
 							word = 0;
