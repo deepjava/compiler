@@ -29,7 +29,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -89,7 +89,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		if(dbg) vrb.println("  b) Looking for String class: ");
 		stringClass = (Class)Type.wktString;
-		if(stringClass != null) if(dbg) vrb.println("     -> found: " + stringClass.name);
+		if(stringClass != null) {
+			if(dbg) vrb.println("     -> found: " + stringClass.name);
+		}
 		else reporter.error(9999, "String class not found!");
 		
 		if(dbg) vrb.println("  c) Deleting old target image... ");
