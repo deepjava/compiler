@@ -439,7 +439,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrDrAd(ppcLwz, instr.result.reg, sReg1, offset);
 					break;
 				case tChar: 
-					assert false : "cg: type not implemented";
+					createIrDrAd(ppcLhz, res.reg, sReg1, offset);
 					break;
 				case tLong:
 					createIrDrAd(ppcLwz, res.regLong, sReg1, offset);
@@ -679,7 +679,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case tInteger:
 					if (sReg1 < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrDrAsimm(ppcAddi, dReg, sReg2, -immVal);
+						createIrDrAsimm(ppcSubfic, dReg, sReg2, immVal);
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrDrAsimm(ppcAddi, dReg, sReg1, -immVal);
@@ -902,10 +902,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				if ((res.type & 0x7fffffff) == tInteger) {
 					if (sReg1 < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrArSuimm(ppcAndi, dReg, sReg2, immVal);
+						if (immVal >= 0)
+							createIrArSuimm(ppcAndi, dReg, sReg2, immVal);
+						else {
+							createIrDrAsimm(ppcAddi, 0, 0, immVal);
+							createIrArSrB(ppcAnd, dReg, 0, sReg2);
+						}
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
-						createIrArSuimm(ppcAndi, dReg, sReg1, immVal);
+						if (immVal >= 0)
+							createIrArSuimm(ppcAndi, dReg, sReg1, immVal);
+						else {
+							createIrDrAsimm(ppcAddi, 0, 0, immVal);
+							createIrArSrB(ppcAnd, dReg, 0, sReg1);
+						}
 					} else
 						createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
 				} else if (res.type == tLong) {
@@ -933,9 +943,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					if (sReg1 < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrArSuimm(ppcOri, dReg, sReg2, immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcOris, dReg, dReg, 0xffff);					
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrArSuimm(ppcOri, dReg, sReg1, immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcOris, dReg, dReg, 0xffff);					
 					} else
 						createIrArSrB(ppcOr, dReg, sReg1, sReg2);
 				} else if (res.type == tLong) {
@@ -943,10 +957,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						int immVal = ((StdConstant)opds[0].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
 						createIrArSuimm(ppcOri, dReg, sReg2, (int)immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcOris, dReg, dReg, 0xffff);					
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
 						createIrArSuimm(ppcOri, dReg, sReg1, (int)immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcOris, dReg, dReg, 0xffff);					
 					} else {
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[1].regLong);
 						createIrArSrB(ppcOr, dReg, sReg1, sReg2);
@@ -963,9 +981,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					if (sReg1 < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
 						createIrArSuimm(ppcXori, dReg, sReg2, immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcXoris, dReg, dReg, 0xffff);
+						else 
+							createIrArSuimm(ppcXoris, dReg, dReg, 0);
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
 						createIrArSuimm(ppcXori, dReg, sReg1, immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcXoris, dReg, dReg, 0xffff);
+						else 
+							createIrArSuimm(ppcXoris, dReg, dReg, 0);
 					} else
 						createIrArSrB(ppcXor, dReg, sReg1, sReg2);
 				} else if (res.type == tLong) {
@@ -973,10 +999,18 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						int immVal = ((StdConstant)opds[0].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
 						createIrArSuimm(ppcXori, dReg, sReg2, (int)immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcXoris, dReg, dReg, 0xffff);
+						else 
+							createIrArSuimm(ppcXoris, dReg, dReg, 0);
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueL;
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
 						createIrArSuimm(ppcXori, dReg, sReg1, (int)immVal);
+						if (immVal < 0)
+							createIrArSuimm(ppcXoris, dReg, dReg, 0xffff);
+						else 
+							createIrArSuimm(ppcXoris, dReg, dReg, 0);
 					} else {
 						createIrArSrB(ppcXor, res.regLong, opds[0].regLong, opds[1].regLong);
 						createIrArSrB(ppcXor, dReg, sReg1, sReg2);

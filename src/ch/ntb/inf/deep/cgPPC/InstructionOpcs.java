@@ -193,6 +193,7 @@ interface InstructionOpcs {
 		ppcLfsx = (0x1f << 26) | (0x217 << 1),
 		ppcLha = (0x2a << 26),
 		ppcLhax = (0x1f << 26) | (0x157 << 1),
+		ppcLhz = (0x28 << 26),
 		ppcLhzx = (0x1f << 26) | (0x117 << 1),
 		ppcLmw = (0x2e << 26),
 		ppcLwz = (0x20 << 26),
