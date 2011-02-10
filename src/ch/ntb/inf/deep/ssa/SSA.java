@@ -9,7 +9,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
  */
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
-	private static boolean dbg = true;
+	private static boolean dbg = false;
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
