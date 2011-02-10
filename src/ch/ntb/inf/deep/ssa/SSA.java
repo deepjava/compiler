@@ -9,7 +9,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
  */
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
-	private static boolean dbg = false;
+	private static boolean dbg = true;
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
@@ -71,26 +71,24 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		if (rootNode.traversed) {// if its already processed
 			return;
 		}
-		rootNode.traversed = true;
 		if (rootNode.nofPredecessors > 0) {
 			if (rootNode.isLoopHeader()) {
 				// mark loop headers for traverse a second time
 				loopHeaders[nofLoopheaders++] = rootNode;
 
 				if(rootNode.idom != null) sortNodes((SSANode)rootNode.idom);
-				
-				sortedNodes[nofSortedNodes++] = rootNode;
+				if(!rootNode.traversed)	sortedNodes[nofSortedNodes++] = rootNode;
 			} else {
 				for (int i = 0; i < rootNode.nofPredecessors; i++) {
-					if (!((SSANode) rootNode.predecessors[i]).traversed) {
-						sortNodes((SSANode) rootNode.predecessors[i]);
-					}
+					sortNodes((SSANode) rootNode.predecessors[i]);
+					
 				}
-				sortedNodes[nofSortedNodes++] = rootNode;
+				if(!rootNode.traversed)sortedNodes[nofSortedNodes++] = rootNode;
 			}
 		} else {
-			sortedNodes[nofSortedNodes++] = rootNode;
+			if(!rootNode.traversed)sortedNodes[nofSortedNodes++] = rootNode;
 		}
+		rootNode.traversed = true;
 		for (int i = 0; i < rootNode.nofSuccessors; i++) {
 			sortNodes((SSANode) rootNode.successors[i]);
 		}
