@@ -708,7 +708,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				load(val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				if(ssa.isParam[val + maxStack]){//TODO check this
+					load(val, ssa.paramType[val + maxStack]);
+				}else{
+					load(val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				}
 				break;
 			case bClload:
 				bca++;
@@ -759,16 +763,32 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				break;
 			case bCiload_0:
-				load(0, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				if(ssa.isParam[maxStack]){//TODO check this
+					load(0, ssa.paramType[maxStack]);
+				}else{
+					load(0, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				}
 				break;
 			case bCiload_1:
-				load(1, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				if(ssa.isParam[maxStack + 1]){//TODO check this
+					load(1, ssa.paramType[maxStack + 1]);
+				}else{
+					load(1, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				}
 				break;
 			case bCiload_2:
-				load(2, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				if(ssa.isParam[maxStack + 2]){//TODO check this
+					load(2, ssa.paramType[maxStack + 2]);
+				}else{
+					load(2, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				}
 				break;
 			case bCiload_3:
-				load(3, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				if(ssa.isParam[maxStack + 3]){//TODO check this
+					load(3, ssa.paramType[maxStack + 3]);
+				}else{
+					load(3, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+				}
 				break;
 			case bClload_0:
 				load(0, SSAValue.tLong);
@@ -880,7 +900,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				result.type = SSAValue.tRef;
+				//if(value1.type == SSAValue.tAref  && value1.owner.getOperands().length > 1){
+				//	result.type = SSAValue.tAref;
+				//}else{
+					result.type = SSAValue.tRef;
+				//}
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
 				instr.result.owner = instr;
@@ -2760,9 +2784,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 							}
 						}
 						if (res == tempOperands[j] || res.owner.ssaOpcode != sCPhiFunc) {
-							// ignore operand he have no parent PhiFunctions
-							// that lives
-							continue;
+							// the PhiFunctions doesn't lives but have 1 operand from an SSAinstruction which is not a PhiFunction
+							// replace the virtual deleted phiFunction with this operand
+							tempOperands[j] = res;	
+							phiFunctions[i].setOperands(tempOperands);
 						} else {
 							tempOperands[j] = res;// protect for cycles
 						}
