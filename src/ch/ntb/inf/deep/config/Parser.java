@@ -1490,6 +1490,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return;
 		}
 		next();
+		Module def =targetConfig.getModuleByName(HString.getHString("default"));
+		if(def == null){
+			reporter.error(errNoDefaultSegmentDef, "in " + currentFile + " at " + targetConfig.name);
+			return;
+		}
 	}
 
 	private Register register() {

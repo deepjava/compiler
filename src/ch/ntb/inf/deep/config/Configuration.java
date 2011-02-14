@@ -67,6 +67,49 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return getSegmentOf(clazz, HString.getHString("var"));
 	}
 
+	public static Segment getDefaultConstSegment(){
+		Segment seg;
+		SegmentAssignment segAss = activeTarConf.getModuleByName(HString.getHString("default")).getSegmentAssignments();
+		while (segAss != null) {
+			if (segAss.contentAttribute.equals(HString.getHString("const"))) {
+				String segDesignator = segAss.segmentDesignator.toString();
+				int index = segDesignator.indexOf('.');
+				// Determine Device name
+				HString name = HString.getHString(segDesignator.substring(0,
+						index));
+				segDesignator = segDesignator.substring(index + 1);
+				Device dev = memoryMap.getDeviceByName(name);
+				if (dev == null) {
+					ErrorReporter.reporter.error(errNoSuchDevice, "Device: "
+							+ name.toString() + "with segment for "
+							+ "const not found\n");
+					return null;
+				}
+				index = segDesignator.indexOf('.');
+				if (index == -1) {
+					return dev.getSegementByName(HString
+							.getHString(segDesignator));
+				}
+				name = HString.getHString(segDesignator.substring(0, index));
+				segDesignator = segDesignator.substring(index + 1);
+				seg = dev.getSegementByName(name);
+				index = segDesignator.indexOf('.');
+				while (index != -1) {
+					name = HString
+							.getHString(segDesignator.substring(0, index));
+					segDesignator = segDesignator.substring(index + 1);
+					seg = seg.getSubSegmentByName(name);
+					index = segDesignator.indexOf('.');
+				}
+				return seg.getSubSegmentByName(HString
+						.getHString(segDesignator));
+			}
+			segAss = segAss.next;
+		}
+
+		// default segment for const not set
+		return null;
+	}
 	private static Segment getSegmentOf(HString clazz, HString contentAttribute) {
 		Segment seg;
 		SegmentAssignment segAss = null;
