@@ -9,7 +9,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
  */
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
-	private static boolean dbg = false;
+	private static boolean dbg = true;
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
@@ -73,11 +73,13 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		if (rootNode.nofPredecessors > 0) {
 			if (rootNode.isLoopHeader()) {
-				// mark loop headers for traverse a second time
-				loopHeaders[nofLoopheaders++] = rootNode;
 
 				if(rootNode.idom != null) sortNodes((SSANode)rootNode.idom);
-				if(!rootNode.traversed)	sortedNodes[nofSortedNodes++] = rootNode;
+				if(!rootNode.traversed){
+					// mark loop headers for traverse a second time
+					loopHeaders[nofLoopheaders++] = rootNode;
+					sortedNodes[nofSortedNodes++] = rootNode;					
+				}
 			} else {
 				for (int i = 0; i < rootNode.nofPredecessors; i++) {
 					sortNodes((SSANode) rootNode.predecessors[i]);
