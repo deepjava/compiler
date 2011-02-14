@@ -9,49 +9,13 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
 	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
 
-	static { // TODO move to init
-		final Class stringClass = (Class)Type.wktString;
-		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname());
-		final Method newstringMethod;
-		final Method heapnewstringMethod;
-		final Method stringInitC;
-		final Method stringInitCII;
-		final Method stringAllocateC;
-		final Method stringAllocateCII;
-		if(stringClass != null) {
-			newstringMethod = (Method)stringClass.getItemByName("newstring"); // TODO improve this
-			Method m = (Method)stringClass.methods;
-			
-			while(m != null && !m.methDescriptor.equals(HString.getHString("([C)V")) && !m.name.equals(HString.getHString("<init>")))  m = (Method)m.next;
-			stringInitC = m;
-			if(dbg) if(m != null) System.out.println("stringInitC = " + m.name + m.methDescriptor); else System.out.println("stringInitC: not found");
-			
-			m = (Method)stringClass.methods;
-			while(m != null && !m.name.equals(HString.getHString("<init>")) && !m.methDescriptor.equals(HString.getHString("([CII)V"))) m = (Method)m.next;
-			stringInitCII = m;
-			if(dbg) if(m != null) System.out.println("stringInitCII = " + m.name + m.methDescriptor); else System.out.println("stringInitCII: not found");
-			
-			m = (Method)stringClass.methods;
-			while(m != null && !m.name.equals(HString.getHString("allocateString")) && !m.methDescriptor.equals(HString.getHString("(I[C)V"))) m = (Method)m.next;
-			stringAllocateC = m;
-			if(dbg) if(m != null) System.out.println("allocateStringC = " + m.name + m.methDescriptor); else System.out.println("allocateStringC: not found");
-			
-			m = (Method)stringClass.methods;
-			while(m != null && !m.name.equals(HString.getHString("allocateString")) && !m.methDescriptor.equals(HString.getHString("(I[CII)V"))) m = (Method)m.next;
-			stringAllocateCII = m;
-			if(dbg) if(m != null) System.out.println("allocateStringCII = " + m.name + m.methDescriptor); else System.out.println("allocateStringCII: not found");
-		}
-		if(heapClass != null) {
-			heapnewstringMethod = (Method)heapClass.getItemByName("newstring"); // TODO improve this
-		}
-	}
 	private static final int objectSize = Type.wktObject.getObjectSize();
 	private static final int stringSize = Type.wktString.getObjectSize();
 	private static final int constForDoubleConv = 32;// für double convert, kommt weg
@@ -72,6 +36,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	static final int idPUTFPR = Configuration.getSystemMethodIdOf("PUTFPR");
 	static final int idPUTSPR = Configuration.getSystemMethodIdOf("PUTSPR");
 	private static final int idADR_OF_METHOD = Configuration.getSystemMethodIdOf("ADR_OF_METHOD");
+	
+	private static Method stringNewstringMethod;
+	private static Method heapNewstringMethod;
+	private static Method strInitC;
+	private static Method strInitCII;
+	private static Method strAllocC;
+	private static Method strAllocCII;
+
 
 	private static int LRoffset;	
 	private static int CTRoffset;	
@@ -1240,8 +1212,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			case sCcall:
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-System.out.println("Call to " + call.item.name);
-System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
 					if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET1) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
@@ -1307,7 +1277,11 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 					} else if (call.invokespecial) {	// invokespecial
 						if (newString) {	// special treatment for strings
-							loadConstantAndFixup(res.regAux1, call.item);	// addr of corresponding allocate method
+							if (call.item == strInitC) call.item = strAllocC;
+							else if (call.item == strInitCII) call.item = strAllocCII;	// addr of corresponding allocate method
+							else if (call.item == strInitCII) call.item = strAllocCII;
+							else if (call.item == stringNewstringMethod) call.item = heapNewstringMethod;
+							loadConstantAndFixup(res.regAux1, call.item);	
 							createIrSspr(ppcMtspr, LR, res.regAux1);
 						} else {
 							refReg = opds[0].reg;
@@ -1316,7 +1290,7 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 							createIrSspr(ppcMtspr, LR, res.regAux1);
 						}
 					} else {	// invokevirtual 
-						System.out.println("invokeviretual");
+						System.out.println("invokevirtual");
 						refReg = opds[0].reg;
 						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -1399,27 +1373,24 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 				}
 				break;
 			case sCnew:
-//				opds = instr.getOperands();
-//				if (opds.length == 1) {
-					Item item = ((Call)instr).item;	// item = ref
-					Item method;
+				opds = instr.getOperands();
+				Item item = ((Call)instr).item;	// item = ref
+				Item method;
+				if (opds == null) {	// bCnew
+					if (item == Type.wktString) {
+						newString = true;	// allocation for strings is postponed
+					} else {
+						method = Class.getNewMemoryMethod(bCnew);
+						loadConstantAndFixup(paramStartGPR, method);	// addr of new
+						createIrSspr(ppcMtspr, LR, paramStartGPR);
+						loadConstantAndFixup(paramStartGPR, item);	// ref
+						createIBOBILK(ppcBclr, BOalways, 0, true);
+						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+					}
+				} else if (opds.length == 1) {
 					switch (res.type & 0x7fffffff) {
-					case tRef:	// bCnew
-						if (item == Type.wktString) {
-							newString = true;	// allocation for strings is postponed
-//							stringRef = item;
-						} else {
-							method = Class.getNewMemoryMethod(bCnew);
-							loadConstantAndFixup(paramStartGPR, method);	// addr of new
-							createIrSspr(ppcMtspr, LR, paramStartGPR);
-							loadConstantAndFixup(paramStartGPR, item);	// ref
-							createIBOBILK(ppcBclr, BOalways, 0, true);
-							createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
-						}
-						break;
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
 					case tAbyte: case tAshort: case tAinteger: case tAlong:	// bCnewarray
-						opds = instr.getOperands();
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						method = Class.getNewMemoryMethod(bCnewarray);
@@ -1430,7 +1401,6 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
 						break;
 					case tAref:	// bCanewarray
-						opds = instr.getOperands();
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						method = Class.getNewMemoryMethod(bCanewarray);
@@ -1443,9 +1413,17 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 					default:
 						assert false : "cg: instruction not implemented";
 					}
-//				} else { // bCmultianewarray:
-//					assert false : "cg: instruction not implemented";
-//				}
+				} else { // bCmultianewarray:
+					method = Class.getNewMemoryMethod(bCmultianewarray);
+					loadConstantAndFixup(paramStartGPR, method);	// addr of multianewarray
+					createIrSspr(ppcMtspr, LR, paramStartGPR);
+					loadConstantAndFixup(paramStartGPR, item);	// ref
+					createIrDrAsimm(ppcAddi, paramStartGPR+1, 0, opds.length);	// nofDimensions
+					for (int n = 0; n < opds.length; n++) 
+						createIrArSrB(ppcOr, paramStartGPR+1+n, opds[n].reg, opds[n].reg);	// dimensions
+					createIBOBILK(ppcBclr, BOalways, 0, true);
+					createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+				}
 				break;
 			case sCreturn:
 				opds = instr.getOperands();
@@ -1942,6 +1920,50 @@ System.out.printf("accAndPropFlags = 0x%1$x\n", call.item.accAndPropFlags);
 			System.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
 		}
 		System.out.println();
+		}
+	}
+
+	public static void init() { 
+		final Class stringClass = (Class)Type.wktString;
+		System.out.println("string class: " + stringClass.name);
+		System.out.println("heap class name :" + Configuration.getHeapClassname());
+//		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname());
+		final Class heapClass = (Class)Type.classList.getItemByName("ch/ntb/inf/deep/runtime/mpc555/Heap");
+		if (stringClass != null) {
+			stringNewstringMethod = (Method)stringClass.methods.getItemByName("newstring"); // TODO improve this
+			if(heapClass != null) {
+				heapNewstringMethod = (Method)heapClass.methods.getItemByName("newstring"); // TODO improve this
+			}
+			if(dbg) {
+				if (stringNewstringMethod != null) System.out.println("newstringMethod = " + stringNewstringMethod.name + stringNewstringMethod.methDescriptor); else System.out.println("newstringMethod: not found");
+				if (heapNewstringMethod != null) System.out.println("heapNewstringMethod = " + heapNewstringMethod.name + heapNewstringMethod.methDescriptor); else System.out.println("heapNewstringMethod: not found");
+			}
+			
+			Method m = (Method)stringClass.methods;		
+			while (m != null) {
+				if (m.name.equals(HString.getHString("<init>"))) {
+					if (m.methDescriptor.equals(HString.getHString("([C)V"))) strInitC = m; 
+					else if (m.methDescriptor.equals(HString.getHString("([CII)V"))) strInitCII = m;
+				}
+				m = (Method)m.next;
+			}		
+			if(dbg) {
+				if (strInitC != null) System.out.println("stringInitC = " + strInitC.name + strInitC.methDescriptor); else System.out.println("stringInitC: not found");
+				if (strInitCII != null) System.out.println("stringInitCII = " + strInitCII.name + strInitCII.methDescriptor); else System.out.println("stringInitCII: not found");
+			}
+			
+			m = (Method)stringClass.methods;		
+			while (m != null) {
+				if (m.name.equals(HString.getHString("allocateString"))) {
+					if (m.methDescriptor.equals(HString.getHString("(I[C)Ljava/lang/String;"))) strAllocC = m; 
+					else if (m.methDescriptor.equals(HString.getHString("(I[CII)Ljava/lang/String;"))) strAllocCII = m;
+				}
+				m = (Method)m.next;
+			}		
+			if(dbg) {
+				if (strAllocC != null) System.out.println("allocateStringC = " + strAllocC.name + strAllocC.methDescriptor); else System.out.println("allocateStringC: not found");
+				if (strAllocCII != null) System.out.println("allocateStringCII = " + strAllocCII.name + strAllocCII.methDescriptor); else System.out.println("allocateStringCII: not found");
+			}
 		}
 	}
 
