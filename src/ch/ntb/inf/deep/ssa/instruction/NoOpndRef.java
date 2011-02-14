@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.classItems.ClassMember;
 import ch.ntb.inf.deep.classItems.Item;
 
 public class NoOpndRef extends NoOpnd {
@@ -24,6 +25,7 @@ public class NoOpndRef extends NoOpnd {
 		System.out.print(result.n + ": ");
 		System.out.print("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
 		if (field.name != null) System.out.print(" <" + field.name + "(" + field.type.name + ")>");
+		if(field instanceof ClassMember) {System.out.print("Owner: "); ((ClassMember)field).printOwner();}
 		System.out.print(" (" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end);
 		if (result.index != -1) System.out.print(", index=" + result.index);

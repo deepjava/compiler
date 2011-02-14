@@ -1,7 +1,7 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.classItems.ClassMember;
 import ch.ntb.inf.deep.classItems.Item;
-import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class MonadicRef extends Monadic {
@@ -35,6 +35,7 @@ public class MonadicRef extends Monadic {
 		System.out.print(result.n + ": ");
 		System.out.print("MonadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
 		if (item != null) System.out.print(" <" + item.name + "(" + item.type.name + ")>");
+		if(item instanceof ClassMember) {System.out.print("Owner: "); ((ClassMember)item).printOwner();}
 		System.out.print(" (" + result.typeName() + ")");
 		System.out.print(",   end=" + result.end);
 		if (result.index != -1) System.out.print(", index=" + result.index);
