@@ -19,16 +19,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static final int objectSize = Type.wktObject.getObjectSize();
 	private static final int stringSize = Type.wktString.getObjectSize();
 	private static final int constForDoubleConv = 32;// für double convert, kommt weg
-	private static final int idGET1 = Configuration.getSystemMethodIdOf("GET1"); // TODO don't use method names here
-	private static final int idGET2 = Configuration.getSystemMethodIdOf("GET2");
-	private static final int idGET4 = Configuration.getSystemMethodIdOf("GET4");
-	private static final int idGET8 = Configuration.getSystemMethodIdOf("GET8");
-	private static final int idPUT1 = Configuration.getSystemMethodIdOf("PUT1");
-	private static final int idPUT2 = Configuration.getSystemMethodIdOf("PUT2");
-	private static final int idPUT4 = Configuration.getSystemMethodIdOf("PUT4");
-	private static final int idPUT8 = Configuration.getSystemMethodIdOf("PUT8");
-	private static final int idGETBIT = Configuration.getSystemMethodIdOf("GETBIT");
-	private static final int idASM = Configuration.getSystemMethodIdOf("ASM");
+	private static int idGET1, idGET2, idGET4, idGET8;
+	private static int idPUT1, idPUT2, idPUT4, idPUT8;
+	private static int idGETBIT, idASM;
 	static final int idGETGPR = Configuration.getSystemMethodIdOf("GETGPR");
 	static final int idGETFPR = Configuration.getSystemMethodIdOf("GETFPR");
 	static final int idGETSPR = Configuration.getSystemMethodIdOf("GETSPR");
@@ -386,9 +379,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				} else {	// getfield
 					if ((ssa.cfg.method.owner == Type.wktString) &&	// string access needs special treatment
 							((MonadicRef)instr).item.name.equals(HString.getHString("value"))) {
-						System.out.println("*****");
-						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
-						stringCharRef = ((MonadicRef)instr).item;
+//						System.out.println("*****");
+						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);	// result contains ref to string
+						stringCharRef = ((MonadicRef)instr).item;	// ref to "value"
 						stringCharOffset = ((MonadicRef)instr).item.index;	// offset is start of char array
 						break;	
 					} else {
@@ -408,7 +401,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				case tInteger: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
-					createIrDrAd(ppcLwz, instr.result.reg, sReg1, offset);
+					createIrDrAd(ppcLwz, res.reg, sReg1, offset);
 					break;
 				case tChar: 
 					createIrDrAd(ppcLhz, res.reg, sReg1, offset);
@@ -431,17 +424,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				opds = instr.getOperands();
 				if (ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
 					indexReg = opds[1].reg;	// index into array
-					createIrDrAd(ppcLwz, res.regAux1, opds[0].reg, stringSize - 8);
+					createIrDrAd(ppcLwz, res.regAux1, opds[0].reg, objectSize);	// read field "count", must be first field
 					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
-						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);	// add index of field "value" to index
 						createIrDrArB(ppcLbzx, res.reg, res.regAux2, indexReg);
 						createIrArS(ppcExtsb, res.reg, res.reg);
 						break;
 					case tChar: 
 						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);	// add index of field "value" to index
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
 						break;
 					default:
@@ -555,27 +548,28 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				indexReg = opds[1].reg;	// index into array
 				valReg = opds[2].reg;	// value to store
 				if (ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
+//System.out.println("stringCharRef found");
 					indexReg = opds[1].reg;	// index into array
-					createIrDrAd(ppcLha, res.regAux1, opds[0].owner.getOperands()[0].reg, stringSize - 4);
+					createIrDrAd(ppcLwz, res.regAux1, opds[0].reg, objectSize);	// read field "count", must be first field
 					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
-					switch (opds[2].type  & 0x7fffffff) {
-					case tByte:
-						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].owner.getOperands()[0].reg, stringSize - 4);
-						createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
-						break;
-					case tChar: 
+//					switch (opds[2].type & 0x7fffffff) {
+//					case tByte:
+//						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);	// add index of field "value" to index
+//						createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
+//						break;
+//					case tChar: 
 						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
-						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].owner.getOperands()[0].reg, stringSize - 4);
+						createIrDrAsimm(ppcAddi, res.regAux2, opds[0].reg, stringSize - 4);	// add index of field "value" to index
 						createIrSrArB(ppcSthx, valReg, res.regAux1, res.regAux2);
-						break;
-					default:
-						assert false : "cg: type not implemented";
-					}
+//						break;
+//					default:
+//						assert false : "cg: type not implemented";
+//					}
 				} else {
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 					createIrDrAd(ppcLha, res.regAux1, refReg, -arrayLenOffset);
 					createItrap(ppcTw, TOifgeU, indexReg, res.regAux1);
-					switch (opds[0].type  & 0x7fffffff) {
+					switch (opds[0].type & 0x7fffffff) {
 					case tAbyte: case tAboolean:
 						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
 						createIrSrArB(ppcStbx, valReg, indexReg, res.regAux2);
@@ -1265,8 +1259,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					}
 				} else {
 					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
-						loadConstantAndFixup(res.regAux1, call.item);	// addr of method
-						createIrSspr(ppcMtspr, LR, res.regAux1);
+						if (call.item == stringNewstringMethod) {	// replace newstring stub with Heap.newstring
+							call.item = heapNewstringMethod;
+							loadConstantAndFixup(res.regAux1, call.item);	
+							createIrSspr(ppcMtspr, LR, res.regAux1); 
+						} else {
+							loadConstantAndFixup(res.regAux1, call.item);	// addr of method
+							createIrSspr(ppcMtspr, LR, res.regAux1);
+						}
 					} else if ((call.item.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						refReg = opds[0].reg;
 						offset = call.item.index;
@@ -1280,7 +1280,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 							if (call.item == strInitC) call.item = strAllocC;
 							else if (call.item == strInitCII) call.item = strAllocCII;	// addr of corresponding allocate method
 							else if (call.item == strInitCII) call.item = strAllocCII;
-							else if (call.item == stringNewstringMethod) call.item = heapNewstringMethod;
 							loadConstantAndFixup(res.regAux1, call.item);	
 							createIrSspr(ppcMtspr, LR, res.regAux1);
 						} else {
@@ -1290,14 +1289,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 							createIrSspr(ppcMtspr, LR, res.regAux1);
 						}
 					} else {	// invokevirtual 
-						System.out.println("invokevirtual");
+//						System.out.println("invokevirtual");
 						refReg = opds[0].reg;
 						offset = call.item.index;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
 						createIrSspr(ppcMtspr, LR, res.regAux1);
-						System.out.println("offset = " + offset);
+//						System.out.println("offset = " + offset);
 					}
 					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
 					for (int k = 0; k < nofFPR; k++) destFPR[k] = 0;
@@ -1379,13 +1378,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				if (opds == null) {	// bCnew
 					if (item == Type.wktString) {
 						newString = true;	// allocation for strings is postponed
+						loadConstantAndFixup(res.reg, item);	// ref to string
 					} else {
 						method = Class.getNewMemoryMethod(bCnew);
 						loadConstantAndFixup(paramStartGPR, method);	// addr of new
 						createIrSspr(ppcMtspr, LR, paramStartGPR);
 						loadConstantAndFixup(paramStartGPR, item);	// ref
 						createIBOBILK(ppcBclr, BOalways, 0, true);
-						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 					}
 				} else if (opds.length == 1) {
 					switch (res.type & 0x7fffffff) {
@@ -1398,7 +1398,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
 						createIBOBILK(ppcBclr, BOalways, 0, true);
-						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
 					case tAref:	// bCanewarray
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
@@ -1408,7 +1408,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrSspr(ppcMtspr, LR, paramStartGPR + 1);
 						loadConstantAndFixup(paramStartGPR + 1, item);	// ref
 						createIBOBILK(ppcBclr, BOalways, 0, true);
-						createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
 					default:
 						assert false : "cg: instruction not implemented";
@@ -1422,7 +1422,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					for (int n = 0; n < opds.length; n++) 
 						createIrArSrB(ppcOr, paramStartGPR+1+n, opds[n].reg, opds[n].reg);	// dimensions
 					createIBOBILK(ppcBclr, BOalways, 0, true);
-					createIrArSrB(ppcOr, instr.result.reg, returnGPR1, returnGPR1);
+					createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 				}
 				break;
 			case sCreturn:
@@ -1924,9 +1924,17 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	public static void init() { 
+		idGET1 = Configuration.getSystemMethodIdOf("GET1");	// TODO don't use method names here
+		idGET2 = Configuration.getSystemMethodIdOf("GET2");
+		idGET4 = Configuration.getSystemMethodIdOf("GET4");
+		idGET8 = Configuration.getSystemMethodIdOf("GET8");
+		idPUT1 = Configuration.getSystemMethodIdOf("PUT1");
+		idPUT2 = Configuration.getSystemMethodIdOf("PUT2");
+		idPUT4 = Configuration.getSystemMethodIdOf("PUT4");
+		idPUT8 = Configuration.getSystemMethodIdOf("PUT8");
+		idGETBIT = Configuration.getSystemMethodIdOf("GETBIT");
+		idASM = Configuration.getSystemMethodIdOf("ASM");
 		final Class stringClass = (Class)Type.wktString;
-		System.out.println("string class: " + stringClass.name);
-		System.out.println("heap class name: " + Configuration.getHeapClassname());
 		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
 		if (stringClass != null) {
 			stringNewstringMethod = (Method)stringClass.methods.getItemByName("newstring"); // TODO improve this
@@ -1934,7 +1942,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				heapNewstringMethod = (Method)heapClass.methods.getItemByName("newstring"); // TODO improve this
 			}
 			if(dbg) {
-				if (stringNewstringMethod != null) System.out.println("newstringMethod = " + stringNewstringMethod.name + stringNewstringMethod.methDescriptor); else System.out.println("newstringMethod: not found");
+				if (stringNewstringMethod != null) System.out.println("stringNewstringMethod = " + stringNewstringMethod.name + stringNewstringMethod.methDescriptor); else System.out.println("stringNewstringMethod: not found");
 				if (heapNewstringMethod != null) System.out.println("heapNewstringMethod = " + heapNewstringMethod.name + heapNewstringMethod.methDescriptor); else System.out.println("heapNewstringMethod: not found");
 			}
 			

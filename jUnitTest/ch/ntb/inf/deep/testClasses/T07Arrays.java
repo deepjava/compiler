@@ -4,6 +4,7 @@ package ch.ntb.inf.deep.testClasses;
 public class T07Arrays {
 	static short[] s1 = new short[3];
 	byte[] b1 = new byte[12];
+	byte[][][][] b2 = new byte[12][2][][];
 	
 	public static void emptyIntArray(){
 		int[] a = new int[5];
@@ -30,6 +31,10 @@ public class T07Arrays {
 
 	public static void multiArray(){
 		int[][] x = new int[2][3];
+		int b = x[1][0];
+		x[0][0] = 12;
+		int[] x1 = new int [10];
+		x[1] = x1;
 		double [][] d = new double[][]{{2.4d,3.1d},{3.5d,8.3d}};
 	}
 	
