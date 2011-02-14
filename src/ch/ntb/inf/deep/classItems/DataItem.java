@@ -26,7 +26,7 @@ public class DataItem extends ClassMember {
 		indent(indentLevel);
 		Dbg.printJavaAccAndPropertyFlags(this.accAndPropFlags, 'F');
 		type.printTypeCategory(); type.printName();
-		vrb.print(' '); printName(); vrb.print(';'); type.printSize();
+		vrb.printf(" %1$s; offset=%2$d, ", name.toString(), offset); type.printSize();
 		vrb.print(", dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags, 'F');
 	}
 

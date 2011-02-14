@@ -91,7 +91,6 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 				if(opc == bCtableswitch||opc == bClookupswitch){
 					int addr = instrAddr + 1;
 					addr = (addr + 3) & -4; // round to the next multiple of 4
-//					int defaultOffset = getInt(bc, addr);
 					addr += 4; // skip default offset
 					if(opc == bCtableswitch){
 						int low = getInt(byteCode, addr);
@@ -99,7 +98,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 						instrLength = ((high-low) + 3) * 4 + addr - instrAddr;
 					}else{// opc == bClookupswitch
 						int nofPairs = getInt(byteCode, addr);
-						instrLength = (nofPairs * 2 + 2) * 4	 + (addr - instrAddr);
+						instrLength = (nofPairs * 2 + 1) * 4	 + (addr - instrAddr);
 					}
 				}else{// (opc != bCtableswitch & opc != bClookupswitch)
 					assert false;
@@ -108,8 +107,8 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 				instrAddr++;
 				opc = byteCode[instrAddr] & 0xFF;
 				bcAttr = bcAttrTab[opc];
+				if(verbose) Dbg.printJvmInstr(instrAddr, opc);
 				if(assertions) {
-					if(verbose) Dbg.printJvmInstr(instrAddr, opc);
 					switch(opc){
 					case bCiload: case bClload: case bCfload: case bCdload: case bCaload: 
 					case bCistore: case bClstore: case bCfstore: case bCdstore: case bCastore: 
@@ -215,8 +214,9 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 					assert false;
 				}
 				if(verbose){
-					vrb.print("\t\trefed item: ");  item.printName();
-					vrb.print(", item.type=");  item.type.printName();
+					vrb.print("\tbcpp: item: "); item.printName();
+					vrb.print(", item.type=");
+					if( item.type == null) vrb.print("null");  else item.type.printName();
 					vrb.print(", owner=");  item.printOwner();
 					vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(item.accAndPropFlags);
 					vrb.println();

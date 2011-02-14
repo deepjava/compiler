@@ -141,7 +141,8 @@ public class Method extends ClassMember {
 			Dbg.printDeepAccAndPropertyFlags(accAndPropFlags & ~sysMethCodeMask, 'M');
 			vrb.printf("; mAttr=0x%1$3x", accAndPropFlags & sysMethCodeMask);
 		}
-		vrb.println(", nofParams="+nofParams);
+		vrb.printf(", nofParams=%1$d, index=%2$d\n", nofParams, index);
+
 		indent(indentLevel+1);
 		vrb.print("code: ");
 		if(this.code == null) vrb.println("none"); else vrb.printf("%1$d B\n", code.length);

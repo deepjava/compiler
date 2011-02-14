@@ -20,6 +20,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private static final int fieldListArrayLength = 9;
 	private static final Item[] instFieldLists = new Item[fieldListArrayLength]; // instance field lists, used by method readFields
 	private static final Item[] classFieldLists = new Item[fieldListArrayLength]; // class field lists, used by method readFields
+	private static final Item[] constFieldLists = new Item[fieldListArrayLength]; //  class constants lists, used by method readFields
 //	private static Item constFields; // constant field list (unsorted)
 	static{
 		assert fieldSizeUnit >= 4 && (fieldSizeUnit & (fieldSizeUnit-1)) == 0;
@@ -31,29 +32,32 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public Item[] constPool; // reduced constant pool
 	
 	public Item methods; // list with all methods
-	public int nOfMethods; // number of methods
-	public int nOfClassMethods, nOfInstanceMethods; // number of methods
-	public int nOfInstanceMethodsInCD = 0;
+	public int nofMethods; // number of methods
+	public int nofInstMethods, nofClassMethods; // number of methods
+	public int methTabLength; // nOfInstanceMethodsInCD
 	
-	public Item fields; // list with all fields
-	public int nOfClassFields, nOfInstanceFields; // number of fields
+	public Item instFields, firstInstReference; // (fields), chained to list with all fields
+	public Item classFields, firstClassReference; // list of class fields
+	public Item constFields; // list of const fields (static final <primitive type>)
+	public int nofInstFields, nofClassFields, nofConstFields; // number of fields
+	public int nofInstRefs, nofClassRefs;
 		
 	public Class[] interfaces;
-	public int nOfInterfaces; // number of interfaces
+	public int nofInterfaces; // number of interfaces
 
 	Class[] imports;
-	public int nOfImports; // number of imports (without arrays)
+	public int nofImports; // number of imports (without arrays)
+
+	public int nofBaseClasses; // number of base classes
 	
-	public int nOfBaseClasses; // number of base classes
-	
-	public int nOfReferences; // number of class fields which are references
+//	public int nOfReferences; // number of class fields which are references
 	
 	public int[] constantBlock; // the constant block for this class
 	public int constantBlockSize; // size of the constant block
 	public int constantPoolSize; // size of this pool on the target (in byte)
 	public int stringPoolSize; // size of this pool on the target (in byte)
 	public int classDescriptorSize; // size of the class descriptor on the target (in byte)
-	public int classDescriptorOffset = 0;
+	public int classDescriptorOffset;
 
 	public int machineCodeSize; // size of the machine code on the target (in byte)
 	
@@ -91,51 +95,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		return (Method)newMethods[methIndex];
 	}
 
-	/**
-	 * Select field by name and delete it in the fields list (if found).
-	 * @param fieldName
-	 * @return  the selected field or null if not found
-	 */
-//	private Item getAndExtractField(HString fieldName){
-//		assert false;
-//		Item item = fields, pred = null;
-//		while(item != null && item.name != fieldName) {
-//			pred = item;
-//			item = item.next;
-//		}
-//		if(item != null){
-//			if(pred == null) fields = item.next; else  pred.next = item.next;
-//			item.next = null;
-//		}
-//		return item;
-//	}
-
 	Item getField(HString fieldName){
-		Item item = fields;
+		Item item = instFields;
 		while(item != null && item.name != fieldName) item = item.next;
 		if(item == null && type != null) item = ((Class)type).getField(fieldName);
 		return item;
 	}
-
-	/**
-	 * Select method by name and descriptor and delete it in the methods list if found.
-	 * @param methName
-	 * @param methDescriptor
-	 * @return the selected method or null if not found
-	 */
-//	private Method getAndExtractMethod(HString methName, HString methDescriptor){
-//		assert false;
-//		Item item = methods, pred = null;
-//		while(item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) {
-//			pred = item;
-//			item = item.next;
-//		}
-//		if(item != null){
-//			if(pred == null) methods = item.next; else pred.next = item.next;
-//			item.next = null;
-//		}
-//		return (Method)item;
-//	}
 
 	protected Item getMethod(HString name, HString descriptor){
 		Item item = null;
@@ -158,7 +123,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	 */
 	DataItem insertCondAndGetField(HString fieldName, Type fieldType){
 		//pre: all strings in the const are already registered in the proper hash table.
-		Item item = fields;
+		Item item = instFields;
 		while(item != null && item.name != fieldName) item = item.next;
 		DataItem field;
 		if(item != null){
@@ -166,7 +131,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			assert field.type == fieldType;
 		}else{// create Field and update field list
 			field = new DataItem(fieldName, fieldType);
-			field.next = fields;  fields = field;
+			field.next = instFields;  instFields = field;
 		}
 		return field;
 	}
@@ -212,28 +177,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		return cls;
 	}
 
-	/**
-	 * Check FieldRefInfo entry in constant pool and update it accordingly if necessary.
-	 * <br>That is: if there is not yet a direct reference to an object of type Field, then such an object is created and registered.
-	 * @param cpFieldInfoIndex index of FieldRefInfo entry
-	 * @return object of this type Class
-	 */
-//	private Item updateAndGetCpFieldEntry(int cpFieldInfoIndex){
-//		//pre: all strings in the const are already registered in the proper hash table.
-//		Item field = cpItems[cpFieldInfoIndex];
-//		if(field == null){
-//			int csx = cpIndices[cpFieldInfoIndex]; // get class and signature indices
-//			Class cls = (Class)updateAndGetCpClassEntry(csx>>>16);
-//			int sx = cpIndices[csx & 0xFFFF];
-//			HString fieldName = cpStrings[sx>>>16];
-//			HString fieldDesc  = cpStrings[sx & 0xFFFF];
-//			Type fieldType = getTypeByDescriptor(fieldDesc);
-//			field = cls.insertCondAndGetField( fieldName, fieldType);
-//			cpItems[cpFieldInfoIndex] = field;
-//		}
-//		return field;
-//	}
-
 	private Item getFieldOrStub(HString fieldName, Type fieldType){
 		Item field = getField(fieldName);
 		if( field == null ) field = new ItemStub(this, fieldName, fieldType);
@@ -255,29 +198,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		return field;
 	}
-
-	/**
-	 * Check MethRefInfo entry in constant pool and update it accordingly if necessary.
-	 * <br>That is: if there is not yet a direct reference to an object of type Method, then such an object is created and registered.
-	 * @param cpMethInfoIndex index of MethRefInfo entry
-	 * @return object of this type Class
-	 */
-//	private Item updateAndGetCpInterfaceMethodEntry(int cpMethInfoIndex){
-//		//pre: all strings in the const are already registered in the proper hash table.
-//		Method method = null;
-//		if(cpItems[cpMethInfoIndex] == null){
-//			int csx = cpIndices[cpMethInfoIndex]; // get class and signature indices
-//			Class cls = (Class)updateAndGetCpClassEntry(csx>>>16);
-//			int sx = cpIndices[csx & 0xFFFF];
-//
-//			HString methName = cpStrings[sx>>>16];
-//			HString methDesc  = cpStrings[sx & 0xFFFF];
-//			method = cls.insertCondAndGetMethod( methName, methDesc);
-//			method.owner = cls;
-//			cpItems[cpMethInfoIndex] = method;
-//		}
-//		return method;
-//	}
 
 	private Item getMethodOrStub(HString name, HString descriptor){
 		Item meth = getMethod(name, descriptor);
@@ -332,7 +252,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			
 			case cptClass:
 				cpIndices[pEntry] = clfInStrm.readUnsignedShort(); 
-				nOfImports++;
+				nofImports++;
 				break; // class index
 			case cptString: cpIndices[pEntry] = clfInStrm.readUnsignedShort(); break; // string index
 			
@@ -376,10 +296,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				pEntry++; 
 				break;
 			case cptClass: // class index
-//				updateAndGetCpClassEntry(pEntry);
 				Item item = updateAndGetCpClassEntry(pEntry);
 				cpItems[pEntry] = item;
-				if( item instanceof Array) nOfImports--; // arrays get not included in imports
+				if( item instanceof Array) nofImports--; // arrays get not included in imports
 				nofItems++;
 				break;
 			case cptString: 
@@ -387,18 +306,14 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				nofItems++;
 				break;
 			case cptFieldRef:
-//				updateAndGetCpFieldEntry(pEntry);
 				cpItems[pEntry] = getFieldOrStub(pEntry);
 				nofItems++;
 				break;
 			case cptMethRef:
-//				updateAndGetCpMethodEntry(pEntry);
 				cpItems[pEntry] = getMethodOrStub(pEntry);
 				nofItems++;
 				break;
 			case cptIntfMethRef:
-//				Item meth = updateAndGetCpInterfaceMethodEntry(pEntry);
-//				meth.accAndPropFlags |= (1<<dpfInterfCall);
 				cpItems[pEntry] = getMethodOrStub(pEntry);
 				nofItems++;
 				break;
@@ -426,7 +341,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	private void readInterfaces(DataInputStream clfInStrm) throws IOException{
 		int cnt = clfInStrm.readUnsignedShort();
-		nOfInterfaces = cnt;
+		nofInterfaces = cnt;
 		if(cnt > 0){
 			interfaces = new Class[cnt];
 			for (int intf = 0; intf < cnt; intf++){
@@ -439,101 +354,76 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private void addItemToFieldList(Item item){
 		if(verbose) vrb.println(">addItemToFieldList");
 		Type type = (Type)item.type;
+		char typeCategory = type.category;
+		char typeNickName = type.name.charAt(0);
 		int sizeInBits = type.sizeInBits;
-		int fieldList = sizeInBits>>3; // fieldList={0, 1, 2, 4, 8}
-		if( (item.accAndPropFlags & (1<<apfStatic)) == 0){// instance field
-			item.next = instFieldLists[fieldList];  instFieldLists[fieldList] = item;
-			nOfInstanceFields++;
-		}else{// class field
-			item.next = classFieldLists[fieldList];  classFieldLists[fieldList] = item;			
-			nOfClassFields++;
+		int fieldListIndex = 0;
+		int sizeInByte = sizeInBits>>3; // fieldList={0, 1, 2, 4, 8}
+		switch(sizeInByte){
+		case 8: // tcPrimitive: long, double
+			if(typeNickName == tdLong) fieldListIndex = flxLong; else  fieldListIndex = flxDouble;
+			break;
+		case 4: // tcRef, tcArray
+			if(typeCategory != tcPrimitive) fieldListIndex = flxRef;
+			else if(typeNickName == tdFloat) fieldListIndex = flxFloat; 
+			else  fieldListIndex = flxInt;
+			break;
+		case 2: // tcPrimitive: long, double
+			fieldListIndex = flxShortChar;
+			break;
+		case 1: // tcPrimitive: long, double
+			fieldListIndex = flxByte;
+			break;
+		case 0: // tcPrimitive: long, double
+			fieldListIndex = flxBits;
+			break;
+		default:
+			assert false;
+		}
+		int flags = item.accAndPropFlags;
+		if( (flags & (1<<apfStatic)) == 0){// instance field
+			item.next = instFieldLists[fieldListIndex];  instFieldLists[fieldListIndex] = item;
+			nofInstFields++;
+			if(fieldListIndex == flxRef) nofInstRefs++;
+		}else if( (flags & (1<<dpfConst)) == 0){// class field
+			item.next = classFieldLists[fieldListIndex];  classFieldLists[fieldListIndex] = item;			
+			nofClassFields++;
+			if(fieldListIndex == flxRef) nofClassRefs++;
+		}else{// constant (of primitive type
+			item.next = constFieldLists[fieldListIndex];  constFieldLists[fieldListIndex] = item;			
+			nofConstFields++;
 		}
 		if(verbose) vrb.println("<addItemToFieldList");
 	}
 
-	private void clearFieldLists(){
-		if(verbose) vrb.println(">clearFieldLists");
-		nOfClassFields = 0;  nOfInstanceFields = 0;
-		instanceFieldsSize = 0; classFieldsSize = 0;
-		for(int n = fieldListArrayLength-1; n >= 0; n--){
-			instFieldLists[n] = null;  classFieldLists[n] = null;
-		}
-		if(verbose) vrb.println("<clearFieldLists");
-	}
-
 	private Item getFieldListAndUpdate(Item[] fieldLists){
-//		final boolean verbose = true;
 		if(verbose) vrb.printf(">getFieldListAndUpdate: class: %1$s\n", name);
 
 		Item head = null, tail = null;
-		Item rest = null;
-		
-		//--- select and extract reference fields
-		int fieldsSize = 0;
-		
-		Item list = fieldLists[4];
-		Item item = list;
-		while(item != null){
-			list = item.next;
-			Type type = (Type)item.type;
-			if( type.category != tcPrimitive ){// reference (tcRef || tcArray)
-				fieldsSize += 4;
-				item.next = head; head = item;
-				if(tail == null) tail = item;
-			}else{
-				item.next = rest; rest = item;
-			}
-			item = list;
-		}
-		fieldLists[4] = rest;
-//		vrb.printf(">getF1: fieldsSize=%1$d\n", fieldsSize);
-		
-		//--- select and extract any other fields
-		Item consts = null;
-		for(int category = 8; category >= 0; category--){
-			list = fieldLists[category];
+
+		for(int category = fieldLists.length-1; category >= 0; category--){
+			Item list = fieldLists[category];
 			fieldLists[category] = null;
-			item = list;
+			Item item = list;
 			while(item != null){
 				list = item.next;
-				if( (item.accAndPropFlags & (1<<dpfConst)) != 0){
-					item.next = consts;
-					consts = item;
-//					vrb.printf(">getF1a: const.name=%1$s\n", consts.name);
-				}else{
-					fieldsSize += Math.max(category, 1); // reserve for boolean etc to 1 B
-					if(tail == null)  head = item; else tail.next = item;
-					tail = item;
-				}
+				item.next = null;
+				//-- append
+				if(tail == null)  head = item; else tail.next = item;
+				tail = item;
 				item = list;
-			}			
+			}
 		}
-//		vrb.printf(">getF2: fieldsSize=%1$d\n", fieldsSize);
-
-		if( fieldLists == instFieldLists)
-			instanceFieldsSize = (fieldsSize + (fieldSizeUnit-1)) & -fieldSizeUnit;
-		else
-			classFieldsSize = (fieldsSize + (fieldSizeUnit-1)) & -fieldSizeUnit;
-		
-//		vrb.printf(">getF3: objectSizeOrDim=%1$d, classFieldsSize=%2$d\n", instanceFieldsSize, classFieldsSize);
-		
-		if( tail == null ) head = consts; else tail.next = consts;
 
 		if(verbose) vrb.println("<getFieldListAndUpdate");
 		return head;
-	}
-
-	private Item appendItem(Item head1, Item tail1, Item head2){
-		if(tail1 == null)  head1 = head2;  else  tail1.next = head2;
-		return head1;
 	}
 
 	private void readFields(DataInputStream clfInStrm) throws IOException{
 		final boolean verbose = false;
 		
 		if(verbose) vrb.println(">readFields: "+name);
-		clearFieldLists();
-		assert fields == null;
+		assert instFields == null;
 		
 		int fieldCnt = clfInStrm.readUnsignedShort();
 		while(fieldCnt > 0){
@@ -544,7 +434,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			//--- read name and descriptor
 			int index = clfInStrm.readUnsignedShort();
 			name = cpStrings[index];
-//			Item field = getAndExtractField(name);
 			index = clfInStrm.readUnsignedShort();
 			descriptor = cpStrings[index];
 
@@ -595,35 +484,27 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			fieldCnt--;
 		}
 		
-		assert fields == null;
-//		if(fields != null){
-//			Item item = fields;
-//			while(item != null){
-//				vrb.print("("+item.name +") ");
-//				item.println(1);
-//				item = item.next;
-//			}
-//			vrb.println(" Class.readFieldsE-end");
-//		}
-		
-		
-		Item clsFields = getFieldListAndUpdate(classFieldLists);
-		Item instFields = getFieldListAndUpdate(instFieldLists);
-		if(clsFields == null) clsFields = instFields;
-		else{
-			Item tail = null, item = clsFields;
-			while(item != null){
-				tail = item; item = item.next;
-			}
-			tail.next = instFields;
-		}
-		fields = clsFields;
+		assert instFields == null;
+		constFields = getFieldListAndUpdate(constFieldLists);
+
+		firstClassReference = classFieldLists[flxRef];
+		classFields = getFieldListAndUpdate(classFieldLists);
+
+		firstInstReference = instFieldLists[flxRef];
+		instFields = getFieldListAndUpdate(instFieldLists);
+
+		//--- chain the field lists
+		Item tail = getTailItem(classFields);
+		classFields = appendItem(classFields, tail, constFields);
+		tail = getTailItem(instFields);
+		instFields = appendItem(instFields, tail, classFields);
+
 		if(verbose) vrb.println("<readFields");
 	}
 
 	private void readMethods(DataInputStream clfInStrm, int userReqAttributes) throws IOException{
 		int methodCnt = clfInStrm.readUnsignedShort();
-		nOfMethods = methodCnt;
+		nofMethods = methodCnt;
 		assert methods == null;
 		
 		int nofClsMeths = 0,  nofInstMeths = 0;
@@ -642,7 +523,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			descriptor = cpStrings[index];
 			if(descriptor == hsCommandDescriptor && name != hsClassConstrName && (flags & (1<<apfStatic)) != 0){
 				flags |= (1<<dpfCommand);
-//				vrb.printf(">command: %1$s%2$s\n", name, descriptor);
 			}
 			Type returnType = getReturnType(descriptor);
 			Method method = new Method(name, returnType, descriptor);
@@ -746,9 +626,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		assert methods == null;
 		methods = appendItem(clsMethHead, clsMethTail, instMethHead);	
-//		methods = clsMethHead;   clsMethTail.next = instMethHead;	
-		nOfClassMethods = nofClsMeths;
-		nOfInstanceMethods = nofInstMeths;
+		nofClassMethods = nofClsMeths;
+		nofInstMethods = nofInstMeths;
 	}
 
 	private void readClassAttributes(DataInputStream clfInStrm, int userReqAttributes) throws IOException{
@@ -870,9 +749,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		//--- load referenced classes
 		if( (accAndPropFlags & (1<<dpfClassLoaded)) != 0){
-			nOfImports--;
-			imports = new Class[nOfImports];
-			int impIndex = nOfImports;
+			nofImports--;
+			imports = new Class[nofImports];
+			int impIndex = nofImports;
 			for(int cpx = constPool.length-1; cpx >= 0; cpx--){
 				Item item = constPool[cpx];
 				if(item instanceof Class){
@@ -1031,11 +910,67 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(verbose) vrb.println("<repalceConstPoolStubs");
 	}
 
+	protected void fixUpInstanceFields(){
+		Item item = instFields;
+		Item clsFields = classFields;
+		objectSize = (objectSize + fieldSizeUnit-1) & -fieldSizeUnit;
+		while(item != clsFields){
+			item.offset = objectSize;
+			objectSize +=  item.type.getTypeSize();
+			item = item.next;
+		}
+	}
+
+	protected void fixUpClassFields(){
+		Item item = classFields;
+		Item cFields = constFields;
+		classFieldsSize = 0;
+		while(item != cFields){
+			item.offset = classFieldsSize;
+			classFieldsSize +=  item.type.getTypeSize();
+			item = item.next;
+		}
+	}
+
+	protected void fixUpMethods(){
+		Item meth = methods;
+		if( type == null){//  java/lang/Object
+			methTabLength = 0;
+			while(meth != null){
+				meth.index = -1;
+				if( (meth.accAndPropFlags & (1<<apfStatic)) == 0) meth.index = methTabLength++;
+				meth = meth.next;
+			}
+		}else{// any other class ( not java/lang/Object)
+			Class baseCls = (Class)type;
+			methTabLength = baseCls.methTabLength;
+			while(meth != null){
+				meth.index = -1;
+				if( (meth.accAndPropFlags & (1<<apfStatic)) == 0){// instance method
+					Item baseMeth = baseCls.getMethod(meth.name, ((Method)meth).methDescriptor);
+					if(baseMeth == null) meth.index = methTabLength++;
+					else meth.index = baseMeth.index;
+				}
+				meth = meth.next;
+			}
+		}
+	}
+
 	protected void selectAndMoveInitClasses(){
 		if( (accAndPropFlags & 1<<dpfClassMark) == 0 ){
 			accAndPropFlags |= 1<<dpfClassMark;
 
-			if(type != null) type.selectAndMoveInitClasses();
+			if(type == null){
+				objectSize = 0; nofBaseClasses = 0;
+			}else{
+				type.selectAndMoveInitClasses();
+				Class baseCls = (Class)type;
+				objectSize = baseCls.objectSize; nofBaseClasses = baseCls.nofBaseClasses + 1;
+			}
+			fixUpInstanceFields();
+			fixUpClassFields();
+			fixUpMethods();
+
 			if(imports != null){
 				for(int index = imports.length-1; index >= 0; index--)  imports[index].selectAndMoveInitClasses();
 			}
@@ -1053,7 +988,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	private void comleteLoadingOfRootClass(){
 		repalceConstPoolStubs();
-		fixUpObjectSize();
+//		fixUpObjectSize();
 		selectAndMoveInitClasses();
 	}
 
@@ -1069,6 +1004,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		clsObject.loadClass(userReqAttributes);
 		clsObject.comleteLoadingOfRootClass();
 
+		Class clsString = (Class)wellKnownTypes[txString];
+		clsString.loadClass(userReqAttributes);
+		clsString.comleteLoadingOfRootClass();
+
 		loadSystemClasses(sysClasses, userReqAttributes);
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
 
@@ -1082,10 +1021,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		fixUpClassList();
 		
 //		boolean verbose = true;
-		if(verbose) {
+//		if(verbose) {
 //			printClassList("end state, class list:");
 //			printConstPools();
-		}
+//		}
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
@@ -1093,31 +1032,24 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
-//	public static void buildSystem(String[] rootClassNames, int userReqAttributes) throws IOException{
-//		buildSystem(rootClassNames, new String[] {"bin"}, null, userReqAttributes);
-//	}
-
+	
 	//--- debug primitives
 	public void printItemCategory(){
 		vrb.print("class");
 	}
 
 	public static void printClassList(String title){
+		vrb.println();
 		if(title != null) vrb.println(title);
-		vrb.printf("\nclass list: nofClasses=%1$d (with class constr. %2$d), nofArrays=%3$d\n", nofClasses, nofInitClasses, nofArrays);
-		vrb.printf("\tclassListHead=%1$s", classList.name);
+		vrb.printf("class list: nofClasses=%1$d (with class constr. %2$d), nofArrays=%3$d\n", nofClasses, nofInitClasses, nofArrays);
+		indent(1); vrb.printf("classListHead=%1$s", classList.name);
 		if(nofInitClasses > 0) vrb.printf(", classInitListTail=%1$s", classInitListTail.name);
 		vrb.printf(", classListTail=%1$s\n", classListTail.name);
 		if(nofInitClasses > 0) vrb.println("//--- a) classes with class constructor");
+		vrb.println();
 		Item cls = classList;
 		while(cls != null){
-			Dbg.indent(1);
-			Dbg.printJavaAccAndPropertyFlags(cls.accAndPropFlags, 'C');  vrb.printf("class %1$s", cls.name);
-			if(cls.type != null)  vrb.printf(" extends %1$s", cls.type.name);
-			vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(cls.accAndPropFlags, 'C'); vrb.println();
-			if (cls instanceof Class) ((Class)cls).printImports(2);
-			cls.printFields(2);
-			cls.printMethods(2);
+			cls.print(1);
 			if(cls == classInitListTail) vrb.println("//--- b) classes without class constructor");
 			cls = cls.next;
 			vrb.println();
@@ -1127,8 +1059,16 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printFields(int indentLevel){
 		indent(indentLevel);
-		vrb.printf("fields: (clsFields: #=%1$d, size=%2$d B; instFields: #=%3$d, size=%4$d B)\n", nOfClassFields, classFieldsSize, nOfInstanceFields, instanceFieldsSize);
-		Item item = fields;
+		vrb.printf("fields: (instFields: #=%1$d, objSize=%2$d B", nofInstFields, objectSize);
+		vrb.printf("; clsFields: #=%1$d, clsFieldsSize=%2$d B; constFields: #=%3$d)\n", nofClassFields, classFieldsSize, nofConstFields);
+		indent(indentLevel+1);
+		vrb.printf("references: (instFields: #=%1$d", nofInstRefs);
+		if(nofInstRefs > 0) vrb.printf(", firstRef=(%1$s, offset=%2$d)", firstInstReference.name, firstInstReference.offset);
+		vrb.printf("); (clsFields: #=%1$d", nofClassRefs);
+		if(nofClassRefs > 0) vrb.printf(", firstRef=(%1$s, offset=%2$d)", firstClassReference.name, firstClassReference.offset); else vrb.print(')');
+		vrb.println();
+	
+		Item item = instFields;
 		while(item != null){
 			item.println(indentLevel+1);
 			item = item.next;
@@ -1137,7 +1077,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printMethods(int indentLevel){
 		indent(indentLevel);
-		vrb.println("methods: (#clsMeths="+ nOfClassMethods + ",#InstMeths=" + nOfInstanceMethods +')' );
+		vrb.printf("methods: (instMeths #=%1$d,  clsMeths #=%2$d)\n", nofInstMethods, nofClassMethods);
 		Item item = methods;
 		while(item != null){
 			item.println(indentLevel+1);
@@ -1216,7 +1156,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printImports(int indentLevel){
 		if(imports != null){
-			indent(indentLevel); 	vrb.printf("imports: %1$d\n", nOfImports);
+			indent(indentLevel); 	vrb.printf("imports: %1$d\n", nofImports);
 			for(int imp = 0; imp < imports.length; imp++){
 				indent(indentLevel+1); vrb.println(imports[imp].name);
 			}
@@ -1242,7 +1182,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	}
 
 	private void printReducedConstPool(String title){
-		vrb.printf("\nreduced constant pool: %1$s (nOfImports=%2$d)\n", title, nOfImports);
+		vrb.printf("\nreduced constant pool: %1$s (nOfImports=%2$d)\n", title, nofImports);
 		for(int pe = 0; pe < constPool.length; pe++){
 			vrb.printf("  [%1$3d] ", pe);
 			printRedCpEntry(pe);
@@ -1257,20 +1197,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void print(int indentLevel){
 		indent(indentLevel);
-		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags, 'C');
-		vrb.print("class ");  vrb.print(name);
-		if(type != null) {
-			vrb.print(" extends "); vrb.print(type.name);
-		}
-		vrb.print("\n\t// dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C');
-		vrb.print("\n\t// category: ");  vrb.print((char)category);
-		vrb.print("\n\t// source file: ");  vrb.println(srcFileName);
-
-		printInterfaces(indentLevel+1);
-		vrb.println('{');
+		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags, 'C');  vrb.printf(" class %1$s", name);
+		if(type != null)  vrb.printf(" extends %1$s", type.name);
+		vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
+		indent(indentLevel+1);  vrb.printf("source file: %1$s, extLevel=%2$d\n", srcFileName, this.nofBaseClasses);
 		printImports(indentLevel+1);
-		vrb.println();
-
+		printInterfaces(indentLevel+1);
 		printFields(indentLevel+1);
 		printMethods(indentLevel+1);
 	}
@@ -1289,7 +1221,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varSize\n"); i++;
 			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] clinitAddr\n"); i++;
 			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] nofPtrs\n"); i++;
-			for(int j = 0; j < this.nOfReferences; j++) {
+			for(int j = 0; j < this.nofClassRefs; j++) {
 				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] ptr" + j + "\n"); i++;
 			}
 			for(int j = 0; j < this.classDescriptorSize / 4; j++) {

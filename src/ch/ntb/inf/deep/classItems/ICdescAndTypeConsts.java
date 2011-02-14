@@ -36,6 +36,16 @@ public interface ICdescAndTypeConsts {
 		txLong = 11, // long
 		nofWellKnownTypes = 12;
 
+	byte// field list indices
+		flxBits = 0, // < 8 Bit, e.g. boolean ('Z')
+		flxByte = 1,  //  ('B')
+		flxShortChar = 2, // short ('S'), char ('C')
+		flxInt = 4, //  ('I')
+		flxRef = 5,	 // any reference type ('L') (incl. array ('['))
+		flxFloat = 6, // float ('F')
+		flxDouble = 7, // double ('D')
+		flxLong = 8; // long ('J')
+
 //		txMaxOfPrimtiveTypes = txDouble,
 //		txMaxOfStringOrPrimtiveTypes = txString,
 

@@ -48,6 +48,14 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return -1;
 	}
 
+	/**
+	 * get size in Byte - always a power of 2 or -1 if undefined
+	 * @return  {-1,  1, 2, 4, 8}
+	 */
+	public int getTypeSize(){
+		return -1;
+	}
+
 	protected Item getMethod(HString name, HString descriptor){
 		assert false : "override this method at class: "+ getClass().getName();
 		return null;
@@ -55,6 +63,17 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 
 	Item getReplacedStub(){
 		return this;
+	}
+
+	public static Item getTailItem(Item item){
+		if( item == null ) return null;
+		while(item.next != null)  item = item.next;
+		return item;
+	}
+
+	public static Item appendItem(Item head1, Item tail1, Item head2){
+		if(tail1 == null)  head1 = head2;  else  tail1.next = head2;
+		return head1;
 	}
 
 	public Item getItemByName(HString name){

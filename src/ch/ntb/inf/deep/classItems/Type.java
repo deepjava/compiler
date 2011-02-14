@@ -43,8 +43,8 @@ public class Type extends Item {
 	public byte sizeInBits;// { 1..8, 16, 32, 64 }
 
 	public int objectSize;
-	public int classFieldsSize = -1; // [Byte], size of all non constant class fields on the target, rounded to the next multiple of "fieldSizeUnit" ( -1 => size not yet calculated)
-	public int instanceFieldsSize = -1; // [Byte], size of all instance fields on the target, rounded to the next multiple of "fieldSizeUnit" ( -1 => size not yet calculated)
+	public int classFieldsSize; // [Byte], size of all non constant class fields on the target, rounded to the next multiple of "fieldSizeUnit"
+//	public int instanceFieldsSize; // [Byte], size of all instance fields on the target, rounded to the next multiple of "fieldSizeUnit"
 
 	//--- class (static) methods
 	protected static void appendClass(Type newType){
@@ -53,6 +53,16 @@ public class Type extends Item {
 		classListTail.next = newType;
 		classListTail = newType;
 		if(newType.category == tcRef) nofClasses++;   else nofArrays++;
+	}
+
+	/**
+	 * get size in Byte - always a power of 2
+	 * @return  {1, 2, 4, 8}
+	 */
+	public int getTypeSize(){
+		int size = sizeInBits>>3;
+		if(size <= 0) size = 1;
+		return size;
 	}
 
 	protected void moveThisClassToInitList(){
@@ -304,30 +314,14 @@ public class Type extends Item {
 
 	//--- instance methods
 	public int getObjectSize(){
-		int baseSize = -1;
-		if( instanceFieldsSize >= 0 ){
-			if( type == null ){
-				 if( this == wktObject) baseSize = 0;
-			}else{
-				baseSize = type.getObjectSize();
-			}
-			if( baseSize >= 0) objectSize = baseSize + instanceFieldsSize;
-		}
 		return objectSize;
 	}
 
-	protected static void fixUpObjectSize(){
-		if(verbose) vrb.println(">fixUpObjectSize");
-		Type type = classList;
-		while(type != null){
-			type.getObjectSize();
-			type = (Type)type.next;
-		}
-		if(verbose) vrb.println("<fixUpObjectSize");
+	//--- debug primitives
+	public void printSize(){
+		vrb.printf("size=%1$d bit", this.sizeInBits);
 	}
 
-
-	//--- debug primitives
 	public void printTypeCategory() {
 		vrb.print("(" + (char)category + ')');
 	}
