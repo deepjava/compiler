@@ -160,19 +160,19 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			int bcCounter = 0;
 			Class bc = (Class)clazz.type;
 			while(bc != null) {
-				bcifs += bc.instanceFieldsSize;
+//				bcifs += bc.instanceFieldsSize;
 				bcCounter++;
 				bc = (Class)bc.type;
 			}
 			if(dbg) vrb.println("     " + bcifs + " byte (0x" + Integer.toHexString(bcifs) + ")");
 			
-			clazz.nOfBaseClasses = bcCounter;
+			clazz.nofBaseClasses = bcCounter;
 			
 			
 			// Fields
 			if(dbg) vrb.println("  3) Calculating indexes and offsets for all fields:");
-			if(clazz.nOfClassFields > 0 || clazz.nOfInstanceFields > 0) {
-				Item field = clazz.fields;
+			if(clazz.nofClassFields > 0 || clazz.nofInstFields > 0) {
+				Item field = clazz.instFields;
 				int size;
 				while(field != null) {
 					
@@ -206,8 +206,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					field = field.next;
 				}
 				clazz.classFieldsSize = roundUpToNextWord(c3); // set the size of all non constant class fields
-				clazz.instanceFieldsSize = roundUpToNextWord(c4); // set the size of all instance fields 
-				clazz.nOfReferences = c5; // set the number of static fields which are references (number of global pointers)
+//				clazz.instanceFieldsSize = roundUpToNextWord(c4); // set the size of all instance fields 
+				clazz.nofClassRefs = c5; // set the number of static fields which are references (number of global pointers)
 			}
 			else {
 				if(dbg) vrb.println("     <none>");
@@ -215,13 +215,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			// Instance methods (for instance methods, index is the byte offset of a method in the class descriptor starting at the size entry)
 			if(dbg) vrb.println("  3) Methods:");
-			c6 = (2 + clazz.nOfInterfaces) * 4; // constant offset for all instance methods
+			c6 = (2 + clazz.nofInterfaces) * 4; // constant offset for all instance methods
 			if(dbg) vrb.println("     Setting start index to: 0x" + Integer.toHexString(c6));
-			if(clazz.nOfBaseClasses > 0 && clazz.type != null && clazz.type instanceof Class) {
+			if(clazz.nofBaseClasses > 0 && clazz.type != null && clazz.type instanceof Class) {
 				if(((Class)(clazz.type)).highestIndex > 0) {
 					Class baseClass = (Class)clazz.type;
 					c6 += baseClass.highestIndex - 8;
-					c7 += baseClass.nOfInstanceMethodsInCD;
+					c7 += baseClass.methTabLength;
 					if(dbg) {
 						vrb.println("     Base class: " + clazz.type.name);
 						vrb.println("     Highest index in base class: 0x" + Integer.toHexString(((Class)(clazz.type)).highestIndex));
@@ -229,12 +229,12 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					}
 				}
 			}
-			if(clazz.nOfMethods > 0) {
+			if(clazz.nofMethods > 0) {
 				Method method = (Method)clazz.methods;
 				while(method != null) {
 					if((method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (method.accAndPropFlags & (1 << apfStatic)) == 0) { // calculate index only for instance methods
 						int tempIndex = -1;
-						if(clazz.nOfBaseClasses > 0 && clazz.type != null && clazz.type instanceof Class) 
+						if(clazz.nofBaseClasses > 0 && clazz.type != null && clazz.type instanceof Class) 
 							tempIndex = getIndexOfMethod((Class)clazz.type, method.name, method.methDescriptor);
 						if(tempIndex >= 0) method.index = tempIndex;
 						else {
@@ -259,8 +259,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			}
 			
 			clazz.highestIndex = c6;
-			clazz.nOfInstanceMethodsInCD = c7;
-			clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nOfReferences + clazz.nOfInstanceMethodsInCD + clazz.nOfInterfaces + 2) * 4;
+			clazz.methTabLength = c7;
+			clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces + 2) * 4;
 		}
 		else {
 			if(dbg) vrb.println("  Class already proceeded...");
@@ -299,8 +299,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(dbg) vrb.print("  2) Constant block: ");
 		
 		// constant block size
-		clazz.classDescriptorSize = cdConstantSize + (clazz.nOfInstanceMethodsInCD + clazz.nOfInterfaces + clazz.nOfBaseClasses) * 4;
-		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nOfReferences + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
+		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
+		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nofClassRefs + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
 		
 //		clazz.constantBlockSize = 4 // constBlockSize field
 //								+ 4 // codeBase field
@@ -419,7 +419,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
-		int classDescriptorBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + cblkNofPtrsOffset + (clazz.nOfReferences + 1) * 4;
+		int classDescriptorBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * 4;
 		int stringPoolBase = classDescriptorBase + clazz.classDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		
@@ -429,17 +429,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		
 		// Class/static fields
-		if(clazz.nOfClassFields > 0) {
-			Item field = clazz.fields;
+		if(clazz.nofClassFields > 0) {
+			Item field = clazz.instFields;
 			if(dbg) vrb.println("  Static fields:");
 			while(field != null) {
 				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field
 					if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
 						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) { // float or double -> constant pool
-							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
+							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nofClassRefs) + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
 						}
 						else if(field.type == Type.wellKnownTypes[txString]) { // literal string -> string pool
-							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nOfReferences) + clazz.classDescriptorSize + field.index + 8;
+							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nofClassRefs) + clazz.classDescriptorSize + field.index + 8;
 						}
 						else if(((Type)field.type).category == tcRef) { // reference but not literal string
 							if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
@@ -456,7 +456,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		
 		// Methods
-		if(clazz.nOfMethods > 0) {
+		if(clazz.nofMethods > 0) {
 			Method method = (Method)clazz.methods;
 			if(dbg) vrb.println("  Methods:");
 			while(method != null) {
@@ -495,7 +495,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		}
 		
 		// Class descriptor
-		//clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4 * (6 + clazz.nOfReferences + clazz.nOfInstanceMethodsInCD + clazz.nOfInterfaces + 2);
+		//clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4 * (6 + clazz.nOfReferences + clazz.methTabLength + clazz.nOfInterfaces + 2);
 		clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + clazz.classDescriptorOffset;
 		
 		if(dbg) vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
@@ -519,13 +519,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if(dbg) {
 				vrb.println("  Constant block size: " + clazz.constantBlockSize + " byte -> " + clazz.constantBlock.length);
 				vrb.println("    Constantblock header: 28 byte -> 7");
-				vrb.println("    Number of references: " + clazz.nOfReferences + " (" + clazz.nOfReferences * 4 + " byte)");
+				vrb.println("    Number of references: " + clazz.nofClassRefs + " (" + clazz.nofClassRefs * 4 + " byte)");
 				vrb.println("    Class descriptor size: " + clazz.classDescriptorSize + " byte -> " + clazz.classDescriptorSize / 4);
 				vrb.println("    String pool size: " + clazz.stringPoolSize + " byte -> " + clazz.stringPoolSize / 4);
 				vrb.println("    Constant pool size: " + clazz.constantPoolSize + " byte -> " + clazz.constantPoolSize / 4);
-				vrb.println("  Number of instance methods: " + clazz.nOfInstanceMethods);
-				vrb.println("  Number of interfaces: " + clazz.nOfInterfaces);
-				vrb.println("  Number of base classes: " + clazz.nOfBaseClasses);
+				vrb.println("  Number of instance methods: " + clazz.nofInstMethods);
+				vrb.println("  Number of interfaces: " + clazz.nofInterfaces);
+				vrb.println("  Number of base classes: " + clazz.nofBaseClasses);
 			}
 			
 			// 1) Insert Header
@@ -543,9 +543,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			// 2) Insert References (Pointers)
 			if(dbg) vrb.println("  2) Inserting References");
-			clazz.constantBlock[cblkNofPtrsOffset / 4] = clazz.nOfReferences;
-			if(clazz.nOfReferences > 0) {
-				Item field = clazz.fields;
+			clazz.constantBlock[cblkNofPtrsOffset / 4] = clazz.nofClassRefs;
+			if(clazz.nofClassRefs > 0) {
+				Item field = clazz.instFields;
 				int index = 0;
 				while(field != null) {
 					if((field.accAndPropFlags & (1 << apfStatic)) != 0 && ((Type)field.type).category == tcRef)
@@ -562,21 +562,21 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 	//		int classDescriptorOffset = 6 + clazz.nOfReferences;
 			int imc = 0;
-			if(clazz.nOfBaseClasses > 0) {
+			if(clazz.nofBaseClasses > 0) {
 				assert clazz.type != null: "ERROR: Number of base classes > 0, but base class is null!";
 				assert clazz.type instanceof Class: "ERROR: Base class is not a class!";
 				Class baseClass = (Class)clazz.type;
 				if(dbg) vrb.println("      Copying methods from base class: " + baseClass.name);
 				if(baseClass.constantBlock != null && baseClass.constantBlock.length > 0) {
-					for(int x = 0; x < baseClass.nOfInstanceMethodsInCD; x++) {
-						if(dbg) vrb.println("        #" + x + ": 0x" + Integer.toHexString(baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nOfInterfaces - x]));
-						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nOfInterfaces - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nOfInterfaces - x];
+					for(int x = 0; x < baseClass.methTabLength; x++) {
+						if(dbg) vrb.println("        #" + x + ": 0x" + Integer.toHexString(baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x]));
+						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x];
 						imc++;
 					}
 //					if(dbg) clazz.printConstantBlock();
 				}
 			}
-			if(clazz.nOfInstanceMethods > 0) {
+			if(clazz.nofInstMethods > 0) {
 				if(dbg) vrb.println("      Inserting instance methods of this class");
 				Method m = (Method)clazz.methods;
 				while(m != null) {
@@ -591,17 +591,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			}
 			
 			// 3b) Insert interfaces
-			if(clazz.nOfInterfaces > 0) {
+			if(clazz.nofInterfaces > 0) {
 				if(dbg) vrb.println("  3b) Inserting interfaces");
-				for(int i = 0; i < clazz.nOfInterfaces; i++) {
-					assert clazz.interfaces[i] != null: "ERROR: Interface is NULL! Current Interface: " + i +"/" + clazz.nOfInterfaces;
+				for(int i = 0; i < clazz.nofInterfaces; i++) {
+					assert clazz.interfaces[i] != null: "ERROR: Interface is NULL! Current Interface: " + i +"/" + clazz.nofInterfaces;
 					clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - i] = clazz.interfaces[i].address;
 				}
 			}
 			
 			// 3c) Insert extension level
 			if(dbg) vrb.println("  3c) Inserting extension level");
-			clazz.constantBlock[(clazz.classDescriptorOffset - cdExtensionLevelOffset) / 4] = clazz.nOfBaseClasses;
+			clazz.constantBlock[(clazz.classDescriptorOffset - cdExtensionLevelOffset) / 4] = clazz.nofBaseClasses;
 			
 			// 3d) Insert size
 			if(dbg) vrb.println("  3d) Inserting size");
@@ -613,10 +613,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			// 3f) Insert base classes
 			if(dbg) vrb.println("  3f) Inserting base classes");
-			if(clazz.nOfBaseClasses > 0) {
+			if(clazz.nofBaseClasses > 0) {
 				Class bc = (Class)clazz.type;
-				for(int i = 0; i < clazz.nOfBaseClasses; i++) {
-					assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.nOfBaseClasses;
+				for(int i = 0; i < clazz.nofBaseClasses; i++) {
+					assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.nofBaseClasses;
 					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + i] = bc.address;
 					bc = (Class)bc.type;
 				}
@@ -624,7 +624,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			// 4) String pool
 			if(dbg) vrb.println("  4) Inserting string pool");
-			int stringPoolOffset = clazz.classDescriptorOffset / 4 + clazz.nOfBaseClasses + 2;
+			int stringPoolOffset = clazz.classDescriptorOffset / 4 + clazz.nofBaseClasses + 2;
 			if(clazz.constPool != null) {
 				for(int i = 0; i < clazz.constPool.length; i++) {
 					int index = clazz.constPool[i].index/4;
@@ -895,7 +895,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
         Class kernel = (Class)Type.classList.getItemByName(Configuration.getKernelClassname().toString());
         if(kernel != null) {
         	if(dbg) vrb.println("  Kernel: " + kernel.name);
-        	cmdAddrField = (DataItem)kernel.fields.getItemByName("cmdAddr");
+        	cmdAddrField = (DataItem)kernel.instFields.getItemByName("cmdAddr");
         	if(cmdAddrField != null) {
         		if(dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
         		cmdAddr = cmdAddrField.address;
@@ -1071,13 +1071,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			if( item instanceof Class){
 				Class c = (Class)item;
 				vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
-				vrb.println("    Number of class methods: " + c.nOfClassMethods);
-				vrb.println("    Number of instance methods: " + c.nOfInstanceMethods);
-				vrb.println("    Number of class fields: " + c.nOfClassFields);
-				vrb.println("    Number of instance fields: " + c.nOfInstanceFields);
-				vrb.println("    Number of interfaces: " + c.nOfInterfaces);
-				vrb.println("    Number of base classes: " + c.nOfBaseClasses);
-				vrb.println("    Number of references: " + c.nOfReferences);
+				vrb.println("    Number of class methods: " + c.nofClassMethods);
+				vrb.println("    Number of instance methods: " + c.nofInstMethods);
+				vrb.println("    Number of class fields: " + c.nofClassFields);
+				vrb.println("    Number of instance fields: " + c.nofInstFields);
+				vrb.println("    Number of interfaces: " + c.nofInterfaces);
+				vrb.println("    Number of base classes: " + c.nofBaseClasses);
+				vrb.println("    Number of references: " + c.nofClassRefs);
 				vrb.println("    Machine code size: " + c.machineCodeSize + " byte");
 				vrb.println("    Constant block size: " + c.constantBlockSize + " byte");
 				vrb.println("    Class fields size: " + c.classFieldsSize + " byte");
@@ -1128,7 +1128,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				}
 				
 				vrb.println("    Field list:");
-				f = c.fields;
+				f = c.instFields;
 				fc = 0;
 				if(f == null) vrb.println("      No fields in this class");
 				else {
