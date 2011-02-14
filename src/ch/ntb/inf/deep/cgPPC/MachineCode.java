@@ -1926,9 +1926,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	public static void init() { 
 		final Class stringClass = (Class)Type.wktString;
 		System.out.println("string class: " + stringClass.name);
-		System.out.println("heap class name :" + Configuration.getHeapClassname());
-//		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname());
-		final Class heapClass = (Class)Type.classList.getItemByName("ch/ntb/inf/deep/runtime/mpc555/Heap");
+		System.out.println("heap class name: " + Configuration.getHeapClassname());
+		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
 		if (stringClass != null) {
 			stringNewstringMethod = (Method)stringClass.methods.getItemByName("newstring"); // TODO improve this
 			if(heapClass != null) {

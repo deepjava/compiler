@@ -40,7 +40,10 @@ public class Launcher implements ICclassFileConsts {
 								.getSystemPrimitives(), attributes);
 			
 			// 2a) Initialize linker
-			Linker.init();
+			if (reporter.nofErrors <= 0) {
+				Linker.init();
+				MachineCode.init();
+			}
 			
 			// 3) Loop One
 			clearVisitedFlagsForAllClasses();
