@@ -2786,11 +2786,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						if (res == tempOperands[j] || res.owner.ssaOpcode != sCPhiFunc) {
 							// the PhiFunctions doesn't lives but have 1 operand from an SSAinstruction which is not a PhiFunction
 							// replace the virtual deleted phiFunction with this operand
-							tempOperands[j] = res;	
-							phiFunctions[i].setOperands(tempOperands);
-						} else {
-							tempOperands[j] = res;// protect for cycles
-						}
+							SSAValue[] opnd = phiFunctions[i].getOperands();
+							opnd[j] = res;
+							phiFunctions[i].setOperands(opnd);
+						} 
+						tempOperands[j] = res;// protect for cycles
 
 					}
 				}
