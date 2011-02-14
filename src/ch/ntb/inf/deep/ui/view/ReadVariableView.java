@@ -218,7 +218,7 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 					String varName = ((ReadVariableElement)obj).fullQualifiedName.substring(lastDot + 1);
 					Class clazz = (Class)Type.classList.getItemByName(clazzName);
 					if(clazz != null){
-						DataItem var = (DataItem)clazz.fields.getItemByName(varName);
+						DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
 						if(var != null){
 							if(bdi == null){
 								bdi = UsbMpc555Loader.getInstance();

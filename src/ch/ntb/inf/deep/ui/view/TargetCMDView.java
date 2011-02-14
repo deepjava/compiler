@@ -160,7 +160,7 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 					Class clazz = (Class)Type.classList.getItemByName(clazzName);
 					Class kernel = (Class)Type.classList.getItemByName(KERNEL);
 					if(clazz != null && kernel != null){
-						int cmdAddr = ((DataItem)kernel.fields.getItemByName(cmdAddrName)).address;
+						int cmdAddr = ((DataItem)kernel.classFields.getItemByName(cmdAddrName)).address;
 						Method meth = (Method)clazz.methods.getItemByName(methName);
 						if(meth != null){
 							if(bdi == null){
