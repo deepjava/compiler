@@ -49,7 +49,7 @@ public class Linker00 extends TestLinker implements ICclassFileConsts {
 					}
 
 					System.out.println("  Fields:");
-					field = (DataItem)clazz.fields;
+					field = (DataItem)clazz.instFields;
 					while(field  != null) {
 						System.out.println("    Name:   " + field.name.toString());
 						System.out.println("    Offset: 0x" + Integer.toHexString(field.offset) + " (" + field.offset + ")");

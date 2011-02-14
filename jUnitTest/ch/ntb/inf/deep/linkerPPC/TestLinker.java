@@ -23,11 +23,11 @@ public class TestLinker {
 	 * 			  expected number of base classes of this class
 	 */
 	public static void testNumberOfElements(Class clazz, int nOfMethodes, int nOfInstanceFields, int nOfClassFields, int nOfInterfaces, int nOfBaseClasses) {
-		assertEquals("Number of methods not as expected", nOfMethodes, clazz.nOfMethods);
-		assertEquals("Number of instance fields not as expected", nOfInstanceFields, clazz.nOfInstanceFields);
-		assertEquals("Number of class/static fields not as expected", nOfClassFields, clazz.nOfClassFields);
-		assertEquals("Number of interfaces not as expected", nOfInterfaces, clazz.nOfInterfaces);
-		assertEquals("Number of base classes not as expected", nOfBaseClasses, clazz.nOfBaseClasses);
+		assertEquals("Number of methods not as expected", nOfMethodes, clazz.nofMethods);
+		assertEquals("Number of instance fields not as expected", nOfInstanceFields, clazz.nofInstFields);
+		assertEquals("Number of class/static fields not as expected", nOfClassFields, clazz.nofClassFields);
+		assertEquals("Number of interfaces not as expected", nOfInterfaces, clazz.nofInterfaces);
+		assertEquals("Number of base classes not as expected", nOfBaseClasses, clazz.nofBaseClasses);
 	}
 	
 }
