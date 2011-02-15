@@ -39,13 +39,13 @@ import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.ui.model.ReadVariableElement;
-import ch.ntb.inf.deep.ui.view.TargetCMDView.MethodCall;
 
 public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.view.ReadVariableView";
 	private TableViewer viewer;
 	private ReadVariableElement[] elements;
 	private Downloader bdi;
+	private Action toChar;
 	private Action toHex;
 	private Action toDez;
 	private Action toDouble;
@@ -72,17 +72,50 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 				if (!((ReadVariableElement) obj).isReaded) {
 					return "";
 				}
-				switch (((ReadVariableElement) obj).representation) {
-				case 1:
-					return "0x" + Integer.toHexString((int) ((ReadVariableElement) obj).result);
-				case 2:
-					return Integer.toString((int) ((ReadVariableElement) obj).result);
-				case 3:
-					return Double.toString(Double.longBitsToDouble(((ReadVariableElement) obj).result));
+				switch (((ReadVariableElement)obj).type){
+				case ReadVariableElement.tBoolean:
+					return String.valueOf((((ReadVariableElement) obj).result > 0));
+				case ReadVariableElement.tByte:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%02X",((ReadVariableElement) obj).result);
+					}
+					return Byte.toString((byte)((ReadVariableElement) obj).result);
+				case ReadVariableElement.tChar:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%04X",((ReadVariableElement) obj).result);
+					}
+					if(((ReadVariableElement) obj).representation == 2){//Dez{
+						return String.format("%d",(int)((ReadVariableElement) obj).result);
+					}
+					return String.format("%c",((char)((ReadVariableElement) obj).result));
+				case ReadVariableElement.tShort:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%04X",((ReadVariableElement) obj).result);
+					}
+					return String.format("%d",((short)((ReadVariableElement) obj).result));
+				case ReadVariableElement.tInteger:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%08X",((ReadVariableElement) obj).result);
+					}
+					return String.format("%d",(int)((ReadVariableElement) obj).result);
+				case ReadVariableElement.tFloat:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%08X",((ReadVariableElement) obj).result);
+					}
+					return String.format("%f",Float.intBitsToFloat((int)((ReadVariableElement) obj).result));
+				case ReadVariableElement.tLong:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%016X",((ReadVariableElement) obj).result);
+					}
+					return String.format("%d",((ReadVariableElement) obj).result);
+				case ReadVariableElement.tDouble:
+					if(((ReadVariableElement) obj).representation == 1){//Hex
+						return String.format("0x%016X",((ReadVariableElement) obj).result);
+					}
+					return String.format("%f",Double.longBitsToDouble(((ReadVariableElement) obj).result));
 				default:
-					return Integer.toString((int) ((ReadVariableElement) obj).result);
+					throw new RuntimeException("Should not happen");
 				}
-
 			default:
 				throw new RuntimeException("Should not happen");
 			}
@@ -168,11 +201,23 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 		menu.add(toHex);
 		menu.add(toDez);
 		menu.add(toDouble);
+		menu.add(toChar);
 		// Other plug-ins can contribute there actions here
 		menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	protected void createActions() {
+		toChar =  new Action(){
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection).getFirstElement();
+				if(obj instanceof ReadVariableElement){
+					((ReadVariableElement)obj).representation = 4;
+				}
+				viewer.refresh();
+			}
+		};
+		toChar.setText("ToChar");
 		toHex =  new Action(){
 					public void run() {
 						ISelection selection = viewer.getSelection();
@@ -218,7 +263,8 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 					String varName = ((ReadVariableElement)obj).fullQualifiedName.substring(lastDot + 1);
 					Class clazz = (Class)Type.classList.getItemByName(clazzName);
 					if(clazz != null){
-						DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
+//						DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
+						DataItem var = (DataItem)clazz.fields.getItemByName(varName);
 						if(var != null){
 							if(bdi == null){
 								bdi = UsbMpc555Loader.getInstance();
@@ -228,10 +274,36 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 								if(!wasFreezeAsserted){
 									bdi.stopTarget();
 								}
-								((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize);
-								System.out.println("High: " +Long.toHexString(((ReadVariableElement)obj).result));
-								if(((Type)var.type).sizeInBits > 8 * slotSize) {
+								if(((Type)var.type).sizeInBits <= 2 * slotSize ) {
+									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize/4);
+									if(((Type)var.type).sizeInBits == 1 ){
+										((ReadVariableElement)obj).type = ReadVariableElement.tBoolean;
+									}else{
+										((ReadVariableElement)obj).type = ReadVariableElement.tByte;										
+									}
+								}else if(((Type)var.type).sizeInBits == 4 * slotSize){
+									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize/2);
+									if(var.type == Type.wellKnownTypes[txChar]){
+										((ReadVariableElement)obj).type = ReadVariableElement.tChar;
+									}else{
+										((ReadVariableElement)obj).type = ReadVariableElement.tShort;										
+									}
+								}else if(((Type)var.type).sizeInBits == 8 * slotSize){
+									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize);
+									if(var.type == Type.wellKnownTypes[txInt]){
+										((ReadVariableElement)obj).type = ReadVariableElement.tInteger;
+									}else{
+										((ReadVariableElement)obj).type = ReadVariableElement.tFloat;										
+									}
+//								System.out.println("High: " +Long.toHexString(((ReadVariableElement)obj).result));
+								}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
+									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize);
 									((ReadVariableElement)obj).result = (((ReadVariableElement)obj).result << (8 * slotSize)) | bdi.getMem(var.address + slotSize, slotSize);
+									if(var.type == Type.wellKnownTypes[txLong]){
+										((ReadVariableElement)obj).type = ReadVariableElement.tLong;
+									}else{
+										((ReadVariableElement)obj).type = ReadVariableElement.tDouble;										
+									}
 								}
 								if(!wasFreezeAsserted){
 									bdi.startTarget();
