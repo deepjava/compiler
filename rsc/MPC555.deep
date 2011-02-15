@@ -33,7 +33,7 @@ sysconst {
 	
 	sysTabBaseAddr = SRAMA_BaseAddr;				# Base address of the system table segment
 	stackSize = 0x2000;								# Default stack size
-	heapSize = 0x2000;								# Default heap size
+	heapSize = 0x40000;								# Default heap size
 }
 
 memorymap {
@@ -63,17 +63,14 @@ memorymap {
 		attributes = read, write, var;
 	}
 	
-	segment InternalRam.SHContainer {
-        segment Stack {
-        	attributes = read, write, stack;
-        	size = stackSize;
-        }
-        
-        segment Heap {
-        	attributes = read, write, heap;
-        	size = heapSize;
-        }
+
+    segment InternalRam.Stack {
+      	attributes = read, write, stack;
+      	size = stackSize;
+      	base = SRAMB_BaseAddr + SRAMB_Size - stackSize ;
     }
+        
+
 	
 	
 	# ===== Internal Flash =====

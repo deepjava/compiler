@@ -33,17 +33,14 @@ memorymap{
       attributes = read, write, const, code, var;
     }
     
-    segment ExternalRam.SHContainer {
-      segment Stack {
-        attributes = read, write, stack;
-        size = stackSize;
-      }
+
       
-      segment Heap {
-        attributes = read, write, heap;
-        size = heapSize;
-      }
-    }
+    segment ExternalRam.Heap {
+      attributes = read, write, heap;
+      size = heapSize;
+      base = extRamBase + extRamSize - heapSize;
+     }
+
     
     # ===== External Flash =====
     device ExternalFlash {
