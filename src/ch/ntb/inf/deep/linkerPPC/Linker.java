@@ -956,7 +956,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
 		//set baseaddress
 		if((s.getSize() > 0 && s.getUsedSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
-			s.setBaseAddress(baseAddress);
+			if(s.getBaseAddress() == -1) s.setBaseAddress(baseAddress);
 			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
 			if(dbg) vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
 		}
