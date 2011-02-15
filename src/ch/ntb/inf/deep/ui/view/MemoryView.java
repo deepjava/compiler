@@ -1,10 +1,17 @@
 package ch.ntb.inf.deep.ui.view;
 
+import java.awt.font.NumericShaper;
+
+import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
@@ -12,6 +19,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Item;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
@@ -30,6 +38,12 @@ public class MemoryView extends ViewPart implements Listener {
 	private Text count;
 	private Button button;
 	private Downloader bdi;
+	
+	static final byte slotSize = 4; // 4 bytes
+	static {
+		assert (slotSize & (slotSize - 1)) == 0; // assert: slotSize == power of
+													// 2
+	}
 
 	class ViewLabelProvider extends LabelProvider implements
 			ITableLabelProvider {
@@ -45,7 +59,7 @@ public class MemoryView extends ViewPart implements Listener {
 				if (((MemorySegment) obj).addr == -1) {
 					return "";
 				}
-				return "0x" + Integer.toHexString(((MemorySegment) obj).value);
+				return String.format("0x%08X", ((MemorySegment) obj).value);
 			default:
 				throw new RuntimeException("Should not happen");
 			}
@@ -146,9 +160,17 @@ public class MemoryView extends ViewPart implements Listener {
 			column.getColumn().setResizable(false);
 			column.getColumn().setMoveable(false);
 		}
-		final Table table = viewer.getTable();
+		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
+		
+		// create the cell editors
+		CellEditor[] editors = new CellEditor[2];
+		editors[1] = new TextCellEditor(table);
+		
+		viewer.setColumnProperties(titels);
+		viewer.setCellEditors(editors);
+		viewer.setCellModifier(new MemoryCellModifier(viewer));
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ViewLabelProvider());
@@ -233,4 +255,92 @@ public class MemoryView extends ViewPart implements Listener {
 		}
 	}
 
+	/**
+	 * This class represents the cell modifier for the Memory View
+	 */
+
+	class MemoryCellModifier implements ICellModifier {
+		private Viewer viewer;
+
+		public MemoryCellModifier(Viewer viewer) {
+			this.viewer = viewer;
+		}
+
+		/**
+		 * Returns whether the property can be modified
+		 * 
+		 * @param element
+		 *            the element
+		 * @param property
+		 *            the property
+		 * @return boolean
+		 */
+		public boolean canModify(Object element, String property) {
+			MemorySegment p = (MemorySegment)element;
+			if (p.addr > -1 && property.equals("Value")) {
+				return true;
+			}
+			return false;
+		}
+
+		/**
+		 * Returns the value for the property
+		 * 
+		 * @param element
+		 *            the element
+		 * @param property
+		 *            the property
+		 * @return Object
+		 */
+		public Object getValue(Object element, String property) {
+			MemorySegment p = (MemorySegment) element;
+			if ("Value".equals(property))
+				return Integer.toString(p.value);
+			else if ("Address".equals(property))
+				return Integer.toString(p.addr);
+			else
+				return null;
+		}
+
+		/**
+		 * Modifies the element
+		 * 
+		 * @param element
+		 *            the element
+		 * @param property
+		 *            the property
+		 * @param value
+		 *            the value
+		 */
+		public void modify(Object element, String property, Object value) {
+			if (element instanceof Item)
+				element = ((Item) element).getData();
+
+			MemorySegment p = (MemorySegment) element;
+			if ("Value".equals(property)){
+				try{
+					p.value =Integer.decode((String) value);
+					if(bdi == null){
+						bdi = UsbMpc555Loader.getInstance();
+					}
+					
+					boolean wasFreezeAsserted = bdi.isFreezeAsserted();
+					if(!wasFreezeAsserted){
+						bdi.stopTarget();
+					}
+					bdi.setMem(p.addr, p.value, slotSize);
+					if(!wasFreezeAsserted){
+						bdi.startTarget();
+					}
+				}catch (NumberFormatException e) {
+				}catch (DownloaderException e1){
+					e1.printStackTrace();
+				}
+
+			// Force the viewer to refresh
+			viewer.refresh();
+		}
+	}
+	}
 }
+
