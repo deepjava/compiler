@@ -17,4 +17,6 @@ public class T10Constants {
 	public static final String s1 = "Hello Tester!"; // 48 65 6c 6c 6f 20 54 65 73 74 65 72 21
 	public static final String s2 = "How are you?"; // 48 6f 77 20 61 72 65 20 79 6f 75 3f
 	public static final String s3 = "äöüÄÖÜàéèê"; // e4 f6 fc c4 d6 dc e0 e9 e8 ea
+	
+	public static final Object o = new Object();
 }
