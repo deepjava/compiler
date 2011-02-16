@@ -35,7 +35,7 @@ public class Linker00 extends TestLinker implements ICclassFileConsts {
 					Class clazz = (Class)item;
 
 					// Linker: Calculate offsets
-					Linker.calculateOffsets(clazz);
+					Linker.prepareConstantBlock(clazz);
 
 					// Print for debuging
 					System.out.println("Class: " + clazz.name.toString());

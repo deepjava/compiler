@@ -15,7 +15,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	static String[] config = new String[] {"M:/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
 
 	public static void createCgPPC(Class clazz) {
-		Linker.calculateOffsets(clazz);
+		Linker.prepareConstantBlock(clazz);
 		TestSSA.createSSA(clazz);
 		code = new MachineCode[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
