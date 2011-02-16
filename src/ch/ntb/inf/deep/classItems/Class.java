@@ -25,8 +25,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	static{
 		assert fieldSizeUnit >= 4 && (fieldSizeUnit & (fieldSizeUnit-1)) == 0;
 	}
-
-	public int highestIndex = -1;
 	
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
@@ -49,8 +47,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public int nofImports; // number of imports (without arrays)
 
 	public int nofBaseClasses; // number of base classes
-	
-//	public int nOfReferences; // number of class fields which are references
 	
 	public int[] constantBlock; // the constant block for this class
 	public int constantBlockSize; // size of the constant block

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.MachineCode;
+import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Item;
@@ -55,7 +56,7 @@ public class Launcher implements ICclassFileConsts {
 
 					// 3.1) Linker: calculate offsets
 					if (reporter.nofErrors <= 0)
-						Linker.calculateOffsets(clazz);
+						Linker.prepareConstantBlock(clazz);
 
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
@@ -81,14 +82,14 @@ public class Launcher implements ICclassFileConsts {
 
 					// 3.5) Linker: calculate required size
 					if (reporter.nofErrors <= 0)
-						Linker.calculateRequiredSize(clazz);
+						Linker.calculateCodeSizeAndOffsets(clazz);
 				}
 				item = item.next;
 			}
 
 			// 4) Linker: freeze memory map
 			if (reporter.nofErrors <= 0) {
-				Linker.calculateSizeOfSystemTable();
+				Linker.calculateSystemTableSize();
 				Linker.freezeMemoryMap();
 			}
 
@@ -97,8 +98,12 @@ public class Launcher implements ICclassFileConsts {
 			while (item != null && reporter.nofErrors <= 0) {
 				// 5.1) Linker: calculate absolute addresses
 				if (item instanceof Class) {
-					Linker.calculateAbsoluteAddresses((Class) item);
+					Linker.calculateAbsoluteAddresses((Class)item);
 				}
+				else if(item instanceof Array) {
+					Linker.calculateAbsoluteAddresses((Array)item);
+				}
+				
 				item = item.next;
 			}
 			
@@ -106,7 +111,7 @@ public class Launcher implements ICclassFileConsts {
 			item = Type.classList;
 			while (item != null && reporter.nofErrors <= 0) { // TODO: why is here another loop??? -> move to loop two?
 				// 5.3) Linker: Create constant block
-				if (item instanceof Class) {
+				if(item instanceof Class) {
 					Class clazz = (Class) item;
 					Linker.createConstantBlock(clazz);
 
@@ -115,10 +120,12 @@ public class Launcher implements ICclassFileConsts {
 						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
 							// 5.2) Code generator: fix up
 							method.machineCode.doFixups();
-
+						}
+						method = (Method) method.next;
 					}
-					method = (Method) method.next;
 				}
+				else if(item instanceof Array) {
+					Linker.createTypeDescriptor((Array)item);
 				}
 
 				item = item.next;

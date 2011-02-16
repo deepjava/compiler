@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -8,6 +9,8 @@ public class Array extends Type {
 	public Type componentType;
 	public byte dimension; // array dimension
 
+	public Segment segment;
+	public int[] typeDescriptor;
 	
 	Array(HString regName){
 		super(regName, wktObject); // base type is java/lang/Object
