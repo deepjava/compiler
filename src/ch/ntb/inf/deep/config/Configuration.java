@@ -569,6 +569,24 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		}		
 		return 0;
 	}
+	public static String getSystemMethodForID(int id){
+		if((id & 0xFFFFF000) != 0){
+			ErrorReporter.reporter.error(errInvalideParameter,
+					"getSystemMethodForID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
+		}
+		SystemClass clazz = os.getClassList();
+		while(clazz != null){
+			SystemMethod meth = clazz.methods;
+			while(meth != null){
+				if((meth.attributes & 0xFFF) == id){
+					return meth.name;
+				}
+				meth = meth.next;
+			}
+			clazz = clazz.next;
+		}
+		return null;
+	}
 
 	public static String[] getRootClassNames() {
 		int count = 0;
