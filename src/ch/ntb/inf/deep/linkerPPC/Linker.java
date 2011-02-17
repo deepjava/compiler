@@ -29,7 +29,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -214,7 +214,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(s == null) reporter.error(731, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
-					c.codeOffset = s.getUsedSize();
+					c.codeOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
 					if(c.machineCodeSize > 0) s.addToUsedSize(c.machineCodeSize);
 					c.codeSegment = s;
 					if(dbg) {
@@ -228,7 +228,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(s == null) reporter.error(731, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
-					c.varOffset = s.getUsedSize();
+					c.varOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
 					if(c.classFieldsSize > 0) s.addToUsedSize(c.classFieldsSize);
 					c.varSegment = s;
 					if(dbg) vrb.println("    Var-Segment: " + c.varSegment.getName());
@@ -239,7 +239,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(s == null) reporter.error(731, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
-					c.constOffset = s.getUsedSize();
+					c.constOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
 					if(c.constantBlockSize > 0) s.addToUsedSize(c.constantBlockSize);
 					c.constSegment = s;
 					if(dbg) vrb.println("    Const-Segment: " + c.constSegment.getName());
@@ -247,7 +247,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			}
 			else if(item instanceof Array) {
 				Array a = (Array)item;
-				//s = Configuration.getConstSegmentOf(HString.getHString("aasldkfjsadlfjsdklfjsdklfjsdklfjsdkfjsdklfjsdklfjsdklfjasdklf")); // TODO remove this line and uncomment the next line
 				s = Configuration.getDefaultConstSegment();
 				
 				if(dbg) vrb.println("  Proceeding Array " + a.name);
@@ -303,11 +302,16 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
-		int classDescriptorBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * 4;
+		int classDescriptorBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
 		int stringPoolBase = classDescriptorBase + clazz.classDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		
 		if(dbg) {
+			vrb.println("  Const segment base address: " + Integer.toHexString(clazz.constSegment.getBaseAddress()));
+			vrb.println("  Const offset: " + Integer.toHexString(clazz.constOffset));
+			vrb.println("  Var base: " + Integer.toHexString(varBase));
+			vrb.println("  Code base: " + Integer.toHexString(codeBase));
+			vrb.println("  Class descriptor base: " + Integer.toHexString(classDescriptorBase));
 			vrb.println("  String pool base: " + Integer.toHexString(stringPoolBase));
 			vrb.println("  Const pool base: " + Integer.toHexString(constPoolBase));
 		}
@@ -317,7 +321,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			Item field = clazz.classFields;
 			if(dbg) vrb.println("  Static fields:");
 			while(field != null) {
-				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field
+				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field // TODO remove this -> only class fields in the list
 					if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
 //						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) { // float or double -> constant pool
 //							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nofClassRefs) + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
