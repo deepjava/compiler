@@ -1,20 +1,26 @@
 package ch.ntb.inf.deep.linkerPPC;
 
 public class TargetMemorySegment {
+	private static int tmsCounter = 0;
+	
+	public int id;
 	public int startAddress;
 	public int[] data;
 	public TargetMemorySegment next;
 
 	public TargetMemorySegment(int maxSize){
+		this.id = tmsCounter++;
 		this.data = new int[maxSize];
 	}
 	
 	public TargetMemorySegment(int startAddress, int maxSize) {
+		this.id = tmsCounter++;
 		this.startAddress = startAddress;
 		this.data = new int[maxSize/4];
 	}
 	
 	public TargetMemorySegment(int startAddress, int[]data) {
+		this.id = tmsCounter++;
 		this.startAddress = startAddress;
 		this.data = data;
 	}
@@ -30,6 +36,7 @@ public class TargetMemorySegment {
 				addr + length * 4 <= this.startAddress + this.data.length * 4) {
 			
 			for(int i = 0; i < length; i++) {
+	//			System.out.println("           > Writing 0x" + Integer.toHexString(d[i]) + " to 0x" + Integer.toHexString(addr + i * 4) + " (" + ((addr - this.startAddress) / 4 + i) + ")");
 				this.data[(addr - this.startAddress) / 4 + i] = d[i];
 			}
 		}
