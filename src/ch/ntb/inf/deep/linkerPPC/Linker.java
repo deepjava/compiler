@@ -24,7 +24,7 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
-	static final byte slotSize = 4; // 4 bytes
+	public static final byte slotSize = 4; // 4 bytes
 	static{
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}

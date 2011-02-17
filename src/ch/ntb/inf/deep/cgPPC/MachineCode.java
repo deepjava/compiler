@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.cgPPC;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.cfg.*;
+import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
@@ -386,7 +387,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						break;	
 					} else {
 						sReg1 = opds[0].reg;
-						offset = ((MonadicRef)instr).item.index;
+						offset = ((MonadicRef)instr).item.offset;
 						createItrap(ppcTwi, TOifequal, sReg1, 0);
 					}
 				}
@@ -1291,7 +1292,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					} else {	// invokevirtual 
 //						System.out.println("invokevirtual");
 						refReg = opds[0].reg;
-						offset = call.item.index;
+						offset = Linker.cdInterface0AddrOffset + ((Method)call.item).owner.nofInterfaces * Linker.slotSize;
+						offset += call.item.index * Linker.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
