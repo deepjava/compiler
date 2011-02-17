@@ -8,6 +8,7 @@ interface InstructionOpcs {
 	final int TOifless = 0x10;
 	final int TOifgreater = 0x08;
 	final int TOifgeU = 0x05;
+	final int TOalways = 0x1f;
 	final int CRF0 = 0;
 	final int CRF1 = 1;
 	final int CRF2 = 3;
@@ -142,7 +143,7 @@ interface InstructionOpcs {
 		"",
 		"",
 		"",
-		""
+		"always"
 	};
 
 	final int // PowerPC Instructions

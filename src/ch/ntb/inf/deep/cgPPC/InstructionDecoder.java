@@ -2374,6 +2374,7 @@ public class InstructionDecoder implements InstructionOpcs {
 		else if (param.equals("ifless")) return TOifless;
 		else if (param.equals("ifgreater")) return TOifgreater;
 		else if (param.equals("ifgeu")) return TOifgeU;
+		else if (param.equals("always")) return TOalways;
 		else return 0;
 	}
 

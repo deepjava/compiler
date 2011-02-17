@@ -133,6 +133,10 @@ operatingsystem {
                     attributes = unsafe, synthetic;
                     id = 0x011;
                 }                
+                method HALT {
+                    attributes = unsafe, synthetic;
+                    id = 0x012;
+                }                
         }
         lowlevel {
                 class = "ch/ntb/inf/deep/lowLevel/LL";
