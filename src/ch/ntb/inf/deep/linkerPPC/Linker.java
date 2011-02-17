@@ -146,7 +146,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 //			clazz.stringPoolLength = slIndex;
 		}
 		
-		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces) * 4 + cdInterface0AddrOffset;
 		
 		// TODO move this to class file reader!!!
 		Class baseClass = (Class)clazz.type;
@@ -155,6 +154,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			baseClass = (Class)baseClass.type;
 		}
 		
+		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces) * 4 + cdInterface0AddrOffset;
+
 		// constant block size
 		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
 		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nofClassRefs + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
@@ -503,7 +504,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(c != null && count <= clazz.nofInterfaces) {
 					if(c.interfaces != null) {
 						for(int i = 0; i < c.interfaces.length; i++) {
-							clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - count] = c.interfaces[i].address;
+							clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - count] = 0x33333333; // TODO set the correct value here...
 						}
 					}
 					c = (Class)c.type;
