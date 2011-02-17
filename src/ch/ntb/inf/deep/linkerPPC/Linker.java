@@ -146,7 +146,14 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 //			clazz.stringPoolLength = slIndex;
 		}
 		
-		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces + 2) * 4;
+		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces) * 4 + cdInterface0AddrOffset;
+		
+		// TODO move this to class file reader!!!
+		Class baseClass = (Class)clazz.type;
+		while(baseClass != null) {
+			clazz.nofInterfaces += baseClass.nofInterfaces;
+			baseClass = (Class)baseClass.type;
+		}
 		
 		// constant block size
 		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
@@ -491,9 +498,15 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			// 3b) Insert interfaces
 			if(clazz.nofInterfaces > 0) {
 				if(dbg) vrb.println("  3b) Inserting interfaces");
-				for(int i = 0; i < clazz.nofInterfaces; i++) {
-					assert clazz.interfaces[i] != null: "ERROR: Interface is NULL! Current Interface: " + i +"/" + clazz.nofInterfaces;
-					clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - i] = clazz.interfaces[i].address;
+				Class c = clazz;
+				int count = 0;
+				while(c != null && count <= clazz.nofInterfaces) {
+					if(c.interfaces != null) {
+						for(int i = 0; i < c.interfaces.length; i++) {
+							clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - count] = c.interfaces[i].address;
+						}
+					}
+					c = (Class)c.type;
 				}
 			}
 			
