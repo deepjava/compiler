@@ -29,7 +29,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -710,9 +710,25 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 						if(dbg) vrb.println("         > Method \"" + m.name + "\":");
 						if((m.accAndPropFlags & (1 << dpfExcHnd)) != 0) { // TODO @Martin: improve this hack!!!
 							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + m.offset, m.machineCode.instructions, m.machineCode.iCount);
+							if(dbg) {
+								vrb.println("           Using code segment: " + clazz.codeSegment.getName() + " which begins at " + Integer.toHexString(clazz.codeSegment.getBaseAddress())); 
+								vrb.println("           Associated target memory segment #" + clazz.codeSegment.tms.id + " begins at: " + Integer.toHexString(clazz.codeSegment.tms.startAddress) + " and has a size of " + clazz.codeSegment.tms.data.length * 4 + " byte");
+								vrb.println("           Writing " + m.machineCode.iCount * 4 + " byte to " + Integer.toHexString(clazz.codeSegment.getBaseAddress() + m.offset));
+							//	for(int x = 0; x < m.machineCode.iCount; x++) {
+							//		vrb.println("           [" + Integer.toHexString(m.machineCode.instructions[x]) + "]");
+							//	}
+							}
 						}
 						else {
-							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);							
+							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);
+							if(dbg) {
+								vrb.println("           Using code segment: " + clazz.codeSegment.getName() + " which begins at " + Integer.toHexString(clazz.codeSegment.getBaseAddress())); 
+								vrb.println("           Associated target memory segment #" + clazz.codeSegment.tms.id + " begins at: " + Integer.toHexString(clazz.codeSegment.tms.startAddress) + " and has a size of " + clazz.codeSegment.tms.data.length * 4 + " byte");
+								vrb.println("           Writing " + m.machineCode.iCount * 4 + " byte to " + Integer.toHexString(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset));
+							//	for(int x = 0; x < m.machineCode.iCount; x++) {
+							//		vrb.println("           [" + Integer.toHexString(m.machineCode.instructions[x]) + "]");
+							//	}
+							}
 						}
 						addTargetMemorySegment(clazz.codeSegment.tms);
 					}
@@ -724,11 +740,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				clazz.constSegment.tms.addData(clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock);
 				addTargetMemorySegment(clazz.constSegment.tms);
 			}
-			else if(item instanceof Array){
-				Array array = (Array)item;
-				if(dbg) vrb.println("  Proceeding array \"" + array.name + "\":");
-				array.segment.tms.addData(array.segment.getBaseAddress() + array.offset, array.typeDescriptor);
-			}
+//			else if(item instanceof Array){ // TODO @Martin improve this!!!!!
+//				Array array = (Array)item;
+//				if(dbg) vrb.println("  Proceeding array \"" + array.name + "\":");
+//				array.segment.tms.addData(array.segment.getBaseAddress() + array.offset, array.typeDescriptor);
+//			}
 			item = item.next;
 		}
 
@@ -884,6 +900,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	
 	private static void addTargetMemorySegment(TargetMemorySegment tms) {
 		if(targetImage == null) {
+			if(dbg) vrb.println("      >>>> Adding target memory segment #" + tms.id);
 			targetImage = tms;
 			lastTargetMemorySegment = tms;
 		}
@@ -893,6 +910,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(current == tms) return;
 				current = current.next;
 			}
+			if(dbg) vrb.println("      >>>> Adding target memory segment #" + tms.id);
 			lastTargetMemorySegment.next = tms;
 			lastTargetMemorySegment = lastTargetMemorySegment.next;
 		}
