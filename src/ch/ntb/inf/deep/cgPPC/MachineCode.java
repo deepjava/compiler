@@ -10,7 +10,7 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = false;
+	private static final boolean dbg = true;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -511,7 +511,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						type = tRef;
 					else
 						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
-					offset = ((DyadicRef)instr).field.index;
+					offset = ((DyadicRef)instr).field.offset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}
 				switch (type) {
@@ -1926,16 +1926,16 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	public static void init() { 
-		idGET1 = Configuration.getSystemMethodIdOf("GET1");	// TODO don't use method names here
-		idGET2 = Configuration.getSystemMethodIdOf("GET2");
-		idGET4 = Configuration.getSystemMethodIdOf("GET4");
-		idGET8 = Configuration.getSystemMethodIdOf("GET8");
-		idPUT1 = Configuration.getSystemMethodIdOf("PUT1");
-		idPUT2 = Configuration.getSystemMethodIdOf("PUT2");
-		idPUT4 = Configuration.getSystemMethodIdOf("PUT4");
-		idPUT8 = Configuration.getSystemMethodIdOf("PUT8");
-		idGETBIT = Configuration.getSystemMethodIdOf("GETBIT");
-		idASM = Configuration.getSystemMethodIdOf("ASM");
+		idPUT1 = 0x001;	// same as in rsc/ntbMpc555STS.deep
+		idPUT2 = 0x002;
+		idPUT4 = 0x003;
+		idPUT8 = 0x004;
+		idGET1 = 0x005;	
+		idGET2 = 0x006;
+		idGET4 = 0x007;
+		idGET8 = 0x008;
+		idGETBIT = 0x009;
+		idASM = 0x00a;
 		final Class stringClass = (Class)Type.wktString;
 		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
 		if (stringClass != null) {
