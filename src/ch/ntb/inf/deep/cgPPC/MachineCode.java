@@ -494,7 +494,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						type = tRef;
 					else
 						type = Type.getPrimitiveTypeIndex(item.type.name.charAt(0));
-						if (type == -1) type = tRef;
+					if (type == -1) type = tRef;
 					offset = 0;
 					loadConstantAndFixup(res.regAux1, item);
 				} else {	// putfield
@@ -505,6 +505,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						type = tRef;
 					else
 						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
+					if (type == -1) type = tRef;//TODO @Urs please check this!!!!!!!!!!!!!!
 					offset = ((DyadicRef)instr).field.offset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}

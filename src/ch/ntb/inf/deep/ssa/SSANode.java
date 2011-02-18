@@ -2238,7 +2238,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tAref;
 						break;
 					default:
-						result.type = SSAValue.tVoid;
+						result.type = SSAValue.tAref;
 					}
 				} else {
 					switch (field.type.name.charAt(0)) {
@@ -2270,7 +2270,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tRef;
 						break;
 					default:
-						result.type = SSAValue.tVoid;
+						result.type = SSAValue.tRef;
 					}
 				}
 				value1 = popFromStack();
