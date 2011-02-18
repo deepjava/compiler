@@ -259,16 +259,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				
 				if(dbg) vrb.println("  Proceeding Array " + a.name);
 				
-				if(s == null) reporter.error(731, "Can't get the default segment for constants!\n");
+				if(s == null) reporter.error(731, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, cdSizeForArrays);
+					a.offset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
 					s.addToUsedSize(cdSizeForArrays);
 					a.segment = s;
 					if(dbg) vrb.println("    Segment for type descriptor: " + a.segment.getName());
-				}
+				}	
 			}
 			else {
-				if(dbg) vrb.println("+++++++++++++++ The following item in classlist is neither a class nor an array: " + item.name);
+				if(dbg) vrb.println("+++++++++++++++ The following item in classlist is neither a class nor an array: " + item.name); // TODO replace throu an error message...
 			}
 			item = item.next;
 		}
@@ -399,9 +400,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 
 	public static void calculateAbsoluteAddresses(Array array) {
-		array.offset = arrayOffsetCounter;
-		arrayOffsetCounter += cdSizeForArrays;
-		
 		array.address = array.segment.getBaseAddress() + array.offset;
 	}
 	
@@ -614,8 +612,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	public static void createTypeDescriptor(Array array) {
 		array.typeDescriptor = new int[cdSizeForArrays / 4];
 		array.typeDescriptor[0] = 1; // extensionLevel
-		array.typeDescriptor[1] = array.objectSize; // size
-		array.typeDescriptor[2] = array.componentType.sizeInBits / 4; // size of element type
+		array.typeDescriptor[1] = array.componentType.sizeInBits / 8; // size of element type
+		array.typeDescriptor[2] = 0x44444444; // not used
 		array.typeDescriptor[3] = Type.wktObject.address; // base class address -> address of java/lang/Object
 	}
 	
@@ -754,11 +752,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				clazz.constSegment.tms.addData(clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock);
 				addTargetMemorySegment(clazz.constSegment.tms);
 			}
-//			else if(item instanceof Array){ // TODO @Martin improve this!!!!!
-//				Array array = (Array)item;
-//				if(dbg) vrb.println("  Proceeding array \"" + array.name + "\":");
-//				array.segment.tms.addData(array.segment.getBaseAddress() + array.offset, array.typeDescriptor);
-//			}
+			else if(item instanceof Array){ // TODO @Martin improve this!!!!!
+				Array array = (Array)item;
+				if(dbg) vrb.println("  Proceeding array \"" + array.name + "\":");
+				array.segment.tms.addData(array.segment.getBaseAddress() + array.offset, array.typeDescriptor);
+			}
 			item = item.next;
 		}
 
@@ -805,7 +803,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
         Class kernel = (Class)Type.classList.getItemByName(Configuration.getKernelClassname().toString());
         if(kernel != null) {
         	if(dbg) vrb.println("  Kernel: " + kernel.name);
-        	cmdAddrField = (DataItem)kernel.instFields.getItemByName("cmdAddr");
+        	cmdAddrField = (DataItem)kernel.classFields.getItemByName("cmdAddr");
         	if(cmdAddrField != null) {
         		if(dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
         		cmdAddr = cmdAddrField.address;
