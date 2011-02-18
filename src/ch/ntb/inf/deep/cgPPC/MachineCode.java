@@ -10,7 +10,7 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -1431,7 +1431,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						assert false : "cg: instruction not implemented";
 					}
 				} else { // bCmultianewarray:
-System.out.println("adsdfgsagsd");
 					method = Class.getNewMemoryMethod(bCmultianewarray);
 					loadConstantAndFixup(res.regAux1, method);	// addr of multianewarray
 					createIrSspr(ppcMtspr, LR, res.regAux1);
@@ -1439,10 +1438,10 @@ System.out.println("adsdfgsagsd");
 					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
 					for (int k = 0; k < opds.length; k++) 
 						destGPR[opds[k].reg] = k + paramStartGPR + 1;				
-System.out.println("destGPR = ");
-for (int h=0; h < 32; h++) 
-	System.out.print(destGPR[h] + ",");
-System.out.println();
+//System.out.println("destGPR = ");
+//for (int h=0; h < 32; h++) 
+//	System.out.print(destGPR[h] + ",");
+//System.out.println();
 					for (int k = 0; k < nofGPR; k++) {
 						if (destGPR[k] != 0 && destGPR[k] != k) {
 							if (destGPR[destGPR[k]] == 0) {
