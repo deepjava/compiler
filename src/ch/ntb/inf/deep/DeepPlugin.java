@@ -6,9 +6,13 @@ import java.net.URL;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.graphics.Image;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 public class DeepPlugin extends Plugin {
@@ -48,6 +52,10 @@ public class DeepPlugin extends Plugin {
 	 */
 	public static final String ID_DEEP_LAUNCH_CONFIGURATION_TYPE = "deep.launchType";	
 	
+	/** 
+	 * The relative path to the images directory. 
+	 */
+	private static final String IMAGES_PATH = "icons/";
 	
 	/**
 	 * Plug-in identifier.
@@ -111,18 +119,39 @@ public class DeepPlugin extends Plugin {
 		return resourceBundle;
 	}
 	
+	
 	/**
 	 * Return a <code>java.io.File</code> object that corresponds to the specified
 	 * <code>IPath</code> in the plugin directory, or <code>null</code> if none.
 	 */
-	public static File getFileInPlugin(IPath path) {
+	public static File getFileInPlugin(String relPath) {
 		try {
-			URL installURL =
-				new URL(getDefault().getDescriptor().getInstallURL(), path.toString());
-			URL localURL = Platform.asLocalURL(installURL);
+			final Bundle pluginBundle =  Platform.getBundle(DeepPlugin.PLUGIN_ID);
+			
+			final Path filePath = new Path(relPath);
+			
+			final URL fileUrl = FileLocator.find(pluginBundle, filePath, null);
+
+			URL localURL = FileLocator.toFileURL(fileUrl);
+			
 			return new File(localURL.getFile());
 		} catch (IOException ioe) {
 			return null;
 		}
-	}	
+	}
+	
+	public static Image createImage(String imagePath)
+    {
+         final Bundle pluginBundle =
+              Platform.getBundle(DeepPlugin.PLUGIN_ID);
+
+         final Path imageFilePath =
+              new Path(DeepPlugin.IMAGES_PATH + imagePath);
+
+         final URL imageFileUrl =
+              FileLocator.find(pluginBundle, imageFilePath, null);
+
+         return
+              ImageDescriptor.createFromURL(imageFileUrl).createImage();
+    }
 }
