@@ -28,5 +28,23 @@ public class T09Types {
 		short i = (short)h;		
 		return b;
 	}
+	
+	static void callm2() {
+		T09Types obj = new T09Types();
+		long a = 0;
+		double c = 0;
+		float b = 0;
+		byte[] d = null;
+		short e = 0;
+		int g = 0;
+		int f = 0;
+		float res = obj.m2(a, b, c, d, e, f, g);
+	}
+	
+	public static void m3(double a, int b, char[] c) {
+		int d;
+		if (c == null) d = b + 1;
+	}
+
 
 }
