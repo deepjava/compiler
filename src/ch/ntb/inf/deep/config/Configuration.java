@@ -248,6 +248,9 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 
 	public static HString getKernelClassname() {
+		if(os == null){
+			return null;
+		}
 		return HString.getHString(os.getKernel().name);
 	}
 
