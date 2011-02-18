@@ -182,6 +182,14 @@
             name="Target Commands"
             restorable="true">
       </view>
+      <view
+            category="ch.ntb.inf.deep.targetManipulation"
+            class="ch.ntb.inf.deep.ui.view.TargetOperationView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.view.TargetOperationView"
+            name="TargetOperation"
+            restorable="true">
+      </view>
    </extension>
 
 </plugin>
