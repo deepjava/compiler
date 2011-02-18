@@ -91,6 +91,38 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(op.isReaded && !choise[op.operation].equals("")){
 						switch(op.operation){
 							case 1:
+								switch(op.registerType){
+								case Parser.sCR:
+								case Parser.sFPSCR:
+								case Parser.sMSR:
+									return String.format("0x%04X",op.value);
+								case Parser.sGPR:
+									if(op.representation == 1){//Hex
+										return String.format("0x%08X",op.value);
+									}else{
+										return String.format("%d",(int)op.value);
+									}
+								case Parser.sFPR:
+									if(op.representation == 1){//Hex
+										return String.format("0x%16X",op.value);
+									}else{
+										return String.format("%f",Double.longBitsToDouble(op.value));
+									}
+								case Parser.sSPR:
+								case Parser.sIOR:
+									switch(op.registerSize){
+									case 1:
+										return String.format("0x%01X",op.value);
+									case 2:
+										return String.format("0x%02X",op.value);
+									case 4:
+										return String.format("0x%04X",op.value);
+									case 8:
+										return String.format("0x%08X",op.value);
+									default:
+										return String.format("0x%04X",op.value);
+									}
+								}
 							case 2:
 								switch (op.valueType){
 									case tBoolean:
