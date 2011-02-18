@@ -2558,6 +2558,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr = new Branch(sCbranch, value1);
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
+				addInstruction(instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto_w:
