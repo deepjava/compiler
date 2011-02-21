@@ -274,37 +274,42 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 */
 	static void assignRegisters(MachineCode code) {
 		// handle loadLocal first
+		if (dbg) System.out.println("handle load local");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
-			SSAValue joinVal = instr.result.join;
+			SSAValue res = instr.result;
+			SSAValue joinVal = res.join;
 			if (instr.ssaOpcode == sCloadLocal) {
-				int type = instr.result.type;
+				if (dbg) {System.out.print("assign reg for instr "); instr.print(0);}
+				int type = res.type;
 				if (type == tLong) {
-					instr.result.regLong = code.paramRegNr[instr.result.index - maxStackSlots];
-					instr.result.reg = code.paramRegNr[instr.result.index+1 - maxStackSlots];
+					res.regLong = code.paramRegNr[res.index - maxStackSlots];
+					res.reg = code.paramRegNr[res.index+1 - maxStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					instr.result.reg = code.paramRegNr[instr.result.index - maxStackSlots];
+					res.reg = code.paramRegNr[res.index - maxStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					instr.result.reg = code.paramRegNr[instr.result.index - maxStackSlots];
+					res.reg = code.paramRegNr[res.index - maxStackSlots];
 				}	
 				if (joinVal != null) {
-					if (instr.result.type == tLong) {
-						joinVal.regLong = instr.result.regLong;
-						joinVal.reg = instr.result.reg;
+					if (res.type == tLong) {
+						joinVal.regLong = res.regLong;
+						joinVal.reg = res.reg;
 						regAtIndex[joinVal.index] = joinVal.regLong;
 						regAtIndex[joinVal.index+1] = joinVal.reg;
 					} else {
-						joinVal.reg = instr.result.reg;
+						joinVal.reg = res.reg;
 						regAtIndex[joinVal.index] = joinVal.reg;			
 					}
 				}
+				if (dbg) System.out.println("\treg = " + res.reg);
 			} 
 		}
 		
+		if (dbg) System.out.println("handle all other instructions");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
-			if (dbg) {System.out.print("assign register for instr: "); instr.print(0);}
+			if (dbg) {System.out.print("assign reg for instr "); instr.print(0);}
 			if (instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted && ((PhiFunction)instr).start >= i && instr.result.join == null) continue; 
 			SSAValue res = instr.result;
 //			System.out.println("ssa opcode = " + instr.scMnemonics[instr.ssaOpcode] + " regsGPR="+Integer.toHexString(regsGPR));
@@ -341,9 +346,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCloadLocal) {
 				// already done
 			} else if (joinVal != null) {
-//				System.out.println("joinVal != null");
+				if (dbg) System.out.println("\tjoinVal != null");
 				if (joinVal.reg < 0) {	// phi function: register not assigned yet
-//				System.out.println("join: assign register to phi-function");
+					if (dbg) System.out.println("\tjoin: assign new reg to phi-function");
 					if (res.type == tLong) {
 						joinVal.regLong = reserveReg(gpr, joinVal.nonVol);
 						joinVal.reg = reserveReg(gpr, joinVal.nonVol);
@@ -357,10 +362,24 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						joinVal.reg = reserveReg(gpr, joinVal.nonVol);
 						res.reg = joinVal.reg;
 					}
-				} else // assign same register as phi function
-					// hier fehlt long
-					res.regLong = joinVal.regLong;	
-					res.reg = joinVal.reg;	
+				} else {// assign same register as phi function
+					if (dbg) System.out.println("\tassign same reg as phi function");
+					if (res.type == tLong) {
+						res.regLong = joinVal.regLong;	
+						res.reg = joinVal.reg;
+						reserveReg(gpr, res.regLong);
+						reserveReg(gpr, res.reg);
+					} else if ((res.type == tFloat) || (res.type == tDouble)) {
+						res.reg = joinVal.reg;
+						reserveReg(fpr, res.reg);
+					} else if (res.type == tVoid) {
+						res.reg = joinVal.reg;
+						reserveReg(gpr, res.reg);
+					} else {
+						res.reg = joinVal.reg;
+						reserveReg(gpr, res.reg);
+					}
+				}
 			} else if (instr.ssaOpcode == sCloadConst) {
 				// check if operand is immediate
 // call.item.accAndPropFlags & sysMethCodeMask) == idGET2
@@ -408,6 +427,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (res.reg < 0) 	// not yet assigned
 					findReg(res);
 			}
+			if (dbg) System.out.println("\treg = " + res.reg);
 
 			if (res.regAux1 != -1) freeReg(gpr, res.regAux1);	//System.out.println("freeing aux reg1");
 			if (res.regAux2 != -1) freeReg(gpr, res.regAux2);	// System.out.println("freeing aux reg2")
@@ -474,6 +494,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	static int reserveReg(boolean isGPR, boolean isNonVolatile) {
+		if (dbg) System.out.println("\tbefore reserving " + Integer.toHexString(regsGPR));
 		int regs;
 		if (isGPR) {
 			if (isNonVolatile) {
@@ -545,12 +566,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	private static void freeReg(boolean isGPR, int reg) {
-		if (dbg) System.out.println("\tfree reg " + reg);
 		if (isGPR) {
 			regsGPR |= 1 << reg;
 		} else {
 			regsFPR |= 1 << reg;
 		}
+		if (dbg) System.out.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 	}
 
 }

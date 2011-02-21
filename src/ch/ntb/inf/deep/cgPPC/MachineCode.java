@@ -81,6 +81,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		tempStorage = false;
+		for (int i = 0; i < maxNofParam; i++) {
+			paramType[i] = tVoid;
+			paramRegNr[i] = -1;
+		}
 
 		// make local copy 
 		int maxStackSlots = ssa.cfg.method.maxStackSlots;
@@ -1445,11 +1449,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					// copy dimensions
 					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
 					for (int k = 0; k < opds.length; k++) 
-						destGPR[opds[k].reg] = k + paramStartGPR + 1;				
-//System.out.println("destGPR = ");
-//for (int h=0; h < 32; h++) 
-//	System.out.print(destGPR[h] + ",");
-//System.out.println();
+						destGPR[opds[k].reg] = k + paramStartGPR + 2;				
+System.out.println("destGPR = ");
+for (int h=0; h < 32; h++) 
+	System.out.print(destGPR[h] + ",");
+System.out.println();
 					for (int k = 0; k < nofGPR; k++) {
 						if (destGPR[k] != 0 && destGPR[k] != k) {
 							if (destGPR[destGPR[k]] == 0) {

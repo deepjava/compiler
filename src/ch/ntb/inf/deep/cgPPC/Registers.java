@@ -16,8 +16,8 @@ interface Registers {
 
 	final int stackPtr = 1;	// register for stack pointer
 
-	final int volRegsGPRinitial = 0x0000fffc;
-	final int nonVolRegsGPRinitial = 0xffff0000;
+	final int volRegsGPRinitial = 0x0003fffc;
+	final int nonVolRegsGPRinitial = 0xfffc0000;
 	final int volRegsFPRinitial = 0x000001fe;
 	final int nonVolRegsFPRinitial = 0xfffffe00;
 
