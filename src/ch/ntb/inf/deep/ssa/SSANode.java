@@ -169,7 +169,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// all other predecessors --> merge
 						for (int j = 0; j < maxStack + maxLocals; j++) {
 							// if both null, do nothing
-							if ((entrySet[j] != null && entrySet[j].type != SSAValue.tVoid)	|| (((SSANode) predecessors[i]).exitSet[j] != null && ((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tVoid)){
+							if ((entrySet[j] != null && (entrySet[j].type != SSAValue.tVoid ||(entrySet[j].type == SSAValue.tVoid && entrySet[j].owner.ssaOpcode == sCPhiFunc)))|| (((SSANode) predecessors[i]).exitSet[j] != null && (((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tVoid ||(((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tVoid && ((SSANode) predecessors[i]).exitSet[j].owner.ssaOpcode == sCPhiFunc )))){
 								if (entrySet[j] == null) {// predecessor is set
 									if (ssa.isParam[j]) {
 										// create phi function
@@ -186,7 +186,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 										for (int x = 0; x < i; x++) {
 											phi.addOperand(generateLoadParameter((SSANode) predecessors[x],j, ssa));
 										}
-										result.type = ((SSANode) predecessors[i]).exitSet[j].type;
+										result.type = ssa.paramType[j];
 										SSAValue opd = ((SSANode) predecessors[i]).exitSet[j];
 										opd = insertRegMoves((SSANode) predecessors[i], j, opd);
 										phi.addOperand(opd);
@@ -212,7 +212,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 														result.index = j;
 														PhiFunction phi = new PhiFunction(sCPhiFunc);
 														result.owner = phi;
-														phi.result.type = entrySet[j].type;
+														phi.result.type = ssa.paramType[j];
 														phi.result = result;
 														int predNo = 0;
 														for(int k = 0; k < nofPredecessors; k++){
@@ -241,7 +241,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
-													phi.result.type = entrySet[j].type;
+													phi.result.type = ssa.paramType[j];
 													int predNo = 0;
 													for(int k = 0; k < nofPredecessors; k++){
 														if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
