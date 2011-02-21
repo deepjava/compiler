@@ -104,7 +104,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 									}
 								case Parser.sFPR:
 									if(op.representation == 1){//Hex
-										return String.format("0x%16X",op.value);
+										return String.format("0x%016X",op.value);
 									}else{
 										return String.format("%f",Double.longBitsToDouble(op.value));
 									}
@@ -165,6 +165,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 											return String.format("0x%016X",op.value);
 										}
 										return String.format("%f",Double.longBitsToDouble(op.value));
+									case tRef:
+										return String.format("0x%08X",op.value);
 									default:
 										throw new RuntimeException("Should not happen");
 								}
@@ -453,8 +455,12 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			try{
 				if(choise[op.operation].equals("Register")){
 					if(((OperationObject)element).registerType != -1){
-						op.value = Long.decode(String.valueOf(value));
-						setToRegister(op);						
+						if(((OperationObject)element).registerType == Parser.sFPR){
+							op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
+						}else{
+							op.value = Long.decode(String.valueOf(value));
+						}
+						setToRegister(op);
 					}
 				}else if(choise[op.operation].equals("Variable")){
 					setVariable(op,String.valueOf(value));
@@ -543,7 +549,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					readFromRegister(op, HString.getHString(op.description));						
 				}
 			}else if(choise[op.operation].equals("Variable")){
-				readVariable(op,String.valueOf(op.value));
+				readVariable(op,op.description);
 			}else if(choise[op.operation].equals("Address")){
 				readFromAddress(op);
 			}
@@ -708,8 +714,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						op.value = bdi.getMem(var.address, slotSize);
 						if(var.type == Type.wellKnownTypes[txInt]){
 							op.valueType = tInteger;
-						}else{
+						}else if(var.type == Type.wellKnownTypes[txFloat]){
 							op.valueType = tFloat;										
+						}else{
+							op.valueType = tRef;
 						}
 					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
 						op.value = bdi.getMem(var.address, slotSize);
