@@ -400,7 +400,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 
 	public static void calculateAbsoluteAddresses(Array array) {
-		array.address = array.segment.getBaseAddress() + array.offset;
+		array.address = array.segment.getBaseAddress() + array.offset + 4;
 	}
 	
 	public static void createConstantBlock(Class clazz) {
@@ -978,7 +978,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		int cc = 0, mc = 0, fc = 0;
 		Item item = Type.classList;
 		while(item != null) {
-			if( item instanceof Class){
+			if(item instanceof Class){
 				Class c = (Class)item;
 				vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
 				vrb.println("    Number of class methods: " + c.nofClassMethods);
@@ -1057,6 +1057,16 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				
 				vrb.println("    Constant block:");
 				c.printConstantBlock(2);
+			}
+			
+			else {
+				Array a = (Array)item;
+				vrb.println("  Array: " + a.name);
+				vrb.println("    Type descriptor:");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[0]); vrb.println("] extension level");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[1]); vrb.println("] size of array element in byte");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[2]); vrb.println("] not used");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] base class address");
 			}
 			
 			item = item.next;
