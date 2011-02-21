@@ -478,7 +478,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
 						break;
+					case tAref: case tAchar: case tAfloat: case tAdouble:    //TODO @roger evt. remove this whole case
+					case tAbyte: case tAshort: case tAinteger: case tAlong: 
+						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
+						createIrDrArB(ppcLwzx, res.reg, res.regAux1, res.regAux2);
+						break;
 					default:
+						if(dbg) System.out.println(res.type & 0x7fffffff);//TODO @roger remove this
 						assert false : "cg: type not implemented";
 					}
 				}

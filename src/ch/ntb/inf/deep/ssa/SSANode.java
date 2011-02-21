@@ -855,6 +855,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAinteger;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -866,6 +867,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAlong;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -877,6 +879,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAfloat;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -888,6 +891,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAdouble;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -900,11 +904,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value2 = popFromStack();
 				value1 = popFromStack();
 				result = new SSAValue();
-				//if(value1.type == SSAValue.tAref  && value1.owner.getOperands().length > 1){
-				//	result.type = SSAValue.tAref;
-				//}else{
+				if(value1.type >= SSAValue.tAref  && ((value1.index >= 0 && ssa.isParam[value1.index]) || (value1.owner.getOperands() != null && value1.owner.getOperands().length > 1))){
+					result.type = value1.type;
+				}else{
 					result.type = SSAValue.tRef;
-				//}
+				}
 				instr = new Dyadic(sCloadFromArray, value1, value2);
 				instr.result = result;
 				instr.result.owner = instr;
@@ -916,6 +920,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// or byte)
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAbyte;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tByte | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -927,6 +932,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCcaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAchar;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tChar | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -938,6 +944,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCsaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAshort;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tShort | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -1090,6 +1097,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAinteger;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1101,6 +1109,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAlong;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1112,6 +1121,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAfloat;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1123,6 +1133,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAdouble;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1134,6 +1145,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAref;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1145,6 +1157,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAbyte;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1156,6 +1169,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAchar;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1167,6 +1181,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
+				value1.type = SSAValue.tAshort;//TODO @Roger and Urs verify
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -2539,7 +2554,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tAref;
 				operands = new SSAValue[val1];
-				for (int i = 0; i < operands.length; i++) {
+				for (int i = operands.length - 1; i >= 0; i--) {
 					operands[i] = popFromStack();
 				}
 				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
