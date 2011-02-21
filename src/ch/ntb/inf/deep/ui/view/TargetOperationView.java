@@ -445,9 +445,97 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 		@Override
 		protected Object getValue(Object element) {
-			return Long.toString(((OperationObject)element).value);
-			
-		}
+			OperationObject op = (OperationObject) element;
+			switch (op.operation) {
+			case 1:
+				switch (op.registerType) {
+				case Parser.sCR:
+				case Parser.sFPSCR:
+				case Parser.sMSR:
+					return String.format("0x%04X", op.value);
+				case Parser.sGPR:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%08X", op.value);
+					} else {
+						return String.format("%d", (int) op.value);
+					}
+				case Parser.sFPR:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%016X", op.value);
+					} else {
+						return String.format("%f", Double.longBitsToDouble(op.value));
+					}
+				case Parser.sSPR:
+				case Parser.sIOR:
+					switch (op.registerSize) {
+					case 1:
+						return String.format("0x%01X", op.value);
+					case 2:
+						return String.format("0x%02X", op.value);
+					case 4:
+						return String.format("0x%04X", op.value);
+					case 8:
+						return String.format("0x%08X", op.value);
+					default:
+						return String.format("0x%04X", op.value);
+					}
+				}
+			case 2:
+				switch (op.valueType) {
+				case tBoolean:
+					return String.valueOf(op.value > 0);
+				case tByte:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%02X", op.value);
+					}
+					return Byte.toString((byte) op.value);
+				case tChar:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%04X", op.value);
+					}
+					if (op.representation == 2) {// Dez{
+						return String.format("%d", (int) op.value);
+					}
+					return String.format("%c", ((char) op.value));
+				case tShort:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%04X", op.value);
+					}
+					return String.format("%d", ((short) op.value));
+				case tInteger:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%08X", op.value);
+					}
+					return String.format("%d", (int) op.value);
+				case tFloat:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%08X", op.value);
+					}
+					return String.format("%f", Float.intBitsToFloat((int) op.value));
+				case tLong:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%016X", op.value);
+					}
+					return String.format("%d", op.value);
+				case tDouble:
+					if (op.representation == 1) {// Hex
+						return String.format("0x%016X", op.value);
+					}
+					return String.format("%f", Double.longBitsToDouble(op.value));
+				case tRef:
+					return String.format("0x%08X", op.value);
+				default:
+					return String.format("%d", op.value);
+				}
+			case 3:
+				return String.format("0x%08X", op.value);
+			case 4:
+				return "";
+			default:
+				throw new RuntimeException("Should not happen");
+			}
+	}
+		
 
 		@Override
 		protected void setValue(Object element, Object value) {
