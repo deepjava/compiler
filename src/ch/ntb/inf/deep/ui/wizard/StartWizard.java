@@ -98,7 +98,7 @@ public class StartWizard extends Wizard implements INewWizard{
 
 	public void addPages() {
 		wizPage1 = new WizPage1("Start Page");
-		wizPage1.setTitle("Processor selection");
+		wizPage1.setTitle("Target configuration");
 		wizPage1.setDescription("Please choose your processor");
 		addPage(wizPage1);
 		wizPage2 = new WizPage2("Second Page");
@@ -165,18 +165,18 @@ public class StartWizard extends Wizard implements INewWizard{
 		
 		if(processor.equals("MPC555")){
 			if(board.equals("NTB MPC555 Headerboard")){
-				sb.append("\"ntbMpc555HB.deep\"");
+				sb.append("\"config/ntbMpc555HB.deep\"");
 				if(rts.equals("Simple tasking system")){
-					sb.append(", \"ntbMpc555STS.deep\"");
+					sb.append(", \"config/ntbMpc555STS.deep\"");
 				}else if(rts.equals("uCos")){
-					sb.append(", \"ntbMpc555uCOS.deep\"");
+					sb.append(", \"config/ntbMpc555uCOS.deep\"");
 				}	 
 			}else if(board.equals("phyCORE-mpc555")){
-				sb.append("\"phyMpc555Core.deep\"");
+				sb.append("\"config/phyMpc555Core.deep\"");
 				if(rts.equals("Simple tasking system")){
-					sb.append(", \"ntbMpc555STS.deep\"");
+					sb.append(", \"config/ntbMpc555STS.deep\"");
 				}else if(rts.equals("uCos")){
-					sb.append(", \"ntbMpc555uCOS.deep\"");
+					sb.append(", \"config/ntbMpc555uCOS.deep\"");
 				}					 
 			}
 			sb.append(";\n}\n\n");

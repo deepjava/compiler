@@ -191,5 +191,33 @@
             restorable="true">
       </view>
    </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="ch.ntb.inf.deep.launcher.DeepLaunchShortcut"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.launcher.DeepLaunchShortcut"
+            label="Deep Application"
+            modes="run">
+         <contextualLaunch>
+            <contextLabel
+                  label="Deep Application"
+                  mode="run">
+            </contextLabel>
+            <enablement>
+               <count
+                     value="1">
+               </count>
+            </enablement>
+         </contextualLaunch>
+         <configurationType
+               id="deep.launchType">
+         </configurationType>
+         <description
+               description="Shortcut to launch a deep aplication"
+               mode="run">
+         </description>
+      </shortcut>
+   </extension>
 
 </plugin>

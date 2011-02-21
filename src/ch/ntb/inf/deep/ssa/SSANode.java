@@ -169,7 +169,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						// all other predecessors --> merge
 						for (int j = 0; j < maxStack + maxLocals; j++) {
 							// if both null, do nothing
-							if ((entrySet[j] != null && (entrySet[j].type != SSAValue.tVoid ||(entrySet[j].type == SSAValue.tVoid && entrySet[j].owner.ssaOpcode == sCPhiFunc)))|| (((SSANode) predecessors[i]).exitSet[j] != null && (((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tVoid ||(((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tVoid && ((SSANode) predecessors[i]).exitSet[j].owner.ssaOpcode == sCPhiFunc )))){
+							if ((entrySet[j] != null && (entrySet[j].type != SSAValue.tVoid ||(entrySet[j].type == SSAValue.tVoid && ssa.isParam[j])))|| (((SSANode) predecessors[i]).exitSet[j] != null && (((SSANode) predecessors[i]).exitSet[j].type != SSAValue.tVoid ||(((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tVoid && ssa.isParam[j])))){
 								if (entrySet[j] == null) {// predecessor is set
 									if (ssa.isParam[j]) {
 										// create phi function

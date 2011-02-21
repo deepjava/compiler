@@ -77,7 +77,7 @@ class WizPage1 extends WizardPage {
 		processor.addSelectionListener(selectionListener);
 		
 		Group group2 = new Group(composite, SWT.NONE);
-		group2.setText("Configuration");
+		group2.setText("Board configuration");
 		RowLayout rowLayout3 = new RowLayout(SWT.VERTICAL);
 		group2.setLayout(rowLayout3);
 		Label label1 = new Label(group2, SWT.NONE);
@@ -89,7 +89,7 @@ class WizPage1 extends WizardPage {
 		
 		
 		Group group3 = new Group(composite, SWT.NONE);
-		group3.setText("Runtime-System");
+		group3.setText("Runtime system");
 		GridLayout gridLayout2 = new GridLayout(2, false);
 		group3.setLayout(gridLayout2);
 		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);

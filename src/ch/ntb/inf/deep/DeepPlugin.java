@@ -44,7 +44,7 @@ public class DeepPlugin extends Plugin {
 	 * The path is a string representing a full path
 	 * to a target image in the workspace. 
 	 */
-	public static final String ATTR_TARGET_IMAGE = ID_DEEP_MODEL + ".ATTR_TARGET_IMAGE";
+	public static final String ATTR_TARGET_CONFIG = ID_DEEP_MODEL + ".ATTR_TARGET_CONFIG";
 	
 	/**
 	 * Identifier for the deep launch configuration type

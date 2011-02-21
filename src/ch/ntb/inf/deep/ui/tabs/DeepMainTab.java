@@ -34,6 +34,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
@@ -45,9 +46,42 @@ import ch.ntb.inf.deep.DeepPlugin;
  */
 public class DeepMainTab extends AbstractLaunchConfigurationTab {
 
-	private Text fProgramText;
+	private Text fProgramText, targetConfig;
+	private String program;
 	private String locationPath;
-	private Button fProgramButton;
+	private Button fProgramButton, ram, flash, other;
+	private String lastChoise = "";
+	private String BOOT_FROM_RAM = "BootFromRam";
+	private String BOOT_FROM_FLASH = "BootFromFlash";
+	
+	private SelectionAdapter selectionListener = new SelectionAdapter() {
+		public void widgetSelected(SelectionEvent e){
+			if (e.widget.equals(ram)){
+				ram.setSelection(true);
+				flash.setSelection(false);
+				if(other.getSelection()){
+					other.setSelection(false);
+					targetConfig.setEnabled(false);
+					targetConfig.setText("");
+				}
+			}else if (e.widget.equals(flash)){
+				flash.setSelection(true);
+				ram.setSelection(false);
+				if(other.getSelection()){
+					other.setSelection(false);
+					targetConfig.setEnabled(false);
+					targetConfig.setText("");
+				}
+			}else if (e.widget.equals(other)){
+				ram.setSelection(false);
+				flash.setSelection(false);
+				other.setSelection(true);
+				targetConfig.setEnabled(true);
+				targetConfig.setText(lastChoise);
+			}
+			updateLaunchConfigurationDialog();
+		}
+	};
 
 	/*
 	 * (non-Javadoc)
@@ -63,19 +97,20 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		setControl(comp);
 		GridLayout topLayout = new GridLayout();
 		topLayout.verticalSpacing = 0;
-		topLayout.numColumns = 3;
+		topLayout.numColumns = 2;
 		comp.setLayout(topLayout);
 		comp.setFont(font);
 
 		createVerticalSpacer(comp, 3);
 
-		Label programLabel = new Label(comp, SWT.NONE);
-		programLabel.setText("&Program:");
-		GridData gd = new GridData(GridData.BEGINNING);
-		programLabel.setLayoutData(gd);
-		programLabel.setFont(font);
-
-		fProgramText = new Text(comp, SWT.SINGLE | SWT.BORDER);
+		Group group1 = new Group(comp, SWT.NONE);
+		group1.setText("Main deep file");
+		GridLayout gridLayout1 = new GridLayout(2, false);
+		group1.setLayout(gridLayout1);
+		GridData gd = new GridData(GridData.FILL, GridData.CENTER, true, false);
+		gd.horizontalSpan = 2;
+		group1.setLayoutData(gd);
+		fProgramText = new Text(group1, SWT.SINGLE | SWT.BORDER);
 		gd = new GridData(GridData.FILL_HORIZONTAL);
 		fProgramText.setLayoutData(gd);
 		fProgramText.setFont(font);
@@ -84,13 +119,44 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 				updateLaunchConfigurationDialog();
 			}
 		});
-
-		fProgramButton = createPushButton(comp, "&Add...", null); //$NON-NLS-1$
+		fProgramButton = createPushButton(group1, "&Browse...", null); //$NON-NLS-1$
 		fProgramButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				browseFiles();
 			}
 		});
+		
+		Group group3 = new Group(comp, SWT.NONE);
+		group3.setText("Target configuration");
+		GridLayout gridLayout2 = new GridLayout(2, false);
+		group3.setLayout(gridLayout2);
+		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+		gridData.horizontalSpan = 2;//TODO check
+		group3.setLayoutData(gridData);
+		Label label2 = new Label(group3,SWT.NONE);
+		label2.setText("Select a targetConfiguration");
+		label2.setLayoutData(gridData);
+		
+		ram = new Button(group3, SWT.RADIO);
+		ram.setText("Boot from ram");
+		ram.setSelection(true);
+		ram.addSelectionListener(selectionListener);
+		ram.setLayoutData(gridData);
+		flash = new Button(group3, SWT.RADIO);
+		flash.setText("Boot from flash");
+		flash.setSelection(false);
+		flash.addSelectionListener(selectionListener);
+		flash.setLayoutData(gridData);
+		other = new Button(group3, SWT.RADIO);
+		other.setText("Other");
+		other.setSelection(false);
+		other.addSelectionListener(selectionListener);
+		targetConfig = new Text(group3, SWT.SINGLE | SWT.BORDER);
+		GridData gridData2 = new GridData();
+//		gridData2.horizontalAlignment = SWT.FILL;
+		gridData2.grabExcessHorizontalSpace = true;
+		targetConfig.setLayoutData(gridData2);
+		targetConfig.setEnabled(false);
 	}
 
 	/**
@@ -101,16 +167,17 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 				getShell(), ResourcesPlugin.getWorkspace().getRoot(),
 				IResource.FILE);
 		dialog.setTitle("Deep Program");
-		dialog.setMessage("Select Deep Program");
+		dialog.setMessage("Select deep project file");
 		if (dialog.open() == Window.OK) {
 			Object[] files = dialog.getResult();
 			IFile file = (IFile) files[0];
 			locationPath = file.getProject().getLocation().toString();
-			String temp = fProgramText.getText();
-			if (!temp.equals("")) {
-				temp = temp + ";";
-			}
-			fProgramText.setText(temp + file.getFullPath().toString());
+//			String temp = fProgramText.getText();
+//			if (!temp.equals("")) {
+//				temp = temp + ";";
+//			}
+			fProgramText.setText(file.getFullPath().toString());
+			program = file.getLocation().toString();
 		}
 
 	}
@@ -134,7 +201,6 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 	 */
 	public void initializeFrom(ILaunchConfiguration configuration) {
 		try {
-			String program = null;
 			program = configuration.getAttribute(DeepPlugin.ATTR_DEEP_PROGRAM,
 					(String) null);
 			if (program != null) {
@@ -155,12 +221,16 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 	 * .debug.core.ILaunchConfigurationWorkingCopy)
 	 */
 	public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-		String program = fProgramText.getText().trim();
-		if (program.length() == 0) {
-			program = null;
-		}
+		
 		configuration.setAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, program);
 		configuration.setAttribute(DeepPlugin.ATTR_DEEP_LOCATION, locationPath);
+		if(ram.getSelection()){
+			configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , BOOT_FROM_RAM);
+		}else if(flash.getSelection()){
+			configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , BOOT_FROM_FLASH);
+		}else{
+			configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , targetConfig.getText());
+		}
 
 		// perform resource mapping for contextual launch
 		IResource[] resources = null;
@@ -196,13 +266,14 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		setMessage(null);
 		String text = fProgramText.getText();
 		if (text.length() > 0) {
-			String[] files = text.split(";");
-			for (int i = 0; i < files.length; i++) {
-				IPath path = new Path(files[i]);
-				if (ResourcesPlugin.getWorkspace().getRoot().findMember(path) == null) {
-					setErrorMessage(files[i] + " does not exist");
-					return false;
-				}
+			IPath path = new Path(text);
+			if (ResourcesPlugin.getWorkspace().getRoot().findMember(path) == null) {
+				setErrorMessage(text + " does not exist");
+				return false;
+			}
+			if(!text.endsWith(".deep")){
+				setErrorMessage("chose a deep project file");
+				return false;
 			}
 		} else {
 			setMessage("Specify a program");

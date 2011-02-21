@@ -213,18 +213,18 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 			StringBuffer sb = new StringBuffer();
 			if (processor.getText().equals("MPC555")) {
 				if (board.getText().equals("NTB MPC555 Headerboard")) {
-					sb.append("\"ntbMpc555HB.deep\"");
+					sb.append("\"config/ntbMpc555HB.deep\"");
 					if (rts.getText().equals("Simple tasking system")) {
-						sb.append(", \"ntbMpc555STS.deep\"");
+						sb.append(", \"config/ntbMpc555STS.deep\"");
 					} else if (rts.getText().equals("uCos")) {
-						sb.append(", \"ntbMpc555uCOS.deep\"");
+						sb.append(", \"config/ntbMpc555uCOS.deep\"");
 					}
 				} else if (board.getText().equals("phyCORE-mpc555")) {
-					sb.append("\"phyMpc555Core.deep\"");
+					sb.append("\"config/phyMpc555Core.deep\"");
 					if (rts.getText().equals("Simple tasking system")) {
-						sb.append(", \"ntbMpc555STS.deep\"");
+						sb.append(", \"config/ntbMpc555STS.deep\"");
 					} else if (rts.getText().equals("uCos")) {
-						sb.append(", \"ntbMpc555uCOS.deep\"");
+						sb.append(", \"config/ntbMpc555uCOS.deep\"");
 					}
 				}
 			} else {

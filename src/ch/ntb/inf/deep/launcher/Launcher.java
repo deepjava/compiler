@@ -18,6 +18,7 @@ import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.ssa.SSA;
+import ch.ntb.inf.deep.strings.HString;
 
 public class Launcher implements ICclassFileConsts {
 	private static ErrorReporter reporter = ErrorReporter.reporter;
@@ -39,6 +40,26 @@ public class Launcher implements ICclassFileConsts {
 				Class.buildSystem(Configuration.getRootClassNames(),
 						Configuration.getSearchPaths(), Configuration
 								.getSystemPrimitives(), attributes);
+
+//			Type t = Type.classList;
+//            while (t != null) {
+//                  if (t.next.name.equals(HString.getHString("java/lang/String"))) {
+//                       Item strClass = t.next;
+//                       t.next = t.next.next;
+//                       strClass.next = Type.classList;
+//                       Type.classList = (Type)strClass;
+//                       break;
+//                  }
+//                  t = (Type)t.next;
+//            }
+//            t = Type.classList;
+//            System.out.println("class list ++++++++++++++++");
+//            while (t != null) {
+//                  System.out.println(t.name);
+//                  t = (Type)t.next;
+//            }
+
+			
 			
 			// 2a) Initialize linker
 			if (reporter.nofErrors <= 0) {
@@ -61,7 +82,7 @@ public class Launcher implements ICclassFileConsts {
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
 						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-							System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+//							System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 
 							// 3.2) Create CFG
 							if (reporter.nofErrors <= 0)

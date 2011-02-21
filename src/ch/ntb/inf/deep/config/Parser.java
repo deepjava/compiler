@@ -106,9 +106,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	}
 
 	private void parseImport(HString location, HString file) {
-		HString fileToRead = HString.getHString(location.toString()
-				+ file.toString());
+		HString fileToRead = HString.getHString(location.toString()	+ file.toString());
 		Parser par = new Parser(fileToRead);
+		if(reporter.nofErrors > 0){
+			return;
+		}
 		par.currentFile = file;
 		checksum.add(par.calculateChecksum(fileToRead));
 		importedFiles.add(file);
@@ -837,7 +839,20 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					parseImport(loc, toCmp);
 				} else {
 					if (libPaths != null) {
-						parseImport(libPaths, toCmp);
+						HString path = libPaths;
+						boolean parsed = false;
+						while(path != null){
+							f = new File( path.toString()+ toCmp.toString());
+							if(f.exists()){
+								parseImport(path, toCmp);
+								parsed = true;
+								break;
+							}
+							path = path.next;
+						}
+						if(!parsed){
+							reporter.error(errIOExp, toCmp.toString() + " is not on searchpath\n");
+						}
 					} else {
 						toImport.add(toCmp);
 					}
@@ -1710,7 +1725,20 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				}
 			}
 			if (!contains && reporter.nofErrors <= 0) {
-				parseImport(libPaths, toCmp);
+				HString path = libPaths;
+				boolean parsed = false;
+				while(path != null){
+					File f = new File( path.toString()+ toCmp.toString());
+					if(f.exists()){
+						parseImport(path, toCmp);
+						parsed = true;
+						break;
+					}
+					path = path.next;
+				}
+				if(!parsed){
+					reporter.error(errIOExp, toCmp.toString() + " is not on searchpath\n");
+				}
 			}
 		}
 		// reset toImport after traversing
@@ -2823,9 +2851,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			}
 			return check.getChecksum().getValue();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			reporter.error(errIOExp, rootfile.toString() + " not found!");
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		return 0;
 	}
