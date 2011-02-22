@@ -1,8 +1,5 @@
 package ch.ntb.inf.deep.ui.view;
 
-import java.awt.font.NumericShaper;
-
-import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ICellModifier;
