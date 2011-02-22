@@ -41,7 +41,7 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 	private Combo processor, board, rts;
 	private Button check, browse;
 	private Text path;
-	private final String defaultPath = "I:/eclipse/bsp";// TODO set right path
+	private final String defaultPath = "I:/deep/lib";
 	private String lastChoise = "";
 	private IEclipsePreferences pref;
 
