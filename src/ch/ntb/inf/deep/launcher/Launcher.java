@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.launcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.MachineCode;
@@ -13,22 +14,24 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.ssa.SSA;
-import ch.ntb.inf.deep.strings.HString;
 
 public class Launcher implements ICclassFileConsts {
 	private static ErrorReporter reporter = ErrorReporter.reporter;
+	private static PrintStream out = StdStreams.out;
+	private static PrintStream vrb = StdStreams.vrb;
 
 	public static void buildAll(String projectConfigFile,
 			String targetConfiguration) {
 
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable)
 				| (1 << atxExceptions) | (1 << atxLineNumberTable);
-		reporter.nofErrors = 0;// TODO add this to a method who reset all static stuff
+		reporter.clear();
 		
 		// 1) Read configuration
 		Configuration.parseAndCreateConfig(projectConfigFile,
@@ -160,11 +163,9 @@ public class Launcher implements ICclassFileConsts {
 			if (reporter.nofErrors <= 0)
 				Linker.generateTargetImage();
 			if (reporter.nofErrors > 0) {
-				System.out.println("Compilation failed with "
-						+ reporter.nofErrors + " error(s)");
+				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 			} else {
-				System.out
-						.println("Compilation and target image generation successfully finished");
+				out.println("Compilation and target image generation successfully finished");
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -183,7 +184,7 @@ public class Launcher implements ICclassFileConsts {
 				e.printStackTrace();
 			}
 		} else {
-			System.out.println("No target image to load");
+			out.println("No target image to load");
 		}
 	}
 

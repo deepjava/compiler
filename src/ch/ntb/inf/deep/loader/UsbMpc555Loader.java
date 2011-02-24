@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.loader;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linkerPPC.Linker;
 import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
@@ -61,7 +62,7 @@ public class UsbMpc555Loader extends Downloader {
 		// Write the code down
 		writeCode();
 		
-		System.out.println("Download successfully finished");
+		StdStreams.out.println("Download successfully finished");
 
 	}
 
@@ -105,7 +106,7 @@ public class UsbMpc555Loader extends Downloader {
 	protected synchronized void writeCode() throws DownloaderException {
 		// get code from the Linker
 		if (!isFreezeAsserted()) {
-			System.out.println("Bdi is not in Debug mode!");
+			StdStreams.out.println("Bdi is not in Debug mode!");
 		}
 		TargetMemorySegment image = Linker.targetImage;
 		while (image != null) {

@@ -9,8 +9,8 @@ import ch.ntb.inf.deep.strings.StringTable;
 
 public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndTypeConsts {
 	static final boolean verbose = false, enAssertion = true;
-	static PrintStream vrb = System.out;
-	static PrintStream log = System.out;
+	static PrintStream vrb = StdStreams.vrb;
+	static PrintStream log = StdStreams.log;
 	static ErrorReporter errRep = ErrorReporter.reporter;
 
 	static StringTable stab;

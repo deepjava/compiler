@@ -1450,10 +1450,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
 					for (int k = 0; k < opds.length; k++) 
 						destGPR[opds[k].reg] = k + paramStartGPR + 2;				
-System.out.println("destGPR = ");
-for (int h=0; h < 32; h++) 
-	System.out.print(destGPR[h] + ",");
-System.out.println();
+//System.out.println("destGPR = ");
+//for (int h=0; h < 32; h++) 
+//	System.out.print(destGPR[h] + ",");
+//System.out.println();
 					for (int k = 0; k < nofGPR; k++) {
 						if (destGPR[k] != 0 && destGPR[k] != k) {
 							if (destGPR[destGPR[k]] == 0) {
