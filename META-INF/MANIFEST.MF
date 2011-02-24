@@ -15,7 +15,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.5.0",
  org.eclipse.jdt.core;bundle-version="3.5.2",
  org.eclipse.jdt.ui;bundle-version="3.5.2",
  org.eclipse.ui.workbench.texteditor;bundle-version="3.5.1",
- org.eclipse.ui.console;bundle-version="3.4.0"
+ org.eclipse.ui.console;bundle-version="3.4.0",
+ org.eclipse.jface.text;bundle-version="3.5.2"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: ch.ntb.inf.deep,
@@ -23,16 +24,16 @@ Export-Package: ch.ntb.inf.deep,
  ch.ntb.inf.deep.cgPPC,
  ch.ntb.inf.deep.classItems,
  ch.ntb.inf.deep.debug,
+ ch.ntb.inf.deep.eclipse.ui.perspective,
+ ch.ntb.inf.deep.eclipse.ui.properties,
+ ch.ntb.inf.deep.eclipse.ui.tabs,
+ ch.ntb.inf.deep.eclipse.ui.wizard,
  ch.ntb.inf.deep.host,
  ch.ntb.inf.deep.launcher,
  ch.ntb.inf.deep.nature,
  ch.ntb.inf.deep.ssa,
  ch.ntb.inf.deep.ssa.instruction,
- ch.ntb.inf.deep.strings,
- ch.ntb.inf.deep.ui.perspective,
- ch.ntb.inf.deep.ui.properties,
- ch.ntb.inf.deep.ui.tabs,
- ch.ntb.inf.deep.ui.wizard
+ ch.ntb.inf.deep.strings
 Bundle-ClassPath: tempLibs/ch.ntb.inf.libusbJava.jar,
  tempLibs/ch.ntb.mcdp.blackbox.jar,
  .
