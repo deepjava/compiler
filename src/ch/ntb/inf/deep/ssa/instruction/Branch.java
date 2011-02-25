@@ -35,7 +35,7 @@ public class Branch extends SSAInstruction {
 
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level*3; i++)System.out.print(" ");
+		for (int i = 0; i < level*3; i++) StdStreams.out.print(" ");
 		StdStreams.vrb.print(result.n + ": ");
 		if (operands == null)
 			StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] ");
