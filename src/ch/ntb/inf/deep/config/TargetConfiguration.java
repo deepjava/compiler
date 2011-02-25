@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class TargetConfiguration {
@@ -63,17 +64,17 @@ public class TargetConfiguration {
 	
 	public void print(int indentLevel){
 		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("targetconfiguration " + name.toString() + " {");
+		StdStreams.vrb.println("targetconfiguration " + name.toString() + " {");
 		Module current = targetConfig;
 		while(current != null){
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
 		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 	}
 }

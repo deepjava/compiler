@@ -21,6 +21,7 @@ import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.IAttributes;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
@@ -73,7 +74,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static TargetMemorySegment lastTargetMemorySegment;
 
 
-	private static PrintStream vrb = System.out;
+	private static PrintStream vrb = StdStreams.vrb;
 		
 	private static int[] systemTable;
 	private static int systemTableSize;
@@ -287,7 +288,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
 		while(d != null) {
-//			System.out.println("Device: " + d.getName() + "\n");
+//			StdStreams.vrb.println("Device: " + d.getName() + "\n");
 			if(d.lastSegment != null) setSegmentSize(d.lastSegment);
 			d = d.next;
 		}
@@ -297,7 +298,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		//usedSegments = new Segment[nOfUsedSegments];
 		while(d != null) {
 			if(dbg) vrb.println("Start setting base addresses for segments in device \"" + d.getName() +"\":");
-			//System.out.println("Device: " + d.getName() + "\n");
+			//StdStreams.vrb.println("Device: " + d.getName() + "\n");
 			if(d.segments != null) setBaseAddress(d.segments, d.getbaseAddress());
 			if(dbg) vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
 			d = d.next;
@@ -653,11 +654,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			c = c.next;
 		}
 		if(c != null) {
-//			System.out.println("Kernel class name: " + c.name);
+//			StdStreams.vrb.println("Kernel class name: " + c.name);
 		//	kernelClinit = ((Class)c).methods.getItemByName("<clinit>");
 			kernelClinit = ((Class)c).getClassConstructor();
 			if(kernelClinit != null) {
-//				System.out.println("kernelClinit: " + kernelClinit.name);
+//				StdStreams.vrb.println("kernelClinit: " + kernelClinit.name);
 				kernelClinitAddr = kernelClinit.address;
 			}
 		}
@@ -894,7 +895,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		else if(s.getSize() < s.getUsedSize()) { 
 			reporter.error(560, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getUsedSize() + " byte!\n");
 		}
-//		System.out.println("  Segment " + s.getName() + ": size = " + s.getSize() + "byte!\n");
+//		StdStreams.vrb.println("  Segment " + s.getName() + ": size = " + s.getSize() + "byte!\n");
 		if(s.prev != null) {
 			setSegmentSize(s.prev);
 		}

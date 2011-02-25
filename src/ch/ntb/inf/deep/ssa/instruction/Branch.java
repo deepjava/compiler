@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Branch extends SSAInstruction {
@@ -35,17 +36,17 @@ public class Branch extends SSAInstruction {
 	@Override
 	public void print(int level) {
 		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.print(result.n + ": ");
+		StdStreams.vrb.print(result.n + ": ");
 		if (operands == null)
-			System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] ");
+			StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] ");
 		else {
 			if (operands.length == 2)
-				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
+				StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
 			else
-				System.out.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
+				StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
 		}
-		System.out.print(" (" + result.typeName() + ")");
-		System.out.println();
+		StdStreams.vrb.print(" (" + result.typeName() + ")");
+		StdStreams.vrb.println();
 
 	}
 	

@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class SystemConstants implements ErrorCodes {
@@ -51,18 +52,18 @@ public class SystemConstants implements ErrorCodes {
 	public void println(int indentLevel) {
 		if (sysConst != null) {
 			for (int i = indentLevel; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("sysconst {");
+			StdStreams.vrb.println("sysconst {");
 			ValueAssignment current = sysConst;
 			while (current != null) {
 				current.println(indentLevel + 1);
 				current = current.next;
 			}
 			for (int i = indentLevel; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("}");
+			StdStreams.vrb.println("}");
 		}
 	}
 

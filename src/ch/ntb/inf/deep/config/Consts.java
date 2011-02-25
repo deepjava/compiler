@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Consts implements ErrorCodes {
@@ -47,18 +48,18 @@ public class Consts implements ErrorCodes {
 	public void println(int indentLevel) {
 		if (consts != null) {
 			for (int i = indentLevel; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("constants {");
+			StdStreams.vrb.println("constants {");
 			ValueAssignment current = consts;
 			while (current != null) {
 				current.println(indentLevel + 1);
 				current = current.next;
 			}
 			for (int i = indentLevel; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("}");
+			StdStreams.vrb.println("}");
 		}
 	}
 

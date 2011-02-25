@@ -8,6 +8,7 @@ import org.eclipse.core.runtime.Path;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts {
@@ -355,7 +356,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 
 	public static void print() {
-		System.out.println("configuration {");
+		StdStreams.vrb.println("configuration {");
 		if (project != null) {
 			project.println(1);
 		}
@@ -371,13 +372,13 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		}
 		registerMap.println(1);
 		if (registerMap.regWithInitalValue != null) {
-			System.out.println("  reginit{");
+			StdStreams.vrb.println("  reginit{");
 			Register initReg = registerMap.regWithInitalValue;
 			while (initReg != null) {
 				initReg.init.println(2);
 				initReg = initReg.nextWithInitValue;
 			}
-			System.out.println("  }");
+			StdStreams.vrb.println("  }");
 		}
 		memoryMap.println(1);
 	}
@@ -679,7 +680,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 //		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
 //		// String[] names =Configuration.getRootClassNames();
 //		// for(int i = 0; i < names.length; i++){
-//		// System.out.println(names[i]);
+//		// StdStreams.out.println(names[i]);
 //		// }
 //
 //		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);

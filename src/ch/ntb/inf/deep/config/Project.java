@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Project {
@@ -56,40 +57,40 @@ public class Project {
 
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("project {");
+		StdStreams.vrb.println("project {");
 		for (int i = indentLevel+1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.print("rootclasses = ");
+		StdStreams.vrb.print("rootclasses = ");
 		HString current = rootClasses;
 		while (current.next != null) {
-			System.out.print(current.toString() + ", ");
+			StdStreams.vrb.print(current.toString() + ", ");
 			current = current.next;
 		}
 		if (current != null) {
-			System.out.println(current.toString() + ";");
+			StdStreams.vrb.println(current.toString() + ";");
 		}
 		
 		for (int i = indentLevel+1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("libpath = " + libPath.toString());
+		StdStreams.vrb.println("libpath = " + libPath.toString());
 		
 		for (int i = indentLevel+1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("debuglevel = " + debugLevel);
+		StdStreams.vrb.println("debuglevel = " + debugLevel);
 		
 		for (int i = indentLevel+1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("printlevel = " + printLevel);
+		StdStreams.vrb.println("printlevel = " + printLevel);
 		
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.out.println("}");
 	}
 }

@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class RegisterMap implements ErrorCodes {
@@ -335,9 +336,9 @@ public class RegisterMap implements ErrorCodes {
 	}
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("registermap {");
+		StdStreams.vrb.println("registermap {");
 
 		msr.println(indentLevel + 1);
 
@@ -366,9 +367,9 @@ public class RegisterMap implements ErrorCodes {
 		}
 
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 	}
 
 	public static void clear() {

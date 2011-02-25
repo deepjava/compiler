@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.ssa.instruction;
 
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Call extends SSAInstruction {
@@ -44,34 +45,34 @@ public class Call extends SSAInstruction {
 	
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.print(result.n + ": ");
-		System.out.print("Call["+ scMnemonics[ssaOpcode]+"]");
+		for (int i = 0; i < level*3; i++)StdStreams.vrb.print(" ");
+		StdStreams.vrb.print(result.n + ": ");
+		StdStreams.vrb.print("Call["+ scMnemonics[ssaOpcode]+"]");
 		if (operands != null) {
-			System.out.print(" {");
+			StdStreams.vrb.print(" {");
 			for (int i=0;i<operands.length-1;i++){
-				System.out.print(operands[i].n + ", ");
+				StdStreams.vrb.print(operands[i].n + ", ");
 			}
 			if (operands.length > 0){
-				System.out.print(operands[operands.length-1].n + "}");
+				StdStreams.vrb.print(operands[operands.length-1].n + "}");
 			} else {
-				System.out.print("}");
+				StdStreams.vrb.print("}");
 			}
 		}
-		System.out.print(" (" + result.typeName() + ") ");
+		StdStreams.vrb.print(" (" + result.typeName() + ") ");
 		if (item != null) { 
 			if (item instanceof Method) {
-				System.out.print(((Method)item).owner.name);
-				System.out.print("." + item.name + ((Method)item).methDescriptor);
+				StdStreams.vrb.print(((Method)item).owner.name);
+				StdStreams.vrb.print("." + item.name + ((Method)item).methDescriptor);
 			} else
-				System.out.print(item.name);
+				StdStreams.vrb.print(item.name);
 		}
-		System.out.print(",   end=" + result.end);
-		if (result.index != -1) System.out.print(", index=" + result.index);
-		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);
-		if (result.reg != -1) System.out.print(", reg=" + result.reg);
-		if (result.join != null) System.out.print(", join={" + result.join.n + "}");
-		System.out.println();
+		StdStreams.vrb.print(",   end=" + result.end);
+		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
+		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
+		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
+		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
+		StdStreams.vrb.println();
 	}
 
 }

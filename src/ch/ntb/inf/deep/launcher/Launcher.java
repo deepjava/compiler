@@ -82,10 +82,12 @@ public class Launcher implements ICclassFileConsts {
 					if (reporter.nofErrors <= 0)
 						Linker.prepareConstantBlock(clazz);
 
+					StdStreams.vrb.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
+					
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
 						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-//							System.out.println(">>>> Method: " + method.name + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+							StdStreams.vrb.println(">>>> Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 
 							// 3.2) Create CFG
 							if (reporter.nofErrors <= 0)

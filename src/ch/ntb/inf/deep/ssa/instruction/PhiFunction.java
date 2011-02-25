@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class PhiFunction extends SSAInstruction {
@@ -52,32 +53,32 @@ public class PhiFunction extends SSAInstruction {
 	}
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.print(result.n + ": ");
-		System.out.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] {");
+		for (int i = 0; i < level*3; i++)StdStreams.vrb.print(" ");
+		StdStreams.vrb.print(result.n + ": ");
+		StdStreams.vrb.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] {");
 		for (int i=0;i<nofOperands-1;i++){
 			if(operands[i] != null){
-				System.out.print(operands[i].n + ", ");
+				StdStreams.vrb.print(operands[i].n + ", ");
 			}else{
-				System.out.print("null, ");
+				StdStreams.vrb.print("null, ");
 			}
 		}
 		if (nofOperands > 0) {
 		if(operands[nofOperands-1] != null){
-			System.out.print(operands[nofOperands-1].n + "}");
+			StdStreams.vrb.print(operands[nofOperands-1].n + "}");
 		}else{
-			System.out.print("null)");
+			StdStreams.vrb.print("null)");
 		}}	
-		System.out.print(" (" + result.typeName() + ")");
-		System.out.print(",   start=" + start + ", end=" + result.end);
-		if (result.index != -1) System.out.print(", index=" + result.index);
-		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);
-		if (result.nonVol) System.out.print(", nonVol"); else System.out.print(", vol");
-		if (result.reg != -1) System.out.print(", reg=" + result.reg);
-		if (result.join != null) System.out.print(", join={" + result.join.n + "}");
-		if (last != 0) System.out.print(", last=" + last);
-		if (deleted) System.out.print(" del");
-		if (used) System.out.print(" u");
-		System.out.println();
+		StdStreams.vrb.print(" (" + result.typeName() + ")");
+		StdStreams.vrb.print(",   start=" + start + ", end=" + result.end);
+		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
+		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
+		if (result.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
+		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
+		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
+		if (last != 0) StdStreams.vrb.print(", last=" + last);
+		if (deleted) StdStreams.vrb.print(" del");
+		if (used) StdStreams.vrb.print(" u");
+		StdStreams.vrb.println();
 	}
 }

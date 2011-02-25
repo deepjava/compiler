@@ -26,7 +26,7 @@ public class ErrorReporter {
 
 	private  ErrorReporter() {
 		clear();
-		errPrStream = StdStreams.out;
+		errPrStream = StdStreams.err;
 		this.maxNofErrors = Integer.MAX_VALUE;
 		// printErrorPos = false;
 	}

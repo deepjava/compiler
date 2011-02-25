@@ -42,17 +42,17 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	public synchronized void init() throws DownloaderException {
 		baseAddress = Configuration.getValueFor(HString.getHString("IMB"));
-//		System.out.println("++++++++ Open Device!+++++++++");
+//		StdStreams.vrb.println("++++++++ Open Device!+++++++++");
 
 		// check if connection is open
 		if (this.isConnected()) {
 			this.closeConnection();
 		}
 		this.openConnection();
-//		System.out.println("++++++++ Reset Target!+++++++++");
+//		StdStreams.vrb.println("++++++++ Reset Target!+++++++++");
 		this.resetTarget();
 
-//		System.out.println("++++++++ init Registers and write Code!+++++++++");
+//		StdStreams.vrb.println("++++++++ init Registers and write Code!+++++++++");
 		// initialize Memory
 		initRegisters();
 
@@ -114,7 +114,7 @@ public class UsbMpc555Loader extends Downloader {
 			int dataSizeToTransfer = image.data.length;
 			int startAddr = image.startAddress;
 
-			// System.out.println("start: 0x"+Integer.toHexString(startAddr) +
+			// StdStreams.vrb.println("start: 0x"+Integer.toHexString(startAddr) +
 			// " Size: "+ dataSizeToTransfer);
 
 			int index = 0;
@@ -126,7 +126,7 @@ public class UsbMpc555Loader extends Downloader {
 				}
 				for (int i = 0; i < data.length; i++) {
 					data[i] = image.data[index++];
-					// System.out.println("Addr: "+
+					// StdStreams.vrb.println("Addr: "+
 					// Integer.toHexString(startAddr+i*4) + " Data: "
 					// +Integer.toHexString(data[i]));
 				}
@@ -163,7 +163,7 @@ public class UsbMpc555Loader extends Downloader {
 				case Parser.sIOR:
 					mpc.writeMem(current.getAddress(), current.getInit()
 							.getValue(), current.getSize());
-					// System.out.println(current.getName() + " = " +
+					// StdStreams.vrb.println(current.getName() + " = " +
 					// Integer.toHexString(current.getInit().getValue()));
 					break;
 				case Parser.sMSR:
@@ -541,7 +541,7 @@ public class UsbMpc555Loader extends Downloader {
 		dev = DeviceFactory.getDevice();
 		try {
 			mpc = new BDI(dev);
-			// System.out.println("USB dev.open()");
+			// StdStreams.vrb.println("USB dev.open()");
 			dev.open();
 		} catch (USBException e) {
 			try {

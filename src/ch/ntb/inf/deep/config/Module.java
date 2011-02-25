@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Module {
@@ -42,17 +43,17 @@ public class Module {
 	
 	public void println(int indentLevel){
 		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.print(name.toString() + " : ");
+		StdStreams.vrb.print(name.toString() + " : ");
 		SegmentAssignment current = root;
 		while(current != null){
 			current.print(indentLevel + 1);
 			if(current.next != null){
-				System.out.print(", ");
+				StdStreams.vrb.print(", ");
 			}
 			current = current.next;
 		}
-		System.out.println(";");		
+		StdStreams.out.println(";");		
 	}
 }

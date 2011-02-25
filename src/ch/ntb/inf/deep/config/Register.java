@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Register {
@@ -115,33 +116,33 @@ public class Register {
 	
 	public void println(int indentLevel){
 		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("register " + name.toString() + " {");
+		StdStreams.vrb.println("register " + name.toString() + " {");
 		
 		for(int i = indentLevel + 1; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("type: " + getTypeName() + ";");
+		StdStreams.vrb.println("type: " + getTypeName() + ";");
 		
 		for(int i = indentLevel + 1; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("address: " + addr + ";");
+		StdStreams.vrb.println("address: " + addr + ";");
 		
 		for(int i = indentLevel + 1; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("size: " + size + ";");
+		StdStreams.vrb.println("size: " + size + ";");
 		
 		for(int i = indentLevel + 1; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("repr: " + getReprName() + ";");
+		StdStreams.vrb.println("repr: " + getReprName() + ";");
 		
 		for(int i = indentLevel; i > 0; i--){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.out.println("}");
 	}
 }

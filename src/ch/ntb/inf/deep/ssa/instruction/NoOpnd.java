@@ -2,8 +2,8 @@ package ch.ntb.inf.deep.ssa.instruction;
 
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
-import ch.ntb.inf.deep.strings.HString;
 
 public class NoOpnd extends SSAInstruction {
 	
@@ -22,40 +22,40 @@ public class NoOpnd extends SSAInstruction {
 	}
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.print(result.n + ": ");
-		System.out.print("NoOpnd["+ scMnemonics[ssaOpcode]+"] ");
+		for (int i = 0; i < level*3; i++)StdStreams.vrb.print(" ");
+		StdStreams.vrb.print(result.n + ": ");
+		StdStreams.vrb.print("NoOpnd["+ scMnemonics[ssaOpcode]+"] ");
 		if (ssaOpcode == sCloadConst) 
 			if (result.constant instanceof StdConstant) {
 				StdConstant constant = (StdConstant)result.constant;
 				if (constant.name == null) {
-					System.out.print(constant.valueH);
+					StdStreams.vrb.print(constant.valueH);
 				} else {
 					long value = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
 					char category = constant.type.name.charAt(0);
 					if (category == 'I') 
-						System.out.print(constant.valueH);
+						StdStreams.vrb.print(constant.valueH);
 					else if (category == 'J') 
-						System.out.print(value);
+						StdStreams.vrb.print(value);
 					else if (category == 'F') 
-						System.out.print(Float.toString(Float.intBitsToFloat(constant.valueH)));
+						StdStreams.vrb.print(Float.toString(Float.intBitsToFloat(constant.valueH)));
 					else
-						System.out.print(Double.longBitsToDouble(value));
+						StdStreams.vrb.print(Double.longBitsToDouble(value));
 				}
-				System.out.print(" (" + result.typeName() + ")");
+				StdStreams.vrb.print(" (" + result.typeName() + ")");
 			} else {
 				StringLiteral str = (StringLiteral)result.constant;
-				if (str != null) System.out.print("\"" + str.string + "\"");
-				else System.out.print("null");
-				System.out.print(" (" + result.typeName() + ")");
+				if (str != null) StdStreams.vrb.print("\"" + str.string + "\"");
+				else StdStreams.vrb.print("null");
+				StdStreams.vrb.print(" (" + result.typeName() + ")");
 			}
 		else
-			System.out.print("(" + result.typeName() + ")");
-		System.out.print(",   end=" + result.end);
-		if (result.index != -1) System.out.print(", index=" + result.index);
-		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);
-		if (result.reg != -1) System.out.print(", reg=" + result.reg);
-		if (result.join != null) System.out.print(", join={" + result.join.n + "}");
-		System.out.println();
+			StdStreams.vrb.print("(" + result.typeName() + ")");
+		StdStreams.vrb.print(",   end=" + result.end);
+		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
+		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
+		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
+		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
+		StdStreams.vrb.println();
 	}
 }

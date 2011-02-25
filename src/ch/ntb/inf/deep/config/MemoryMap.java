@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 /**
@@ -157,9 +158,9 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("memorymap {");
+		StdStreams.vrb.println("memorymap {");
 		Device current = dev;
 		while (current != null) {
 			current.println(indentLevel + 1);
@@ -168,23 +169,23 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 
 		if (modulesMap != null) {
 			for (int i = indentLevel + 1; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("modules {");
+			StdStreams.vrb.println("modules {");
 			Module mod = modulesMap;
 			while (mod != null) {
 				mod.println(indentLevel + 2);
 			}
 			for (int i = indentLevel + 1; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("}");
+			StdStreams.vrb.println("}");
 		}
 
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.out.println("}");
 
 	}
 

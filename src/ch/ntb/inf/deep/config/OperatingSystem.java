@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.host.StdStreams;
 
 public class OperatingSystem implements ICclassFileConsts {
 	private SystemClass kernel;
@@ -84,78 +85,78 @@ public class OperatingSystem implements ICclassFileConsts {
 
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("operatingsystem {");
+		StdStreams.vrb.println("operatingsystem {");
 
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("kernel {");
+		StdStreams.vrb.println("kernel {");
 		kernel.print(indentLevel + 2);
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("exceptionbaseclass {");
+		StdStreams.vrb.println("exceptionbaseclass {");
 		exceptionBaseClass.print(indentLevel + 2);
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 
 		SystemClass current = exceptions;
 		while (current != null && (current.attributes & (1 << dpfExcHnd)) != 0 && (current != exceptionBaseClass)) {
 			for (int i = indentLevel + 1; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("exception {");
+			StdStreams.vrb.println("exception {");
 			current.print(indentLevel + 2);
 			for (int i = indentLevel + 1; i > 0; i--) {
-				System.out.print("  ");
+				StdStreams.vrb.print("  ");
 			}
-			System.out.println("}");
+			StdStreams.vrb.println("}");
 			current = current.next;
 		}
 
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("heap {");
+		StdStreams.vrb.println("heap {");
 		heap.print(indentLevel + 2);
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("us {");
+		StdStreams.vrb.println("us {");
 		us.print(indentLevel + 2);
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("lowlevel {");
+		StdStreams.vrb.println("lowlevel {");
 		lowlevel.print(indentLevel + 2);
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.vrb.println("}");
 
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.out.println("}");
 	}
 
 	private void addClass(SystemClass clazz) {

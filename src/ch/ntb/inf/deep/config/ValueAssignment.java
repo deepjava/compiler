@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class ValueAssignment {
@@ -26,15 +27,15 @@ public class ValueAssignment {
 	}
 	
 	public void print(int indentLevel){
-		System.out.print(name.toString() + " = 0x" + Integer.toHexString(value));	
+		StdStreams.vrb.print(name.toString() + " = 0x" + Integer.toHexString(value));	
 	}
 	
 	public void println(int indentLevel){
 		while(indentLevel > 0){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 			indentLevel--;
 		}
-		System.out.println(name.toString() + " = 0x" + Integer.toHexString(value));	
+		StdStreams.vrb.println(name.toString() + " = 0x" + Integer.toHexString(value));	
 	}
 
 }

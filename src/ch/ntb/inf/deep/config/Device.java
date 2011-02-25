@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Device implements ErrorCodes{
@@ -73,29 +74,29 @@ public class Device implements ErrorCodes{
 
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("device " + name.toString() + "{");
+		StdStreams.vrb.println("device " + name.toString() + "{");
 		for (int i = indentLevel + 1; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.print("attributes: 0x" + Integer.toHexString(attributes)
+		StdStreams.vrb.print("attributes: 0x" + Integer.toHexString(attributes)
 				+ ", width: " + width);
 		if (baseAddress != -1) {
-			System.out.print(", base: 0x" + Integer.toHexString(baseAddress));
+			StdStreams.vrb.print(", base: 0x" + Integer.toHexString(baseAddress));
 		}
 		if (size > 0) {
-			System.out.print(", size: 0x" + Integer.toHexString(size));
+			StdStreams.vrb.print(", size: 0x" + Integer.toHexString(size));
 		}
-		System.out.println(";");
+		StdStreams.vrb.println(";");
 		Segment current = segments;
 		while (current != null) {
 			current.println(indentLevel + 1);
 			current = current.next;
 		}
 		for (int i = indentLevel; i > 0; i--) {
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 		}
-		System.out.println("}");
+		StdStreams.out.println("}");
 	}
 }

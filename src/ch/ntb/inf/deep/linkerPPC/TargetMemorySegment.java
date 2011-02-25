@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.linkerPPC;
 
+import ch.ntb.inf.deep.host.StdStreams;
+
 public class TargetMemorySegment {
 	private static int tmsCounter = 0;
 	
@@ -27,7 +29,7 @@ public class TargetMemorySegment {
 	
 	// TODO @Martin: add return value (boolean)
 	public void addData(int addr, int[] d, int length) {
-	//	System.out.println("DBG: addr = " + addr + ", d.length = " + d.length + ", length = " + length);
+	//	StdStreams.vrb.println("DBG: addr = " + addr + ", d.length = " + d.length + ", length = " + length);
 		if(d != null && 
 				d.length > 0 && 
 				length > 0 && 
@@ -36,23 +38,23 @@ public class TargetMemorySegment {
 				addr + length * 4 <= this.startAddress + this.data.length * 4) {
 			
 			for(int i = 0; i < length; i++) {
-	//			System.out.println("           > Writing 0x" + Integer.toHexString(d[i]) + " to 0x" + Integer.toHexString(addr + i * 4) + " (" + ((addr - this.startAddress) / 4 + i) + ")");
+	//			StdStreams.vrb.println("           > Writing 0x" + Integer.toHexString(d[i]) + " to 0x" + Integer.toHexString(addr + i * 4) + " (" + ((addr - this.startAddress) / 4 + i) + ")");
 				this.data[(addr - this.startAddress) / 4 + i] = d[i];
 			}
 		}
 		else { // TODO @Martin: remove all debung outputs!
-			System.out.println("          ++++++++++ ERROR ++++++++++");
-			System.out.println("            > Cound not add the data to the target memory segment.");
-			System.out.print("            > The error was: ");
-			if(d == null) System.out.println("the given data array (d) was null!");
-			else if(d.length <= 0 || length <= 0) System.out.println("the array length or the given length was zero!");
-			else if(addr < this.startAddress || addr + length * 4 > this.startAddress + this.data.length * 4) System.out.println("out of range!");
-			else if(length > d.length) System.out.println("length > d.length");
-			else System.out.println("<unknown>");
-			System.out.println("              Start address of tms: 0x" + Integer.toHexString(this.startAddress));
-			System.out.println("              End address of tms: 0x" + Integer.toHexString((this.startAddress + this.data.length * 4)));
-			System.out.println("              Address for inserting data: 0x" + Integer.toHexString(addr));
-			System.out.println("              Size of the data to insert: " + d.length * 4 + " byte (0x" + Integer.toHexString(d.length * 4) + " byte)");
+			StdStreams.vrb.println("          ++++++++++ ERROR ++++++++++");
+			StdStreams.vrb.println("            > Cound not add the data to the target memory segment.");
+			StdStreams.vrb.print("            > The error was: ");
+			if(d == null) StdStreams.vrb.println("the given data array (d) was null!");
+			else if(d.length <= 0 || length <= 0) StdStreams.vrb.println("the array length or the given length was zero!");
+			else if(addr < this.startAddress || addr + length * 4 > this.startAddress + this.data.length * 4) StdStreams.vrb.println("out of range!");
+			else if(length > d.length) StdStreams.vrb.println("length > d.length");
+			else StdStreams.vrb.println("<unknown>");
+			StdStreams.vrb.println("              Start address of tms: 0x" + Integer.toHexString(this.startAddress));
+			StdStreams.vrb.println("              End address of tms: 0x" + Integer.toHexString((this.startAddress + this.data.length * 4)));
+			StdStreams.vrb.println("              Address for inserting data: 0x" + Integer.toHexString(addr));
+			StdStreams.vrb.println("              Size of the data to insert: " + d.length * 4 + " byte (0x" + Integer.toHexString(d.length * 4) + " byte)");
 			
 		}
 	}

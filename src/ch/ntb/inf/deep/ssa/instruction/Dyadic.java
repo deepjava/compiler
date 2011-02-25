@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Dyadic extends SSAInstruction {
@@ -29,16 +30,16 @@ public class Dyadic extends SSAInstruction {
 
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level*3; i++)System.out.print(" ");
-		System.out.print(result.n + ": ");
-		System.out.print("Dyadic["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
-		System.out.print(" (" + result.typeName() + ")");
-		System.out.print(",   end=" + result.end);
-		if (result.index != -1) System.out.print(", index=" + result.index);
-		if (result.regLong != -1) System.out.print(", regLong=" + result.regLong);
-		if (result.reg != -1) System.out.print(", reg=" + result.reg);
-		if (result.join != null) System.out.print(", join={" + result.join.n + "}");
-		System.out.println();
+		for (int i = 0; i < level*3; i++)StdStreams.vrb.print(" ");
+		StdStreams.vrb.print(result.n + ": ");
+		StdStreams.vrb.print("Dyadic["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
+		StdStreams.vrb.print(" (" + result.typeName() + ")");
+		StdStreams.vrb.print(",   end=" + result.end);
+		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
+		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
+		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
+		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
+		StdStreams.vrb.println();
 
 	}
 	

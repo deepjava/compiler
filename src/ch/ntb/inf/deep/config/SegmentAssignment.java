@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class SegmentAssignment {
@@ -16,15 +17,15 @@ public class SegmentAssignment {
 	}
 	
 	public void print(int indentLevel){
-		System.out.print(contentAttribute.toString() + "@" + segmentDesignator.toString());
+		StdStreams.vrb.print(contentAttribute.toString() + "@" + segmentDesignator.toString());
 	}
 	
 	public void println(int indentLevel){
 		while(indentLevel > 0){
-			System.out.print("  ");
+			StdStreams.vrb.print("  ");
 			indentLevel--;
 		}
-		System.out.println(contentAttribute.toString() + "@" + segmentDesignator.toString());
+		StdStreams.vrb.println(contentAttribute.toString() + "@" + segmentDesignator.toString());
 	}
 	
 }
