@@ -26,7 +26,7 @@ import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.strings.HString;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -840,9 +840,15 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				} else if (type == tLong) {
 					if (sReg2 < 0) {	// gibt Problem wenn shift > 32
 						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
-						createIrArSSHMBME(ppcRlwinm, dReg, sReg1, 32-immVal, immVal, 31);
-						createIrArSSHMBME(ppcRlwimi, dReg, opds[0].regLong, 32-immVal, 0, immVal-1);
-						createIrArSSH(ppcSrawi, res.regLong, opds[0].regLong, immVal);
+						if (immVal < 32) {
+							createIrArSSHMBME(ppcRlwinm, dReg, sReg1, 32-immVal, immVal, 31);
+							createIrArSSHMBME(ppcRlwimi, dReg, opds[0].regLong, 32-immVal, 0, immVal-1);
+							createIrArSSH(ppcSrawi, res.regLong, opds[0].regLong, immVal);
+						} else {
+							immVal %= 32;
+							createIrArSSH(ppcSrawi, res.reg, opds[0].regLong, immVal);
+							createIrDrAsimm(ppcAddi, res.regLong, 0, 0);
+						}
 					} else {
 						createIrArSSHMBME(ppcRlwinm, 0, sReg2, 0, 27, 31);
 						createIrArSrB(ppcSlw, res.regAux1, sReg1, 0);

@@ -18,7 +18,7 @@ import ch.ntb.inf.deep.strings.HString;
  * 
  */
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	private static final int nofSSAInstr = 256;
 	
@@ -387,9 +387,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {
-					if (((instr1.ssaOpcode == sCadd) && ((res.type & 0x7fffffff) == tInteger || res.type == tLong))
-							|| ((instr1.ssaOpcode == sCsub) && ((res.type & 0x7fffffff) == tInteger || res.type == tLong))
-							|| ((instr1.ssaOpcode == sCmul) && ((res.type & 0x7fffffff) == tInteger ))
+					if (((instr1.ssaOpcode == sCadd) && ((res.type & 0x7fffffff) == tInteger))
+							|| ((instr1.ssaOpcode == sCsub) && ((res.type & 0x7fffffff) == tInteger))
+							|| ((instr1.ssaOpcode == sCmul) && ((res.type & 0x7fffffff) == tInteger))
 							|| (instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)
