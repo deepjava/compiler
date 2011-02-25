@@ -10,6 +10,7 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.instruction.Branch;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.Dyadic;
@@ -117,6 +118,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						PhiFunction phi = new PhiFunction(sCPhiFunc);
 						result.owner = phi;
 						phi.result = result;
+						if( ssa.isParam[i]){
+							phi.result.type = ssa.paramType[i];
+						}
 						if (entrySet[i] != null) {
 							phi.result.type = entrySet[i].type;
 							SSAValue opd = entrySet[i];
@@ -379,7 +383,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		// determine top of the stack
 		for (stackpointer = maxStack - 1; stackpointer >= 0	&& exitSet[stackpointer] == null; stackpointer--);
 		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
-			if(dbg)System.out.println("BCA: " + bca + ", nofStackItems: " + (stackpointer + 1));
+			if(dbg)StdStreams.vrb.println("BCA: " + bca + ", nofStackItems: " + (stackpointer + 1));
 			switch (ssa.cfg.code[bca] & 0xff) {
 			case bCnop:
 				break;
@@ -2892,35 +2896,35 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	public void print(int level, int nodeNr) {
 
 		for (int i = 0; i < level * 3; i++)
-			System.out.print(" ");
-		System.out.println("SSANode " + nodeNr + ":");
+			StdStreams.vrb.print(" ");
+		StdStreams.vrb.println("SSANode " + nodeNr + ":");
 
 		// Print EntrySet with Stack and Locals
 		for (int i = 0; i < (level + 1) * 3; i++)
-			System.out.print(" ");
-		System.out.print("EntrySet {");
+			StdStreams.vrb.print(" ");
+		StdStreams.vrb.print("EntrySet {");
 		if (entrySet.length > 0)
-			System.out.print("[ ");
+			StdStreams.vrb.print("[ ");
 		for (int i = 0; i < entrySet.length - 1; i++) {
 
 			if (entrySet[i] != null)
-				System.out.print(entrySet[i].toString());
+				StdStreams.vrb.print(entrySet[i].toString());
 
 			if (i == maxStack - 1) {
-				System.out.print("], [ ");
+				StdStreams.vrb.print("], [ ");
 			} else {
-				System.out.print(", ");
+				StdStreams.vrb.print(", ");
 			}
 		}
 		if (entrySet.length > 0) {
 			if (entrySet[entrySet.length - 1] != null) {
-				System.out.println(entrySet[entrySet.length - 1].toString()
+				StdStreams.vrb.println(entrySet[entrySet.length - 1].toString()
 						+ " ]}");
 			} else {
-				System.out.println("]}");
+				StdStreams.vrb.println("]}");
 			}
 		} else {
-			System.out.println("}");
+			StdStreams.vrb.println("}");
 		}
 
 		// Print Phifunctions
@@ -2934,32 +2938,32 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 		// Print ExitSet with Stack and Locals
 		for (int i = 0; i < (level + 1) * 3; i++)
-			System.out.print(" ");
-		System.out.print("ExitSet {");
+			StdStreams.vrb.print(" ");
+		StdStreams.vrb.print("ExitSet {");
 		if (exitSet.length > 0)
-			System.out.print("[ ");
+			StdStreams.vrb.print("[ ");
 
 		for (int i = 0; i < exitSet.length - 1; i++) {
 
 			if (exitSet[i] != null)
-				System.out.print(exitSet[i].toString());
+				StdStreams.vrb.print(exitSet[i].toString());
 
 			if (i == maxStack - 1) {
-				System.out.print("], [ ");
+				StdStreams.vrb.print("], [ ");
 			} else {
-				System.out.print(", ");
+				StdStreams.vrb.print(", ");
 			}
 
 		}
 		if (exitSet.length > 0) {
 			if (exitSet[exitSet.length - 1] != null) {
-				System.out.println(exitSet[exitSet.length - 1].toString()
+				StdStreams.vrb.println(exitSet[exitSet.length - 1].toString()
 						+ " ]}");
 			} else {
-				System.out.println("]}");
+				StdStreams.vrb.println("]}");
 			}
 		} else {
-			System.out.println("}");
+			StdStreams.vrb.println("}");
 		}
 	}
 
