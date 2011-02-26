@@ -31,7 +31,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 
-import ch.ntb.inf.deep.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
 public class DeepLaunchShortcut implements ILaunchShortcut2 {
 	public static final String ID = "ch.ntb.inf.deep.launcher.DeepLaunchShortcut";

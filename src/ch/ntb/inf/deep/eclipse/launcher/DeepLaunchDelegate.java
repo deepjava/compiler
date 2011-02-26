@@ -9,7 +9,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
-import ch.ntb.inf.deep.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
