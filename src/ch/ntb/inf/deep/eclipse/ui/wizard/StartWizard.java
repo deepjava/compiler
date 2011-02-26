@@ -47,7 +47,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.osgi.service.prefs.BackingStoreException;
 
-import ch.ntb.inf.deep.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
 
 public class StartWizard extends Wizard implements INewWizard{
