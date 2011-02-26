@@ -30,11 +30,11 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.service.prefs.BackingStoreException;
 
-import ch.ntb.inf.deep.DeepPlugin;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.ReadVariableElement;
 import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;

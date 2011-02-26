@@ -39,7 +39,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 
-import ch.ntb.inf.deep.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
 /**
  * Tab to specify the Deep program to run/debug.
