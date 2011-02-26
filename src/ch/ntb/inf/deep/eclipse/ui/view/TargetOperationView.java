@@ -112,15 +112,15 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 								case Parser.sIOR:
 									switch(op.registerSize){
 									case 1:
-										return String.format("0x%01X",op.value);
-									case 2:
 										return String.format("0x%02X",op.value);
+									case 2:
+										return String.format("0x%04X",op.value);
 									case 4:
-										return String.format("0x%04X",op.value);
-									case 8:
 										return String.format("0x%08X",op.value);
+									case 8:
+										return String.format("0x%016X",op.value);
 									default:
-										return String.format("0x%04X",op.value);
+										return String.format("0x%08X",op.value);
 									}
 								}
 							case 2:
@@ -178,9 +178,33 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 								throw new RuntimeException("Should not happen");
 						}
 					}
+				
 				}else if(index == 3){
-					return null;
+					switch(op.operation){
+					case 1:
+						if(op.isReaded && op.registerType == Parser.sIOR){
+							return String.format("0x%8X", op.addr);
+						}else{
+							return "";
+						}
+					case 2:
+						if(op.isReaded){
+							return String.format("0x%8X", op.addr);
+						}else{
+							return "";
+						}
+					case 4:
+						if(op.cmdSend){
+							return String.format("0x%8X", op.addr);
+						}else{
+							return "";
+						}
+					default :
+						return "";
+					}
 				}else if(index == 4){
+					return null;
+				}else if(index == 5){
 					return null;
 				}
 			}
@@ -191,10 +215,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		public Image getColumnImage(Object element, int columnIndex) {
 			if ((element instanceof OperationObject)) {
 				OperationObject op = (OperationObject)element;
-				if(op.operation != 0 && columnIndex == 3){
+				if(op.operation != 0 && columnIndex == 4){
 					return UP;
 				}
-				if(op.operation != 0 && columnIndex == 4){
+				if(op.operation != 0 && columnIndex == 5){
 					return DOWN;
 				}
 			}
@@ -210,8 +234,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		viewer = new TableViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		
-		String[] titels = { "Operation", "Descriptor", "Value", "", "" };
-		int[] bounds = { 100, 100, 100, 18, 18 };
+		String[] titels = { "Operation", "Descriptor", "Value","MemAddr" , "", "" };
+		int[] bounds = { 100, 100, 100, 100, 18, 18 };
 
 		TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[0]);
@@ -239,11 +263,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		column.getColumn().setWidth(bounds[3]);
 		column.getColumn().setResizable(false);
 		column.getColumn().setMoveable(false);
-		column.setEditingSupport(new RefreshEditingSupport(viewer));
-		
+
 		column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[4]);
 		column.getColumn().setWidth(bounds[4]);
+		column.getColumn().setResizable(false);
+		column.getColumn().setMoveable(false);
+		column.setEditingSupport(new RefreshEditingSupport(viewer));
+		
+		column = new TableViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setText(titels[5]);
+		column.getColumn().setWidth(bounds[5]);
 		column.getColumn().setResizable(false);
 		column.getColumn().setMoveable(false);
 		column.setEditingSupport(new DownloadEditingSupport(viewer));
@@ -416,8 +446,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}				
 				
 			}else if(choise[op.operation].equals("TargetCMD")){
-				op.description = param;// do it first, so we need only one parameter for the functions
-				sendCMD(op);
+				sendCMD(op, param);
 			}
 			saveView();
 			viewer.refresh();
@@ -682,7 +711,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}else if(choise[op.operation].equals("Address")){
 					setToAddress(op);
 				}else if(choise[op.operation].equals("TargetCMD")){
-					sendCMD(op);					
+					sendCMD(op, op.description);					
 				}				
 			return false;//TODO check this
 			
@@ -694,8 +723,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 	
-	private void sendCMD(OperationObject op) {
-		if(op.description.equals("")){
+	private void sendCMD(OperationObject op, String param) {
+		if(param.equals("")){
 			return;
 		}
 		boolean wasFreezeAsserted;
@@ -704,7 +733,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			return;
 		}
 		KERNEL = kernelName.toString(); 
-		String fullQualName = op.description;
+		String fullQualName = param;
 		int lastDot = fullQualName.lastIndexOf(".");
 		String clazzName = fullQualName.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
@@ -719,6 +748,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			int cmdAddr = ((DataItem) kernel.classFields.getItemByName(cmdAddrName)).address;
 			Method meth = (Method) clazz.methods.getItemByName(methName);
 			if (meth != null) {
+				//Save address for display
+				op.addr = meth.address;
+				
 				if (bdi == null) {
 					bdi = UsbMpc555Loader.getInstance();
 				}
@@ -728,7 +760,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.stopTarget();
 					}
 					bdi.setMem(cmdAddr, meth.address, 4);
-
+					op.description = param;
+					op.cmdSend = true;
+					
 					if (!wasFreezeAsserted) {
 						bdi.startTarget();
 					}
@@ -776,6 +810,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		if(clazz != null){
 			DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
 			if(var != null){
+				//save address for display
+				op.addr = var.address;
 				if(bdi == null){
 					bdi = UsbMpc555Loader.getInstance();
 				}

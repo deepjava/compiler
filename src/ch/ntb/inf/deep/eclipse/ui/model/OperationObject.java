@@ -20,7 +20,7 @@ public class OperationObject {
 	public int registerSize;
 	
 	/**
-	 * Address of the Register or Memory
+	 * Address of the register, memory, variable or method
 	 */
 	public int addr;
 	
@@ -39,6 +39,10 @@ public class OperationObject {
 	 * is to determine if when an readVariable operation is chosen, thats display the value only if it is true 
 	 */
 	public boolean isReaded;
+	/**
+	 * is to determine if when an TargetCMD operation was executed, thats display the address of the method only if it is true 
+	 */
+	public boolean cmdSend;
 	
 	public OperationObject(){
 		description = "";
