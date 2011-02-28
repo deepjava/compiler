@@ -2,7 +2,7 @@ package ch.ntb.inf.deep.debug;
 
 import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 
-interface ICjvmInstructionOpcsAndMnemonics extends ICjvmInstructionOpcs{
+public interface ICjvmInstructionOpcsAndMnemonics extends ICjvmInstructionOpcs{
 	String[] bcAttributes = { // index = bcapX - bcapBase
 		"Branch",
 		"CondBranch",

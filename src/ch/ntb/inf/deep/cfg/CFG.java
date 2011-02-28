@@ -1,10 +1,8 @@
 package ch.ntb.inf.deep.cfg;
 
-import java.io.PrintStream;
-
 import ch.ntb.inf.deep.classItems.*;
-import ch.ntb.inf.deep.debug.Dbg;
-import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.debug.ICjvmInstructionOpcsAndMnemonics;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSANode;
 
 
@@ -13,16 +11,11 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * builds the CFG.
  * 
  * 
- * @author buesser 23.2.2010, graf
+ * @author buesser 23.2.2010
+ * Urs Graf 27.2.2011, wide corrected
  */
-public class CFG implements ICjvmInstructionOpcs {
-	static final boolean verbose = Dbg.verbose;
-	static PrintStream vrb = Dbg.vrb;
-	
-	static PrintStream log = System.out;
-	static ErrorReporter errRep = ErrorReporter.reporter;
-	
-	private static final boolean debug = false;
+public class CFG implements ICjvmInstructionOpcsAndMnemonics {
+	private static final boolean dbg = false;
 
 	/**
 	 * Start-node of the CFG.
@@ -99,8 +92,10 @@ public class CFG implements ICjvmInstructionOpcs {
 		startNode.firstBCA = 0;
 		startNode.lastBCA = findLastBcaInNode(this, startNode, len);
 		int bca = 0;
+		if (dbg) StdStreams.out.println("build cfg");
 		while (bca < len) {
 			int bci = code[bca] & 0xff;
+			if (dbg) StdStreams.out.println("\t" + bca + " " + bcMnemonics[bci]);
 			int entry = bcAttrTab[bci];
 			int instrLen = (entry >> 8) & 0xF;
 			if (instrLen == 0) {
@@ -128,8 +123,8 @@ public class CFG implements ICjvmInstructionOpcs {
 					instrLen = nofPairs * 8 + 4 + addr - bca;
 				}
 			} else if (bci == bCwide) {	// wide instruction
-				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3);
-				
+				entry = bcAttrTab[code[bca+1] & 0xff];
+				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3) + 1;	// add wide to len
 			} else if ((entry & (1 << bcapBranch)) != 0  && (entry & (1 << bcapReturn)) == 0) {
 				int branchOffset = (short)(((code[bca + 1]&0xff) << 8) | (code[bca + 2]&0xff));
 				split(this, bca, bca + branchOffset);
@@ -138,11 +133,11 @@ public class CFG implements ICjvmInstructionOpcs {
 			bca += instrLen;
 		}
 		assert (bca == len) : "last instruction not at end of method";
-		if (debug) vrb.println("marking loop headers");
+		if (dbg) StdStreams.out.println("marking loop headers");
 		markLoopHeaders(rootNode);
-		if (debug) System.out.println("eliminating dead nodes");
+		if (dbg) StdStreams.out.println("eliminating dead nodes");
 		eliminateDeadNodes(this);
-		if (debug) System.out.println("enter predecessors");
+		if (dbg) StdStreams.out.println("enter predecessors");
 		enterPredecessors(this);
 		CFGNode current = this.rootNode;	// prepare to find dominators
 		while (current != null) {
@@ -150,10 +145,10 @@ public class CFG implements ICjvmInstructionOpcs {
 			current = current.next;
 		}
 		rootNode.idom = null;
-		if (debug) System.out.println("build dom");
+		if (dbg) StdStreams.out.println("build dom");
 		for (int i = 0; i < rootNode.nofSuccessors; i++)
 			visitDom(rootNode.successors[i], rootNode);
-		if (debug) printToLog();
+		if (dbg) printToLog();
 	}
 
 	/**
@@ -201,17 +196,14 @@ public class CFG implements ICjvmInstructionOpcs {
 		}
 		entry = bcAttrTab[code[branchAddr] & 0xff];
 		if ((entry & (1 << bcapUncondBranch)) != 0) {
-			if (debug)
-				System.out
-						.println("eliminate goto node at bca = " + branchAddr);
+			if (dbg)
+				StdStreams.out.println("eliminate goto node at bca = " + branchAddr);
 			// branch target is a goto, jump to new target node
 			branchAddr += (short) (code[branchAddr + 1] & 0xff << 8 | code[branchAddr + 2]);
-			if (debug)
-				System.out.println("new branch address = " + branchAddr);
+			if (dbg) StdStreams.out.println("new branch address = " + branchAddr);
 		}
 		CFGNode targNode = cfg.getNode(branchAddr);
-		if (branchAddr != targNode.firstBCA) { // if first instruction, no
-			// splitting
+		if (branchAddr != targNode.firstBCA) { // if first instruction, no splitting
 			// split before target address
 			CFGNode newTargNode = new SSANode();
 			newTargNode.lastBCA = targNode.lastBCA;
@@ -249,6 +241,7 @@ public class CFG implements ICjvmInstructionOpcs {
 	 * @return address of the last byte code instruction.
 	 */
 	private static int findLastBcaInNode(CFG cfg, CFGNode node, int addr) {
+		if (dbg) StdStreams.out.println("find last bca in node [" + node.firstBCA + ":" + node.lastBCA + "]");
 		byte[] code = cfg.code;
 		int instrLen = 0;
 		int bca = node.firstBCA;
@@ -257,17 +250,16 @@ public class CFG implements ICjvmInstructionOpcs {
 			instrLen = (entry >> 8) & 0xF;
 			int bci = (entry & 0xff);
 			if (instrLen == 0) {
-				if (debug)
-					System.out.println("instruction with len undef");
 				if (bci == bCtableswitch) {	// bCtableswitch
 					instrLen = tableSwitchLen(cfg, bca);
 				} else { // bClookupswitch) {
 					instrLen = lookupSwitchLen(cfg, bca);
 				}
+				if (dbg) StdStreams.out.println("\tinstruction at " + bca + " with len undef, len = " + instrLen);
 			} else if (bci == bCwide) {	// wide instruction
-				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3);
-				if (debug)
-					System.out.println("len = " + instrLen);
+				entry = bcAttrTab[code[bca+1] & 0xff];
+				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3) + 1;	// add wide to len
+				if (dbg) StdStreams.out.println("\tinstruction at " + bca + " with len undef, len = " + instrLen);
 			}
 			bca += instrLen;
 		}
@@ -429,10 +421,9 @@ public class CFG implements ICjvmInstructionOpcs {
 	}
 
 	/**
-	 * Prints all nodes of a CFG to System.out for debugging purposes.
+	 * Prints all nodes of a CFG for debugging purposes.
 	 */
 	public void printToLog() {
-		// System.out.println(CFGPrinter.getCFGString(this));
-		vrb.println(this.cfgToString());
+		StdStreams.out.println(this.cfgToString());
 	}
 }
