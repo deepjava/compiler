@@ -152,6 +152,7 @@ interface InstructionOpcs {
 		ppcAdde = (0x1f << 26) | (0x8a << 1),
 		ppcAddi = (0x0e << 26),
 		ppcAddic = (0x0c << 26),
+		ppcAddicp = (0x0d << 26),	// p stands for period, addic.
 		ppcAddis = (0x0f << 26),
 		ppcAnd = (0x1f << 26) | (0x1c << 1),
 		ppcAndi = (0x1c << 26),

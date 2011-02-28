@@ -314,7 +314,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
-//			if (dbg) StdStreams.out.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
+			if (dbg) StdStreams.out.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -856,11 +856,13 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 							createIrArSSH(ppcSrawi, res.regLong, opds[0].regLong, 31);
 						}
 					} else {
-						createIrDrAsimm(ppcSubfic, res.regAux1, sReg2, 32);
+						createIrArSSHMBME(ppcRlwinm, 0, sReg2, 0, 26, 31);
+						createIrDrAsimm(ppcSubfic, res.regAux1, 0, 32);
 						createIrArSrB(ppcSrw, dReg, sReg1, sReg2);
 						createIrArSrB(ppcSlw, 0, opds[0].regLong, res.regAux1);
 						createIrArSrB(ppcOr, dReg, dReg, 0);
-						createIrDrAsimm(ppcAddi, res.regAux1, sReg2, -32);
+						createIrArSSHMBME(ppcRlwinm, 0, sReg2, 0, 26, 31);
+						createIrDrAsimm(ppcAddicp, res.regAux1, 0, -32);
 						createIrArSrB(ppcSraw, 0, opds[0].regLong, res.regAux1);
 						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 2);
 						createIrArSuimm(ppcOri, dReg, 0, 0);
