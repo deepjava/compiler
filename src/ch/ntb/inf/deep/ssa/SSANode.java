@@ -2021,8 +2021,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// default jump address
 				bca = bca + 4;
 				// we need the low and high
-				int low1 = (ssa.cfg.code[bca++] << 24) | (ssa.cfg.code[bca++] << 16) | (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
-				int high1 = (ssa.cfg.code[bca++] << 24)	| (ssa.cfg.code[bca++] << 16) | (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				int low1 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
+				int high1 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
 				int nofPair1 = high1 - low1 + 1;
 
 				// jump offsets
@@ -2043,9 +2043,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// default jump adress
 				bca = bca + 4;
 				// npairs
-				int nofPair2 = (ssa.cfg.code[bca++] << 24)
-						| (ssa.cfg.code[bca++] << 16)
-						| (ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++];
+				int nofPair2 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
 				// jump offsets
 				bca = bca + 8 * nofPair2 - 1;
 				break;
