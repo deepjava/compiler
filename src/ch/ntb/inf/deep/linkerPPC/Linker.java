@@ -67,17 +67,28 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	public static Class stringClass;
 	
 	
-	// Error reporter:
+	// Error reporter and stdout:
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
+	private static PrintStream vrb = StdStreams.vrb;
 
+	// Target image
 	public static TargetMemorySegment targetImage;
 	private static TargetMemorySegment lastTargetMemorySegment;
 
-
-	private static PrintStream vrb = StdStreams.vrb;
-		
+	// System table
 	private static int[] systemTable;
 	private static int systemTableSize;
+	
+	// Global constants // TODO improve this...
+	private static long gc1Value = Double.doubleToLongBits(4503599627370496L + 2147483648L); // 2^52 + 2^31
+	public static StdConstant gc1 = new StdConstant((int)(gc1Value >> 32 & 0xFFFFFFFF), (int)(gc1Value & 0xFFFFFFFF));
+	private static int[] globalConstantTable = new int[2];
+	private static int globalConstantTableOffset = -1;
+	private static Segment globalConstantTableSegment;
+	static {
+		globalConstantTable[0] = gc1.valueH;
+		globalConstantTable[1] = gc1.valueL;
+	}
 
 	public static void init() {
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
@@ -197,10 +208,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	public static void calculateSystemTableSize() {
 		if(dbg) vrb.println("[LINKER] START: Calculating the size of the system table:\n");
 		
-		systemTableSize = stConstantSize
-							+ 2 * Configuration.getNumberOfStacks()
-							+ 2 * Configuration.getNumberOfHeaps()
-							+ Type.nofClasses;
+		systemTableSize = stConstantSize +
+							(2 * Configuration.getNumberOfStacks() + 2 * Configuration.getNumberOfHeaps() + Type.nofClasses) * 4;
 		
 		if(dbg) vrb.println("  Size of the system table: " + systemTableSize + " byte (0x" + Integer.toHexString(systemTableSize) + ")");
 		
@@ -274,17 +283,39 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			}
 			item = item.next;
 		}
-
-		
 		
 		Segment[] sysTabs = Configuration.getSysTabSegments(); // TODO @Martin: implement this for more than one system table!
 		if(sysTabs != null && sysTabs.length > 0) {
 			for(int i = 0; i < sysTabs.length; i++) {
-				sysTabs[i].addToUsedSize(systemTableSize * 4); 
+				sysTabs[i].addToUsedSize(systemTableSize * 4); // TODO this is not correct, systemTableSize is already in byte!!! 
 			}
 		}
 		else reporter.error(731, "Can't get a memory segment for the systemtable!");
 	
+		
+		
+		
+		
+		
+		s = Configuration.getDefaultConstSegment();
+		
+		if(dbg) vrb.println("  Proceeding global constant table");
+		
+		if(s == null) reporter.error(731, "Can't get a memory segment for the global constant table!\n");
+		else {
+			if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, globalConstantTable.length * 4);
+			globalConstantTableOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
+			s.addToUsedSize(globalConstantTable.length * 4);
+			globalConstantTableSegment = s;
+			if(dbg) vrb.println("    Segment for global constant table: " + globalConstantTableSegment.getName());
+		}	
+		
+		
+		
+		
+		
+		
+		
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
 		while(d != null) {
@@ -705,6 +736,13 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(dbg) vrb.println("[LINKER] END: Creating systemtable\n");
 	}
 	
+	public static void createGlobalConstantTable() {
+		// TODO fill up the table here...
+		gc1.index = 0;
+		gc1.offset = 0;
+		gc1.address = globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset + gc1.offset;
+	}
+	
 	public static void generateTargetImage() {
 		
 		if(dbg) vrb.println("[LINKER] START: Generating target image:\n");
@@ -765,6 +803,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		Segment[] s = Configuration.getSysTabSegments();
 		s[0].tms.addData(s[0].getBaseAddress(), systemTable);
 		addTargetMemorySegment(s[0].tms);
+		
+		globalConstantTableSegment.tms.addData(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable);
 		
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
@@ -943,6 +983,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		int nOfHeaps = systemTable[5 + 2 * nOfStacks];
 		int nOfClasses = Type.nofClasses;
 		vrb.print("System table:\n");
+		vrb.print("  size: " + systemTableSize + " byte\n");
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] classConstOffset\n"); i++;
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] stackOffset\n"); i++;
 		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] heapOffset\n"); i++;
