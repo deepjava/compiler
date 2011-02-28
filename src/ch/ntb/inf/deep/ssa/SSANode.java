@@ -2060,6 +2060,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
+				ssa.countAndMarkReturns(this);
 				break;
 			case bClreturn:
 				value1 = popFromStack();
@@ -2072,6 +2073,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
+				ssa.countAndMarkReturns(this);
 				break;
 			case bCfreturn:
 				value1 = popFromStack();
@@ -2084,6 +2086,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
+				ssa.countAndMarkReturns(this);
 				break;
 			case bCdreturn:
 				value1 = popFromStack();
@@ -2096,6 +2099,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
+				ssa.countAndMarkReturns(this);
 				break;
 			case bCareturn:
 				value1 = popFromStack();
@@ -2108,6 +2112,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
+				ssa.countAndMarkReturns(this);
 				break;
 			case bCreturn:
 				instr = new Branch(sCreturn);
@@ -2119,6 +2124,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
+				ssa.countAndMarkReturns(this);
 				break;
 			case bCgetstatic:
 				bca++;
@@ -2672,6 +2678,34 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 		pushToStack(result);
 
+	}
+	
+	protected void loadLocal(int index, int type){
+		SSAValue result = exitSet[maxStack + index];
+
+		if (result == null) {// local isn't initialized
+			result = new SSAValue();
+			result.type = type;
+			result.index = index + maxStack;
+			SSAInstruction instr = new NoOpnd(sCloadLocal);
+			instr.result = result;
+			instr.result.owner = instr;
+			exitSet[maxStack + index] = result;
+			
+			//insert before return statement
+			int len = instructions.length;
+			if (nofInstr == len) {
+				SSAInstruction[] newArray = new SSAInstruction[2 * len];
+				for (int k = 0; k < len; k++)
+					newArray[k] = instructions[k];
+				instructions = newArray;
+
+			}
+							
+			instructions[nofInstr] = instructions[nofInstr - 1];
+			instructions[nofInstr - 1] = instr;
+			nofInstr++;			
+		}
 	}
 
 	private SSAValue generateLoadParameter(SSANode predecessor, int index,

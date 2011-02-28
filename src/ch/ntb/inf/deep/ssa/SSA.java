@@ -10,11 +10,13 @@ import ch.ntb.inf.deep.host.StdStreams;
  */
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
-	private static boolean dbg = false;
+	private static boolean dbg = true;
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
 	public int paramType[];
+	private int returnCount;
+	private SSANode returnNodes[];
 	private SSANode loopHeaders[];
 	private SSANode sortedNodes[];
 	private int nofSortedNodes;
@@ -23,6 +25,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		this.cfg = cfg;
 		loopHeaders = new SSANode[cfg.getNumberOfNodes()];
 		sortedNodes = new SSANode[cfg.getNumberOfNodes()];
+		returnCount = 0;
+		returnNodes = new SSANode[4];
 		nofLoopheaders = 0;
 		nofSortedNodes = 0;
 		
@@ -47,6 +51,26 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		
 		determineStateArray();
+		
+		//if the method have multiple return statements, so check if in the last node all required params are loaded
+		if(returnCount > 1){
+			if(cfg.method.nofParams > 0){
+				for(int x = 0; x < cfg.method.nofParams; x++){
+					boolean isNeeded = false;
+					for(int i = 0; i < returnCount && !isNeeded; i++){
+						if(returnNodes[i].exitSet[cfg.method.maxStackSlots + x] != null){
+							isNeeded = true;
+						}
+					}
+					for(int i = 0; isNeeded && i < returnCount; i++){
+						returnNodes[i].loadLocal(x, paramType[cfg.method.maxStackSlots + x]);
+					}
+					
+				}
+			}
+		}
+		
+		
 		renumberInstructions(cfg);
 		if(dbg)print(0);
 	}
@@ -261,7 +285,19 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			node = (SSANode) node.next;
 			count++;
 		}
-
 	}
+	
+	public void countAndMarkReturns(SSANode node){
+		if(returnCount >= returnNodes.length){
+			SSANode[]temp = new SSANode[2*returnNodes.length];
+			for(int i = 0; i < returnCount; i++){
+				temp[i] = returnNodes[i];
+			}
+			returnNodes = temp;
+		}
+		returnNodes[returnCount++] = node; 
+	}
+	
+	
 
 }
