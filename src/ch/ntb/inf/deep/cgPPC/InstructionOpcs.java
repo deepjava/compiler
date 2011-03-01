@@ -207,6 +207,7 @@ interface InstructionOpcs {
 		ppcMfspr = (0x1f << 26) | (0x153 << 1),
 		ppcMftb = (0x1f << 26) | (0x173 << 1),
 		ppcMtcrf = (0x1f << 26) | (0x90 << 1),
+		ppcMtfsfi = (0x3f << 26) | (0x86 << 1),
 		ppcMtspr = (0x1f << 26) | (0x1d3 << 1),
 		ppcMulhw = (0x1f << 26) | (0x4b << 1),
 		ppcMulhwu = (0x1f << 26) | (0x0b << 1),

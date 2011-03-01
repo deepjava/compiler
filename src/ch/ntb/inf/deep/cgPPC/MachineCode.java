@@ -1,32 +1,17 @@
 package ch.ntb.inf.deep.cgPPC;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
-import ch.ntb.inf.deep.classItems.Item;
-import ch.ntb.inf.deep.classItems.Method;
-import ch.ntb.inf.deep.classItems.StdConstant;
-import ch.ntb.inf.deep.classItems.StringLiteral;
-import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linkerPPC.Linker;
-import ch.ntb.inf.deep.ssa.SSA;
-import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
-import ch.ntb.inf.deep.ssa.SSAInstructionOpcs;
-import ch.ntb.inf.deep.ssa.SSANode;
-import ch.ntb.inf.deep.ssa.SSAValue;
-import ch.ntb.inf.deep.ssa.SSAValueType;
-import ch.ntb.inf.deep.ssa.instruction.Call;
-import ch.ntb.inf.deep.ssa.instruction.DyadicRef;
-import ch.ntb.inf.deep.ssa.instruction.MonadicRef;
-import ch.ntb.inf.deep.ssa.instruction.NoOpndRef;
-import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
+import ch.ntb.inf.deep.ssa.*;
+import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = false;
+	private static final boolean dbg = true;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -34,7 +19,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static final int arrayLenOffset = 6;	
 
 	private static int objectSize, stringSize;
-	private static final int constForDoubleConv = 32;// für double convert, kommt weg
+	private static StdConstant int2floatConst = null;	// for int -> float conversions
+	
 	private static int idGET1, idGET2, idGET4, idGET8;
 	private static int idPUT1, idPUT2, idPUT4, idPUT8;
 	private static int idGETBIT, idASM, idHALT, idADR_OF_METHOD;
@@ -314,7 +300,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
-			if (dbg) StdStreams.out.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
+//			if (dbg) StdStreams.out.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -764,10 +750,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					assert false : "cg: type not implemented";
 					break;
 				case tFloat:
-					assert false : "cg: type not implemented";
+//					assert false : "cg: type not implemented";
 					break;
 				case tDouble:
-					assert false : "cg: type not implemented";
+//					assert false : "cg: type not implemented";
 					break;
 				default:
 					assert false : "cg: wrong type";
@@ -1077,23 +1063,29 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrArSSH(ppcSrawi, res.regLong, sReg1, 31);
 					break;
 				case tFloat:
+					Item item = int2floatConst;	// ref to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
 					createIrArSuimm(ppcXoris, 0, sReg1, 0x8000);
 					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
-					Item item = null;	// hier ref auf 2^52;
 					loadConstantAndFixup(res.regAux1, item);
-					createIrDrAd(ppcLfd, dReg, res.regAux1, constForDoubleConv);
+					createIrDrAd(ppcLfd, dReg, res.regAux1, 0);
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(ppcFsub, dReg, 0, dReg);
 					createIrDrB(ppcFrsp, dReg, dReg);
 					break;
 				case tDouble:
-					item = null;
+//					instructions[iCount] = ppcMtfsfi | (7 << 23) | (4  << 12);
+//					incInstructionNum();
+					item = int2floatConst;	// ref to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
 					createIrArSuimm(ppcXoris, 0, sReg1, 0x8000);
 					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
 					loadConstantAndFixup(res.regAux1, item);
-					createIrDrAd(ppcLfd, dReg, res.regAux1, constForDoubleConv);
+					createIrDrAd(ppcLfd, dReg, res.regAux1, 0);
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-					createIrDrArB(ppcFsub, dReg, 0, dReg);
+					createIrDrArB(ppcFsub, dReg+5, 0, dReg);
 					break;
 				default:
 					assert false : "cg: wrong type";
@@ -1202,7 +1194,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					assert false : "cg: wrong type";
 				}
 				break;
-			case sCcmpl:
+			case sCcmpl: case sCcmpg:
 				opds = instr.getOperands();
 				sReg1 = opds[0].reg;
 				sReg2 = opds[1].reg;
@@ -1214,7 +1206,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createICRFrArB(ppcCmp, CRF0, sReg1L, sReg2L);
 					createICRFrArB(ppcCmpl, CRF1, sReg1, sReg2);
 					instr = node.instructions[i+1];
-					if (instr.ssaOpcode == sCregMove) {i++; instr = node.instructions[i+1];}
+					if (instr.ssaOpcode == sCregMove) {i++; instr = node.instructions[i+1]; assert false;}
 					assert instr.ssaOpcode == sCbranch : "sCcompl is not followed by branch instruction";
 					bci = ssa.cfg.code[node.lastBCA] & 0xff;
 					if (bci == bCifeq) {
@@ -1245,8 +1237,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createICRFrArB(ppcFcmpu, CRF1, sReg1, sReg2);
 					instr = node.instructions[i+1];
 					assert instr.ssaOpcode == sCbranch;
-					opds = instr.getOperands();
-					createICRFrASimm(ppcCmpi, CRF0, sReg1, 0);
 					bci = ssa.cfg.code[node.lastBCA] & 0xff;
 					if (bci == bCifeq) 
 						createIBOBIBD(ppcBc, BOtrue, CRF1EQ, 0);
@@ -1266,9 +1256,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					assert false : "cg: wrong type";
 				i++;
 				break;
-			case sCcmpg:
-				assert false : "ssa instruction not implemented";
-			break;
 			case sCinstanceof:
 				break;
 			case sCalength:
@@ -1767,7 +1754,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				break;
 			case sCregMove:
 				opds = instr.getOperands();
-				createIrArSrB(ppcOr, instr.result.reg, opds[0].reg, opds[0].reg);
+				switch (res.type & 0x7fffffff) {
+				case tInteger:
+					createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
+					break;
+				case tLong:
+					createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
+					createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
+					break;
+				case tFloat: case tDouble:
+					createIrDrB(ppcFmr, res.reg, opds[0].reg);
+					break;
+				default:
+					assert false : "type not implemented";
+				}
 				break;
 			default:
 				assert false : "cg: no code generated for " + instr.scMnemonics[instr.ssaOpcode] + " function";
@@ -1901,6 +1901,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	private void createIrDrB(int opCode, int rD, int rB) {
+		if ((opCode == ppcFmr) && (rD == rB)) return; 	// fmr x,x makes no sense
 		instructions[iCount] = opCode | (rD << 21) | (rB << 11);
 		incInstructionNum();
 	}
@@ -1962,12 +1963,12 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				addr = 0;
 			else 
 				addr = fixups[currFixup].address;
-			if (dbg) { 
-				StdStreams.out.print("\t fix item ");
-				if(item == null) StdStreams.out.print("null"); 
-				else item.printName();
-				StdStreams.out.println(" at address = " + Integer.toHexString(addr));
-			}
+//			if (dbg) { 
+//				StdStreams.out.print("\t fix item ");
+//				if(item == null) StdStreams.out.print("null"); 
+//				else item.printName();
+//				StdStreams.out.println(" at address = " + Integer.toHexString(addr));
+//			}
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
 			if (!((low >> 15) == 0)) high++;
@@ -2106,6 +2107,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		idHALT = 0x012;
 		objectSize = Type.wktObject.getObjectSize();
 		stringSize = Type.wktString.getObjectSize();
+		int2floatConst = Linker.addGlobalConstant((double)(0x10000000000000L + 0x80000000L));
 		final Class stringClass = (Class)Type.wktString;
 		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
 		if (stringClass != null) {
