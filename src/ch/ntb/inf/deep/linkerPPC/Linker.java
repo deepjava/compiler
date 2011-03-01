@@ -79,17 +79,17 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static int[] systemTable;
 	private static int systemTableSize;
 	
-	// Global constants // TODO improve this...
-	private static long gc1Value = Double.doubleToLongBits(4503599627370496L + 2147483648L); // 2^52 + 2^31
-	public static StdConstant gc1 = new StdConstant((int)(gc1Value >> 32 & 0xFFFFFFFF), (int)(gc1Value & 0xFFFFFFFF));
-	private static int[] globalConstantTable = new int[2];
+	// Global constants
+	private static StdConstant globalConstantList;
+	private static StdConstant globalConstantListTail;
+	private static int[] globalConstantTable;
 	private static int globalConstantTableOffset = -1;
 	private static Segment globalConstantTableSegment;
 	static {
-		globalConstantTable[0] = gc1.valueH;
-		globalConstantTable[1] = gc1.valueL;
+		// TODO move the following to the code generator
+		addGlobalConstant((double)(4503599627370496L + 2147483648L)); // add '2^52 + 2^31' as global constant
 	}
-
+	
 	public static void init() {
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
 		
@@ -214,6 +214,37 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(dbg) vrb.println("  Size of the system table: " + systemTableSize + " byte (0x" + Integer.toHexString(systemTableSize) + ")");
 		
 		if(dbg) vrb.println("[LINKER] END: Calculating the size of the system table.\n");
+	}
+	
+	public static void calculateGlobalConstantTableSize() {
+		if(dbg) vrb.println("[LINKER] START: Calculating the size of the global constant table:\n");
+		
+		// Calculate requried size, indexes and offsets
+		Item cgc = globalConstantList;
+		int cgtsize = 0, indexCounter = 0;
+		while(cgc != null) {
+			if(cgc.type != null) {
+				cgc.index = indexCounter;
+				cgc.offset = cgtsize;
+				if(((Type)cgc.type).sizeInBits == 64) {
+					indexCounter += 2;
+					cgtsize += 8;
+				}
+				else {
+					indexCounter++;
+					cgtsize += 4;
+				}
+			}
+			else {
+				vrb.println("Warning: global constant skipped because type is not set!");
+			}
+			cgc = cgc.next;
+		}
+		
+		// Create table
+		globalConstantTable = new int[cgtsize/4];
+		
+		if(dbg) vrb.println("[LINKER] END: Calculating the size of the global constant table.\n");
 	}
 	
 	public static void freezeMemoryMap() {
@@ -737,10 +768,20 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	}
 	
 	public static void createGlobalConstantTable() {
-		// TODO fill up the table here...
-		gc1.index = 0;
-		gc1.offset = 0;
-		gc1.address = globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset + gc1.offset;
+						
+		// Inserting data and setting address
+		Item cgc = globalConstantList;
+		while(cgc != null) {
+			if(cgc.index >= 0) {
+				cgc.address = globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset + cgc.offset;
+				
+				globalConstantTable[cgc.index] = ((StdConstant)cgc).valueH;
+				if(((Type)cgc.type).sizeInBits == 64) {
+					globalConstantTable[cgc.index + 1] = ((StdConstant)cgc).valueL;
+				}
+			}
+			cgc = cgc.next;
+		}
 	}
 	
 	public static void generateTargetImage() {
@@ -889,6 +930,48 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
 	}
 	
+	public static StdConstant addGlobalConstant(int val) {
+		StdConstant gconst = new StdConstant(val, 0);
+		gconst.type = Type.wellKnownTypes[txInt];
+		addGlobalConstant(gconst);
+		return gconst;
+	}
+	
+	public static StdConstant addGlobalConstant(long val) {
+		StdConstant gconst = new StdConstant((int)(val >> 32 & 0xFFFFFFFF), (int)(val & 0xFFFFFFFF));
+		gconst.type = Type.wellKnownTypes[txLong];
+		addGlobalConstant(gconst);
+		return gconst;
+	}
+	
+	public static StdConstant addGlobalConstant(float val) {
+		StdConstant gconst = new StdConstant(Float.floatToIntBits(val), 0);
+		gconst.type = Type.wellKnownTypes[txFloat];
+		addGlobalConstant(gconst);
+		return gconst;
+	}
+	
+	public static StdConstant addGlobalConstant(double val) {
+		long tempval = Double.doubleToLongBits(val);
+		StdConstant gconst = new StdConstant((int)(tempval >> 32 & 0xFFFFFFFF), (int)(tempval & 0xFFFFFFFF));
+		gconst.type = Type.wellKnownTypes[txDouble];
+		addGlobalConstant(gconst);
+		return gconst;
+	}
+	
+	public static void addGlobalConstant(StdConstant gconst) {
+		if(globalConstantList == null) {
+			globalConstantList = gconst;
+			globalConstantListTail = globalConstantList;
+		}
+		else {
+			globalConstantListTail.next = gconst;
+			globalConstantListTail = (StdConstant)globalConstantListTail.next;
+		}
+	}
+	
+	//private static long gc1Value = Double.doubleToLongBits(4503599627370496L + 2147483648L); // 2^52 + 2^31
+	
 	/* ---------- private helper methods ---------- */
 	
 	private static byte[] getBytes(int number) {
@@ -968,13 +1051,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			lastTargetMemorySegment = lastTargetMemorySegment.next;
 		}
 	}
-	
-//	private static int getIndexOfMethod(Class clazz, HString methName, HString methDescriptor) {
-//		Method m = (Method)clazz.methods.getItemByName(methName);
-//		if(m != null && m.methDescriptor == methDescriptor) return m.index;
-//		return -1;
-//	}
-	
+		
 	/* ---------- debug primitives ---------- */
 	
 	public static void printSystemTable() {
@@ -1118,4 +1195,26 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("\n[LINKER] PRINT: End of class list\n");
 	}
 
+	public static void printGlobalConstantTable() {
+		vrb.println("\n[LINKER] PRINT: Global constants\n");
+		
+		int i = 0;
+		Item cgc = globalConstantList;
+		vrb.println("  Global constants:");
+		while(cgc != null) {
+			vrb.println("    #" + i++ + ":");
+			vrb.println("    > Index: 0x" + Integer.toHexString(cgc.index));
+			vrb.println("    > Offset: 0x" + Integer.toHexString(cgc.offset));
+			vrb.println("    > Address: 0x" + Integer.toHexString(cgc.address));
+			cgc = cgc.next;
+		}
+		
+		vrb.println("  Table: (length = " + globalConstantTable.length + ")");
+		for(int j = 0; j < globalConstantTable.length; j++) {
+			vrb.print("    ["); vrb.printf("%8x", globalConstantTable[j]); vrb.println("]");
+		}
+		
+		vrb.println("\n[LINKER] PRINT: End of global constants\n");
+	}
+	
 }

@@ -116,6 +116,7 @@ public class Launcher implements ICclassFileConsts {
 			// 4) Linker: freeze memory map
 			if (reporter.nofErrors <= 0) {
 				Linker.calculateSystemTableSize();
+				Linker.calculateGlobalConstantTableSize();
 				Linker.freezeMemoryMap();
 			}
 
@@ -132,6 +133,8 @@ public class Launcher implements ICclassFileConsts {
 				
 				item = item.next;
 			}
+			
+			Linker.createGlobalConstantTable();
 			
 			clearVisitedFlagsForAllClasses();
 			item = Type.classList;
