@@ -10,7 +10,7 @@ import ch.ntb.inf.deep.host.StdStreams;
  */
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
-	private static boolean dbg = true;
+	private static boolean dbg = false;
 	public CFG cfg;
 	public int nofLoopheaders;
 	public boolean isParam[];
@@ -55,6 +55,15 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		//if the method have multiple return statements, so check if in the last node all required params are loaded
 		if(returnCount > 1){
 			if(cfg.method.nofParams > 0){
+				//search last node
+				SSANode last = null;
+				for(int i = 0;  i < returnCount; i++){
+					if(last == null){
+						last = returnNodes[i];
+					}else if(last.firstBCA < returnNodes[i].firstBCA){
+						last = returnNodes[i];
+					}					
+				}
 				for(int x = 0; x < cfg.method.nofParams; x++){
 					boolean isNeeded = false;
 					for(int i = 0; i < returnCount && !isNeeded; i++){
@@ -62,10 +71,10 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 							isNeeded = true;
 						}
 					}
-					for(int i = 0; isNeeded && i < returnCount; i++){
-						returnNodes[i].loadLocal(x, paramType[cfg.method.maxStackSlots + x]);
+					if(isNeeded){	
+						last.loadLocal(x, paramType[cfg.method.maxStackSlots + x]);
 					}
-					
+								
 				}
 			}
 		}
