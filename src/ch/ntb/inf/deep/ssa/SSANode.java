@@ -706,8 +706,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
-					// index
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get index
 					wide = false;
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
@@ -721,7 +720,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -732,7 +731,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -743,7 +742,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -754,7 +753,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCaload:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -960,7 +959,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCistore:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -972,7 +971,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClstore:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -984,7 +983,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfstore:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -996,7 +995,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdstore:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -1008,7 +1007,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCastore:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]) & 0xffff;// get
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff)) & 0xffff;// get
 					// index
 					wide = false;
 				} else {
@@ -1708,10 +1707,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiinc:
 				bca++;
 				if (wide) {
-					val = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca++]) & 0xffff;// get
-					// index
-					val1 = ((ssa.cfg.code[bca++] << 8) | ssa.cfg.code[bca]);// get
-					// const
+					val = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca++] & 0xff)) & 0xffff;// get index
+					val1 = ((ssa.cfg.code[bca++] << 8) | (ssa.cfg.code[bca] & 0xff));// get const
 					wide = false;
 				} else {
 					val = ssa.cfg.code[bca++] & 0xFF;// get index
@@ -2021,8 +2018,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// default jump address
 				bca = bca + 4;
 				// we need the low and high
-				int low1 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
-				int high1 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
+				int low1 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | (ssa.cfg.code[bca++] & 0xFF);
+				int high1 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | (ssa.cfg.code[bca++] & 0xFF);
 				int nofPair1 = high1 - low1 + 1;
 
 				// jump offsets
@@ -2043,7 +2040,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// default jump adress
 				bca = bca + 4;
 				// npairs
-				int nofPair2 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca++] & 0xFF;
+				int nofPair2 = ((ssa.cfg.code[bca++] & 0xFF) << 24) | ((ssa.cfg.code[bca++] & 0xFF) << 16) | ((ssa.cfg.code[bca++] & 0xFF) << 8) | (ssa.cfg.code[bca++] & 0xFF);
 				// jump offsets
 				bca = bca + 8 * nofPair2 - 1;
 				break;
