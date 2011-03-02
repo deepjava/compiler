@@ -85,10 +85,6 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	private static int[] globalConstantTable;
 	private static int globalConstantTableOffset = -1;
 	private static Segment globalConstantTableSegment;
-	static {
-		// TODO move the following to the code generator
-		addGlobalConstant((double)(4503599627370496L + 2147483648L)); // add '2^52 + 2^31' as global constant
-	}
 	
 	public static void init() {
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
