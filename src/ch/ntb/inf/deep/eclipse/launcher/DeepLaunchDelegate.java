@@ -38,7 +38,6 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 			StdStreams.log = out;
 			StdStreams.out = out;
 			StdStreams.err = err;
-			cdm.println("done", ConsoleDisplayMgr.MSG_INFORMATION);
 		}
 		
 	
