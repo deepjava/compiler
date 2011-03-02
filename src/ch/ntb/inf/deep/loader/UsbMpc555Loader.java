@@ -73,7 +73,7 @@ public class UsbMpc555Loader extends Downloader {
 				// open Usb-Connection
 				loader.openConnection();
 				// Make a reset on target
-				loader.resetTarget();
+//				loader.resetTarget();
 			} catch (DownloaderException e) {
 				e.printStackTrace();
 			}

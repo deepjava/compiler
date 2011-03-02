@@ -82,12 +82,12 @@ public class Launcher implements ICclassFileConsts {
 					if (reporter.nofErrors <= 0)
 						Linker.prepareConstantBlock(clazz);
 
-					StdStreams.vrb.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
+//					StdStreams.vrb.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
 					
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
 						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-							StdStreams.vrb.println(">>>> Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+//							StdStreams.vrb.println(">>>> Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 
 							// 3.2) Create CFG
 							if (reporter.nofErrors <= 0)
@@ -119,7 +119,7 @@ public class Launcher implements ICclassFileConsts {
 				Linker.calculateGlobalConstantTableSize();
 				Linker.freezeMemoryMap();
 			}
-
+			
 			// 5) Loop Two 
 			item = Type.classList;
 			while (item != null && reporter.nofErrors <= 0) {
@@ -182,6 +182,7 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) {
 			Downloader bdi = UsbMpc555Loader.getInstance();
 			try {
+				bdi.resetTarget();
 				bdi.init();
 				// System.out.println("++++++++ Start Target!+++++++++");
 				bdi.startTarget();
