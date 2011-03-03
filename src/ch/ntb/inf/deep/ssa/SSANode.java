@@ -216,8 +216,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 														result.index = j;
 														PhiFunction phi = new PhiFunction(sCPhiFunc);
 														result.owner = phi;
-														phi.result.type = ssa.paramType[j];
 														phi.result = result;
+														phi.result.type = ssa.paramType[j];
 														int predNo = 0;
 														for(int k = 0; k < nofPredecessors; k++){
 															if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
