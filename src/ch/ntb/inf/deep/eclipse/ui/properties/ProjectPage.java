@@ -17,7 +17,11 @@ import java.util.GregorianCalendar;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ProjectScope;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -37,12 +41,15 @@ import org.eclipse.ui.IWorkbenchPropertyPage;
 import org.eclipse.ui.dialogs.PropertyPage;
 import org.osgi.service.prefs.BackingStoreException;
 
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
+
 public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage {
 	private Combo processor, board, rts;
 	private Button check, browse;
 	private Text path;
 	private final String defaultPath = "I:/deep/lib";
 	private String lastChoise = "";
+	private String oldChoise = "";
 	private IEclipsePreferences pref;
 
 	@Override
@@ -115,6 +122,7 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		if (!check.getSelection()) {
 			lastChoise = path.getText();
 		}
+		oldChoise = path.getText();
 		browse = new Button(group3, SWT.PUSH);
 		browse.setText("Browse...");
 		browse.addSelectionListener(new SelectionAdapter() {
@@ -207,6 +215,7 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 		IProject project = (IProject) getElement();
 		ConfigFileChanger cfc = new ConfigFileChanger(project.getLocation()
 				+ "/" + project.getName() + ".deep");
+		ClasspathFileChanger classpathfile = new ClasspathFileChanger(project.getLocation() + "/.classpath");
 		try {
 			cfc.changeContent("version", "\"" + cal.getTime().toString() + "\"");
 
@@ -232,11 +241,21 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 			}
 			cfc.changeContent("import", sb.toString());
 			cfc.changeContent("libpath", "\"" + path.getText() + "\"");
+			classpathfile.changeLibPath(oldChoise, path.getText());
+			oldChoise = path.getText();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		cfc.save();
+		classpathfile.save();
 		cfc.close();
+		classpathfile.close();
+		//refresh the package explorer
+		try {
+			ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
 	}
 }
