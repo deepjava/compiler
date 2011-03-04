@@ -134,8 +134,8 @@ public class StartWizard extends Wizard implements INewWizard{
 		sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
 		sb.append("<classpath>\n");
 		sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
-		sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
 		sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
+		sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
 		sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
 		sb.append("</classpath>\n");
 		return new ByteArrayInputStream(sb.toString().getBytes());
