@@ -43,6 +43,10 @@ public class OperationObject {
 	 * is to determine if when an TargetCMD operation was executed, thats display the address of the method only if it is true 
 	 */
 	public boolean cmdSend;
+	/**
+	 * Message if an error occours
+	 */
+	public String errorMsg;
 	
 	public OperationObject(){
 		description = "";
@@ -51,6 +55,7 @@ public class OperationObject {
 	public OperationObject(int operation, String description){
 		this.operation = operation;
 		this.description = description;
+		this.errorMsg = "";
 	}
 	
 	public OperationObject(int operation, String description, long value, int type, int representation, int registerSize){
@@ -60,5 +65,6 @@ public class OperationObject {
 		this.valueType = type;
 		this.representation = representation;
 		this.registerSize = registerSize;
+		this.errorMsg = "";
 	}
 }

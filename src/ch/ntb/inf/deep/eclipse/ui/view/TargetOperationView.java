@@ -9,6 +9,7 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
@@ -47,6 +48,7 @@ import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.mcdp.blackbox.uart.Uart0;
 
 public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
@@ -62,7 +64,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private static String KERNEL;
 	private static String cmdAddrName = "cmdAddr";
 
-	private String[] choise =new String[]{"", "Register", "Variable","Address","TargetCMD" };
+	private String[] choise =new String[]{"", "Register", "Variable","Address","TargetCMD", "send over SCI1" };
 
 	private static Image UP = DeepPlugin.createImage("full/obj32/up.gif");
 	private static Image DOWN = DeepPlugin.createImage("full/obj32/down.gif");
@@ -173,6 +175,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 							case 3:
 								return String.format("0x%08X",op.value);
 							case 4:
+							case 5:
 								return "";
 							default:
 								throw new RuntimeException("Should not happen");
@@ -199,6 +202,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						}else{
 							return "";
 						}
+					case 5:
+						return "";
 					default :
 						return "";
 					}
@@ -206,6 +211,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					return null;
 				}else if(index == 5){
 					return null;
+				}else if(index == 6){
+					return op.errorMsg;
 				}
 			}
 			return "";
@@ -234,8 +241,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		viewer = new TableViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		
-		String[] titels = { "Operation", "Descriptor", "Value","MemAddr" , "", "" };
-		int[] bounds = { 100, 100, 100, 100, 18, 18 };
+		String[] titels = { "Operation", "Descriptor", "Value","MemAddr" , "", "", "Error Message" };
+		int[] bounds = { 100, 100, 100, 100, 18, 18, 250 };
 
 		TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[0]);
@@ -278,6 +285,12 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		column.getColumn().setMoveable(false);
 		column.setEditingSupport(new DownloadEditingSupport(viewer));
 		
+		column = new TableViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setText(titels[6]);
+		column.getColumn().setWidth(bounds[6]);
+		column.getColumn().setResizable(false);
+		column.getColumn().setMoveable(false);
+
 		final Table table = viewer.getTable();
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -420,6 +433,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if(value == null){
 				return;
 			}
+			op.errorMsg = "";
 			String param = String.valueOf(value);
 			if(choise[op.operation].equals("Register")){
 				HString register = HString.getHString(param.toUpperCase());
@@ -447,6 +461,14 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				
 			}else if(choise[op.operation].equals("TargetCMD")){
 				sendCMD(op, param);
+			}else if(choise[op.operation].equals("send over SCI1")){
+				UsbMpc555Loader.getInstance();//Needs only to connect to the device
+				Uart0.write(param.getBytes(), param.length());
+				op.description = param;
+			}else if(param.equals("stirb!!!")){
+				MessageDialog dialog = new MessageDialog( viewer.getControl().getShell(), "bye bye", null, "aaaaaaaaaaahhhhhhhh",  MessageDialog.ERROR, new String[] { "tot" }, 0);
+		        dialog.open();
+				System.exit(0);
 			}
 			saveView();
 			viewer.refresh();
@@ -498,15 +520,15 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				case Parser.sIOR:
 					switch (op.registerSize) {
 					case 1:
-						return String.format("0x%01X", op.value);
-					case 2:
 						return String.format("0x%02X", op.value);
+					case 2:
+						return String.format("0x%04X", op.value);
 					case 4:
-						return String.format("0x%04X", op.value);
-					case 8:
 						return String.format("0x%08X", op.value);
+					case 8:
+						return String.format("0x%016X", op.value);
 					default:
-						return String.format("0x%04X", op.value);
+						return String.format("0x%08X", op.value);
 					}
 				}
 			case 2:
@@ -559,6 +581,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			case 3:
 				return String.format("0x%08X", op.value);
 			case 4:
+			case 5:
 				return "";
 			default:
 				throw new RuntimeException("Should not happen");
@@ -625,6 +648,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			@Override
 			protected void setValue(Object element, Object value) {
 				OperationObject op = (OperationObject)element;
+				op.errorMsg = "";
 				if((Integer)value < 0){
 					op.operation = 0;
 				}else{
@@ -632,6 +656,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(!choise[op.operation].equals("Register")){
 						op.registerType = -1;
 					}
+				}
+				if(op.operation == 0){//reset all
+					op.addr = 0;
+					op.cmdSend = false;
+					op.description = "";
+					op.isReaded = false;
+					op.registerSize = 0;
+					op.registerType = 0;
+					op.representation = 0;
+					op.value = 0;
+					op.valueType = 0;
 				}
 				saveView();
 				viewer.refresh();
@@ -661,6 +696,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		@Override
 		protected Object getValue(Object element) {
 			OperationObject op = (OperationObject)element;
+			op.errorMsg = "";
 			if(choise[op.operation].equals("Register")){
 				if(((OperationObject)element).registerType != -1){
 					readFromRegister(op, HString.getHString(op.description));						
@@ -702,6 +738,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		@Override
 		protected Object getValue(Object element) {
 			OperationObject op = (OperationObject)element;
+			op.errorMsg = "";
 				if(choise[op.operation].equals("Register")){
 					if(((OperationObject)element).registerType != -1){
 						setToRegister(op);						
@@ -712,6 +749,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					setToAddress(op);
 				}else if(choise[op.operation].equals("TargetCMD")){
 					sendCMD(op, op.description);					
+				}else if(choise[op.operation].equals("send over SCI1")){
+					UsbMpc555Loader.getInstance();//Needs only to connect to the device
+					Uart0.write(op.description.getBytes(), op.description.length());					
 				}				
 			return false;//TODO check this
 			
@@ -730,16 +770,22 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		boolean wasFreezeAsserted;
 		HString kernelName = Configuration.getKernelClassname();
 		if(kernelName == null){
+			op.errorMsg = "configuration isn't loaded";
 			return;
 		}
 		KERNEL = kernelName.toString(); 
 		String fullQualName = param;
 		int lastDot = fullQualName.lastIndexOf(".");
+		if(lastDot < 0){
+			op.errorMsg = "invalid description";
+			return;
+		}
 		String clazzName = fullQualName.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String methName = fullQualName.substring(lastDot + 1);
 		Class classList = (Class)Type.classList;
 		if(classList == null){
+			op.errorMsg = "system not builded";
 			return;
 		}
 		Class clazz = (Class)classList.getItemByName(clazzName);
@@ -769,7 +815,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				} catch (DownloaderException e) {
 					e.printStackTrace();
 				}
+			}else{
+				op.errorMsg = "method not found";
 			}
+		}else{
+			op.errorMsg = "class not found";
 		}
 	}
 	
@@ -801,13 +851,22 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		boolean wasFreezeAsserted;
 		int lastDot = fullQualName.lastIndexOf(".");
 		if (lastDot == -1){
+			op.errorMsg = "invalid description";
 			return;
 		}
 		String clazzName = fullQualName.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String varName = fullQualName.substring(lastDot + 1);
+		if(Type.classList == null){
+			op.errorMsg = "system not builded";
+			return;
+		}
 		Class clazz = (Class)Type.classList.getItemByName(clazzName);
 		if(clazz != null){
+			if((DataItem)clazz.classFields == null){
+				op.errorMsg = "no fields";
+				return;
+			}
 			DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
 			if(var != null){
 				//save address for display
@@ -860,7 +919,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}catch(DownloaderException e){
 					e.printStackTrace();
 				}
+			}else{
+				op.errorMsg = "field not found";
 			}
+		}else{
+			op.errorMsg = "class not found";
 		}
 	}
 	
@@ -983,6 +1046,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			} catch (DownloaderException e) {
 				e.printStackTrace();
 			}
+		}else{
+			op.errorMsg = "register not found";
 		}
 	}
 	
@@ -1010,11 +1075,22 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private void setVariable(OperationObject op, String value){
 		boolean wasFreezeAsserted;
 		int lastDot = op.description.lastIndexOf(".");
+		if(lastDot < 0){
+			op.errorMsg = "invalide descriptor";
+			return;
+		}
 		String clazzName = op.description.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String varName = op.description.substring(lastDot + 1);
+		if(Type.classList == null){
+			op.errorMsg = "system not builded";
+		}
 		Class clazz = (Class)Type.classList.getItemByName(clazzName);
 		if(clazz != null){
+			if(clazz.classFields == null){
+				op.errorMsg = "no fields";
+				return;
+			}
 			DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
 			if(var != null){
 				if(bdi == null){
@@ -1043,7 +1119,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}catch(DownloaderException e){
 					e.printStackTrace();
 				}
+			}else{
+				op.errorMsg = "field not found";
 			}
+		}else{
+			op.errorMsg = "class not found";
 		}
 	}
 	private void setToRegister(OperationObject op){
