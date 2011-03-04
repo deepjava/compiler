@@ -23,7 +23,7 @@ public class USBLogWriter extends Thread {
 				if(readed != null){
 					out.write(readed);
 				}
-			Thread.sleep(150);
+			Thread.sleep(50);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
