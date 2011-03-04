@@ -218,9 +218,26 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					}
 				}
 			}
+//			if (res.join != null) {
+//				if (dbg) StdStreams.out.println("\tjoin != null");
+//				SSAValue val = res.join;
+//				while (val.join != null) val = val.join;
+//				if (dbg) StdStreams.out.println("\tres.end = "+res.end + "val.end="+val.end);
+//				int start = ((PhiFunction)instrs[val.n]).start;
+//				if (res.end > val.end) val.end = res.end;
+//				if (res.n < start) ((PhiFunction)instrs[val.n]).start = res.n;
+//			}
+		}
+		// 2nd run, set ends
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+			SSAValue res = instr.result;
+//			if (dbg) StdStreams.out.println("instr : " + res.n);
 			if (res.join != null) {
+				if (dbg) StdStreams.out.println("\tjoin != null");
 				SSAValue val = res.join;
 				while (val.join != null) val = val.join;
+				if (dbg) StdStreams.out.println("\tres.end = "+res.end + "val.end="+val.end);
 				int start = ((PhiFunction)instrs[val.n]).start;
 				if (res.end > val.end) val.end = res.end;
 				if (res.n < start) ((PhiFunction)instrs[val.n]).start = res.n;
@@ -250,6 +267,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				// call to inline method is omitted
 				for (int k = 0; k < endNo; k++) {
 					SSAInstruction instr1 = instrs[k];
+//					if (MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots]) 
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 //					StdStreams.out.printf("accAndPropFlags = 0x%1$x\n", ((Call)instrs[k]).item.accAndPropFlags);
@@ -318,9 +336,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			int nofAuxReg = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
 			if (nofAuxReg == 4 && res.type == tLong) nofAuxReg = 2;
 			else if ((nofAuxReg == 5 && res.type == tLong)
-					|| (nofAuxReg == 6 && (res.type == tFloat)||(res.type == tDouble))) nofAuxReg = 1;
+					|| ((nofAuxReg == 6 && (res.type == tFloat || res.type == tDouble)))) nofAuxReg = 1;
 			else if (nofAuxReg == 7) {
-				if (res.type == tFloat && res.type == tFloat) nofAuxReg = 1;
+				if (res.type == tFloat || res.type == tDouble) nofAuxReg = 1;
 				else nofAuxReg = 0;
 			}
 			if (nofAuxReg == 1)
@@ -383,7 +401,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 			} else if (instr.ssaOpcode == sCloadConst) {
 				// check if operand is immediate
-// call.item.accAndPropFlags & sysMethCodeMask) == idGET2
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {
@@ -430,16 +447,21 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			}
 			if (dbg) StdStreams.out.println("\treg = " + res.reg);
 
-			if (res.regAux1 != -1) freeReg(gpr, res.regAux1);	//StdStreams.out.println("freeing aux reg1");
-			if (res.regAux2 != -1) freeReg(gpr, res.regAux2);	// StdStreams.out.println("freeing aux reg2")
+			if (res.regAux1 != -1) {
+				freeReg(gpr, res.regAux1);	StdStreams.out.println("\tfreeing aux reg1");
+			}
+			if (res.regAux2 != -1) {
+				freeReg(gpr, res.regAux2);	StdStreams.out.println("\tfreeing aux reg2");
+			}
 
 			// free registers of operands if end of live range reached 
 			SSAValue[] opds = instr.getOperands();
 			if (opds != null) {
 				for (SSAValue opd : opds) {
+//					if (opd.owner.ssaOpcode == sCloadLocal) continue;
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
-//						StdStreams.out.println("freeing operands at end of live range");
+						StdStreams.out.println("\tfree operand regs at end of live range");
 						if (opd.type == tLong) {
 							freeReg(gpr, opd.regLong);
 							freeReg(gpr, opd.reg);
@@ -455,7 +477,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			for (int k = 0; k < res.n; k++) {
 				SSAInstruction instr1 = instrs[k];
 				if (instr1.ssaOpcode == sCPhiFunc && instr1.result.end == res.n && instr1.result.join == null) {
-					if (dbg) StdStreams.out.println("free reg for phi function in this node at " + k);
+					if (dbg) StdStreams.out.println("\tfree reg for phi function in this node at " + k);
 					if (instr1.result.reg > -1) freeReg(gpr, instr1.result.reg);
 				}
 			}
@@ -465,7 +487,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAValue val = res;
 				while (val.join != null) val = val.join;
 				if (val.end == i && val.reg > -1) {	
-//					StdStreams.out.println("freeing result at end of live range");
+					StdStreams.out.println("\tfree result reg at end of live range");
 					if (val.type == tLong) {
 						freeReg(gpr, val.regLong);
 						freeReg(gpr, val.reg);

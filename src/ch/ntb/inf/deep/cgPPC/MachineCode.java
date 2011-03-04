@@ -11,7 +11,7 @@ import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -315,7 +315,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					case tLong:	
 						StdConstant constant = (StdConstant)res.constant;
 						long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-//						StdStreams.out.println("sdfsdge " + immValLong);
 						loadConstant((int)(immValLong >> 32), res.regLong);
 						loadConstant((int)immValLong, dReg);
 						break;	
@@ -1085,7 +1084,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					loadConstantAndFixup(res.regAux1, item);
 					createIrDrAd(ppcLfd, dReg, res.regAux1, 0);
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-					createIrDrArB(ppcFsub, dReg+5, 0, dReg);
+					createIrDrArB(ppcFsub, dReg, 0, dReg);
 					break;
 				default:
 					assert false : "cg: wrong type";
