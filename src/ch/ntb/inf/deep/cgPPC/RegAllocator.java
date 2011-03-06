@@ -99,21 +99,23 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	// Resolve phi functions 
 	private static void resolvePhiFunctions() {
 		if (dbg) StdStreams.out.println("resolving phi functions");
+		// first run, determine which deleted phi-functions are still used further down
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 //			if (dbg) StdStreams.out.println("\t resolve at " + instr.result.n);
 			SSAValue[] opds = instr.getOperands();
-			if (instr.ssaOpcode != sCPhiFunc && opds != null) {
+			if (opds != null) {
 				for (SSAValue opd : opds) {
-//					if (opd.n < 0) continue;
-					SSAInstruction opdInstr = instrs[opd.n];
-					if (opdInstr.ssaOpcode == sCPhiFunc) {	// iterativ machen!!!
+					SSAInstruction opdInstr = opd.owner;
+					if (opdInstr.ssaOpcode == sCPhiFunc) {	// make iterativ
+//						if (dbg) StdStreams.out.println("\t\topd is phi-function at " + opdInstr.result.n);
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted) {
+//							if (dbg) StdStreams.out.println("\t\tphi-function is deleted");
 							phi.used = true;
 							SSAValue delPhiOpd = phi.getOperands()[0];
-							opdInstr = instrs[delPhiOpd.n];
-							if (opdInstr.ssaOpcode == sCPhiFunc) {	// iterativ machen!!!
+							opdInstr = delPhiOpd.owner;
+							if (opdInstr.ssaOpcode == sCPhiFunc) {	
 								phi = (PhiFunction)opdInstr;
 								if (phi.deleted) {
 									phi.used = true;
@@ -124,6 +126,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}	
 			} 
 		}
+		// 2nd run, set all joins
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			if (instr.ssaOpcode == sCPhiFunc) {
@@ -156,6 +159,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				//					if (opds[0].type != tPhiFunc) res.type = opds[0].type;
 			} 
 		}
+		// 3rd run, all simplify joins
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
@@ -163,22 +167,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (res.join.join != null) res.join = res.join.join;
 //				if (res.join.join != null && instrs[res.join.n].ssaOpcode != sCregMove) res.join = res.join.join;
 			} 
-		}
-/*else {
-				SSAValue[] opds = instr.getOperands();
-				if (opds != null) {
-					for (SSAValue opd : opds) {
-						if (instrs[opd.n].ssaOpcode == sCPhiFunc) {
-							PhiFunction phi = (PhiFunction)instrs[opd.n];
-							if (phi.deleted) {
-								SSAValue val = phi.getOperands()[0];
-								val.join = phi.result;
-							}
-						}
-					}
-				}
-			}*/
-		
+		}		
 	}
 
 	// computes the live ranges of all SSAValues 
@@ -448,10 +437,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (dbg) StdStreams.out.println("\treg = " + res.reg);
 
 			if (res.regAux1 != -1) {
-				freeReg(gpr, res.regAux1);	StdStreams.out.println("\tfreeing aux reg1");
+				freeReg(gpr, res.regAux1);	if (dbg) StdStreams.out.println("\tfreeing aux reg1");
 			}
 			if (res.regAux2 != -1) {
-				freeReg(gpr, res.regAux2);	StdStreams.out.println("\tfreeing aux reg2");
+				freeReg(gpr, res.regAux2);	if (dbg) StdStreams.out.println("\tfreeing aux reg2");
 			}
 
 			// free registers of operands if end of live range reached 
@@ -461,7 +450,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 //					if (opd.owner.ssaOpcode == sCloadLocal) continue;
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
-						StdStreams.out.println("\tfree operand regs at end of live range");
 						if (opd.type == tLong) {
 							freeReg(gpr, opd.regLong);
 							freeReg(gpr, opd.reg);
@@ -487,7 +475,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAValue val = res;
 				while (val.join != null) val = val.join;
 				if (val.end == i && val.reg > -1) {	
-					StdStreams.out.println("\tfree result reg at end of live range");
 					if (val.type == tLong) {
 						freeReg(gpr, val.regLong);
 						freeReg(gpr, val.reg);

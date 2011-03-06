@@ -23,9 +23,10 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	
 	private static int idGET1, idGET2, idGET4, idGET8;
 	private static int idPUT1, idPUT2, idPUT4, idPUT8;
-	private static int idGETBIT, idASM, idHALT, idADR_OF_METHOD;
+	private static int idBIT, idASM, idHALT, idADR_OF_METHOD;
 	static int idGETGPR, idGETFPR, idGETSPR;
 	static int idPUTGPR, idPUTFPR, idPUTSPR;
+	static int idDoubleToBits, idBitsToDouble;
 	
 	private static Method stringNewstringMethod;
 	private static Method heapNewstringMethod;
@@ -1274,20 +1275,28 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrDrAd(ppcLha, res.reg, opds[0].reg, 0);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET4) { // GET4
 						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET8) { // GET8
+						createIrDrAd(ppcLwz, res.regLong, opds[0].reg, 0);
+						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 4);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT1) { // PUT1
 						createIrSrAd(ppcStb, opds[1].reg, opds[0].reg, 0);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT2) { // PUT2
 						createIrSrAd(ppcSth, opds[1].reg, opds[0].reg, 0);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT4) { // PUT4
 						createIrSrAd(ppcStw, opds[1].reg, opds[0].reg, 0);
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT8) { // PUT8
+						createIrSrAd(ppcStw, opds[1].regLong, opds[0].reg, 0);
+						createIrSrAd(ppcStw, opds[1].reg, opds[0].reg, 4);
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idBIT) { // BIT
+						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
+						createIrDrAsimm(ppcSubfic, 0, opds[1].reg, 32);
+						createIrArSrBMBME(ppcRlwnm, res.reg, res.reg, 0, 31, 31);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETGPR) { // GETGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
 						createIrArSrB(ppcOr, res.reg, gpr, gpr);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETFPR) { // GETFPR
 						int fpr = ((StdConstant)opds[0].constant).valueH;
-						createIrDrAd(ppcStfd, fpr, stackPtr, tempStorageOffset);
-						createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset);
-						createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset + 4);
+						createIrDrB(ppcFmr, res.reg, fpr);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETSPR) { // GETSPR
 						int spr = ((StdConstant)opds[0].constant).valueH;
 						createIrSspr(ppcMfspr, spr, res.reg);
@@ -1295,7 +1304,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						int gpr = ((StdConstant)opds[0].constant).valueH;
 						createIrArSrB(ppcOr, gpr, opds[1].reg, opds[1].reg);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUTFPR) { // PUTFPR
-						createIrDrB(ppcFmr, opds[1].reg, opds[0].reg);
+						int fpr = ((StdConstant)opds[0].constant).valueH;
+						createIrDrB(ppcFmr, fpr, opds[1].reg);
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUTSPR) { // PUTSPR
 						createIrArSrB(ppcOr, 0, opds[1].reg, opds[1].reg);
 						int spr = ((StdConstant)opds[0].constant).valueH;
@@ -1320,6 +1330,14 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						Class clazz = (Class)(Type.classList.getItemByName(className.toString()));
 						Item method = clazz.methods.getItemByName(methName.toString());
 						loadConstantAndFixup(res.reg, method);	// addr of method
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idDoubleToBits) { // DoubleToBits
+						createIrSrAd(ppcStfd, opds[0].reg, stackPtr, tempStorageOffset);
+						createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset);
+						createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset + 4);
+					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idBitsToDouble) { // BitsToDouble
+						createIrSrAd(ppcStw, opds[0].regLong, stackPtr, tempStorageOffset);
+						createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset+4);
+						createIrDrAd(ppcLfd, res.reg, stackPtr, tempStorageOffset);
 					}
 				} else {
 					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
@@ -2094,7 +2112,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		idGET2 = 0x006;
 		idGET4 = 0x007;
 		idGET8 = 0x008;
-		idGETBIT = 0x009;
+		idBIT = 0x009;
 		idASM = 0x00a;
 		idGETGPR = 0x00b;
 		idGETFPR = 0x00c;
@@ -2104,6 +2122,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		idPUTSPR = 0x010;
 		idADR_OF_METHOD = 0x011;
 		idHALT = 0x012;
+		idDoubleToBits = 0x106;
+		idBitsToDouble = 0x107;
 		objectSize = Type.wktObject.getObjectSize();
 		stringSize = Type.wktString.getObjectSize();
 		int2floatConst = Linker.addGlobalConstant((double)(0x10000000000000L + 0x80000000L));
