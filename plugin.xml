@@ -223,7 +223,6 @@
             label="Deep ActionSet"
             visible="true">
          <menu
-               icon="icons/full/obj16/deep.gif"
                id="ch.ntb.inf.deep.eclipse.workbenchMenu"
                label="deep"
                path="additions">
@@ -248,11 +247,11 @@
                class="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
                icon="icons/full/obj16/Fairytale_player_pause.gif"
                id="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
-               label="Suspend USB"
+               label="Suspend Target"
                menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
                style="push"
                toolbarPath="Normal/additions"
-               tooltip="suspen the target">
+               tooltip="suspend the target">
          </action>
          <action
                class="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
