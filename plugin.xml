@@ -21,7 +21,7 @@
          point="org.eclipse.core.resources.natures">
       <runtime>
          <run
-               class="ch.ntb.inf.deep.nature.DeepNature">
+               class="ch.ntb.inf.deep.eclipse.nature.DeepNature">
          </run>
       </runtime>
       <requires-nature
@@ -214,6 +214,57 @@
                mode="run">
          </description>
       </shortcut>
+   </extension>
+   <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            description="This is a action set from the deep plugin"
+            id="ch.ntb.inf.deep.eclipse.workbenchActionSet"
+            label="Deep ActionSet"
+            visible="true">
+         <menu
+               icon="icons/full/obj16/deep.gif"
+               id="ch.ntb.inf.deep.eclipse.workbenchMenu"
+               label="deep"
+               path="additions">
+            <groupMarker
+                  name="content">
+            </groupMarker>
+            <separator
+                  name="additions">
+            </separator>
+         </menu>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction"
+               icon="icons/full/obj16/Fairytale_undo.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction"
+               label="Reopen USB"
+               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="reopen the USB connection">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
+               icon="icons/full/obj16/Fairytale_player_pause.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
+               label="Suspend USB"
+               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="suspen the target">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
+               icon="icons/full/obj16/Fairytale_player_play.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
+               label="Resume Target"
+               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="resume the target">
+         </action>
+      </actionSet>
    </extension>
 
 </plugin>

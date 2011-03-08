@@ -10,7 +10,7 @@
  *	   NTB - initial implementation
  *	   Roger Millischer - initial implementation
  */
-package ch.ntb.inf.deep.nature;
+package ch.ntb.inf.deep.eclipse.nature;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectNature;
