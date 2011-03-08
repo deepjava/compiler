@@ -182,14 +182,16 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) {
 			Downloader bdi = UsbMpc555Loader.getInstance();
 			try {
-				if(bdi.isConnected()){
+				if(bdi != null){
 					bdi.resetTarget();
 					bdi.init();
 					// System.out.println("++++++++ Start Target!+++++++++");
 					bdi.startTarget();
+				}else{
+					reporter.error("Target not found!(USB connection failed)");
 				}
 			} catch (DownloaderException e) {
-				e.printStackTrace();
+				reporter.error("A error occours while downloading");
 			}
 		} else {
 			out.println("No target image to load");
