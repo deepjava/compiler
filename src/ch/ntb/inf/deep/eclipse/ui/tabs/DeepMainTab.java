@@ -139,7 +139,7 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		
 		ram = new Button(group3, SWT.RADIO);
 		ram.setText("Boot from ram");
-		ram.setSelection(true);
+		ram.setSelection(false);
 		ram.addSelectionListener(selectionListener);
 		ram.setLayoutData(gridData);
 		flash = new Button(group3, SWT.RADIO);
@@ -204,6 +204,17 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 				fProgramText.setText(program);
 			}
 			locationPath = configuration.getAttribute(	DeepPlugin.ATTR_DEEP_LOCATION, "");
+			String targetConf = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, BOOT_FROM_RAM);
+			if(targetConf.endsWith(BOOT_FROM_RAM)){
+				ram.setSelection(true);
+			}else if(targetConf.equals(BOOT_FROM_FLASH)){
+				flash.setSelection(true);
+			}else{
+				other.setSelection(true);
+				targetConfig.setEnabled(true);
+				targetConfig.setText(targetConf);
+			}
+		
 		} catch (CoreException e) {
 			setErrorMessage(e.getMessage());
 		}
