@@ -28,10 +28,12 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 		UsbMpc555Loader bdi = UsbMpc555Loader.getInstance();
 		bdi.closeConnection();
 		try {
+			Thread.sleep(500);//Give OS time 
 			bdi.openConnection();
 			StdStreams.out.println("Device succesfully reopened");
 		} catch (DownloaderException e) {
 			ErrorReporter.reporter.error("Reopen failed");
+		} catch (InterruptedException e) {
 		}
 	}
 
