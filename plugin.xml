@@ -264,6 +264,62 @@
                tooltip="resume the target">
          </action>
       </actionSet>
+      <actionSet
+            description="Prints the Memory Map"
+            id="ch.ntb.inf.deep.eclipse.workbenchActionSet.printClassList"
+            label="Deep ClasslistSet"
+            visible="true">
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
+               icon="icons/full/obj16/print.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.PrintClasslistAction"
+               label="Print Memory Map"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="prints the Memory Map">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
+               icon="icons/full/obj16/constBlock.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintConstantBlock"
+               label="Print Constantblock"
+               state="false"
+               style="toggle"
+               toolbarPath="Normal/additions"
+               tooltip="enable Constantblock printing">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
+               disabledIcon="icons/full/dlcl16/deepInactiv.gif"
+               icon="icons/full/obj16/constField.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintConstFields"
+               label="Print Constant Fields"
+               state="false"
+               style="toggle"
+               toolbarPath="Normal/additions"
+               tooltip="enalble constant field printing">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
+               icon="icons/full/obj16/field.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintFields"
+               label="Print Fields"
+               state="false"
+               style="toggle"
+               toolbarPath="Normal/additions"
+               tooltip="enable field printing">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
+               icon="icons/full/obj16/method.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintMethod"
+               label="Print Methods"
+               state="false"
+               style="toggle"
+               toolbarPath="Normal/additions"
+               tooltip="enable method printing">
+         </action>
+      </actionSet>
    </extension>
 
 </plugin>
