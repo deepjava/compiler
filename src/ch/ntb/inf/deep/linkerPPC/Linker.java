@@ -1191,6 +1191,115 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		vrb.println("\n[LINKER] PRINT: End of class list\n");
 	}
 
+	public static void printClassList(boolean printMethods, boolean printFields, boolean printConstantFields, boolean printConstantBlock) {
+		Method m;
+		Item f;
+		int cc = 0, mc = 0, fc = 0;
+		Item item = Type.classList;
+		while(item != null) {
+			if(item instanceof Class){
+				Class c = (Class)item;
+				vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
+				vrb.println("    Number of class methods:     " + c.nofClassMethods);
+				vrb.println("    Number of instance methods:  " + c.nofInstMethods);
+				vrb.println("    Number of class fields:      " + c.nofClassFields);
+				vrb.println("    Number of instance fields:   " + c.nofInstFields);
+				vrb.println("    Number of interfaces:        " + c.nofInterfaces);
+				vrb.println("    Number of base classes:      " + c.nofBaseClasses);
+				vrb.println("    Number of references:        " + c.nofClassRefs);
+				vrb.println("    Machine code size:           " + c.machineCodeSize + " byte");
+				vrb.println("    Constant block size:         " + c.constantBlockSize + " byte");
+				vrb.println("    Class fields size:           " + c.classFieldsSize + " byte");
+				vrb.println("    Code offset:                 0x" + Integer.toHexString(c.codeOffset));
+				vrb.println("    Var offset:                  0x" + Integer.toHexString(c.varOffset));
+				vrb.println("    Const offset:                0x" + Integer.toHexString(c.constOffset));
+				vrb.println("    Code segment:                " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
+				vrb.println("    Var segment:                 " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
+				vrb.println("    Const segment:               " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
+				vrb.println("    Class descriptor address:    0x" + Integer.toHexString(c.address));
+				vrb.println("    Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
+				vrb.println("    Code  bade address:          0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
+				vrb.println("    Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
+				
+				if(printMethods) {
+					vrb.println("    Methods:");
+					m = (Method)c.methods;
+					mc = 0;
+					if(m == null) vrb.println("      No methods in this class");
+					else {
+						while(m != null) {
+							vrb.println("      > Method #" + mc++ + ": " + m.name +  m.methDescriptor);
+							vrb.println("        Flags:     0x" + Integer.toHexString(m.accAndPropFlags));
+							if((m.accAndPropFlags & ((1 << dpfNew) | (1 << dpfUnsafe) | (1 << dpfSysPrimitive) | (1 << dpfSynthetic))) != 0) {	
+								if((m.accAndPropFlags & (1 << dpfNew)) != 0) {
+									vrb.println("        Special:   New");
+								}
+								if((m.accAndPropFlags & (1 << dpfUnsafe)) != 0) {
+									vrb.println("        Special:   Unsafe");
+								}
+								if((m.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) {
+									vrb.println("        Special:   System primitive");
+								}
+								if((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+									vrb.println("        Special:   Synthetic");
+								}
+								vrb.println("        Static:    yes");
+							}
+							else {
+								if((m.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static:    yes"); else vrb.println("        Static:    no");
+							}
+							vrb.println("        address:   0x" + Integer.toHexString(m.address));
+							vrb.println("        offset:    0x" + Integer.toHexString(m.offset));
+							vrb.println("        index:     0x" + Integer.toHexString(m.index));
+							if(m.machineCode != null)
+								vrb.println("        Code size: 0x" + Integer.toHexString(m.machineCode.iCount * 4) + " (" + m.machineCode.iCount * 4 +" byte)");
+							m = (Method)m.next;
+						}
+					}
+				}
+				if(printFields) {
+					vrb.println("    Field list:");
+					f = c.instFields;
+					fc = 0;
+					if(f == null) vrb.println("      No fields in this class");
+					else {
+						while(f != null) {
+							if(printConstantFields || (f.accAndPropFlags & (1 << dpfConst)) == 0) { // printConstantsField || !constant
+								vrb.println("      > Field #" + fc++ + ": " + f.name);
+								vrb.println("        Type:     " + f.type.name);
+								vrb.println("        Flags:    0x" + Integer.toHexString(f.accAndPropFlags));
+								if((f.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static:   yes"); else vrb.println("        Static:   no");
+								if((f.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("        Constant: yes"); else vrb.println("        Constant: no");
+								vrb.println("        address:  0x" + Integer.toHexString(f.address));
+								vrb.println("        offset:   0x" + Integer.toHexString(f.offset));
+								vrb.println("        index:    0x" + Integer.toHexString(f.index));
+							}
+							f = f.next;
+						}
+					}
+				}
+				
+				if(printConstantBlock) {
+					vrb.println("    Constant block:");
+					c.printConstantBlock(2);
+				}
+				vrb.println("  ----------------------------------------------------------------------");
+			}
+			
+/*			else {
+				Array a = (Array)item;
+				vrb.println("  Array: " + a.name);
+				vrb.println("    Type descriptor:");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[0]); vrb.println("] extension level");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[1]); vrb.println("] size of array element in byte");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[2]); vrb.println("] not used");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] base class address");
+			}*/
+			
+			item = item.next;
+		}
+	}
+	
 	public static void printGlobalConstantTable() {
 		vrb.println("\n[LINKER] PRINT: Global constants\n");
 		
