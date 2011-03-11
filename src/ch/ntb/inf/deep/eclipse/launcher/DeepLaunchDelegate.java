@@ -35,7 +35,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 			PrintStream out = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_INFORMATION));
 			PrintStream err = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_ERROR));
 			StdStreams.vrb = out;
-			StdStreams.log = out;
+			//StdStreams.log = out;
 			StdStreams.out = out;
 			StdStreams.err = err;
 		}
