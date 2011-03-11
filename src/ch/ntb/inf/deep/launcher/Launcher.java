@@ -40,29 +40,8 @@ public class Launcher implements ICclassFileConsts {
 		try {
 			// 2) Read requiered classes
 			if (reporter.nofErrors <= 0)
-				Class.buildSystem(Configuration.getRootClassNames(),
-						Configuration.getSearchPaths(), Configuration
-								.getSystemPrimitives(), attributes);
-
-//			Type t = Type.classList;
-//            while (t != null) {
-//                  if (t.next.name.equals(HString.getHString("java/lang/String"))) {
-//                       Item strClass = t.next;
-//                       t.next = t.next.next;
-//                       strClass.next = Type.classList;
-//                       Type.classList = (Type)strClass;
-//                       break;
-//                  }
-//                  t = (Type)t.next;
-//            }
-//            t = Type.classList;
-//            System.out.println("class list ++++++++++++++++");
-//            while (t != null) {
-//                  System.out.println(t.name);
-//                  t = (Type)t.next;
-//            }
-
-			
+				Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
+	
 			
 			// 2a) Initialize linker
 			if (reporter.nofErrors <= 0) {
@@ -74,15 +53,17 @@ public class Launcher implements ICclassFileConsts {
 			clearVisitedFlagsForAllClasses();
 			Item item = Type.classList;
 			Method method;
+			out.println("Loaded classes");
 			while (item != null && reporter.nofErrors <= 0) {
 				if (item instanceof Class) {
+					
 					Class clazz = (Class) item;
 
 					// 3.1) Linker: calculate offsets
 					if (reporter.nofErrors <= 0)
 						Linker.prepareConstantBlock(clazz);
 
-//					StdStreams.vrb.println(">>>> Class: " + clazz.name + ", accAndPropFlags: " + Integer.toHexString(clazz.accAndPropFlags));
+					out.printf("Class: %1$s\n", clazz.name);
 					
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
@@ -112,6 +93,7 @@ public class Launcher implements ICclassFileConsts {
 				}
 				item = item.next;
 			}
+			out.println();
 
 			// 4) Linker: freeze memory map
 			if (reporter.nofErrors <= 0) {

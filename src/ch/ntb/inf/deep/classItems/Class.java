@@ -1009,7 +1009,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
 			String sname = rootClassNames[rc];
-			vrb.println("\n\nRootClass["+rc +"] = "+ sname);
+			if(verbose) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
 			if(errRep.nofErrors > 0) break;
 		}
