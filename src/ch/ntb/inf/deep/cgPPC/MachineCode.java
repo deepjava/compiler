@@ -1373,7 +1373,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					} else {	// invokevirtual 
 //						StdStreams.out.println("invokevirtual");
 						refReg = opds[0].reg;
-						offset = Linker.cdInterface0AddrOffset + ((Method)call.item).owner.nofInterfaces * Linker.slotSize;
+//						offset = Linker.cdInterface0AddrOffset + ((Method)call.item).owner.nofInterfaces * Linker.slotSize; // TODO @ Urs implement this
+						offset = Linker.cdInterface0AddrOffset;
 						offset += call.item.index * Linker.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);

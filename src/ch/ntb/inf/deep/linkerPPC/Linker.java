@@ -49,7 +49,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 	public static final int cdClassNameAddrOffset = 1 * 4;
 	public static final int cdBaseClass0Offset = 2 * 4;
 	public static final int cdConstantSize = 3 * 4;
-	public static final int cblkConstantSize = 8 * 4 + cdConstantSize;
+	public static final int cblkConstantSize = 8 * 4;
 	public static final int cdSizeForArrays = 4 * 4;
 	private static int arrayOffsetCounter = 0;
 	
@@ -156,16 +156,18 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		
 		
 		// TODO move this to class file reader!!!
-		Class baseClass = (Class)clazz.type;
-		while(baseClass != null) {
-			clazz.nofInterfaces += baseClass.nofInterfaces;
-			baseClass = (Class)baseClass.type;
-		}
+//		Class baseClass = (Class)clazz.type;
+//		while(baseClass != null) {
+//			clazz.nofInterfaces += baseClass.nofInterfaces;
+//			baseClass = (Class)baseClass.type;
+//		}
 		
-		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces) * 4 + cdInterface0AddrOffset;
+//		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces) * 4 + cdInterface0AddrOffset;
+		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength) * 4 + cdInterface0AddrOffset;
 
 		// constant block size
-		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
+//		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
+		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofBaseClasses) * 4;
 		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nofClassRefs + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
 		
 		if(dbg) vrb.println("\n[LINKER] END: calculating offsets and indexes for class \"" + clazz.name +"\"\n");
@@ -532,8 +534,9 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				if(dbg) vrb.println("      Copying methods from base class: " + baseClass.name);
 				if(baseClass.constantBlock != null && baseClass.constantBlock.length > 0) {
 					for(int x = 0; x < baseClass.methTabLength; x++) {
-						if(dbg) vrb.println("        #" + x + ": 0x" + Integer.toHexString(baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x]));
-						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x];
+						if(dbg) vrb.println("        #" + x + ": 0x" + Integer.toHexString(baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - x]));
+		//				clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x];
+						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - x];
 						imc++;
 					}
 //					if(dbg) clazz.printConstantBlock();
@@ -545,7 +548,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				while(m != null) {
 					if((m.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (m.accAndPropFlags & (1 << apfStatic)) == 0) { // not system primitive and not static
 						if(dbg) vrb.println("        <" + m.index + "> 0x" + Integer.toHexString(m.address));
-						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - m.index] = m.address;
+//						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - m.index] = m.address;
+						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - m.index] = m.address;
 						imc++;
 					}
 					m = (Method)m.next;
@@ -554,19 +558,19 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			}
 			
 			// 3b) Insert interfaces
-			if(clazz.nofInterfaces > 0) {
-				if(dbg) vrb.println("  3b) Inserting interfaces");
-				Class c = clazz;
-				int count = 0;
-				while(c != null && count <= clazz.nofInterfaces) {
-					if(c.interfaces != null) {
-						for(int i = 0; i < c.interfaces.length; i++) {
-							clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - count] = 0x33333333; // TODO set the correct value here...
-						}
-					}
-					c = (Class)c.type;
-				}
-			}
+//			if(clazz.nofInterfaces > 0) {
+//				if(dbg) vrb.println("  3b) Inserting interfaces");
+//				Class c = clazz;
+//				int count = 0;
+//				while(c != null && count <= clazz.nofInterfaces) {
+//					if(c.interfaces != null) {
+//						for(int i = 0; i < c.interfaces.length; i++) {
+//							clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - count] = 0x33333333; // TODO set the correct value here...
+//						}
+//					}
+//					c = (Class)c.type;
+//				}
+//			}
 			
 			// 3c) Insert extension level
 			if(dbg) vrb.println("  3c) Inserting extension level");
@@ -1218,7 +1222,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Const segment:               " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
 				vrb.println("    Class descriptor address:    0x" + Integer.toHexString(c.address));
 				vrb.println("    Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
-				vrb.println("    Code  bade address:          0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
+				vrb.println("    Code base address:           0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
 				vrb.println("    Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
 				
 				if(printMethods) {
