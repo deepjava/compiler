@@ -42,12 +42,13 @@ import org.eclipse.ui.dialogs.PropertyPage;
 import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 
 public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage {
 	private Combo processor, board, rts;
 	private Button check, browse;
 	private Text path;
-	private final String defaultPath = "I:/deep/lib";
+	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
 	private String lastChoise = "";
 	private String oldChoise = "";
 	private IEclipsePreferences pref;

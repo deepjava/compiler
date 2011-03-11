@@ -321,5 +321,19 @@
          </action>
       </actionSet>
    </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferencePage"
+            id="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferencePage"
+            name="Deep Preferences">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceInitializer">
+      </initializer>
+   </extension>
 
 </plugin>

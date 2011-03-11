@@ -27,12 +27,15 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
+
 class WizPage1 extends WizardPage {
 	
 	private Combo processor, board, rts;
 	private Button check, browse;
 	private Text path;
-	private final String defaultPath = "I:/deep/lib";
+	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
 	private String lastChoise = "";
 	
 	private SelectionAdapter selectionListener = new SelectionAdapter() {
