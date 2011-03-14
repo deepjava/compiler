@@ -332,7 +332,7 @@
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceInitializer">
+            class="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferenceInitializer">
       </initializer>
    </extension>
 

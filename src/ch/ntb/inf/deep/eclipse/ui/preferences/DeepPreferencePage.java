@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.eclipse.ui.preferences;
 
+import org.eclipse.core.internal.runtime.Activator;
 import org.eclipse.jface.preference.*;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;
@@ -20,13 +21,10 @@ import ch.ntb.inf.deep.eclipse.DeepPlugin;
  */
 
 public class DeepPreferencePage
-	extends FieldEditorPreferencePage
-	implements IWorkbenchPreferencePage {
+	extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
 	public DeepPreferencePage() {
 		super(GRID);
-		setPreferenceStore(DeepPlugin.getDefault().getPreferenceStore());
-		setDescription("General setting for the deep plugin ");
 	}
 	
 	/**
@@ -44,6 +42,8 @@ public class DeepPreferencePage
 	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
 	 */
 	public void init(IWorkbench workbench) {
+		setPreferenceStore(DeepPlugin.getDefault().getPreferenceStore());
+		setDescription("General setting for the deep plugin ");
 	}
 	
 }

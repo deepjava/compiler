@@ -9,23 +9,23 @@ import java.util.ResourceBundle;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Plugin;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 
-public class DeepPlugin extends Plugin {
+public class DeepPlugin extends AbstractUIPlugin {
 	//The shared instance.
 	private static DeepPlugin plugin;
 	//Resource bundle.
 	private ResourceBundle resourceBundle;
-	// default Lib Path
-	private static final String LIB_PATH = "I:\\deep\\lib";
+	/**
+	 *  default Lib Path
+	 */
+	public static final String LIB_PATH = "I:\\deep\\lib";
 	
 	/**
 	 * Unique identifier for the deep model (value 
@@ -74,11 +74,6 @@ public class DeepPlugin extends Plugin {
 	public DeepPlugin() {
 		super();
 		plugin = this;
-		getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_LIBRARY_PATH, LIB_PATH);
-		String defLibPath = getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-		if(defLibPath.equals("")){
-			getPreferenceStore().setToDefault(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-		}
 	}
 
 	/**
@@ -166,8 +161,4 @@ public class DeepPlugin extends Plugin {
               ImageDescriptor.createFromURL(imageFileUrl).createImage();
     }
 
-	public IPreferenceStore getPreferenceStore() {
-		return PlatformUI.getPreferenceStore();
-	
-	}
 }
