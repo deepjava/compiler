@@ -2677,10 +2677,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		do {
 			next();
 			if (tempList == null) {
-				tempList = HString.getHString(readString());
+				String temp = readString().replace('.', '/');
+				tempList = HString.getHString(temp);
 				current = tempList;
 			} else {
-				current.next = HString.getHString(readString());
+				String temp = readString().replace('.', '/');
+				current.next = HString.getHString(temp);
 				current = current.next;
 			}
 		} while (sym == sComma);
