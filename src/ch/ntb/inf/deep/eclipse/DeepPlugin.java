@@ -15,8 +15,6 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
-import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
-
 public class DeepPlugin extends AbstractUIPlugin {
 	//The shared instance.
 	private static DeepPlugin plugin;
