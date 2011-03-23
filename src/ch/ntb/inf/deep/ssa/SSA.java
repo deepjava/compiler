@@ -54,7 +54,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		
 		//if the method have multiple return statements, so check if in the last node all required params are loaded
 		if(returnCount > 1){
-			if(cfg.method.nofParams > 0){
+			int nofParams = cfg.method.nofParams;
+			if(((cfg.method.accAndPropFlags & (1 << apfStatic)) == 0) && ((cfg.method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0)){//method isn't static
+				nofParams++;//implizit this parameter
+			}
+			if(nofParams > 0){
 				//search last node
 				SSANode last = null;
 				for(int i = 0;  i < returnCount; i++){
@@ -64,7 +68,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 						last = returnNodes[i];
 					}					
 				}
-				for(int x = 0; x < cfg.method.nofParams; x++){
+				for(int x = 0; x < nofParams; x++){
 					boolean isNeeded = false;
 					for(int i = 0; i < returnCount && !isNeeded; i++){
 						if(returnNodes[i].exitSet[cfg.method.maxStackSlots + x] != null){
