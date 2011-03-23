@@ -102,16 +102,16 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		// first run, determine which deleted phi-functions are still used further down
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
-//			if (dbg) StdStreams.out.println("\t resolve at " + instr.result.n);
+			if (dbg) StdStreams.out.println("\t resolve at " + instr.result.n);
 			SSAValue[] opds = instr.getOperands();
 			if (opds != null) {
 				for (SSAValue opd : opds) {
 					SSAInstruction opdInstr = opd.owner;
 					if (opdInstr.ssaOpcode == sCPhiFunc) {	// make iterativ
-//						if (dbg) StdStreams.out.println("\t\topd is phi-function at " + opdInstr.result.n);
+						if (dbg) StdStreams.out.println("\t\topd is phi-function at " + opdInstr.result.n);
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted) {
-//							if (dbg) StdStreams.out.println("\t\tphi-function is deleted");
+							if (dbg) StdStreams.out.println("\t\tphi-function is deleted");
 							phi.used = true;
 							SSAValue delPhiOpd = phi.getOperands()[0];
 							opdInstr = delPhiOpd.owner;
@@ -134,10 +134,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				((PhiFunction)instr).start = instr.result.n;		// schon hier???????
 				SSAValue[] opds = instr.getOperands();
 				SSAValue res = instr.result;
-//		if (dbg) StdStreams.out.println("instr : " + res.n);
+				if (dbg) StdStreams.out.println("instr : " + res.n);
 				//					while (res.join != null) res = res.join;
 				for (SSAValue opd : opds) {
-//		if (dbg) StdStreams.out.println("\topd : " + opd.n);
+					if (dbg) StdStreams.out.println("\topd : " + opd.n);
 					if (phi.deleted && opd.n == res.n) continue;
 					if (phi.deleted && !phi.used ) continue;
 					if (phi.deleted && instrs[opd.n].ssaOpcode != sCPhiFunc && opd.n > res.n) continue;
@@ -176,11 +176,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
-			if (dbg) StdStreams.out.println("instr : " + res.n);
+			if (dbg) StdStreams.out.println("instr : " + res.n + " end=" + res.end);
 			int currNo = res.n;
 			res.end = currNo;
 			SSAValue[] opds = instr.getOperands();
 //			if (opds == null) continue;
+			// handle phi-functions separately
+			// set start and end for this phi-function and its join   
 			if (instr.ssaOpcode == sCPhiFunc) {
 				int last = ((PhiFunction)instr).last;
 				if (res.end < last) res.end = last;
@@ -191,45 +193,47 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 				continue;
 			}
+			// set end ???
 			if (opds != null) {
 				for (SSAValue opd : opds) {
-					if (dbg) StdStreams.out.println("\topd : " + opd.n);
-					if (instrs[opd.n].ssaOpcode == sCPhiFunc) {
-						int last = ((PhiFunction)instrs[opd.n]).last;
-						if (!((PhiFunction)instrs[opd.n]).deleted && res.n < last) res.end = last;
+					if (dbg) StdStreams.out.println("\topd : " + opd.n + " end=" + res.end);
+					SSAInstruction opdInstr = opd.owner;
+					if (opdInstr.ssaOpcode == sCPhiFunc) {
+						int last = ((PhiFunction)opdInstr).last;
+//						if (!((PhiFunction)opdInstr).deleted && res.n < last) {
+//							res.end = last; 
+//							if (dbg) StdStreams.out.println("\t\tlast="+last);
+//						}
 						SSAValue val = opd;
 						while (val.join != null) val = val.join;
-						PhiFunction phi = (PhiFunction)instrs[val.n];
-						if (res.end > phi.result.end) phi.result.end = res.end;
+						PhiFunction phi = (PhiFunction)val.owner;
+						if (res.end > phi.result.end) {
+							phi.result.end = res.end; 
+							if (dbg) StdStreams.out.println("\t\tend="+res.end);
+						}
 						if (res.n < phi.start) phi.start = res.n;
 					} else {
 						if (opd.end < currNo) opd.end = currNo;
+						if (opd.owner.ssaOpcode == sCloadLocal) 
+							MachineCode.paramRegEnd[opd.index - maxStackSlots] = currNo;
 					}
 				}
 			}
-//			if (res.join != null) {
-//				if (dbg) StdStreams.out.println("\tjoin != null");
-//				SSAValue val = res.join;
-//				while (val.join != null) val = val.join;
-//				if (dbg) StdStreams.out.println("\tres.end = "+res.end + "val.end="+val.end);
-//				int start = ((PhiFunction)instrs[val.n]).start;
-//				if (res.end > val.end) val.end = res.end;
-//				if (res.n < start) ((PhiFunction)instrs[val.n]).start = res.n;
-//			}
 		}
+		if (dbg) StdStreams.out.println("\tsecond run");
 		// 2nd run, set ends
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
-//			if (dbg) StdStreams.out.println("instr : " + res.n);
+			if (dbg) StdStreams.out.println("instr : " + res.n);
 			if (res.join != null) {
 				if (dbg) StdStreams.out.println("\tjoin != null");
 				SSAValue val = res.join;
 				while (val.join != null) val = val.join;
-				if (dbg) StdStreams.out.println("\tres.end = "+res.end + "val.end="+val.end);
-				int start = ((PhiFunction)instrs[val.n]).start;
+				if (dbg) StdStreams.out.println("\tres.end = "+res.end + ", val.end="+val.end);
+				int start = ((PhiFunction)val.owner).start;
 				if (res.end > val.end) val.end = res.end;
-				if (res.n < start) ((PhiFunction)instrs[val.n]).start = res.n;
+				if (res.n < start) ((PhiFunction)val.owner).start = res.n;
 			}
 		}
 	}
@@ -247,6 +251,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					SSAInstruction instr1 = instrs[k];
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
+//						System.out.println("instr n = "+instr.result.n);
+//						System.out.println("instr start = "+((PhiFunction)instr).start);
+//						System.out.println("instr end = "+instr.result.end);
+//						System.out.println("instr join = "+instr.result.join);
+//						System.out.println("instr last = "+((PhiFunction)instr).last);
 						instr.result.nonVol = true;
 						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
@@ -256,7 +265,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				// call to inline method is omitted
 				for (int k = 0; k < endNo; k++) {
 					SSAInstruction instr1 = instrs[k];
-//					if (MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots]) 
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 //					StdStreams.out.printf("accAndPropFlags = 0x%1$x\n", ((Call)instrs[k]).item.accAndPropFlags);
@@ -389,19 +397,25 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					}
 				}
 			} else if (instr.ssaOpcode == sCloadConst) {
-				// check if operand is immediate
+				// check if operand can be used with immediate instruction format
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {
-					if (((instr1.ssaOpcode == sCadd) && ((res.type & 0x7fffffff) == tInteger))
+					// opd must be used in an instruction with immediate form available
+					// and opd must not be already in a register 
+					// and opd must have join == null
+					if (((instr1.ssaOpcode == sCadd) && ((res.type & 0x7fffffff) == tInteger))	
 							|| ((instr1.ssaOpcode == sCsub) && ((res.type & 0x7fffffff) == tInteger))
 							|| ((instr1.ssaOpcode == sCmul) && ((res.type & 0x7fffffff) == tInteger))
+							// add, sub, mul only with integer
 							|| (instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)
+							// logical operators with integer and long
 							|| (instr1.ssaOpcode == sCshl) && (res == instr1.getOperands()[1])
 							|| (instr1.ssaOpcode == sCshr) && (res == instr1.getOperands()[1])
 							|| (instr1.ssaOpcode == sCushr) && (res == instr1.getOperands()[1])
+							// shift operators only if immediate is shift distance (and not value to be shifted)
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETGPR")))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETFPR")))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETSPR")))
@@ -447,7 +461,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue[] opds = instr.getOperands();
 			if (opds != null) {
 				for (SSAValue opd : opds) {
-//					if (opd.owner.ssaOpcode == sCloadLocal) continue;
+//					if (opd.owner.ssaOpcode == sCloadLocal) {
+//						if (MachineCode.paramRegEnd[opd.index - maxStackSlots] <= i)
+//							freeReg(gpr, opd.reg);
+//						continue;
+//					}
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
 						if (opd.type == tLong) {

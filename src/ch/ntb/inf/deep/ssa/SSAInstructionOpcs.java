@@ -51,18 +51,18 @@ public interface SSAInstructionOpcs {
 			0x00060000 | (1<<ssaApTempStore) + sCconvInt, 	//convert from
 			0x00000000 | (1<<ssaApTempStore) + sCconvLong,
 			0x00000000 | (1<<ssaApTempStore) + sCconvFloat,
-			0x00000000 | (1<<ssaApTempStore) + sCconvDouble,
+			0x00040000 | (1<<ssaApTempStore) + sCconvDouble,
 			
 			0x00000000 + sCcmpl, 		//compare
 			0x00000000 + sCcmpg,
-			0x00000000 + sCinstanceof,
+			0x00010000 + sCinstanceof,
 			
 			0x00000000 + sCalength, 	//arrayLength
 			
 			0x00010000 | (1<<ssaApCall) | (1<<ssaApImmOpd) + sCcall, 		//call
 			0x00010000 | (1<<ssaApCall) + sCnew,
 			0x00000000 + sCreturn, 		
-			0x00000000 + sCthrow, 		
+			0x00010000 + sCthrow, 		
 			0x00000000 | (1<<ssaApImmOpd) + sCbranch, 		
 			
 			0x00000000 + sCregMove, 		

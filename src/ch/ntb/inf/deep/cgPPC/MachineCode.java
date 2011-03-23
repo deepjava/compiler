@@ -54,6 +54,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	static int[] paramType = new int[maxNofParam];
 	static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
 	static int[] paramRegNr = new int[maxNofParam];
+	static int[] paramRegEnd = new int[maxNofParam];
 	
 	// information about into which registers parameters of this method go 
 	private static int nofMoveGPR, nofMoveFPR;
@@ -84,9 +85,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		tempStorage = false;
+		if (dbg) StdStreams.out.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 		for (int i = 0; i < maxNofParam; i++) {
 			paramType[i] = tVoid;
 			paramRegNr[i] = -1;
+			paramRegEnd[i] = 0;
 		}
 
 		// make local copy 
@@ -101,14 +104,15 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		}
 		nofParam = i - maxStackSlots;
 		assert nofParam <= maxNofParam : "method has too many parameters";
+		if (dbg) StdStreams.out.println("nofParam = " + nofParam);
 		
-		if (dbg) StdStreams.out.println("build intervals for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
+		if (dbg) StdStreams.out.println("build intervals");
 //		ssa.cfg.printToLog();
 //		ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
 //		ssa.print(0);
 		
-		if(dbg) StdStreams.out.println("assign registers to parameters, nofParam = " + nofParam);
+		if(dbg) StdStreams.out.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b.next != null) {
 			b = (SSANode) b.next;
@@ -458,7 +462,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
 						createIrDrArB(ppcLhax, res.reg, res.regAux1, res.regAux2);
 						break;
-					case tInteger: case tRef:
+					case tInteger: case tRef: case tAref: case tAchar: case tAfloat: 
+					case tAdouble: case tAbyte: case tAshort: case tAinteger: case tAlong:
 						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
 						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
 						createIrDrArB(ppcLwzx, res.reg, res.regAux1, res.regAux2);
@@ -483,12 +488,6 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 1, 0, 30);
 						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
-						break;
-					case tAref: case tAchar: case tAfloat: case tAdouble:    //TODO @roger evt. remove this whole case
-					case tAbyte: case tAshort: case tAinteger: case tAlong: 
-						createIrArSSHMBME(ppcRlwinm, res.regAux1, indexReg, 2, 0, 29);
-						createIrDrAsimm(ppcAddi, res.regAux2, refReg, objectSize);
-						createIrDrArB(ppcLwzx, res.reg, res.regAux1, res.regAux2);
 						break;
 					default:
 						if(dbg) StdStreams.out.println(res.type & 0x7fffffff);//TODO @roger remove this
@@ -1142,7 +1141,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrArS(ppcExtsh, dReg, 0);
 					break;
 				case tInteger:
-					createIrDrB(ppcFctiw, 0, sReg1);
+					createIrDrB(ppcFctiwz, 0, sReg1);
 					createIrSrAd(ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(ppcLwz, dReg, stackPtr, tempStorageOffset + 4);
 					break;
@@ -1179,13 +1178,44 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createIrArS(ppcExtsh, dReg, 0);
 					break;
 				case tInteger:
-					createIrDrB(ppcFctiw, 0, sReg1);
+					createIrDrB(ppcFctiwz, 0, sReg1);
 					createIrSrAd(ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(ppcLwz, dReg, stackPtr, tempStorageOffset + 4);
 					tempStorage = true;
 					break;
 				case tLong:	
-					// noch machen
+					createIrDrAsimm(ppcAddis, res.regAux1, 0, 0x41f0);	// 2 ^ 32
+					createIrSrAd(ppcStw, res.regAux1, stackPtr, tempStorageOffset);
+					createIrDrAsimm(ppcAddis, res.regAux1, 0, 0);
+					createIrSrAd(ppcStw, res.regAux1, stackPtr, tempStorageOffset+4);
+					createIrDrAd(ppcLfd, 15, stackPtr, tempStorageOffset);
+					
+					createIrDrArB(ppcFdiv, 16, sReg1, 15);
+					
+					createIrDrB(ppcFctiwz, 17, 16);
+					createIrSrAd(ppcStfd, 17, stackPtr, tempStorageOffset);
+					createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset + 4);
+
+					Item item = int2floatConst;	// ref to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+					createIrArSuimm(ppcXoris, 0, res.regLong, 0x8000);
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, 18, res.regAux1, 0);
+					createIrDrAd(ppcLfd, 19, stackPtr, tempStorageOffset);
+					createIrDrArB(ppcFsub, 20, 19, 18);
+					createIrDrArC(ppcFmul, 21, 20, 15);
+
+					createIrDrArB(ppcFsub, 22, sReg1, 21);
+
+					createIrDrB(ppcFctiwz, 23, 22);
+					createIrSrAd(ppcStfd, 23, stackPtr, tempStorageOffset);
+					createIrDrAd(ppcLwz, dReg, stackPtr, tempStorageOffset + 4);
+					
+					createIrDrAsimm(ppcAddicp, res.regLong, res.regLong, 0);
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 2);
+					createIrDrAsimm(ppcAddi, res.regLong, res.regLong, -1);	
 					break;
 				case tFloat:
 					createIrDrB(ppcFrsp, dReg, sReg1);
@@ -1207,7 +1237,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					createICRFrArB(ppcCmpl, CRF1, sReg1, sReg2);
 					instr = node.instructions[i+1];
 					if (instr.ssaOpcode == sCregMove) {i++; instr = node.instructions[i+1]; assert false;}
-					assert instr.ssaOpcode == sCbranch : "sCcompl is not followed by branch instruction";
+					assert instr.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
 					bci = ssa.cfg.code[node.lastBCA] & 0xff;
 					if (bci == bCifeq) {
 						createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0EQ, CRF1EQ);
@@ -1236,7 +1266,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				} else if (type == tFloat  || type == tDouble) {
 					createICRFrArB(ppcFcmpu, CRF1, sReg1, sReg2);
 					instr = node.instructions[i+1];
-					assert instr.ssaOpcode == sCbranch;
+					assert instr.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
 					bci = ssa.cfg.code[node.lastBCA] & 0xff;
 					if (bci == bCifeq) 
 						createIBOBIBD(ppcBc, BOtrue, CRF1EQ, 0);
@@ -1257,6 +1287,18 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				i++;
 				break;
 			case sCinstanceof:
+//				StdStreams.out.print("translating "); instr.print(0);
+//				opds = instr.getOperands();
+//				refReg = opds[0].reg;
+//				MonadicRef ref = (MonadicRef)instr;
+//				Type t = (Type)ref.item;
+//				createItrap(ppcTwi, TOifequal, refReg, 0);
+//				createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
+//				createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -ref.item.offset);
+//				StdStreams.out.println("offset " + t.address);
+//			createIrDrAd(ppcLwz, res.regAux1, res.regAux1, 0);
+//			createIrSspr(ppcMtspr, LR, res.regAux1);
+//				createIrArSrB(ppcOr, instr.result.reg, opds[0].reg, opds[0].reg);
 				break;
 			case sCalength:
 				opds = instr.getOperands();
@@ -1773,7 +1815,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			case sCregMove:
 				opds = instr.getOperands();
 				switch (res.type & 0x7fffffff) {
-				case tInteger:
+				case tInteger: case tRef:
 					createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
 					break;
 				case tLong:
@@ -2078,15 +2120,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 	
 	public void print(){
-//		StdStreams.out.println("Method information for " + ssa.cfg.method.name);
-		Method m = ssa.cfg.method;
-//		StdStreams.out.println("Method has " + m.maxLocals + " locals where " + m.nofParams + " are parameters");
-//		StdStreams.out.println("stackSize = " + stackSize);
-//		StdStreams.out.println("Method uses " + nofNonVolGPR + " GPR and " + nofNonVolFPR + " FPR for locals where " + nofParamGPR + " GPR and " + nofParamFPR + " FPR are for parameters");
-//		StdStreams.out.println();
-		
 		StdStreams.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor);
-
 		for (int i = 0; i < iCount; i++){
 			StdStreams.out.print("\t" + Integer.toHexString(instructions[i]));
 			StdStreams.out.print("\t[0x");

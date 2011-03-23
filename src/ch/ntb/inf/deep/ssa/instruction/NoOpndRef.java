@@ -32,6 +32,7 @@ public class NoOpndRef extends NoOpnd {
 		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
 		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
 		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
+		if (result.regAux1 != -1) StdStreams.vrb.print(", regAux1=" + result.regAux1);
 		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
 		StdStreams.vrb.println();
 	}

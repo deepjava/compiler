@@ -35,7 +35,11 @@ public class MonadicRef extends Monadic {
 		for (int i = 0; i < level*3; i++)StdStreams.vrb.print(" ");
 		StdStreams.vrb.print(result.n + ": ");
 		StdStreams.vrb.print("MonadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
-		if (item != null) StdStreams.vrb.print(" <" + item.name + "(" + item.type.name + ")>");
+		if (item != null) {
+			StdStreams.vrb.print(" <" + item.name);
+			if (item.type != null) StdStreams.vrb.print("(" + item.type.name + ")");
+			StdStreams.vrb.print(">");
+		}
 		if(item instanceof ClassMember) {StdStreams.vrb.print("Owner: "); ((ClassMember)item).printOwner();}
 		StdStreams.vrb.print(" (" + result.typeName() + ")");
 		StdStreams.vrb.print(",   end=" + result.end);
