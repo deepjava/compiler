@@ -109,8 +109,10 @@ public class CFG implements ICjvmInstructionOpcsAndMnemonics {
 					int nofCases = high - low + 1;
 					for (int i = 0; i < nofCases; i++) {
 						int branchOffset = getInt(code, addr + 8 + i * 4);
+						if (dbg) StdStreams.out.println("\t\tbranchOffset = " + branchOffset);
 						split(this, bca, bca + branchOffset);
 					}
+					if (dbg) StdStreams.out.println("\t\tdefaultOffset = " + defaultOffset);
 					split(this, bca, bca + defaultOffset);
 					instrLen = ((high-low) + 1) * 4 + addr + 8 - bca;
 				} else {	// bClookupswitch
@@ -199,7 +201,7 @@ public class CFG implements ICjvmInstructionOpcsAndMnemonics {
 			if (dbg)
 				StdStreams.out.println("eliminate goto node at bca = " + branchAddr);
 			// branch target is a goto, jump to new target node
-			branchAddr += (short) (code[branchAddr + 1] & 0xff << 8 | code[branchAddr + 2]);
+			branchAddr += (short) ((code[branchAddr + 1]&0xff << 8) | (code[branchAddr + 2]&0xff));
 			if (dbg) StdStreams.out.println("new branch address = " + branchAddr);
 		}
 		CFGNode targNode = cfg.getNode(branchAddr);
