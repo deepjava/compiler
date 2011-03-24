@@ -502,22 +502,18 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					sReg2 = opds[0].regLong;
 					refReg = res.regAux1;
 					Item item = ((MonadicRef)instr).item;
-					if (item.type.name.charAt(0) == '[')
-						type = tRef;
-					else
+					if(((Type)item.type).category == 'P')
 						type = Type.getPrimitiveTypeIndex(item.type.name.charAt(0));
-					if (type == -1) type = tRef;
+					else type = tRef; //is a Array or a Object //TODO @Urs please check this again 24.03.2011!!!!!!!!!!!!!!
 					offset = 0;
 					loadConstantAndFixup(res.regAux1, item);
 				} else {	// putfield
 					refReg = opds[0].reg;
 					sReg1 = opds[1].reg;
 					sReg2 = opds[1].regLong;
-					if (((DyadicRef)instr).field.type.name.charAt(0) == '[')
-						type = tRef;
-					else
+					if(((Type)((DyadicRef)instr).field.type).category == 'P')
 						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
-					if (type == -1) type = tRef;//TODO @Urs please check this!!!!!!!!!!!!!!
+					else type = tRef;//is a Array or a Object //TODO @Urs please check this again 24.03.2011!!!!!!!!!!!!!!
 					offset = ((DyadicRef)instr).field.offset;
 					createItrap(ppcTwi, TOifequal, refReg, 0);
 				}

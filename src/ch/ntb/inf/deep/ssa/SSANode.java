@@ -606,11 +606,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
 					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
-					if (constant.type.name.charAt(0) == 'I') {// is a int
+					if (constant.type == Type.wellKnownTypes[txInt]) {// is a int
 						result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 						result.constant = constant;
 					} else {
-						if (constant.type.name.charAt(0) == 'F') { // is a float
+						if (constant.type == Type.wellKnownTypes[txFloat]) { // is a float
 							result.type = SSAValue.tFloat;
 							result.constant = constant;
 							// result.constant =
@@ -644,11 +644,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
 					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
-					if (constant.type.name.charAt(0) == 'I') {// is a int
+					if (constant.type == Type.wellKnownTypes[txInt]) {// is a int
 						result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 						result.constant = constant;
 					} else {
-						if (constant.type.name.charAt(0) == 'F') { // is a float
+						if (constant.type == Type.wellKnownTypes[txFloat]) { // is a float
 							result.type = SSAValue.tFloat;
 							result.constant = constant;
 							// result.constant =
@@ -682,11 +682,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof StdConstant) {
 					StdConstant constant = (StdConstant) ssa.cfg.method.owner.constPool[val];
-					if (constant.type.name.charAt(0) == 'D') {// is a Double
+					if (constant.type == Type.wellKnownTypes[txDouble]) {// is a Double
 						result.type = SSAValue.tDouble;
 						result.constant = constant;
 					} else {
-						if (constant.type.name.charAt(0) == 'J') { // is a Long
+						if (constant.type == Type.wellKnownTypes[txLong]) { // is a Long
 							result.type = SSAValue.tLong;
 							result.constant = constant;
 						} else {
@@ -2130,7 +2130,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					assert false : "Constantpool entry isn't a DataItem. Used in getstatic";
 				}
 				field = (DataItem) ssa.cfg.method.owner.constPool[val];
-				if (field.type.name.charAt(0) == '[') {
+				if (((Type)field.type).category == tcArray) {
 					switch (field.type.name.charAt(1)) {
 					case 'B':
 						result.type = SSAValue.tAbyte;
@@ -2165,7 +2165,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					default:
 						result.type = SSAValue.tVoid;
 					}
-				} else {
+				} else if(((Type)field.type).category == tcPrimitive) {
 					switch (field.type.name.charAt(0)) {
 					case 'B':
 						result.type = SSAValue.tByte | (1 << SSAValue.ssaTaFitIntoInt);
@@ -2191,12 +2191,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					case 'Z':
 						result.type = SSAValue.tBoolean | (1 << SSAValue.ssaTaFitIntoInt);
 						break;
-					case 'L':
-						result.type = SSAValue.tRef;
-						break;
 					default:
-						result.type = SSAValue.tRef;
+						result.type = SSAValue.tVoid;
 					}
+				} else {//tcRef
+					result.type = SSAValue.tRef;
 				}
 				instr = new NoOpndRef(sCloadFromField, field);
 				instr.result = result;
@@ -2228,7 +2227,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				// determine the type of the field
 				field = (DataItem) ssa.cfg.method.owner.constPool[val];
-				if (field.type.name.charAt(0) == '[') {
+				if (((Type)field.type).category == tcArray) {
 					switch (field.type.name.charAt(1)) {
 					case 'B':
 						result.type = SSAValue.tAbyte;
@@ -2258,9 +2257,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						result.type = SSAValue.tAref;
 						break;
 					default:
-						result.type = SSAValue.tAref;
+						result.type = SSAValue.tVoid;
 					}
-				} else {
+				} else if(((Type)field.type).category == tcPrimitive) {
 					switch (field.type.name.charAt(0)) {
 					case 'B':
 						result.type = SSAValue.tByte | (1 << SSAValue.ssaTaFitIntoInt);
@@ -2286,12 +2285,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					case 'Z':
 						result.type = SSAValue.tBoolean | (1 << SSAValue.ssaTaFitIntoInt);
 						break;
-					case 'L':
-						result.type = SSAValue.tRef;
-						break;
 					default:
-						result.type = SSAValue.tRef;
+						result.type = SSAValue.tVoid;
 					}
+				}else{//tcRef
+					result.type = SSAValue.tRef;
 				}
 				value1 = popFromStack();
 				if (ssa.cfg.method.owner.constPool[val] instanceof DataItem) {
