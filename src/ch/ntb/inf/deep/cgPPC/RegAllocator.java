@@ -27,7 +27,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	static int nofNonVolGPR, nofNonVolFPR;
 	
 	// used for resolving phi-functions
-	private static int[] regAtIndex = new int[64];
+	private static int[] phiRegAtIndex = new int[64];
 	
 	// local and linear copy of all SSA-instructions of all nodes
 	private static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
@@ -41,7 +41,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		regsGPR = volRegsGPRinitial | nonVolRegsGPRinitial;
 		regsFPR = volRegsFPRinitial | nonVolRegsFPRinitial;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		for (int i = 0; i < regAtIndex.length; i++) regAtIndex[i] = -1;
+		for (int i = 0; i < phiRegAtIndex.length; i++) phiRegAtIndex[i] = -1;
 		
 		nofInstructions = SSA.renumberInstructions(ssa.cfg);
 		findLastNodeOfPhi(ssa);
@@ -193,12 +193,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 				continue;
 			}
-			// set end ???
+			// for all instructions which are not phi-functions:
+			// set interval end for all operands
 			if (opds != null) {
 				for (SSAValue opd : opds) {
 					if (dbg) StdStreams.out.println("\topd : " + opd.n + " end=" + res.end);
 					SSAInstruction opdInstr = opd.owner;
 					if (opdInstr.ssaOpcode == sCPhiFunc) {
+						// if opd is phi-function: change start and end of this phi-function
 						int last = ((PhiFunction)opdInstr).last;
 //						if (!((PhiFunction)opdInstr).deleted && res.n < last) {
 //							res.end = last; 
@@ -214,14 +216,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						if (res.n < phi.start) phi.start = res.n;
 					} else {
 						if (opd.end < currNo) opd.end = currNo;
-						if (opd.owner.ssaOpcode == sCloadLocal) 
-							MachineCode.paramRegEnd[opd.index - maxStackSlots] = currNo;
+//						if (opd.owner.ssaOpcode == sCloadLocal) 
+//							MachineCode.paramRegEnd[opd.index - maxStackSlots] = currNo;
 					}
 				}
 			}
 		}
 		if (dbg) StdStreams.out.println("\tsecond run");
-		// 2nd run, set ends
+		// 2nd run, set interval end for all joins 
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
@@ -299,23 +301,26 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (dbg) {StdStreams.out.print("assign reg for instr "); instr.print(0);}
 				int type = res.type;
 				if (type == tLong) {
-					res.regLong = code.paramRegNr[res.index - maxStackSlots];
-					res.reg = code.paramRegNr[res.index+1 - maxStackSlots];
+					res.regLong = MachineCode.paramRegNr[res.index - maxStackSlots];
+					res.reg = MachineCode.paramRegNr[res.index+1 - maxStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					res.reg = code.paramRegNr[res.index - maxStackSlots];
+					res.reg = MachineCode.paramRegNr[res.index - maxStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					res.reg = code.paramRegNr[res.index - maxStackSlots];
+					res.reg = MachineCode.paramRegNr[res.index - maxStackSlots];
 				}	
+				// store last use of a parameter
+				MachineCode.paramRegEnd[res.index - maxStackSlots] = res.end;
+				
 				if (joinVal != null) {
 					if (res.type == tLong) {
 						joinVal.regLong = res.regLong;
 						joinVal.reg = res.reg;
-						regAtIndex[joinVal.index] = joinVal.regLong;
-						regAtIndex[joinVal.index+1] = joinVal.reg;
+						phiRegAtIndex[joinVal.index] = joinVal.regLong;
+						phiRegAtIndex[joinVal.index+1] = joinVal.reg;
 					} else {
 						joinVal.reg = res.reg;
-						regAtIndex[joinVal.index] = joinVal.reg;			
+						phiRegAtIndex[joinVal.index] = joinVal.reg;			
 					}
 				}
 				if (dbg) StdStreams.out.println("\treg = " + res.reg);
@@ -398,7 +403,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 			} else if (instr.ssaOpcode == sCloadConst) {
 				// check if operand can be used with immediate instruction format
-				SSAInstruction instr1 = instrs[res.end];
+				SSAInstruction instr1 = res.owner;
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < 0 && res.join == null) {
 					// opd must be used in an instruction with immediate form available
@@ -461,11 +466,18 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue[] opds = instr.getOperands();
 			if (opds != null) {
 				for (SSAValue opd : opds) {
-//					if (opd.owner.ssaOpcode == sCloadLocal) {
-//						if (MachineCode.paramRegEnd[opd.index - maxStackSlots] <= i)
-//							freeReg(gpr, opd.reg);
+					if (opd.owner.ssaOpcode == sCloadLocal) {
+//						if (MachineCode.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
+//							if (opd.type == tLong) {
+//								freeReg(gpr, opd.regLong);
+//								freeReg(gpr, opd.reg);
+//							} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
+//								freeReg(fpr, opd.reg);
+//							} else {
+//								freeReg(gpr, opd.reg);
+//							}
 //						continue;
-//					}
+					}
 					if (opd.join != null) opd = opd.join;
 					if (opd.end <= i && opd.reg > -1) {
 						if (opd.type == tLong) {
@@ -525,63 +537,51 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		if (dbg) StdStreams.out.println("\tbefore reserving " + Integer.toHexString(regsGPR));
 		int regs;
 		if (isGPR) {
-			if (isNonVolatile) {
-				regs = regsGPR & nonVolRegsGPRinitial;			
-				int i = topGPR;
-				while (regs != 0) {
-					if ((regs & (1 << i)) != 0) {
-						regsGPR &= ~(1 << i);
-						if (nofGPR - i > nofNonVolGPR) nofNonVolGPR = nofGPR - i;
-//	check if ok			
+			int i;
+			if (!isNonVolatile) {	// is volatile
+				i = paramStartGPR;
+				while (i < nonVolStartGPR) {
+					if ((regsGPR & (1 << i)) != 0) {
+						regsGPR &= ~(1 << i);	
 						return i;
 					}
-					i--;
-				}
-				assert false: "not enough registers for nonvolatile GPRs";
-				return 0;
-			} else {
-				regs = regsGPR & volRegsGPRinitial;
-				int i = 0;
-				while (regs != 0) {
-					if ((regs & 1) != 0) {
-						regsGPR &= ~(1 << i);
-//						StdStreams.out.println("\tregsGPR is now = " + Integer.toHexString(regsGPR));
-						return i;
-					}
-					regs /= 2;
 					i++;
 				}
-				assert false: "not enough registers for volatile GPRs";
-				return 0;
+			} 
+			i = topGPR;
+			while (i >= nonVolStartGPR) {
+				if ((regsGPR & (1 << i)) != 0) {
+					regsGPR &= ~(1 << i);
+					if (nofGPR - i > nofNonVolGPR) nofNonVolGPR = nofGPR - i;
+					return i;
+				}
+				i--;
 			}
+			assert false: "not enough registers for GPRs";
+			return 0;
 		} else {
-			if (isNonVolatile) {
-				regs = regsFPR & nonVolRegsFPRinitial;			
-				int i = topFPR;
-				while (regs != 0) {
-					if ((regs & (1 << i)) != 0) {
-						regsFPR &= ~(1 << i);
-						if (nofFPR - i > nofNonVolFPR) nofNonVolFPR = nofFPR - i;
+			int i;
+			if (!isNonVolatile) {
+				i = paramStartFPR;
+				while (i < nonVolStartFPR) {
+					if ((regsFPR & (1 << i)) != 0) {
+						regsFPR &= ~(1 << i);	
 						return i;
 					}
-					i--;
-				}
-				assert false: "not enough registers for nonvolatile FPRs";
-				return 0;
-			} else {
-				regs = regsFPR & volRegsFPRinitial;
-				int i = 0;
-				while (regs != 0) {
-					if ((regs & 1) != 0) {
-						regsFPR &= ~(1 << i);
-						return i;
-					}
-					regs /= 2;
 					i++;
 				}
-				assert false: "not enough registers for volatile FPRs";
-				return 0;
-			}		
+			} 
+			i = topFPR;
+			while (i >= nonVolStartFPR) {
+				if ((regsFPR & (1 << i)) != 0) {
+					regsFPR &= ~(1 << i);
+					if (nofFPR - i > nofNonVolFPR) nofNonVolFPR = nofFPR - i;
+					return i;
+				}
+				i--;
+			}
+			assert false: "not enough registers for FPRs";
+			return 0;
 		}
 	}
 

@@ -10,6 +10,9 @@ interface Registers {
 	final int paramStartGPR = 2;
 	final int paramStartFPR = 1;
 	
+	final int nonVolStartGPR = 10;
+	final int nonVolStartFPR = 13;
+	
 	final int returnGPR1 = 2;
 	final int returnGPR2 = 3;
 	final int returnFPR = 1;

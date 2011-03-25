@@ -89,7 +89,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		for (int i = 0; i < maxNofParam; i++) {
 			paramType[i] = tVoid;
 			paramRegNr[i] = -1;
-			paramRegEnd[i] = 0;
+			paramRegEnd[i] = -1;
 		}
 
 		// make local copy 
@@ -120,9 +120,20 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		lastExitSet = b.exitSet;
 		// determine, which parameters go into which register
 		parseExitSet(lastExitSet, maxStackSlots);
+		if(dbg) {
+			StdStreams.out.print("parameter go into register: ");
+			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.out.print(paramRegNr[n] + "  "); 
+			StdStreams.out.println();
+		}
 		
 		if(dbg) StdStreams.out.println("allocate registers");
 		RegAllocator.assignRegisters(this);
+		if(dbg) {
+			StdStreams.out.println("nofNonVolGPR = " + nofNonVolGPR + ", nofNonVolFPR = " + nofNonVolFPR);
+			StdStreams.out.print("parameter end at instr no: ");
+			for (int n = 0; paramRegEnd[n] != -1; n++) StdStreams.out.print(paramRegEnd[n] + "  "); 
+			StdStreams.out.println();
+		}
 		if (dbg) ssa.print(0);
 		
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
