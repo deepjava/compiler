@@ -25,9 +25,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	static int maxStackSlots;
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
+	static int nofVolGPR, nofVolFPR;
 	
 	// used for resolving phi-functions
-	private static int[] phiRegAtIndex = new int[64];
+//	private static int[] phiRegAtIndex = new int[64];
 	
 	// local and linear copy of all SSA-instructions of all nodes
 	private static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
@@ -41,7 +42,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		regsGPR = volRegsGPRinitial | nonVolRegsGPRinitial;
 		regsFPR = volRegsFPRinitial | nonVolRegsFPRinitial;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		for (int i = 0; i < phiRegAtIndex.length; i++) phiRegAtIndex[i] = -1;
+		nofVolGPR = 0; nofVolFPR = 0;
+//		for (int i = 0; i < phiRegAtIndex.length; i++) phiRegAtIndex[i] = -1;
 		
 		nofInstructions = SSA.renumberInstructions(ssa.cfg);
 		findLastNodeOfPhi(ssa);
@@ -214,6 +216,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							if (dbg) StdStreams.out.println("\t\tend="+res.end);
 						}
 						if (res.n < phi.start) phi.start = res.n;
+					} else if (opdInstr.ssaOpcode == sCloadLocal) {
+						if (opd.end < currNo) opd.end = currNo;
+						// store last use of a parameter
+//						StdStreams.out.println("opdInstr.result.index="+opdInstr.result.index);
+//						StdStreams.out.println("maxStackSlots="+maxStackSlots);
+						MachineCode.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
 					} else {
 						if (opd.end < currNo) opd.end = currNo;
 //						if (opd.owner.ssaOpcode == sCloadLocal) 
@@ -309,18 +317,16 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				} else {
 					res.reg = MachineCode.paramRegNr[res.index - maxStackSlots];
 				}	
-				// store last use of a parameter
-				MachineCode.paramRegEnd[res.index - maxStackSlots] = res.end;
 				
 				if (joinVal != null) {
 					if (res.type == tLong) {
 						joinVal.regLong = res.regLong;
 						joinVal.reg = res.reg;
-						phiRegAtIndex[joinVal.index] = joinVal.regLong;
-						phiRegAtIndex[joinVal.index+1] = joinVal.reg;
+//						phiRegAtIndex[joinVal.index] = joinVal.regLong;
+//						phiRegAtIndex[joinVal.index+1] = joinVal.reg;
 					} else {
 						joinVal.reg = res.reg;
-						phiRegAtIndex[joinVal.index] = joinVal.reg;			
+//						phiRegAtIndex[joinVal.index] = joinVal.reg;			
 					}
 				}
 				if (dbg) StdStreams.out.println("\treg = " + res.reg);
@@ -466,19 +472,19 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue[] opds = instr.getOperands();
 			if (opds != null) {
 				for (SSAValue opd : opds) {
-					if (opd.owner.ssaOpcode == sCloadLocal) {
-//						if (MachineCode.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
-//							if (opd.type == tLong) {
-//								freeReg(gpr, opd.regLong);
-//								freeReg(gpr, opd.reg);
-//							} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
-//								freeReg(fpr, opd.reg);
-//							} else {
-//								freeReg(gpr, opd.reg);
-//							}
-//						continue;
-					}
 					if (opd.join != null) opd = opd.join;
+					if (opd.owner.ssaOpcode == sCloadLocal) {
+						if (MachineCode.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
+							if (opd.type == tLong) {
+								freeReg(gpr, opd.regLong);
+								freeReg(gpr, opd.reg);
+							} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
+								freeReg(fpr, opd.reg);
+							} else {
+								freeReg(gpr, opd.reg);
+							}
+						continue;
+					}
 					if (opd.end <= i && opd.reg > -1) {
 						if (opd.type == tLong) {
 							freeReg(gpr, opd.regLong);
@@ -518,6 +524,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		}
 		MachineCode.nofNonVolGPR = nofNonVolGPR;
 		MachineCode.nofNonVolFPR = nofNonVolFPR;
+		MachineCode.nofVolGPR = nofVolGPR;
+		MachineCode.nofVolFPR = nofVolFPR;
 	}
 
 	private static void findReg(SSAValue res) {
@@ -543,6 +551,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				while (i < nonVolStartGPR) {
 					if ((regsGPR & (1 << i)) != 0) {
 						regsGPR &= ~(1 << i);	
+						if (i-paramStartGPR > nofVolGPR) nofVolGPR = i+1-paramStartGPR;
 						return i;
 					}
 					i++;
@@ -566,6 +575,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				while (i < nonVolStartFPR) {
 					if ((regsFPR & (1 << i)) != 0) {
 						regsFPR &= ~(1 << i);	
+						if (i-paramStartFPR > nofVolFPR) nofVolFPR = i+1-paramStartFPR;
 						return i;
 					}
 					i++;

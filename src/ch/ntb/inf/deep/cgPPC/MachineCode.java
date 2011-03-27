@@ -51,6 +51,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static int nofParam;
 	private static int nofParamGPR, nofParamFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
+	static int nofVolGPR, nofVolFPR;
 	static int[] paramType = new int[maxNofParam];
 	static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
 	static int[] paramRegNr = new int[maxNofParam];
@@ -83,6 +84,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		fixups = new Item[defaultNofFixup];
 		nofParamGPR = 0; nofParamFPR = 0;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
+		nofVolGPR = 0; nofVolFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		tempStorage = false;
 		if (dbg) StdStreams.out.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
@@ -129,7 +131,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		if(dbg) StdStreams.out.println("allocate registers");
 		RegAllocator.assignRegisters(this);
 		if(dbg) {
-			StdStreams.out.println("nofNonVolGPR = " + nofNonVolGPR + ", nofNonVolFPR = " + nofNonVolFPR);
+			StdStreams.out.print("nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
+			StdStreams.out.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
 			StdStreams.out.print("parameter end at instr no: ");
 			for (int n = 0; paramRegEnd[n] != -1; n++) StdStreams.out.print(paramRegEnd[n] + "  "); 
 			StdStreams.out.println();
