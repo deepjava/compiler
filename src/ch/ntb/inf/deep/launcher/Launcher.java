@@ -173,7 +173,7 @@ public class Launcher implements ICclassFileConsts {
 					reporter.error("Target not found!(USB connection failed)");
 				}
 			} catch (DownloaderException e) {
-				reporter.error("A error occours while downloading");
+				reporter.error("A error occurs while downloading\n");
 			}
 		} else {
 			out.println("No target image to load");
