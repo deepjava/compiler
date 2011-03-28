@@ -44,6 +44,7 @@ import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterMap;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.OperationObject;
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
@@ -64,7 +65,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private static String KERNEL;
 	private static String cmdAddrName = "cmdAddr";
 
-	private String[] choise =new String[]{"", "Register", "Variable","Address","TargetCMD", "send over SCI1" };
+	private String[] choise =new String[]{"", "Register", "Variable","Address", "TargetCMD", "send over SCI1" };
 
 	private static Image UP = DeepPlugin.createImage("full/obj32/up.gif");
 	private static Image DOWN = DeepPlugin.createImage("full/obj32/down.gif");
@@ -222,7 +223,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		public Image getColumnImage(Object element, int columnIndex) {
 			if ((element instanceof OperationObject)) {
 				OperationObject op = (OperationObject)element;
-				if(op.operation != 0 && columnIndex == 4){
+				if(op.operation != 0 && op.operation < 4 && columnIndex == 4){
 					return UP;
 				}
 				if(op.operation != 0 && columnIndex == 5){
@@ -813,7 +814,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.startTarget();
 					}
 				} catch (DownloaderException e) {
-					e.printStackTrace();
+					bdi.closeConnection();
+					StdStreams.err.println("USB connection error");
+					bdi = null;
 				}
 			}else{
 				op.errorMsg = "method not found";
@@ -841,7 +844,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.startTarget();
 			}
 		} catch (DownloaderException e) {
-			e.printStackTrace();
+			bdi.closeConnection();
+			StdStreams.err.println("USB connection error");
+			bdi = null;
 		}
 
 		
@@ -917,7 +922,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					op.isReaded = true;
 					op.description = fullQualName;
 				}catch(DownloaderException e){
-					e.printStackTrace();
+					bdi.closeConnection();
+					StdStreams.err.println("USB connection error");
+					bdi = null;
 				}
 			}else{
 				op.errorMsg = "field not found";
@@ -1044,7 +1051,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					bdi.startTarget();
 				}
 			} catch (DownloaderException e) {
-				e.printStackTrace();
+				bdi.closeConnection();
+				StdStreams.err.println("USB connection error");
+				bdi = null;
 			}
 		}else{
 			op.errorMsg = "register not found";
@@ -1068,7 +1077,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.startTarget();
 			}
 		} catch (DownloaderException e) {
-			e.printStackTrace();
+			bdi.closeConnection();
+			StdStreams.err.println("USB connection error");
+			bdi = null;
 		}
 		
 	}
@@ -1117,7 +1128,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.startTarget();
 					}
 				}catch(DownloaderException e){
-					e.printStackTrace();
+					bdi.closeConnection();
+					StdStreams.err.println("USB connection error");
+					bdi = null;
 				}
 			}else{
 				op.errorMsg = "field not found";
@@ -1160,7 +1173,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.startTarget();
 			}
 		} catch (DownloaderException e) {
-			e.printStackTrace();
+			bdi.closeConnection();
+			StdStreams.err.println("USB connection error");
+			bdi = null;
 		}
 
 	}
