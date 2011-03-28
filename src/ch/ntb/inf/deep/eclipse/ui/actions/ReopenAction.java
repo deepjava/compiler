@@ -34,7 +34,7 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 			StdStreams.out.println("Device succesfully reopened");
 		} catch (DownloaderException e) {
 			bdi.closeConnection();
-			ErrorReporter.reporter.error("Reopen failed");
+			ErrorReporter.reporter.error("Reopen failed\n");
 		} catch (InterruptedException e) {
 		}
 	}
