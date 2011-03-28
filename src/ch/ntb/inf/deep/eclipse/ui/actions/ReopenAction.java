@@ -30,8 +30,10 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 		try {
 			Thread.sleep(500);//Give OS time 
 			bdi.openConnection();
+			bdi.resetTarget();
 			StdStreams.out.println("Device succesfully reopened");
 		} catch (DownloaderException e) {
+			bdi.closeConnection();
 			ErrorReporter.reporter.error("Reopen failed");
 		} catch (InterruptedException e) {
 		}
