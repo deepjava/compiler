@@ -10,7 +10,10 @@ interface Registers {
 	final int paramStartGPR = 2;
 	final int paramStartFPR = 1;
 	
-	final int nonVolStartGPR = 10;
+	final int paramEndGPR = 10;	// must be < nonVolStartGPR
+	final int paramEndFPR = 8;	// must be < nonVolStartFPR
+	
+	final int nonVolStartGPR = 13;
 	final int nonVolStartFPR = 13;
 	
 	final int returnGPR1 = 2;
@@ -19,10 +22,8 @@ interface Registers {
 
 	final int stackPtr = 1;	// register for stack pointer
 
-	final int volRegsGPRinitial = 0x0003fffc;
-	final int nonVolRegsGPRinitial = ~volRegsGPRinitial & 0xfffffffc;
-	final int volRegsFPRinitial = 0x00001ffe;
-	final int nonVolRegsFPRinitial = ~volRegsFPRinitial & 0xfffffffe;
+	final int regsGPRinitial = 0xfffffffc;
+	final int regsFPRinitial = 0xfffffffe;
 
 	final boolean gpr = true;
 	final boolean fpr = false;
