@@ -2678,10 +2678,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			next();
 			if (tempList == null) {
 				String temp = readString().replace('.', '/');
+				temp = temp.replace('\\', '/');
 				tempList = HString.getHString(temp);
 				current = tempList;
 			} else {
 				String temp = readString().replace('.', '/');
+				temp = temp.replace('\\', '/');
 				current.next = HString.getHString(temp);
 				current = current.next;
 			}
