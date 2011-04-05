@@ -1,6 +1,5 @@
 package ch.ntb.inf.deep.eclipse.ui.preferences;
 
-import org.eclipse.core.internal.runtime.Activator;
 import org.eclipse.jface.preference.*;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.IWorkbench;

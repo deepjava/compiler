@@ -12,14 +12,11 @@
  */
 package ch.ntb.inf.deep.eclipse.ui.wizard;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import org.eclipse.core.resources.IFile;

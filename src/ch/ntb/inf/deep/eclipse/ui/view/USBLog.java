@@ -12,13 +12,10 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
-import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 
 public class USBLog extends ViewPart {
