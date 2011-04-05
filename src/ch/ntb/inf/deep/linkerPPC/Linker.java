@@ -590,7 +590,8 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				Class bc = (Class)clazz.type;
 				for(int i = 0; i < clazz.nofBaseClasses; i++) {
 					assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.nofBaseClasses;
-					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + i] = bc.address;
+//					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + i] = bc.address;
+					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + clazz.nofBaseClasses - 1 - i] = bc.address;
 					bc = (Class)bc.type;
 				}
 			}
