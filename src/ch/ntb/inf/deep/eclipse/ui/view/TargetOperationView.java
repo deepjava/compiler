@@ -98,10 +98,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 								case Parser.sCR:
 								case Parser.sFPSCR:
 								case Parser.sMSR:
-									return String.format("0x%04X",op.value);
+									return String.format("0x%04X",(short)op.value);
 								case Parser.sGPR:
 									if(op.representation == 1){//Hex
-										return String.format("0x%08X",op.value);
+										return String.format("0x%08X",(int)op.value);
 									}else{
 										return String.format("%d",(int)op.value);
 									}
@@ -115,15 +115,15 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 								case Parser.sIOR:
 									switch(op.registerSize){
 									case 1:
-										return String.format("0x%02X",op.value);
+										return String.format("0x%02X",(byte)op.value);
 									case 2:
-										return String.format("0x%04X",op.value);
+										return String.format("0x%04X",(short)op.value);
 									case 4:
-										return String.format("0x%08X",op.value);
+										return String.format("0x%08X",(int)op.value);
 									case 8:
 										return String.format("0x%016X",op.value);
 									default:
-										return String.format("0x%08X",op.value);
+										return String.format("0x%08X",(int)op.value);
 									}
 								}
 							case 2:
@@ -132,12 +132,12 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										return String.valueOf(op.value > 0);
 									case tByte:
 										if(op.representation == 1){//Hex
-											return String.format("0x%02X",op.value);
+											return String.format("0x%02X",(byte)op.value);
 										}
 										return Byte.toString((byte)op.value);
 									case tChar:
 										if(op.representation == 1){//Hex
-											return String.format("0x%04X",op.value);
+											return String.format("0x%04X",(short)op.value);
 										}
 										if(op.representation == 2){//Dez{
 											return String.format("%d",(int)op.value);
@@ -145,17 +145,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										return String.format("%c",((char)op.value));
 									case tShort:
 										if(op.representation == 1){//Hex
-											return String.format("0x%04X",op.value);
+											return String.format("0x%04X",(short)op.value);
 										}
 										return String.format("%d",((short)op.value));
 									case tInteger:
 										if(op.representation == 1){//Hex
-											return String.format("0x%08X",op.value);
+											return String.format("0x%08X",(int)op.value);
 										}
 										return String.format("%d",(int)op.value);
 									case tFloat:
 										if(op.representation == 1){//Hex
-											return String.format("0x%08X",op.value);
+											return String.format("0x%08X",(int)op.value);
 										}
 										return String.format("%f",Float.intBitsToFloat((int)op.value));
 									case tLong:
@@ -169,12 +169,12 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										}
 										return String.format("%f",Double.longBitsToDouble(op.value));
 									case tRef:
-										return String.format("0x%08X",op.value);
+										return String.format("0x%08X",(int)op.value);
 									default:
 										throw new RuntimeException("Should not happen");
 								}
 							case 3:
-								return String.format("0x%08X",op.value);
+								return String.format("0x%08X",(int)op.value);
 							case 4:
 							case 5:
 								return "";
