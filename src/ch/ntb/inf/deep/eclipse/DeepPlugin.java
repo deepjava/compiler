@@ -23,7 +23,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	/**
 	 *  default Lib Path
 	 */
-	public static final String LIB_PATH = "I:\\deep\\lib";
+	public static final String LIB_PATH = "I:/deep/lib";
 	
 	/**
 	 * Unique identifier for the deep model (value 
