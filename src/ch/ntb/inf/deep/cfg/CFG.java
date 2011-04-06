@@ -201,7 +201,7 @@ public class CFG implements ICjvmInstructionOpcsAndMnemonics {
 			if (dbg)
 				StdStreams.out.println("eliminate goto node at bca = " + branchAddr);
 			// branch target is a goto, jump to new target node
-			branchAddr += (short) ((code[branchAddr + 1]&0xff << 8) | (code[branchAddr + 2]&0xff));
+			branchAddr += (short) (((code[branchAddr + 1]&0xff) << 8) | (code[branchAddr + 2]&0xff));
 			if (dbg) StdStreams.out.println("new branch address = " + branchAddr);
 		}
 		CFGNode targNode = cfg.getNode(branchAddr);
