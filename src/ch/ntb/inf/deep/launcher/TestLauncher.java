@@ -11,7 +11,7 @@ public class TestLauncher {
 
 		Launcher.buildAll("D:/path/to/deep/project/ExampleProject.deep", "BootFromRAM");
 
-		Launcher.saveTargetImage2File("C:/temp/deep_example_target_image.dti");
+		Launcher.saveTargetImageToFile("C:/temp/deep_example_target_image.dti");
 
 		
 	}
