@@ -26,6 +26,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
 	static int nofVolGPR, nofVolFPR;
+	//used to find call in this method with most parameters -> gives stack size
 	static int nofParamGPR, nofParamFPR;
 	
 	// local and linear copy of all SSA-instructions of all nodes
@@ -217,9 +218,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					} else if (opdInstr.ssaOpcode == sCloadLocal) {
 						if (opd.end < currNo) opd.end = currNo;
 						// store last use of a parameter
-//						StdStreams.out.println("opdInstr.result.index="+opdInstr.result.index);
-//						StdStreams.out.println("maxStackSlots="+maxStackSlots);
 						MachineCode.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
+//						StdStreams.out.print("currNo="+currNo);
+//						StdStreams.out.println(", paramRegEnd["+(opdInstr.result.index - maxStackSlots)+"]="+MachineCode.paramRegEnd[opdInstr.result.index - maxStackSlots]);
 					} else {
 						if (opd.end < currNo) opd.end = currNo;
 //						if (opd.owner.ssaOpcode == sCloadLocal) 
@@ -332,11 +333,15 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue res = instr.result;
 			// reserve auxiliary register for this instruction
 			int nofAuxReg = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
+			int nofAuxRegFpr = 0;
 			if (nofAuxReg == 4 && res.type == tLong) nofAuxReg = 2;
 			else if ((nofAuxReg == 5 && res.type == tLong)
 					|| ((nofAuxReg == 6 && (res.type == tFloat || res.type == tDouble)))) nofAuxReg = 1;
 			else if (nofAuxReg == 7) {
 				if (res.type == tFloat || res.type == tDouble) nofAuxReg = 1;
+				else nofAuxReg = 0;
+			} else if (nofAuxReg == 8) {
+				if (res.type == tFloat || res.type == tDouble) {nofAuxReg = 1; nofAuxRegFpr = 1;}
 				else nofAuxReg = 0;
 			}
 			if (nofAuxReg == 1)
@@ -345,6 +350,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				res.regAux1 = reserveReg(gpr, false);
 				res.regAux2 = reserveReg(gpr, false);
 			}
+			if (nofAuxRegFpr == 1) res.regAux2 = reserveReg(fpr, false);
 			if (dbg) {
 				if (res.regAux1 != -1) StdStreams.out.print("\tauxReg1 = " + res.regAux1);
 				if (res.regAux2 != -1) StdStreams.out.print("\tauxReg2 = " + res.regAux2);
@@ -455,7 +461,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				freeReg(gpr, res.regAux1);	if (dbg) StdStreams.out.println("\tfreeing aux reg1");
 			}
 			if (res.regAux2 != -1) {
-				freeReg(gpr, res.regAux2);	if (dbg) StdStreams.out.println("\tfreeing aux reg2");
+				if (nofAuxRegFpr == 0) {
+					freeReg(gpr, res.regAux2);	if (dbg) StdStreams.out.println("\tfreeing aux reg2");
+				} else  freeReg(fpr, res.regAux2);
 			}
 
 			// free registers of operands if end of live range reached 

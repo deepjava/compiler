@@ -182,6 +182,7 @@ interface InstructionOpcs {
 		ppcFctiwz = (0x3f << 26) | (0x0f << 1),
 		ppcFdiv = (0x3f << 26) | (0x12 << 1),
 		ppcFdivs = (0x3b << 26) | (0x12 << 1),
+		ppcFmadd = (0x3f << 26) | (0x1d << 1),
 		ppcFmr = (0x3f << 26) | (0x48 << 1),
 		ppcFmul = (0x3f << 26) | (0x19 << 1),
 		ppcFmuls = (0x3b << 26) | (0x19 << 1),
