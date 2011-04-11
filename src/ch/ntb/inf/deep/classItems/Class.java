@@ -25,10 +25,13 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	static{
 		assert fieldSizeUnit >= 4 && (fieldSizeUnit & (fieldSizeUnit-1)) == 0;
 	}
+	public static int maxExtensionLevel;
 	
 	//--- instance fields
 	public Item[] constPool; // reduced constant pool
-	
+
+	public int extensionLevel; // extensionLevel of class java.lang.Object is 0
+
 	public Item methods; // list with all methods
 	public int nofMethods; // number of methods
 	public int nofInstMethods, nofClassMethods; // number of methods
@@ -45,8 +48,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	Class[] imports;
 	public int nofImports; // number of imports (without arrays)
-
-	public int nofBaseClasses; // number of base classes
 	
 	public int[] constantBlock; // the constant block for this class
 	public int constantBlockSize; // size of the constant block
@@ -957,11 +958,13 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			accAndPropFlags |= 1<<dpfClassMark;
 
 			if(type == null){
-				objectSize = 0; nofBaseClasses = 0;
+				objectSize = 0; extensionLevel = 0;
 			}else{
 				type.selectAndMoveInitClasses();
 				Class baseCls = (Class)type;
-				objectSize = baseCls.objectSize; nofBaseClasses = baseCls.nofBaseClasses + 1;
+				objectSize = baseCls.objectSize;
+				extensionLevel = baseCls.extensionLevel + 1;
+				if( extensionLevel > maxExtensionLevel ) maxExtensionLevel = extensionLevel;
 			}
 			fixUpInstanceFields();
 			fixUpClassFields();
@@ -1038,6 +1041,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		vrb.println();
 		if(title != null) vrb.println(title);
 		vrb.printf("class list: nofClasses=%1$d (with class constr. %2$d), nofArrays=%3$d\n", nofClasses, nofInitClasses, nofArrays);
+		vrb.printf("maxExtensionLevel=%1$d\n", maxExtensionLevel);
 		indent(1); vrb.printf("classListHead=%1$s", classList.name);
 		if(nofInitClasses > 0) vrb.printf(", classInitListTail=%1$s", classInitListTail.name);
 		vrb.printf(", classListTail=%1$s\n", classListTail.name);
@@ -1196,7 +1200,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags, 'C');  vrb.printf(" class %1$s", name);
 		if(type != null)  vrb.printf(" extends %1$s", type.name);
 		vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
-		indent(indentLevel+1);  vrb.printf("source file: %1$s, extLevel=%2$d\n", srcFileName, this.nofBaseClasses);
+		indent(indentLevel+1);  vrb.printf("source file: %1$s, extLevel=%2$d(max=%3$d)\n", srcFileName, this.extensionLevel, maxExtensionLevel);
 		printImports(indentLevel+1);
 		printInterfaces(indentLevel+1);
 		printFields(indentLevel+1);

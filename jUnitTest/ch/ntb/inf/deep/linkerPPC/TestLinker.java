@@ -27,7 +27,7 @@ public class TestLinker {
 		assertEquals("Number of instance fields not as expected", nOfInstanceFields, clazz.nofInstFields);
 		assertEquals("Number of class/static fields not as expected", nOfClassFields, clazz.nofClassFields);
 		assertEquals("Number of interfaces not as expected", nOfInterfaces, clazz.nofInterfaces);
-		assertEquals("Number of base classes not as expected", nOfBaseClasses, clazz.nofBaseClasses);
+		assertEquals("Number of base classes not as expected", nOfBaseClasses, clazz.extensionLevel);
 	}
 	
 }

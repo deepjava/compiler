@@ -167,7 +167,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 
 		// constant block size
 //		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
-		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofBaseClasses) * 4;
+		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.extensionLevel) * 4;
 		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nofClassRefs + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
 		
 		if(dbg) vrb.println("\n[LINKER] END: calculating offsets and indexes for class \"" + clazz.name +"\"\n");
@@ -490,7 +490,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Constant pool size: " + clazz.constantPoolSize + " byte -> " + clazz.constantPoolSize / 4);
 				vrb.println("  Number of instance methods: " + clazz.nofInstMethods);
 				vrb.println("  Number of interfaces: " + clazz.nofInterfaces);
-				vrb.println("  Number of base classes: " + clazz.nofBaseClasses);
+				vrb.println("  Extension level: " + clazz.extensionLevel);
 			}
 			
 			// 1) Insert Header
@@ -527,7 +527,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 	//		int classDescriptorOffset = 6 + clazz.nOfReferences;
 			int imc = 0;
-			if(clazz.nofBaseClasses > 0) {
+			if(clazz.extensionLevel > 0) {
 				assert clazz.type != null: "ERROR: Number of base classes > 0, but base class is null!";
 				assert clazz.type instanceof Class: "ERROR: Base class is not a class!";
 				Class baseClass = (Class)clazz.type;
@@ -574,7 +574,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			// 3c) Insert extension level
 			if(dbg) vrb.println("  3c) Inserting extension level");
-			clazz.constantBlock[(clazz.classDescriptorOffset - cdExtensionLevelOffset) / 4] = clazz.nofBaseClasses;
+			clazz.constantBlock[(clazz.classDescriptorOffset - cdExtensionLevelOffset) / 4] = clazz.extensionLevel;
 			
 			// 3d) Insert size
 			if(dbg) vrb.println("  3d) Inserting size");
@@ -586,19 +586,19 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 			
 			// 3f) Insert base classes
 			if(dbg) vrb.println("  3f) Inserting base classes");
-			if(clazz.nofBaseClasses > 0) {
+			if(clazz.extensionLevel > 0) {
 				Class bc = (Class)clazz.type;
-				for(int i = 0; i < clazz.nofBaseClasses; i++) {
-					assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.nofBaseClasses;
+				for(int i = 0; i < clazz.extensionLevel; i++) {
+					assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.extensionLevel;
 //					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + i] = bc.address;
-					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + clazz.nofBaseClasses - 1 - i] = bc.address;
+					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + clazz.extensionLevel - 1 - i] = bc.address;
 					bc = (Class)bc.type;
 				}
 			}
 			
 			// 4) String pool
 			if(dbg) vrb.println("  4) Inserting string pool");
-			int stringPoolOffset = clazz.classDescriptorOffset / 4 + clazz.nofBaseClasses + 2;
+			int stringPoolOffset = clazz.classDescriptorOffset / 4 + clazz.extensionLevel + 2;
 			if(clazz.constPool != null) {
 				for(int i = 0; i < clazz.constPool.length; i++) {
 					int index = clazz.constPool[i].index;
@@ -1106,7 +1106,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Number of class fields: " + c.nofClassFields);
 				vrb.println("    Number of instance fields: " + c.nofInstFields);
 				vrb.println("    Number of interfaces: " + c.nofInterfaces);
-				vrb.println("    Number of base classes: " + c.nofBaseClasses);
+				vrb.println("    Extension level: " + c.extensionLevel);
 				vrb.println("    Number of references: " + c.nofClassRefs);
 				vrb.println("    Machine code size: " + c.machineCodeSize + " byte");
 				vrb.println("    Constant block size: " + c.constantBlockSize + " byte");
@@ -1210,7 +1210,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Number of class fields:      " + c.nofClassFields);
 				vrb.println("    Number of instance fields:   " + c.nofInstFields);
 				vrb.println("    Number of interfaces:        " + c.nofInterfaces);
-				vrb.println("    Number of base classes:      " + c.nofBaseClasses);
+				vrb.println("    Extension level:      " + c.extensionLevel);
 				vrb.println("    Number of references:        " + c.nofClassRefs);
 				vrb.println("    Machine code size:           " + c.machineCodeSize + " byte");
 				vrb.println("    Constant block size:         " + c.constantBlockSize + " byte");
