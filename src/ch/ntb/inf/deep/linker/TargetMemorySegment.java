@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.linkerPPC;
+package ch.ntb.inf.deep.linker;
 
 import ch.ntb.inf.deep.host.StdStreams;
 

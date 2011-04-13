@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.linkerPPC;
+package ch.ntb.inf.deep.linker;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -24,7 +24,7 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
+public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
 	public static final byte slotSize = 4; // 4 bytes
 	static{
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
@@ -154,20 +154,10 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 //			clazz.stringPoolLength = slIndex;
 		}
 		
-		
-		// TODO move this to class file reader!!!
-//		Class baseClass = (Class)clazz.type;
-//		while(baseClass != null) {
-//			clazz.nofInterfaces += baseClass.nofInterfaces;
-//			baseClass = (Class)baseClass.type;
-//		}
-		
-//		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength + clazz.nofInterfaces) * 4 + cdInterface0AddrOffset;
 		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength) * 4 + cdInterface0AddrOffset;
 
 		// constant block size
-//		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.nofInterfaces + clazz.nofBaseClasses) * 4;
-		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + clazz.extensionLevel) * 4;
+		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + Class.maxExtensionLevel + 1) * 4;
 		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nofClassRefs + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
 		
 		if(dbg) vrb.println("\n[LINKER] END: calculating offsets and indexes for class \"" + clazz.name +"\"\n");
@@ -490,7 +480,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Constant pool size: " + clazz.constantPoolSize + " byte -> " + clazz.constantPoolSize / 4);
 				vrb.println("  Number of instance methods: " + clazz.nofInstMethods);
 				vrb.println("  Number of interfaces: " + clazz.nofInterfaces);
-				vrb.println("  Extension level: " + clazz.extensionLevel);
+				vrb.println("  Number of base classes: " + clazz.extensionLevel);
 			}
 			
 			// 1) Insert Header
@@ -595,10 +585,11 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 					bc = (Class)bc.type;
 				}
 			}
+			clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + clazz.extensionLevel] = clazz.address;
 			
 			// 4) String pool
 			if(dbg) vrb.println("  4) Inserting string pool");
-			int stringPoolOffset = clazz.classDescriptorOffset / 4 + clazz.extensionLevel + 2;
+			int stringPoolOffset = clazz.classDescriptorOffset / 4 + Class.maxExtensionLevel + 3;
 			if(clazz.constPool != null) {
 				for(int i = 0; i < clazz.constPool.length; i++) {
 					int index = clazz.constPool[i].index;
@@ -1031,7 +1022,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 		return potentialOffset + (4 - (potentialOffset % size));
 	}
 	
-	private static int roundUpToNextWord(int val) {
+	protected static int roundUpToNextWord(int val) {
 		return  (val + (slotSize-1) ) & -slotSize;
 	}
 	
@@ -1106,7 +1097,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Number of class fields: " + c.nofClassFields);
 				vrb.println("    Number of instance fields: " + c.nofInstFields);
 				vrb.println("    Number of interfaces: " + c.nofInterfaces);
-				vrb.println("    Extension level: " + c.extensionLevel);
+				vrb.println("    Number of base classes: " + c.extensionLevel);
 				vrb.println("    Number of references: " + c.nofClassRefs);
 				vrb.println("    Machine code size: " + c.machineCodeSize + " byte");
 				vrb.println("    Constant block size: " + c.constantBlockSize + " byte");
@@ -1210,7 +1201,7 @@ public class Linker implements ICclassFileConsts, ICdescAndTypeConsts, IAttribut
 				vrb.println("    Number of class fields:      " + c.nofClassFields);
 				vrb.println("    Number of instance fields:   " + c.nofInstFields);
 				vrb.println("    Number of interfaces:        " + c.nofInterfaces);
-				vrb.println("    Extension level:      " + c.extensionLevel);
+				vrb.println("    Number of base classes:      " + c.extensionLevel);
 				vrb.println("    Number of references:        " + c.nofClassRefs);
 				vrb.println("    Machine code size:           " + c.machineCodeSize + " byte");
 				vrb.println("    Constant block size:         " + c.constantBlockSize + " byte");

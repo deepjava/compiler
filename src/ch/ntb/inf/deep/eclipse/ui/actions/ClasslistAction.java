@@ -5,7 +5,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
-import ch.ntb.inf.deep.linkerPPC.Linker;
+import ch.ntb.inf.deep.linker.Linker32;
 
 public class ClasslistAction implements IWorkbenchWindowActionDelegate {
 
@@ -30,7 +30,7 @@ public class ClasslistAction implements IWorkbenchWindowActionDelegate {
 		String actionID = action.getId();
 		if(actionID == null) return;
 		if(actionID.equals("ch.ntb.inf.deep.eclipse.ui.actions.PrintClasslistAction")){
-			Linker.printClassList(printMethods, printFields, printConstantFields, printConstantBlock);
+			Linker32.printClassList(printMethods, printFields, printConstantFields, printConstantBlock);
 		}else if(actionID.equals("ch.ntb.inf.deep.eclipse.ui.actions.setPrintMethod")){
 			printMethods = action.isChecked();
 		}else if(actionID.equals("ch.ntb.inf.deep.eclipse.ui.actions.setPrintFields")){

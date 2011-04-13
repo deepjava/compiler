@@ -5,7 +5,7 @@ import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linkerPPC.Linker;
+import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
@@ -1478,8 +1478,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 //						offset = Linker.cdInterface0AddrOffset + ((Method)call.item).owner.nofInterfaces * Linker.slotSize; // TODO @ Urs implement this
-						offset = Linker.cdInterface0AddrOffset;
-						offset += call.item.index * Linker.slotSize; 
+						offset = Linker32.cdInterface0AddrOffset;
+						offset += call.item.index * Linker32.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);
@@ -2234,9 +2234,9 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		idBitsToDouble = 0x107;
 		objectSize = Type.wktObject.getObjectSize();
 		stringSize = Type.wktString.getObjectSize();
-		int2floatConst1 = Linker.addGlobalConstant((double)(0x10000000000000L + 0x80000000L));
-		int2floatConst2 = Linker.addGlobalConstant((double)0x100000000L);
-		int2floatConst3 = Linker.addGlobalConstant((double)0x10000000000000L);
+		int2floatConst1 = Linker32.addGlobalConstant((double)(0x10000000000000L + 0x80000000L));
+		int2floatConst2 = Linker32.addGlobalConstant((double)0x100000000L);
+		int2floatConst3 = Linker32.addGlobalConstant((double)0x10000000000000L);
 		final Class stringClass = (Class)Type.wktString;
 		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
 		if (stringClass != null) {

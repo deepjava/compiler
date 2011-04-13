@@ -15,7 +15,7 @@ import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linkerPPC.Linker;
+import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
@@ -45,7 +45,7 @@ public class Launcher implements ICclassFileConsts {
 			
 			// 2a) Initialize linker
 			if (reporter.nofErrors <= 0) {
-				Linker.init();
+				Linker32.init();
 				MachineCode.init();
 			}
 			
@@ -61,7 +61,7 @@ public class Launcher implements ICclassFileConsts {
 
 					// 3.1) Linker: calculate offsets
 					if (reporter.nofErrors <= 0)
-						Linker.prepareConstantBlock(clazz);
+						Linker32.prepareConstantBlock(clazz);
 
 					out.printf("Class: %1$s\n", clazz.name);
 					
@@ -89,7 +89,7 @@ public class Launcher implements ICclassFileConsts {
 
 					// 3.5) Linker: calculate required size
 					if (reporter.nofErrors <= 0)
-						Linker.calculateCodeSizeAndOffsets(clazz);
+						Linker32.calculateCodeSizeAndOffsets(clazz);
 				}
 				item = item.next;
 			}
@@ -97,9 +97,9 @@ public class Launcher implements ICclassFileConsts {
 
 			// 4) Linker: freeze memory map
 			if (reporter.nofErrors <= 0) {
-				Linker.calculateSystemTableSize();
-				Linker.calculateGlobalConstantTableSize();
-				Linker.freezeMemoryMap();
+				Linker32.calculateSystemTableSize();
+				Linker32.calculateGlobalConstantTableSize();
+				Linker32.freezeMemoryMap();
 			}
 			
 			// 5) Loop Two 
@@ -107,16 +107,16 @@ public class Launcher implements ICclassFileConsts {
 			while (item != null && reporter.nofErrors <= 0) {
 				// 5.1) Linker: calculate absolute addresses
 				if (item instanceof Class) {
-					Linker.calculateAbsoluteAddresses((Class)item);
+					Linker32.calculateAbsoluteAddresses((Class)item);
 				}
 				else if(item instanceof Array) {
-					Linker.calculateAbsoluteAddresses((Array)item);
+					Linker32.calculateAbsoluteAddresses((Array)item);
 				}
 				
 				item = item.next;
 			}
 			
-			Linker.createGlobalConstantTable();
+			Linker32.createGlobalConstantTable();
 			
 			clearVisitedFlagsForAllClasses();
 			item = Type.classList;
@@ -124,7 +124,7 @@ public class Launcher implements ICclassFileConsts {
 				// 5.3) Linker: Create constant block
 				if(item instanceof Class) {
 					Class clazz = (Class) item;
-					Linker.createConstantBlock(clazz);
+					Linker32.createConstantBlock(clazz);
 
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
@@ -136,7 +136,7 @@ public class Launcher implements ICclassFileConsts {
 					}
 				}
 				else if(item instanceof Array) {
-					Linker.createTypeDescriptor((Array)item);
+					Linker32.createTypeDescriptor((Array)item);
 				}
 
 				item = item.next;
@@ -144,11 +144,11 @@ public class Launcher implements ICclassFileConsts {
 
 			// 6) Linker: Create system table
 			if (reporter.nofErrors <= 0)
-				Linker.createSystemTable();
+				Linker32.createSystemTable();
 
 			// 7) Linker: Create target image
 			if (reporter.nofErrors <= 0)
-				Linker.generateTargetImage();
+				Linker32.generateTargetImage();
 			if (reporter.nofErrors > 0) {
 				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 			} else {
@@ -183,7 +183,7 @@ public class Launcher implements ICclassFileConsts {
 	public static void saveTargetImageToFile(String fileName) {
 		if (reporter.nofErrors <= 0){
 			try {
-				Linker.writeTargetImageToFile(fileName);
+				Linker32.writeTargetImageToFile(fileName);
 			} catch(IOException e) {
 				e.printStackTrace();
 			}
@@ -202,7 +202,7 @@ public class Launcher implements ICclassFileConsts {
 	public static void saveCommandTableToFile(String fileName) {
 		if (reporter.nofErrors <= 0){
 			try {
-				Linker.writeCommandTableToFile(fileName);
+				Linker32.writeCommandTableToFile(fileName);
 			} catch (IOException e) { 
 				e.printStackTrace();
 			}

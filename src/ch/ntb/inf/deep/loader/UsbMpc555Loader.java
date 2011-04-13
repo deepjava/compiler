@@ -4,8 +4,8 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linkerPPC.Linker;
-import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
+import ch.ntb.inf.deep.linker.Linker32;
+import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.libusbJava.USBException;
 import ch.ntb.mcdp.bdi.BDIException;
@@ -109,7 +109,7 @@ public class UsbMpc555Loader extends Downloader {
 		if (!isFreezeAsserted()) {
 			StdStreams.out.println("Bdi is not in Debug mode!");
 		}
-		TargetMemorySegment image = Linker.targetImage;
+		TargetMemorySegment image = Linker32.targetImage;
 		while (image != null) {
 			// TODO remove Hack, solve it proper!!!!!
 			int dataSizeToTransfer = image.data.length;

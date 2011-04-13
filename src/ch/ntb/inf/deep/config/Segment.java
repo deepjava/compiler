@@ -1,7 +1,7 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linkerPPC.TargetMemorySegment;
+import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Segment implements IAttributes {
