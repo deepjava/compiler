@@ -11,6 +11,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.linker.Linker32;
 
 // TODO rewrite this test!!!
 
@@ -35,7 +36,7 @@ public class Linker00 extends TestLinker implements ICclassFileConsts {
 					Class clazz = (Class)item;
 
 					// Linker: Calculate offsets
-					Linker.prepareConstantBlock(clazz);
+					Linker32.prepareConstantBlock(clazz);
 
 					// Print for debuging
 					System.out.println("Class: " + clazz.name.toString());
