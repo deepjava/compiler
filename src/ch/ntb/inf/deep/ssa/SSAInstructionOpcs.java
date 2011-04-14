@@ -50,7 +50,7 @@ public interface SSAInstructionOpcs {
 			
 			0x00060000 | (1<<ssaApTempStore) + sCconvInt, 	//convert from
 			0x00080000 | (1<<ssaApTempStore) + sCconvLong,
-			0x00000000 | (1<<ssaApTempStore) + sCconvFloat,
+			0x00040000 | (1<<ssaApTempStore) + sCconvFloat,
 			0x00040000 | (1<<ssaApTempStore) + sCconvDouble,
 			
 			0x00000000 + sCcmpl, 		//compare

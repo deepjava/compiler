@@ -8,10 +8,11 @@ interface InstructionOpcs {
 	final int TOifless = 0x10;
 	final int TOifgreater = 0x08;
 	final int TOifgeU = 0x05;
+	final int TOifnequal = 0x18;
 	final int TOalways = 0x1f;
 	final int CRF0 = 0;
 	final int CRF1 = 1;
-	final int CRF2 = 3;
+	final int CRF2 = 2;
 	final int CRF3 = 3;
 	final int CRF4 = 4;
 	final int CRF5 = 5;
@@ -155,6 +156,7 @@ interface InstructionOpcs {
 		ppcAddicp = (0x0d << 26),	// p stands for period, addic.
 		ppcAddis = (0x0f << 26),
 		ppcAnd = (0x1f << 26) | (0x1c << 1),
+		ppcAndc = (0x1f << 26) | (0x3c << 1),
 		ppcAndi = (0x1c << 26),
 		ppcAndis = (0x1d << 26),
 		ppcB = (0x12 << 26),
