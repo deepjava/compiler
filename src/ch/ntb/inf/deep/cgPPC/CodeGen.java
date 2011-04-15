@@ -10,7 +10,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
-public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
+public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
 	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
@@ -25,7 +25,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	
 	private static int idGET1, idGET2, idGET4, idGET8;
 	private static int idPUT1, idPUT2, idPUT4, idPUT8;
-	private static int idBIT, idASM, idHALT, idADR_OF_METHOD, idENABLE_FLOATS;
+	private static int idBIT, idASM, idHALT, idADR_OF_METHOD;
+	static int idENABLE_FLOATS;
 	static int idGETGPR, idGETFPR, idGETSPR;
 	static int idPUTGPR, idPUTFPR, idPUTSPR;
 	static int idDoubleToBits, idBitsToDouble;
@@ -49,6 +50,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	private static int tempStorageOffset;	
 	private static int stackSize;
 	static boolean tempStorage;
+	static boolean enFloatsInExc;
 	
 	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
 	private static int nofParam;	
@@ -88,7 +90,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	int fCount;	//nof fixups
 	int lastFixup;	// instr number where the last fixup is found
 
-	public MachineCode(SSA ssa) {
+	public CodeGen(SSA ssa) {
 		this.ssa = ssa;
 		instructions = new int[defaultNofInstr];
 		fixups = new Item[defaultNofFixup];
@@ -97,6 +99,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		nofVolGPR = 0; nofVolFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		tempStorage = false;
+		enFloatsInExc = false;
 		paramSlotsOnStack = 0;
 		if (dbg) StdStreams.out.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 		for (int i = 0; i < maxNofParam; i++) {
@@ -160,7 +163,8 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			}
 		} else {
 			stackSize = calcStackSize();
-			iCount = calcPrologSize();
+//			iCount = calcPrologSize();
+			insertProlog();
 		}
 		
 		SSANode node = (SSANode)ssa.cfg.rootNode;
@@ -214,7 +218,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 			}
 		} else {
 			insertEpilog(stackSize);
-			insertProlog();
+//			insertProlog();
 		}
 		if (dbg) print();
 	}
@@ -308,6 +312,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 
 	private static int calcStackSizeException() {
 		int size = 24 + paramSlotsOnStack * 4 + nofGPR * 4 + (tempStorage? 8 : 0);
+		if (enFloatsInExc) size += nofNonVolFPR * 8  + (nonVolStartFPR - paramStartFPR) * 8;
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
 		LRoffset = size - 4;
@@ -316,22 +321,23 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		SRR0offset = size - 20;
 		SRR1offset = size - 16;
 		GPRoffset = size - 20 - nofGPR * 4;
-		if (tempStorage) tempStorageOffset = GPRoffset - 8;
-		else tempStorageOffset = GPRoffset;
+		FPRoffset = GPRoffset - (nofNonVolFPR * 8 + (nonVolStartFPR - paramStartFPR) * 8);
+		if (tempStorage) tempStorageOffset = FPRoffset - 8;
+		else tempStorageOffset = FPRoffset;
 		paramOffset = 4;
 		return size;
 	}
 
-	private static int calcPrologSize() {
-		int size = 3;
-		if (nofNonVolGPR > 0) size++;
-		size = size + nofNonVolFPR + nofMoveGPR + nofMoveFPR;
-		int paramsGPR = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (paramsGPR > 0) size += paramsGPR;
-		int paramsFPR = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
-		if (paramsFPR > 0) size += paramsFPR;
-		return size;
-	}
+//	private static int calcPrologSize() {
+//		int size = 3;
+//		if (nofNonVolGPR > 0) size++;
+//		size = size + nofNonVolFPR + nofMoveGPR + nofMoveFPR;
+//		int paramsGPR = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
+//		if (paramsGPR > 0) size += paramsGPR;
+//		int paramsFPR = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
+//		if (paramsFPR > 0) size += paramsFPR;
+//		return size;
+//	}
 
 	private void translateSSA (SSANode node) {
 		SSAValue[] opds;
@@ -1800,12 +1806,12 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				t = (Type)ref.item;
 				if (t instanceof Class) offset = ((Class)t).extensionLevel;
 				else offset = 0;
-				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
-				createIBOBIBD(ppcBc, BOtrue, 4*CRF2+EQ, 6);	// jump to end
-				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
-				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
-				loadConstantAndFixup(res.regAux1, t);	// addr of type
-				createItrap(ppcTw, TOifnequal, res.regAux1, 0);
+//				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+//				createIBOBIBD(ppcBc, BOtrue, 4*CRF2+EQ, 6);	// jump to end
+//				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
+//				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
+//				loadConstantAndFixup(res.regAux1, t);	// addr of type
+//				createItrap(ppcTw, TOifnequal, res.regAux1, 0);
 				break;
 			case sCbranch:
 				bci = ssa.cfg.code[node.lastBCA] & 0xff;
@@ -2035,7 +2041,7 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 		incInstructionNum();
 	}
 
-	private void createIrSrASimm(int opCode, int rS, int rA, int simm) {
+	private void createIrSrAsimm(int opCode, int rS, int rA, int simm) {
 		instructions[iCount] = opCode | (rS << 21) | (rA << 16) | (simm  & 0xffff);
 		incInstructionNum();
 	}
@@ -2201,11 +2207,11 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 	}
 
 	private void insertProlog() {
-		int count = iCount;
+//		int count = iCount;
 		iCount = 0;
-		createIrSrASimm(ppcStwu, stackPtr, stackPtr, -stackSize);
+		createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -stackSize);
 		createIrSspr(ppcMfspr, LR, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, LRoffset);
+		createIrSrAsimm(ppcStw, 0, stackPtr, LRoffset);
 		if (nofNonVolGPR > 0) {
 			createIrSrAd(ppcStmw, nofGPR-nofNonVolGPR, stackPtr, GPRoffset);
 		}
@@ -2224,25 +2230,31 @@ public class MachineCode implements SSAInstructionOpcs, SSAInstructionMnemonics,
 				createIrDrAd(ppcLwz, paramRegNr[paramEndGPR - paramStartGPR + 1 + i], stackPtr, stackSize + paramOffset + i * 4);
 			}
 		}
-		iCount = count;
+//		iCount = count;
 	}
 
 	private void insertPrologException() {
 		iCount = 0;
-		createIrSrASimm(ppcStwu, stackPtr, stackPtr, -stackSize);
-		createIrSrASimm(ppcStw, 0, stackPtr, GPRoffset);
+		createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -stackSize);
+		createIrSrAsimm(ppcStw, 0, stackPtr, GPRoffset);
 		createIrSspr(ppcMfspr, SRR0, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, SRR0offset);
+		createIrSrAsimm(ppcStw, 0, stackPtr, SRR0offset);
 		createIrSspr(ppcMfspr, SRR1, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, SRR1offset);
+		createIrSrAsimm(ppcStw, 0, stackPtr, SRR1offset);
 		createIrSspr(ppcMtspr, EID, 0);
 		createIrSspr(ppcMfspr, LR, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, LRoffset);
+		createIrSrAsimm(ppcStw, 0, stackPtr, LRoffset);
 		createIrSspr(ppcMfspr, CTR, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, CTRoffset);
+		createIrSrAsimm(ppcStw, 0, stackPtr, CTRoffset);
 		createIrD(ppcMfcr, 0);
-		createIrSrASimm(ppcStw, 0, stackPtr, CRoffset);
+		createIrSrAsimm(ppcStw, 0, stackPtr, CRoffset);
 		createIrSrAd(ppcStmw, 2, stackPtr, GPRoffset + 8);
+		if (enFloatsInExc) {
+			assert false;
+			System.err.println("enabled");
+			for (int i = paramStartFPR; i < nonVolStartFPR; i++)
+				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + i * 8);
+		}
 	}
 
 	private void insertEpilog(int stackSize) {

@@ -218,7 +218,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					} else if (opdInstr.ssaOpcode == sCloadLocal) {
 						if (opd.end < currNo) opd.end = currNo;
 						// store last use of a parameter
-						MachineCode.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
+						CodeGen.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
 //						StdStreams.out.print("currNo="+currNo);
 //						StdStreams.out.println(", paramRegEnd["+(opdInstr.result.index - maxStackSlots)+"]="+MachineCode.paramRegEnd[opdInstr.result.index - maxStackSlots]);
 					} else {
@@ -260,7 +260,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 						instr.result.nonVol = true;
-						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
+						CodeGen.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
 				}
 			} else if (instr.ssaOpcode == sCloadLocal) {
@@ -271,7 +271,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 						instr.result.nonVol = true;
-						MachineCode.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
+						CodeGen.paramHasNonVolReg[instr.result.index - maxStackSlots] = true;
 					}
 				}
 			} else {
@@ -284,13 +284,21 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						instr.result.nonVol = true;
 				}
 			}
+			
+			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions
+				Call call = (Call)instr;
+				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
+					if ((call.item.accAndPropFlags & sysMethCodeMask) == CodeGen.idENABLE_FLOATS) {
+					CodeGen.enFloatsInExc = true;
+				}
+			}
 		}
 	}
 
 	/**
 	 * Assign a register or memory location to all SSAValues
 	 */
-	static void assignRegisters(MachineCode code) {
+	static void assignRegisters(CodeGen code) {
 		// handle loadLocal first
 		if (dbg) StdStreams.out.println("\thandle load local");
 		for (int i = 0; i < nofInstructions; i++) {
@@ -301,13 +309,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (dbg) {StdStreams.out.print("\t\tassign reg for instr "); instr.print(0);}
 				int type = res.type;
 				if (type == tLong) {
-					res.regLong = MachineCode.paramRegNr[res.index - maxStackSlots];
-					res.reg = MachineCode.paramRegNr[res.index+1 - maxStackSlots];
+					res.regLong = CodeGen.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGen.paramRegNr[res.index+1 - maxStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					res.reg = MachineCode.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGen.paramRegNr[res.index - maxStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					res.reg = MachineCode.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGen.paramRegNr[res.index - maxStackSlots];
 				}	
 				
 				if (joinVal != null) {
@@ -358,9 +366,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			// reserve temporary storage on the stack for certain fpr operations
 			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
-				MachineCode.tempStorage = true;
+				CodeGen.tempStorage = true;
 			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
-				MachineCode.tempStorage = true;
+				CodeGen.tempStorage = true;
 
 			// reserve register for result of instruction
 			SSAValue joinVal = res.join;
@@ -428,7 +436,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETSPR")))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTGPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTFPR")) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && ((((Call)instr1).item.accAndPropFlags & sysMethCodeMask) == MachineCode.idPUTSPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && ((((Call)instr1).item.accAndPropFlags & sysMethCodeMask) == CodeGen.idPUTSPR) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger ))) {
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
@@ -472,7 +480,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					if (opd.join != null) opd = opd.join;
 					if (opd.owner.ssaOpcode == sCloadLocal) {
-						if (MachineCode.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
+						if (CodeGen.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
 							if (opd.type == tLong) {
 								freeReg(gpr, opd.regLong);
 								freeReg(gpr, opd.reg);
@@ -534,14 +542,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (fpr > nofParamFPR) nofParamGPR = fpr; 
 			}
 		}
-		MachineCode.nofNonVolGPR = nofNonVolGPR;
-		MachineCode.nofNonVolFPR = nofNonVolFPR;
-		MachineCode.nofVolGPR = nofVolGPR;
-		MachineCode.nofVolFPR = nofVolFPR;
+		CodeGen.nofNonVolGPR = nofNonVolGPR;
+		CodeGen.nofNonVolFPR = nofNonVolFPR;
+		CodeGen.nofVolGPR = nofVolGPR;
+		CodeGen.nofVolFPR = nofVolFPR;
 		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) MachineCode.paramSlotsOnStack = nof;
+		if (nof > 0) CodeGen.paramSlotsOnStack = nof;
 		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
-		if (nof > 0) MachineCode.paramSlotsOnStack += nof;
+		if (nof > 0) CodeGen.paramSlotsOnStack += nof;
 	}
 
 	private static void findReg(SSAValue res) {

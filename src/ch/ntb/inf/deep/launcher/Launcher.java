@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cgPPC.MachineCode;
+import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
@@ -46,7 +46,7 @@ public class Launcher implements ICclassFileConsts {
 			// 2a) Initialize linker
 			if (reporter.nofErrors <= 0) {
 				Linker32.init();
-				MachineCode.init();
+				CodeGen.init();
 			}
 			
 			// 3) Loop One
@@ -81,7 +81,7 @@ public class Launcher implements ICclassFileConsts {
 
 							// 3.4) Create machine code
 							if (reporter.nofErrors <= 0)
-								method.machineCode = new MachineCode(method.ssa);
+								method.machineCode = new CodeGen(method.ssa);
 
 						}
 						method = (Method) method.next;
