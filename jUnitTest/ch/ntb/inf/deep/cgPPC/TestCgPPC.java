@@ -10,16 +10,16 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class TestCgPPC implements ICclassFileConsts {
 
-	static MachineCode[] code;
+	static CodeGen[] code;
 //	static String[] config = new String[] {"C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
-	static String[] config = new String[] {"M:/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
+	static String[] config = new String[] {"D:/work/Crosssystem/deep/ExampleProject.deep","BootFromRam"};
 
 	public static void createCgPPC(Class clazz) {
 		Linker32.prepareConstantBlock(clazz);
 		TestSSA.createSSA(clazz);
-		code = new MachineCode[TestCFG.cfg.length];
+		code = new CodeGen[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
-			code[i] = new MachineCode(TestSSA.ssa[i]);
+			code[i] = new CodeGen(TestSSA.ssa[i]);
 			TestSSA.ssa[i].print(0);
 			code[i].print();
 			System.out.println();
