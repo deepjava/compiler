@@ -50,7 +50,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int cdBaseClass0Offset = 2 * 4;
 	public static final int cdConstantSize = 3 * 4;
 	public static final int cblkConstantSize = 8 * 4;
-	public static final int cdSizeForArrays = 4 * 4;
+	public static final int cdSizeForArrays = 5 * 4;
 	private static int arrayOffsetCounter = 0;
 	
 	// System table:
@@ -670,6 +670,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		array.typeDescriptor[1] = array.componentType.sizeInBits / 8; // size of element type
 		array.typeDescriptor[2] = 0x44444444; // not used
 		array.typeDescriptor[3] = Type.wktObject.address; // base class address -> address of java/lang/Object
+		array.typeDescriptor[4] = array.address; // address of own type descriptor
 	}
 	
 	public static void createSystemTable() {
@@ -1282,16 +1283,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("  ----------------------------------------------------------------------");
 			}
 			
-/*			else {
+			else {
 				Array a = (Array)item;
 				vrb.println("  Array: " + a.name);
 				vrb.println("    Type descriptor:");
 				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[0]); vrb.println("] extension level");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[1]); vrb.println("] size of array element in byte");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[1]); vrb.println("] size of an array element in byte");
 				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[2]); vrb.println("] not used");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] base class address");
-			}*/
-			
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] address of base class object");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[4]); vrb.println("] the address of the array type descriptor itself");
+			}
+		
 			item = item.next;
 		}
 	}
