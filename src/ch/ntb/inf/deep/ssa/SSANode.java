@@ -2419,7 +2419,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					pushToStack(result);
 				}
 				break;
-			case bCnew:
+			case bCnew:		// TODO @Urs: Check this
 				bca++;
 				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				// value1 = new SSAValue();
@@ -2427,19 +2427,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				Item type = null;
 				if (ssa.cfg.method.owner.constPool[val] instanceof Class) {
 					type = ssa.cfg.method.owner.constPool[val];
-					// value1.type = SSAValue.tRef;
-					// value1.constant = clazz;
-				} else {
-					// it is a Array of objects
-					if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
-						assert false : "why a type?";
-						// Item type = ssa.cfg.method.owner.constPool[val];
-						// result.type = SSAValue.tAref;
-						// result.constant = type.type;
-					} else {
-						assert false : "Unknown Parametertype for new";
-						break;
-					}
+				} 
+				else {
+					assert false : "Unknown Parametertype for new";
 				}
 				result.type = SSAValue.tRef;
 				// instr = new Call(sCnew, new SSAValue[] { value1 });
@@ -2449,14 +2439,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				pushToStack(result);
 				break;
-			case bCnewarray:
+			case bCnewarray:		// TODO @Urs: Check this
 				bca++;
-				val = ssa.cfg.code[bca] & 0xff;// atype
+				val = ssa.cfg.code[bca] & 0xff; // atype (Array type)
 				value1 = popFromStack();
+				Item atype = Type.classList.getItemByName(Character.toString(tcArray) + Type.wellKnownTypes[val].name);
+				assert atype == null : "bCnewArray: can't find a array item for the given atype!";
 				result = new SSAValue();
 				result.type = val + 10;
 				SSAValue[] operand = { value1 };
-				instr = new Call(sCnew, operand);
+				instr = new Call(sCnew, atype, operand);
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
