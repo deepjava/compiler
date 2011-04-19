@@ -2444,7 +2444,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = ssa.cfg.code[bca] & 0xff; // atype (Array type)
 				value1 = popFromStack();
 				Item atype = Type.classList.getItemByName(Character.toString(tcArray) + Type.wellKnownTypes[val].name);
-				assert atype == null : "bCnewArray: can't find a array item for the given atype!";
+				assert atype != null : "[BCA " + bca + "] can't find a array item for the given atype (\"" + Character.toString(tcArray) + Type.wellKnownTypes[val].name +"\")!";
 				result = new SSAValue();
 				result.type = val + 10;
 				SSAValue[] operand = { value1 };
