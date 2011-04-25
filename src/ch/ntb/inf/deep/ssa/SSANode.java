@@ -2501,7 +2501,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				value1 = popFromStack();
-				result = value1;
+				result = new SSAValue();
 				if (ssa.cfg.method.owner.constPool[val] instanceof Type) {
 					instr = new MonadicRef(sCthrow,
 							(Type) ssa.cfg.method.owner.constPool[val], value1);
@@ -2998,6 +2998,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	
 	private SSAValue insertRegMoves(SSANode addTo, int index, SSAValue val){
 		if(val.index > -1 && val.index != index){
+			System.out.println("val.index = " + val.index);
 			SSAValue r = new SSAValue();
 			r.type = val.type;
 			r.index = index;

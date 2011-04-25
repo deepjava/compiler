@@ -11,7 +11,7 @@ import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = false;
+	private static final boolean dbg = true;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -74,9 +74,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static int[] moveGPR = new int[maxNofParam];
 	private static int[] moveFPR = new int[maxNofParam];
 	
-	// information about into which registers parameters of a call to a method go 
-	private static int[] destGPR = new int[nofGPR];
-	private static int[] destFPR = new int[nofFPR];
+	// information about the src registers for parameters of a call to a method 
+	private static int[] srcGPR = new int[nofGPR];
+	private static int[] srcFPR = new int[nofFPR];
+	private static int[] srcGPRcount = new int[nofGPR];
+	private static int[] srcFPRcount = new int[nofFPR];
 	
 	private static SSAValue[] lastExitSet;
 	private static boolean newString;
@@ -1224,7 +1226,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				opds = instr.getOperands();
 				sReg1 = opds[0].reg;
 				dReg = res.reg;
-				switch (res.type & 0x7fffffff) {
+				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
 					createIrDrB(ppcFctiw, 0, sReg1);
 					createIrSrAd(ppcStfd, 0, stackPtr, tempStorageOffset);
@@ -1313,7 +1315,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				opds = instr.getOperands();
 				sReg1 = opds[0].reg;
 				dReg = res.reg;
-				switch (res.type & 0x7fffffff) {
+				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
 					createIrDrB(ppcFctiw, 0, sReg1);
 					createIrSrAd(ppcStfd, 0, stackPtr, tempStorageOffset);
@@ -1403,7 +1405,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				sReg1 = opds[0].reg;
 				sReg2 = opds[1].reg;
 				dReg = res.reg;
-				type = opds[0].type & 0x7fffffff;
+				type = opds[0].type & ~(1<<ssaTaFitIntoInt);
 				if (type == tLong) {
 					int sReg1L = opds[0].regLong;
 					int sReg2L = opds[1].regLong;
@@ -1467,12 +1469,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				MonadicRef ref = (MonadicRef)instr;
 				Type t = (Type)ref.item;
 				if (t instanceof Class) offset = ((Class)t).extensionLevel;
-				else offset = 1;
-				createItrap(ppcTwi, TOifequal, sReg1, 0);
+				else offset = 1;	// object is an array
+				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+				createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+				createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+				createIBOBIBD(ppcBc, BOalways, 4*CRF0, 7);	// jump to end
+				// label 1
 				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
 				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
-//StdStreams.out.println("adress of type = " + t.address);
-//StdStreams.out.println("offset in TD = " + (8 + offset * 4));
 				loadConstantAndFixup(res.regAux1, t);	// addr of type
 				createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
 				createIrD(ppcMfcr, res.reg);
@@ -1550,8 +1554,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						Class clazz = (Class)(Type.classList.getItemByName(className.toString()));
 						Item method = clazz.methods.getItemByName(methName.toString());
 						loadConstantAndFixup(res.reg, method);	// addr of method
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idENABLE_FLOATS) { // ENABLE_FLOATS
-						boolean enFloats = true;
 					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idDoubleToBits) { // DoubleToBits
 						createIrSrAd(ppcStfd, opds[0].reg, stackPtr, tempStorageOffset);
 						createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset);
@@ -1604,59 +1606,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					}
 					
 					// copy parameters into registers and to stack if not enough registers
-					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
-					for (int k = 0; k < nofFPR; k++) destFPR[k] = 0;
-					for (int k = 0, kGPR = 0, kFPR = 0; k < opds.length; k++) {
-						type = opds[k].type & ~(1<<ssaTaFitIntoInt);
-						if (type == tLong) {
-							destGPR[opds[k].regLong] = kGPR + paramStartGPR;
-							destGPR[opds[k].reg] = kGPR + 1 + paramStartGPR;
-							kGPR += 2;
-						} else if (type == tFloat || type == tDouble) {
-							destFPR[opds[k].reg] = kFPR + paramStartFPR;
-							kFPR++;
-						} else {
-							destGPR[opds[k].reg] = kGPR + paramStartGPR;
-							kGPR++;
-						}
-					}
-					for (int k = 0, n = 0; k < nofGPR; k++) {
-						if (destGPR[k] <= paramEndGPR) {
-							if (destGPR[k] != 0 && destGPR[k] != k) {
-								if (destGPR[destGPR[k]] == 0) {
-									createIrArSrB(ppcOr, destGPR[k], k, k);
-									destGPR[k] = 0;
-								} else {
-									createIrArSrB(ppcOr, 0, destGPR[k], destGPR[k]);
-									createIrArSrB(ppcOr, destGPR[k], k, k);
-									createIrArSrB(ppcOr, k, 0, 0);
-									int temp = destGPR[k];
-									destGPR[k] = destGPR[temp];
-									destGPR[temp] = temp;
-									k--;
-								}
-							}
-						} else {	// copy to stack
-							createIrSrAd(ppcStw, k, stackPtr, paramOffset + n++ * 4);
-							if(dbg) StdStreams.out.println("\treg " + k + " stored to stack");
-						}
-					}
-					for (int k = 0; k < nofFPR; k++) {
-						if (destFPR[k] != 0 && destFPR[k] != k) {
-							if (destFPR[destFPR[k]] == 0) {
-								createIrDrB(ppcFmr, destFPR[k], k);
-								destGPR[k] = 0;
-							} else {
-								createIrDrB(ppcFmr, 0, destFPR[k]);
-								createIrDrB(ppcFmr, destFPR[k], k);
-								createIrDrB(ppcFmr, k, 0);
-								int temp = destFPR[k];
-								destFPR[k] = destFPR[temp];
-								destFPR[temp] = temp;
-								k--;
-							}
-						}
-					}
+					copyParameters(opds);
+					
 					if (newString) {
 //						loadConstantAndFixup(paramStartGPR, stringRef);	// first reg contains ref to string
 						int sizeOfObject = Type.wktObject.getObjectSize();
@@ -1710,28 +1661,28 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 					}
 				} else if (opds.length == 1) {
-					switch (res.type & 0x7fffffff) {
+					switch (res.type  & ~(1<<ssaTaFitIntoInt)) {
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
 					case tAbyte: case tAshort: case tAinteger: case tAlong:	// bCnewarray
 						method = Class.getNewMemoryMethod(bCnewarray);
 						loadConstantAndFixup(res.regAux1, method);	// addr of newarray
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 						// copy parameters
-						for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
+						for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
 						for (int k = 0; k < opds.length; k++) 
-							destGPR[opds[k].reg] = k + paramStartGPR;				
+							srcGPR[opds[k].reg] = k + paramStartGPR;				
 						for (int k = 0; k < nofGPR; k++) {
-							if (destGPR[k] != 0 && destGPR[k] != k) {
-								if (destGPR[destGPR[k]] == 0) {
-									createIrArSrB(ppcOr, destGPR[k], k, k);
-									destGPR[k] = 0;
+							if (srcGPR[k] != 0 && srcGPR[k] != k) {
+								if (srcGPR[srcGPR[k]] == 0) {
+									createIrArSrB(ppcOr, srcGPR[k], k, k);
+									srcGPR[k] = 0;
 								} else {
-									createIrArSrB(ppcOr, 0, destGPR[k], destGPR[k]);
-									createIrArSrB(ppcOr, destGPR[k], k, k);
+									createIrArSrB(ppcOr, 0, srcGPR[k], srcGPR[k]);
+									createIrArSrB(ppcOr, srcGPR[k], k, k);
 									createIrArSrB(ppcOr, k, 0, 0);
-									int temp = destGPR[k];
-									destGPR[k] = destGPR[temp];
-									destGPR[temp] = temp;
+									int temp = srcGPR[k];
+									srcGPR[k] = srcGPR[temp];
+									srcGPR[temp] = temp;
 									k--;
 								}
 							}
@@ -1740,6 +1691,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
 						loadConstantAndFixup(paramStartGPR + 2, item);	// ref
+//						System.out.println("Item = "); item.printName(); item.print(1);
 						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
@@ -1748,21 +1700,21 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						loadConstantAndFixup(res.regAux1, method);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 						// copy parameters
-						for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
+						for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
 						for (int k = 0; k < opds.length; k++) 
-							destGPR[opds[k].reg] = k + paramStartGPR;				
+							srcGPR[opds[k].reg] = k + paramStartGPR;				
 						for (int k = 0; k < nofGPR; k++) {
-							if (destGPR[k] != 0 && destGPR[k] != k) {
-								if (destGPR[destGPR[k]] == 0) {
-									createIrArSrB(ppcOr, destGPR[k], k, k);
-									destGPR[k] = 0;
+							if (srcGPR[k] != 0 && srcGPR[k] != k) {
+								if (srcGPR[srcGPR[k]] == 0) {
+									createIrArSrB(ppcOr, srcGPR[k], k, k);
+									srcGPR[k] = 0;
 								} else {
-									createIrArSrB(ppcOr, 0, destGPR[k], destGPR[k]);
-									createIrArSrB(ppcOr, destGPR[k], k, k);
+									createIrArSrB(ppcOr, 0, srcGPR[k], srcGPR[k]);
+									createIrArSrB(ppcOr, srcGPR[k], k, k);
 									createIrArSrB(ppcOr, k, 0, 0);
-									int temp = destGPR[k];
-									destGPR[k] = destGPR[temp];
-									destGPR[temp] = temp;
+									int temp = srcGPR[k];
+									srcGPR[k] = srcGPR[temp];
+									srcGPR[temp] = temp;
 									k--;
 								}
 							}
@@ -1781,25 +1733,25 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					loadConstantAndFixup(res.regAux1, method);	// addr of multianewarray
 					createIrSspr(ppcMtspr, LR, res.regAux1);
 					// copy dimensions
-					for (int k = 0; k < nofGPR; k++) destGPR[k] = 0;
+					for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
 					for (int k = 0; k < opds.length; k++) 
-						destGPR[opds[k].reg] = k + paramStartGPR + 2;				
+						srcGPR[opds[k].reg] = k + paramStartGPR + 2;				
 //StdStreams.out.println("destGPR = ");
 //for (int h=0; h < 32; h++) 
 //	StdStreams.out.print(destGPR[h] + ",");
 //StdStreams.out.println();
 					for (int k = 0; k < nofGPR; k++) {
-						if (destGPR[k] != 0 && destGPR[k] != k) {
-							if (destGPR[destGPR[k]] == 0) {
-								createIrArSrB(ppcOr, destGPR[k], k, k);
-								destGPR[k] = 0;
+						if (srcGPR[k] != 0 && srcGPR[k] != k) {
+							if (srcGPR[srcGPR[k]] == 0) {
+								createIrArSrB(ppcOr, srcGPR[k], k, k);
+								srcGPR[k] = 0;
 							} else {
-								createIrArSrB(ppcOr, 0, destGPR[k], destGPR[k]);
-								createIrArSrB(ppcOr, destGPR[k], k, k);
+								createIrArSrB(ppcOr, 0, srcGPR[k], srcGPR[k]);
+								createIrArSrB(ppcOr, srcGPR[k], k, k);
 								createIrArSrB(ppcOr, k, 0, 0);
-								int temp = destGPR[k];
-								destGPR[k] = destGPR[temp];
-								destGPR[temp] = temp;
+								int temp = srcGPR[k];
+								srcGPR[k] = srcGPR[temp];
+								srcGPR[temp] = temp;
 								k--;
 							}
 						}
@@ -1840,13 +1792,15 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				ref = (MonadicRef)instr;
 				t = (Type)ref.item;
 				if (t instanceof Class) offset = ((Class)t).extensionLevel;
-				else offset = 0;
+				else offset = 1;	// object is an array
 //				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
-//				createIBOBIBD(ppcBc, BOtrue, 4*CRF2+EQ, 6);	// jump to end
+//				createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 6);	// jump to label 1 if null pointer
 //				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
 //				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
 //				loadConstantAndFixup(res.regAux1, t);	// addr of type
 //				createItrap(ppcTw, TOifnequal, res.regAux1, 0);
+//				// label 1
+//				createIrArSrB(ppcOr, res.reg, sReg1, sReg1);				
 				break;
 			case sCbranch:
 				bci = ssa.cfg.code[node.lastBCA] & 0xff;
@@ -1875,11 +1829,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					opds = instr.getOperands();
 					sReg1 = opds[0].reg;
 					sReg2 = opds[1].reg;
-//					assertEquals("cg: wrong type", opds[0].type, tInteger);
-//					assertEquals("cg: wrong type", opds[1].type, tInteger);
 					if (sReg1 < 0) {
 						if (opds[0].constant != null) {
-//							StdStreams.out.println("constant is not null");
 							int immVal = ((StdConstant)opds[0].constant).valueH;
 							if ((immVal >= -32768) && (immVal <= 32767))
 								createICRFrAsimm(ppcCmpi, CRF0, sReg2, immVal);
@@ -1936,7 +1887,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				case bCifle:
 					opds = instr.getOperands();
 					sReg1 = opds[0].reg;
-//					assertEquals("cg: wrong type", opds[0].type, tInteger);
 					createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
 					if (bci == bCifeq) 
 						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);
@@ -1991,13 +1941,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIli(ppcB, nofPairs, true);
 					break;
 				default:
-//					StdStreams.out.println(bci);
 					assert false : "cg: no such branch instruction";
 				}
 				break;
 			case sCregMove:
 				opds = instr.getOperands();
-				switch (res.type & 0x7fffffff) {
+				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
@@ -2011,12 +1960,147 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrB(ppcFmr, res.reg, opds[0].reg);
 					break;
 				default:
-					System.out.println("type = " + (res.type& 0x7fffffff));
+					StdStreams.out.println("type = " + (res.type& 0x7fffffff));
 					assert false : "type not implemented";
 				}
 				break;
 			default:
 				assert false : "cg: no code generated for " + instr.scMnemonics[instr.ssaOpcode] + " function";
+			}
+		}
+	}
+
+	private void copyParameters(SSAValue[] opds) {
+		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
+		for (int k = 0; k < nofFPR; k++) {srcFPR[k] = 0; srcFPRcount[k] = 0;}
+
+		// get info about register location for parameters
+		for (int k = 0, kGPR = 0, kFPR = 0; k < opds.length; k++) {
+			int type = opds[k].type & ~(1<<ssaTaFitIntoInt);
+			if (type == tLong) {
+				srcGPR[kGPR + paramStartGPR] = opds[k].regLong;
+				srcGPR[kGPR + 1 + paramStartGPR] = opds[k].reg;
+				kGPR += 2;
+			} else if (type == tFloat || type == tDouble) {
+				srcFPR[kFPR + paramStartFPR] = opds[k].reg;
+				kFPR++;
+			} else {
+				srcGPR[kGPR + paramStartGPR] = opds[k].reg;
+				kGPR++;
+			}
+		}
+		
+		// count register usage
+		int i = paramStartGPR;
+		while (srcGPR[i] != 0) srcGPRcount[srcGPR[i++]]++;
+		i = paramStartFPR;
+		while (srcFPR[i] != 0) srcFPRcount[srcFPR[i++]]++;
+//		if (dbg) {
+//			StdStreams.out.print("srcGPR = ");
+//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.out.print(srcGPR[i] + ","); 
+//			StdStreams.out.println();
+//			StdStreams.out.print("srcGPRcount = ");
+//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.out.print(srcGPRcount[i] + ","); 
+//			StdStreams.out.println();
+//		}
+		
+		// handle move to itself
+		i = paramStartGPR;
+		while (srcGPR[i] != 0) {
+			if (srcGPR[i] == i) srcGPRcount[i]--;
+			i++;
+		}
+		i = paramStartFPR;
+		while (srcFPR[i] != 0) {
+			if (srcFPR[i] == i) srcFPRcount[i]--;
+			i++;
+		}
+
+		// move registers 
+		boolean done = false;
+		while (!done) {
+			i = paramStartGPR; done = true;
+			while (srcGPR[i] != 0) {
+				if (srcGPRcount[i] == 0) {
+					createIrArSrB(ppcOr, i, srcGPR[i], srcGPR[i]);
+					srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
+					done = false;
+				}
+				i++; 
+			}
+		}
+		done = false;
+		while (!done) {
+			i = paramStartFPR; done = true;
+			while (srcFPR[i] != 0) {
+				if (srcFPRcount[i] == 0) {
+					createIrDrB(ppcFmr, i, srcFPR[i]);
+					srcFPRcount[i]--; srcFPRcount[srcFPR[i]]--;
+					done = false;
+				}
+				i++;
+			}
+		}
+
+		// resolve cycles
+		done = false;
+		while (!done) {
+			i = paramStartGPR; done = true;
+			while (srcGPR[i] != 0) {
+				int src = 0;
+				if (srcGPRcount[i] == 1) {
+					src = i;
+					createIrArSrB(ppcOr, 0, srcGPR[i], srcGPR[i]);
+					srcGPRcount[srcGPR[i]]--;
+					done = false;
+				}
+				boolean done1 = false;
+				while (!done1) {
+					int k = paramStartGPR; done1 = true;
+					while (srcGPR[k] != 0) {
+						if (srcGPRcount[k] == 0 && k != src) {
+							createIrArSrB(ppcOr, k, srcGPR[k], srcGPR[k]);
+							srcGPRcount[k]--; srcGPRcount[srcGPR[k]]--; 
+							done1 = false;
+						}
+						k++; 
+					}
+				}
+				if (src != 0) {
+					createIrArSrB(ppcOr, src, 0, 0);
+					srcGPRcount[src]--;
+				}
+				i++;
+			}
+		}
+		done = false;
+		while (!done) {
+			i = paramStartFPR; done = true;
+			while (srcFPR[i] != 0) {
+				int src = 0;
+				if (srcFPRcount[i] == 1) {
+					src = i;
+					createIrDrB(ppcFmr, 0, srcFPR[i]);
+					srcFPRcount[srcFPR[i]]--;
+					done = false;
+				}
+				boolean done1 = false;
+				while (!done1) {
+					int k = paramStartFPR; done1 = true;
+					while (srcFPR[k] != 0) {
+						if (srcFPRcount[k] == 0 && k != src) {
+							createIrDrB(ppcFmr, k, srcFPR[k]);
+							srcFPRcount[k]--; srcFPRcount[srcFPR[k]]--; 
+							done1 = false;
+						}
+						k++; 
+					}
+				}
+				if (src != 0) {
+					createIrDrB(ppcFmr, src, 0);
+					srcFPRcount[src]--;
+				}
+				i++;
 			}
 		}
 	}
