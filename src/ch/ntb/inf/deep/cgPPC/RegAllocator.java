@@ -369,6 +369,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				CodeGen.tempStorage = true;
 			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
 				CodeGen.tempStorage = true;
+			if (instr.ssaOpcode == sCdiv && res.type == tLong)
+				CodeGen.tempStorage = true;
 
 			// reserve register for result of instruction
 			SSAValue joinVal = res.join;

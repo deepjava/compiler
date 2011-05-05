@@ -175,6 +175,7 @@ interface InstructionOpcs {
 		ppcCrorc = (0x13 << 26) | (0x1a1 << 1),
 		ppcCrxor = (0x13 << 26) | (0xc1 << 1),
 		ppcDivw = (0x1f << 26) | (0x1eb << 1),
+		ppcDivwu = (0x1f << 26) | (0x1cb << 1),
 		ppcExtsb = (0x1f << 26) | (0x3ba << 1),
 		ppcExtsh = (0x1f << 26) | (0x39a << 1),
 		ppcFadd = (0x3f << 26) | (0x15 << 1),

@@ -11,7 +11,7 @@ import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
-	private static final boolean dbg = true;
+	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int defaultNofInstr = 16;
@@ -759,7 +759,147 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcDivw, dReg, sReg1, sReg2);
 					break;
 				case tLong:
-					assert false : "cg: type not implemented";
+					// achtung: div mit type long reserviert 2 gprs und noch keine fprs
+					createICRFrAsimm(ppcCmpi, CRF1, opds[1].regLong, -1); // is divisor negativ?
+					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 4);	
+					createIrDrAsimm(ppcSubfic, res.regAux2, sReg2, 0);	// negate divisor
+					createIrDrA(ppcSubfze, res.regAux1, opds[1].regLong);
+					createIBOBIBD(ppcBc, BOalways, 0, 3);
+					createIrArSrB(ppcOr, res.regAux1, opds[1].regLong, opds[1].regLong); // copy if not negativ
+					createIrArSrB(ppcOr, res.regAux2, opds[1].reg, opds[1].reg);
+					createICRFrAsimm(ppcCmpi, CRF0, res.regAux1, 0);	// test if divisor < 2^32
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 31);	// jump to label 1
+					createICRFrAsimm(ppcCmpi, CRF0, res.regAux2, 0x7fff);	// test if divisor < 2^15
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 29);	// jump to label 1
+					createIrDrArB(ppcDivw, res.regLong, opds[0].regLong, res.regAux2);
+					createIrDrArB(ppcMullw, 0, res.regAux2, res.regLong);
+					createIrDrArB(ppcSubf, 0, 0, opds[0].regLong);
+					createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negativ?
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
+					createIrDrArB(ppcAdd, 0, 0, res.regAux2);	// add divisor
+					createIrDrAsimm(ppcAddi, res.regLong, res.regLong, -1);	
+					createIrArSSHMBME(ppcRlwinm, res.regAux1, 0, 16, 0, 15);
+					createIrArSSHMBME(ppcRlwimi, res.regAux1, opds[0].reg, 16, 16, 31);
+					createIrDrArB(ppcDivwu, res.reg, res.regAux1, res.regAux2);
+					createIrDrArB(ppcMullw, 0, res.regAux2, res.reg);
+					createIrDrArB(ppcSubf, 0, 0, res.regAux1);
+					createIrArSSHMBME(ppcRlwinm, res.regAux1, 0, 16, 0, 15);
+					createIrArSSHMBME(ppcRlwimi, res.regAux1, opds[0].reg, 0, 16, 31);
+					createIrDrArB(ppcDivwu, 0, res.regAux1, res.regAux2);
+					createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 16, 0, 15);
+					createIrArSSHMBME(ppcRlwimi, res.reg, 0, 0, 16, 31);
+					createIrDrArB(ppcMullw, 0, res.regAux2, 0);
+					createIrDrArB(ppcSubf, 0, 0, res.regAux1);
+					createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
+					createICRFrAsimm(ppcCmpi, CRF2, opds[0].regLong, 0); // and dividend negativ?
+					createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
+					createIrDrAsimm(ppcAddi, res.reg, res.reg, 1);	
+					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negativ?
+					createIrDrAsimm(ppcSubfic, res.reg, res.reg, 0);	// negate result
+					createIrDrA(ppcSubfze, res.regLong, res.regLong);
+					createIBOBIBD(ppcBc, BOalways, 0, 76);	// jump to end
+
+					//label 1
+					//TODO optimize load const
+					dReg = 20;
+					Item item = int2floatConst1;	// ref to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+					createIrArSuimm(ppcXoris, 0, opds[0].regLong, 0x8000);
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, dReg, res.regAux1, 0);
+					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+					createIrDrArB(ppcFsub, dReg, 0, dReg);
+					createIrSrAd(ppcStw, sReg1, stackPtr, tempStorageOffset+4);
+					item = int2floatConst3;	// ref to 2^52;
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, res.regAux2, res.regAux1, 0);
+					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+					createIrDrArB(ppcFsub, res.regAux2, 0, res.regAux2);					
+					item = int2floatConst2;	// ref to 2^32;
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, 0, res.regAux1, 0);
+					createIrDrArCrB(ppcFmadd, dReg, dReg, 0, res.regAux2);
+					
+					dReg = 21;
+					item = int2floatConst1;	// ref to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+					createIrArSuimm(ppcXoris, 0, opds[1].regLong, 0x8000);
+					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, dReg, res.regAux1, 0);
+					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+					createIrDrArB(ppcFsub, dReg, 0, dReg);
+					createIrSrAd(ppcStw, sReg2, stackPtr, tempStorageOffset+4);
+					item = int2floatConst3;	// ref to 2^52;
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, res.regAux2, res.regAux1, 0);
+					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+					createIrDrArB(ppcFsub, res.regAux2, 0, res.regAux2);					
+					item = int2floatConst2;	// ref to 2^32;
+					loadConstantAndFixup(res.regAux1, item);
+					createIrDrAd(ppcLfd, 0, res.regAux1, 0);
+					createIrDrArCrB(ppcFmadd, dReg, dReg, 0, res.regAux2);
+
+					createIrDrArB(ppcFdiv, 22, 20, 21);
+					
+					sReg1 = 22;
+					dReg = res.reg;
+					createIrSrAd(ppcStfd, sReg1, stackPtr, tempStorageOffset);
+					createIrDrAd(ppcLwz, res.regAux1, stackPtr, tempStorageOffset);
+					createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset+4);
+					createIrArSSHMBME(ppcRlwinm, res.regAux2, res.regAux1, 12, 21, 31);	
+					createIrDrAsimm(ppcSubfic, res.regAux2, res.regAux2, 1075);	
+					createICRFrAsimm(ppcCmpi, CRF2, res.regAux1, 0);
+					createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
+					createIrArSrB(ppcAndc, res.regAux1, res.regAux1, 0);	
+					createIrArSuimm(ppcOris, res.regAux1, res.regAux1, 0x10);	
+					createICRFrAsimm(ppcCmpi, CRF0, res.regAux2, 52);
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 4);	// jump to label 1
+					createIrDrAsimm(ppcAddi, res.regLong, 0, 0);
+					createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+					createIBOBIBD(ppcBc, BOalways, 0, 23);	// jump to end
+					//label 1
+					createICRFrAsimm(ppcCmpi, CRF0, res.regAux2, 0);
+					createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 10);	// jump to label 2
+					createIrDrAsimm(ppcSubfic, 0, res.regAux2, 32);
+					createIrArSrB(ppcSrw, res.reg, res.reg, res.regAux2);
+					createIrArSrB(ppcSlw, 0, res.regAux1, 0);
+					createIrArSrB(ppcOr, dReg, dReg, 0);
+					createIrDrAsimm(ppcAddi, 0, res.regAux2, -32);
+					createIrArSrB(ppcSrw, 0, res.regAux1, 0);
+					createIrArSrB(ppcOr, dReg, dReg, 0);
+					createIrArSrB(ppcSrw, res.regLong, res.regAux1, res.regAux2);
+					createIBOBIBD(ppcBc, BOalways, 0, 9);	// jump to label 5
+					//label 2
+//					createIrDrA(ppcNeg, res.regAux2, res.regAux2);
+//					createICRFrAsimm(ppcCmpi, CRF0, res.regAux2, 11);
+//					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 9);	// jump to label 4
+//					createIBOBIBD(ppcBc, BOtrue, 4*CRF2+LT, 5);	// jump to label 3
+//					createIrDrAsimm(ppcAddi, res.reg, 0, -1);
+//					createIrDrAsimm(ppcAddis, res.regLong, 0, 0x7fff);
+//					createIrArSuimm(ppcOri, res.regLong, res.regLong, 0xffff);
+//					createIBOBIBD(ppcBc, BOalways, 0, 15);	// jump to end
+					//label 3
+//					createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+//					createIrDrAsimm(ppcAddis, res.regLong, 0, 0x8000);
+//					createIBOBIBD(ppcBc, BOalways, 0, 12);	// jump to end
+					//label 4
+					createIrDrAsimm(ppcSubfic, 0, res.regAux2, 32);
+					createIrArSrB(ppcSlw, res.regLong, res.regAux1, res.regAux2);
+					createIrArSrB(ppcSrw, 0, res.reg, 0);
+					createIrArSrB(ppcOr, res.regLong, res.regLong, 0);
+					createIrDrAsimm(ppcAddi, 0, res.regAux2, -32);
+					createIrArSrB(ppcSlw, 0, res.reg, 0);
+					createIrArSrB(ppcOr, res.regLong, res.regLong, 0);
+					createIrArSrB(ppcSlw, res.reg, res.reg, res.regAux2);
+					//label 5
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF2+LT, 3);	// jump to end
+					createIrDrAsimm(ppcSubfic, res.reg, res.reg, 0);
+					createIrDrA(ppcSubfze, res.regLong, res.regLong);
 					break;
 				case tFloat:
 					createIrDrArB(ppcFdivs, dReg, sReg1, sReg2);
@@ -1793,13 +1933,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				t = (Type)ref.item;
 				if (t instanceof Class) offset = ((Class)t).extensionLevel;
 				else offset = 1;	// object is an array
-//				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
-//				createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 6);	// jump to label 1 if null pointer
-//				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
-//				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
-//				loadConstantAndFixup(res.regAux1, t);	// addr of type
-//				createItrap(ppcTw, TOifnequal, res.regAux1, 0);
-//				// label 1
+				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+				createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 6);	// jump to label 1 if null pointer
+				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
+				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
+				loadConstantAndFixup(res.regAux1, t);	// addr of type
+				createItrap(ppcTw, TOifnequal, res.regAux1, 0);
+				// label 1
 //				createIrArSrB(ppcOr, res.reg, sReg1, sReg1);				
 				break;
 			case sCbranch:
