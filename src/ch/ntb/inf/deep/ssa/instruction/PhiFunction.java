@@ -8,7 +8,7 @@ public class PhiFunction extends SSAInstruction {
 	public boolean deleted = false;
 	public boolean visited = false;
 	public boolean used = false;
-	public int start;
+//	public int start;
 	public int last;	
 
 	public PhiFunction(int opCode) {
@@ -64,18 +64,27 @@ public class PhiFunction extends SSAInstruction {
 			}
 		}
 		if (nofOperands > 0) {
-		if(operands[nofOperands-1] != null){
-			StdStreams.vrb.print(operands[nofOperands-1].n + "}");
-		}else{
-			StdStreams.vrb.print("null)");
-		}}	
+			if(operands[nofOperands-1] != null){
+				StdStreams.vrb.print(operands[nofOperands-1].n + "}");
+			} else {
+				StdStreams.vrb.print("null)");
+			}
+		}	
 		StdStreams.vrb.print(" (" + result.typeName() + ")");
-		StdStreams.vrb.print(",   start=" + start + ", end=" + result.end);
 		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
-		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
-		if (result.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
-		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
-		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
+		SSAValue res = result;
+		if (res.join != null) {
+			StdStreams.vrb.print(", join=[" + res.index + "]");
+			res = result.join;
+		} else {
+			StdStreams.vrb.print(", end=" + res.end);
+			if (res.reg != -1) {
+				if (res.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
+			}
+			if (res.regLong != -1) StdStreams.vrb.print(", regLong=" + res.regLong);
+			if (res.reg != -1) StdStreams.vrb.print(", reg=" + res.reg);
+			if (res.regAux1 != -1) StdStreams.vrb.print(", regAux1=" + res.regAux1);
+		}
 		if (last != 0) StdStreams.vrb.print(", last=" + last);
 		if (deleted) StdStreams.vrb.print(" del");
 		if (used) StdStreams.vrb.print(" u");

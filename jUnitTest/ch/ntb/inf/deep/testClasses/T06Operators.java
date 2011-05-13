@@ -36,4 +36,9 @@ public class T06Operators {
 		return bRes;
 	}
 
+	public static boolean conditionalOperator4(int a) {
+		boolean b = a > 10;
+		return b;
+	}
+
 }

@@ -12,10 +12,8 @@ public class T04Loops {
 	public static void doWhileIf1() {
 		int j, i;
 		boolean b, c;
-
 		j = 0;
-		i = -6; // 0: c TRUE, b FALSE ; - 6 b TRUE c FALSE
-
+		i = -6; 
 		do {
 			j++;
 			i = i + j;
@@ -23,11 +21,8 @@ public class T04Loops {
 			c = j < 5;
 		} while (b && c);
 
-		if (b) {
-			j = -1;
-		} else {
-			j = 1;
-		}
+		if (b) j = -1;
+		else j = 1;
 	}
 
 	public static int while1() {
@@ -89,20 +84,6 @@ public class T04Loops {
 		}
 	}
 	
- 	private void whileAfterWhile(int a) {
-		int b = 10;
-		do a--; while(a < -1);
-		b++;
-		while (b == 0) {
-			int c = a * 2;
-			int d = c - b;
-			if (c > 1) break;
-			int e = c + d;
-			b++;
-		}
-		int f = 2 + b;
-	}
-
 	private void while2() {
 		int a = 10;
 		do a--; while(a > -1);
@@ -129,9 +110,104 @@ public class T04Loops {
 	
 	private void whileTrue2() {
 		while (true) {
-			whileAfterWhile(65);
+			help3(65);
 			for (int i = 0; i < 1000000; i++);
 		}
+	}
+	
+	private static int help1() { return 0; }
+	private static void help2() {}
+	private static void help3(int a) {}
+
+	private static void phiFunctionTest1() {
+		int a;	// a erhält Wert erst in der Schleife
+		int b;	// b erhält Wert erst in der Schleife
+		do {
+			a = 100;
+			b = a * 2;
+		} while (b < 0);
+	}
+
+	private static void phiFunctionTest2() {
+		help2();
+		int a;	// a erhält Wert erst in der Schleife
+		int b;	// b erhält Wert erst in der Schleife
+		do {
+			a = 100;
+			b = a * 2;
+		} while (b < 0);
+	}
+
+	private static void phiFunctionTest3() {
+		int a = 100;	// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			a += 10;
+			b = a * 2;
+		} while (b < 0);
+	}
+
+	private static void phiFunctionTest4() {
+		int a = 100;	// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			b = a * 2;
+		} while (b < 0);
+	}
+	
+	private static int phiFunctionTest5() {
+		int a;
+		for (int i = 0; i < 10; i++);
+		a = 100;
+		for (int i = 0; i < 20; i++);
+		return a + 3;
+	}
+	
+	private static int phiFunctionTest6() {
+		int a = 100;
+		for (int i = 0; i < 10; i++);
+		for (int i = 0; i < 20; i++);
+		return a + 3;
+	}
+	
+	private static int phiFunctionTest7() {
+		int a = 100;
+		int b;
+		for (int i = 0; i < 10; i++);
+		b = 200;
+		for (int i = 0; i < 20; i++) b++;
+		return a + b;
+	}
+
+	private static void phiFunctionTest8(int a) {
+		// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			b = a * 2;
+			b++;
+		} while (b < 0);	// Problem!!!!
+	}
+
+	private static void phiFunctionTest9(int a) {
+		// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b = 100;			// b erhält Wert erst in der Schleife
+		do {
+			b += a;
+		} while (b < 0);
+	}
+
+ 	private void phiFunctionTest10(int a) {
+		int b = 10;
+		do a--; while(a < -1);
+		b++;
+		while (b == 0) {
+			int c = a * 2;
+			int d = c - b;
+			if (c > 1) break;
+			int e = c + d;
+			b++;
+		}
+		int f = 2 + b;
 	}
 
 }

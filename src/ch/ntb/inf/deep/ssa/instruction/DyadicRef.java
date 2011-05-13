@@ -40,11 +40,18 @@ public class DyadicRef extends Dyadic {
 		StdStreams.vrb.print("DyadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
 		if (field.name != null) StdStreams.vrb.print(" <" + field.name + "(" + field.type.name + ")>");
 		StdStreams.vrb.print(" (" + result.typeName() + ")");
-		StdStreams.vrb.print(",   end=" + result.end);
 		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
-		if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
-		if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
-		if (result.join != null) StdStreams.vrb.print(", join={" + result.join.n + "}");
+		if (result.join != null) {
+			StdStreams.vrb.print(", join=[" + result.index + "]");
+		} else {
+			StdStreams.vrb.print(", end=" + result.end);
+			if (result.reg != -1) {
+				if (result.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
+			}
+			if (result.regLong != -1) StdStreams.vrb.print(", regLong=" + result.regLong);
+			if (result.reg != -1) StdStreams.vrb.print(", reg=" + result.reg);
+			if (result.regAux1 != -1) StdStreams.vrb.print(", regAux1=" + result.regAux1);
+		}
 		StdStreams.vrb.println();
 	}
 }
