@@ -11,6 +11,11 @@ public class T01SimpleMethods {
         int x = 1;
     }
 
+	public static boolean assignment2(int a) {
+		boolean b = a > 10;
+		return b;
+	}
+
     public static void simple1(int y) {
         int x = 0;
         x++;
@@ -74,5 +79,6 @@ public class T01SimpleMethods {
         Object d = null;
         d = ExampleInterface.o;
     }
+
 
 }

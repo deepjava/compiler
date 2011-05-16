@@ -53,7 +53,7 @@ public class NoOpnd extends SSAInstruction {
 			StdStreams.vrb.print("(" + result.typeName() + ")");
 		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
 		if (result.join != null) {
-			StdStreams.vrb.print(", join=[" + result.index + "]");
+			StdStreams.vrb.print(", join=[" + result.join.index + "]");
 		} else {
 			StdStreams.vrb.print(", end=" + result.end);
 			if (result.reg != -1) {
