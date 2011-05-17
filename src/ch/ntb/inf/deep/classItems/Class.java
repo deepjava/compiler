@@ -689,7 +689,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				File classFile = ClassFileAdmin.getClassFile(name);
 				log.println("opening class file of class: "+name );
 
-				if(classFile == null) throw new FileNotFoundException();
+				if(classFile == null) throw new FileNotFoundException(name.toString());
 				InputStream inStrm = new FileInputStream(classFile); // new FileInputStream
 				DataInputStream clfInStrm = new DataInputStream(inStrm); // new DataInputStream
 
@@ -754,7 +754,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				
 				clfInStrm.close();
 			}catch (FileNotFoundException fnfE){
-				errRep.error("class file not found"); errRep.println();
+				errRep.error("class file not found: " + fnfE.getMessage()); errRep.println();
 				fnfE.getCause();
 			}
 		}
