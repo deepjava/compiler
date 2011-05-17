@@ -8,7 +8,7 @@ public class PhiFunction extends SSAInstruction {
 	public boolean deleted = false;
 	public boolean visited = false;
 	public boolean used = false;
-//	public int start;
+	public int start;
 	public int last;	
 
 	public PhiFunction(int opCode) {
