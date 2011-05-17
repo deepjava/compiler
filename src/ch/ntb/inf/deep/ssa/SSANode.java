@@ -79,10 +79,46 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			// create new entry and exit sets, locals are uninitialized
 			entrySet = new SSAValue[maxStack + maxLocals];
 		} else if (nofPredecessors == 1) {
-			// only one predecessor --> no merge necessary
-			if (this.equals(predecessors[0]) || ((SSANode) predecessors[0]).exitSet == null) {// equal by
-				// "while(true){}
-				entrySet = new SSAValue[maxStack + maxLocals];
+			// only one predecessor --> no merge necessary but if it the predecessor is itself(loopheader) so create phiFunctions
+			// they are used by regAllocator
+			if (this.equals(predecessors[0]) || ((SSANode) predecessors[0]).exitSet == null) {// equal if it is the first node and it is from a while(...){} or do{...}while(..)
+				if(!traversed){
+					entrySet = new SSAValue[maxStack + maxLocals];
+					for (int i = 0; (i < maxStack + maxLocals) ; i++) {
+						//generate phiFunction
+						SSAValue result = new SSAValue();
+						result.index = i;
+						PhiFunction phi = new PhiFunction(sCPhiFunc);
+						result.owner = phi;
+						phi.result = result;
+						if(ssa.isParam[i]){
+							phi.result.type = ssa.paramType[i];
+							
+							SSAValue param = new SSAValue();
+							param.index = i;
+							param.type = ssa.paramType[i];
+							SSAInstruction instr = new NoOpnd(sCloadLocal);
+							instr.result = param;
+							instr.result.owner = instr;
+							this.addInstruction(instr);
+							phi.addOperand(param);
+						}			
+						addPhiFunction(phi);
+						
+						//Stack is empty
+						if (i >= maxStack ) {
+							entrySet[i] = result;
+						}
+					}
+				}else{
+					for (int i = 0; (i < maxStack + maxLocals) ; i++) {
+						SSAValue value = ((SSANode) predecessors[0]).exitSet[i];
+						if(value != null){
+							phiFunctions[i].addOperand(value);
+						}
+					}
+					eliminateRedundantPhiFunc();
+				}
 			} else {
 				entrySet = ((SSANode) predecessors[0]).exitSet.clone();
 			}
@@ -104,7 +140,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					}
 
 					if (((SSANode) predecessors[0]).exitSet == null) {
-						// if this ist the root node and this is a loopheader
+						// if this is the root node and this is a loopheader
 						// from case while(true){..}
 						entrySet = new SSAValue[maxStack + maxLocals];
 					} else {
