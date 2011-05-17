@@ -80,8 +80,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			entrySet = new SSAValue[maxStack + maxLocals];
 		} else if (nofPredecessors == 1) {
 			// only one predecessor --> no merge necessary
-			if (this.equals(predecessors[0])
-					|| ((SSANode) predecessors[0]).exitSet == null) {// equal by
+			if (this.equals(predecessors[0]) || ((SSANode) predecessors[0]).exitSet == null) {// equal by
 				// "while(true){}
 				entrySet = new SSAValue[maxStack + maxLocals];
 			} else {
@@ -274,29 +273,39 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 														break;
 													}
 												}
-												if (func == null) {
-													SSAValue result = new SSAValue();
-													SSAValue opd = entrySet[j];
-													result.index = j;
-													PhiFunction phi = new PhiFunction(sCPhiFunc);
-													result.owner = phi;
-													phi.result = result;
-													phi.result.type = entrySet[j].type;
-													int predNo = 0;
-													for(int k = 0; k < nofPredecessors; k++){
-														if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
-															predNo = k;
-															break;
-														}
+												
+												if (func == null ) {
+													//check if operands are from same type
+													boolean typeFlagsSet = false;
+													if((entrySet[j].type & (1 << SSAValue.ssaTaFitIntoInt))!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & (1 << SSAValue.ssaTaFitIntoInt)) != 0){
+														typeFlagsSet = true;
 													}
-													assert predNo != -1 : "predecessor for entrySet not found";
-													opd = insertRegMoves((SSANode) predecessors[predNo], j, opd);//entrySet[j]
-													phi.addOperand(opd);
-													opd = ((SSANode) predecessors[i]).exitSet[j];
-													opd = insertRegMoves((SSANode) predecessors[i], j, opd);
-													phi.addOperand(opd);
-													entrySet[j] = result;
-													addPhiFunction(phi);
+													if (typeFlagsSet || (entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type)) {
+														SSAValue result = new SSAValue();
+														SSAValue opd = entrySet[j];
+														result.index = j;
+														PhiFunction phi = new PhiFunction(sCPhiFunc);
+														result.owner = phi;
+														phi.result = result;
+														phi.result.type = entrySet[j].type;
+														int predNo = 0;
+														for(int k = 0; k < nofPredecessors; k++){
+															if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
+																predNo = k;
+																break;
+															}
+														}
+														assert predNo != -1 : "predecessor for entrySet not found";
+														opd = insertRegMoves((SSANode) predecessors[predNo], j, opd);//entrySet[j]
+														phi.addOperand(opd);
+														opd = ((SSANode) predecessors[i]).exitSet[j];
+														opd = insertRegMoves((SSANode) predecessors[i], j, opd);
+														phi.addOperand(opd);
+														entrySet[j] = result;
+														addPhiFunction(phi);
+													}else{
+														entrySet[j] = null;
+													}
 												} else {
 													// phi functions are created in this node 
 													//check if operands are from same type
@@ -304,7 +313,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 													// determine type
 													boolean typeFlagsSet = false;
-													if((opnd[0].type & 0x7fffffff)!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & 0x7fffffff) != 0){
+													if((opnd[0].type & (1 << SSAValue.ssaTaFitIntoInt))!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & (1 << SSAValue.ssaTaFitIntoInt)) != 0){
 														typeFlagsSet = true;
 													}
 													if (typeFlagsSet || (opnd[0].type == ((SSANode) predecessors[i]).exitSet[j].type)) {
@@ -322,7 +331,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 											} else {
 												// entrySet[j].owner.ssaOpcode != sCPhiFunc
 												boolean typeFlagsSet = false;
-												if((entrySet[j].type & 0x7fffffff)!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & 0x7fffffff) != 0){
+												if((entrySet[j].type & (1 << SSAValue.ssaTaFitIntoInt))!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & (1 << SSAValue.ssaTaFitIntoInt)) != 0){
 													typeFlagsSet = true;
 												}
 												if (typeFlagsSet || entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type) {
@@ -2485,7 +2494,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCathrow:
 				value1 = popFromStack();
-				result = value1;
+				result = new SSAValue();
 				instr = new Monadic(sCthrow, value1);
 				instr.result = result;
 				instr.result.owner = instr;
@@ -2495,7 +2504,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
-				pushToStack(result);
+				pushToStack(value1);
 				break;
 			case bCcheckcast:
 				bca++;
@@ -2998,7 +3007,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	
 	private SSAValue insertRegMoves(SSANode addTo, int index, SSAValue val){
 		if(val.index > -1 && val.index != index){
-			System.out.println("val.index = " + val.index);
+//			System.out.println("val.index = " + val.index);
 			SSAValue r = new SSAValue();
 			r.type = val.type;
 			r.index = index;
