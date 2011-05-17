@@ -29,7 +29,6 @@ public class TargetMemorySegment {
 	
 	// TODO @Martin: add return value (boolean)
 	public void addData(int addr, int[] d, int length) {
-	//	StdStreams.vrb.println("DBG: addr = " + addr + ", d.length = " + d.length + ", length = " + length);
 		if(d != null && 
 				d.length > 0 && 
 				length > 0 && 
@@ -38,7 +37,7 @@ public class TargetMemorySegment {
 				addr + length * 4 <= this.startAddress + this.data.length * 4) {
 			
 			for(int i = 0; i < length; i++) {
-	//			StdStreams.vrb.println("           > Writing 0x" + Integer.toHexString(d[i]) + " to 0x" + Integer.toHexString(addr + i * 4) + " (" + ((addr - this.startAddress) / 4 + i) + ")");
+				//if(addr == 0x0 || addr == 0x800000)StdStreams.vrb.println("  >>> Writing 0x" + Integer.toHexString(d[i]) + " to 0x" + Integer.toHexString(addr + i * 4) + " (" + ((addr - this.startAddress) / 4 + i) + ")");
 				this.data[(addr - this.startAddress) / 4 + i] = d[i];
 			}
 		}
@@ -61,6 +60,17 @@ public class TargetMemorySegment {
 	
 	public void addData(int addr, int[] d) {
 		addData(addr, d, d.length);
+	}
+	
+	public void addData(int addr, BlockItem item) {
+		int offset = 0;
+		while(item != null) {
+		//	System.out.println(">>>>>> Inserting BlockItem: " + item.name);
+		//	if(addr + offset < 0x60 | addr + offset == 0x800000) StdStreams.vrb.println("++++++ Written to " + addr + "++++++");
+			item.insertIntoArray(data, addr - this.startAddress + offset);
+			offset += item.getItemSize();
+			item = item.next;
+		}
 	}
 	
 	public String toString() {

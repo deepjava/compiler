@@ -8,10 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import ch.ntb.inf.deep.config.Segment;
-import ch.ntb.inf.deep.debug.Dbg;
-import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.config.SystemClass;
 import ch.ntb.inf.deep.config.SystemMethod;
+import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.host.ClassFileAdmin;
+import ch.ntb.inf.deep.linker.BlockItem;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
@@ -35,7 +36,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public Item methods; // list with all methods
 	public int nofMethods; // number of methods
 	public int nofInstMethods, nofClassMethods; // number of methods
-	public int methTabLength; // nOfInstanceMethodsInCD
+	public int methTabLength; // number of methods for the class descriptor
+	public int ifaceTabLength; // number of interfaces with methods for the class descriptor
 	
 	public Item instFields, firstInstReference; // (fields), chained to list with all fields
 	public Item classFields, firstClassReference; // list of class fields
@@ -49,14 +51,19 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	Class[] imports;
 	public int nofImports; // number of imports (without arrays)
 	
-	public int[] constantBlock; // the constant block for this class
-	public int constantBlockSize; // size of the constant block
-	public int constantPoolSize; // size of this pool on the target (in byte)
+	public BlockItem constantBlock; // reference to the first entry of the constant block (=constBlockSize entry)
+	public BlockItem codeBase; // reference to the codeBase entry
+	public BlockItem varBase; // reference to the varBase entry
+	public BlockItem ptrList; // reference to the beginning of the pointer list (=nofPtrs entry)
+	public BlockItem typeDescriptor; // reference to the type descriptor (size entry)
+	public BlockItem stringPool; // reference to the beginning of the string pool
+	public BlockItem constantPool; // reference to the beginning of the constant pool
+	public BlockItem constantBlockChecksum; // reference to the end of the constant block (=fcs entry)
+	
+	public int typeDescriptorSize; // size of the type descriptor on the target (in byte)
+	public int typeDescriptorOffset;
 	public int stringPoolSize; // size of this pool on the target (in byte)
-	public int classDescriptorSize; // size of the class descriptor on the target (in byte)
-	public int classDescriptorOffset;
-
-	public int machineCodeSize; // size of the machine code on the target (in byte)
+	public int constantPoolSize; // size of this pool on the target (in byte)
 	
 	public Segment codeSegment, varSegment, constSegment; // references to the memory segments for this class
 	public int codeOffset, varOffset, constOffset; // the offset of the code/class fields/constant block in the dedicated segment
@@ -104,6 +111,13 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(methods != null)  item = methods.getMethod(name, descriptor);
 		if(item == null && type != null) item = type.getMethod(name, descriptor);
 		return item;
+	}
+	
+	public Item getMethod(int methTabIndex) {
+		Item m = this.methods;
+		while(m != null && m.index != methTabIndex) m = m.next;
+		if(m == null) m = ((Class)this.type).getMethod(methTabIndex);
+		return m;
 	}
 
 	public Method getClassConstructor() {
@@ -1208,36 +1222,38 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	}
 	
 	public void printConstantBlock() {
-		printConstantBlock(0);
+		constantBlock.printList();
+//		vrb.println("----------");
+//		constantBlock.printListRaw();
 	}
 	
-	public void printConstantBlock(int indentLevel) {
-		int i = 0;
-		if(this.constantBlock != null) {
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] constBlockSize\n"); i++;
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] codeBase\n"); i++;
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] codeSize\n"); i++;
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varBase\n"); i++;
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varSize\n"); i++;
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] clinitAddr\n"); i++;
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] nofPtrs\n"); i++;
-			for(int j = 0; j < this.nofClassRefs; j++) {
-				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] ptr" + j + "\n"); i++;
-			}
-			for(int j = 0; j < this.classDescriptorSize / 4; j++) {
-				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] CD[" + j + "]\n"); i++;
-			}
-			for(int j = 0; j < this.stringPoolSize / 4; j++) {
-				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] SP[" + j + "]\n"); i++;
-			}
-			for(int j = 0; j < this.constantPoolSize / 4; j++) {
-				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] CP[" + j + "]\n"); i++;
-			}
-			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] fcs\n");
-		}
-		else {
-			indent(indentLevel);
-			vrb.print("<null>\n");
-		}
-	}
+//	public void printConstantBlock(int indentLevel) {
+//		int i = 0;
+//		if(this.constantBlock != null) {
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] constBlockSize\n"); i++;
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] codeBase\n"); i++;
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] codeSize\n"); i++;
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varBase\n"); i++;
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] varSize\n"); i++;
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] clinitAddr\n"); i++;
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] nofPtrs\n"); i++;
+//			for(int j = 0; j < this.nofClassRefs; j++) {
+//				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] ptr" + j + "\n"); i++;
+//			}
+//			for(int j = 0; j < this.classDescriptorSize / 4; j++) {
+//				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] CD[" + j + "]\n"); i++;
+//			}
+//			for(int j = 0; j < this.stringPoolSize / 4; j++) {
+//				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] SP[" + j + "]\n"); i++;
+//			}
+//			for(int j = 0; j < this.constantPoolSize / 4; j++) {
+//				indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] CP[" + j + "]\n"); i++;
+//			}
+//			indent(indentLevel); vrb.printf("> %4d", i); vrb.print(" ["); vrb.printf("%8x", this.constantBlock[i]); vrb.print("] fcs\n");
+//		}
+//		else {
+//			indent(indentLevel);
+//			vrb.print("<null>\n");
+//		}
+//	}
 }

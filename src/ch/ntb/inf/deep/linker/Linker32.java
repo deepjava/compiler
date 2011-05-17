@@ -109,61 +109,174 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 	public static void prepareConstantBlock(Class clazz) {
 			
-		if(dbg) vrb.println("[LINKER] START: Calculating remaining offsets and indexes for class \"" + clazz.name +"\":");
+		if(dbg) vrb.println("[LINKER] START: Preparing constant block for class \"" + clazz.name +"\":");
 
-		int cOffset = 0,	// byte offset of the constant float or double in the constant pool
-			cIndex = 0,		// index of constant float or double in the constant pool
-			slOffset = 0,	// byte offset of the string literal in the string pool
-			slIndex = 0;	// index of the string literal in the string pool
-			
-			
-		if(dbg) vrb.println("  1) Calculating indexes and offsets for the constant- and string pool:");
-						
-		if(clazz.constPool != null && clazz.constPool.length > 0) {
-			Item cpe;
-			int size = 0;
-			for(int i = 0; i < clazz.constPool.length; i++) {
-				cpe = clazz.constPool[i];
-				if(cpe instanceof StdConstant && (cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble])) { // constant float or double value -> target constant pool
-					size = ((Type)cpe.type).sizeInBits / 8; // size in byte
-					if(size != 4 && size != 8) reporter.error(9999, "Illegal size of constant pool entry! Type: " + cpe.type.name + ", Size: " + size + " byte");
-					cOffset = getCorrectOffset(cOffset, size);
-					cpe.offset = cOffset; // save offset
-					cOffset += size; // prepare counter for next round
-					cpe.index = cIndex; // save index
-					cIndex += size/slotSize; // prepare counter for next round
-				}
-				else if(cpe instanceof StringLiteral) { // string literal -> target string pool
-					size = stringHeaderSize + roundUpToNextWord(((StringLiteral)cpe).string.length() * 2); // use the size of the string not of the reference! -> 2 byte per character
-					cpe.offset = slOffset;// save offset
-					slOffset += size; // prepare counter for next round
-					cpe.index = slIndex;  // save index
-					slIndex += size/slotSize; // prepare counter for next round
-				}
-				if(dbg) { // Output if debugging is enabled
-					vrb.println("     > Entry: " + cpe.name);
-					if(cpe.type != null) vrb.println("       Type: " + cpe.type.name); else vrb.println("       Type: unkown");
-					vrb.println("       Index: 0x" + Integer.toHexString(cpe.index));
-					vrb.println("       Offset: 0x" + Integer.toHexString(cpe.offset));
-				}
-			}
-			clazz.constantPoolSize = roundUpToNextWord(cOffset); // set the size of the constant pool of this class
-//			clazz.constantPoolLength = cIndex;
-			
-			clazz.stringPoolSize = roundUpToNextWord(slOffset); // set the size of the constant pool of this class
-//			clazz.stringPoolLength = slIndex;
+		// Header
+		if(dbg) vrb.println("   Creating header");
+		clazz.constantBlock = new FixedValueItem("constBlockSize");
+		clazz.codeBase = new FixedValueItem("codeBase");
+		clazz.codeBase.append(new FixedValueItem("codeSize"));
+		clazz.constantBlock.append(clazz.codeBase);
+		clazz.varBase = new FixedValueItem("varBase");
+		clazz.varBase.append(new FixedValueItem("varSize"));
+		clazz.constantBlock.append(clazz.varBase);
+		Method classConstructor = clazz.getClassConstructor();
+		if(classConstructor != null) {			
+			clazz.constantBlock.append(new AddressItem(classConstructor));
+		}
+		else {
+			clazz.constantBlock.append(new FixedValueItem("<clinit>", -1));
 		}
 		
-		clazz.classDescriptorOffset = cblkNofPtrsOffset + (clazz.nofClassRefs + clazz.methTabLength) * 4 + cdInterface0AddrOffset;
-
-		// constant block size
-		clazz.classDescriptorSize = cdConstantSize + (clazz.methTabLength + Class.maxExtensionLevel + 1) * 4;
-		clazz.constantBlockSize = cblkConstantSize + 4 * clazz.nofClassRefs + clazz.classDescriptorSize + clazz.constantPoolSize + clazz.stringPoolSize;
+		// Pointer list
+		if(dbg) vrb.println("   Creating pointer list");
+		clazz.ptrList = new FixedValueItem("nofPtrs");
+		int ptrCounter = 0;
+		if(clazz.nofClassRefs > 0) {
+			Item field = clazz.classFields;
+			while(field != null) {
+				if((field.accAndPropFlags & (1 << apfStatic)) != 0 && ((Type)field.type).category == tcRef) {
+					clazz.ptrList.append(new AddressItem(field));
+					ptrCounter++;
+				}
+				field = field.next;
+			}
+		}
+		((FixedValueItem)clazz.ptrList).setValue(ptrCounter);
+		clazz.constantBlock.append(clazz.ptrList);
 		
-		if(dbg) vrb.println("\n[LINKER] END: calculating offsets and indexes for class \"" + clazz.name +"\"\n");
+		// Type descriptor
+		if(dbg) vrb.println("    Creating type descriptor");
+		if(dbg) vrb.println("    - Beginning with size");
+		clazz.typeDescriptor = new FixedValueItem("size");
+		if(dbg) vrb.println("    - Inserting the extension level");
+		clazz.typeDescriptor.insertBefore(new FixedValueItem("extensionLevel", clazz.extensionLevel));
+		Item m;
+		if(dbg) vrb.println("    - Inserting method table:");
+		for(int i = 0; i < clazz.methTabLength; i++) {
+			m = clazz.getMethod(i);
+			assert m != null : "[Error] No method with index " + i + " found!";
+			if(dbg) vrb.println("      > " + m.name);
+			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(m)); 
+		}
+//		if(clazz.nofInstMethods > 0) {
+//			if(dbg) vrb.println("    - Inserting instance methods:");
+//			Method m = (Method)clazz.methods;
+//			while(m != null) {
+//				if((m.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (m.accAndPropFlags & (1 << apfStatic)) == 0) { // not system primitive and not static
+//					if(dbg) vrb.println("      > " + m.name);
+//					clazz.typeDescriptor.getHead().insertBefore(new AddressItem(m));
+//				}
+//				m = (Method)m.next;
+//			}
+//		}
+		if(dbg) vrb.println("    - Inserting class name address");
+		clazz.typeDescriptor.insertAfter(new FixedValueItem("classNameAddr", 0x12345678));
+		if(dbg) vrb.println("    - Inserting base classes");
+		Class baseClass = (Class)clazz.type;
+		AddressItem bctable = new AddressItem(clazz);
+		for(int i = 0; i < Class.maxExtensionLevel; i++) {
+			if(baseClass != null) {
+				//clazz.typeDescriptor.getTail().insertAfter(new AddressItem(bc));
+				bctable.getHead().insertBefore(new AddressItem(baseClass));
+				baseClass = (Class)baseClass.type;
+			}
+			else {
+				bctable.getTail().insertAfter(new FixedValueItem("padding", 0));
+			}
+		}
+		clazz.typeDescriptor.append(bctable.getHead());
+		clazz.typeDescriptorSize = clazz.typeDescriptor.getBlockSize();
+		clazz.constantBlock.append(clazz.typeDescriptor.getHead());
+		
+		// String pool
+		if(dbg) vrb.println("  Creating string pool");
+		if(clazz.constPool != null) {
+			Item cpe;
+			for(int i = 0; i < clazz.constPool.length; i++) {
+				cpe = clazz.constPool[i];
+				if(cpe.type == Type.wellKnownTypes[txString] && (cpe.accAndPropFlags & (1 << dpfConst)) != 0) { // TODO @Martin is checking the const flag necessary?
+					if(clazz.stringPool == null) clazz.stringPool = new StringItem(cpe);
+					else clazz.stringPool.append(new StringItem(cpe));
+				}
+			}
+		}
+		if(clazz.stringPool != null) {
+			clazz.stringPoolSize = clazz.stringPool.getBlockSize();
+			clazz.constantBlock.append(clazz.stringPool);
+		}
+		
+		// Constant pool
+		if(dbg) vrb.println("  Creating constant pool");
+		if(clazz.constPool != null) {
+			Item cpe;
+			for(int i = 0; i < clazz.constPool.length; i++) {
+				cpe = clazz.constPool[i];
+				if(checkConstantPoolType(cpe)) {
+					if(clazz.constantPool == null) clazz.constantPool = new ConstantItem(cpe);
+					else clazz.constantPool.append(new ConstantItem(cpe));
+				}
+			}
+		}
+		if(clazz.constantPool != null) {
+			clazz.constantPoolSize = clazz.constantPool.getBlockSize();
+			clazz.constantBlock.append(clazz.constantPool);
+		}
+		
+		// Checksum
+		if(dbg) vrb.println("  Calculating checksum");
+		clazz.constantBlockChecksum = new FixedValueItem("fcs", 0); // TODO @Martin calculate checksum here...
+		clazz.constantBlock.append(clazz.constantBlockChecksum);
+		
+		// Calculating size of constant block
+		((FixedValueItem)clazz.constantBlock).setValue(clazz.constantBlock.getBlockSize());
+		
+		// Calculating indexes and offsets for the string- and constant pool
+		int offset, index;
+		
+		if(clazz.stringPool != null) {
+			if(dbg) vrb.println("  Calculating indexes and offsets for the string pool entries");
+			BlockItem s = clazz.stringPool;
+			offset = 0; index = 0;
+			while(s != clazz.constantPool && s != clazz.constantBlockChecksum) {
+				((StringItem)s).setIndex(index);
+				((StringItem)s).setOffset(offset);
+				
+				index++;
+				offset += s.getItemSize();
+				
+				s = s.next;
+			}
+		}
+		
+		if(clazz.constantPool != null) {
+			if(dbg) vrb.println("  Calculating indexes and offsets for the constant pool entries");
+			BlockItem c = clazz.constantPool;
+			offset = 0; index = 0;
+			while(c != clazz.constantBlockChecksum) {
+				((ConstantItem)c).setIndex(index);
+				((ConstantItem)c).setOffset(offset);
+				
+				index++;
+				offset += c.getItemSize();
+				
+				c = c.next;
+			}
+		}
+		
+		// Calculating type descriptor offset
+		BlockItem i = clazz.constantBlock;
+		offset = 0;
+		while(i != clazz.typeDescriptor) {
+			offset += i.getItemSize();
+			i = i.next;
+		}
+		clazz.typeDescriptorOffset = offset;
+				
+		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
 		
 	}
-	
+		
 	public static void calculateCodeSizeAndOffsets(Class clazz) {
 		
 		if(dbg) vrb.println("[LINKER] START: Calculating required size for class \"" + clazz.name +"\":\n");
@@ -185,10 +298,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 			m = (Method)m.next;
 		}
-		clazz.machineCodeSize = codeSize;
-		if(dbg) vrb.println("    Total code size: " + codeSize + " byte");		
-		
-		if(dbg) vrb.println(clazz.constantBlockSize + " byte");
+		((FixedValueItem)clazz.codeBase.next).setValue(codeSize);
+		if(dbg) vrb.println("    Total code size: " + codeSize + " byte");
 		
 		if(dbg) vrb.println("\n[LINKER] END: Calculating required size for class \"" + clazz.name +"\"\n");
 	}
@@ -243,16 +354,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Segment s;
 		while(item != null) {
 			// Code
-			if(item instanceof Class){
+			if(item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
 				Class c = (Class)item;
 				s = Configuration.getCodeSegmentOf(c.name);
 				if(dbg) vrb.println("  Proceeding Class " + c.name);
 				
 				if(s == null) reporter.error(731, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
-					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, c.machineCodeSize);
+					int codeSize = ((FixedValueItem)c.codeBase.next).getValue();
+					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, codeSize);
 					c.codeOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					if(c.machineCodeSize > 0) s.addToUsedSize(c.machineCodeSize);
+					if(codeSize > 0) s.addToUsedSize(codeSize);
 					c.codeSegment = s;
 					if(dbg) {
 						vrb.println("    Code-Segment: " + c.codeSegment.getName());
@@ -275,9 +387,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				s = Configuration.getConstSegmentOf(c.name);
 				if(s == null) reporter.error(731, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 				else {
-					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, c.constantBlockSize);
+					int constBlockSize = ((FixedValueItem)c.constantBlock).getValue();
+					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, constBlockSize);
 					c.constOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					if(c.constantBlockSize > 0) s.addToUsedSize(c.constantBlockSize);
+					if(constBlockSize > 0) s.addToUsedSize(constBlockSize);
 					c.constSegment = s;
 					if(dbg) vrb.println("    Const-Segment: " + c.constSegment.getName());
 				}		
@@ -298,7 +411,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				}	
 			}
 			else {
-				if(dbg) vrb.println("+++++++++++++++ The following item in classlist is neither a class nor an array: " + item.name); // TODO replace throu an error message...
+				if(dbg) vrb.println("+++++++++++++++ The following item in classlist is neither a class nor an array: " + item.name); // it should be an interface...
 			}
 			item = item.next;
 		}
@@ -363,7 +476,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
 		int classDescriptorBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
-		int stringPoolBase = classDescriptorBase + clazz.classDescriptorSize;
+		int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		
 		if(dbg) {
@@ -443,9 +556,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 		}
 		
-		// Class descriptor
-		//clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4 * (6 + clazz.nOfReferences + clazz.methTabLength + clazz.nOfInterfaces + 2);
-		clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + clazz.classDescriptorOffset;
+		// type descriptor
+		clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + clazz.typeDescriptorOffset;
 		
 		if(dbg) vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
 	}
@@ -454,220 +566,27 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		array.address = array.segment.getBaseAddress() + array.offset + 4;
 	}
 	
-	public static void createConstantBlock(Class clazz) {
-				
-		if((clazz.accAndPropFlags & 1<<dpfClassMark) == 0 ){
-			clazz.accAndPropFlags |= 1<<dpfClassMark;
+	public static void updateConstantBlock(Class clazz) {
+		if(dbg) vrb.println("[LINKER] START: Updating constant block for class \"" + clazz.name +"\":\n");
+
+		if(dbg) vrb.println("  Inserting code base");
+		((FixedValueItem)clazz.codeBase).setValue(clazz.codeSegment.getBaseAddress() + clazz.codeOffset); // codeBase
+		// codeSize already set...
+		if(dbg) vrb.println("  Inserting var base");
+		((FixedValueItem)clazz.varBase).setValue(clazz.varSegment.getBaseAddress() + clazz.varOffset); // varBase
+		if(dbg) vrb.println("  Inserting var size");
+		((FixedValueItem)clazz.varBase.next).setValue(clazz.classFieldsSize); // varSize
 		
-			if(dbg) vrb.println("[LINKER] START: Creating constant block for class \"" + clazz.name +"\":\n");
-			
-			if(dbg) vrb.println("  0) Creating constant blocks for all base classes:");
-			if(clazz.type != null) {
-				Class baseClass = (Class)clazz.type;
-				createConstantBlock(baseClass);
-			}
-			
-			clazz.constantBlock = new int[clazz.constantBlockSize/4];
-			
-			if(dbg) {
-				vrb.println("  Constant block size: " + clazz.constantBlockSize + " byte -> " + clazz.constantBlock.length);
-				vrb.println("    Constantblock header: 28 byte -> 7");
-				vrb.println("    Number of references: " + clazz.nofClassRefs + " (" + clazz.nofClassRefs * 4 + " byte)");
-				vrb.println("    Class descriptor size: " + clazz.classDescriptorSize + " byte -> " + clazz.classDescriptorSize / 4);
-				vrb.println("    Class descriptor offset: " + clazz.classDescriptorOffset);
-				vrb.println("    Method table length: " + clazz.methTabLength);
-				vrb.println("    String pool size: " + clazz.stringPoolSize + " byte -> " + clazz.stringPoolSize / 4);
-				vrb.println("    Constant pool size: " + clazz.constantPoolSize + " byte -> " + clazz.constantPoolSize / 4);
-				vrb.println("  Number of instance methods: " + clazz.nofInstMethods);
-				vrb.println("  Number of interfaces: " + clazz.nofInterfaces);
-				vrb.println("  Number of base classes: " + clazz.extensionLevel);
-			}
-			
-			// 1) Insert Header
-			if(dbg) vrb.println("  1) Inserting Header");
-			clazz.constantBlock[cblkConstBlockSizeOffset / 4]	= clazz.constantBlockSize;									// constBlockSize
-			clazz.constantBlock[cblkCodeBaseOffset / 4]			= clazz.codeSegment.getBaseAddress() + clazz.codeOffset;	// codeBase
-			clazz.constantBlock[cblkCodeSizeOffset / 4]			= clazz.machineCodeSize;									// codeSize
-			clazz.constantBlock[cblkVarBaseOffset / 4]			= clazz.varSegment.getBaseAddress() + clazz.varOffset;		// varBase
-			clazz.constantBlock[cblkVarSizeOffset / 4]			= clazz.classFieldsSize;									// varSize
-			
-			Method clinit = clazz.getClassConstructor();
-			if(clinit != null)
-				clazz.constantBlock[cblkClinitAddrOffset / 4]	= clinit.address;											//clinitAddr
-			else clazz.constantBlock[cblkClinitAddrOffset / 4]	= -1; // the address of the class constructor is set to -1 if there is no one in this class
-			
-			// 2) Insert References (Pointers)
-			if(dbg) vrb.println("  2) Inserting References");
-			clazz.constantBlock[cblkNofPtrsOffset / 4] = clazz.nofClassRefs;
-			if(clazz.nofClassRefs > 0) {
-				Item field = clazz.classFields;
-				int index = 0;
-				while(field != null) {
-					if((field.accAndPropFlags & (1 << apfStatic)) != 0 && ((Type)field.type).category == tcRef)
-						clazz.constantBlock[cblkPtrAddr0Offset / 4 + index] = field.address;
-					field = field.next;
-				}
-			}
-					
-			// 3) Class descriptor
-			if(dbg) vrb.println("  3) Inserting class descriptor");
-			
-			// 3a) Insert instance method addresses
-			if(dbg) vrb.println("  3a) Inserting addrsses of instance methods");
-			
-	//		int classDescriptorOffset = 6 + clazz.nOfReferences;
-			int imc = 0;
-			if(clazz.extensionLevel > 0) {
-				assert clazz.type != null: "ERROR: Number of base classes > 0, but base class is null!";
-				assert clazz.type instanceof Class: "ERROR: Base class is not a class!";
-				Class baseClass = (Class)clazz.type;
-				if(dbg) vrb.println("      Copying methods from base class: " + baseClass.name);
-				if(baseClass.constantBlock != null && baseClass.constantBlock.length > 0) {
-					for(int x = 0; x < baseClass.methTabLength; x++) {
-						if(dbg) vrb.println("        #" + x + ": 0x" + Integer.toHexString(baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - x]));
-		//				clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - x];
-						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - x] = baseClass.constantBlock[baseClass.classDescriptorOffset / 4 - 2 - x];
-						imc++;
-					}
-//					if(dbg) clazz.printConstantBlock();
-				}
-			}
-			if(clazz.nofInstMethods > 0) {
-				if(dbg) vrb.println("      Inserting instance methods of this class");
-				Method m = (Method)clazz.methods;
-				while(m != null) {
-					if((m.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (m.accAndPropFlags & (1 << apfStatic)) == 0) { // not system primitive and not static
-						if(dbg) vrb.println("        <" + m.index + "> 0x" + Integer.toHexString(m.address));
-//						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - clazz.nofInterfaces - m.index] = m.address;
-						clazz.constantBlock[clazz.classDescriptorOffset / 4 - 2 - m.index] = m.address;
-						imc++;
-					}
-					m = (Method)m.next;
-				}
-//				if(dbg) clazz.printConstantBlock();
-			}
-			
-			// 3b) Insert interfaces
-//			if(clazz.nofInterfaces > 0) {
-//				if(dbg) vrb.println("  3b) Inserting interfaces");
-//				Class c = clazz;
-//				int count = 0;
-//				while(c != null && count <= clazz.nofInterfaces) {
-//					if(c.interfaces != null) {
-//						for(int i = 0; i < c.interfaces.length; i++) {
-//							clazz.constantBlock[(clazz.classDescriptorOffset - cdInterface0AddrOffset) / 4 - count] = 0x33333333; // TODO set the correct value here...
-//						}
-//					}
-//					c = (Class)c.type;
-//				}
-//			}
-			
-			// 3c) Insert extension level
-			if(dbg) vrb.println("  3c) Inserting extension level");
-			clazz.constantBlock[(clazz.classDescriptorOffset - cdExtensionLevelOffset) / 4] = clazz.extensionLevel;
-			
-			// 3d) Insert size
-			if(dbg) vrb.println("  3d) Inserting size");
-			clazz.constantBlock[(clazz.classDescriptorOffset + cdSizeOffset) / 4] = clazz.objectSize;
-			
-			// 3e) Insert class name address
-			if(dbg) vrb.println("  3e) Inserting class name address");
-			clazz.constantBlock[(clazz.classDescriptorOffset + cdClassNameAddrOffset) / 4] = 0x12345678; // TODO set the right value here! -> address of the first entrie of the const/string pool?
-			
-			// 3f) Insert base classes
-			if(dbg) vrb.println("  3f) Inserting base classes");
-			if(clazz.extensionLevel > 0) {
-				Class bc = (Class)clazz.type;
-				for(int i = 0; i < clazz.extensionLevel; i++) {
-					assert bc != null: "ERROR: Base class is NULL! Current base class: " + i + "/" + clazz.extensionLevel;
-//					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + i] = bc.address;
-					clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + clazz.extensionLevel - 1 - i] = bc.address;
-					bc = (Class)bc.type;
-				}
-			}
-			clazz.constantBlock[(clazz.classDescriptorOffset + cdBaseClass0Offset) / 4 + clazz.extensionLevel] = clazz.address;
-			
-			// 4) String pool
-			if(dbg) vrb.println("  4) Inserting string pool");
-			int stringPoolOffset = clazz.classDescriptorOffset / 4 + Class.maxExtensionLevel + 3;
-			if(clazz.constPool != null) {
-				for(int i = 0; i < clazz.constPool.length; i++) {
-					int index = clazz.constPool[i].index;
-					if(clazz.constPool[i].type == Type.wellKnownTypes[txString] && (clazz.constPool[i].accAndPropFlags & (1 << dpfConst)) != 0) {
-						HString s = ((StringLiteral)clazz.constPool[i]).string;
-						if(dbg) vrb.println("     > Proceeding String \"" + s + "\"");
-						if(dbg) vrb.println("       Inserting Header:");
-						if(dbg) vrb.println("         <" + index + "> ???");
-						clazz.constantBlock[stringPoolOffset + index++] = 0x55555555; // Header: ??? TODO what the hell should be here???
-						if(dbg) vrb.println("         <" + index + "> Tag");
-						clazz.constantBlock[stringPoolOffset + index++] = stringClass.address; // Header: Tag -> Reference to string class
-						index += (stringHeaderSize - stringHeaderConstSize) / 4; // Header: Object -> zero at the moment...
-						if(dbg) vrb.println("         <" + index + "> Count");
-						clazz.constantBlock[stringPoolOffset + index++] = s.length(); // Header: Count -> number of characters
-						int word = 0, c = 0;
-						if(dbg) vrb.println("       Inserting characters:");
-						for(int j = 0; j < s.length(); j++) {
-							if(dbg) vrb.println("         <" + index + "> " + s.charAt(j));
-							word = (word << 16) + s.charAt(j);
-							c++;
-							if(c > 1 || j == s.length() - 1) {
-								if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
-								clazz.constantBlock[stringPoolOffset + index] = word;
-								c = 0;
-								word = 0;
-								index++;
-							}
-						}
-					}
-				}
-			}
+		if(dbg) vrb.println("  Inserting object size");
+		((FixedValueItem)clazz.typeDescriptor).setValue(clazz.objectSize); // size
 		
-			// 5) Constant pool
-			if(dbg) vrb.println("  5) Inserting constant pool");
-			int constantPoolOffset = stringPoolOffset + clazz.stringPoolSize / 4;
-			if(clazz.constantPoolSize > 0) {
-				int index = 0;
-				Item cpe;
-				for(int i = 0; i < clazz.constPool.length; i++) {
-					cpe = clazz.constPool[i];
-					if(dbg) {
-						vrb.println(" ************ Proceeding const pool entry #" + i + " " + cpe.name + ":");
-						if(cpe.type != null) vrb.println("              - Type: " + cpe.type.name);
-						else vrb.println("              - Type: <null>");
-						if((cpe.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("              - Constant: yes");
-						else vrb.println("              - Constant: no");
-					}
-					index = cpe.index;
-					if(cpe.type == Type.wellKnownTypes[Type.txFloat] && (cpe.accAndPropFlags & (1 << dpfConst)) != 0 && cpe instanceof StdConstant) { // TODO @Martin: is this correct???
-						if(dbg) vrb.println(" ************ Inserting Float into CP: " + cpe.name);
-						clazz.constantBlock[constantPoolOffset + index] = ((StdConstant)cpe).valueH;
-					}
-					else if(cpe.type == Type.wellKnownTypes[Type.txDouble]  && (cpe.accAndPropFlags & (1 << dpfConst)) != 0 && cpe instanceof StdConstant) { // TODO @Martin: is this correct???
-						if(dbg) vrb.println(" ************ Inserting Double into CP: " + cpe.name);
-						clazz.constantBlock[constantPoolOffset + index] = ((StdConstant)cpe).valueH;
-						clazz.constantBlock[constantPoolOffset + index + 1] = ((StdConstant)cpe).valueL;
-					}
-				}
-			}
-			
-			// 6 Checksum
-			if(dbg) vrb.println("  6) Inserting checksum");
-			clazz.constantBlock[clazz.constantBlock.length - 1] = 0; // TODO implement crc32 checksum
-		
-//			if(dbg) clazz.printConstantBlock();
-			
-			if(dbg) vrb.println("\n[LINKER] END: Creating constant block for class \"" + clazz.name +"\"\n");
-			
-		}
-		else {
-			if(dbg) vrb.println("  Class " + clazz.name + " already proceeded...");
-		}
+		if(dbg) vrb.println("\n[LINKER] END: Updating constant block for class \"" + clazz.name +"\"\n");
 	}
 
 	public static void createTypeDescriptor(Array array) {
 		array.typeDescriptor = new int[cdSizeForArrays / 4];
 		array.typeDescriptor[0] = 1; // extensionLevel
-		array.typeDescriptor[1] = array.componentType.sizeInBits / 8; // size of element type
+		array.typeDescriptor[1] = Type.wktObject.objectSize; // size of object
 		array.typeDescriptor[2] = 0x44444444; // not used
 		array.typeDescriptor[3] = Type.wktObject.address; // base class address -> address of java/lang/Object
 		array.typeDescriptor[4] = array.address; // address of own type descriptor
@@ -745,7 +664,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int i = 7 + 2 * nOfStacks + 2 * nOfHeaps;
 		while(item != null) {
 			//systemTable[i] = clazz.address;
-			if( item instanceof Class ){
+			if( item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
 				Class clazz = (Class)item;
 				systemTable[i] = clazz.constSegment.getBaseAddress() + clazz.constOffset;
 				
@@ -784,7 +703,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Item item = Type.classList;
 		Method m;
 		while(item != null) {
-			if( item instanceof Class){
+			if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 				Class clazz = (Class)item;
 				if(dbg) vrb.println("  Proceeding class \"" + clazz.name + "\":");
 				// code
@@ -835,9 +754,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 
 		if(dbg) vrb.println("  Proceeding system table:");
 		Segment[] s = Configuration.getSysTabSegments();
+		if(dbg) vrb.println("  > Address: 0x" + Integer.toHexString(s[0].getBaseAddress()));
 		s[0].tms.addData(s[0].getBaseAddress(), systemTable);
 		addTargetMemorySegment(s[0].tms);
 		
+		if(dbg) vrb.println("  Proceeding global constant table:");
 		globalConstantTableSegment.tms.addData(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable);
 		
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
@@ -1044,7 +965,27 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			lastTargetMemorySegment = lastTargetMemorySegment.next;
 		}
 	}
-		
+	
+	private static boolean checkConstantPoolType(Item cpe) {
+		// TODO @Martin: Make this configurable...
+		return cpe instanceof StdConstant && ((cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble]));
+	}
+	
+	private static int getNofInterfaceWithMethods(Class c) {
+		int counter = 0;
+		Class baseClass = (Class)c.type;
+		while(baseClass != null) {
+			counter += getNofInterfaceWithMethods(baseClass);
+			baseClass = (Class)baseClass.type;
+		}
+		if(c.nofInterfaces > 0) {
+			for(int i = 0; i < c.interfaces.length; i++) {
+				if(c.interfaces[i].nofMethods > 0) counter++;
+			}
+		}
+		return counter;
+	}
+	
 	/* ---------- debug primitives ---------- */
 	
 	public static void printSystemTable() {
@@ -1090,7 +1031,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int cc = 0, mc = 0, fc = 0;
 		Item item = Type.classList;
 		while(item != null) {
-			if(item instanceof Class){
+			if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 				Class c = (Class)item;
 				vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
 				vrb.println("    Number of class methods: " + c.nofClassMethods);
@@ -1100,8 +1041,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("    Number of interfaces: " + c.nofInterfaces);
 				vrb.println("    Number of base classes: " + c.extensionLevel);
 				vrb.println("    Number of references: " + c.nofClassRefs);
-				vrb.println("    Machine code size: " + c.machineCodeSize + " byte");
-				vrb.println("    Constant block size: " + c.constantBlockSize + " byte");
+				vrb.println("    Machine code size: " + ((FixedValueItem)c.codeBase.next).getValue() + " byte");
+				vrb.println("    Constant block size: " + ((FixedValueItem)c.constantBlock).getValue() + " byte");
 				vrb.println("    Class fields size: " + c.classFieldsSize + " byte");
 				vrb.println("    Code offset: 0x" + Integer.toHexString(c.codeOffset));
 				vrb.println("    Var offset: 0x" + Integer.toHexString(c.varOffset));
@@ -1168,7 +1109,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				}
 				
 				vrb.println("    Constant block:");
-				c.printConstantBlock(2);
+				c.printConstantBlock();
 			}
 			
 			else {
@@ -1194,7 +1135,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int cc = 0, mc = 0, fc = 0;
 		Item item = Type.classList;
 		while(item != null) {
-			if(item instanceof Class){
+			if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 				Class c = (Class)item;
 				vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
 				vrb.println("    Number of class methods:     " + c.nofClassMethods);
@@ -1204,8 +1145,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("    Number of interfaces:        " + c.nofInterfaces);
 				vrb.println("    Number of base classes:      " + c.extensionLevel);
 				vrb.println("    Number of references:        " + c.nofClassRefs);
-				vrb.println("    Machine code size:           " + c.machineCodeSize + " byte");
-				vrb.println("    Constant block size:         " + c.constantBlockSize + " byte");
+				vrb.println("    Max extension level:         " + Class.maxExtensionLevel);
+				vrb.println("    Machine code size:           " + ((FixedValueItem)c.codeBase.next).getValue() + " byte");
+				vrb.println("    Constant block size:         " + ((FixedValueItem)c.constantBlock).getValue() + " byte");
 				vrb.println("    Class fields size:           " + c.classFieldsSize + " byte");
 				vrb.println("    Code offset:                 0x" + Integer.toHexString(c.codeOffset));
 				vrb.println("    Var offset:                  0x" + Integer.toHexString(c.varOffset));
@@ -1278,12 +1220,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				if(printConstantBlock) {
 					vrb.println("    Constant block:");
-					c.printConstantBlock(2);
+					c.printConstantBlock();
 				}
 				vrb.println("  ----------------------------------------------------------------------");
 			}
 			
-			else {
+			else if(item instanceof Array) {
 				Array a = (Array)item;
 				vrb.println("  Array: " + a.name);
 				vrb.println("    Type descriptor:");

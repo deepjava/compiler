@@ -55,7 +55,7 @@ public class Launcher implements ICclassFileConsts {
 			Method method;
 			out.println("Loaded classes");
 			while (item != null && reporter.nofErrors <= 0) {
-				if (item instanceof Class) {
+				if(item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 					
 					Class clazz = (Class) item;
 
@@ -106,7 +106,7 @@ public class Launcher implements ICclassFileConsts {
 			item = Type.classList;
 			while (item != null && reporter.nofErrors <= 0) {
 				// 5.1) Linker: calculate absolute addresses
-				if (item instanceof Class) {
+				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 					Linker32.calculateAbsoluteAddresses((Class)item);
 				}
 				else if(item instanceof Array) {
@@ -122,9 +122,9 @@ public class Launcher implements ICclassFileConsts {
 			item = Type.classList;
 			while (item != null && reporter.nofErrors <= 0) { // TODO: why is here another loop??? -> move to loop two?
 				// 5.3) Linker: Create constant block
-				if(item instanceof Class) {
+				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 					Class clazz = (Class) item;
-					Linker32.createConstantBlock(clazz);
+					Linker32.updateConstantBlock(clazz);
 
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {

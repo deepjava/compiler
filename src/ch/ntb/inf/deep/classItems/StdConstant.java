@@ -85,4 +85,33 @@ public class StdConstant extends Constant {
 	public void println(int indentLevel){
 		print(indentLevel);  vrb.println();
 	}
+	
+	public String toString() {
+		long value = ((long)(valueH)<<32) | (valueL&0xFFFFFFFFL);
+		char category = type.name.charAt(0);
+		String s;
+		switch(category){
+		case tdBoolean:
+			s = Boolean.toString(valueH != 0);
+			break;
+		case tdByte: case tdShort: case tdInt:
+			s = Integer.toString(valueH);
+			break;
+		case tdChar:
+			s = Character.toString((char)valueH);
+			break;
+		case tdFloat:
+			s = Float.toString(Float.intBitsToFloat(valueH));
+			break;
+		case tdLong:
+			s = Long.toString(value);
+			break;
+		case tdDouble:
+			s = Double.toString((Double.longBitsToDouble(value)));
+			break;
+		default:
+			s = "<???>";
+		}
+		return s;
+	}
 }
