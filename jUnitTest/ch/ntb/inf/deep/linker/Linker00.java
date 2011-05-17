@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.linkerPPC;
+package ch.ntb.inf.deep.linker;
 
 import java.io.IOException;
 
@@ -62,7 +62,7 @@ public class Linker00 extends TestLinker implements ICclassFileConsts {
 					//Linker.calculateRequiredSize(clazz);
 					//Linker.calculateAbsoluteAddresses(clazz);
 					//Linker.createConstantBlock(clazz);
-					clazz.printConstantBlock(5);
+					clazz.printConstantBlock();
 
 					/*				System.out.println("  Constant pool:");
 				System.out.println("    Size: " + clazz.constantPoolSize + " byte");
