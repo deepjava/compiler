@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Segment implements IAttributes {
+	public Device owner;
 	public Segment subSegments;
 	public Segment parent;
 	public Segment lastSubSegment;
@@ -19,34 +20,39 @@ public class Segment implements IAttributes {
 	int usedSize = 0;
 	int width = 0;
 	
-	public Segment(HString name){
+	public Segment(HString name, Device owner){
 		this.name = name;
+		this.owner = owner;
 	}
 	
-	public Segment(HString name, int baseAddress) {
+	public Segment(HString name, Device owner, int baseAddress) {
 		this.name = name;
 		this.baseAddress = baseAddress;
+		this.owner = owner;
 	}
 	
-	public Segment(HString name, int baseAddress, int size) {
+	public Segment(HString name, Device owner, int baseAddress, int size) {
 		this.name = name;
 		this.baseAddress = baseAddress;
 		this.size = size;
+		this.owner = owner;
 	}
 	
-	public Segment(HString name, int baseAddress, int size, int width) {
+	public Segment(HString name, Device owner, int baseAddress, int size, int width) {
 		this.name = name;
 		this.baseAddress = baseAddress;
 		this.size = size;
 		this.width = width;
+		this.owner = owner;
 	}
 	
-	public Segment(HString name, int baseAddress, int size, int width, int attributes) {
+	public Segment(HString name, Device owner, int baseAddress, int size, int width, int attributes) {
 		this.name = name;
 		this.baseAddress = baseAddress;
 		this.size = size;
 		this.width = width;
 		this.attributes = attributes;
+		this.owner = owner;
 	}
 		
 	public void setAttribute(int attributes) {

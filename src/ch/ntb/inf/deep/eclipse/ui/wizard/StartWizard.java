@@ -13,12 +13,14 @@
 package ch.ntb.inf.deep.eclipse.ui.wizard;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.GregorianCalendar;
 
+import org.eclipse.core.internal.resources.Folder;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -128,10 +130,15 @@ public class StartWizard extends Wizard implements INewWizard{
 		}
 		
 		StringBuffer sb = new StringBuffer();
+		File srcFolder = new File(libpath + "/src");
 		sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
 		sb.append("<classpath>\n");
 		sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
-		sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
+		if(srcFolder.exists()){			
+			sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\" sourcepath=\"" + libpath + "/src\"/>\n");
+		}else{			
+			sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
+		}
 		sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
 		sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
 		sb.append("</classpath>\n");

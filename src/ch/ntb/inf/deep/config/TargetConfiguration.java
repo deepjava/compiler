@@ -5,7 +5,8 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class TargetConfiguration {
 		
-	Module targetConfig;
+	Module modules;
+	Module system;
 	HString name;
 	TargetConfiguration next;
 	
@@ -14,11 +15,11 @@ public class TargetConfiguration {
 	}
 	
 	public void setModule(Module mod) {
-		if (targetConfig == null) {
-			targetConfig = mod;
+		if (modules == null) {
+			modules = mod;
 		}
 		int modHash = mod.name.hashCode();
-		Module current = targetConfig;
+		Module current = modules;
 		Module prev = null;
 		while (current != null) {
 			if (current.name.hashCode() == modHash) {
@@ -28,7 +29,7 @@ public class TargetConfiguration {
 					if(prev != null){
 						prev.next = mod;
 					}else{
-						targetConfig = mod;
+						modules = mod;
 					}
 					return;
 				}
@@ -39,13 +40,25 @@ public class TargetConfiguration {
 		//if no match prev shows the tail of the list
 		prev.next = mod;
 	}
+	public void addSystemModule(Module mod){
+		if(system == null){
+			system = mod;
+		}else{
+			mod.next = system;
+			system = mod;
+		}		
+	}
 
 	public Module getModules(){
-		return targetConfig;
+		return modules;
+	}
+	
+	public Module getSystemModules(){
+		return system;
 	}
 	
 	public Module getModuleByName(HString moduleName){
-		Module current = targetConfig;
+		Module current = modules;
 		while (current != null) {
 			if (current.name.charAt(current.name.length() - 1) == '*') {
 				if (current.name.length() <= moduleName.length()) {
@@ -67,11 +80,39 @@ public class TargetConfiguration {
 			StdStreams.vrb.print("  ");
 		}
 		StdStreams.vrb.println("targetconfiguration " + name.toString() + " {");
-		Module current = targetConfig;
+		
+		for(int i = indentLevel+1; i > 0; i--){
+			StdStreams.vrb.print("  ");
+		}
+		StdStreams.vrb.println("system {");
+		
+		Module current = system;
 		while(current != null){
-			current.println(indentLevel + 1);
+			current.println(indentLevel + 2);
 			current = current.next;
 		}
+		
+		for(int i = indentLevel+1; i > 0; i--){
+			StdStreams.vrb.print("  ");
+		}
+		StdStreams.vrb.println("}");
+		
+		for(int i = indentLevel+1; i > 0; i--){
+			StdStreams.vrb.print("  ");
+		}
+		StdStreams.vrb.println("modules {");
+				
+		current = modules;
+		while(current != null){
+			current.println(indentLevel + 2);
+			current = current.next;
+		}
+		
+		for(int i = indentLevel+1; i > 0; i--){
+			StdStreams.vrb.print("  ");
+		}
+		StdStreams.vrb.println("}");
+		
 		for(int i = indentLevel; i > 0; i--){
 			StdStreams.vrb.print("  ");
 		}

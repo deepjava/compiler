@@ -37,6 +37,20 @@ public class Module {
 		tail = tail.next;
 	}
 	
+	/**
+	 * without protection of duplicated entries
+	 * @param assign
+	 */
+	public void addSegmentAssignment(SegmentAssignment assign){
+		if(root == null){
+			root = assign;
+			tail = root;
+		}else{
+			tail.next = assign;
+			tail = tail.next;
+		}
+	}
+	
 	public SegmentAssignment getSegmentAssignments(){
 		return root;
 	}

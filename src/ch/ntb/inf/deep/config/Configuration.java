@@ -160,7 +160,8 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				if (dev == null) {
 					ErrorReporter.reporter.error(errNoSuchDevice, "Device: "
 							+ name.toString() + "with segment for "
-							+ contentAttribute.toString() + " not found\n");
+							+ contentAttribute.toString() + " not found");
+					ErrorReporter.reporter.println();
 					return null;
 				}
 				index = segDesignator.indexOf('.');
@@ -507,7 +508,62 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	public static Segment[] getSysTabSegments() {
 		segsCount = 0;// reset if it was used befor
-		collectSegmentsForAttributes((1 << atrSysTab));
+		segs = new Segment[defaultLength];
+		
+		Module sysMod = activeTarConf.getSystemModules();
+		while(sysMod != null){
+			SegmentAssignment segAss = null;
+			if(sysMod.name.equals(HString.getHString("systemtable"))){
+				segAss = sysMod.getSegmentAssignments();
+			}
+			//search all systab segments from active target config
+			while (segAss != null) {
+				if (segAss.contentAttribute.equals(HString.getHString("systab"))) {
+					String segDesignator = segAss.segmentDesignator.toString();
+					int index = segDesignator.indexOf('.');
+					// Determine Device name
+					HString name = HString.getHString(segDesignator.substring(0, index));
+					segDesignator = segDesignator.substring(index + 1);
+					Device dev = memoryMap.getDeviceByName(name);
+					if (dev == null) {
+						ErrorReporter.reporter.error(errNoSuchDevice, "Device: " + name.toString() + "with segment for systab not found");
+						ErrorReporter.reporter.println();
+						return null;
+					}
+					index = segDesignator.indexOf('.');
+					Segment seg;
+					if (index == -1) {
+						seg = dev.getSegementByName(HString.getHString(segDesignator));
+						if(seg != null){
+							noticeSegment(seg);
+						}else{
+							ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
+							ErrorReporter.reporter.println();
+						}
+						break;
+					}
+					name = HString.getHString(segDesignator.substring(0, index));
+					segDesignator = segDesignator.substring(index + 1);
+					seg = dev.getSegementByName(name);
+					index = segDesignator.indexOf('.');
+					while (index != -1) {
+						name = HString.getHString(segDesignator.substring(0, index));
+						segDesignator = segDesignator.substring(index + 1);
+						seg = seg.getSubSegmentByName(name);
+						index = segDesignator.indexOf('.');
+					}
+					if(seg != null){
+						noticeSegment(seg);
+					}else{
+						ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
+						ErrorReporter.reporter.println();
+					}
+				}
+				segAss = segAss.next;
+			}
+			sysMod = sysMod.next;
+		}
+
 		Segment[] sysTabSegs = new Segment[segsCount];
 		for (int i = 0; i < segsCount; i++) {
 			sysTabSegs[i] = segs[i];
@@ -515,29 +571,29 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return sysTabSegs;
 	}
 	
-	private static void collectSegmentsForAttributes(int attributes) {
-		segs = new Segment[defaultLength];
-		Device currDev = memoryMap.getDevices();
-		while (currDev != null) {
-			Segment currSeg = currDev.segments;
-			if (currSeg != null) {
-				findSegment(currSeg, attributes);
-			}
-			currDev = currDev.next;
-		}
-	}
-
-	private static void findSegment(Segment s, int attributes) {
-		// descend
-		if (s.subSegments != null)
-			findSegment(s.subSegments, attributes);
-		// traverse from left to right
-		if (s.next != null)
-			findSegment(s.next, attributes);
-		if ((s.getAttributes() & (1 << atrSysTab)) != 0) {
-			noticeSegment(s);
-		}
-	}
+//	private static void collectSegmentsForAttributes(int attributes) {
+//		segs = new Segment[defaultLength];
+//		Device currDev = memoryMap.getDevices();
+//		while (currDev != null) {
+//			Segment currSeg = currDev.segments;
+//			if (currSeg != null) {
+//				findSegment(currSeg, attributes);
+//			}
+//			currDev = currDev.next;
+//		}
+//	}
+//
+//	private static void findSegment(Segment s, int attributes) {
+//		// descend
+//		if (s.subSegments != null)
+//			findSegment(s.subSegments, attributes);
+//		// traverse from left to right
+//		if (s.next != null)
+//			findSegment(s.next, attributes);
+//		if ((s.getAttributes() & (1 << atrSysTab)) != 0) {
+//			noticeSegment(s);
+//		}
+//	}
 
 	private static void noticeSegment(Segment s) {
 		if (s == null)
