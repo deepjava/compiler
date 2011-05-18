@@ -1,6 +1,8 @@
 package ch.ntb.inf.deep.cgPPC;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -72,6 +74,25 @@ public class cgPPC01 extends TestCgPPC {
 		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
 	}
 	
+	//	@Ignore
+	@Test 
+	public void assignment2() {
+		createCgPPC1(Type.rootClasses[0],"assignment2");
+		assertTrue("wrong join", checkJoin(getJoin(0), 3, 7, vol, false));
+		assertNull("wrong join", getJoin(1));
+	}
+	
+	//	@Ignore
+	@Test 
+	public void assignment3() {
+		createCgPPC1(Type.rootClasses[0],"assignment3");
+		assertTrue("wrong join", checkJoin(getJoin(0), 5, 9, vol, false));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 25, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 16, 23, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+
 	@Test
 	public void simple1() {
 		int[] code = getCode("simple1");

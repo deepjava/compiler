@@ -33,12 +33,12 @@ public class T04Loops {
 		return i;
 	}
 
-   public static void whileTrue() {
-    	int a = 10;
-        while(true) {
-        	int b = a + 1;
-        }
-    }
+	public static void whileTrue() {
+		int a = 10;
+		while(true) {
+			int b = a + 1;
+		}
+	}
 
     public static void whileTrueBreak() {
     	int a = 10;
@@ -82,30 +82,6 @@ public class T04Loops {
 			}
 			
 		}
-	}
-	
-	private void while2() {
-		int a = 10;
-		do a--; while(a > -1);
-		int b = 20;
-		while (b == 0) {
-			int c = a * 2;
-			int d = a -1;
-			int e = a + b;
-			b--;
-		}
-		int f = 2 + b;
-	}
-
-	private void while3() {
-		int a = 10;
-		while (a < 15) a++;
-		int b = 20;
-		while (b > 10) {
-			int c = b + 1;
-		}
-		if (a < b) a += 10;
-		int c = 2 + a;
 	}
 	
 	private void whileTrue2() {
@@ -196,7 +172,20 @@ public class T04Loops {
 		} while (b < 0);
 	}
 
- 	private void phiFunctionTest10(int a) {
+	static int phiFunctionTest10(int a) {
+		if (a > 0) {
+			float f2 = 3.0f;
+			while (f2 < 10.0f) f2 += 5.0f;
+			a = (int)f2;
+		} else {
+			int b = 4;
+			while (b < 10) b += 5;
+			a = b;
+		}
+		return (a);
+	}
+
+ 	private void phiFunctionTest11(int a) {
 		int b = 10;
 		do a--; while(a < -1);
 		b++;
@@ -209,5 +198,31 @@ public class T04Loops {
 		}
 		int f = 2 + b;
 	}
+
+	private void phiFunctionTest12() {
+		int a = 10;
+		do a--; while(a > -1);
+		int b = 20;
+		while (b == 0) {
+			int c = a * 2;
+			int d = a -1;
+			int e = a + b;
+			b--;
+		}
+		int f = 2 + b;
+	}
+
+	private void phiFunctionTest13() {
+		int a = 10;
+		while (a < 15) a++;
+		int b = 20;
+		while (b > 10) {
+			int c = b + 1;
+		}
+		if (a < b) a += 10;
+		int c = 2 + a;
+	}
+	
+
 
 }

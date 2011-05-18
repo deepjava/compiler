@@ -1,6 +1,9 @@
 package ch.ntb.inf.deep.testClasses;
 
 public class T01SimpleMethods {
+	static int global1, count;
+	static boolean done;
+	
     public static void emptyMethodStatic() {
     }
     
@@ -15,6 +18,16 @@ public class T01SimpleMethods {
 		boolean b = a > 10;
 		return b;
 	}
+	
+	public static void assignment3(Object obj) {
+		done = done && global1 > 10;
+		if (done) {
+			count++;
+			int n = count;
+			while(obj != null) n >>= 1;
+		}
+	}
+
 
     public static void simple1(int y) {
         int x = 0;

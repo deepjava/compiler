@@ -21,7 +21,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	private static final boolean dbg = false;
 
 	private static final int nofSSAInstr = 256;
-	private static final int maxNofJoins = 32;
+	public static final int maxNofJoins = 32;
 	
 	static int maxStackSlots;
 	static int regsGPR, regsFPR;
@@ -35,7 +35,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	private static int nofInstructions;
 	
 	// used for resolving phi functions
-	static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
+	public static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
 
 	/**
 	 * generates the live ranges of all SSAValues and assigns register to them
@@ -122,7 +122,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						//  TODO make recursiv
 						PhiFunction phi = (PhiFunction)opdInstr;
 //						if (((PhiFunction)instr).deleted) continue;
-						if (phi.deleted && phi != instr) {
+						if (phi.deleted && phi != instr && phi != phi.getOperands()[0].owner) {
 							if (dbg) StdStreams.out.println("\tphi-function is deleted");
 							phi.used = true;
 							SSAValue delPhiOpd = phi.getOperands()[0];
@@ -165,19 +165,31 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				
 				SSAValue[] opds = instr.getOperands();
 				SSAValue res = instr.result, joinVal;
-//				boolean newIndex = true;
-//				for (SSAValue opd : opds) {
-//					if (opd.owner.ssaOpcode == sCPhiFunc) newIndex = false;
-//				}
-
-				if (joins[res.index] == null) {
+				boolean newIndex = true;
+				if (opds.length > 1) 
+					for (SSAValue opd : opds) {
+						if (opd.owner.ssaOpcode == sCPhiFunc) newIndex = false;
+					}
+				else newIndex = false;
+				joinVal = joins[res.index];
+				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
+				if (joinVal == null) {
 					joinVal = joins[res.index] = new SSAValue();
-//				} else if (newIndex) {
-//					joinVal = joins[res.index].next = new SSAValue();
-				} else joinVal = joins[res.index];
+					if (!newIndex) joinVal.memorySlot = 100;
+//					joins[res.index] = new SSAValue();
+				} else if (newIndex) {
+					if (joinVal.memorySlot == 100) {
+						
+					} else {
+						joinVal.next = new SSAValue();
+						joinVal = joinVal.next;
+					}
+				} 
+				assert joinVal != null;
 				res.join = joinVal;	// set join of phi function
 				res.join.index = res.index;
 				for (SSAValue opd : opds) {
+					if (opd.owner.ssaOpcode == sCPhiFunc && ((PhiFunction)opd.owner).deleted && !((PhiFunction)opd.owner).used) continue;
 					opd.join = joinVal;
 				}
 			} 				

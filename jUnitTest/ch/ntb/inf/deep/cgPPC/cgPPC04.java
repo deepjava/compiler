@@ -1,6 +1,6 @@
 package ch.ntb.inf.deep.cgPPC;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
@@ -32,318 +32,269 @@ public class cgPPC04 extends TestCgPPC {
 		}
 	}
 
-//	@Ignore
-	@Test
+	//	@Ignore
+	@Test 
 	public void doWhile1() {
-		int[] code = getCode("doWhile1");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"doWhile1");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 8, vol, false));
+		assertNull("wrong join", getJoin(3));
 	}
 	
 //	@Ignore
 	@Test
 	public void doWhileIf1() {
-		int[] code = getCode("doWhileIf1");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, -6"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("add  r3, r3, r2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[LT], 12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r5, r4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 5"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[LT], 12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r6, r4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r5, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[EQ], 12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r6, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[EQ], -68"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r5, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[EQ], 12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"doWhileIf1");
+		assertTrue("wrong join", checkJoin(getJoin(0), 11, 15, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(0).next, 18, 22, vol, false));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 24, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(2).next, 26, 29, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 1, 24, vol, false));
+		for (int i = 4; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void while1() {
-		int[] code = getCode("while1");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"while1");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
+		for (int i = 3; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void whileTrue() {
-		int[] code = getCode("whileTrue");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  -4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"whileTrue");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
+		for (int i = 3; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void whileTrueBreak() {
-		int[] code = getCode("whileTrueBreak");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r3, r2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"whileTrueBreak");
+		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void whileMultiCond() {
-		int[] code = getCode("whileMultiCond");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[LT], 12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[LT], -16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"whileMultiCond");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 8, vol, false));
+		for (int i = 3; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void for1() {
-		int[] code = getCode("for1");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -12"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"for1");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 10, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 1, 10, vol, false));
+		for (int i = 4; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void forWhile() {
-		int[] code = getCode("forWhile");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[GT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r4, r4, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmp  crf0, 0, r4, r3"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lr  r2, r3"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"forWhile");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 17, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 0, 16, vol, false));
+		for (int i = 5; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
 	@Test
 	public void forIfWhile() {
-		int[] code = getCode("forIfWhile");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  32"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 50"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[GT], 20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 75"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 100"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -32"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
-	}
-	
-//	@Ignore
-	@Test
-	public void whileAfterWhile() {
-		int[] code = getCode("whileAfterWhile");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r4, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  32"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mulli  r4, r3, 2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("subf  r5, r2, r4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r4, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[GT], 8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("add  r6, r4, r5"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[EQ], -32"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r2, 2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
-	}
-
-//	@Ignore
-	@Test
-	public void while2() {
-		int[] code = getCode("while2");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[GT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mulli  r4, r3, 2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r4, r3, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("add  r4, r3, r2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, -1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[EQ], -20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r2, 2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
-	}
-
-	//	@Ignore
-	@Test
-	public void while3() {
-		int[] code = getCode("while3");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r3, 15"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 20"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r4, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmpi  crf0, 0, r2, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[GT], -8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmp  crf0, 0, r3, r2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iffalse, CRF0[LT], 8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r3, r3, 10"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r3, 2"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"forIfWhile");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 19, vol, false));
+		for (int i = 4; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 	
 	//	@Ignore
 	@Test
 	public void whileTrue2() {
-		int[] code = getCode("whileTrue2");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 65"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("twi  ifequal, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r4, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r4, r4, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r4"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  8"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r2, r2, 1"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  r3, 16960"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  r3, r3, 15"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("cmp  crf0, 0, r2, r3"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bc  iftrue, CRF0[LT], -16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("b  -52"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		createCgPPC1(Type.rootClasses[0],"whileTrue2");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 4, 11, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+
+	//	@Ignore
+	@Test
+	public void phiFunctionTest1() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest1");
+		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+	
+	//	@Ignore
+	@Test
+	public void phiFunctionTest2() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest2");
+		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+	
+	//	@Ignore
+	@Test
+	public void phiFunctionTest3() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest3");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
+		assertNull("wrong join", getJoin(3));
+	}
+	
+	//	@Ignore
+	@Test
+	public void phiFunctionTest4() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest4");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
+		assertNull("wrong join", getJoin(3));
+	}
+	
+	//	@Ignore
+	@Test
+	public void phiFunctionTest5() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest5");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 8, 18, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 7, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(3).next, 9, 16, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+
+	//	@Ignore
+	@Test
+	public void phiFunctionTest6() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest6");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 18, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 1, 8, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(3).next, 9, 16, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+
+	//	@Ignore
+	@Test
+	public void phiFunctionTest7() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest7");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 22, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 10, 22, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 1, 9, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(4).next, 11, 21, vol, false));
+		assertNull("wrong join", getJoin(5));
+	}
+
+	//	@Ignore
+	@Test
+	public void phiFunctionTest8() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest8");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
+		assertNull("wrong join", getJoin(3));
+	}
+
+	//	@Ignore
+	@Test
+	public void phiFunctionTest9() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest9");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 5, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+
+
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest10() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest10");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 11, 23, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 2, 11, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(3).next, 13, 21, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+	
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest11() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest11");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 0, 33, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(5), 17, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(6), 18, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(7), 22, 31, vol, false));
+		assertNull("wrong join", getJoin(8));
+	}
+
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest12() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest12");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 0, 33, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(5), 17, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(6), 18, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(7), 22, 31, vol, false));
+		assertNull("wrong join", getJoin(8));
+	}
+
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest13() {
+		createCgPPC1(Type.rootClasses[0],"phiFunctionTest13");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 0, 33, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(5), 17, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(6), 18, 31, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(7), 22, 31, vol, false));
+		assertNull("wrong join", getJoin(8));
 	}
 
 }
