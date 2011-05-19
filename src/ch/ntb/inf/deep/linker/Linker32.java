@@ -974,13 +974,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		else {
 			TargetMemorySegment current = targetImage;
-			while(current != null) {
-				if(current == tms) return;
-				current = current.next;
+			if(current.startAddress < tms.startAddress) {
+				while(current.next != null && tms.startAddress > current.next.startAddress) {
+					current = current.next;
+				}
+				tms.next = current.next;
+				current.next = tms;
 			}
-			if(dbg) vrb.println("      >>>> Adding target memory segment #" + tms.id);
-			lastTargetMemorySegment.next = tms;
-			lastTargetMemorySegment = lastTargetMemorySegment.next;
+			else {
+				tms.next = current;
+				targetImage = tms;
+			}
 		}
 	}
 	
@@ -1042,6 +1046,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 	}
 
+	public static void printTargetImageSegmentList() {
+		vrb.println("ID\tstart address");
+		TargetMemorySegment tms = targetImage;
+		while(tms != null) {
+			vrb.println("#" + tms.id + "\t[" + String.format("[0x%08X]", tms.startAddress) + "]");
+			tms = tms.next;
+		}
+	}
+	
 	public static void printClassList() {
 		vrb.println("\n[LINKER] PRINT: This is a list of all classes with their methodes, fields and constant blocks\n");
 		Method m;
