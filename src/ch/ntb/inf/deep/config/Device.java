@@ -106,29 +106,29 @@ public class Device implements ErrorCodes{
 	public int getTechnology(){
 		return technology;
 	}
-	/**
-	 * valid method only till new linker is ready
-	 */
-	public void markUsedSectors(){
-		Segment seg = segments;	
-		while(seg != null){
-			if(seg.tms != null){
-				markUsedSectors(seg.tms);
-			}
-			if(seg.subSegments != null && seg.subSegments.getUsedSize() == 0){
-				seg = seg.subSegments;
-			}else if(seg.next != null){
-				seg = seg.next;
-				while(seg != null && seg.getUsedSize() == 0){
-					seg = seg.next;
-				}
-			}else if (seg.parent != null){
-				seg = seg.parent.next;
-			}else{
-				seg = null;
-			}
-		}
-	}
+//	/**
+//	 * valid method only till new linker is ready
+//	 */
+//	public void markUsedSectors(){
+//		Segment seg = segments;	
+//		while(seg != null){
+//			if(seg.tms != null){
+//				markUsedSectors(seg.tms);
+//			}
+//			if(seg.subSegments != null && seg.subSegments.getUsedSize() == 0){
+//				seg = seg.subSegments;
+//			}else if(seg.next != null){
+//				seg = seg.next;
+//				while(seg != null && seg.getUsedSize() == 0){
+//					seg = seg.next;
+//				}
+//			}else if (seg.parent != null){
+//				seg = seg.parent.next;
+//			}else{
+//				seg = null;
+//			}
+//		}
+//	}
 	
 	public void markUsedSectors(TargetMemorySegment tms){
 		if(tms == null)return;

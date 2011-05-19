@@ -11,7 +11,6 @@ public class Segment implements IAttributes {
 	public Segment lastSubSegment;
 	public Segment next;
 	public Segment prev;
-	public TargetMemorySegment tms;
 	
 	HString name;
 	int attributes = 0;

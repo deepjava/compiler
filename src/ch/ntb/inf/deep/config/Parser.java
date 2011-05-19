@@ -1622,11 +1622,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return;
 		}
 		next();
-		Module def =targetConfig.getModuleByName(HString.getHString("default"));
-		if(def == null){
-			reporter.error(errNoDefaultSegmentDef, "in " + currentFile + " at " + targetConfig.name);
-			reporter.println();
-			return;
+		if(targetConfig != null){
+			Module def =targetConfig.getModuleByName(HString.getHString("default"));
+			if(def == null){
+				nOfErrors++;
+				reporter.error(errNoDefaultSegmentDef, "in " + currentFile + " at " + targetConfig.name);
+				reporter.println();
+				return;
+			}
 		}
 	}
 	
@@ -1926,8 +1929,22 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return;
 		}
 		next();
-		system(targetConfig);
-		modules(targetConfig);
+		while(sym == sReginit || sym == sSystem || sym == sModules){
+			if(sym == sReginit){
+				regInit();
+			}else if(sym == sSystem){				
+				system(targetConfig);
+			}else{				
+				modules(targetConfig);
+			}
+		}
+		Module sysMod = targetConfig.getSystemModules();
+		if(sysMod == null){
+			nOfErrors++;
+			reporter.error(errNoSysTabSegmentDef, "in system " + currentFile + " at " + targetConfig.name);
+			reporter.println();
+			return;
+		}
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
