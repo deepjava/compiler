@@ -51,7 +51,7 @@ public class MemoryView extends ViewPart implements Listener {
 				if (((MemorySegment) obj).addr == -1) {
 					return "";
 				}
-				return "0x" + Integer.toHexString(((MemorySegment) obj).addr);
+				return String.format("0x%08X",((MemorySegment) obj).addr);
 			case 1:
 				if (((MemorySegment) obj).addr == -1) {
 					return "";
@@ -154,7 +154,6 @@ public class MemoryView extends ViewPart implements Listener {
 			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 			column.getColumn().setText(titels[i]);
 			column.getColumn().setWidth(bounds[i]);
-			column.getColumn().setResizable(false);
 			column.getColumn().setMoveable(false);
 		}
 		Table table = viewer.getTable();
@@ -292,9 +291,9 @@ public class MemoryView extends ViewPart implements Listener {
 		public Object getValue(Object element, String property) {
 			MemorySegment p = (MemorySegment) element;
 			if ("Value".equals(property))
-				return Integer.toString(p.value);
+				return String.format("0x%08X",p.value);
 			else if ("Address".equals(property))
-				return Integer.toString(p.addr);
+				return String.format("0x%08X",p.addr);
 			else
 				return null;
 		}
