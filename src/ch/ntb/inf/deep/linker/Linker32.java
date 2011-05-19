@@ -78,6 +78,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	// System table
 	private static int[] systemTable;
 	private static int systemTableSize;
+	private static Segment[] sysTabSegments;
 	
 	// Global constants
 	private static StdConstant globalConstantList;
@@ -100,7 +101,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		else reporter.error(9999, "String class not found!");
 		
-		if(dbg) vrb.println("  c) Deleting old target image... ");
+		if(dbg) vrb.println("  c) Looking for segments for the system table: ");
+		sysTabSegments = Configuration.getSysTabSegments();
+		if(sysTabSegments != null && sysTabSegments.length > 0) {
+			if(dbg) {
+				for(int i = 0; i < sysTabSegments.length; i++) {
+					vrb.println("     -> found: " + sysTabSegments[0].getName());
+				}
+			}
+		}
+		
+		if(dbg) vrb.println("  d) Deleting old target image... ");
 		targetImage = null;
 		lastTargetMemorySegment = null;
 		
@@ -416,10 +427,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			item = item.next;
 		}
 		
-		Segment[] sysTabs = Configuration.getSysTabSegments(); // TODO @Martin: implement this for more than one system table!
-		if(sysTabs != null && sysTabs.length > 0) {
-			for(int i = 0; i < sysTabs.length; i++) {
-				sysTabs[i].addToUsedSize(systemTableSize * 4); // TODO this is not correct, systemTableSize is already in byte!!! 
+		//Segment[] sysTabs = Configuration.getSysTabSegments(); // TODO @Martin: implement this for more than one system table!
+		if(sysTabSegments != null && sysTabSegments.length > 0) {
+			for(int i = 0; i < sysTabSegments.length; i++) {
+				sysTabSegments[i].addToUsedSize(systemTableSize); 
 			}
 		}
 		else reporter.error(731, "Can't get a memory segment for the systemtable!");
@@ -712,42 +723,45 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				while(m != null) {
 					if(m.machineCode != null) {
 						if(dbg) vrb.println("         > Method \"" + m.name + "\":");
-						if((m.accAndPropFlags & (1 << dpfExcHnd)) != 0) { // TODO @Martin: improve this hack!!!
-							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + m.offset, m.machineCode.instructions, m.machineCode.iCount);
-							if(dbg) {
-								vrb.println("           Using code segment: " + clazz.codeSegment.getName() + " which begins at " + Integer.toHexString(clazz.codeSegment.getBaseAddress())); 
-								vrb.println("           Associated target memory segment #" + clazz.codeSegment.tms.id + " begins at: " + Integer.toHexString(clazz.codeSegment.tms.startAddress) + " and has a size of " + clazz.codeSegment.tms.data.length * 4 + " byte");
-								vrb.println("           Writing " + m.machineCode.iCount * 4 + " byte to " + Integer.toHexString(clazz.codeSegment.getBaseAddress() + m.offset));
-							//	for(int x = 0; x < m.machineCode.iCount; x++) {
-							//		vrb.println("           [" + Integer.toHexString(m.machineCode.instructions[x]) + "]");
-							//	}
-							}
-						}
-						else {
-							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);
-							if(dbg) {
-								vrb.println("           Using code segment: " + clazz.codeSegment.getName() + " which begins at " + Integer.toHexString(clazz.codeSegment.getBaseAddress())); 
-								vrb.println("           Associated target memory segment #" + clazz.codeSegment.tms.id + " begins at: " + Integer.toHexString(clazz.codeSegment.tms.startAddress) + " and has a size of " + clazz.codeSegment.tms.data.length * 4 + " byte");
-								vrb.println("           Writing " + m.machineCode.iCount * 4 + " byte to " + Integer.toHexString(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset));
-							//	for(int x = 0; x < m.machineCode.iCount; x++) {
-							//		vrb.println("           [" + Integer.toHexString(m.machineCode.instructions[x]) + "]");
-							//	}
-							}
-						}
-						addTargetMemorySegment(clazz.codeSegment.tms);
+						addTargetMemorySegment(new TargetMemorySegment(clazz.codeSegment, m.address, m.machineCode.instructions, m.machineCode.iCount));
+//						if((m.accAndPropFlags & (1 << dpfExcHnd)) != 0) { // TODO @Martin: improve this hack!!!
+//							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + m.offset, m.machineCode.instructions, m.machineCode.iCount);
+//							if(dbg) {
+//								vrb.println("           Using code segment: " + clazz.codeSegment.getName() + " which begins at " + Integer.toHexString(clazz.codeSegment.getBaseAddress())); 
+//								vrb.println("           Associated target memory segment #" + clazz.codeSegment.tms.id + " begins at: " + Integer.toHexString(clazz.codeSegment.tms.startAddress) + " and has a size of " + clazz.codeSegment.tms.data.length * 4 + " byte");
+//								vrb.println("           Writing " + m.machineCode.iCount * 4 + " byte to " + Integer.toHexString(clazz.codeSegment.getBaseAddress() + m.offset));
+//							//	for(int x = 0; x < m.machineCode.iCount; x++) {
+//							//		vrb.println("           [" + Integer.toHexString(m.machineCode.instructions[x]) + "]");
+//							//	}
+//							}
+//						}
+//						else {
+//							clazz.codeSegment.tms.addData(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset, m.machineCode.instructions, m.machineCode.iCount);
+//							if(dbg) {
+//								vrb.println("           Using code segment: " + clazz.codeSegment.getName() + " which begins at " + Integer.toHexString(clazz.codeSegment.getBaseAddress())); 
+//								vrb.println("           Associated target memory segment #" + clazz.codeSegment.tms.id + " begins at: " + Integer.toHexString(clazz.codeSegment.tms.startAddress) + " and has a size of " + clazz.codeSegment.tms.data.length * 4 + " byte");
+//								vrb.println("           Writing " + m.machineCode.iCount * 4 + " byte to " + Integer.toHexString(clazz.codeSegment.getBaseAddress() + clazz.codeOffset + m.offset));
+//							//	for(int x = 0; x < m.machineCode.iCount; x++) {
+//							//		vrb.println("           [" + Integer.toHexString(m.machineCode.instructions[x]) + "]");
+//							//	}
+//							}
+//						}
+//						addTargetMemorySegment(clazz.codeSegment.tms);
 					}
 					m = (Method)m.next;
 				}
 				
 				// consts
 				if(dbg) vrb.println("    2) Constantblock:");
-				clazz.constSegment.tms.addData(clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock);
-				addTargetMemorySegment(clazz.constSegment.tms);
+				addTargetMemorySegment(new TargetMemorySegment(clazz.constSegment, clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock));
+//				clazz.constSegment.tms.addData(clazz.constSegment.getBaseAddress() + clazz.constOffset, clazz.constantBlock);
+//				addTargetMemorySegment(clazz.constSegment.tms);
 			}
 			else if(item instanceof Array){ // TODO @Martin improve this!!!!!
 				Array array = (Array)item;
 				if(dbg) vrb.println("  Proceeding array \"" + array.name + "\":");
-				array.segment.tms.addData(array.segment.getBaseAddress() + array.offset, array.typeDescriptor);
+				//array.segment.tms.addData(array.segment.getBaseAddress() + array.offset, array.typeDescriptor);
+				addTargetMemorySegment(new TargetMemorySegment(array.segment, array.segment.getBaseAddress() + array.offset, array.typeDescriptor));
 			}
 			item = item.next;
 		}
@@ -755,11 +769,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  Proceeding system table:");
 		Segment[] s = Configuration.getSysTabSegments();
 		if(dbg) vrb.println("  > Address: 0x" + Integer.toHexString(s[0].getBaseAddress()));
-		s[0].tms.addData(s[0].getBaseAddress(), systemTable);
-		addTargetMemorySegment(s[0].tms);
+		//s[0].tms.addData(s[0].getBaseAddress(), systemTable);
+		//addTargetMemorySegment(s[0].tms);
+		for(int i = 0; i < sysTabSegments.length; i++) {
+			addTargetMemorySegment(new TargetMemorySegment(s[i], s[i].getBaseAddress(), systemTable));
+		}
 		
 		if(dbg) vrb.println("  Proceeding global constant table:");
-		globalConstantTableSegment.tms.addData(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable);
+		//globalConstantTableSegment.tms.addData(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable);
+		addTargetMemorySegment(new TargetMemorySegment(globalConstantTableSegment, globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable));
 		
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
@@ -903,7 +921,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		//set baseaddress
 		if((s.getSize() > 0 && s.getUsedSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			if(s.getBaseAddress() == -1) s.setBaseAddress(baseAddress);
-			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
+//			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
 			if(dbg) vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
 		}
 		// traverse from left to right
