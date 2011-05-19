@@ -133,7 +133,6 @@ public class UsbMpc555Loader extends Downloader {
 				continue;
 			}
 			if(image.segment.owner.getTechnology() == 0){//RAM device
-				StdStreams.out.println("Ram");
 				int dataSizeToTransfer = image.data.length;
 				int startAddr = image.startAddress;
 				int index = 0;
