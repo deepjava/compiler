@@ -1047,10 +1047,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 
 	public static void printTargetImageSegmentList() {
-		vrb.println("ID\tstart address");
+		vrb.println("ID\tstart address\tsize (byte)");
 		TargetMemorySegment tms = targetImage;
 		while(tms != null) {
-			vrb.println("#" + tms.id + "\t[" + String.format("[0x%08X]", tms.startAddress) + "]");
+			vrb.println("#" + tms.id + "\t[" + String.format("[0x%08X]", tms.startAddress) + "]\t" + tms.data.length * 4);
 			tms = tms.next;
 		}
 	}
