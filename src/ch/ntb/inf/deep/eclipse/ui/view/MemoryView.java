@@ -109,7 +109,7 @@ public class MemoryView extends ViewPart implements Listener {
 		count = new Text(parent, SWT.BORDER);
 		count.addListener(SWT.Verify, new Listener() {
 			public void handleEvent(Event e) {
-				String string = addr.getText() + e.text;
+				String string = count.getText() + e.text;
 				char[] chars = new char[string.length()];
 				string.getChars(0, chars.length, chars, 0);
 				if (chars[0] == '0' && chars.length > 1) {// hex value
@@ -149,7 +149,7 @@ public class MemoryView extends ViewPart implements Listener {
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		String[] titels = { "Address", "Value" };
-		int[] bounds = { 60, 230 };
+		int[] bounds = { 100, 100 };
 		for (int i = 0; i < titels.length; i++) {
 			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 			column.getColumn().setText(titels[i]);
