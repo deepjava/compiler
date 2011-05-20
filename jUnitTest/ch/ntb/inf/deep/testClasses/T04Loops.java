@@ -91,6 +91,31 @@ public class T04Loops {
 		}
 	}
 	
+	private static int forIfFor() {
+		int  offset, k; 
+		offset = 0; 
+		int val = 10;
+		if (val == 10) {
+			offset += 4;	
+			for (int i = 0; i < 5; i++) {
+				offset += 2;
+			}
+			for (int i = 0; i < 3; i++) {
+				boolean valid = true;
+				if(valid == false) offset += 138;
+				else {
+					for (k = 0; k < 32; k++) {
+						offset += 2;
+					}
+					for (k = 0; k < 7; k++) {
+						offset += 4;
+					}	
+				} 
+			}
+		} 
+		return offset;
+	}
+	
 	private static int help1() { return 0; }
 	private static void help2() {}
 	private static void help3(int a) {}

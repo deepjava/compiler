@@ -122,7 +122,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						//  TODO make recursiv
 						PhiFunction phi = (PhiFunction)opdInstr;
 //						if (((PhiFunction)instr).deleted) continue;
-						if (phi.deleted && phi != instr && phi != phi.getOperands()[0].owner) {
+//						if (phi.deleted && phi != instr && phi != phi.getOperands()[0].owner) {
+						// achtung: Fall das phi später kommt!!! z.B. in CmdTransmitter.sendFailed(BLjava/lang/String;II)V
+						if (phi.deleted && phi != instr) {
 							if (dbg) StdStreams.out.println("\tphi-function is deleted");
 							phi.used = true;
 							SSAValue delPhiOpd = phi.getOperands()[0];
@@ -149,41 +151,48 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCPhiFunc) {
 				PhiFunction phi = (PhiFunction)instr;
 				if (phi.deleted && !phi.used) continue;
-//				if (phi.result.index < maxStackSlots) {
-//					// result of phi function is on the stack
-//					SSAInstruction nextInstr; int n = i+1;
-//					do {
-//						nextInstr = instrs[n++];
-//					} while (nextInstr.ssaOpcode == sCPhiFunc);
-//					assert nextInstr.ssaOpcode == sCregMove;
-//					phi.result.index = nextInstr.result.index;
-//					
-//					if (joins[phi.result.index] == null) joins[phi.result.index] = new SSAValue();
-//					nextInstr.result.join = joins[phi.result.index];
-//					nextInstr.result.join.index = phi.result.index;	
-//				}
-				
 				SSAValue[] opds = instr.getOperands();
 				SSAValue res = instr.result, joinVal;
-				boolean newIndex = true;
-				if (opds.length > 1) 
-					for (SSAValue opd : opds) {
-						if (opd.owner.ssaOpcode == sCPhiFunc) newIndex = false;
-					}
-				else newIndex = false;
+//				boolean newIndex = true;
+//				if (opds.length > 1) 
+//					for (SSAValue opd : opds) {
+//						if (opd.owner.ssaOpcode == sCPhiFunc && opd.join != null) {
+//							newIndex = false;
+//							opd.owner.print(5);
+////							System.out.println("newIndex = "+newIndex);
+//						}
+//					}
+//				else newIndex = false;
+//					System.out.println("newIndex = "+newIndex);
+//				joinVal = joins[res.index];
+//				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
+//				if (joinVal == null) {
+//					joinVal = joins[res.index] = new SSAValue();
+//					if (!newIndex) joinVal.memorySlot = 100;
+////					joins[res.index] = new SSAValue();
+//				} else if (newIndex) {
+//					if (joinVal.memorySlot == 100) {
+//						System.out.println("aaaa");
+//					} else {
+//						System.out.println("bbbb");
+//						joinVal.next = new SSAValue();
+//						joinVal = joinVal.next;
+//					}
+//				} 
 				joinVal = joins[res.index];
-				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
+//				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
 				if (joinVal == null) {
 					joinVal = joins[res.index] = new SSAValue();
-					if (!newIndex) joinVal.memorySlot = 100;
+//					if (!newIndex) joinVal.memorySlot = 100;
 //					joins[res.index] = new SSAValue();
-				} else if (newIndex) {
-					if (joinVal.memorySlot == 100) {
-						
-					} else {
-						joinVal.next = new SSAValue();
-						joinVal = joinVal.next;
-					}
+//				} else if (newIndex) {
+//					if (joinVal.memorySlot == 100) {
+//						System.out.println("aaaa");
+//					} else {
+//						System.out.println("bbbb");
+//						joinVal.next = new SSAValue();
+//						joinVal = joinVal.next;
+//					}
 				} 
 				assert joinVal != null;
 				res.join = joinVal;	// set join of phi function

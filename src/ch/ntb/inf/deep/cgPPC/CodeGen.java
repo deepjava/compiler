@@ -228,7 +228,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		} else {
 			insertEpilog(stackSize);
 		}
-//		if (dbg) print();
+		if (dbg) print();
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {

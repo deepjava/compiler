@@ -147,6 +147,19 @@ public class cgPPC04 extends TestCgPPC {
 
 	//	@Ignore
 	@Test
+	public void forIfFor() {
+		createCgPPC1(Type.rootClasses[0],"forIfFor");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", checkJoin(getJoin(2), 0, 67, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(3), 4, 11, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 1, 66, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(5), 6, 66, vol, false));
+		assertNull("wrong join", getJoin(7));
+	}
+
+	//	@Ignore
+	@Test
 	public void phiFunctionTest1() {
 		createCgPPC1(Type.rootClasses[0],"phiFunctionTest1");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
