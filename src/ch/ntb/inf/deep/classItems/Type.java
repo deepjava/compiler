@@ -15,6 +15,7 @@ public class Type extends Item {
 	static HString[] classFileAttributeTable;// well known attributes
 //	static final byte[] primitveTypeChars = { 'D', 'F', 'J', 'Z', 'B', 'S', 'C', 'I', 'V' }; // inclusive 'V'
 	public static Type[] wellKnownTypes;
+	public static final Array[] primTypeArrays = new Array[nofWellKnownTypes];
 	public static Type wktObject;
 	public static Type wktString;
 	

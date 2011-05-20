@@ -5,7 +5,7 @@ import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Array extends Type {
-
+	
 	public Type componentType;
 	public byte dimension; // array dimension
 
@@ -22,6 +22,14 @@ public class Array extends Type {
 		HString sname = regName.substring(dimension);
 		sname = stab.insertCondAndGetEntry(sname);
 		componentType = getTypeByDescriptor(sname);
+		
+		if( regName.length() == 2 ){
+			assert dimension == 1;
+			int typeIndex = getPrimitiveTypeIndex(sname.charAt(0));
+			if( typeIndex >= txBoolean){// if (one dimensional array of primitve type) register it in primTypeArrays
+				primTypeArrays[typeIndex] = this;
+			}
+		}
 	}
 
 	protected void selectAndMoveInitClasses(){

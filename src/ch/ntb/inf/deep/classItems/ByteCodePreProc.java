@@ -3,15 +3,18 @@ package ch.ntb.inf.deep.classItems;
 import java.io.PrintStream;
 
 import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.strings.StringTable;
 
 /**
  * Byte Code preprocessor:
  * <br>fixes constant pool indices in accordant instructions
  * <br>sets access and property flags {dpfReadAccess, dpfWriteAccess, dpfCall, dpfInterfCall, dpfNew, dpfTypeTest} accordingly
  */
-public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs {
+public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs, ICdescAndTypeConsts {
 	private static final boolean verbose = false, assertions = true;
 	private static PrintStream vrb = Item.vrb;
+	private static final char[] any2chars = new char[2];
 
 	/*attribute table (classItems.ICjvmInstructionOpcs.bcAttrTab)
 	 * format B:	0xsFFF'owLcc, binary: ssss ' ffff | ffff'ffff | oo ww ' LLLL 	| cccc'cccc
@@ -119,6 +122,16 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs 
 					}
 				}
 				instrLength = ((bcAttr >> 8) & 0xF) + ((bcAttr >> 12) & 0x3);
+			}else if(opc == bCnewarray){
+				int typeIndex = byteCode[instrAddr+1];
+				if( Type.primTypeArrays[typeIndex] == null){
+					Type compType = Type.wellKnownTypes[typeIndex];
+					any2chars[0] = tcArray; any2chars[1] = compType.name.charAt(0);
+					StringTable strTab = StringTable.getInstance();
+					HString regTypeName = strTab.insertCondAndGetEntry(any2chars, 2);
+					Type.getTypeByNameAndUpdate(tcArray, regTypeName, null);
+					assert Type.primTypeArrays[typeIndex] != null;
+				}
 			}else if( (bcAttr&(1<<bcapCpRef)) != 0){// (opc != bCtableswitch & opc != bClookupswitch & opc != bCwide)
 				int addr = instrAddr+1;
 				Item item = null;
