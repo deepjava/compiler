@@ -2870,7 +2870,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 								break;
 							}
 						}
-						if (res == tempOperands[j] || res.owner.ssaOpcode != sCPhiFunc) {
+						if (res != tempOperands[j] || res.owner.ssaOpcode != sCPhiFunc) {
 							// the PhiFunctions doesn't lives but have 1 operand from an SSAinstruction which is not a PhiFunction
 							// replace the virtual deleted phiFunction with this operand
 							SSAValue[] opnd = phiFunctions[i].getOperands();
@@ -2881,7 +2881,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 
 					}
 				}
-				if (tempRes != (tempOperands[j])) {
+				//true if:
+				//two different SSAValues and tempOperand[j] is not a result from a deleted phiFunction which have as operand[0] its own result
+				if (tempRes != (tempOperands[j]) && !(tempOperands[j].owner.ssaOpcode == sCPhiFunc && ((PhiFunction)tempOperands[j].owner).deleted && tempOperands[j] == tempOperands[j].owner.getOperands()[0])) {
 					if (diffAlreadyOccured) {
 						if(tempOperands[indexOfDiff] != tempOperands[j]){
 							redundant = false;
@@ -2894,7 +2896,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 			}
 			if (redundant) {
-				// if the Phifunc has no parameter or it has only itself as paramter so delete it real 
+				// if the Phifunc has no parameter so delete it real 
 				if (phiFunctions[i].nofOperands > 0) {
 						if (!phiFunctions[i].deleted) {
 							// delete it virtually an set the operand for replacement
