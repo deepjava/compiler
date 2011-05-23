@@ -281,19 +281,6 @@ public class UsbMpc555Loader extends Downloader {
 		try {
 			// make a hard reset
 			mpc.reset_target();
-			/*
-			 * Do not check the freeze signal on the target because it is set
-			 * only after the following memory writes
-			 */
-			boolean cf = mpc.isCheckFreezeOnTarget();
-			mpc.setCheckFreezeOnTarget(false);
-			// assign pin to Freeze output
-			mpc.writeMem(0x02FC000, 0x40000, 4);
-			// enable bus monitor,disable watchdog timer
-			mpc.writeMem(0x02FC004, 0xFFFFFF83, 4);
-			// SCCR, switch off EECLK for download
-			mpc.writeMem(0x02FC280, 0x8121C100, 4);
-			mpc.setCheckFreezeOnTarget(cf);
 		} catch (BDIException e) {
 			throw new DownloaderException(e.getMessage(), e);
 		}
