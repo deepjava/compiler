@@ -30,7 +30,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -146,12 +146,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(clazz.nofClassRefs > 0) {
 			Item field = clazz.classFields;
 			while(field != null) {
-				if((field.accAndPropFlags & (1 << apfStatic)) != 0 && ((Type)field.type).category == tcRef) {
+				if((field.accAndPropFlags & (1 << apfStatic)) != 0 && ( ((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
 					clazz.ptrList.append(new AddressItem(field));
 					ptrCounter++;
 				}
 				field = field.next;
 			}
+			assert ptrCounter == clazz.nofClassRefs : "[Error] Number of added pointers (" + ptrCounter + ") not equal to number of pointers in class (" + clazz.nofClassRefs + ")!";
 		}
 		((FixedValueItem)clazz.ptrList).setValue(ptrCounter);
 		clazz.constantBlock.append(clazz.ptrList);
@@ -486,18 +487,21 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
-		int classDescriptorBase = clazz.constSegment.getBaseAddress() + clazz.constOffset + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
+		int constBlockBase =  clazz.constSegment.getBaseAddress() + clazz.constOffset;
+		int classDescriptorBase = constBlockBase + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
 		int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		
 		if(dbg) {
-			vrb.println("  Const segment base address: " + Integer.toHexString(clazz.constSegment.getBaseAddress()));
-			vrb.println("  Const offset: " + Integer.toHexString(clazz.constOffset));
-			vrb.println("  Var base: " + Integer.toHexString(varBase));
-			vrb.println("  Code base: " + Integer.toHexString(codeBase));
-			vrb.println("  Class descriptor base: " + Integer.toHexString(classDescriptorBase));
-			vrb.println("  String pool base: " + Integer.toHexString(stringPoolBase));
-			vrb.println("  Const pool base: " + Integer.toHexString(constPoolBase));
+			vrb.println("  Code base: 0x" + Integer.toHexString(codeBase));
+			vrb.println("  Var base: 0x" + Integer.toHexString(varBase));
+			vrb.println("  Const segment base address: 0x" + Integer.toHexString(clazz.constSegment.getBaseAddress()));
+			vrb.println("  Const offset: 0x" + Integer.toHexString(clazz.constOffset));
+			vrb.println("  Const block base address: 0x" + Integer.toHexString(constBlockBase));
+			vrb.println("  Number of class refereces: " + clazz.nofClassRefs);
+			vrb.println("  Class descriptor base: 0x" + Integer.toHexString(classDescriptorBase));
+			vrb.println("  String pool base: 0x" + Integer.toHexString(stringPoolBase));
+			vrb.println("  Const pool base: 0x" + Integer.toHexString(constPoolBase));
 		}
 		
 		// Class/static fields
@@ -561,8 +565,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					else reporter.error(9999, "Offset of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
 				}
 				if(dbg) {
-					if(cpe.type != null) vrb.print("    > #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
-					else vrb.print("    > #" + i + ": Type = <unknown>, Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
+					if(cpe.type != null) vrb.print("    - #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
+					else vrb.print("    - #" + i + ": Type = <unknown>, Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
 				}
 			}
 		}
