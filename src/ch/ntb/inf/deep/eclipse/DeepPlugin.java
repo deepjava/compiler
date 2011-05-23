@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.eclipse;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -14,6 +15,9 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+
+import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
+import ch.ntb.inf.deep.host.StdStreams;
 
 public class DeepPlugin extends AbstractUIPlugin {
 	//The shared instance.
@@ -72,6 +76,17 @@ public class DeepPlugin extends AbstractUIPlugin {
 	public DeepPlugin() {
 		super();
 		plugin = this;
+		ConsoleDisplayMgr cdm = ConsoleDisplayMgr.getDefault();
+		//Init Console
+		if(cdm != null){
+			cdm.clear();
+			PrintStream out = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_INFORMATION));
+			PrintStream err = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_ERROR));
+			StdStreams.vrb = out;
+			//StdStreams.log = out;
+			StdStreams.out = out;
+			StdStreams.err = err;
+		}
 	}
 
 	/**

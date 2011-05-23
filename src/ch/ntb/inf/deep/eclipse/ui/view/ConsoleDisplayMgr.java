@@ -157,9 +157,12 @@ public class ConsoleDisplayMgr
 				break;
 			default:				
 		}	
+
+		IOConsoleOutputStream ioConsoleStream = getIOConsole().newOutputStream();
+		if(PlatformUI.getWorkbench() != null){
+			ioConsoleStream.setColor(PlatformUI.getWorkbench().getDisplay().getSystemColor(swtColorId)); //TODO solve problem with Nullpointer when started from non-UI-Thread
+		}
 		
-		IOConsoleOutputStream ioConsoleStream = getIOConsole().newOutputStream();		
-		//ioConsoleStream.setColor(PlatformUI.getWorkbench().getDisplay().getSystemColor(swtColorId)); //TODO solve problem with Nullpointer when started from non-UI-Thread
 		return ioConsoleStream;
 	}
 	

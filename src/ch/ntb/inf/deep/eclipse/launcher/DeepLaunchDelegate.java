@@ -1,7 +1,5 @@
 package ch.ntb.inf.deep.eclipse.launcher;
 
-import java.io.PrintStream;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
@@ -12,7 +10,6 @@ import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
 import ch.ntb.inf.deep.host.ErrorReporter;
-import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.launcher.Launcher;
 
 
@@ -29,15 +26,9 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 
 		monitor.beginTask("Download Target Image", 100);
 
-		//Init Console
+		//clear Console
 		if(cdm != null){
 			cdm.clear();
-			PrintStream out = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_INFORMATION));
-			PrintStream err = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_ERROR));
-			StdStreams.vrb = out;
-			//StdStreams.log = out;
-			StdStreams.out = out;
-			StdStreams.err = err;
 		}
 		
 	
