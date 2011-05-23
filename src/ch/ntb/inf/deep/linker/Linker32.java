@@ -30,7 +30,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;

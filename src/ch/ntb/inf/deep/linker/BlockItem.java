@@ -1,7 +1,5 @@
 package ch.ntb.inf.deep.linker;
 
-import java.text.DecimalFormat;
-
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
