@@ -540,23 +540,24 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 							ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
 							ErrorReporter.reporter.println();
 						}
-						break;
-					}
-					name = HString.getHString(segDesignator.substring(0, index));
-					segDesignator = segDesignator.substring(index + 1);
-					seg = dev.getSegementByName(name);
-					index = segDesignator.indexOf('.');
-					while (index != -1) {
+						
+					}else{
 						name = HString.getHString(segDesignator.substring(0, index));
 						segDesignator = segDesignator.substring(index + 1);
-						seg = seg.getSubSegmentByName(name);
+						seg = dev.getSegementByName(name);
 						index = segDesignator.indexOf('.');
-					}
-					if(seg != null){
-						noticeSegment(seg);
-					}else{
-						ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
-						ErrorReporter.reporter.println();
+						while (index != -1) {
+							name = HString.getHString(segDesignator.substring(0, index));
+							segDesignator = segDesignator.substring(index + 1);
+							seg = seg.getSubSegmentByName(name);
+							index = segDesignator.indexOf('.');
+						}
+						if(seg != null){
+							noticeSegment(seg);
+						}else{
+							ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
+							ErrorReporter.reporter.println();
+						}
 					}
 				}
 				segAss = segAss.next;
