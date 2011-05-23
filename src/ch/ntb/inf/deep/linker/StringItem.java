@@ -9,8 +9,6 @@ public class StringItem extends BlockItem {
 	
 	private static final int tag = 0x55555555;
 	private static final int constHeaderSize = 3 * 4; // byte
-	private static int stringClassAddr = -1;
-	private static int headerSize = -1;
 	
 	Item ref;
 	
@@ -55,19 +53,11 @@ public class StringItem extends BlockItem {
 	}
 	
 	private static int getStringClassAddr() {
-		if(stringClassAddr < 0) {
-			//stringClassAddr = Linker32.stringClass.address;
-			stringClassAddr = Type.wktString.address;
-		}
-		//System.out.println("++++++ String Class Address: 0x" + Integer.toHexString(stringClassAddr) + " ++++++");
-		return stringClassAddr;
+		return Type.wktString.address;
 	}
 
 	private static int getHeaderSize() {
-		if(headerSize < 0) {
-			headerSize = constHeaderSize + Linker32.roundUpToNextWord(Type.wktObject.objectSize);
-		}
-		return headerSize;
+		return constHeaderSize + Linker32.roundUpToNextWord(Type.wktObject.objectSize);
 	}
 	
 	public String toString() {
