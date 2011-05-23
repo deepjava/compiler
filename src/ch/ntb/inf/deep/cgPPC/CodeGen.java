@@ -531,7 +531,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
 						break;
 					default:
-						if(dbg) StdStreams.out.println(res.type & 0x7fffffff);//TODO @roger remove this
 						assert false : "cg: type not implemented";
 					}
 				}
