@@ -117,11 +117,11 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		SegmentAssignment segAss = null;
 
 		// first check if clazz is a system class
-		if (os.getKernel().name.equals(clazz)) {
+		if (os.getKernel().name.equals(clazz.toString())) {
 			segAss = activeTarConf.getModuleByName(HString.getHString("kernel")).getSegmentAssignments();
-		} else if (os.getHeap().name.equals(clazz)) {
+		} else if (os.getHeap().name.equals(clazz.toString())) {
 			segAss = activeTarConf.getModuleByName(HString.getHString("heap")).getSegmentAssignments();
-		} else if (os.getExceptionBaseClass().name.equals(clazz)) {
+		} else if (os.getExceptionBaseClass().name.equals(clazz.toString())) {
 			segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
 		} else {
 			SystemClass tempCls = os.getExceptions();
