@@ -756,7 +756,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				if(ssa.isParam[val + maxStack]){//TODO check this
+				if(ssa.isParam[val + maxStack]){
 					load(val, ssa.paramType[val + maxStack]);
 				}else{
 					load(val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
@@ -804,35 +804,35 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				if(ssa.isParam[val + maxStack]){//TODO check this
+				if(ssa.isParam[val + maxStack]){
 					load(val, ssa.paramType[val + maxStack]);
 				}else{
 					load(val, SSAValue.tRef);
 				}
 				break;
 			case bCiload_0:
-				if(ssa.isParam[maxStack]){//TODO check this
+				if(ssa.isParam[maxStack]){
 					load(0, ssa.paramType[maxStack]);
 				}else{
 					load(0, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bCiload_1:
-				if(ssa.isParam[maxStack + 1]){//TODO check this
+				if(ssa.isParam[maxStack + 1]){
 					load(1, ssa.paramType[maxStack + 1]);
 				}else{
 					load(1, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bCiload_2:
-				if(ssa.isParam[maxStack + 2]){//TODO check this
+				if(ssa.isParam[maxStack + 2]){
 					load(2, ssa.paramType[maxStack + 2]);
 				}else{
 					load(2, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bCiload_3:
-				if(ssa.isParam[maxStack + 3]){//TODO check this
+				if(ssa.isParam[maxStack + 3]){
 					load(3, ssa.paramType[maxStack + 3]);
 				}else{
 					load(3, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
@@ -903,7 +903,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCiaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAinteger;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAinteger;
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -915,7 +915,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bClaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAlong;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAlong;
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -927,7 +927,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCfaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAfloat;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAfloat;
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -939,7 +939,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCdaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAdouble;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAdouble;
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -968,7 +968,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				// or byte)
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAbyte;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAbyte;
 				result = new SSAValue();
 				result.type = SSAValue.tByte | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -980,7 +980,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCcaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAchar;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAchar;
 				result = new SSAValue();
 				result.type = SSAValue.tChar | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -992,7 +992,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCsaload:
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAshort;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAshort;
 				result = new SSAValue();
 				result.type = SSAValue.tShort | (1 << SSAValue.ssaTaFitIntoInt);
 				instr = new Dyadic(sCloadFromArray, value1, value2);
@@ -1145,7 +1145,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAinteger;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAinteger;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1157,7 +1157,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAlong;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAlong;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1169,7 +1169,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAfloat;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAfloat;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1181,7 +1181,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAdouble;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAdouble;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1193,7 +1193,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAref;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAref;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1205,7 +1205,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAbyte;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAbyte;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1217,7 +1217,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAchar;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAchar;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -1229,7 +1229,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value3 = popFromStack();
 				value2 = popFromStack();
 				value1 = popFromStack();
-				value1.type = SSAValue.tAshort;//TODO @Roger and Urs verify
+				value1.type = SSAValue.tAshort;
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				instr = new StoreToArray(sCstoreToArray, value1, value2, value3);
@@ -2464,7 +2464,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					pushToStack(result);
 				}
 				break;
-			case bCnew:		// TODO @Urs: Check this
+			case bCnew:	
 				bca++;
 				val = ((ssa.cfg.code[bca++] & 0xFF) << 8) | ssa.cfg.code[bca] & 0xFF;
 				// value1 = new SSAValue();
@@ -2484,11 +2484,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				pushToStack(result);
 				break;
-			case bCnewarray:		// TODO @Urs: Check this
+			case bCnewarray:
 				bca++;
 				val = ssa.cfg.code[bca] & 0xff; // atype (Array type)
 				value1 = popFromStack();
-				Item atype = Type.classList.getItemByName(Character.toString(tcArray) + Type.wellKnownTypes[val].name);
+				Item atype = Type.primTypeArrays[val];  
 				assert atype != null : "[BCA " + bca + "] can't find a array item for the given atype (\"" + Character.toString(tcArray) + Type.wellKnownTypes[val].name +"\")!";
 				result = new SSAValue();
 				result.type = val + 10;
