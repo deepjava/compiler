@@ -11,7 +11,6 @@ public class Register {
 	int addr = -1;
 	int size = -1;
 	int repr;
-	ValueAssignment init;
 	
 	public Register(HString name){
 		this.name = name;
@@ -25,10 +24,6 @@ public class Register {
 		this.size = size;
 	}
 	
-	public void setInit(ValueAssignment init){
-		this.init = init;
-	}
-	
 	public void setType(int type){
 		this.type = type;
 		if(repr == 0){
@@ -39,15 +34,7 @@ public class Register {
 			}
 		}
 	}
-	
-	public void setInitalValue(ValueAssignment init){
-		this.init = init;
-	}
-	
-	public ValueAssignment getInit(){
-		return init;
-	}
-	
+		
 	public void setRepresentation(int repr){
 		this.repr = repr;
 	}

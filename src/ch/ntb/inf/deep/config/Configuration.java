@@ -17,6 +17,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	private static Consts consts = Consts.getInstance();
 	private static MemoryMap memoryMap = MemoryMap.getInstance();
 	private static RegisterMap registerMap = RegisterMap.getInstance();
+	private static RegisterInit regInit;	
 	private static TargetConfiguration targetConfig;
 	private static TargetConfiguration activeTarConf;
 	private static OperatingSystem os;
@@ -318,14 +319,32 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 
 	public static void setRegInit(HString name, int initValue) {
-
-		ValueAssignment init = new ValueAssignment(name, initValue);
-		HString register = name.substring(0, name.length() - 4);
-		registerMap.addInitValueFor(register, init);
+		Register reg = registerMap.getRegister(name);
+		if(regInit == null){
+			regInit = new RegisterInit(reg, initValue);
+			return;
+		}
+		//check if register initialization already exist
+		RegisterInit current = regInit;
+		RegisterInit prev = null;
+		while(current != null){
+			if(reg == current.register){
+				current.initValue = initValue;
+				return;
+			}
+			prev = current;
+			current = current.next;
+		}
+		//if no initialization exist, so append new one
+		// if no match prev shows the tail of the list
+		prev.next = new RegisterInit(reg, initValue);
 	}
 
-	public static Register getInitializedRegisters() {
-		return registerMap.regWithInitalValue;
+	public static RegisterInit[] getInitializedRegisters() {
+		RegisterInit[] reg = new RegisterInit[2];
+		reg[0] = regInit; //Global scope
+		reg[1] = activeTarConf.getRegInit(); //active target config scope
+		return reg;
 	}
 
 	public static ValueAssignment getConstant() {
@@ -372,12 +391,15 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 			os.println(1);
 		}
 		registerMap.println(1);
-		if (registerMap.regWithInitalValue != null) {
+		if (regInit != null) {
 			StdStreams.vrb.println("  reginit{");
-			Register initReg = registerMap.regWithInitalValue;
+			RegisterInit initReg = regInit;
 			while (initReg != null) {
-				initReg.init.println(2);
-				initReg = initReg.nextWithInitValue;
+				for (int i = 2; i > 0; i--) {
+					StdStreams.vrb.print("  ");
+				}
+				StdStreams.vrb.println(initReg.register.getName().toString() + String.format(" = 0x%X", initReg.initValue));
+				initReg = initReg.next;
 			}
 			StdStreams.vrb.println("  }");
 		}
@@ -448,15 +470,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 						+ Integer.toHexString(reg.addr) + ";\n");
 				reg = reg.next;
 			}
-			fw.write("\n\t//Register inital value\n");
-			Register initReg = registerMap.regWithInitalValue;
-			while (initReg != null) {
-				fw.write("\tpublic static final int "
-						+ initReg.init.getName().toString() + " = 0x"
-						+ Integer.toHexString(initReg.init.getValue()) + ";\n");
-				initReg = initReg.nextWithInitValue;
-			}
-
 			fw.write("}");
 			fw.flush();
 			fw.close();
@@ -681,6 +694,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		memoryMap = MemoryMap.getInstance();
 		RegisterMap.clear();
 		registerMap = RegisterMap.getInstance();
+		regInit = null;
 		targetConfig = null;
 		activeTarConf = null;
 		os = null;
@@ -698,7 +712,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	protected static void setActiveTargetConfig(HString targetConfigName) {
 		// determine active configuration if it is not set
-		if (activeTarConf == null) {
+//		if (activeTarConf == null) {
 			activeTarConf = targetConfig;
 			while (activeTarConf != null) {
 				if (activeTarConf.name.equals(targetConfigName)) {
@@ -707,10 +721,9 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				activeTarConf = activeTarConf.next;
 			}
 			if (activeTarConf == null) {
-				ErrorReporter.reporter.error(errInconsistentattributes,
-						"Targetconfiguration which is set is not found\n");
+				ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration which is set is not found\n");
 			}
-		}
+//		}
 
 	}
 

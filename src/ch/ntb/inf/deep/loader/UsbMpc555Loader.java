@@ -4,6 +4,7 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.MemoryMap;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
+import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
@@ -212,62 +213,58 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	protected synchronized void initRegisters() throws DownloaderException {
 		try {
-			Register root = Configuration.getInitializedRegisters();
-			Register current = root;
-			while (current != null) {
-				switch (current.getType()) {
-				case Parser.sSPR:
-					mpc.writeSPR(current.getAddress(), current.getInit()
-							.getValue());
-					break;
-				case Parser.sIOR:
-					mpc.writeMem(current.getAddress(), current.getInit()
-							.getValue(), current.getSize());
-					// StdStreams.vrb.println(current.getName() + " = " +
-					// Integer.toHexString(current.getInit().getValue()));
-					break;
-				case Parser.sMSR:
-					mpc.writeMSR(current.getInit().getValue());
-					break;
-				case Parser.sCR:
-					mpc.writeCR(current.getInit().getValue());
-					break;
-				case Parser.sFPSCR:
-					mpc.writeFPSCR(current.getInit().getValue());
-					break;
-				default:
-					break;
+			RegisterInit[] regInitArray = Configuration.getInitializedRegisters();
+			for(int i = 0; i < regInitArray.length; i++){
+				RegisterInit current = regInitArray[i];
+				while (current != null) {
+					switch (current.register.getType()) {
+					case Parser.sSPR:
+						mpc.writeSPR(current.register.getAddress(), current.initValue);
+						break;
+					case Parser.sIOR:
+						mpc.writeMem(current.register.getAddress(), current.initValue, current.register.getSize());
+						break;
+					case Parser.sMSR:
+						mpc.writeMSR(current.initValue);
+						break;
+					case Parser.sCR:
+						mpc.writeCR(current.initValue);
+						break;
+					case Parser.sFPSCR:
+						mpc.writeFPSCR(current.initValue);
+						break;
+					default:
+						break;
+					}
+					current = current.next;
 				}
-				current = current.nextWithInitValue;
-			}
-
-			// Check if all is set fine
-			current = root;
-			while (current != null) {
-				switch (current.getType()) {
-				case Parser.sSPR:
-					checkValue(mpc.readSPR(current.getAddress()), current
-							.getInit().getValue());
-					break;
-				case Parser.sIOR:
-					if (!current.getName().equals(HString.getHString("RSR")))
-						checkValue(mpc.readMem(current.getAddress(), current
-								.getSize()), current.getInit().getValue());
-					break;
-				case Parser.sMSR:
-					checkValue(mpc.readMSR(), current.getInit().getValue());
-					break;
-				case Parser.sCR:
-					checkValue(mpc.readCR(), current.getInit().getValue());
-					break;
-				case Parser.sFPSCR:
-					checkValue(mpc.readFPSCR(), current.getInit().getValue());
-					break;
-				default:
-					break;
+	
+				// Check if all is set fine
+				current = regInitArray[i];
+				while (current != null) {
+					switch (current.register.getType()) {
+					case Parser.sSPR:
+						checkValue(mpc.readSPR(current.register.getAddress()), current.initValue);
+						break;
+					case Parser.sIOR:
+						if (!current.register.getName().equals(HString.getHString("RSR")))
+							checkValue(mpc.readMem(current.register.getAddress(), current.register.getSize()), current.initValue);
+						break;
+					case Parser.sMSR:
+						checkValue(mpc.readMSR(), current.initValue);
+						break;
+					case Parser.sCR:
+						checkValue(mpc.readCR(), current.initValue);
+						break;
+					case Parser.sFPSCR:
+						checkValue(mpc.readFPSCR(), current.initValue);
+						break;
+					default:
+						break;
+					}
+					current = current.next;
+	
 				}
-				current = current.nextWithInitValue;
-
 			}
 		} catch (BDIException e) {
 			throw new DownloaderException(e.getMessage(), e);
@@ -293,9 +290,9 @@ public class UsbMpc555Loader extends Downloader {
 			// assign pin to Freeze output
 			mpc.writeMem(0x02FC000, 0x40000, 4);
 			// enable bus monitor,disable watchdog timer
-			mpc.writeMem(0x02FC004, 0x0FFFFFF83, 4);
+			mpc.writeMem(0x02FC004, 0xFFFFFF83, 4);
 			// SCCR, switch off EECLK for download
-			mpc.writeMem(0x02FC280, 0x08121C100, 4);
+			mpc.writeMem(0x02FC280, 0x8121C100, 4);
 			mpc.setCheckFreezeOnTarget(cf);
 		} catch (BDIException e) {
 			throw new DownloaderException(e.getMessage(), e);

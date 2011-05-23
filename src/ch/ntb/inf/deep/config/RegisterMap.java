@@ -6,7 +6,6 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class RegisterMap implements ErrorCodes {
 	private static RegisterMap regMap;
-	Register regWithInitalValue;
 	int nofGprs = 0;
 	Register gpr;
 	int nofFprs = 0;
@@ -28,101 +27,175 @@ public class RegisterMap implements ErrorCodes {
 		}
 		return regMap;
 	}
-
-	public void addInitValueFor(HString registername, ValueAssignment init) {
+	
+	public Register getRegister(HString registername){
 		// search register
 		Register current = spr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				if (current.getInit() != null) {
-					current.setInit(init);
-					return;
-				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
+				return current;
 			}
 			current = current.next;
 		}
 		current = ior;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				if (current.getInit() != null) {
-					current.setInit(init);
-					return;
+				if (current.name.equals(registername)) {
+					return current;
 				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
 			}
 			current = current.next;
 		}
 		current = fpscr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				if (current.getInit() != null) {
-					current.setInit(init);
-					return;
+				if (current.name.equals(registername)) {
+					return current;
 				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
 			}
 			current = current.next;
 		}
 		current = cr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				if (current.getInit() != null) {
-					current.setInit(init);
-					return;
+				if (current.name.equals(registername)) {
+					return current;
 				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
 			}
 			current = current.next;
 		}
 		current = msr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				if (current.getInit() != null) {
-					current.setInit(init);
-					return;
+				if (current.name.equals(registername)) {
+					return current;
 				}
-				current.setInit(init);
-				current.nextWithInitValue = regWithInitalValue;
-				regWithInitalValue = current;
-				return;
 			}
 			current = current.next;
 		}
 		current = gpr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				ErrorReporter.reporter
-						.error("it is not allowed to set a init value for a gpr register");
+				ErrorReporter.reporter.error("it is not allowed to set a init value for gpr register " + registername);
+				ErrorReporter.reporter.println();
+				Parser.nOfErrors++;
+				return null;
 			}
 			current = current.next;
 		}
 		current = fpr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				ErrorReporter.reporter
-						.error("it is not allowed to set a init value for a fpr register");
+				ErrorReporter.reporter.error("it is not allowed to set a init value for fpr register " + registername);
+				ErrorReporter.reporter.println();
+				Parser.nOfErrors++;
+				return null;
 			}
 			current = current.next;
 		}
-		// if Register doesn't exist yet create one;
-		Register reg = new Register(registername);
-		reg.setInit(init);
-		reg.nextWithInitValue = regWithInitalValue;
-		regWithInitalValue = reg;
+		//register not found
+		ErrorReporter.reporter.error(errNoSuchRegister, "register " + registername + " not found");
+		ErrorReporter.reporter.println();
+		Parser.nOfErrors++;
+		return null;
+		
+		
 	}
+
+//	public void addInitValueFor(HString registername, ValueAssignment init) {
+//		// search register
+//		Register current = spr;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				if (current.getInit() != null) {
+//					current.setInit(init);
+//					return;
+//				}
+//				current.setInit(init);
+//				current.nextWithInitValue = regWithInitalValue;
+//				regWithInitalValue = current;
+//				return;
+//			}
+//			current = current.next;
+//		}
+//		current = ior;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				if (current.getInit() != null) {
+//					current.setInit(init);
+//					return;
+//				}
+//				current.setInit(init);
+//				current.nextWithInitValue = regWithInitalValue;
+//				regWithInitalValue = current;
+//				return;
+//			}
+//			current = current.next;
+//		}
+//		current = fpscr;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				if (current.getInit() != null) {
+//					current.setInit(init);
+//					return;
+//				}
+//				current.setInit(init);
+//				current.nextWithInitValue = regWithInitalValue;
+//				regWithInitalValue = current;
+//				return;
+//			}
+//			current = current.next;
+//		}
+//		current = cr;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				if (current.getInit() != null) {
+//					current.setInit(init);
+//					return;
+//				}
+//				current.setInit(init);
+//				current.nextWithInitValue = regWithInitalValue;
+//				regWithInitalValue = current;
+//				return;
+//			}
+//			current = current.next;
+//		}
+//		current = msr;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				if (current.getInit() != null) {
+//					current.setInit(init);
+//					return;
+//				}
+//				current.setInit(init);
+//				current.nextWithInitValue = regWithInitalValue;
+//				regWithInitalValue = current;
+//				return;
+//			}
+//			current = current.next;
+//		}
+//		current = gpr;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				ErrorReporter.reporter
+//						.error("it is not allowed to set a init value for a gpr register");
+//			}
+//			current = current.next;
+//		}
+//		current = fpr;
+//		while (current != null) {
+//			if (current.name.equals(registername)) {
+//				ErrorReporter.reporter
+//						.error("it is not allowed to set a init value for a fpr register");
+//			}
+//			current = current.next;
+//		}
+//		// if Register doesn't exist yet create one;
+//		Register reg = new Register(registername);
+//		reg.setInit(init);
+//		reg.nextWithInitValue = regWithInitalValue;
+//		regWithInitalValue = reg;
+//	}
 
 	private void addGprRegister(Register reg) {
 		nofGprs++;
@@ -251,24 +324,6 @@ public class RegisterMap implements ErrorCodes {
 	public void addRegister(Register reg) {
 		// if a register init is set before all register was set we have to
 		// check and merge
-		if (regWithInitalValue != null) {
-			Register current = regWithInitalValue;
-			while (current != null) {
-				if (current.name.equals(reg.name)) {
-					// copy content of reg into current
-					current.name = reg.name;
-					current.next = reg.next;
-					current.type = reg.type;
-					current.addr = reg.addr;
-					current.size = reg.size;
-					current.repr = reg.repr;
-
-					// replace reg with current;
-					reg = current;
-					break;
-				}
-			}
-		}
 		if (reg.type == Parser.sGPR) {
 			addGprRegister(reg);
 		} else if (reg.type == Parser.sFPR) {
@@ -284,9 +339,9 @@ public class RegisterMap implements ErrorCodes {
 		} else if (reg.type == Parser.sFPSCR) {
 			setFPSCRRegister(reg);
 		} else {
-			ErrorReporter.reporter.error(errInvalidType,
-					"Invalide register type in register "
-							+ reg.getName().toString() + "\n");
+			ErrorReporter.reporter.error(errInvalidType, "Invalide register type in register "	+ reg.getName().toString());
+			ErrorReporter.reporter.println();
+			Parser.nOfErrors++;
 			return;
 		}
 	}

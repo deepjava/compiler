@@ -8,6 +8,7 @@ public class TargetConfiguration {
 	Module modules;
 	Module system;
 	HString name;
+	RegisterInit regInit;
 	TargetConfiguration next;
 	
 	public TargetConfiguration(HString name){
@@ -40,6 +41,33 @@ public class TargetConfiguration {
 		//if no match prev shows the tail of the list
 		prev.next = mod;
 	}
+	
+	public void setRegInit(HString name, int initValue) {
+		Register reg = RegisterMap.getInstance().getRegister(name);
+		if(regInit == null){
+			regInit = new RegisterInit(reg, initValue);
+			return;
+		}
+		//check if register initialization already exist
+		RegisterInit current = regInit;
+		RegisterInit prev = null;
+		while(current != null){
+			if(reg == current.register){
+				current.initValue = initValue;
+				return;
+			}
+			prev = current;
+			current = current.next;
+		}
+		//if no initialization exist, so append new one
+		// if no match prev shows the tail of the list
+		prev.next = new RegisterInit(reg, initValue);
+	}
+	
+	public RegisterInit getRegInit(){
+		return regInit;
+	}
+	
 	public void addSystemModule(Module mod){
 		if(system == null){
 			system = mod;
@@ -80,6 +108,20 @@ public class TargetConfiguration {
 			StdStreams.vrb.print("  ");
 		}
 		StdStreams.vrb.println("targetconfiguration " + name.toString() + " {");
+		
+		if (regInit != null) {
+			StdStreams.vrb.println("  reginit{");
+			RegisterInit initReg = regInit;
+			while (initReg != null) {
+				for(int i = indentLevel+1; i > 0; i--){
+					StdStreams.vrb.print("  ");
+				}
+				StdStreams.vrb.println(initReg.register.getName().toString() + String.format(" = 0x%X", initReg.initValue));
+				initReg = initReg.next;
+			}
+			StdStreams.vrb.println("  }");
+		}
+		
 		
 		for(int i = indentLevel+1; i > 0; i--){
 			StdStreams.vrb.print("  ");

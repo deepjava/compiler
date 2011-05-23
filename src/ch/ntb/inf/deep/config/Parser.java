@@ -144,7 +144,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				targetconfiguration();
 				break;
 			case sReginit:
-				regInit();
+				regInit(null);
 				break;
 			case sProject:
 				project();
@@ -1023,7 +1023,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			} else if (sym == sSegment) {
 				memMap.addSegment(segment(false, 0, 0, null));
 			} else if (sym == sReginit) {
-				regInit();
+				regInit(null);
 			} else if (sym == sSegmentarray) {
 				segmentArray(false, null);
 			} else {// sModules
@@ -1501,8 +1501,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.println();
 		}
 	}
-
-	private void regInit() {
+	//if regInit are in global scope, so is targetConfig null
+	private void regInit(TargetConfiguration targetConfig) {
 		if (sym != sReginit) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
@@ -1524,8 +1524,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		while (sym == sDesignator) {
-			Configuration.setRegInit(HString.getHString(strBuffer),
-					regAssignment());
+			if(targetConfig == null){
+				Configuration.setRegInit(HString.getHString(strBuffer),	regAssignment());
+			}else{
+				targetConfig.setRegInit(HString.getHString(strBuffer),	regAssignment());
+			}
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1931,7 +1934,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 		while(sym == sReginit || sym == sSystem || sym == sModules){
 			if(sym == sReginit){
-				regInit();
+				regInit(targetConfig);
 			}else if(sym == sSystem){				
 				system(targetConfig);
 			}else{				
