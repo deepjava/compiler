@@ -99,7 +99,7 @@ public class MPC555HBFlashWriter implements MemoryWriter {
 			try {
 				data = bdi.getMem(addr, 4);
 				count++;
-				if(count > 100){
+				if(count > 150){
 					count = 0;
 					StdStreams.out.print(".");
 				}

@@ -290,8 +290,7 @@ public class UsLeSPRView extends ViewPart implements ISelectionListener {
 					module = UsbMpc555Loader.getInstance();
 				}
 				try {
-					if(module.isConnected()){//reopen
-						module.closeConnection();
+					if(!module.isConnected()){//reopen
 						module.openConnection();
 					}
 					if(!module.isFreezeAsserted()){
@@ -313,8 +312,7 @@ public class UsLeSPRView extends ViewPart implements ISelectionListener {
 					module = UsbMpc555Loader.getInstance();
 				}
 				try {
-					if(module.isConnected()){//reopen
-						module.closeConnection();
+					if(!module.isConnected()){//reopen
 						module.openConnection();
 					}
 					if(module.isFreezeAsserted()){

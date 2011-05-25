@@ -35,7 +35,7 @@ public class USBLog extends ViewPart {
 		Display d =parent.getShell().getDisplay();
 		
 		//Create view
-		viewer = new TextViewer(parent, SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
+		viewer = new TextViewer(parent, SWT.WRAP | SWT.V_SCROLL | SWT.SCROLL_PAGE);
 		GridData viewerData = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(viewerData);
 		

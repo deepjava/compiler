@@ -26,7 +26,6 @@ public class ResumeAction implements IWorkbenchWindowActionDelegate {
 		UsbMpc555Loader bdi = UsbMpc555Loader.getInstance();
 		try {
 			if(!bdi.isConnected()){//reopen
-				bdi.closeConnection();
 				bdi.openConnection();
 			}
 			if(bdi.isFreezeAsserted()){

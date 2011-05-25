@@ -3,7 +3,7 @@ package ch.ntb.inf.deep.eclipse.ui.view;
 import java.io.IOException;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
@@ -31,6 +31,11 @@ public class ConsoleDisplayMgr
 	private static ConsoleDisplayMgr fDefault = null;
 	private String fTitle = null;
 	private IOConsole fIOConsole = null;
+	private static final Color GREEN = new Color(null, 0, 255, 0);
+	private static final Color RED = new Color(null, 255, 0, 0);
+	private static final Color BLACK = new Color(null, 0, 0, 0);
+	private static final Color DARK_YELLOW = new Color(null, 255, 180, 0);
+	
 	
 	public static final int MSG_INFORMATION = 1;
 	public static final int MSG_ERROR = 2;
@@ -67,52 +72,6 @@ public class ConsoleDisplayMgr
 		}				
 	}
 	
-//	public void println()
-//	{		
-//		/* if console-view in Java-perspective is not active, then show it and
-//		 * then display the message in the console attached to it */		
-//		if( !displayConsoleView() )
-//		{
-//			/*If an exception occurs while displaying in the console, then just diplay atleast the same in a message-box */
-//			MessageDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Error", "");
-//			return;
-//		}
-//		
-//		/* display message on console */	
-//		getNewMessageConsoleStream(MSG_INFORMATION).println();				
-//	}
-//	
-//	public void print(String msg, int msgKind)
-//	{		
-//		if( msg == null ) return;
-//		
-//		/* if console-view in Java-perspective is not active, then show it and
-//		 * then display the message in the console attached to it */		
-//		if( !displayConsoleView() )
-//		{
-//			/*If an exception occurs while displaying in the console, then just diplay atleast the same in a message-box */
-//			MessageDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Error", msg);
-//			return;
-//		}
-//		
-//		/* display message on console */	
-//		getNewMessageConsoleStream(msgKind).print(msg);				
-//	}
-//	public void print(int msg, int msgKind)
-//	{		
-//			/* if console-view in Java-perspective is not active, then show it and
-//		 * then display the message in the console attached to it */		
-//		if( !displayConsoleView() )
-//		{
-//			/*If an exception occurs while displaying in the console, then just diplay atleast the same in a message-box */
-//			MessageDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Error",Integer.toString(msg));
-//			return;
-//		}
-//		
-//		/* display message on console */	
-//		getNewMessageConsoleStream(msgKind).print(Integer.toString(msg));				
-//	}
-//	
 	public void clear()
 	{		
 		if(fIOConsole != null){
@@ -142,27 +101,22 @@ public class ConsoleDisplayMgr
 	
 	public IOConsoleOutputStream getNewIOConsoleOutputStream(int msgKind)
 	{		
-		int swtColorId = SWT.COLOR_DARK_GREEN;
-		
+		IOConsoleOutputStream ioConsoleStream = getIOConsole().newOutputStream();		
 		switch (msgKind)
 		{
 			case MSG_INFORMATION:
-				swtColorId = SWT.COLOR_BLACK;				
+				ioConsoleStream.setColor(BLACK);			
 				break;
 			case MSG_ERROR:
-				swtColorId = SWT.COLOR_RED;
+				ioConsoleStream.setColor(RED);
 				break;
 			case MSG_WARNING:
-				swtColorId = SWT.COLOR_DARK_YELLOW;
+				ioConsoleStream.setColor(DARK_YELLOW);
 				break;
-			default:				
+			default:
+				ioConsoleStream.setColor(GREEN);
 		}	
 
-		IOConsoleOutputStream ioConsoleStream = getIOConsole().newOutputStream();
-		if(PlatformUI.getWorkbench() != null){
-			ioConsoleStream.setColor(PlatformUI.getWorkbench().getDisplay().getSystemColor(swtColorId));
-		}
-		
 		return ioConsoleStream;
 	}
 	

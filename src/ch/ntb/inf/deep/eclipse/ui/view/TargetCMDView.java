@@ -167,6 +167,9 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 								bdi = UsbMpc555Loader.getInstance();
 							}
 							try{
+								if(!bdi.isConnected()){
+									bdi.openConnection();
+								}
 								wasFreezeAsserted = bdi.isFreezeAsserted();
 								if(!wasFreezeAsserted){
 									bdi.stopTarget();

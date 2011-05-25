@@ -3,8 +3,8 @@ package ch.ntb.inf.deep.loader;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.MemoryMap;
 import ch.ntb.inf.deep.config.Parser;
-import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
@@ -50,11 +50,10 @@ public class UsbMpc555Loader extends Downloader {
 		baseAddress = Configuration.getValueFor(HString.getHString("IMB"));
 		if(dbg) StdStreams.vrb.println("++++++++ Open Device!+++++++++");
 
-		// check if connection is open
-		if (this.isConnected()) {
-			this.closeConnection();
+		// check connection is open
+		if (!this.isConnected()) {
+			this.openConnection();
 		}
-		this.openConnection();
 		
 		if(dbg) StdStreams.vrb.println("++++++++ Reset Target!+++++++++");
 		this.resetTarget();
@@ -66,7 +65,7 @@ public class UsbMpc555Loader extends Downloader {
 
 		// clear the GPRs
 		clearGPRs();
-		StdStreams.out.println("Download... ");
+		StdStreams.out.println("Download");
 
 		// Write the code down
 		writeCode();
@@ -85,11 +84,8 @@ public class UsbMpc555Loader extends Downloader {
 			try {
 				// open Usb-Connection
 				loader.openConnection();
-				// Make a reset on target
-//				loader.resetTarget();
 			} catch (DownloaderException e) {
 				loader = null;
-//				e.printStackTrace();
 			}
 		}
 		return loader;
@@ -121,13 +117,14 @@ public class UsbMpc555Loader extends Downloader {
 		// get code from the Devices
 		if (!isFreezeAsserted()) {
 			nofErrors++;
-			StdStreams.out.println("Bdi is not in Debug mode!");
+			ErrorReporter.reporter.error("Bdi is not in Debug mode!");
+			ErrorReporter.reporter.println();
 			return;
 		}
 		TargetMemorySegment image = Linker32.targetImage;
 		boolean flashErased = false;
 		MPC555HBFlashWriter memWriter = null;
-		
+		int count  = 0;
 		while (image != null){
 			if(image.segment == null ){//this should not happen
 				image = image.next;
@@ -137,6 +134,10 @@ public class UsbMpc555Loader extends Downloader {
 				int dataSizeToTransfer = image.data.length;
 				int startAddr = image.startAddress;
 				int index = 0;
+				
+				if(count%5 == 0){
+					StdStreams.out.print('.');
+				}
 				
 				while (dataSizeToTransfer > 0) {
 					// limitation for fast download is 101 Words
@@ -156,7 +157,11 @@ public class UsbMpc555Loader extends Downloader {
 					}
 					dataSizeToTransfer -= data.length;
 					startAddr += data.length * 4;
-				}					
+				}
+				count++;
+				if(image.next == null || image.next.segment.owner.getTechnology() != 0){
+					StdStreams.out.println();
+				}
 			}else if (image.segment.owner.getTechnology() == 1){ //Flash device
 				if(image.segment.owner.getMemoryType().equals(Am29LV160d)){
 					if(!flashErased){//erase all used sectors
@@ -191,18 +196,20 @@ public class UsbMpc555Loader extends Downloader {
 					}
 				}else{// other devices not implemented yet
 						nofErrors++;
-						StdStreams.out.println("MemoryWriter for Device " + image.segment.owner.getName().toString() + " isn't implemented yet!");
+						ErrorReporter.reporter.error("MemoryWriter for Device " + image.segment.owner.getName().toString() + " isn't implemented yet!");
+						ErrorReporter.reporter.println();
 						return;
 					
 					
 				}
 			}else{ // other technologies not implemented yet
 				nofErrors++;
-				StdStreams.out.println("MemoryWriter for Device " + image.segment.owner.getName().toString() + " isn't implemented yet!");
+				ErrorReporter.reporter.error("MemoryWriter for Device " + image.segment.owner.getName().toString() + " isn't implemented yet!");
+				ErrorReporter.reporter.println();
 				return;
 			}
 			image = image.next;	
-		}
+		}	
 	}
 
 	/**

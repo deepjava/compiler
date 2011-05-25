@@ -220,8 +220,7 @@ public class MemoryView extends ViewPart implements Listener {
 			if (bdi == null) {
 				bdi = UsbMpc555Loader.getInstance();
 			}
-			if(bdi.isConnected()){//reopen
-				bdi.closeConnection();
+			if(!bdi.isConnected()){//reopen
 				try {
 					bdi.openConnection();
 				} catch (DownloaderException e) {

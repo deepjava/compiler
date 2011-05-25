@@ -151,8 +151,10 @@ public class Launcher implements ICclassFileConsts {
 				Linker32.generateTargetImage();
 			if (reporter.nofErrors > 0) {
 				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
+				out.println();
 			} else {
 				out.println("Compilation and target image generation successfully finished");
+				out.println();
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -170,12 +172,18 @@ public class Launcher implements ICclassFileConsts {
 					bdi.startTarget();
 				}else{
 					reporter.error("Target not found!(USB connection failed)");
+					reporter.println();
+					reporter.nofErrors++;
 				}
 			} catch (DownloaderException e) {
-				reporter.error("A error occurs while downloading\n");
+				reporter.error("A error occurs while downloading!(Try to reopen)");
+				reporter.println();
+				reporter.nofErrors++;
 			}
 		} else {
-			out.println("No target image to load");
+			reporter.error("No target image to load");
+			reporter.println();
+			reporter.nofErrors++;
 		}
 	}
 

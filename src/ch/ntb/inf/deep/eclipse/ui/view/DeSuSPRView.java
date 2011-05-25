@@ -311,8 +311,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 					module = UsbMpc555Loader.getInstance();
 				}
 				try {
-					if(module.isConnected()){//reopen
-						module.closeConnection();
+					if(!module.isConnected()){//reopen
 						module.openConnection();
 					}
 					if(!module.isFreezeAsserted()){
@@ -334,8 +333,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 					module = UsbMpc555Loader.getInstance();
 				}
 				try {
-					if(module.isConnected()){//reopen
-						module.closeConnection();
+					if(!module.isConnected()){//reopen
 						module.openConnection();
 					}
 					if(module.isFreezeAsserted()){

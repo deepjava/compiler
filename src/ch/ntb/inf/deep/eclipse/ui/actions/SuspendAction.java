@@ -27,7 +27,6 @@ public class SuspendAction implements IWorkbenchWindowActionDelegate {
 		
 		try {
 		if(!bdi.isConnected()){//reopen
-			bdi.closeConnection();
 			bdi.openConnection();
 		}
 		if(!bdi.isFreezeAsserted()){

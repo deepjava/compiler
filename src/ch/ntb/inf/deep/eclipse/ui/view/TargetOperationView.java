@@ -463,7 +463,16 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}else if(choise[op.operation].equals("TargetCMD")){
 				sendCMD(op, param);
 			}else if(choise[op.operation].equals("send over SCI1")){
-				UsbMpc555Loader.getInstance();//Needs only to connect to the device
+				if(bdi == null){
+					bdi = UsbMpc555Loader.getInstance();//Needs only to connect to the device
+				}
+				if(!bdi.isConnected()){
+					try{
+						bdi.openConnection();
+					}catch(DownloaderException e){
+						e.printStackTrace();
+					}
+				}
 				Uart0.write(param.getBytes(), param.length());
 				op.description = param;
 			}else if(param.equals("stirb!!!")){
@@ -751,7 +760,16 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}else if(choise[op.operation].equals("TargetCMD")){
 					sendCMD(op, op.description);					
 				}else if(choise[op.operation].equals("send over SCI1")){
-					UsbMpc555Loader.getInstance();//Needs only to connect to the device
+					if(bdi == null){
+						bdi = UsbMpc555Loader.getInstance();//Needs only to connect to the device
+					}
+					if(!bdi.isConnected()){
+						try{
+							bdi.openConnection();
+						}catch(DownloaderException e){
+							e.printStackTrace();
+						}
+					}
 					Uart0.write(op.description.getBytes(), op.description.length());					
 				}				
 			return false;//TODO check this
@@ -802,6 +820,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					bdi = UsbMpc555Loader.getInstance();
 				}
 				try {
+					if(!bdi.isConnected()){
+						bdi.openConnection();
+					}
 					wasFreezeAsserted = bdi.isFreezeAsserted();
 					if (!wasFreezeAsserted) {
 						bdi.stopTarget();
@@ -832,6 +853,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			bdi = UsbMpc555Loader.getInstance();
 		}
 		try {
+			if(!bdi.isConnected()){
+				bdi.openConnection();
+			}
+			
 			wasFreezeAsserted = bdi.isFreezeAsserted();
 			if (!wasFreezeAsserted) {
 				bdi.stopTarget();
@@ -880,6 +905,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					bdi = UsbMpc555Loader.getInstance();
 				}
 				try{
+					if(!bdi.isConnected()){
+						bdi.openConnection();
+					}
+					
 					wasFreezeAsserted = bdi.isFreezeAsserted();
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
@@ -1018,6 +1047,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi = UsbMpc555Loader.getInstance();
 			}
 			try {
+				if(!bdi.isConnected()){
+					bdi.openConnection();
+				}				
 				wasFreezeAsserted = bdi.isFreezeAsserted();
 				if (!wasFreezeAsserted) {
 					bdi.stopTarget();
@@ -1066,6 +1098,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			bdi = UsbMpc555Loader.getInstance();
 		}
 		try {
+			if(!bdi.isConnected()){
+				bdi.openConnection();
+			}
+			
 			wasFreezeAsserted = bdi.isFreezeAsserted();
 			if (!wasFreezeAsserted) {
 				bdi.stopTarget();
@@ -1109,6 +1145,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}
 				try{
 					long val = Long.decode(value);
+					if(!bdi.isConnected()){
+						bdi.openConnection();
+					}
 					wasFreezeAsserted = bdi.isFreezeAsserted();
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
@@ -1146,6 +1185,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			bdi = UsbMpc555Loader.getInstance();
 		}
 		try {
+			if(!bdi.isConnected()){
+				bdi.openConnection();
+			}
 			wasFreezeAsserted = bdi.isFreezeAsserted();
 			if (!wasFreezeAsserted) {
 				bdi.stopTarget();
