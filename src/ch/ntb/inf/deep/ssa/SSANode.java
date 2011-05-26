@@ -757,9 +757,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				if(ssa.isParam[val + maxStack]){
-					load(val, ssa.paramType[val + maxStack]);
+					load(maxStack + val, ssa.paramType[val + maxStack]);
 				}else{
-					load(val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+					load(maxStack + val, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bClload:
@@ -771,7 +771,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				load(val, SSAValue.tLong);
+				load(maxStack + val, SSAValue.tLong);
 				break;
 			case bCfload:
 				bca++;
@@ -782,7 +782,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				load(val, SSAValue.tFloat);
+				load(maxStack + val, SSAValue.tFloat);
 				break;
 			case bCdload:
 				bca++;
@@ -793,7 +793,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				} else {
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
-				load(val, SSAValue.tDouble);
+				load(maxStack + val, SSAValue.tDouble);
 				break;
 			case bCaload:
 				bca++;
@@ -805,100 +805,100 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					val = (ssa.cfg.code[bca] & 0xff);// get index
 				}
 				if(ssa.isParam[val + maxStack]){
-					load(val, ssa.paramType[val + maxStack]);
+					load(maxStack + val, ssa.paramType[val + maxStack]);
 				}else{
-					load(val, SSAValue.tRef);
+					load(maxStack + val, SSAValue.tRef);
 				}
 				break;
 			case bCiload_0:
 				if(ssa.isParam[maxStack]){
-					load(0, ssa.paramType[maxStack]);
+					load(maxStack, ssa.paramType[maxStack]);
 				}else{
-					load(0, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+					load(maxStack, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bCiload_1:
 				if(ssa.isParam[maxStack + 1]){
-					load(1, ssa.paramType[maxStack + 1]);
+					load(maxStack + 1, ssa.paramType[maxStack + 1]);
 				}else{
-					load(1, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+					load(maxStack + 1, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bCiload_2:
 				if(ssa.isParam[maxStack + 2]){
-					load(2, ssa.paramType[maxStack + 2]);
+					load(maxStack + 2, ssa.paramType[maxStack + 2]);
 				}else{
-					load(2, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+					load(maxStack + 2, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bCiload_3:
 				if(ssa.isParam[maxStack + 3]){
-					load(3, ssa.paramType[maxStack + 3]);
+					load(maxStack + 3, ssa.paramType[maxStack + 3]);
 				}else{
-					load(3, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
+					load(maxStack + 3, SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt));
 				}
 				break;
 			case bClload_0:
-				load(0, SSAValue.tLong);
+				load(maxStack, SSAValue.tLong);
 				break;
 			case bClload_1:
-				load(1, SSAValue.tLong);
+				load(maxStack + 1, SSAValue.tLong);
 				break;
 			case bClload_2:
-				load(2, SSAValue.tLong);
+				load(maxStack + 2, SSAValue.tLong);
 				break;
 			case bClload_3:
-				load(3, SSAValue.tLong);
+				load(maxStack + 3, SSAValue.tLong);
 				break;
 			case bCfload_0:
-				load(0, SSAValue.tFloat);
+				load(maxStack, SSAValue.tFloat);
 				break;
 			case bCfload_1:
-				load(1, SSAValue.tFloat);
+				load(maxStack + 1, SSAValue.tFloat);
 				break;
 			case bCfload_2:
-				load(2, SSAValue.tFloat);
+				load(maxStack + 2, SSAValue.tFloat);
 				break;
 			case bCfload_3:
-				load(3, SSAValue.tFloat);
+				load(maxStack + 3, SSAValue.tFloat);
 				break;
 			case bCdload_0:
-				load(0, SSAValue.tDouble);
+				load(maxStack, SSAValue.tDouble);
 				break;
 			case bCdload_1:
-				load(1, SSAValue.tDouble);
+				load(maxStack + 1, SSAValue.tDouble);
 				break;
 			case bCdload_2:
-				load(2, SSAValue.tDouble);
+				load(maxStack + 2, SSAValue.tDouble);
 				break;
 			case bCdload_3:
-				load(3, SSAValue.tDouble);
+				load(maxStack + 3, SSAValue.tDouble);
 				break;
 			case bCaload_0:
 				if(ssa.isParam[maxStack]){
-					load(0, ssa.paramType[maxStack]);
+					load(maxStack, ssa.paramType[maxStack]);
 				}else{
-					load(0, SSAValue.tRef);
+					load(maxStack, SSAValue.tRef);
 				}
 				break;
 			case bCaload_1:
 				if(ssa.isParam[1 + maxStack]){
-					load(1, ssa.paramType[1 + maxStack]);
+					load(maxStack + 1, ssa.paramType[1 + maxStack]);
 				}else{
-					load(1, SSAValue.tRef);
+					load(maxStack + 1, SSAValue.tRef);
 				}
 				break;
 			case bCaload_2:
 				if(ssa.isParam[2 + maxStack]){
-					load(2, ssa.paramType[2 + maxStack]);
+					load(maxStack + 2, ssa.paramType[2 + maxStack]);
 				}else{
-					load(2, SSAValue.tRef);
+					load(maxStack + 2, SSAValue.tRef);
 				}				break;
 			case bCaload_3:
 				if(ssa.isParam[3 + maxStack]){
-					load(3, ssa.paramType[3 + maxStack]);
+					load(maxStack + 3, ssa.paramType[3 + maxStack]);
 				}else{
-					load(3, SSAValue.tRef);
+					load(maxStack + 3, SSAValue.tRef);
 				}				break;
 			case bCiaload:
 				value2 = popFromStack();
@@ -2639,6 +2639,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		if (stackpointer + 1 >= maxStack) {
 			throw new IndexOutOfBoundsException("Stack overflow");
 		}
+		//set index for unsubscripted SSAValues
+		if(value.index < 0){
+			value.index = stackpointer + 1;
+		}
 		exitSet[stackpointer + 1] = value;
 		stackpointer++;
 
@@ -2693,17 +2697,17 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	}
 
 	private void load(int index, int type) {
-		SSAValue result = exitSet[maxStack + index];
+		SSAValue result = exitSet[index];
 
 		if (result == null) {// local isn't initialized
 			result = new SSAValue();
 			result.type = type;
-			result.index = index + maxStack;
+			result.index = index;
 			SSAInstruction instr = new NoOpnd(sCloadLocal);
 			instr.result = result;
 			instr.result.owner = instr;
 			addInstruction(instr);
-			exitSet[maxStack + index] = result;
+			exitSet[index] = result;
 		}
 
 		pushToStack(result);
@@ -2711,16 +2715,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	}
 	
 	protected void loadLocal(int index, int type){
-		SSAValue result = exitSet[maxStack + index];
+		SSAValue result = exitSet[index];
 
 		if (result == null) {// local isn't initialized
 			result = new SSAValue();
 			result.type = type;
-			result.index = index + maxStack;
+			result.index = index;
 			SSAInstruction instr = new NoOpnd(sCloadLocal);
 			instr.result = result;
 			instr.result.owner = instr;
-			exitSet[maxStack + index] = result;
+			exitSet[index] = result;
 			
 			//insert before return statement
 			int len = instructions.length;
@@ -3036,7 +3040,17 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	private void storeAndInsertRegMoves(int index) {
 		// create register moves in creating of SSA was wished by U.Graf
 		SSAValue value1 = popFromStack();
-		SSAValue value2 = insertRegMoves(this, index, value1);
+		SSAValue value2;
+		
+		//if the value exists only on the stack, the register to store into is not decided now
+		//so we don't need a register move
+		if(value1.index > -1 && value1.index < maxStack){
+			value1.index = index;
+			value2 = value1;
+		}else{
+			value2 = insertRegMoves(this, index, value1);			
+		}
+		
 		if (value1 == value2) {
 			exitSet[index] = value1;
 			exitSet[index].index = index;
@@ -3045,7 +3059,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	
 	private SSAValue insertRegMoves(SSANode addTo, int index, SSAValue val){
 		if(val.index > -1 && val.index != index){
-//			System.out.println("val.index = " + val.index);
+			if(dbg)StdStreams.vrb.println("val.index = " + val.index);
 			SSAValue r = new SSAValue();
 			r.type = val.type;
 			r.index = index;

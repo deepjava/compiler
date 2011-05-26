@@ -76,7 +76,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 						}
 					}
 					if(isNeeded){	
-						last.loadLocal(x, paramType[cfg.method.maxStackSlots + x]);
+						last.loadLocal(cfg.method.maxStackSlots + x, paramType[cfg.method.maxStackSlots + x]);
 					}
 								
 				}
