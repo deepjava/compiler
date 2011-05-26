@@ -31,7 +31,7 @@ public class ConsoleDisplayMgr
 	private static ConsoleDisplayMgr fDefault = null;
 	private String fTitle = null;
 	private IOConsole fIOConsole = null;
-	private static final Color GREEN = new Color(null, 0, 255, 0);
+	private static final Color BLUE = new Color(null, 20, 20, 255);
 	private static final Color RED = new Color(null, 255, 0, 0);
 	private static final Color BLACK = new Color(null, 0, 0, 0);
 	private static final Color DARK_YELLOW = new Color(null, 255, 180, 0);
@@ -114,7 +114,7 @@ public class ConsoleDisplayMgr
 				ioConsoleStream.setColor(DARK_YELLOW);
 				break;
 			default:
-				ioConsoleStream.setColor(GREEN);
+				ioConsoleStream.setColor(BLUE);
 		}	
 
 		return ioConsoleStream;
