@@ -3044,7 +3044,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		
 		//if the value exists only on the stack, the register to store into is not decided now
 		//so we don't need a register move
-		if(value1.index > -1 && value1.index < maxStack){
+		if(value1.owner.ssaOpcode != sCPhiFunc && value1.index > -1 && value1.index < maxStack){
 			value1.index = index;
 			value2 = value1;
 		}else{
