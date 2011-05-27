@@ -22,4 +22,8 @@ public class NamedConst extends DataItem {
 		vrb.printf("nconst %1$s %2$s, flags=", type.name, name);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'F');
 		vrb.print(", ");  constant.printShort(0);
 	}
+	
+	public Constant getConstantItem() {
+		return constant;
+	}
 }
