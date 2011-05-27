@@ -61,10 +61,31 @@ public class T02Branches {
 		a++;
 	}
 	
-	public int if5(int n, int m){//example from mössenböck for loadParameter
+	public int if5(int n, int m){ //example from mössenböck for loadParameter
 		if(n < 0){
 			n = 0; m = 0;
 		}
 		return n + m;
+	}
+	
+	public int if6(double val){ // from doubleToChars
+		int exp = 1000;
+		int high = 12;
+		if (exp < 1023){
+			val = -val;
+		}
+		if (exp == 0){
+			high = 13;
+		} else {
+			if (val > 100)
+				val *= 3;
+			else 
+				val /=5;
+			if (val > 200)
+				high = 14;
+		}
+		if (val > 10) exp++;
+		else val--;
+		return exp;
 	}
 }

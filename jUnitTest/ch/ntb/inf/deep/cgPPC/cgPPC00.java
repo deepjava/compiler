@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.cgPPC;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 
@@ -34,20 +35,9 @@ public class cgPPC00 extends TestCgPPC {
 	
 	@Test
 	public void testConstructor() {
-		int[] code = getCode("<init>");
-		int i = 0;
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stwu  r1, -16(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mfspr  r0, LR"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("stw  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("twi  ifequal, r2, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("li  R3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addis  R3, R3, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr LR, r3"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclrl  always, 0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("lwz  r0, 12(r1)"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("mtspr  LR, r0"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("addi  r1, r1, 16"), code[i++]);
-		assertEquals("wrong instruction", InstructionDecoder.getCode("bclr  always, 0"), code[i++]);
+		CodeGen code = getCode("<init>");
+		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 	
 }

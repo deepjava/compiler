@@ -1,0 +1,126 @@
+	public int if6(double val){ // from doubleToChars
+		int exp = 1000;
+		int high = 12;
+		if (exp < 1023){
+			val = -val;
+		}
+		if (exp == 0){
+			high = 13;
+		} else {
+			if (val > 100)
+				val *= 3;
+			else 
+				val /=5;
+			if (val > 200)
+				high = 14;
+		}
+		if (val > 10) exp++;
+		else val--;
+		return exp;
+	}
+
+assign registers to parameters
+[(Ref), (Double)fr1]
+parameter go into register: 
+allocate registers
+phi functions resolved
+joins at index: [,,,,,x,,x,x,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=5: start=0, end=7, vol, reg=1: start=7, end=34, vol, reg=2   !!!!!!!!!!!
+	index=7: start=0, end=36, vol, reg=2
+	index=8: start=1, end=25, vol, reg=3
+nofNonVolGPR = 0, nofVolGPR = 2, nofNonVolFPR = 0, nofVolFPR = 2, paramSlotsOnStack = 0
+parameter end at instr no: 7  
+SSA for Method: ch/ntb/inf/deep/testClasses/T02Branches.if6(D)I
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , , , ]}
+         0: NoOpnd[sCloadConst] 1000 (Integer), index=7, join=[7]
+         1: NoOpnd[sCloadConst] 12 (Integer), index=8, join=[8]
+         2: NoOpnd[sCloadConst] 1023 (Integer), index=1, end=3, vol, reg=4
+         3: Branch[sCBranch] {2, 0} (Void)
+      ExitSet {[ , , , ], [ , , , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , , , ], [ , , , 0 (Integer), 1 (Integer) ]}
+         4: NoOpnd[sCloadLocal] (Double), index=5, end=5, vol, reg=1
+         5: Monadic[sCneg] {4} (Double), index=5, join=[5]
+      ExitSet {[ , , , ], [ , 5 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , , , ], [ , , , 0 (Integer), 1 (Integer) ]}
+         6: NoOpnd[sCloadLocal] (Double), index=5, join=[5]
+      ExitSet {[ , , , ], [ , 6 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+         7: PhiFunction[sCPhiFunc] {6, 5} (Double), index=5, join=[5]
+         8: Branch[sCBranch] {0} (Void)
+      ExitSet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+         9: NoOpnd[sCloadConst] 13 (Integer), index=8, join=[8]
+         10: Branch[sCBranch]  (Void)
+      ExitSet {[ , , , ], [ , 7 (Double), , 0 (Integer), 9 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+         11: NoOpnd[sCloadConst] 100.0 (Double), index=1, end=12, vol, reg=3, regAux1=4
+         12: Dyadic[sCcmpl] {7, 11} (Integer), index=0, end=13, vol, reg=4
+         13: Branch[sCBranch] {12} (Void)
+      ExitSet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+         14: NoOpnd[sCloadConst] 3.0 (Double), index=1, end=15, vol, reg=3, regAux1=4
+         15: Dyadic[sCmul] {7, 14} (Double), index=5, join=[5]
+         16: Branch[sCBranch]  (Void)
+      ExitSet {[ , , , ], [ , 15 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 7:
+      EntrySet {[ , , , ], [ , 7 (Double), , 0 (Integer), 1 (Integer) ]}
+         17: NoOpnd[sCloadConst] 5.0 (Double), index=1, end=18, vol, reg=3, regAux1=4
+         18: Dyadic[sCdiv] {7, 17} (Double), index=5, join=[5]
+      ExitSet {[ , , , ], [ , 18 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 8:
+      EntrySet {[ , , , ], [ , 19 (Double), , 0 (Integer), 1 (Integer) ]}
+         19: PhiFunction[sCPhiFunc] {15, 18} (Double), index=5, join=[5]
+         20: NoOpnd[sCloadConst] 200.0 (Double), index=1, end=21, vol, reg=3, regAux1=4
+         21: Dyadic[sCcmpl] {19, 20} (Integer), index=0, end=22, vol, reg=4
+         22: Branch[sCBranch] {21} (Void)
+      ExitSet {[ , , , ], [ , 19 (Double), , 0 (Integer), 1 (Integer) ]}
+
+   SSANode 9:
+      EntrySet {[ , , , ], [ , 19 (Double), , 0 (Integer), 1 (Integer) ]}
+         23: NoOpnd[sCloadConst] 14 (Integer), index=8, join=[8]
+      ExitSet {[ , , , ], [ , 19 (Double), , 0 (Integer), 23 (Integer) ]}
+
+   SSANode 10:
+      EntrySet {[ , , , ], [ , 24 (Double), , 0 (Integer), 25 (Integer) ]}
+         24: PhiFunction[sCPhiFunc] {7, 19, 19} (Double), index=5, join=[5]
+         25: PhiFunction[sCPhiFunc] {9, 1, 23} (Integer), index=8, join=[8]
+         26: NoOpnd[sCloadConst] 10.0 (Double), index=1, end=27, vol, reg=3, regAux1=3
+         27: Dyadic[sCcmpl] {24, 26} (Integer), index=0, end=28, vol, reg=3
+         28: Branch[sCBranch] {27} (Void)
+      ExitSet {[ , , , ], [ , 24 (Double), , 0 (Integer), 25 (Integer) ]}
+
+   SSANode 11:
+      EntrySet {[ , , , ], [ , 24 (Double), , 0 (Integer), 25 (Integer) ]}
+         29: NoOpnd[sCloadConst] 1 (Integer), end=30
+         30: Dyadic[sCadd] {0, 29} (Integer), index=7, join=[7]
+         31: Branch[sCBranch]  (Void)
+      ExitSet {[ , , , ], [ , 24 (Double), , 30 (Integer), 25 (Integer) ]}
+
+   SSANode 12:
+      EntrySet {[ , , , ], [ , 24 (Double), , 0 (Integer), 25 (Integer) ]}
+         32: NoOpnd[sCloadConst] 1.0 (Double), index=1, end=33, vol, reg=3, regAux1=3
+         33: Dyadic[sCsub] {24, 32} (Double), index=5, join=[5]
+      ExitSet {[ , , , ], [ , 33 (Double), , 0 (Integer), 25 (Integer) ]}
+
+   SSANode 13:
+      EntrySet {[ , , , ], [ , 34 (Double), , 35 (Integer), 25 (Integer) ]}
+         34: PhiFunction[sCPhiFunc] {24, 33} (Double), index=5, join=[5]
+         35: PhiFunction[sCPhiFunc] {30, 0} (Integer), index=7, join=[7]
+         36: Branch[sCreturn] {35} (Void)
+      ExitSet {[ , , , ], [ , 34 (Double), , 35 (Integer), 25 (Integer) ]}

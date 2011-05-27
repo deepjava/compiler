@@ -55,76 +55,90 @@ CFG of method forIfWhile
 		predecessor: CFG-Node [26:29]	
 		successor: 
 
-SSA for Method: forIfWhile
+assign registers to parameters
+[(Ref)r2]
+parameter go into register: 2  
+allocate registers
+phi functions resolved
+joins at index: [,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0, end=19, vol, reg=2
+	index=3: start=0, end=19, vol, reg=3
+nofNonVolGPR = 0, nofVolGPR = 2, nofNonVolFPR = 0, nofVolFPR = 0, paramSlotsOnStack = 0
+parameter end at instr no: 16  
+SSA for Method: ch/ntb/inf/deep/testClasses/T04Loops.forIfWhile()V
    SSANode 0:
       EntrySet {[ , ], [ , ]}
-         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=3
-         1: NoOpnd[sCloadLocal] (Ref),   end=0, index=2
+         0: NoOpnd[sCloadConst] 0 (Integer), index=3, join=[3]
+         1: NoOpnd[sCloadLocal] (Ref), index=2, join=[2]
          2: Branch[sCBranch]  (Void)
       ExitSet {[ , ], [ 1 (Ref), 0 (Integer) ]}
 
    SSANode 1:
-      EntrySet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
-         3: NoOpnd[sCloadConst] 50 (Integer),   end=0
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+         3: NoOpnd[sCloadConst] 50 (Integer), index=1, end=4, vol, reg=4
          4: Branch[sCBranch] {3, 17} (Void)
-      ExitSet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
 
    SSANode 2:
-      EntrySet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
          5: Branch[sCBranch]  (Void)
-      ExitSet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
 
    SSANode 3:
-      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9) ]}
-         6: NoOpnd[sCloadConst] 1 (Integer),   end=0
-         7: Dyadic[sCadd] {9, 6} (Integer),   end=0, index=3
-      ExitSet {[ , ], [ Phi-Function(8), 7 (Integer) ]}
+      EntrySet {[ , ], [ 8 (Ref), 9 (Integer) ]}
+         6: NoOpnd[sCloadConst] 1 (Integer), end=7
+         7: Dyadic[sCadd] {9, 6} (Integer), index=3, join=[3]
+      ExitSet {[ , ], [ 8 (Ref), 7 (Integer) ]}
 
    SSANode 4:
-      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9) ]}
-         8: PhiFunction[sCPhiFunc] {16} (Phi-Function),   start=0, end=0, index=2 deleted
-         9: PhiFunction[sCPhiFunc] {17, 7} (Phi-Function),   start=0, end=0, index=3
-         10: NoOpnd[sCloadConst] 75 (Integer),   end=0
+      EntrySet {[ , ], [ 8 (Ref), 9 (Integer) ]}
+         8: PhiFunction[sCPhiFunc] {1} (Ref), index=2, end=8, last=11 del
+         9: PhiFunction[sCPhiFunc] {17, 7} (Integer), index=3, join=[3], last=11
+         10: NoOpnd[sCloadConst] 75 (Integer), index=1, end=11, vol, reg=4
          11: Branch[sCBranch] {10, 9} (Void)
-      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9) ]}
+      ExitSet {[ , ], [ 8 (Ref), 9 (Integer) ]}
 
    SSANode 5:
-      EntrySet {[ , ], [ Phi-Function(12), Phi-Function(13) ]}
-         12: PhiFunction[sCPhiFunc] {16} (Phi-Function),   start=0, end=0, index=2 deleted
-         13: PhiFunction[sCPhiFunc] {17, 9} (Phi-Function),   start=0, end=0, index=3
-         14: NoOpnd[sCloadConst] 1 (Integer),   end=0
-         15: Dyadic[sCadd] {13, 14} (Integer),   end=0, index=3
-      ExitSet {[ , ], [ Phi-Function(12), 15 (Integer) ]}
+      EntrySet {[ , ], [ 12 (Ref), 13 (Integer) ]}
+         12: PhiFunction[sCPhiFunc] {16} (Ref), index=2, end=12 del
+         13: PhiFunction[sCPhiFunc] {17, 9} (Integer), index=3, join=[3]
+         14: NoOpnd[sCloadConst] 1 (Integer), end=15
+         15: Dyadic[sCadd] {13, 14} (Integer), index=3, join=[3]
+      ExitSet {[ , ], [ 12 (Ref), 15 (Integer) ]}
 
    SSANode 6:
-      EntrySet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
-         16: PhiFunction[sCPhiFunc] {1} (Phi-Function),   start=0, end=0, index=2 deleted
-         17: PhiFunction[sCPhiFunc] {0, 15} (Phi-Function),   start=0, end=0, index=3
-         18: NoOpnd[sCloadConst] 100 (Integer),   end=0
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+         16: PhiFunction[sCPhiFunc] {1} (Ref), index=2, join=[2], last=19 del u
+         17: PhiFunction[sCPhiFunc] {0, 15} (Integer), index=3, join=[3], last=19
+         18: NoOpnd[sCloadConst] 100 (Integer), index=1, end=19, vol, reg=4
          19: Branch[sCBranch] {18, 17} (Void)
-      ExitSet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
 
    SSANode 7:
-      EntrySet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
          20: Branch[sCreturn]  (Void)
-      ExitSet {[ , ], [ Phi-Function(16), Phi-Function(17) ]}
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
 
-Code for Method: forIfWhile
+Code for Method: ch/ntb/inf/deep/testClasses/T04Loops.forIfWhile()V
 	9421fff0	[0x0]	stwu  r1, -16(r1)
 	7c0802a6	[0x4]	mfspr  r0, LR
 	9001000c	[0x8]	stw  r0, 12(r1)
 	38600000	[0xc]	li  r3, 0
-	48000020	[0x10]	b  32, [0x30]	
-	2c030032	[0x14]	cmpi  crf0, 0, r3, 50
-	409e0014	[0x18]	bc  iffalse, CRF0[GT], 20, [0x2c]	
-	48000008	[0x1c]	b  8, [0x24]	
-	38630001	[0x20]	addi  r3, r3, 1
-	2c03004b	[0x24]	cmpi  crf0, 0, r3, 75
-	419ffff8	[0x28]	bc  iftrue, CRF0[LT], -8, [0x20]	
-	38630001	[0x2c]	addi  r3, r3, 1
-	2c030064	[0x30]	cmpi  crf0, 0, r3, 100
-	419fffe0	[0x34]	bc  iftrue, CRF0[LT], -32, [0x14]	
-	8001000c	[0x38]	lwz  r0, 12(r1)
-	7c0803a6	[0x3c]	mtspr  LR, r0
-	38210010	[0x40]	addi  r1, r1, 16
-	4e800020	[0x44]	bclr always, CRF7[SO]
+	48000028	[0x10]	b  40, [0x38]	
+	38800032	[0x14]	li  r4, 50
+	7c032000	[0x18]	cmp crf0, 0, r3, r4
+	40810018	[0x1c]	bc  iffalse, CRF0[GT], 24, [0x34]	
+	48000008	[0x20]	b  8, [0x28]	
+	38630001	[0x24]	addi  r3, r3, 1
+	3880004b	[0x28]	li  r4, 75
+	7c032000	[0x2c]	cmp crf0, 0, r3, r4
+	4180fff4	[0x30]	bc  iftrue, CRF0[LT], -12, [0x24]	
+	38630001	[0x34]	addi  r3, r3, 1
+	38800064	[0x38]	li  r4, 100
+	7c032000	[0x3c]	cmp crf0, 0, r3, r4
+	4180ffd4	[0x40]	bc  iftrue, CRF0[LT], -44, [0x14]	
+	8001000c	[0x44]	lwz  r0, 12(r1)
+	7c0803a6	[0x48]	mtspr  LR, r0
+	38210010	[0x4c]	addi  r1, r1, 16
+	4e800020	[0x50]	bclr always, CRF0[LT]

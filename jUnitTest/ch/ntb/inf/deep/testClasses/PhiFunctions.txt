@@ -1,0 +1,453 @@
+	private static void phiFunctionTest1() {
+		int a;	// a erhält Wert erst in der Schleife
+		int b;	// b erhält Wert erst in der Schleife
+		do {
+			a = 100;
+			b = a * 2;
+		} while (b < 0);
+	}
+	
+	private static void phiFunctionTest1() { gleicher Fall wie oben
+		int b;	// b erhält Wert erst in der Schleife
+		do {
+			int a = 100;	// a erhält Wert erst in der Schleife
+			b = a * 2;
+		} while (b < 0);
+	}
+
+Hier wird gar keine phi-Funktion erzeugt!! Grund: Schleife ist der erste Node und 
+hat nur einen Predecessor (sich selber)
+Wenn aber zu Beginn irgendeine Anweisung erfolgt, z.B. auch ein Call, dann 
+ist es nicht mehr der erste Node und es gibt phi-Funktionen 
+17.5.2011: Neu werden trotzdem phi-Funktionen eingefügt. Hier wären Sie nicht 
+nötig, aber bei phiFunctionTest11.
+Darum neu:
+phi-Funktion für a ist del
+phi-Funktion für b ist del
+
+--------------------------------------------------------------------------------
+
+	private static void phiFunctionTest2() {
+		help2();
+		int a;	// a erhält Wert erst in der Schleife
+		int b;	// b erhält Wert erst in der Schleife
+		do {
+			a = 100;
+			b = a * 2;
+		} while (b < 0);
+	}
+	
+phi-Funktion für a ist del
+phi-Funktion für b ist del
+--------------------------------------------------------------------------------
+
+	private static void phiFunctionTest3() {
+		int a = 100;	// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			a += 10;
+			b = a * 2;
+		} while (b < 0);
+	}
+	
+phi-Funktion für a
+phi-Funktion für b ist del
+joins at index: [,,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0: end=7, vol
+--------------------------------------------------------------------------------
+
+	private static void phiFunctionTest4() {
+		int a = 100;	// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			b = a * 2;
+		} while (b < 0);
+	}
+	
+a wird nur vor der Schleife gesetzt, trotzdem muss range bis zum Ende der Schleife gehen
+phi-Funktion für a ist del und used
+phi-Funktion für b ist del
+joins at index: [,,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0: end=5, vol
+--------------------------------------------------------------------------------
+
+	private static void phiFunctionTest5() {
+		int a = 100;	// a erhält in der Schleife neuen Wert
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			a = 200;
+			b = a * 2;
+		} while (b < 0);
+	}
+phi-Funktion für a
+phi-Funktion für b ist del
+joins at index: [,,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0, end=6, vol, reg=2
+--------------------------------------------------------------------------------
+
+	private static int phiFunctionTest6() {
+		int a;
+		for (int i = 0; i < 10; i++);
+		a = 100;
+		for (int i = 0; i < 20; i++);
+		return a + 3;
+	}
+	
+phi-Funktion für a in der 1.Schleife ist del
+phi-Funktion für i in der 1.Schleife
+phi-Funktion für a in der 2.Schleife ist del und used
+phi-Funktion für i in der 2.Schleife, dieser Bereich ist unabhängig von der 1.
+  Schleife!!!
+joins at index: [,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=8: end=18, vol
+	index=3: start=0, end=7, vol: start=9, end=16, vol
+--------------------------------------------------------------------------------
+
+	private static int phiFunctionTest7() {
+		int a = 100;
+		for (int i = 0; i < 10; i++);
+		for (int i = 0; i < 20; i++);
+		return a + 3;
+	}
+
+phi-Funktion für a in der 1.Schleife ist del
+phi-Funktion für i in der 1.Schleife
+phi-Funktion für a in der 2.Schleife ist del und used, opd dieser phi-Funktion 
+  ist direkt die Instruktion "a = 100"
+phi-Funktion für i in der 2.Schleife, dieser Bereich ist unabhängig von der 1.
+  Schleife!!!
+joins at index: [,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0: end=18, vol
+	index=3: start=1, end=8, vol: start=9, end=16, vol
+--------------------------------------------------------------------------------
+
+	private static int phiFunctionTest8() {
+		int a = 100;
+		for (int i = 0; i < 10; i++);
+		int b = a * 3;
+		for (int i = 0; i < 20; i++);
+		return a + 3;
+	}
+
+phi-Funktion für a in der 1.Schleife ist del und used
+phi-Funktion für i in der 1.Schleife
+phi-Funktion für b in der 1.Schleife ist del
+phi-Funktion für a in der 2.Schleife ist del und used, opd dieser phi-Funktion 
+  ist direkt die Instruktion "a = 100"
+phi-Funktion für i in der 2.Schleife, dieser Bereich ist unabhängig von der 1.
+  Schleife!!!
+phi-Funktion für b in der 2.Schleife ist del
+joins at index: [,,x,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0, end=22, vol, reg=2
+	index=3: start=1, end=9, vol, reg=3
+	index=4: start=12, end=20, vol, reg=3
+!!!Achtung: i in der 1. Schleife hat index 3, in der 2. Schleife aber index 4
+--------------------------------------------------------------------------------
+
+	private static int phiFunctionTest9() {
+		int a = 100;
+		for (int i = 0; i < 10 + a; i++);
+		int b = a * 3;
+		for (int i = 0; i < 20; i++);
+		return a + 3;
+	}
+
+phi-Funktion für a in der 1.Schleife ist del und used
+phi-Funktion für i in der 1.Schleife
+phi-Funktion für b in der 1.Schleife ist del
+phi-Funktion für a in der 2.Schleife ist del und used, opd dieser phi-Funktion 
+  ist direkt die Instruktion "a = 100"
+phi-Funktion für i in der 2.Schleife, dieser Bereich ist unabhängig von der 1.
+  Schleife!!!
+phi-Funktion für b in der 2.Schleife ist del
+joins at index: [,,x,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=3: start=0, end=23, vol, reg=2
+	index=4: start=1, end=10, vol, reg=3
+	index=5: start=13, end=21, vol, reg=3
+!!!Achtung: i in der 1. Schleife hat index 4, in der 2. Schleife aber index 5
+--------------------------------------------------------------------------------
+	private static int phiFunctionTest10() {
+		int a = 100;
+		int b;
+		for (int i = 0; i < 10; i++);
+		b = 200;
+		for (int i = 0; i < 20; i++) b++;
+		return a + b;
+	}
+	
+phi-Funktion für a in der 1.Schleife ist del
+phi-Funktion für b in der 1.Schleife ist del
+phi-Funktion für i in der 1.Schleife
+phi-Funktion für a in der 2.Schleife ist del und used, opd dieser phi-Funktion 
+  ist direkt die Instruktion "a = 100"
+phi-Funktion für b in der 2.Schleife
+phi-Funktion für i in der 2.Schleife
+joins at index: [,,x,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0: end=22, vol
+	index=3: start=10: end=22, vol
+	index=4: start=1, end=9, vol: start=11, end=21, vol
+--------------------------------------------------------------------------------
+
+	private static void phiFunctionTest11(int a) {
+		// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b;			// b erhält Wert erst in der Schleife
+		do {
+			b = a * 2;
+			b++;
+		} while (b < 0);
+	}
+
+phi-Funktion für a ist del und used
+phi-Funktion für b ist del
+joins at index: [,,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0, end=7, vol
+--------------------------------------------------------------------------------
+
+	private static void phiFunctionTest12(int a) {
+		// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
+		int b = 100;			// b erhält Wert erst in der Schleife
+		do {
+			b += a;
+		} while (b < 0);
+	}
+
+phi-Funktion für a ist del und used
+phi-Funktion für b
+joins at index: [,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0: end=5, vol
+	index=3: start=0: end=5, vol
+--------------------------------------------------------------------------------
+
+	static int phiFunctionTest13(int a) {
+		if (a > 0) {
+			float f2 = 3.0f;
+			while (f2 < 10.0f) f2 += 5.0f;
+			a = (int)f2;
+		} else {
+			int b = 4;
+			while (b < 10) b += 5;
+			a = b;
+		}
+		return (a);
+	}
+	
+phi-Funktion für a in der 1. Schleife ist del
+phi-Funktion für f2 in der 1. Schleife
+phi-Funktion für a in der 2. Schleife ist del
+phi-Funktion für b in der 2. Schleife
+phi-Funktion für a am Ende von if
+joins at index: [,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=11, end=23, vol, reg=2
+	index=3: start=2, end=11, vol, reg=1: start=13, end=21, vol, reg=3
+--------------------------------------------------------------------------------
+
+ 	private void phiFunctionTest14(int a) {
+		int b = 10;
+		do a--; while(a < -1);
+		b++;
+		while (b == 0) {
+			int c = a * 2;
+			int d = c - b;
+			if (c > 1) break;
+			int e = c + d;
+			b++;
+		}
+		int f = 2 + b;
+	}
+
+1. Schleife:	
+phi-Funktion für ref ist del
+phi-Funktion für a
+phi-Funktion für b ist del und used
+phi-Funktion für c ist del
+phi-Funktion für d ist del
+phi-Funktion für e ist del
+2. Schleife:	
+phi-Funktion für ref ist del
+phi-Funktion für a ist del und used
+phi-Funktion für b 
+phi-Funktion für c ist del
+phi-Funktion für d ist del
+phi-Funktion für e ist del
+joins at index: [,,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=3: start=0, end=31, vol, reg=3
+	index=4: start=0, end=33, vol, reg=4
+--------------------------------------------------------------------------------
+
+	private void phiFunctionTest15() {
+		int a = 10;
+		do a--; while(a > -1);
+		int b = 20;
+		while (b == 0) {
+			int c = a * 2;
+			int d = a -1;
+			int e = a + b;
+			b--;
+		}
+		int f = 2 + b;
+	}
+	
+1. Schleife:	
+phi-Funktion für ref ist del
+phi-Funktion für a
+phi-Funktion für b ist del
+phi-Funktion für c ist del
+phi-Funktion für d ist del
+phi-Funktion für e ist del
+2. Schleife:	
+phi-Funktion für ref ist del
+phi-Funktion für a ist del und used
+phi-Funktion für b 
+phi-Funktion für c ist del
+phi-Funktion für d ist del
+phi-Funktion für e ist del
+joins at index: [,,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=3: start=0, end=27, vol, reg=3
+	index=4: start=12, end=29, vol, reg=2
+--------------------------------------------------------------------------------
+
+	private void phiFunctionTest16() {
+		int a = 10;
+		while (a < 15) a++;
+		int b = 20;
+		while (b > 10) {
+			int c = b + 1;
+		}
+		if (a < b) a += 10;
+		int c = 2 + a;
+	}
+
+1. Schleife:	
+phi-Funktion für ref ist del
+phi-Funktion für a
+phi-Funktion für b ist del
+phi-Funktion für c ist del
+2. Schleife:	
+phi-Funktion für ref ist del
+phi-Funktion für a ist del und used
+phi-Funktion für b ist del und used 
+phi-Funktion für c ist del
+3. if-Anweisung
+phi-Funktion für a
+joins at index: [,,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=3: start=0, end=26, vol, reg=3
+	index=4: start=11, end=21, vol, reg=2
+--------------------------------------------------------------------------------
+
+	In Klasse Double.java
+  public static int doubleToChars(double val, int nofFractDigits, char[] chars) {
+		gchars = chars;
+		nofChars = 0;
+		if (chars == null) return 0;
+		int high = highPartToIntBits(val);
+
+		if ((high & highINF) == highINF) {
+			if ((high & highNaN) == highNaN) { // NaN
+				putChar('N'); putChar('a');	putChar('N');
+			} else { // INF
+				if (high >= 0) putChar('+');
+				else putChar('-');
+				putChar('I'); putChar('N');	putChar('F');
+			}
+			putChar('\0');
+			gchars = null;
+			return nofChars;
+		}
+
+		int exp = (high & highINF) >> 20;
+		if (exp != 0 && high < 0) {
+			putChar('-');
+			val = -val;
+A		}
+		int low;
+		if (exp == 0) { // no denormals
+			high = 0;
+			low = 0;
+		} else { 
+			if (nofFractDigits < 1) nofFractDigits = 1;
+			else if (nofFractDigits > 15) nofFractDigits = 15;
+B:		exp = (exp - expOffset) * 301029;
+			if (exp % 1000000 < 0) exp = exp / 1000000 - 1;
+			else exp = exp / 1000000; 
+C:		double z = powOf10(exp + 1);
+			if (val >= z) {
+				val = val / z;
+				exp++;
+			} else {
+				val = val * powOf10(-exp);
+D:		}
+			if (val >= 10) {
+				val = val * 0.1 + 0.5 / powOf10(nofFractDigits);
+				exp++;
+			} else {
+				val = val + 0.5 / powOf10(nofFractDigits);
+				if (val >= 10) {
+					val = val * 0.1;
+					exp++;
+				}
+			}
+			val = val * 1E7;
+			high = (int) val;
+			low = (int) ((val - high) * 1E8);
+		}
+
+		int dig = 15;
+		while (dig > 7) {
+			digits[dig] = (char) (low % 10 + '0');
+			low = low / 10;
+			dig--;
+		}
+		while (dig >= 0) {
+			digits[dig] = (char) (high % 10 + '0');
+			high = high / 10;
+			dig--;
+		}
+		putChar(digits[0]);
+		putChar('.');
+		dig = 1;
+		while (dig <= nofFractDigits) {
+			putChar(digits[dig]);
+			dig++;
+		}
+		putChar('E');
+		if (exp >= 0) putChar('+');
+		else {putChar('-'); exp = -exp;}
+		putChar((char) (exp / 100 % 10 + '0'));
+		putChar((char) (exp / 10 % 10 + '0'));
+		putChar((char) (exp % 10 + '0'));
+		putChar('\0');
+		gchars = null;
+		return nofChars;
+	}
+	
+	A: 51, phi-function für val
+  B: 65, phi-function für nofFractDigits
+  C: 80, phi-function für exp
+  D: 93,94, phi-function für val und exp
+index name            start end vol     reg   in SSA
+6     val             0     128 nonVol  f31   0-54
+7     ist zweiter Slot von val
+8     nofFractDigits  0     201 nonVol  r31   0-71
+9     chars, keine phi function  end = 4      0-4
+10    high            53    178 nonVol  f30   5-65  Achtung: wird in 8 gesetzt
+          und bis 47 gebraucht, hat aber in diesem Bereich keine phi Funktion
+          und wird später neu gesetzt
+11    exp             45    229 nonVol  r29   20-80
+12    low             54    156 nonVol  r28   25-60
+13    dig             133   178 vol           57-73  
+                      185   201 nonVol
+14    ?

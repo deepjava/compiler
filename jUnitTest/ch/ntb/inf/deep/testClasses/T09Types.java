@@ -42,6 +42,10 @@ public class T09Types {
 	}
 	
 	public static void m3(double a, int b, char[] c) {
+		// Achtung: b erhält phi_Funktion, muss in if und in else geladen werden (loadLocal)
+		// d wird nur in if gesetzt, in else nicht, erhält darum auch keine phi-Funktion,
+		// d wird zwar ausserhalb von if deklariert aber nie gesetzt, der Java-Compiler würde eine 
+		// Fehlermeldung liefern, wenn d später benutzt würde.
 		int d;
 		if (c == null) d = b + 1;
 	}
