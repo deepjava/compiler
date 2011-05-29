@@ -1190,7 +1190,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("    Code segment:                " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
 				vrb.println("    Var segment:                 " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
 				vrb.println("    Const segment:               " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
-				vrb.println("    Class descriptor address:    0x" + Integer.toHexString(c.address));
+				vrb.println("    Type descriptor address:    0x" + Integer.toHexString(c.address));
 				vrb.println("    Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
 				vrb.println("    Code base address:           0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
 				vrb.println("    Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
