@@ -5,10 +5,10 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class BlockItem {
 		
-	BlockItem next;
-	BlockItem prev;
+	public BlockItem next;
+	public BlockItem prev;
 	
-	HString name;
+	public HString name;
 	
 	protected void insertAfter(BlockItem itm) {
 		if(this.next != null) {
