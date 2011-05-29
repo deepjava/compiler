@@ -186,6 +186,14 @@
             name="USB Log"
             restorable="true">
       </view>
+      <view
+            category="ch.ntb.inf.deep.ui.Log"
+            class="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
+            name="ClassTreeView"
+            restorable="true">
+      </view>
    </extension>
    <extension
          point="org.eclipse.debug.ui.launchShortcuts">
