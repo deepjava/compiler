@@ -3037,6 +3037,78 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		}
 	}
 
+	public String nodeToString() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 3; i++) sb.append(" ");
+		sb.append("SSANode ["+ this.firstBCA + ":" + this.lastBCA + "]:\n" );
+		
+		// Print EntrySet with Stack and Locals
+		for (int i = 0; i < 6; i++) sb.append(" ");
+		sb.append("EntrySet {");
+		if (entrySet.length > 0)
+			sb.append("[ ");
+		for (int i = 0; i < entrySet.length - 1; i++) {
+			
+			if (entrySet[i] != null)
+				sb.append(entrySet[i].toString());
+			
+			if (i == maxStack - 1) {
+				sb.append("], [ ");
+			} else {
+				sb.append(", ");
+			}
+		}
+		if (entrySet.length > 0) {
+			if (entrySet[entrySet.length - 1] != null) {
+				sb.append(entrySet[entrySet.length - 1].toString() + " ]}\n");
+			} else {
+				sb.append("]}\n");
+			}
+		} else {
+			sb.append("}\n");
+		}
+		
+		// write Phifunctions
+		for (int i = 0; i < nofPhiFunc; i++) {
+			for (int j = 0; j < 9; j++)	sb.append(" ");
+			sb.append(phiFunctions[i].toString() + "\n");
+		}
+		// Print Instructions
+		for (int i = 0; i < nofInstr; i++) {
+			for (int j = 0; j < 9; j++)	sb.append(" ");
+			sb.append(instructions[i].toString() + "\n");
+		}
+		
+		// Print ExitSet with Stack and Locals
+		for (int i = 0; i <  6; i++) sb.append(" ");
+		sb.append("ExitSet {");
+		if (exitSet.length > 0)
+			sb.append("[ ");
+		
+		for (int i = 0; i < exitSet.length - 1; i++) {
+			
+			if (exitSet[i] != null)
+				sb.append(exitSet[i].toString());
+			
+			if (i == maxStack - 1) {
+				sb.append("], [ ");
+			} else {
+				sb.append(", ");
+			}
+			
+		}
+		if (exitSet.length > 0) {
+			if (exitSet[exitSet.length - 1] != null) {
+				sb.append(exitSet[exitSet.length - 1].toString() + " ]}\n");
+			} else {
+				sb.append("]}\n");
+			}
+		} else {
+			sb.append("}\n");
+		}
+		return sb.toString();
+	}
+
 	private void storeAndInsertRegMoves(int index) {
 		// create register moves in creating of SSA was wished by U.Graf
 		SSAValue value1 = popFromStack();

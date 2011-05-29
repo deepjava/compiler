@@ -3,7 +3,6 @@ package ch.ntb.inf.deep.ssa.instruction;
 import ch.ntb.inf.deep.classItems.ClassMember;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class NoOpndRef extends NoOpnd {
 	public Item field;
@@ -42,6 +41,29 @@ public class NoOpndRef extends NoOpnd {
 			if (result.regAux1 != -1) StdStreams.vrb.print(", regAux1=" + result.regAux1);
 		}
 		StdStreams.vrb.println();
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(result.n + ": ");
+		sb.append("NoOpndRef["+ scMnemonics[ssaOpcode]+"]");
+		if (field.name != null) sb.append(" <" + field.name + "(" + field.type.name + ")>");
+		if(field instanceof ClassMember) {sb.append("Owner: " + ((ClassMember)field).owner.name.toString());}
+		sb.append(" (" + result.typeName() + ")");
+		if (result.index != -1) sb.append(", index=" + result.index);
+		if (result.join != null) {
+			sb.append(", join=[" + result.index + "]");
+		} else {
+			sb.append(", end=" + result.end);
+			if (result.reg != -1) {
+				if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
+			}
+			if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
+			if (result.reg != -1) sb.append(", reg=" + result.reg);
+			if (result.regAux1 != -1) sb.append(", regAux1=" + result.regAux1);
+		}
+		return sb.toString();
 	}
 
 }

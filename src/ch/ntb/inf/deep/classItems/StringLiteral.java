@@ -25,4 +25,8 @@ public class StringLiteral extends Constant {
 	public void println(int indentLevel){
 		print(indentLevel);  vrb.println();
 	}
+	
+	public String toString() {
+		return string.toString();
+	}
 }

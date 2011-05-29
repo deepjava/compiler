@@ -2726,6 +2726,27 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 	}
 
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
+		for (int i = 0; i < iCount; i++){
+			sb.append("\t" + String.format("%08X",instructions[i]));
+			sb.append("\t[0x");
+			sb.append(Integer.toHexString(i*4));
+			sb.append("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
+				if (opcode == 0x10) {
+					int BD = (short)(instructions[i] & 0xFFFC);
+					sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+				} else if (opcode == 0x12) {
+					int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+					sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+				}
+				sb.append("\n");
+		}
+		return sb.toString();
+	}
+
 	public static void init() { 
 		idPUT1 = 0x001;	// same as in rsc/ntbMpc555STS.deep
 		idPUT2 = 0x002;

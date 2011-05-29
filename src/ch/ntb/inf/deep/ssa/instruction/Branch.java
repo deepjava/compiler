@@ -50,4 +50,21 @@ public class Branch extends SSAInstruction {
 
 	}
 	
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		sb.append(result.n + ": ");
+		if (operands == null)
+			sb.append("Branch["+ scMnemonics[ssaOpcode]+"] ");
+		else {
+			if (operands.length == 2)
+				sb.append("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
+			else
+				sb.append("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
+		}
+		sb.append(" (" + result.typeName() + ")");
+		
+		return sb.toString();
+	}
+	
 }

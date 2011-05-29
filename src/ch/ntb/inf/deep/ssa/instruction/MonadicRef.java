@@ -57,5 +57,32 @@ public class MonadicRef extends Monadic {
 		StdStreams.vrb.println();
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(result.n + ": ");
+		sb.append("MonadicRef["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
+		if (item != null) {
+			sb.append(" <" + item.name);
+			if (item.type != null) sb.append("(" + item.type.name + ")");
+			sb.append(">");
+		}
+		if(item instanceof ClassMember) {sb.append("Owner: " + ((ClassMember)item).owner.name.toString());}
+		sb.append(" (" + result.typeName() + ")");
+		if (result.index != -1) sb.append(", index=" + result.index);
+		if (result.join != null) {
+			sb.append(", join=[" + result.index + "]");
+		} else {
+			sb.append(", end=" + result.end);
+			if (result.reg != -1) {
+				if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
+			}
+			if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
+			if (result.reg != -1) sb.append(", reg=" + result.reg);
+			if (result.regAux1 != -1) sb.append(", regAux1=" + result.regAux1);
+		}
+		return sb.toString();
+	}
+	
 
 }

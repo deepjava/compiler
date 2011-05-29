@@ -90,4 +90,44 @@ public class PhiFunction extends SSAInstruction {
 		if (used) StdStreams.vrb.print(" u");
 		StdStreams.vrb.println();
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(result.n + ": ");
+		sb.append("PhiFunction["+ scMnemonics[ssaOpcode]+"] {");
+		for (int i=0;i<nofOperands-1;i++){
+			if(operands[i] != null){
+				sb.append(operands[i].n + ", ");
+			}else{
+				sb.append("null, ");
+			}
+		}
+		if (nofOperands > 0) {
+			if(operands[nofOperands-1] != null){
+				sb.append(operands[nofOperands-1].n + "}");
+			} else {
+				sb.append("null)");
+			}
+		}	
+		sb.append(" (" + result.typeName() + ")");
+		if (result.index != -1) sb.append(", index=" + result.index);
+		SSAValue res = result;
+		if (res.join != null) {
+			sb.append(", join=[" + res.index + "]");
+			res = result.join;
+		} else {
+			sb.append(", end=" + res.end);
+			if (res.reg != -1) {
+				if (res.nonVol) sb.append(", nonVol"); else sb.append(", vol");
+			}
+			if (res.regLong != -1) sb.append(", regLong=" + res.regLong);
+			if (res.reg != -1) sb.append(", reg=" + res.reg);
+			if (res.regAux1 != -1) sb.append(", regAux1=" + res.regAux1);
+		}
+		if (last != 0) sb.append(", last=" + last);
+		if (deleted) sb.append(" del");
+		if (used) sb.append(" u");
+		return sb.toString();
+	}
 }

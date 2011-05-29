@@ -300,6 +300,21 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 	}
 	
+
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		SSANode node = (SSANode) this.cfg.rootNode;
+		
+		sb.append("SSA for Method: " + cfg.method.owner.name + "." + cfg.method.name + cfg.method.methDescriptor + "\n");
+		SSA.renumberInstructions(cfg);
+		
+		while (node != null) {
+			sb.append(node.nodeToString() + "\n");
+			node = (SSANode) node.next;
+		}
+		return sb.toString();
+	}
+	
 	public void countAndMarkReturns(SSANode node){
 		if(returnCount >= returnNodes.length){
 			SSANode[]temp = new SSANode[2*returnNodes.length];

@@ -49,5 +49,25 @@ public class Dyadic extends SSAInstruction {
 		StdStreams.vrb.println();
 
 	}
-	
+
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		sb.append(result.n + ": ");
+		sb.append("Dyadic["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
+		sb.append(" (" + result.typeName() + ")");
+		if (result.index != -1) sb.append(", index=" + result.index);
+		if (result.join != null) {
+			sb.append(", join=[" + result.index + "]");
+		} else {
+			sb.append(", end=" + result.end);
+			if (result.reg != -1) {
+				if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
+			}
+			if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
+			if (result.reg != -1) sb.append(", reg=" + result.reg);
+			if (result.regAux1 != -1) sb.append(", regAux1=" + result.regAux1);
+		}
+		return sb.toString();
+	}
 }

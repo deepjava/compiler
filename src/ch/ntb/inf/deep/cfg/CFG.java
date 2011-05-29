@@ -421,6 +421,10 @@ public class CFG implements ICjvmInstructionOpcsAndMnemonics {
 		}
 		return sb.toString();
 	}
+	@Override
+	public String toString(){
+		return this.cfgToString();
+	}
 
 	/**
 	 * Prints all nodes of a CFG for debugging purposes.
