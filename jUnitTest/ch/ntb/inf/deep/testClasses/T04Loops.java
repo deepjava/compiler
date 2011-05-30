@@ -84,14 +84,14 @@ public class T04Loops {
 		}
 	}
 	
-	private void whileTrue2() {
+	public void whileTrue2() {
 		while (true) {
 			help3(65);
 			for (int i = 0; i < 1000000; i++);
 		}
 	}
 	
-	private static int forIfFor() {
+	public static int forIfFor() {
 		int  offset, k; 
 		offset = 0; 
 		int val = 10;
@@ -116,11 +116,11 @@ public class T04Loops {
 		return offset;
 	}
 	
-	private static int help1() { return 0; }
-	private static void help2() {}
-	private static void help3(int a) {}
+	public static int help1() { return 0; }
+	public static void help2() {}
+	public static void help3(int a) {}
 
-	private static void phiFunctionTest1() {
+	public static void phiFunctionTest1() {
 		int a;	// a erhält Wert erst in der Schleife
 		int b;	// b erhält Wert erst in der Schleife
 		do {
@@ -129,7 +129,7 @@ public class T04Loops {
 		} while (b < 0);
 	}
 
-	private static void phiFunctionTest2() {
+	public static void phiFunctionTest2() {
 		help2();
 		int a;	// a erhält Wert erst in der Schleife
 		int b;	// b erhält Wert erst in der Schleife
@@ -139,7 +139,7 @@ public class T04Loops {
 		} while (b < 0);
 	}
 
-	private static void phiFunctionTest3() {
+	public static void phiFunctionTest3() {
 		int a = 100;	// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
 		int b;			// b erhält Wert erst in der Schleife
 		do {
@@ -148,7 +148,7 @@ public class T04Loops {
 		} while (b < 0);
 	}
 
-	private static void phiFunctionTest4() {
+	public static void phiFunctionTest4() {
 		int a = 100;	// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
 		int b;			// b erhält Wert erst in der Schleife
 		do {
@@ -156,7 +156,7 @@ public class T04Loops {
 		} while (b < 0);
 	}
 	
-	private static void phiFunctionTest5() {
+	public static void phiFunctionTest5() {
 		int a = 100;	// a erhält in der Schleife neuen Wert
 		int b;			// b erhält Wert erst in der Schleife
 		do {
@@ -165,7 +165,7 @@ public class T04Loops {
 		} while (b < 0);
 	}
 	
-	private static int phiFunctionTest6() {
+	public static int phiFunctionTest6() {
 		int a;
 		for (int i = 0; i < 10; i++);
 		a = 100;
@@ -173,14 +173,14 @@ public class T04Loops {
 		return a + 3;
 	}
 	
-	private static int phiFunctionTest7() {
+	public static int phiFunctionTest7() {
 		int a = 100;
 		for (int i = 0; i < 10; i++);
 		for (int i = 0; i < 20; i++);
 		return a + 3;
 	}
 	
-	private static int phiFunctionTest8() {
+	public static int phiFunctionTest8() {
 		int a = 100;
 		for (int i = 0; i < 10; i++);
 		int b = a * 3;
@@ -188,7 +188,7 @@ public class T04Loops {
 		return a + 3;
 	}
 	
-	private static int phiFunctionTest9() {
+	public static int phiFunctionTest9() {
 		int a = 100;
 		for (int i = 0; i < 10 + a; i++);
 		int b = a * 3;
@@ -196,7 +196,7 @@ public class T04Loops {
 		return a + 3;
 	}
 	
-	private static int phiFunctionTest10() {
+	public static int phiFunctionTest10() {
 		int a = 100;
 		int b;
 		for (int i = 0; i < 10; i++);
@@ -205,7 +205,7 @@ public class T04Loops {
 		return a + b;
 	}
 
-	private static void phiFunctionTest11(int a) {
+	public static void phiFunctionTest11(int a) {
 		// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
 		int b;			// b erhält Wert erst in der Schleife
 		do {
@@ -214,7 +214,7 @@ public class T04Loops {
 		} while (b < 0);	// Problem!!!!
 	}
 
-	private static void phiFunctionTest12(int a) {
+	public static void phiFunctionTest12(int a) {
 		// a muss Register bis zum Ende der Schleife besitzen, sonst wird es neu vergeben
 		int b = 100;			// b erhält Wert erst in der Schleife
 		do {
@@ -222,7 +222,7 @@ public class T04Loops {
 		} while (b < 0);
 	}
 
-	static int phiFunctionTest13(int a) {
+	public static int phiFunctionTest13(int a) {
 		if (a > 0) {
 			float f2 = 3.0f;
 			while (f2 < 10.0f) f2 += 5.0f;
@@ -235,7 +235,7 @@ public class T04Loops {
 		return (a);
 	}
 
- 	private void phiFunctionTest14(int a) {
+	public void phiFunctionTest14(int a) {
 		int b = 10;
 		do a--; while(a < -1);
 		b++;
@@ -249,7 +249,7 @@ public class T04Loops {
 		int f = 2 + b;
 	}
 
-	private void phiFunctionTest15() {
+	public void phiFunctionTest15() {
 		int a = 10;
 		do a--; while(a > -1);
 		int b = 20;
@@ -262,7 +262,7 @@ public class T04Loops {
 		int f = 2 + b;
 	}
 
-	private void phiFunctionTest16() {
+	public void phiFunctionTest16() {
 		int a = 10;
 		while (a < 15) a++;
 		int b = 20;
