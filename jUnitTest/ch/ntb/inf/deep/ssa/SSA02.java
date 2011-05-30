@@ -46,7 +46,7 @@ public class SSA02 extends TestSSA {
 		testNode(nodes[0], 3, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 1, 0, 4);
-		testNode(nodes[3], 5, 1, 4);
+		testNode(nodes[3], 6, 1, 4);
 	}
 
 	@Test
@@ -66,7 +66,7 @@ public class SSA02 extends TestSSA {
 		testNode(nodes[0], 4, 0, 5);
 		testNode(nodes[1], 2, 0, 5);
 		testNode(nodes[2], 1, 0, 5);
-		testNode(nodes[3], 3, 1, 5);
+		testNode(nodes[3], 4, 1, 5);
 	}
 	
 	@Test
@@ -76,6 +76,25 @@ public class SSA02 extends TestSSA {
 		testNode(nodes[1], 2, 0, 5);
 		testNode(nodes[2], 1, 0, 5);
 		testNode(nodes[3], 2, 2, 5);
+	}
+	
+	@Test
+	public void testIf6(){
+		SSANode[] nodes = getAndTestSSA("if6", 14, 0);
+		testNode(nodes[0], 4, 0, 9);
+		testNode(nodes[1], 2, 0, 9);
+		testNode(nodes[2], 1, 0, 9);
+		testNode(nodes[3], 1, 1, 9);
+		testNode(nodes[4], 2, 0, 9);
+		testNode(nodes[5], 3, 0, 9);
+		testNode(nodes[6], 3, 0, 9);
+		testNode(nodes[7], 2, 0, 9);
+		testNode(nodes[8], 3, 1, 9);
+		testNode(nodes[9], 1, 0, 9);
+		testNode(nodes[10], 3, 2, 9);
+		testNode(nodes[11], 3, 0, 9);
+		testNode(nodes[12], 2, 0, 9);
+		testNode(nodes[13], 1, 2, 9);
 	}
 	
 	

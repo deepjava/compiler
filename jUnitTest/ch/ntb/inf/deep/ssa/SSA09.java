@@ -42,7 +42,29 @@ public class SSA09 extends TestSSA {
 		testNode(nodes[3], 6, 0, 11);
 		testNode(nodes[4], 2, 0, 11);
 		testNode(nodes[5], 1, 0, 11);
-		testNode(nodes[6], 5, 1, 11);
+		testNode(nodes[6], 6, 1, 11);
+	}
+	
+	@Test
+	public void m2(){
+		SSANode[] nodes = getAndTestSSA("m2", 1, 0);
+		testNode(nodes[0], 23, 0, 16);
+		
+	}
+	
+	@Test
+	public void callm2(){
+		SSANode[] nodes = getAndTestSSA("callm2", 1, 0);
+		testNode(nodes[0], 12, 0, 21);
+	}
+	
+	@Test
+	public void m3(){
+		SSANode[] nodes = getAndTestSSA("m3", 4, 0);
+		testNode(nodes[0], 2, 0, 7);
+		testNode(nodes[1], 3, 0, 7);
+		testNode(nodes[2], 1, 0, 7);
+		testNode(nodes[3], 1, 1, 7);
 	}
 	
 	}

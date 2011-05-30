@@ -31,7 +31,7 @@ public class SSA07 extends TestSSA {
 	@Test
 	public void testConstructor() {
 		SSANode[] nodes = getAndTestSSA("<init>", 1, 0);
-		testNode(nodes[0], 3, 0, 2);
+		testNode(nodes[0], 10, 0, 4);
 	}
 	
 	@Test
@@ -64,6 +64,12 @@ public class SSA07 extends TestSSA {
 	@Test
 	public void testMultiArray(){
 		SSANode[] nodes = getAndTestSSA("multiArray", 1, 0);
-		testNode(nodes[0], 26, 0, 10);
+		testNode(nodes[0], 39, 0, 12);
+	}
+	
+	@Test
+	public void testMultiObjectArray(){
+		SSANode[] nodes = getAndTestSSA("multiObjectArray", 1, 0);
+		testNode(nodes[0], 28, 0, 10);
 	}
 }

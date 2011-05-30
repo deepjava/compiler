@@ -52,7 +52,7 @@ public class SSA01 extends TestSSA {
 	@Test
 	public void simple2() {
 		SSANode[] nodes = getAndTestSSA("simple2", 1,0);
-		testNode(nodes[0],5,0,4);
+		testNode(nodes[0],8,0,4);
  	}
 	
 	@Test
@@ -60,5 +60,23 @@ public class SSA01 extends TestSSA {
 		SSANode[] nodes = getAndTestSSA("simple3", 1,0);
 		testNode(nodes[0],5,0,4);
  	}
+
+	@Test
+	public void simple4() {
+		SSANode[] nodes = getAndTestSSA("simple4", 1,0);
+		testNode(nodes[0],19,0,2);
+	}
+
+	@Test
+	public void simple5() {
+		SSANode[] nodes = getAndTestSSA("simple5", 1,0);
+		testNode(nodes[0],5,0,4);
+	}
+
+	@Test
+	public void simple6() {
+		SSANode[] nodes = getAndTestSSA("simple6", 1,0);
+		testNode(nodes[0],7,0,7);
+	}
 
 }
