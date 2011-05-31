@@ -146,7 +146,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(clazz.nofClassRefs > 0) {
 			Item field = clazz.classFields;
 			while(field != null) {
-				if((field.accAndPropFlags & (1 << apfStatic)) != 0 && ( ((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
+				if((field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) != 0 && (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
 					clazz.ptrList.append(new AddressItem(field));
 					ptrCounter++;
 				}
@@ -163,6 +163,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.typeDescriptor = new FixedValueItem("size");
 		if(dbg) vrb.println("    - Inserting the extension level");
 		clazz.typeDescriptor.insertBefore(new FixedValueItem("extensionLevel", clazz.extensionLevel));
+
+//		if(clazz.interfaces != null && clazz.interfaces.length > 0) {
+//			
+//			if(dbg) vrb.println("    - Inserting interfaces:");
+//			for(int i = 0; i < clazz.interfaces.length; i++) {
+//				if(dbg) vrb.println("      > " + clazz.interfaces[i].name);
+//				clazz.typeDescriptor.getHead().insertBefore(new InterfaceItem(clazz.interfaces[i], -1)); 
+//			}
+//			
+//		}
+		
 		Item m;
 		if(dbg) vrb.println("    - Inserting method table:");
 		for(int i = 0; i < clazz.methTabLength; i++) {
@@ -171,17 +182,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(dbg) vrb.println("      > " + m.name);
 			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(m)); 
 		}
-//		if(clazz.nofInstMethods > 0) {
-//			if(dbg) vrb.println("    - Inserting instance methods:");
-//			Method m = (Method)clazz.methods;
-//			while(m != null) {
-//				if((m.accAndPropFlags & (1 << dpfSysPrimitive)) == 0 && (m.accAndPropFlags & (1 << apfStatic)) == 0) { // not system primitive and not static
-//					if(dbg) vrb.println("      > " + m.name);
-//					clazz.typeDescriptor.getHead().insertBefore(new AddressItem(m));
-//				}
-//				m = (Method)m.next;
-//			}
-//		}
+
 		if(dbg) vrb.println("    - Inserting class name address");
 		clazz.typeDescriptor.insertAfter(new FixedValueItem("classNameAddr", 0x12345678));
 		if(dbg) vrb.println("    - Inserting base classes");
