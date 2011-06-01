@@ -376,8 +376,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				else {
 					int codeSize = ((FixedValueItem)c.codeBase.next).getValue();
 					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, codeSize);
-					c.codeOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					if(codeSize > 0) s.addToUsedSize(codeSize);
+					c.codeOffset = s.getUsedSize();
+					if(codeSize > 0) s.addToUsedSize(roundUpToNextWord(codeSize));
 					c.codeSegment = s;
 					if(dbg) {
 						vrb.println("    Code-Segment: " + c.codeSegment.getName());
@@ -390,8 +390,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				if(s == null) reporter.error(731, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
-					c.varOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					if(c.classFieldsSize > 0) s.addToUsedSize(c.classFieldsSize);
+					c.varOffset = s.getUsedSize();
+					if(c.classFieldsSize > 0) s.addToUsedSize(roundUpToNextWord(c.classFieldsSize));
 					c.varSegment = s;
 					if(dbg) vrb.println("    Var-Segment: " + c.varSegment.getName());
 				}
@@ -402,8 +402,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				else {
 					int constBlockSize = ((FixedValueItem)c.constantBlock).getValue();
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, constBlockSize);
-					c.constOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					if(constBlockSize > 0) s.addToUsedSize(constBlockSize);
+					c.constOffset = s.getUsedSize();
+					if(constBlockSize > 0) s.addToUsedSize(roundUpToNextWord(constBlockSize));
 					c.constSegment = s;
 					if(dbg) vrb.println("    Const-Segment: " + c.constSegment.getName());
 				}		
@@ -512,13 +512,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			while(field != null) {
 				if((field.accAndPropFlags & (1 << apfStatic)) != 0) { // class field // TODO remove this -> only class fields in the list
 					if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
-//						if(field.type == Type.wellKnownTypes[txFloat] || field.type == Type.wellKnownTypes[txDouble]) { // float or double -> constant pool
-//							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nofClassRefs) + clazz.classDescriptorSize + clazz.stringPoolSize + field.index;
-//						}
-//						else if(field.type == Type.wellKnownTypes[txString]) { // literal string -> string pool
-//							field.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + 4* (7 + clazz.nofClassRefs) + clazz.classDescriptorSize + field.index + 8;
-//						}
-//						else 
 						if(((Type)field.type).category == tcRef) { // reference but not literal string
 							if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 						}
@@ -968,7 +961,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	protected static int roundUpToNextWord(int val) {
-		return  (val + (slotSize-1) ) & -slotSize;
+		return (val + (slotSize - 1)) & -slotSize;
 	}
 	
 	private static void addTargetMemorySegment(TargetMemorySegment tms) {
