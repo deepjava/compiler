@@ -48,10 +48,9 @@ public class cgPPC06 extends TestCgPPC {
 	@Test
 	public void conditionalOperator2() {
 		CodeGen code = getCode("conditionalOperator2");
-		assertNull("wrong join", getJoin(0));
-		assertNull("wrong join", getJoin(1));
-		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
-		for (int i = 3; i < RegAllocator.maxNofJoins; i++)
+		assertTrue("wrong join", checkJoin(getJoin(0), 9, 13, vol, true));
+		assertTrue("wrong join", checkJoin(getJoin(0).next, 17, 26, vol, false));
+		for (int i = 1; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	

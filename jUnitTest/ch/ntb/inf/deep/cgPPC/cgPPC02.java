@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
@@ -105,7 +106,7 @@ public class cgPPC02 extends TestCgPPC {
 		assertNull("wrong join", getJoin(2));
 		assertNull("wrong join", getJoin(3));
 		assertNull("wrong join", getJoin(4));
-		assertTrue("wrong join", checkJoin(getJoin(5), 0, 7, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(5), 0, 34, vol, false));
 		assertTrue("wrong join", checkJoin(getJoin(7), 0, 36, vol, false));
 		assertTrue("wrong join", checkJoin(getJoin(8), 1, 25, vol, false));
 		for (int i = 9; i < RegAllocator.maxNofJoins; i++)
@@ -118,4 +119,21 @@ public class cgPPC02 extends TestCgPPC {
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 35, false, false));
 	}
 	
+//@Ignore
+	@Test
+	public void if7() {
+		CodeGen code = getCode("if7");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 25, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(4), 8, 24, vol, false));
+		for (int i = 5; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 6, false, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 17, false, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 20, true, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 21, false, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 22, false, false));
+	}
 }

@@ -276,7 +276,8 @@ phi-Funktion für e ist del
 2. Schleife:	
 phi-Funktion für ref ist del
 phi-Funktion für a ist del und used
-phi-Funktion für b 
+phi-Funktion für b, Achtung: das b++ vor der while-Schleife erzeugt einen neuen 
+range!
 phi-Funktion für c ist del
 phi-Funktion für d ist del
 phi-Funktion für e ist del
@@ -434,10 +435,6 @@ D:		}
 		return nofChars;
 	}
 	
-	A: 51, phi-function für val
-  B: 65, phi-function für nofFractDigits
-  C: 80, phi-function für exp
-  D: 93,94, phi-function für val und exp
 index name            start end vol     reg   in SSA
 6     val             0     128 nonVol  f31   0-54
 7     ist zweiter Slot von val
@@ -451,3 +448,49 @@ index name            start end vol     reg   in SSA
 13    dig             133   178 vol           57-73  
                       185   201 nonVol
 14    ?
+
+  phi functions
+	A: 51, phi-function für val
+  B: 65, phi-function für nofFractDigits
+  C: 80, phi-function für exp
+  D: 93,94, phi-function für val und exp
+
+--------------------------------------------------------------------------------
+
+	In Klasse Kernel.java
+	boot
+
+index name            start end vol     reg   in SSA
+3     reg             keine phi function
+4     reset           keine phi function
+5     classConstOff   73    171 nonVol  r31  
+                      177   213 nonVol  r31 im Moment r26 ???????!!!!!!!! 
+6     state           74    171 nonVol  r30 
+7     kernelClinitAddr76    213 nonVol  r29
+8     constBlkBase    92    213 nonVol  r28
+      Achtung: constBlkBase wird in 1. und 2. Schleife definiert, beim Merge der
+      Nodes wird detektiert, dass auf dem gleichen Index im StateArray nicht der
+      gleiche SSAValue, sehr wohl aber der gleiche Typ vorhanden ist, also wird
+      eine phi Function eingefügt, obwohl diese hier gar nicht nötig wäre, sie 
+      stört aber auch nicht weiter
+9     constBlkSize    95    213 nonVol  r27
+      gleicher Fall wie oben, in der ersten Schleife heisst die Variable in diesem
+      Index constBlkSize, in der 2. Schleife clinitAddr, gibt phi function
+10    codeBase        nur in einem linearen Bereich verwendet, alle phi deleted
+      -> kein join
+11    codeSize        wie oben
+12    varBase         wie oben
+13    varSize         wie oben
+14    begin           146   166 vol     r2
+15    end             147   166 vol     r3
+
+  phi functions
+  in oberster Schleife while (reg): alle del
+  nach if: keine phi
+  1. Schleife while (true): normale phi für index 5 und 6, Rest del
+    in 1. Schleife if (FCS): alle del
+    in 1. Schleife if (FCS): alle del
+    in 1. Schleife while (): alle del dazu index 5 und 6 used
+  2. Schleife while (true): normale phi für index 5, 8, 9, 
+                            index 7 ist del und used
+                            Rest del

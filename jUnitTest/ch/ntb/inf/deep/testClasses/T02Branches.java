@@ -88,4 +88,21 @@ public class T02Branches {
 		else val--;
 		return exp;
 	}
+
+	public int if7(int val){
+		int exp = 1000;
+		if (exp < 1023){
+			val = -val;
+		}
+		exp = val + 40;
+		while (val > 20) {
+			if (exp == 0){
+				val += 13;
+			} else {
+				val *= 3;
+			}
+			exp = val + 30;
+		}
+		return val;
+	}
 }
