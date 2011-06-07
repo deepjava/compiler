@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.cgPPC.RegAllocator;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
@@ -8,6 +9,7 @@ public class PhiFunction extends SSAInstruction {
 	public boolean deleted = false;
 	public boolean visited = false;
 	public boolean used = false;
+	public boolean regular = false;
 	public int start;
 	public int last;	
 
@@ -53,42 +55,8 @@ public class PhiFunction extends SSAInstruction {
 	}
 	@Override
 	public void print(int level) {
-		for (int i = 0; i < level*3; i++)StdStreams.vrb.print(" ");
-		StdStreams.vrb.print(result.n + ": ");
-		StdStreams.vrb.print("PhiFunction["+ scMnemonics[ssaOpcode]+"] {");
-		for (int i=0;i<nofOperands-1;i++){
-			if(operands[i] != null){
-				StdStreams.vrb.print(operands[i].n + ", ");
-			}else{
-				StdStreams.vrb.print("null, ");
-			}
-		}
-		if (nofOperands > 0) {
-			if(operands[nofOperands-1] != null){
-				StdStreams.vrb.print(operands[nofOperands-1].n + "}");
-			} else {
-				StdStreams.vrb.print("null)");
-			}
-		}	
-		StdStreams.vrb.print(" (" + result.typeName() + ")");
-		if (result.index != -1) StdStreams.vrb.print(", index=" + result.index);
-		SSAValue res = result;
-		if (res.join != null) {
-			StdStreams.vrb.print(", join=[" + res.index + "]");
-			res = result.join;
-		} else {
-			StdStreams.vrb.print(", end=" + res.end);
-			if (res.reg != -1) {
-				if (res.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
-			}
-			if (res.regLong != -1) StdStreams.vrb.print(", regLong=" + res.regLong);
-			if (res.reg != -1) StdStreams.vrb.print(", reg=" + res.reg);
-			if (res.regAux1 != -1) StdStreams.vrb.print(", regAux1=" + res.regAux1);
-		}
-		if (last != 0) StdStreams.vrb.print(", last=" + last);
-		if (deleted) StdStreams.vrb.print(" del");
-		if (used) StdStreams.vrb.print(" u");
-		StdStreams.vrb.println();
+		for (int i = 0; i < level*3; i++) StdStreams.vrb.print(" ");
+		StdStreams.vrb.println(toString());
 	}
 
 	@Override
@@ -114,7 +82,14 @@ public class PhiFunction extends SSAInstruction {
 		if (result.index != -1) sb.append(", index=" + result.index);
 		SSAValue res = result;
 		if (res.join != null) {
-			sb.append(", join=[" + res.index + "]");
+			sb.append(", join=[" + result.index + "(");
+			SSAValue join = RegAllocator.joins[result.index];
+			int i = 0;
+			while (join != result.join) {
+				i++;
+				join = join.next;
+			}
+			sb.append(i + ")]");
 			res = result.join;
 		} else {
 			sb.append(", end=" + res.end);

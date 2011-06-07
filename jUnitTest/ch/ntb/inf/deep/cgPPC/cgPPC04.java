@@ -486,4 +486,51 @@ public class cgPPC04 extends TestCgPPC {
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 18, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 24, false, false));
 	}
+
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest17() {
+		CodeGen code = getCode("phiFunctionTest17");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 0, 121, nonVol, false));	// ref	
+		assertNull("wrong join", getJoin(4));	// nofDim					
+		assertTrue("wrong join", checkJoin(getJoin(5), 0, 116, nonVol, false));	// dim0	
+		assertTrue("wrong join", checkJoin(getJoin(6), 0, 117, nonVol, false));	// dim1
+		assertTrue("wrong join", checkJoin(getJoin(7), 0, 118, nonVol, false));	// dim2
+		assertTrue("wrong join", checkJoin(getJoin(8), 0, 119, nonVol, false));	// dim3
+		assertTrue("wrong join", checkJoin(getJoin(9), 0, 120, nonVol, false));	// dim4
+		assertNull("wrong join", getJoin(10));	// elemSize
+		assertTrue("wrong join", checkJoin(getJoin(11), 20, 98, nonVol, false));	// dim1Size
+		assertTrue("wrong join", checkJoin(getJoin(12), 27, 101, nonVol, false));	// size
+		assertTrue("wrong join", checkJoin(getJoin(13), 28, 52, nonVol, true));	// addr
+		assertTrue("wrong join", checkJoin(getJoin(13).next, 64, 98, nonVol, false));	// addr
+		assertTrue("wrong join", checkJoin(getJoin(14), 65, 98, nonVol, false));	// i
+		assertNull("wrong join", getJoin(16));	// elemAddr
+		for (int i = 17; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+	
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest18() {
+		CodeGen code = getCode("phiFunctionTest18");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertNull("wrong join", getJoin(3));
+		assertNull("wrong join", getJoin(4));					
+		assertTrue("wrong join", checkJoin(getJoin(5), 0, 74, nonVol, false));	// code
+		assertTrue("wrong join", checkJoin(getJoin(6), 0, 25, nonVol, false));	// message
+		assertTrue("wrong join", checkJoin(getJoin(7), 0, 53, nonVol, false));	// expected
+		assertTrue("wrong join", checkJoin(getJoin(8), 0, 64, nonVol, false));	// actual
+		assertTrue("wrong join", checkJoin(getJoin(9), 0, 109, nonVol, false));	// len
+		assertTrue("wrong join", checkJoin(getJoin(10), 0, 110, nonVol, false));	// checkByte
+		assertTrue("wrong join", checkJoin(getJoin(11), 20, 98, nonVol, false));	// m
+		assertTrue("wrong join", checkJoin(getJoin(12), 27, 101, nonVol, false));	// i
+		assertTrue("wrong join", checkJoin(getJoin(13), 28, 52, nonVol, true));	// addr
+		for (int i = 13; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
 }

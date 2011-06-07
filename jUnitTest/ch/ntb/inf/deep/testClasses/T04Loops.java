@@ -119,6 +119,8 @@ public class T04Loops {
 	public static int help1() { return 0; }
 	public static void help2() {}
 	public static void help3(int a) {}
+	public static int help4(int a) {return 0;}
+	public static void help5(int a, int b) {}
 
 	public static void phiFunctionTest1() {
 		int a;	// a erhält Wert erst in der Schleife
@@ -273,6 +275,72 @@ public class T04Loops {
 		int c = 2 + a;
 	}
 	
+	static int heapPtr;
+	
+	// from Heap.newMultiDimArray
+	private static int phiFunctionTest17(int ref, int nofDim, int dim0, int dim1, int dim2, int dim3, int dim4) {
+		if (nofDim > 3 || nofDim < 2) help3(20);
+		if (nofDim == 2) {
+			int elemSize = help4(ref);
+			int dim1Size = (8 + dim1 * elemSize + 3) >> 2 << 2;	
+			int size = 8 + dim0 * 4 + dim0 * dim1Size;
+			int addr = heapPtr; 
+			while (addr < heapPtr + size) {help5(addr, 0); addr += 4;}
+			help5(heapPtr + 4, ref);	// write tag
+			help5(heapPtr + 2, dim0);	// write length of dim0
+			ref = heapPtr + 8;
+			addr = ref;
+			for (int i = 0; i < dim0; i++) {
+				int elemAddr = ref + 4 * dim0 + 8 + i * dim1Size; 
+				help5(addr, elemAddr);
+				help5(elemAddr - 4, ref);	// write tag
+				help5(elemAddr - 6, dim1);	// write length of dim0
+				addr += 4;
+			}
+			heapPtr += ((size + 15) >> 4) << 4;
+		}
+		return ref;
+	}
 
+	static final int maxStringLen = 64;
+	static byte[] txData = new byte[maxStringLen];
+	static final byte startSymbol = 0x11;
+	public static final boolean host = false;
+	static void write(byte[] txData2, int i, int j) {}
+
+	// from CmdTransmitter.sendFailed
+	public static void phiFunctionTest18(byte code, String message, int expected, int actual) {
+		int len = 0;
+		byte checkByte;
+		byte[] m = null;
+		if (message != null) {
+			len = message.length();
+			m = new byte[len];
+			for (int i = 0; i < len; i++) m[i] = (byte)message.charAt(i);
+			if (len > maxStringLen)
+				len = maxStringLen;
+		}
+		len += 11;
+		txData[0] = startSymbol;
+		txData[1] = (byte) len;
+		checkByte = txData[1];
+		txData[3] = (byte) (expected >> 24);
+		checkByte ^= txData[3];
+		txData[7] = (byte) (actual >> 24);
+		checkByte ^= txData[7];
+		txData[11] = code;
+		checkByte ^= txData[11];
+		for (int i = 12; i <= len; i++) {
+			txData[i] = m[i - 12];
+			checkByte ^= txData[i];
+		}
+		txData[len + 1] = checkByte;
+		
+		if(host){
+			write(txData, 0, len + 2);
+		}else{
+			write(txData, 0, len + 2);
+		}
+	}
 
 }

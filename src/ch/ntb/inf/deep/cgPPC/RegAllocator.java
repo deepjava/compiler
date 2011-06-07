@@ -36,6 +36,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	
 	// used for resolving phi functions
 	public static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
+	private static int range;
 
 	/**
 	 * generates the live ranges of all SSAValues and assigns register to them
@@ -47,6 +48,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
 		nofParamGPR = 0; nofParamFPR = 0;
+		range = 0;
 		for (int i = 0; i < maxNofJoins; i++) {
 			rootJoins[i] = null;
 			joins[i] = rootJoins[i];
@@ -118,12 +120,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					SSAInstruction opdInstr = opd.owner;
 					if (opdInstr.ssaOpcode == sCPhiFunc) {	
-						//						if (instr.ssaOpcode == sCPhiFunc) {
 						//  TODO make recursiv
 						PhiFunction phi = (PhiFunction)opdInstr;
-//						if (((PhiFunction)instr).deleted) continue;
-//						if (phi.deleted && phi != instr && phi != phi.getOperands()[0].owner) {
-						// achtung: Fall das phi später kommt!!! z.B. in CmdTransmitter.sendFailed(BLjava/lang/String;II)V
+						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
 						if (phi.deleted && phi != instr) {
 							if (dbg) StdStreams.out.println("\tphi-function is deleted");
 							phi.used = true;
@@ -144,6 +143,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	private static void resolvePhiFunctions() {
 		if (dbg) StdStreams.out.println("resolving phi functions, set joins");
+		// first run
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 //				instr.print(2);
@@ -152,56 +152,105 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				PhiFunction phi = (PhiFunction)instr;
 				if (phi.deleted && !phi.used) continue;
 				SSAValue[] opds = instr.getOperands();
-				SSAValue res = instr.result, joinVal;
-//				boolean newIndex = true;
-//				if (opds.length > 1) 
-//					for (SSAValue opd : opds) {
-//						if (opd.owner.ssaOpcode == sCPhiFunc && opd.join != null) {
-//							newIndex = false;
-//							opd.owner.print(5);
-////							System.out.println("newIndex = "+newIndex);
-//						}
-//					}
-//				else newIndex = false;
-//					System.out.println("newIndex = "+newIndex);
-//				joinVal = joins[res.index];
-//				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
-//				if (joinVal == null) {
-//					joinVal = joins[res.index] = new SSAValue();
-//					if (!newIndex) joinVal.memorySlot = 100;
-////					joins[res.index] = new SSAValue();
-//				} else if (newIndex) {
-//					if (joinVal.memorySlot == 100) {
-//						System.out.println("aaaa");
-//					} else {
-//						System.out.println("bbbb");
-//						joinVal.next = new SSAValue();
-//						joinVal = joinVal.next;
-//					}
-//				} 
+				SSAValue res = phi.result;
+				for (SSAValue opd : opds) {
+					if (opd.owner.ssaOpcode == sCloadLocal) res.start = 0;
+					if (res.start > opd.n) res.start = opd.n;
+					if (res.start > res.n) res.start = res.n;
+					if (res.end < opd.n) res.end = opd.n;
+					if (res.end < res.n) res.end = res.n;
+				}
+				
+				SSAValue joinVal;
 				joinVal = joins[res.index];
-//				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
+				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
 				if (joinVal == null) {
 					joinVal = joins[res.index] = new SSAValue();
-//					if (!newIndex) joinVal.memorySlot = 100;
-//					joins[res.index] = new SSAValue();
-//				} else if (newIndex) {
-//					if (joinVal.memorySlot == 100) {
-//						System.out.println("aaaa");
-//					} else {
-//						System.out.println("bbbb");
-//						joinVal.next = new SSAValue();
-//						joinVal = joinVal.next;
-//					}
-				} 
+					joinVal.start = res.start;
+					joinVal.end = res.end;
+				} else {
+//						System.out.println("res: " + res.start + " to " + res.end);
+//						System.out.println("joinVal: " + joinVal.start + " to " + joinVal.end);
+//						System.out.println("b");
+					if (res.start <= joinVal.end) { // does range overlap with current join?
+//						System.out.println("joinVal overlaps");
+						// check if last join also overlaps
+						SSAValue prevJoin = joins[res.index];
+						while (prevJoin.next != null && prevJoin.next.next != null) prevJoin = prevJoin.next;
+						if (res.start <= prevJoin.end && prevJoin != joinVal) { // does range overlap with previous join, then merge
+//							System.out.println("merge joins: prevJoin:" + prevJoin.start + " to " + prevJoin.end + ", join:" + joinVal.start + " to " + joinVal.end);
+							assert prevJoin.next == joinVal; 
+							res.join = prevJoin;
+							prevJoin.next = null;
+							for (int k = 0; k < nofInstructions; k++) {
+								if (instrs[k].ssaOpcode == sCPhiFunc && instrs[k].result.join == joinVal) {
+//									System.out.println("redirect at " + k);
+									instrs[k].result.join = prevJoin;
+								}
+							}
+							joinVal = prevJoin;
+						}
+						if (res.start < joinVal.start) joinVal.start = res.start;
+						if (res.end > joinVal.end) joinVal.end = res.end;
+					} else {
+//						System.out.println("joinVal does not overlap, create new join value");
+						joinVal.next = new SSAValue();
+						joinVal = joinVal.next;
+						joinVal.start = res.start;
+						joinVal.end = res.end;
+					}
+				}
+
 				assert joinVal != null;
 				res.join = joinVal;	// set join of phi function
 				res.join.index = res.index;
-				for (SSAValue opd : opds) {
-					if (opd.owner.ssaOpcode == sCPhiFunc && ((PhiFunction)opd.owner).deleted && !((PhiFunction)opd.owner).used) continue;
-					opd.join = joinVal;
-				}
 			} 				
+		}
+
+//		// 3rd run
+//		for (int i = 0; i < nofInstructions; i++) {
+//			SSAInstruction instr = instrs[i];
+//				instr.print(2);
+////				printJoins();
+//			if (instr.ssaOpcode == sCPhiFunc) {
+//				PhiFunction phi = (PhiFunction)instr;
+//				if ((phi.deleted && !phi.used) || phi.regular) continue;
+//				SSAValue[] opds = instr.getOperands();
+//				SSAValue joinVal = null;
+//				for (SSAValue opd : opds) {
+//					if (opd.owner.ssaOpcode == sCPhiFunc) {
+//						if (joinVal == null) joinVal = ((PhiFunction)opd.owner).result.join;
+//						else {
+//							if (joinVal != ((PhiFunction)opd.owner).result.join) {
+//								System.out.println("merge");
+//								((PhiFunction)opd.owner).result.join = joinVal;
+//								joinVal.next = null;
+//							}
+//						}
+//					}
+//				}
+//
+//			} 				
+//		}
+		
+		// 4th run
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+			if (instr.ssaOpcode == sCPhiFunc) {
+				PhiFunction phi = (PhiFunction)instr;
+//				if ((phi.deleted && !phi.used) || phi.regular) continue;
+				if ((phi.deleted && !phi.used)) continue;
+				SSAValue[] opds = instr.getOperands();
+				for (SSAValue opd : opds) {
+//					if (opd.owner.ssaOpcode == sCPhiFunc && ((PhiFunction)opd.owner).deleted && !((PhiFunction)opd.owner).used) continue;
+					if (opd.owner.ssaOpcode == sCPhiFunc) continue;
+					if (phi.result.join != null) {
+						opd.join = phi.result.join;
+					} else {
+//						phi.result.join = opd.join;
+					}
+				}
+			} 		
 		}
 	}
 
@@ -560,7 +609,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			// find call which needs most registers for parameters
 			// this determines the size of the stack for this method
-			if (instr.ssaOpcode == sCcall || instr.ssaOpcode == sCcall) {
+			if (instr.ssaOpcode == sCcall) {
 				int gpr = 0, fpr = 0;
 				for (SSAValue opd : opds) {
 					int type = opd.type & ~(1<<ssaTaFitIntoInt);
@@ -579,7 +628,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
 		if (nof > 0) CodeGen.paramSlotsOnStack = nof;
 		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
-		if (nof > 0) CodeGen.paramSlotsOnStack += nof;
+		if (nof > 0) CodeGen.paramSlotsOnStack += nof*2;
 	}
 
 	private static void findReg(SSAValue res) {
@@ -680,7 +729,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				while (next != null) {
 					StdStreams.out.print(": start=" + next.start);
 					StdStreams.out.print(", end=" + next.end);
-					if (next.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
+					if (next.nonVol) StdStreams.out.print(", nonVol"); else StdStreams.out.print(", vol");
 					StdStreams.out.print(", reg=" + next.reg);
 					if (next.regAux1 > -1) StdStreams.out.print(", regAux1=" + next.regAux1);
 					next = next.next;

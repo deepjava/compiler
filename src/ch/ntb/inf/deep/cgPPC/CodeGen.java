@@ -156,7 +156,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if(dbg) {
 			StdStreams.out.print("nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
-			StdStreams.out.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
+			StdStreams.out.print(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
+			StdStreams.out.println(", paramSlotsOnStack = " + paramSlotsOnStack);
 			StdStreams.out.print("parameter end at instr no: ");
 			for (int n = 0; n < nofParam; n++) 
 				if (paramRegEnd[n] != -1) StdStreams.out.print(paramRegEnd[n] + "  "); 
@@ -1850,7 +1851,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					copyParameters(opds);
 					
 					if (newString) {
-//						loadConstantAndFixup(paramStartGPR, stringRef);	// first reg contains ref to string
 						int sizeOfObject = Type.wktObject.getObjectSize();
 						createIrDrAsimm(ppcAddi, paramStartGPR+opds.length, 0, sizeOfObject); // reg after last parameter
 					}
@@ -2215,7 +2215,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
 		for (int k = 0; k < nofFPR; k++) {srcFPR[k] = 0; srcFPRcount[k] = 0;}
 
-		// get info about register location for parameters
+		// get info about register location of parameters
 		for (int k = 0, kGPR = 0, kFPR = 0; k < opds.length; k++) {
 			int type = opds[k].type & ~(1<<ssaTaFitIntoInt);
 			if (type == tLong) {
