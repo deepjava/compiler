@@ -27,11 +27,7 @@ public class Register {
 	public void setType(int type){
 		this.type = type;
 		if(repr == 0){
-			if(type == Parser.sFPR){
-				repr = Parser.sFloat;
-			}else{
-				repr = Parser.sHex;
-			}
+			repr = Parser.sHex;
 		}
 	}
 		
@@ -94,9 +90,6 @@ public class Register {
 		}
 		if(repr == Parser.sHex){
 			return HString.getHString("Hex");
-		}
-		if(repr == Parser.sFloat){
-			return HString.getHString("Float");
 		}
 		return HString.getHString("Undefined Representation");
 	}

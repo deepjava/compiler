@@ -22,7 +22,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	private static TargetConfiguration activeTarConf;
 	private static OperatingSystem os;
 	private static String location;
-	// private static Class heap;
 	private static final int maxNumbersOfHeaps = 4;
 	private static final int maxNumbersOfStacks = 4;
 	private static final int defaultLength = 32;
@@ -260,24 +259,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	public static HString getExceptionClassname() {
 		return HString.getHString(os.getExceptionBaseClass().name);
 	}
-
-	// public static Class getReferenceToHeapClass() {
-	// if (heap == null) {
-	// HString str = os.getHeap();
-	// int heapHash = str.hashCode();
-	// Class current = Class.classList;
-	// while (current != null) {
-	// if (current.name.hashCode() == heapHash) {
-	// if (current.name.equals(str)) {
-	// heap = current;
-	// break;
-	// }
-	// }
-	// current = (Class) current.next;
-	// }
-	// }
-	// return heap;
-	// }
 
 	public static void setOperatingSystem(OperatingSystem os) {
 		Configuration.os = os;
@@ -584,30 +565,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		}
 		return sysTabSegs;
 	}
-	
-//	private static void collectSegmentsForAttributes(int attributes) {
-//		segs = new Segment[defaultLength];
-//		Device currDev = memoryMap.getDevices();
-//		while (currDev != null) {
-//			Segment currSeg = currDev.segments;
-//			if (currSeg != null) {
-//				findSegment(currSeg, attributes);
-//			}
-//			currDev = currDev.next;
-//		}
-//	}
-//
-//	private static void findSegment(Segment s, int attributes) {
-//		// descend
-//		if (s.subSegments != null)
-//			findSegment(s.subSegments, attributes);
-//		// traverse from left to right
-//		if (s.next != null)
-//			findSegment(s.next, attributes);
-//		if ((s.getAttributes() & (1 << atrSysTab)) != 0) {
-//			noticeSegment(s);
-//		}
-//	}
 
 	private static void noticeSegment(Segment s) {
 		if (s == null)
@@ -698,7 +655,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		targetConfig = null;
 		activeTarConf = null;
 		os = null;
-		// heap = null;
 		nofHeapSegments = 0;
 		nofStackSegments = 0;
 		heaps = new Segment[maxNumbersOfHeaps];
@@ -712,19 +668,16 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	protected static void setActiveTargetConfig(HString targetConfigName) {
 		// determine active configuration if it is not set
-//		if (activeTarConf == null) {
-			activeTarConf = targetConfig;
-			while (activeTarConf != null) {
-				if (activeTarConf.name.equals(targetConfigName)) {
-					break;
-				}
-				activeTarConf = activeTarConf.next;
+		activeTarConf = targetConfig;
+		while (activeTarConf != null) {
+			if (activeTarConf.name.equals(targetConfigName)) {
+				break;
 			}
-			if (activeTarConf == null) {
-				ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration which is set is not found\n");
-			}
-//		}
-
+			activeTarConf = activeTarConf.next;
+		}
+		if (activeTarConf == null) {
+			ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration which is set is not found\n");
+		}
 	}
 
 	public static void parseAndCreateConfig(String file, String targetConfigurationName) {
@@ -743,19 +696,5 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		if(ErrorReporter.reporter.nofErrors <=0) setActiveTargetConfig(HString.getHString(targetConfigurationName));
 	}
 
-//	public static void main(String[] args) {
-//		parseAndCreateConfig("D:/work/Crosssystem/deep/ExampleProject.deep",
-//				"BootFromRam");
-//		Configuration.print();
-//		Dbg.vrb.println("Config read with " + Parser.nOfErrors + " error(s)");
-//		// String[] names =Configuration.getRootClassNames();
-//		// for(int i = 0; i < names.length; i++){
-//		// StdStreams.out.println(names[i]);
-//		// }
-//
-//		// Configuration.getCodeSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
-//		// Configuration.getVarSegmentOf(HString.getHString("ch/ntb/inf/mpc555/kernel")).println(0);
-//		// Configuration.getConstSegmentOf(HString.getHString("ch/ntb/inf/myProject/package2/z")).println(0);
-//		Configuration.createInterfaceFile(HString.getHString("D:/work/Crosssystem/deep/src/ch/ntb/inf/deep/runtime/mpc555/ntbMpc555HB.java"));
-//	}
+
 }

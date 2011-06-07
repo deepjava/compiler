@@ -48,9 +48,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			sNew = g7 + 6, sMSR = g7 + 7, sCR = g7 + 8, sFPSCR = g7 + 9, sExcHnd = g7 + 10;
 	// -------- Register representation: 
 	public static final short g8 = g7 + 11, sHex = g8, sDez = g8 + 1,
-			sBin = g8 + 2, sFloat = g8 + 3;
+			sBin = g8 + 2;
 	// -------- Assignment keywords; 
-	private static final short g9 = g8 + 4, sVersion = g9,
+	private static final short g9 = g8 + 3, sVersion = g9,
 			sDescription = g9 + 1, sImport = g9 + 2, sAttributes = g9 + 3,
 			sWidth = g9 + 4, sSize = g9 + 5, sBase = g9 + 6,
 			sRootclasses = g9 + 7, sSegmentsize = g9 + 8, sArraysize = g9 + 9,
@@ -62,13 +62,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	// -------- Block keywords: 
 	private static final short g10 = g9 + 30, sMeta = g10,
 			sConstants = g10 + 1, sDevice = g10 + 2, sReginit = g10 + 3,
-			sSegment = g10 + 4, sMemorymap = g10 + 5, sMap = g10 + 6,
-			sModules = g10 + 7, sTargetConf = g10 + 8, sProject = g10 + 9,
-			sSegmentarray = g10 + 10, sRegistermap = g10 + 11,
-			sRegister = g10 + 12, sOperatingSystem = g10 + 13,
-			sSysConst = g10 + 14, sMethod = g10 + 15, sMemorysector = g10 + 16, sMemorysectorArray = g10 + 17, sSystem = g10 + 18;
+			sSegment = g10 + 4, sMemorymap = g10 + 5,
+			sModules = g10 + 6, sTargetConf = g10 + 7, sProject = g10 + 8,
+			sSegmentarray = g10 + 9, sRegistermap = g10 + 10,
+			sRegister = g10 + 11, sOperatingSystem = g10 + 12,
+			sSysConst = g10 + 13, sMethod = g10 + 14, sMemorysector = g10 + 15, sMemorysectorArray = g10 + 16, sSystem = g10 + 17;
 	// -------- Designator, IntNumber,
-	private static final short g11 = g10 + 19, sDesignator = g11,
+	private static final short g11 = g10 + 18, sDesignator = g11,
 			sNumber = g11 + 1;
 	// -------- End of file: EOF
 	private static final short g12 = g11 + 2, sEndOfFile = g12;
@@ -283,9 +283,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			if (temp.equals("fpr")) {
 				sym = sFPR;
 				return true;
-			} else if (temp.equals("float")) {
-				sym = sFloat;
-				return true;
 			} else if (temp.equals("fpscr")) {
 				sym = sFPSCR;
 				return true;
@@ -336,10 +333,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				return true;
 			}
 		case 'm':
-			if (str.equals("map")) {
-				sym = sMap;
-				return true;
-			} else if (str.equals("modules")) {
+			if (str.equals("modules")) {
 				sym = sModules;
 				return true;
 			} else if (str.equals("meta")) {
@@ -735,8 +729,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "dez";
 		case sBin:
 			return "bin";
-		case sFloat:
-			return "float";
 		case sVersion:
 			return "version";
 		case sDescription:
@@ -809,8 +801,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "segment";
 		case sMemorymap:
 			return "memorymap";
-		case sMap:
-			return "map";
 		case sModules:
 			return "modules";
 		case sTargetConf:
@@ -981,8 +971,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 		SystemConstants sysConst = SystemConstants.getInstance();
 		while (sym == sDesignator) {
-			sysConst
-					.addSysConst(HString.getHString(strBuffer), varAssignment());
+			sysConst.addSysConst(HString.getHString(strBuffer), varAssignment());
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1098,18 +1087,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				next();
 				if (sym != sEqualsSign) {
 					nOfErrors++;
-					reporter.error(errAssignExp, "in " + currentFile + " at Line "
-							+ lineNumber + " expected: =, received symbol: "
-							+ symToString());
+					reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber + " expected: =, received symbol: " + symToString());
 					reporter.println();
 				}
 				next();
 				memType = HString.getHString(readString());
 				if (sym != sSemicolon) {
 					nOfErrors++;
-					reporter.error(errSemicolonMissExp, "in " + currentFile
-							+ " befor Line " + lineNumber
-							+ " expected symbol: ;, received symbol: " + symToString());
+					reporter.error(errSemicolonMissExp, "in " + currentFile + " befor Line " + lineNumber + " expected symbol: ;, received symbol: " + symToString());
 					reporter.println();
 				}
 				next();
@@ -1117,10 +1102,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		Device device =new Device(dev, base, size, width, attributes, technology);
 		device.memorytype = memType;
-		while(sym == sSegment || sym == sMemorysector || sym == sMemorysectorArray){
-			if(sym == sSegment){
-				device.addSegment(segment(true,device.attributes, device.width, device));
-			}else if (sym == sMemorysector){
+		while( sym == sMemorysector || sym == sMemorysectorArray){
+			if (sym == sMemorysector){
 				device.addSector(sector());
 			}else if (sym == sMemorysectorArray){
 				sectorArray(device);
@@ -1136,9 +1119,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		if (attributes == 0 || width == 0 || size == 0 || technology == -1 || (technology > 0 && memType == null) || (technology > 0 && device.sector == null)) {
-			reporter.error(errInconsistentattributes, "in " + currentFile
-					+ " Missing attribute by creation of device: "
-					+ dev.toString());
+			reporter.error(errInconsistentattributes, "in " + currentFile + " Missing attribute by creation of device: " + dev.toString());
 			reporter.println();
 			return null;
 		}
@@ -1302,8 +1283,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return null;
 		}
 		next();
-		while (sym == sAttributes || sym == sBase || sym == sWidth
-				|| sym == sSize) {
+		while (sym == sAttributes || sym == sBase || sym == sWidth || sym == sSize) {
 			switch (sym) {
 			case sAttributes:
 				seg.setAttributes(attributeAssignment());
@@ -1323,8 +1303,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			if (sym == sSegmentarray) {
 				segmentArray(true, seg);
 			} else {
-				seg.addSubSegment(segment(true, seg.getAttributes(), seg
-						.getWidth(), seg.owner));
+				seg.addSubSegment(segment(true, seg.getAttributes(), seg.getWidth(), seg.owner));
 			}
 		}
 		if ((seg.attributes & (1 << atrHeap)) != 0) {
@@ -1525,9 +1504,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 		while (sym == sDesignator) {
 			if(targetConfig == null){
-				Configuration.setRegInit(HString.getHString(strBuffer),	regAssignment());
+				Configuration.setRegInit(HString.getHString(strBuffer),	varAssignment());
 			}else{
-				targetConfig.setRegInit(HString.getHString(strBuffer),	regAssignment());
+				targetConfig.setRegInit(HString.getHString(strBuffer),	varAssignment());
 			}
 		}
 		if (sym != sRBrace) {
@@ -1601,8 +1580,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		MemoryMap memMap = MemoryMap.getInstance();
-		while (sym == sKernel || sym == sException || sym == sHeap
-				|| sym == sDesignator || sym == sDefault) {
+		while (sym == sKernel || sym == sException || sym == sHeap	|| sym == sDesignator || sym == sDefault) {
 			Module root = moduleAssignment(true);
 			if (targetConfig != null) {
 				while (root != null) {
@@ -1626,7 +1604,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		if(targetConfig != null){
-			Module def =targetConfig.getModuleByName(HString.getHString("default"));
+			Module def = targetConfig.getModuleByName(HString.getHString("default"));
 			if(def == null){
 				nOfErrors++;
 				reporter.error(errNoDefaultSegmentDef, "in " + currentFile + " at " + targetConfig.name);
@@ -1981,8 +1959,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		Project proj = new Project();
-		while (sym == sRootclasses || sym == sLibPath || sym == sDebugLevel
-				|| sym == sPrintLevel) {
+		while (sym == sRootclasses || sym == sLibPath || sym == sDebugLevel	|| sym == sPrintLevel) {
 			if (sym == sRootclasses) {
 				HString classes = rootClassesAssignment();
 				proj.setRootClasses(classes);
@@ -2005,27 +1982,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (proj.getRootClasses() == null || proj.getLibPaths() == null) {
 			nOfErrors++;
-			reporter.error(	errMissingTag,"in "	+ currentFile
-									+ " \"project\" tags \"rootclasses and libpath\" must be defined");
+			reporter.error(	errMissingTag,"in "	+ currentFile + " \"project\" tags \"rootclasses and libpath\" must be defined");
 			reporter.println();
 			return;
 
 		}
 
 		Configuration.setProject(proj);
-		// if (importList != null) {
-		// for (int i = 0; i < importList.size(); i++) {
-		// HString toCmp = importList.remove(i);
-		// if (!importedFiles.contains(toCmp)) {
-		// File f = new File(loc.toString() + toCmp.toString());
-		// if (f.exists()) {
-		// parseImport(loc, toCmp);
-		// } else {
-		// parseImport(libPath, toCmp);
-		// }
-		// }
-		// }
-		// }
 		for (int i = 0; i < toImport.size(); i++) {
 			Boolean contains = false;
 			HString toCmp = toImport.get(i);
@@ -2062,19 +2025,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	private void operatingSystem() {
 		if (sym != sOperatingSystem) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFile
-					+ " at Line " + lineNumber
-					+ " expected symbol: operatingsystem, received symbol: "
-					+ symToString());
+			reporter.error(errUnexpectetSymExp, "in " + currentFile + " at Line " + lineNumber + " expected symbol: operatingsystem, received symbol: " + symToString());
 			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber + " expected symbol: {, received symbol: "	+ symToString());
 			reporter.println();
 			return;
 		}
@@ -2097,17 +2055,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber + " expected symbol: }, received symbol: " + symToString());
 			reporter.println();
 			return;
 		}
 		if (os.getExceptionBaseClass() == null || os.getHeap() == null
 				|| os.getKernel() == null || os.getUs() == null || os.getLowLevel() == null) {
 			nOfErrors++;
-			reporter.error(	errMissingTag,"in "	+ currentFile
-							+ " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined");
+			reporter.error(	errMissingTag,"in "	+ currentFile + " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined");
 			reporter.println();
 			return;
 		}
@@ -2449,7 +2404,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			}
 		} else if (sym == sDesignator) {
 			value = Configuration.getValueFor(HString.getHString(strBuffer));
-
 			next();
 		} else {
 			nOfErrors++;
@@ -2799,9 +2753,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		return res;
 	}
 
-	private int regAssignment() {
-		return varAssignment();
-	}
 
 	private int attributeAssignment() {
 		int res = 0;
