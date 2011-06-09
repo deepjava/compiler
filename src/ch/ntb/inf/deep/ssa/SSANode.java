@@ -316,6 +316,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 													if((entrySet[j].type & (1 << SSAValue.ssaTaFitIntoInt))!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & (1 << SSAValue.ssaTaFitIntoInt)) != 0){
 														typeFlagsSet = true;
 													}
+													if((entrySet[j].type == SSAValue.tRef && ((SSANode) predecessors[i]).exitSet[j].type > SSAValue.tAref) || (entrySet[j].type > SSAValue.tAref && ((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tRef) ){
+														typeFlagsSet = true;
+													}
 													if (typeFlagsSet || (entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type)) {
 														SSAValue result = new SSAValue();
 														SSAValue opd = entrySet[j];
@@ -323,7 +326,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 														PhiFunction phi = new PhiFunction(sCPhiFunc);
 														result.owner = phi;
 														phi.result = result;
-														phi.result.type = entrySet[j].type;
+														if(typeFlagsSet && ((SSANode) predecessors[i]).exitSet[j].type > SSAValue.tRef){														
+															phi.result.type = ((SSANode) predecessors[i]).exitSet[j].type;
+														}else{														
+															phi.result.type = entrySet[j].type;
+														}
 														int predNo = 0;
 														for(int k = 0; k < nofPredecessors; k++){
 															if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
@@ -352,6 +359,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 													if((opnd[0].type & (1 << SSAValue.ssaTaFitIntoInt))!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & (1 << SSAValue.ssaTaFitIntoInt)) != 0){
 														typeFlagsSet = true;
 													}
+													if((opnd[0].type == SSAValue.tRef && ((SSANode) predecessors[i]).exitSet[j].type > SSAValue.tAref) || (opnd[0].type > SSAValue.tAref && ((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tRef) ){
+														typeFlagsSet = true;
+													}
 													if (typeFlagsSet || (opnd[0].type == ((SSANode) predecessors[i]).exitSet[j].type)) {
 														SSAValue opd = ((SSANode) predecessors[i]).exitSet[j];
 														opd = insertRegMoves((SSANode) predecessors[i], j, opd);
@@ -370,6 +380,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 												if((entrySet[j].type & (1 << SSAValue.ssaTaFitIntoInt))!= 0 && (((SSANode) predecessors[i]).exitSet[j].type & (1 << SSAValue.ssaTaFitIntoInt)) != 0){
 													typeFlagsSet = true;
 												}
+												if((entrySet[j].type == SSAValue.tRef && ((SSANode) predecessors[i]).exitSet[j].type > SSAValue.tAref) || (entrySet[j].type > SSAValue.tAref && ((SSANode) predecessors[i]).exitSet[j].type == SSAValue.tRef) ){
+													typeFlagsSet = true;
+												}
 												if (typeFlagsSet || entrySet[j].type == ((SSANode) predecessors[i]).exitSet[j].type) {
 													SSAValue result = new SSAValue();
 													SSAValue opd = entrySet[j];
@@ -377,7 +390,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 													PhiFunction phi = new PhiFunction(sCPhiFunc);
 													result.owner = phi;
 													phi.result = result;
-													phi.result.type = entrySet[j].type;
+													if(typeFlagsSet && ((SSANode) predecessors[i]).exitSet[j].type > SSAValue.tRef){														
+														phi.result.type = ((SSANode) predecessors[i]).exitSet[j].type;
+													}else{														
+														phi.result.type = entrySet[j].type;
+													}
 													int predNo = 0;
 													for(int k = 0; k < nofPredecessors; k++){
 														if(entrySet[j]==((SSANode)predecessors[k]).exitSet[j]){
