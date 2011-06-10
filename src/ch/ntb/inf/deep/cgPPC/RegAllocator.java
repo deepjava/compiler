@@ -153,7 +153,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (phi.deleted && !phi.used) continue;
 				SSAValue[] opds = instr.getOperands();
 				SSAValue res = phi.result;
-				for (SSAValue opd : opds) {
+				for (SSAValue opd : opds) {	// set range of phi functions
 					if (opd.owner.ssaOpcode == sCloadLocal) res.start = 0;
 					if (res.start > opd.n) res.start = opd.n;
 					if (res.start > res.n) res.start = res.n;
@@ -171,10 +171,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				} else {
 //						System.out.println("res: " + res.start + " to " + res.end);
 //						System.out.println("joinVal: " + joinVal.start + " to " + joinVal.end);
-//						System.out.println("b");
 					if (res.start <= joinVal.end) { // does range overlap with current join?
 //						System.out.println("joinVal overlaps");
-						// check if last join also overlaps
 						SSAValue prevJoin = joins[res.index];
 						while (prevJoin.next != null && prevJoin.next.next != null) prevJoin = prevJoin.next;
 						if (res.start <= prevJoin.end && prevJoin != joinVal) { // does range overlap with previous join, then merge
@@ -183,16 +181,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							res.join = prevJoin;
 							prevJoin.next = null;
 							for (int k = 0; k < nofInstructions; k++) {
-								if (instrs[k].ssaOpcode == sCPhiFunc && instrs[k].result.join == joinVal) {
-//									System.out.println("redirect at " + k);
+								if (instrs[k].ssaOpcode == sCPhiFunc && instrs[k].result.join == joinVal) 
 									instrs[k].result.join = prevJoin;
-								}
 							}
 							joinVal = prevJoin;
 						}
 						if (res.start < joinVal.start) joinVal.start = res.start;
 						if (res.end > joinVal.end) joinVal.end = res.end;
-					} else {
+					} else {	// does not overlap, create new join
 //						System.out.println("joinVal does not overlap, create new join value");
 						joinVal.next = new SSAValue();
 						joinVal = joinVal.next;
@@ -207,47 +203,17 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			} 				
 		}
 
-//		// 3rd run
-//		for (int i = 0; i < nofInstructions; i++) {
-//			SSAInstruction instr = instrs[i];
-//				instr.print(2);
-////				printJoins();
-//			if (instr.ssaOpcode == sCPhiFunc) {
-//				PhiFunction phi = (PhiFunction)instr;
-//				if ((phi.deleted && !phi.used) || phi.regular) continue;
-//				SSAValue[] opds = instr.getOperands();
-//				SSAValue joinVal = null;
-//				for (SSAValue opd : opds) {
-//					if (opd.owner.ssaOpcode == sCPhiFunc) {
-//						if (joinVal == null) joinVal = ((PhiFunction)opd.owner).result.join;
-//						else {
-//							if (joinVal != ((PhiFunction)opd.owner).result.join) {
-//								System.out.println("merge");
-//								((PhiFunction)opd.owner).result.join = joinVal;
-//								joinVal.next = null;
-//							}
-//						}
-//					}
-//				}
-//
-//			} 				
-//		}
-		
-		// 4th run
+		// 2nd run, set joins of all operands of phi functions
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			if (instr.ssaOpcode == sCPhiFunc) {
 				PhiFunction phi = (PhiFunction)instr;
-//				if ((phi.deleted && !phi.used) || phi.regular) continue;
 				if ((phi.deleted && !phi.used)) continue;
 				SSAValue[] opds = instr.getOperands();
 				for (SSAValue opd : opds) {
-//					if (opd.owner.ssaOpcode == sCPhiFunc && ((PhiFunction)opd.owner).deleted && !((PhiFunction)opd.owner).used) continue;
-					if (opd.owner.ssaOpcode == sCPhiFunc) continue;
+					if (opd.owner.ssaOpcode == sCPhiFunc) continue;	// already set
 					if (phi.result.join != null) {
 						opd.join = phi.result.join;
-					} else {
-//						phi.result.join = opd.join;
 					}
 				}
 			} 		
@@ -482,7 +448,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				// check if operand can be used with immediate instruction format
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
-				if (imm && res.index < 0 && res.join == null) {
+//				if (imm && res.index < 0 && res.join == null) {
+				if (imm && res.index < maxStackSlots && res.join == null) {
 					if (dbg) StdStreams.out.println("\timmediate");
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 

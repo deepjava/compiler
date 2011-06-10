@@ -349,6 +349,90 @@ live ranges of phi functions
 	index=4: start=11, end=21, vol, reg=2
 --------------------------------------------------------------------------------
 
+	// from Heap.newMultiDimArray
+	private static int phiFunctionTest17(int ref, int nofDim, int dim0, int dim1, int dim2, int dim3, int dim4) {
+		if (nofDim > 3 || nofDim < 2) help3(20);
+		if (nofDim == 2) {
+			int elemSize = help4(ref);
+			int dim1Size = (8 + dim1 * elemSize + 3) >> 2 << 2;	
+			int size = 8 + dim0 * 4 + dim0 * dim1Size;
+			int addr = heapPtr; 
+			while (addr < heapPtr + size) {help5(addr, 0); addr += 4;}
+			help5(heapPtr + 4, ref);	// write tag
+			help5(heapPtr + 2, dim0);	// write length of dim0
+			ref = heapPtr + 8;
+			addr = ref;
+			for (int i = 0; i < dim0; i++) {
+				int elemAddr = ref + 4 * dim0 + 8 + i * dim1Size; 
+				help5(addr, elemAddr);
+				help5(elemAddr - 4, ref);	// write tag
+				help5(elemAddr - 6, dim1);	// write length of dim0
+				addr += 4;
+			}
+			heapPtr += ((size + 15) >> 4) << 4;
+		}
+		return ref;
+	}
+joins at index: [,,,x,,x,x,x,x,x,,x,x,x,x,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=3: start=0, end=121, nonVol, reg=31
+	index=5: start=0, end=116, nonVol, reg=29
+	index=6: start=0, end=117, nonVol, reg=28
+	index=7: start=0, end=118, nonVol, reg=27
+	index=8: start=0, end=119, nonVol, reg=26
+	index=9: start=0, end=120, nonVol, reg=25
+	index=11: start=20, end=98, nonVol, reg=30
+	index=12: start=27, end=101, nonVol, reg=24
+	index=13: start=28, end=52, nonVol, reg=23: start=64, end=98, nonVol, reg=23
+	index=14: start=65, end=98, nonVol, reg=22
+--------------------------------------------------------------------------------
+
+	static final int maxStringLen = 64;
+	static byte[] txData = new byte[maxStringLen];
+	static final byte startSymbol = 0x11;
+	static void write(byte[] txData2, int i, int j) {}
+
+	// from CmdTransmitter.sendFailed
+	public static void phiFunctionTest18(byte code, String message, int expected, int actual) {
+		int len = 0;
+		byte checkByte;
+		byte[] m = null;
+		if (message != null) {
+			len = message.length();
+			m = new byte[len];
+			for (int i = 0; i < len; i++) m[i] = (byte)message.charAt(i);
+			if (len > maxStringLen)
+				len = maxStringLen;
+		}
+		len += 11;
+		txData[0] = startSymbol;
+		txData[1] = (byte) len;
+		checkByte = txData[1];
+		txData[3] = (byte) (expected >> 24);
+		checkByte ^= txData[3];
+		txData[7] = (byte) (actual >> 24);
+		checkByte ^= txData[7];
+		txData[11] = code;
+		checkByte ^= txData[11];
+		for (int i = 12; i <= len; i++) {
+			txData[i] = m[i - 12];
+			checkByte ^= txData[i];
+		}
+		txData[len + 1] = checkByte;
+		write(txData, 0, len + 2);
+	}
+joins at index: [,,,,,x,x,x,x,x,x,x,x,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=5: start=0, end=75, nonVol, reg=31
+	index=6: start=0, end=25, nonVol, reg=30
+	index=7: start=0, end=54, nonVol, reg=29
+	index=8: start=0, end=65, nonVol, reg=28
+	index=9: start=0, end=39, nonVol, reg=27: start=39, end=110, vol, reg=2
+	index=10: start=80, end=106, vol, reg=4
+	index=11: start=1, end=102, nonVol, reg=26
+	index=12: start=7, end=25, nonVol, reg=25: start=81, end=102, vol, reg=3
+--------------------------------------------------------------------------------
+
 	In Klasse Double.java
   public static int doubleToChars(double val, int nofFractDigits, char[] chars) {
 		gchars = chars;

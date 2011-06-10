@@ -305,7 +305,6 @@ public class T04Loops {
 	static final int maxStringLen = 64;
 	static byte[] txData = new byte[maxStringLen];
 	static final byte startSymbol = 0x11;
-	public static final boolean host = false;
 	static void write(byte[] txData2, int i, int j) {}
 
 	// from CmdTransmitter.sendFailed
@@ -335,12 +334,7 @@ public class T04Loops {
 			checkByte ^= txData[i];
 		}
 		txData[len + 1] = checkByte;
-		
-		if(host){
-			write(txData, 0, len + 2);
-		}else{
-			write(txData, 0, len + 2);
-		}
+		write(txData, 0, len + 2);
 	}
 
 }
