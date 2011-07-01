@@ -147,7 +147,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 //				instr.print(2);
-//				printJoins();
 			if (instr.ssaOpcode == sCPhiFunc) {
 				PhiFunction phi = (PhiFunction)instr;
 				if (phi.deleted && !phi.used) continue;
@@ -168,6 +167,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					joinVal = joins[res.index] = new SSAValue();
 					joinVal.start = res.start;
 					joinVal.end = res.end;
+					joinVal.type = res.type;
 				} else {
 //						System.out.println("res: " + res.start + " to " + res.end);
 //						System.out.println("joinVal: " + joinVal.start + " to " + joinVal.end);
@@ -194,6 +194,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						joinVal = joinVal.next;
 						joinVal.start = res.start;
 						joinVal.end = res.end;
+						joinVal.type = res.type;
 					}
 				}
 
@@ -697,6 +698,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					StdStreams.out.print(": start=" + next.start);
 					StdStreams.out.print(", end=" + next.end);
 					if (next.nonVol) StdStreams.out.print(", nonVol"); else StdStreams.out.print(", vol");
+					StdStreams.out.print(", type=" + next.typeName());
 					StdStreams.out.print(", reg=" + next.reg);
 					if (next.regAux1 > -1) StdStreams.out.print(", regAux1=" + next.regAux1);
 					next = next.next;
