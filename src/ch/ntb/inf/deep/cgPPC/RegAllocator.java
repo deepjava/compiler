@@ -23,6 +23,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	private static final int nofSSAInstr = 256;
 	public static final int maxNofJoins = 32;
 	
+	static SSA ssa;
 	static int maxStackSlots;
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
@@ -42,6 +43,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 * generates the live ranges of all SSAValues and assigns register to them
 	 */
 	static void buildIntervals(SSA ssa) {
+		RegAllocator.ssa = ssa;
 		maxStackSlots = ssa.cfg.method.maxStackSlots;
 		regsGPR = regsGPRinitial;
 		regsFPR = regsFPRinitial;
@@ -120,7 +122,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					SSAInstruction opdInstr = opd.owner;
 					if (opdInstr.ssaOpcode == sCPhiFunc) {	
-						//  TODO make recursiv
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
 						if (phi.deleted && phi != instr) {
@@ -134,10 +135,45 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 									phi.used = true;
 								}
 							}
+							// set "used" in all del phi-functions in dominators
+							SSANode origin = getNode(opdInstr);
+							SSANode current = getNode(phi);
+							markInDominators(origin, current, phi.result.index);
 						}
 					}
 				}	
 			} 
+		}
+	}
+
+	private static SSANode getNode(SSAInstruction opdInstr) {
+		SSANode b = (SSANode) ssa.cfg.rootNode;
+		boolean found = false;
+		while (b != null) {
+			for (int i = 0; i < b.nofPhiFunc; i++) {
+				if (b.phiFunctions[i] == opdInstr) found = true;
+			}
+			for (int i = 0; i < b.nofInstr; i++) {
+				if (b.instructions[i] == opdInstr) found = true;
+			}
+			if (found) break;
+			b = (SSANode) b.next;
+		}	
+		if (found) return b; else return null;
+	}
+
+	private static void markInDominators(SSANode origin, SSANode current, int index) {
+		SSANode node = current;
+		while (node.idom != null && node.idom != origin) {
+			node = (SSANode)node.idom;
+			SSAValue val = node.exitSet[index];
+			if (val != null) {
+				SSAInstruction instr = node.exitSet[index].owner;
+				if (instr.ssaOpcode == sCPhiFunc) {
+					PhiFunction phi = (PhiFunction)instr;
+					if (phi.deleted) phi.used = true;
+				}
+			}
 		}
 	}
 

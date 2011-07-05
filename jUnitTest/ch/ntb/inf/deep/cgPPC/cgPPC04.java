@@ -179,7 +179,7 @@ public class cgPPC04 extends TestCgPPC {
 		CodeGen code = getCode("forIfFor");
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 12, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 13, true, false));
-		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 14, true, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 14, true, true));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 15, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 16, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 32, false, false));
@@ -303,7 +303,7 @@ public class cgPPC04 extends TestCgPPC {
 		assertTrue("wrong join", checkJoin(getJoin(3).next, 9, 16, vol, false));
 		for (int i = 4; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
-		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 5, true, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 5, true, true));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 6, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 13, true, true));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 14, false, false));
@@ -361,7 +361,7 @@ public class cgPPC04 extends TestCgPPC {
 		assertTrue("wrong join", checkJoin(getJoin(4).next, 11, 21, vol, false));
 		for (int i = 5; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
-		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 5, true, false));
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 5, true, true));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 6, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 7, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 17, true, true));
@@ -532,6 +532,34 @@ public class cgPPC04 extends TestCgPPC {
 		assertTrue("wrong join", checkJoin(getJoin(12), 7, 25, nonVol, true));	// i
 		assertTrue("wrong join", checkJoin(getJoin(12).next, 81, 102, vol, false));	// i
 		for (int i = 13; i < RegAllocator.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+
+	//	@Ignore
+	@Test 
+	public void phiFunctionTest19() {
+		CodeGen code = getCode("phiFunctionTest19");
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 10, true, true));	// a
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 11, true, true));	// i
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 12, true, true));	// b
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 13, false, false));	// k
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 18, true, true));	// a
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 19, false, false));	// i
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 20, true, false));	// b
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 21, true, false));	// k
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 28, true, false));	// a
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 29, false, false));	// n
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 30, true, false));	// b
+		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 31, true, false));	// k
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 1, 23, vol, false));	// a
+		assertTrue("wrong join", checkJoin(getJoin(4), 2, 23, vol, true));	// i
+		assertTrue("wrong join", checkJoin(getJoin(4).next, 24, 33, vol, false));	// n
+		assertTrue("wrong join", checkJoin(getJoin(5), 4, 15, vol, false));	// b
+		assertTrue("wrong join", checkJoin(getJoin(6), 5, 15, vol, false));	// k
+		for (int i = 7; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 }

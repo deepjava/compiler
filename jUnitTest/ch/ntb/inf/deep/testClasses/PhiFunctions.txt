@@ -114,7 +114,7 @@ live ranges of phi functions
 		return a + 3;
 	}
 
-phi-Funktion für a in der 1.Schleife ist del
+phi-Funktion für a in der 1.Schleife ist del und used
 phi-Funktion für i in der 1.Schleife
 phi-Funktion für a in der 2.Schleife ist del und used, opd dieser phi-Funktion 
   ist direkt die Instruktion "a = 100"
@@ -182,7 +182,7 @@ live ranges of phi functions
 		return a + b;
 	}
 	
-phi-Funktion für a in der 1.Schleife ist del
+phi-Funktion für a in der 1.Schleife ist del und used
 phi-Funktion für b in der 1.Schleife ist del
 phi-Funktion für i in der 1.Schleife
 phi-Funktion für a in der 2.Schleife ist del und used, opd dieser phi-Funktion 
@@ -431,6 +431,39 @@ live ranges of phi functions
 	index=10: start=80, end=106, vol, reg=4
 	index=11: start=1, end=102, nonVol, reg=26
 	index=12: start=7, end=25, nonVol, reg=25: start=81, end=102, vol, reg=3
+--------------------------------------------------------------------------------
+
+	// problem taken from flash file System
+	public static void phiFunctionTest19() {
+		int[] a = new int[5];
+		for (int i = 0; i < 32; i++) {
+			int b = 20;
+			for (int k = 0; k < 3; k++) a[k] = b;
+		}
+		for (int n = 0; n < 7; n++);
+	}
+
+äussere for-Schleife:	kommt im Code weiter unten
+phi-Funktion für a ist del und used
+phi-Funktion für i
+phi-Funktion für b ist del
+phi-Funktion für k ist del
+innere for-Schleife:	
+phi-Funktion für a ist del und used
+phi-Funktion für i ist del und used  
+phi-Funktion für b ist del und used 
+phi-Funktion für k 
+nachfolgende for-Schleife:	
+phi-Funktion für a ist del
+phi-Funktion für n 
+phi-Funktion für b ist del  
+phi-Funktion für k ist del
+
+Problem: phi-Funktion für a in der äusseren Schleife ist del. Das darf nicht 
+sein, weil in einer inneren Schleife eine weitere phi-Funktion für a existiert
+und diese used ist. Man muss dem Dominator folgen.
+
+	
 --------------------------------------------------------------------------------
 
 	In Klasse Double.java

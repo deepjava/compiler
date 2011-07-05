@@ -416,6 +416,7 @@ public class CFG implements ICjvmInstructionOpcsAndMnemonics {
 				sb.append("\t");
 			}
 			sb.append("\n");
+//			if (node.idom != null) sb.append("\t\tdominator:"+node.idom.toString()+"\n");
 			node = node.next;
 			i++;
 		}

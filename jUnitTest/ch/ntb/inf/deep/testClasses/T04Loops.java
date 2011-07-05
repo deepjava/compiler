@@ -337,4 +337,16 @@ public class T04Loops {
 		write(txData, 0, len + 2);
 	}
 
+	private static int helper(int var) {return 10 + var;};
+	
+	// problem taken from flash file System
+	public static void phiFunctionTest19() {
+		int[] a = new int[5];
+		for (int i = 0; i < 32; i++) {
+			int b = 20;
+			for (int k = 0; k < 3; k++) a[k] = b;
+		}
+		for (int n = 0; n < 7; n++);
+	}
+
 }
