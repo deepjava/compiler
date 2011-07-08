@@ -3,7 +3,7 @@ package ch.ntb.inf.deep.eclipse.ui.view;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import ch.ntb.mcdp.blackbox.uart.Uart0;
+import ch.ntb.mcdp.ide.uart.Uart0;
 
 public class USBLogWriter extends Thread {
 	private OutputStream out;

@@ -336,4 +336,14 @@ public class SSA04 extends TestSSA {
 		testNode(nodes[7], 2, 0, 6);
 		testNode(nodes[8], 3, 1, 6);
 	}
+	
+	@Test 
+	public void phiFunctionTest17() {
+		SSANode[] nodes =getAndTestSSA("phiFunctionTest17", 13, 2);
+	}
+	
+	@Test 
+	public void phiFunctionTest18() {
+		SSANode[] nodes =getAndTestSSA("phiFunctionTest18", 11, 2);
+	}
 }

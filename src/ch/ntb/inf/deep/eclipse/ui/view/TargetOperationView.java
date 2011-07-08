@@ -49,7 +49,7 @@ import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.deep.strings.HString;
-import ch.ntb.mcdp.blackbox.uart.Uart0;
+import ch.ntb.mcdp.ide.uart.Uart0;
 
 public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";

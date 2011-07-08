@@ -37,8 +37,6 @@ public class DeepTabGroup extends AbstractLaunchConfigurationTabGroup {
 //				new SourceLookupTab(),
 				new EnvironmentTab(),
 				new CommonTab()
-				
-				
 		});
 
 	}

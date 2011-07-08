@@ -21,7 +21,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	static SSA[] ssa;
 	static CodeGen[] code;
 //	static String[] config = new String[] {"C:/NTbcheckout/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
-	static String[] config = new String[] {"M:/EUser/JCC/Deep/ExampleProject.deep","BootFromRam"};
+	static String[] config = new String[] {System.getProperty("user.dir") + "/ExampleProject.deep","BootFromRam"};
 
 	public static void createCgPPC(Class clazz) {
 		TestCFG.createCFG(clazz);

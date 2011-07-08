@@ -7,12 +7,7 @@
             delegate="ch.ntb.inf.deep.eclipse.launcher.DeepLaunchDelegate"
             id="deep.launchType"
             modes="run"
-            name="Deep Application"
-            public="true">
-         <fileExtension
-               default="true"
-               extension="java">
-         </fileExtension>
+            name="Deep Application">
       </launchConfigurationType>
    </extension>
    <extension
@@ -77,6 +72,9 @@
             id="ch.ntb.inf.deep.ui.wizard.StartWizard"
             name="Deep Project"
             project="true">
+         <description>
+            Generate a deep project
+         </description>
       </wizard>
    </extension>
    <extension
@@ -88,6 +86,10 @@
             id="ch.ntb.inf.deep.ui.properties.ProjectPage"
             name="Target configuration"
             objectClass="org.eclipse.core.resources.IResource">
+         <filter
+               name="nature"
+               value="ch.ntb.inf.deep.eclipse.nature.DeepNature">
+         </filter>
       </page>
    </extension>
    <extension
@@ -113,6 +115,9 @@
             id="ch.ntb.inf.deep.ui.UsLeSPRView"
             name="User Level SPR View"
             restorable="true">
+         <description>
+            Display the content of the user level SPR's
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
@@ -121,6 +126,9 @@
             id="ch.ntb.inf.deep.ui.DeSuSPRView"
             name="Development Support SPR View"
             restorable="true">
+         <description>
+            Display the content of the development support SPR's
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
@@ -129,6 +137,9 @@
             id="ch.ntb.inf.deep.ui.GprView"
             name="General Purpose Register View"
             restorable="true">
+         <description>
+            Display the content of the general purpose registers
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
@@ -137,6 +148,9 @@
             id="ch.ntb.inf.deep.ui.FprView"
             name="Floating Point Register View"
             restorable="true">
+         <description>
+            Display the content of the floatingpoint registers
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
@@ -145,6 +159,9 @@
             id="ch.ntb.inf.deep.ui.MaStRegView"
             name="Machinestate register View"
             restorable="true">
+         <description>
+            Display the content of the machine state register
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
@@ -153,6 +170,9 @@
             id="ch.ntb.inf.deep.ui.SuLeSPRView"
             name="Support Level SPR View"
             restorable="true">
+         <description>
+            Display the content of the support level SPR's
+         </description>
       </view>
       <category
             id="ch.ntb.inf.deep.targetManipulation"
@@ -165,6 +185,9 @@
             id="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
             name="Selected Memory View"
             restorable="true">
+         <description>
+            Displays the content of the chosen memory space
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.targetManipulation"
@@ -173,6 +196,11 @@
             id="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
             name="TargetOperation"
             restorable="true">
+         <description>
+            View to interact with the target. Possible actions are:
+TargetCommands, read from address, write to address, read and modify static variables, 
+read and modify registers and send strings to the target.
+         </description>
       </view>
       <category
             id="ch.ntb.inf.deep.ui.Log"
@@ -185,6 +213,9 @@
             id="ch.ntb.inf.deep.ui.view.USBLog"
             name="USB Log"
             restorable="true">
+         <description>
+            Displays the outprints, which was send from the target over the usb.
+         </description>
       </view>
       <view
             category="ch.ntb.inf.deep.ui.Log"
@@ -193,6 +224,9 @@
             id="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
             name="ClassTreeView"
             restorable="true">
+         <description>
+            Display which classes where downloded and their CFG's, SSA's and machincode
+         </description>
       </view>
    </extension>
    <extension
