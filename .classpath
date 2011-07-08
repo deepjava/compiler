@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry excluding="views/ByteCodeView.java|ch/ntb/cross/eclipse/views/ByteCodeView.java|ch/ntb/cross/eclipse/views/CFGView.java|ch/ntb/cross/eclipse/views/SSAView.java|ch/ntb/cross/eclipse/views/TargetCodeView.java|ch/ntb/cross/eclipse/views/helpers/ModifiedDot.java|ch/ntb/cross/eclipse/views/printers/SSAPrinter.java" kind="src" path="src"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="jUnitTest"/>
 	<classpathentry kind="lib" path="tempLibs/ch.ntb.inf.libusbJava.jar"/>
-	<classpathentry kind="lib" path="tempLibs/ch.ntb.mcdp.blackbox.jar"/>
+	<classpathentry kind="lib" path="tempLibs/ch.ntb.mcdp.ide.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
