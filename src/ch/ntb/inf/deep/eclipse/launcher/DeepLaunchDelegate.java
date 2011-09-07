@@ -4,6 +4,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
@@ -18,6 +19,9 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 
 	@Override
 	public final void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor)throws CoreException{
+		if(!mode.equals(ILaunchManager.RUN_MODE)){
+			return;
+		}
 		ConsoleDisplayMgr cdm = ConsoleDisplayMgr.getDefault();
 
 		String targetConfig = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, "");
@@ -47,6 +51,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		}
 		if(ErrorReporter.reporter.nofErrors == 0 ){
 			Launcher.downloadTargetImage();
+			Launcher.startTarget();
 		}
 		monitor.worked(100);
 		monitor.done();

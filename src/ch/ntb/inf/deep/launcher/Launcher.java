@@ -26,16 +26,13 @@ public class Launcher implements ICclassFileConsts {
 	private static PrintStream out = StdStreams.out;
 	private static PrintStream vrb = StdStreams.vrb;
 
-	public static void buildAll(String projectConfigFile,
-			String targetConfiguration) {
+	public static void buildAll(String projectConfigFile, String targetConfiguration) {
 
-		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable)
-				| (1 << atxExceptions) | (1 << atxLineNumberTable);
+		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 		reporter.clear();
 		
 		// 1) Read configuration
-		Configuration.parseAndCreateConfig(projectConfigFile,
-				targetConfiguration);
+		Configuration.parseAndCreateConfig(projectConfigFile, targetConfiguration);
 		
 		try {
 			// 2) Read requiered classes
@@ -153,6 +150,7 @@ public class Launcher implements ICclassFileConsts {
 				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 				out.println();
 			} else {
+				//TODO fix linenumbertable
 				out.println("Compilation and target image generation successfully finished");
 				out.println();
 			}
@@ -169,7 +167,7 @@ public class Launcher implements ICclassFileConsts {
 				if(bdi != null){
 					bdi.init();
 					// System.out.println("++++++++ Start Target!+++++++++");
-					bdi.startTarget();
+//					bdi.startTarget();
 				}else{
 					reporter.error("Target not found!(USB connection failed)");
 					reporter.println();
@@ -184,6 +182,21 @@ public class Launcher implements ICclassFileConsts {
 			reporter.error("No target image to load");
 			reporter.println();
 			reporter.nofErrors++;
+		}
+	}
+	
+	public static void startTarget() {
+		if (reporter.nofErrors <= 0) {
+			Downloader bdi = UsbMpc555Loader.getInstance();
+			if (bdi != null) {
+				try {
+					bdi.startTarget();
+				} catch (DownloaderException e) {
+					reporter.error("Starting of Device failed");
+					reporter.println();
+					reporter.nofErrors++;
+				}
+			}
 		}
 	}
 

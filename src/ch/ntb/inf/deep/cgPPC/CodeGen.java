@@ -83,7 +83,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static SSAValue[] lastExitSet;
 	private static boolean newString;
 	private static Item stringRef;
-
+	
 	public SSA ssa;	// reference to the SSA of a method
 	public int[] instructions;	//contains machine instructions for the ssa of a method
 	public int iCount;	//nof instructions for this method
@@ -110,7 +110,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			paramRegEnd[i] = -1;
 		}
 
-		// make local copy 
+		// make local copy
 		int maxStackSlots = ssa.cfg.method.maxStackSlots;
 		int i = maxStackSlots;
 		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
@@ -350,6 +350,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
+			instr.machineCodeOffset = iCount;
+			
 //			if (dbg) StdStreams.out.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:

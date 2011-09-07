@@ -10,6 +10,7 @@ public abstract class SSAInstruction implements SSAInstructionMnemonics {
 	protected SSAValue[] operands;
 	public SSAValue result;
 	public int ssaOpcode;
+	public int machineCodeOffset = -1; // needs for debug purpose ex. step into
 	
 	public abstract void setOperands(SSAValue[] operands);
 	public abstract SSAValue[] getOperands();

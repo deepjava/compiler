@@ -79,7 +79,7 @@ public class Call extends SSAInstruction {
 			sb.append(", join=[" + result.index + "(");
 			SSAValue join = RegAllocator.joins[result.index];
 			int i = 0;
-			while (join != result.join) {
+			while (join != null && join != result.join) {
 				i++;
 				join = join.next;
 			}

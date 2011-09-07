@@ -121,13 +121,13 @@ public class DeepLaunchShortcut implements ILaunchShortcut2 {
 			if (found) {
 				// second try to find a config
 				try {
-					String[] attributeToCompare = new String[]{ DeepPlugin.ATTR_DEEP_PROGRAM, DeepPlugin.ATTR_DEEP_LOCATION};
+					String[] attributeToCompare = new String[]{ DeepPlugin.ATTR_DEEP_PROGRAM, DeepPlugin.ATTR_DEEP_LOCATION, DeepPlugin.ATTR_TARGET_CONFIG};
 					ILaunchManager lm = DebugPlugin.getDefault().getLaunchManager();
 					ILaunchConfigurationType type = lm.getLaunchConfigurationType("deep.launchType");
 					ILaunchConfiguration config = null;
 					if (type != null) {
 						ILaunchConfiguration[] configs = lm	.getLaunchConfigurations(type);
-						ILaunchConfigurationWorkingCopy copy = createConfiguration((IFile)candidate);
+						ILaunchConfigurationWorkingCopy copy = createConfiguration((IFile)candidate, configs);
 						for(int i = 0; i < configs.length; i++) {
 							if(hasSameAttributes(configs[i], copy, attributeToCompare)){
 								config = configs[i];
@@ -149,11 +149,18 @@ public class DeepLaunchShortcut implements ILaunchShortcut2 {
 		}
 	}
 	
-	protected ILaunchConfigurationWorkingCopy createConfiguration(IFile fileToLaunch) {
+	protected ILaunchConfigurationWorkingCopy createConfiguration(IFile fileToLaunch, ILaunchConfiguration[] configs) {
 		ILaunchConfigurationWorkingCopy wc = null;
+		String name = fileToLaunch.getName();
+		for(int i = 0; i < configs.length; i++){
+			if(name.equals(configs[i].getName())){
+				name = DebugPlugin.getDefault().getLaunchManager().generateUniqueLaunchConfigurationNameFrom(fileToLaunch.getName());
+				break;
+			}
+		}
 		try {
 			ILaunchConfigurationType configType = getConfigurationType();
-			wc = configType.newInstance(null, DebugPlugin.getDefault().getLaunchManager().generateUniqueLaunchConfigurationNameFrom(	fileToLaunch.getName()));
+			wc = configType.newInstance(null, name);
 			wc.setAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, fileToLaunch.getProjectRelativePath().toString());
 			wc.setAttribute(DeepPlugin.ATTR_DEEP_LOCATION, fileToLaunch.getProject().getLocation().toString());
 			wc.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG, "BootFromRam");

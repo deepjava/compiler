@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.loader;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.MemoryMap;
 import ch.ntb.inf.deep.config.Parser;
+import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
@@ -626,6 +627,195 @@ public class UsbMpc555Loader extends Downloader {
 	@Override
 	public synchronized boolean isConnected() {
 		return dev.isOpen();
+	}
+
+	@Override
+	public synchronized void setBreakpoint(int memAddr) throws DownloaderException {
+		//1. Disable Instruction breakpoint interrupt
+		Register der = Configuration.getRegisterMap().getRegister(HString.getHString("DER"));
+		if(der == null)return;
+		int derValue = getSPR(der.getAddress()) & ~0x4;
+		setSPR(der.getAddress(), derValue);
+		
+		// 2. read ICTRL
+		Register ictrl = Configuration.getRegisterMap().getRegister(HString.getHString("ICTRL"));
+		if(ictrl == null)return;
+		int ictrlValue = getSPR(ictrl.getAddress());
+	
+		//3. decide which CMP is free an set it appropriate
+		if((ictrlValue & 0x80000) == 0){//CMPA is free
+			Register cmpa = Configuration.getRegisterMap().getRegister(HString.getHString("CMPA"));
+			if(cmpa == null)return;
+			setSPR(cmpa.getAddress(), memAddr);
+			setSPR(ictrl.getAddress(), ictrlValue | 0x80080800);//CTA = equals, IWP0 = match from CMPA, SIWP0EN = trap enabled
+		}else if((ictrlValue & 0x20000) == 0){//CMPB is free
+			Register cmpb = Configuration.getRegisterMap().getRegister(HString.getHString("CMPB"));
+			if(cmpb == null)return;
+			setSPR(cmpb.getAddress(), memAddr);
+			setSPR(ictrl.getAddress(), ictrlValue | 0x10020400);//CTB = equals, IWP1 = match from CMPB, SIWP1EN = trap enabled			
+		}else if((ictrlValue & 0x8000) == 0){//CMPC is free
+			Register cmpc = Configuration.getRegisterMap().getRegister(HString.getHString("CMPC"));
+			if(cmpc == null)return;
+			setSPR(cmpc.getAddress(), memAddr);
+			setSPR(ictrl.getAddress(), ictrlValue | 0x2008200);//CTC = equals, IWP2 = match from CMPC, SIWP2EN = trap enabled
+		}else if((ictrlValue & 0x2000) == 0){//CMPD is free
+			Register cmpd = Configuration.getRegisterMap().getRegister(HString.getHString("CMPD"));
+			if(cmpd == null)return;
+			setSPR(cmpd.getAddress(), memAddr);
+			setSPR(ictrl.getAddress(), ictrlValue | 0x402100);//CTD = equals, IWP3 = match from CMPD, SIWP3EN = trap enabled
+		}
+		
+		//4. Enable instruction breakpoint interrupt
+		setSPR(der.getAddress(), derValue | 0x4);		
+	}
+	
+	@Override
+	public synchronized void confirmBreakpoint() throws DownloaderException {
+		//1. Disable Instruction breakpoint interrupt
+		Register der = Configuration.getRegisterMap().getRegister(HString.getHString("DER"));
+		if(der == null)return;
+		int derValue = getSPR(der.getAddress()) & ~0x4;
+		setSPR(der.getAddress(), derValue);
+		
+		// 2. read ICTRL
+		Register ictrl = Configuration.getRegisterMap().getRegister(HString.getHString("ICTRL"));
+		if(ictrl == null)return;
+		int ictrlValue = getSPR(ictrl.getAddress());
+		
+		// 3. set ignore first match on i-bus
+		setSPR(ictrl.getAddress(), ictrlValue | 0x8);		
+		
+		//4. Enable instruction breakpoint interrupt
+		setSPR(der.getAddress(), derValue | 0x4);	
+	
+		
+	}
+
+	@Override
+	public synchronized void removeBreakpoint(int memAddr) throws DownloaderException {
+		//1. Disable Instruction breakpoint interrupt
+		Register der = Configuration.getRegisterMap().getRegister(HString.getHString("DER"));
+		if(der == null)return;
+		int derValue = getSPR(der.getAddress()) & ~0x4;
+		setSPR(der.getAddress(), derValue);
+		
+		// 2. read ICTRL
+		Register ictrl = Configuration.getRegisterMap().getRegister(HString.getHString("ICTRL"));
+		if(ictrl == null)return;
+		int ictrlValue = getSPR(ictrl.getAddress());
+		
+		//3. find correct CMP
+		if((ictrlValue & 0x80000) != 0){//CMPA is used
+			Register cmpa = Configuration.getRegisterMap().getRegister(HString.getHString("CMPA"));
+			if(cmpa == null)return;
+			int cmpaValue = getSPR(cmpa.getAddress());
+			if(cmpaValue == memAddr){
+				setSPR(ictrl.getAddress(), ictrlValue & ~0xE00C0800);
+				//4. Enable instruction breakpoint interrupt
+				setSPR(der.getAddress(), derValue | 0x4);
+				return;
+			}
+		}
+		if((ictrlValue & 0x20000) != 0){//CMPB is used
+			Register cmpb = Configuration.getRegisterMap().getRegister(HString.getHString("CMPB"));
+			if(cmpb == null)return;
+			int cmpbValue = getSPR(cmpb.getAddress());
+			if(cmpbValue == memAddr){
+				setSPR(ictrl.getAddress(), ictrlValue & ~0x1C030400);
+				//4. Enable instruction breakpoint interrupt
+				setSPR(der.getAddress(), derValue | 0x4);
+				return;
+			}
+			
+		}
+		if((ictrlValue & 0x8000) != 0){//CMPC is used
+			Register cmpc = Configuration.getRegisterMap().getRegister(HString.getHString("CMPC"));
+			if(cmpc == null)return;
+			int cmpcValue = getSPR(cmpc.getAddress());
+			if(cmpcValue == memAddr){
+				setSPR(ictrl.getAddress(), ictrlValue & ~0x38C200);
+				//4. Enable instruction breakpoint interrupt
+				setSPR(der.getAddress(), derValue | 0x4);
+				return;
+			}
+			
+		}
+		if((ictrlValue & 0x2000) != 0){//CMPD is used
+			Register cmpd = Configuration.getRegisterMap().getRegister(HString.getHString("CMPD"));
+			if(cmpd == null)return;
+			int cmpdValue = getSPR(cmpd.getAddress());
+			if(cmpdValue == memAddr){
+				setSPR(ictrl.getAddress(), ictrlValue & ~0x73100);
+				//4. Enable instruction breakpoint interrupt
+				setSPR(der.getAddress(), derValue | 0x4);
+				return;
+			}
+		}
+		
+		//4. Enable instruction breakpoint interrupt
+		setSPR(der.getAddress(), derValue | 0x4);	
+	
+		
+	}
+
+	@Override
+	public synchronized int getECR() throws DownloaderException {
+		Register ecr = Configuration.getRegisterMap().getRegister(HString.getHString("ECR"));
+		if(ecr == null)throw new DownloaderException("ECR Regigster not found!");
+		return getSPR(ecr.getAddress());
+	}
+
+	@Override
+	public int getPC() throws DownloaderException {
+		Register srr0 = Configuration.getRegisterMap().getRegister(HString.getHString("SRR0"));
+		if(srr0 == null)throw new DownloaderException("PC Regigster not found!");
+		return getSPR(srr0.getAddress());
+	}
+
+	@Override
+	public int getSP() throws DownloaderException {
+		return getGPR(1);
+	}
+
+	@Override
+	public void setMSR(int value) throws DownloaderException {
+		try {
+			mpc.writeMSR(value);
+		} catch (BDIException e) {
+			throw new DownloaderException(e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void setStepping(int mode) throws DownloaderException {
+//		int msrValue = getMSR(); //Clear BE and SE bit
+		Register srr1 = Configuration.getRegisterMap().getRegister(HString.getHString("SRR1"));
+		int srr1Value = getSPR(srr1.getAddress()) & ~0x600;
+		switch(mode){
+		case 1://branch trace
+			srr1Value |= 0x200;
+//			msrValue |= 0x200;
+			setSPR(srr1.getAddress(), srr1Value & 0xFFFF); 
+//			setMSR(msrValue);
+			break;
+		case 2://single step
+			srr1Value |= 0x400;
+//			msrValue |= 0x400;
+			setSPR(srr1.getAddress(), srr1Value & 0xFFFF); 
+//			setMSR(msrValue);
+			break;
+		case 3://both
+			srr1Value |= 0x600;
+//			msrValue |= 0x600;
+			setSPR(srr1.getAddress(), srr1Value & 0xFFFF); 
+//			setMSR(msrValue);
+			break;
+		default ://clear
+			setSPR(srr1.getAddress(), srr1Value & 0xFFFF); 
+//			setMSR(msrValue);
+			break;
+		}
+		
 	}
 
 }

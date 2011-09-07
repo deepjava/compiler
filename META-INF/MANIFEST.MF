@@ -19,7 +19,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.5.0",
  org.eclipse.jdt.debug.ui;bundle-version="3.4.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: ch.ntb.inf.deep.classItems,
+Export-Package: ch.ntb.inf.deep.cgPPC,
+ ch.ntb.inf.deep.classItems,
  ch.ntb.inf.deep.config,
  ch.ntb.inf.deep.eclipse,
  ch.ntb.inf.deep.eclipse.nature,
@@ -31,7 +32,11 @@ Export-Package: ch.ntb.inf.deep.classItems,
  ch.ntb.inf.deep.eclipse.ui.wizard,
  ch.ntb.inf.deep.host,
  ch.ntb.inf.deep.launcher,
- ch.ntb.inf.deep.loader
+ ch.ntb.inf.deep.linker,
+ ch.ntb.inf.deep.loader,
+ ch.ntb.inf.deep.ssa,
+ ch.ntb.inf.deep.ssa.instruction,
+ ch.ntb.inf.deep.strings
 Bundle-ClassPath: tempLibs/ch.ntb.inf.libusbJava.jar,
  tempLibs/ch.ntb.mcdp.ide.jar,
  .

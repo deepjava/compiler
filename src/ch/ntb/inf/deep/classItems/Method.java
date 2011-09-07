@@ -20,7 +20,7 @@ public class Method extends ClassMember {
 	
 	ExceptionTabEntry[] exceptionTab;
 	LocalVar[] localVars;
-	int[] lineNrTab; // entry: (startPc<<16) | lineNr
+	public int[] lineNrTab; // entry: (startPc<<16) | lineNr
 
 	public byte nofParams;
 	public int maxStackSlots, maxLocals;

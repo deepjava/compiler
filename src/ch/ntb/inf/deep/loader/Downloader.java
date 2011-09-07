@@ -241,6 +241,14 @@ public abstract class Downloader {
 	 * @throws DownloaderException
 	 */
 	public abstract int getMSR() throws DownloaderException;
+
+	/**
+	 * Set the machine state register to the given value
+	 * 
+	 * @param value set to
+	 * @throws DownloaderException
+	 */
+	public abstract void setMSR(int value) throws DownloaderException;
 	
 	/**
 	 * Get the value of the floatingpointregister
@@ -264,29 +272,76 @@ public abstract class Downloader {
 	 * @throws DownloaderException
 	 */
 	public abstract int getFPSCR() throws DownloaderException;
+	
+	/**
+	 * set Breakpoint at given address
+	 * @param memAddr
+	 */
+	public abstract void setBreakpoint(int memAddr) throws DownloaderException;
+	
+	/**
+	 * confirms the Breakpoint at given address
+	 * @param memAddr
+	 */
+	public abstract void confirmBreakpoint() throws DownloaderException;
+	
 
 	/**
-	 * Opens the bin file for reading
-	 * 
-	 * @throws FileNotFoundException
+	 * removes Breakpoint from given address
+	 * @param memAddr
 	 */
-	protected void openBinFile() throws FileNotFoundException {
-		if(filename != null) {
-			fis = new FileInputStream(filename);
-		}
-	}
-
+	public abstract void removeBreakpoint(int memAddr) throws DownloaderException;
+	
+	/**
+	 * Get the Value of the Exception Cause Register
+	 * @return
+	 * @throws DownloaderException 
+	 */
+	public abstract int getECR() throws DownloaderException; 
 
 	/**
-	 * Closes the bin file
-	 * 
-	 * @throws IOException
+	 * Get the Value of the Program Counter
+	 * @return
+	 * @throws DownloaderException 
 	 */
-	protected void closeBinFile() throws IOException {
-		if(fis != null) {
-			fis.close();
-		}
-	}
+	public abstract int getPC() throws DownloaderException; 
+
+	/**
+	 * Get the Value of the Stackpointer
+	 * @return
+	 * @throws DownloaderException 
+	 */
+	public abstract int getSP() throws DownloaderException; 
+	
+	/**
+	 * set the stepping mode
+	 * @param mode 0 = off, 1 = Branch trace, 2 = single step, 3 = both modes
+	 * @throws DownloaderException 
+	 */
+	public abstract void setStepping(int mode) throws DownloaderException; 
+	
+//	/**
+//	 * Opens the bin file for reading
+//	 * 
+//	 * @throws FileNotFoundException
+//	 */
+//	protected void openBinFile() throws FileNotFoundException {
+//		if(filename != null) {
+//			fis = new FileInputStream(filename);
+//		}
+//	}
+//
+//
+//	/**
+//	 * Closes the bin file
+//	 * 
+//	 * @throws IOException
+//	 */
+//	protected void closeBinFile() throws IOException {
+//		if(fis != null) {
+//			fis.close();
+//		}
+//	}
 
 
 //	/**
