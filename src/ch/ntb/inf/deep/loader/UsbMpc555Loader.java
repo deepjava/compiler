@@ -11,10 +11,10 @@ import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.libusbJava.USBException;
-import ch.ntb.mcdp.bdi.BDIException;
-import ch.ntb.mcdp.targets.mpc555.BDI;
-import ch.ntb.mcdp.usb.Device;
-import ch.ntb.mcdp.usb.DeviceFactory;
+import ch.ntb.inf.mcdp.bdi.BDIException;
+import ch.ntb.inf.mcdp.targets.mpc555.BDI;
+import ch.ntb.inf.mcdp.usb.Device;
+import ch.ntb.inf.mcdp.usb.DeviceFactory;
 
 /**
  * Creates an USB connection to the target.<br>
