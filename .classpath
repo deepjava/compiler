@@ -5,6 +5,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="jUnitTest"/>
 	<classpathentry kind="lib" path="tempLibs/ch.ntb.inf.libusbJava.jar"/>
-	<classpathentry kind="lib" path="D:/work/Crosssystem/deep/tempLibs/ch.ntb.inf.mcdp.ide.jar"/>
+	<classpathentry kind="lib" path="tempLibs/ch.ntb.inf.mcdp.ide.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
