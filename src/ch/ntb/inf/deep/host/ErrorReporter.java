@@ -1,18 +1,30 @@
 package ch.ntb.inf.deep.host;
 /**
 changes:
+<br>11-09-12, NTB/MILR	error(int errNr, String additionalInfo): printing errNr, errMsg and additional informations, handling if class is into a jar
 <br>09-04-22, NTB/ED	error(int errNr, String errMsg): printing errNr, errMsg
 <br>09-03-23, NTB/ED	extension of error(int errNr, String errMsg)
 <br>05-02-11, NTB/ED	creation
 */
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+
 
 /**
   * Does the common error reporting (implemented as a singleton)
  */
 public class ErrorReporter {
 	public static final  ErrorReporter  reporter;
-	private  PrintStream  errPrStream;
+	private PrintStream  errPrStream;
+	private String  errorMsgFilePath = "rsc/ErrorMsg.txt";
+	private JarFile jar;
 
 	public  int  maxNofErrors;
 	public  int  nofErrors, firstError, lastError;
@@ -27,6 +39,14 @@ public class ErrorReporter {
 	private  ErrorReporter() {
 		clear();
 		errPrStream = StdStreams.err;
+		String home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6);//get jar name
+		if(home.endsWith("jar")){
+			try {
+				jar = new JarFile(home);
+			} catch (IOException e) {
+			}
+		}
+						
 		this.maxNofErrors = Integer.MAX_VALUE;
 		// printErrorPos = false;
 	}
@@ -54,10 +74,85 @@ public class ErrorReporter {
 	}
 
 	public void error(String errMsg) {
-		error(0, errMsg);
+		report(0, errMsg);
+	}
+	
+	public void error(int errNr, String additionalInfo) {
+		String msg = "";
+		BufferedReader br = null;
+		boolean found = false;
+		String[] elements = new String[0];
+		if(jar != null){
+			ZipEntry entry = jar.getEntry(errorMsgFilePath);
+			InputStreamReader isr = null;
+			try {
+				isr = new InputStreamReader(jar.getInputStream(entry));
+				br = new BufferedReader(isr);
+				br.readLine();//overread header
+				while (!found && br.ready()){
+					String line = br.readLine();
+					elements = line.split(";");
+					if(elements.length > 1 && Integer.decode(elements[0]) == errNr){
+						found = true;
+					}
+				}
+				br.close();
+				isr.close();
+			} catch (IOException e) {
+				try {
+					br.close();
+					isr.close();
+				} catch (IOException e1) {
+				}
+			}
+		}else{
+			File file = new File(errorMsgFilePath);
+			if(file.exists()){
+				FileReader fr = null;
+				try {
+					//search error message in the message file
+					fr = new FileReader(file);
+					br = new BufferedReader(fr);
+					br.readLine();//overread header
+					while (!found && br.ready()){
+						String line = br.readLine();
+						elements = line.split(";");
+						if(elements.length > 1 && Integer.decode(elements[0]) == errNr){
+							found = true;
+						}
+					}
+					br.close();
+					fr.close();
+				} catch (FileNotFoundException e) {
+				} catch (IOException e) {
+					try {
+						fr.close();
+						br.close();
+					} catch (IOException e1) {
+					}
+				}
+			}
+		}
+
+		if(found){
+			if(elements.length > 1){
+				msg += elements[1] + ",";
+			}
+			if(additionalInfo != null){
+				msg += " " + additionalInfo + ".";
+			}
+			if(elements.length > 2){
+				msg += " possible solution: " + elements[2] + ".";
+			}
+			
+		}else{
+			if(additionalInfo != null)
+				msg = additionalInfo;
+		}
+		report(errNr, msg);
 	}
 
-	public void error(int errNr, String errMsg) {
+	private void report(int errNr, String errMsg) {
 		if (nofErrors == 0) firstError = errNr;
 		lastError = errNr;
 		nofErrors++;
@@ -70,15 +165,9 @@ public class ErrorReporter {
 			errPrStream.print(" error: ");
 			if (errNr != 0)   errPrStream.print(errNr);
 			if (errMsg != null)  errPrStream.print(" \"" + errMsg + '\"');
-//			errPrStream.println();
+			errPrStream.println();
 		}
 //		assert false;
 	}
 	
-	public void print(String string){
-		errPrStream.print(string);
-	}
-	public void println(){
-		errPrStream.println();
-	}
 }

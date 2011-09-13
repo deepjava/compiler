@@ -28,6 +28,11 @@ public abstract class Downloader {
 	 * File handle if bin file is opened
 	 */
 	private FileInputStream fis;
+	
+	public static int errTargetNotFound = 800, errDownloadFailed = 801, errNoTargetImage = 802,
+					  errConnectionLost = 803, errReopenFailed = 804, errStartTargetFailed = 805,
+					  errTargetNotInDebugMode = 806, errMemWriterNotImplemented = 807, errBypassNotUnlocked = 808,
+					  errProgrammFailed = 809;
 
 //	/**
 //	 * Buffer for reading from a open bin file

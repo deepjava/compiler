@@ -100,8 +100,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			importList = new ArrayList<HString>();
 			configFile = new BufferedReader(new FileReader(file.toString()));
 		} catch (FileNotFoundException e) {
-			reporter.error(errIOExp, " " + e.getMessage());
-			reporter.println();
+			reporter.error(errIOExp, e.getMessage());
 		}
 	}
 
@@ -158,7 +157,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			default:
 				nOfErrors++;
 				reporter.error(errUnexpectetSymExp,	"in "+ currentFile+ " at Line "+ lineNumber+ " expectet symbol : constants | sysconst | memorymap | registermap | targetconfiguration | reginit | project | operatingsystem, received symbol: "	+ symToString());
-				reporter.println();
 				next();
 			}
 		}
@@ -174,9 +172,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sQuotationMark) {
 			nOfErrors++;
 			reporter.error(errQuotationMarkExp, "in " + currentFile
-					+ " at Line " + lineNumber
-					+ " expected symbol: \", received symbol: " + symToString());
-			reporter.println();
+					+ " at Line " + lineNumber);
 			return "";
 		}
 		StringBuffer sb = new StringBuffer();
@@ -192,14 +188,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			if (sym != sQuotationMark) {
 				nOfErrors++;
 				reporter.error(errQuotationMarkExp, "in " + currentFile
-						+ " at Line " + lineNumber
-						+ " expected symbol: \", received symbol: "
-						+ symToString() + " ");
+						+ " at Line " + lineNumber);
 				return "";
 			}
 		} catch (IOException e) {
 			reporter.error(errIOExp, e.getMessage());
-			reporter.println();
 		}
 		next();
 		return sb.toString();
@@ -616,10 +609,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 						} else {// check if it is a digit
 							if (!(ch >= '0' && ch <= '9')) {
 								nOfErrors++;
-								reporter.error(errDigitExp, "in " + currentFile
-										+ " at Line " + lineNumber
-										+ " Invalide Number");
-								reporter.println();
+								reporter.error(errDigitExp, "in " + currentFile	+ " at Line " + lineNumber);
 								chBuffer = ch;
 								break;
 							}
@@ -637,7 +627,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			}
 		} catch (IOException e) {
 			reporter.error(errIOExp, e.getMessage());
-			reporter.println();
 		}
 	}
 
@@ -847,16 +836,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: meta, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -867,10 +852,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		for (int i = 0; i < importList.size(); i++) {
@@ -901,7 +883,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 						}
 						if(!parsed){
 							reporter.error(errIOExp, toCmp.toString() + " is not on searchpath");
-							reporter.println();
 						}
 					} else {
 						toImport.add(toCmp);
@@ -921,16 +902,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: constants, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -940,10 +917,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -956,16 +930,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: sysconst, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -975,10 +945,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -991,16 +958,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: memorymap, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1021,10 +984,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -1037,7 +997,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: device, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		next();
@@ -1047,17 +1006,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		HString dev = HString.getHString(strBuffer);
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -1087,15 +1042,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				next();
 				if (sym != sEqualsSign) {
 					nOfErrors++;
-					reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber + " expected: =, received symbol: " + symToString());
-					reporter.println();
+					reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 				}
 				next();
 				memType = HString.getHString(readString());
 				if (sym != sSemicolon) {
 					nOfErrors++;
-					reporter.error(errSemicolonMissExp, "in " + currentFile + " befor Line " + lineNumber + " expected symbol: ;, received symbol: " + symToString());
-					reporter.println();
+					reporter.error(errSemicolonMissExp, "in " + currentFile + " before Line " + lineNumber);
 				}
 				next();
 			} 
@@ -1111,16 +1064,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
-
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		if (attributes == 0 || width == 0 || size == 0 || technology == -1 || (technology > 0 && memType == null) || (technology > 0 && device.sector == null)) {
 			reporter.error(errInconsistentattributes, "in " + currentFile + " Missing attribute by creation of device: " + dev.toString());
-			reporter.println();
 			return null;
 		}
 		next();
@@ -1130,7 +1078,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sMemorysectorArray) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile	+ " at Line " + lineNumber + " expected symbol: memorysector, received symbol: " + symToString());
-			reporter.println();
 		}
 		next();
 		if (sym != sDesignator) {
@@ -1139,17 +1086,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		String designator = strBuffer;
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1167,10 +1110,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 
 		}
@@ -1178,7 +1118,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errInconsistentattributes, "in " + currentFile
 					+ " Missing attribute by creation sector array in device: "
 					+ dev.toString());
-			reporter.println();
 			return;
 		}
 		for(int i = 0; i < nofSectors; i++){
@@ -1191,7 +1130,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sMemorysector) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile	+ " at Line " + lineNumber + " expected symbol: memorysector, received symbol: " + symToString());
-			reporter.println();
 			return null;
 		}
 		next();
@@ -1201,17 +1139,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		Memorysector sec = new Memorysector(HString.getHString(strBuffer));
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return null;
 		}
 		next();
@@ -1224,11 +1158,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
-
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -1243,7 +1173,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: segment, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		next();
@@ -1258,7 +1187,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				reporter.error(errSyntax,"in "	+ currentFile + " at Line "	+ lineNumber
 										+ " Dots are not allowed in subsegment designators. Sytax error in: "
 										+ seg.name.toString());
-				reporter.println();
 				return null;
 			}
 		} else {// get width and attributes from Device
@@ -1276,10 +1204,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return null;
 		}
 		next();
@@ -1314,10 +1239,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -1334,7 +1256,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSegmentarray) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile	+ " at Line " + lineNumber	+ " expected symbol: segmentarray, received symbol: " + symToString());
-			reporter.println();
 			return;
 		}
 		next();
@@ -1347,11 +1268,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				HString devName = segName.substring(0, indexOf);
 				dev = MemoryMap.getInstance().getDeviceByName(devName);
 				if (dev == null) {
-					reporter.error(errNoSuchDevice, "in "
-							+ currentFile + " Device " + devName.toString()
-							+ " for Segment " + segName.toString()
-							+ "not found");
-					reporter.println();
+					reporter.error(errNoSuchDevice, devName.toString() + " for Segment " + segName.toString());
 					return;
 				}
 
@@ -1377,7 +1294,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				}
 			} else {
 				reporter.error(errSyntax,	"Error in memorymap segementarray definition (" + segName.toString() + "), segmentarray names starts with the device name!");
-				reporter.println();
 				return;
 			}
 		}else{
@@ -1386,10 +1302,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1410,29 +1323,25 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "  + lineNumber + " expected symbol: }, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "  + lineNumber);
 			return;
 		}
 		if (arraySize != 0) {
 			if (nofSegments != 0) {
 				if (nofSegments != (arraySize / segSize)) {
 					reporter.error(errInconsistentattributes,"Number of segemts in segmentarray creation not as expected");
-					reporter.println();
 					return;
 				}
 			} else {
 				nofSegments = arraySize / segSize;
 				if (arraySize % segSize != 0) {
 					reporter.error(errInconsistentattributes,"Segmentsize is not a multiple of Arraysize");
-					reporter.println();
 					return;
 				}
 			}
 		} else {
 			if (nofSegments == 0) {
 				reporter.error(errInconsistentattributes, "in " + currentFile + " Missing attribute in segmentarray creation");
-				reporter.println();
 				return;
 			}
 		}
@@ -1477,7 +1386,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errInvalideParameter, "in " + currentFile
 					+ " at Line " + lineNumber
 					+ " Parent Segment must be given for Subsegmentarrays");
-			reporter.println();
 		}
 	}
 	//if regInit are in global scope, so is targetConfig null
@@ -1488,17 +1396,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: reginit, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
-			
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1511,10 +1414,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1527,16 +1427,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: system, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1549,10 +1445,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -1566,16 +1459,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: modules, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1596,10 +1485,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1608,7 +1494,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			if(def == null){
 				nOfErrors++;
 				reporter.error(errNoDefaultSegmentDef, "in " + currentFile + " at " + targetConfig.name);
-				reporter.println();
 				return;
 			}
 		}
@@ -1668,7 +1553,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					reporter.error(errUnexpectetSymExp, "in " + currentFile
 							+ " at Line " + lineNumber + " Unexpected symbol: "
 							+ symToString() + " by system block creation");
-					reporter.println();
 					break;
 				}
 				if (root == null) {
@@ -1695,17 +1579,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				reporter.error(errUnexpectetSymExp, "in " + currentFile
 						+ " at Line " + lineNumber + " Unexpected symbol: "
 						+ symToString() + " by module creation");
-				reporter.println();
 				break;
 			}
 		} while (sym == sComma);
 		if (sym != sColon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: :, received symbol: "
-					+ symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return null;
 		}
 		do {
@@ -1740,16 +1620,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			default:
 				nOfErrors++;
 				reporter.error(errUnexpectetSymExp,	"in " + currentFile + " at Line " + lineNumber + " expected symbol: contentattribute, received symbol: " + symToString());
-				reporter.println();
 				return null;
 			}
 			if (sym != sAt) {
 				nOfErrors++;
 				reporter.error(errAssignExp, "in " + currentFile
-						+ " at Line " + lineNumber
-						+ " expected symbol: @, received symbol: "
-						+ symToString());
-				reporter.println();
+						+ " at Line " + lineNumber);
 				return null;
 			}
 			next();
@@ -1768,10 +1644,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: "
-					+ symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -1785,7 +1658,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: register, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		next();
@@ -1795,7 +1667,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator | CR | MSR | FPSCR, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		Register reg;
@@ -1807,10 +1678,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -1832,14 +1700,10 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errInconsistentattributes, "in " + currentFile
 					+ " Missing attribute in creation of Register: "
 					+ reg.getName().toString());
-			reporter.println();
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -1853,17 +1717,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: registermap, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		RegisterMap regMap = RegisterMap.getInstance();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -1872,10 +1732,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1885,7 +1742,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sTargetConf) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile + " at Line " + lineNumber + " expected symbol: targetconfiguration, received symbol: " + symToString());
-			reporter.println();
 			return;
 		}
 		next();
@@ -1895,7 +1751,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		TargetConfiguration targetConfig = new TargetConfiguration(HString
@@ -1903,10 +1758,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		next();
@@ -1923,15 +1775,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if(sysMod == null){
 			nOfErrors++;
 			reporter.error(errNoSysTabSegmentDef, "in system " + currentFile + " at " + targetConfig.name);
-			reporter.println();
 			return;
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		Configuration.addTargetConfiguration(targetConfig);
@@ -1945,16 +1793,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: project, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -1974,16 +1818,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		if (proj.getRootClasses() == null || proj.getLibPaths() == null) {
 			nOfErrors++;
 			reporter.error(	errMissingTag,"in "	+ currentFile + " \"project\" tags \"rootclasses and libpath\" must be defined");
-			reporter.println();
 			return;
 
 		}
@@ -2012,7 +1852,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				}
 				if(!parsed){
 					reporter.error(errIOExp, toCmp.toString() + " is not on searchpath");
-					reporter.println();
 				}
 			}
 		}
@@ -2026,14 +1865,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sOperatingSystem) {
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile + " at Line " + lineNumber + " expected symbol: operatingsystem, received symbol: " + symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber + " expected symbol: {, received symbol: "	+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return;
 		}
 		next();
@@ -2055,15 +1892,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber + " expected symbol: }, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		if (os.getExceptionBaseClass() == null || os.getHeap() == null
 				|| os.getKernel() == null || os.getUs() == null || os.getLowLevel() == null) {
 			nOfErrors++;
 			reporter.error(	errMissingTag,"in "	+ currentFile + " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined");
-			reporter.println();
 			return;
 		}
 		Configuration.setOperatingSystem(os);
@@ -2078,7 +1913,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber + "received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		if(sym == sExceptionBaseClass){
@@ -2087,10 +1921,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return null;
 		}
 		next();
@@ -2100,7 +1931,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ "expected Symbol: class, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		SystemClass clazz = new SystemClass(classAssignment());
@@ -2110,18 +1940,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			clazz.addMethod(meth);
 			clazz.addAttributes(meth.attributes);
 			if(!isExceptionClass && meth.offset != -1){
-				reporter.error("fix addresses for Method are only in exception methods allowed");
-				reporter.println();
+				reporter.error(errFixMethAddrNotSupported);
 				return null;
 			}
 		}
 
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return null;
 		}
 		next();
@@ -2139,7 +1965,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: method, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		next();
@@ -2149,17 +1974,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		SystemMethod method = new SystemMethod(strBuffer);
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: {, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errLBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return null;
 		}
 		next();
@@ -2170,19 +1991,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				next();
 				if (sym != sEqualsSign) {
 					nOfErrors++;
-					reporter.error(errAssignExp, "in " + currentFile
-							+ " at Line " + lineNumber
-							+ " expected symbol: =, received symbol: "
-							+ symToString());
-					reporter.println();
+					reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 					return null;
 				}
 				next();
 				int id = expression();
 				if((id & 0xFFFFF000) > 0){
 					nOfErrors++;
-					reporter.error(errAssignExp, "id for method" + method.name + "to great, max 12 bit number");
-					reporter.println();
+					reporter.error(errInvalideParameter, "id for method" + method.name + "to great, max 12 bit number");
 					return null;
 				}
 				method.attributes |= id;
@@ -2190,10 +2006,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				if (sym != sSemicolon) {
 					nOfErrors++;
 					reporter.error(errSemicolonMissExp, "in " + currentFile
-							+ " befor Line " + lineNumber
-							+ " expected symbol: ;, received symbol: "
-							+ symToString());
-					reporter.println();
+							+ " before Line " + lineNumber);
 					return null;
 				}
 				next();
@@ -2203,10 +2016,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		if (sym != sRBrace) {
 			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: }, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errRBraceExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return null;
 		}
 		next();
@@ -2221,26 +2031,19 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: version, received symbol: "
 					+ symToString());
-			reporter.println();
 			return "";
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return "";
 		}
 		next();
 		s = readString();
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return s;
 		}
 		next();
@@ -2255,16 +2058,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: description, received symbol: "
 					+ symToString());
-			reporter.println();
 			return "";
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return "";
 		}
 		next();
@@ -2272,9 +2071,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return s;
 		}
 		next();
@@ -2288,16 +2085,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: import, received symbol: "
 					+ symToString());
-			reporter.println();
 			return;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return;
 		}
 		do {
@@ -2307,9 +2100,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return;
 		}
 		next();
@@ -2324,16 +2115,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2341,10 +2128,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2397,21 +2181,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				next();
 			} else {
 				nOfErrors++;
-				reporter.error(errRParenExp, "in " + currentFile + " at Line "
-						+ lineNumber + " expected symbol: ), received symbol: "
-						+ symToString());
-				reporter.println();
+				reporter.error(errRParenExp, "in " + currentFile + " at Line " + lineNumber);
 			}
 		} else if (sym == sDesignator) {
 			value = Configuration.getValueFor(HString.getHString(strBuffer));
 			next();
 		} else {
 			nOfErrors++;
-			reporter.error(errDigitExp, "in " + currentFile + " at Line "
-					+ lineNumber
-					+ " expected symbol: number, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errDigitExp, "in " + currentFile + " at Line " + lineNumber);
 		}
 		if(isNeg){
 			return -value;
@@ -2427,16 +2204,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: base, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2448,9 +2221,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2465,16 +2236,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: technology, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2484,19 +2251,15 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			res = 1;
 		}else{
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile
+			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber
 					+ " expected symbol: Ram or Flash, received symbol: " + symToString());
-			reporter.println();
 			return res;
 		}		
 		next();
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return -1;
 		}
 		next();
@@ -2513,16 +2276,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: nofsector, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2534,9 +2293,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2551,16 +2308,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: width, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2568,10 +2321,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2586,16 +2336,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: size, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2604,9 +2350,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2621,16 +2365,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: sectorsize, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2639,9 +2379,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2656,16 +2394,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: segmentsize, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2674,9 +2408,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2691,16 +2423,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: arraysize, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2709,9 +2437,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2726,16 +2452,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: nofsegments, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2744,9 +2466,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2762,16 +2482,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: attributes, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber );
 			return res;
 		}
 		do {
@@ -2819,17 +2535,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 						+ " at Line " + lineNumber
 						+ " expected symbol: some attribute, received symbol: "
 						+ symToString());
-				reporter.println();
 				return res;
 			}
 			next();
 		} while (sym == sComma);
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2844,16 +2556,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: type, received symbol: "
 					+ symToString());
-			reporter.println();
 			return sUndef;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return sUndef;
 		}
 		next();
@@ -2865,16 +2573,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber + " unexpected symbol: "
 					+ symToString());
-			reporter.println();
 			return sUndef;
 		}
 		next();
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return s;
 		}
 		next();
@@ -2889,16 +2593,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: repr, received symbol: "
 					+ symToString());
-			reporter.println();
 			return s;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return s;
 		}
 		next();
@@ -2908,7 +2608,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: dez | bin | hex, received symbol: "
 					+ symToString());
-			reporter.println();
 			return s;
 		}
 		s = sym;
@@ -2916,9 +2615,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return s;
 		}
 		next();
@@ -2933,16 +2630,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: addr, received symbol: "
 					+ symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "+ lineNumber);
 			return res;
 		}
 		next();
@@ -2951,9 +2644,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -2968,16 +2659,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: addr, received symbol: "
 					+ symToString() );
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected symbol: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
@@ -2985,10 +2672,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -3003,7 +2687,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return sb.toString();
 		}
 		sb.append(strBuffer);
@@ -3019,7 +2702,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 						+ " at Line " + lineNumber
 						+ " expected symbol: designator, received symbol: "
 						+ symToString());
-				reporter.println();
 				return sb.toString();
 			} else {
 				sb.append(strBuffer);
@@ -3037,16 +2719,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected: rootclasses, received symbol: "
 					+ symToString());
-			reporter.println();
 			return null;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return null;
 		}
 		
@@ -3056,9 +2734,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return null;
 		}
 		next();
@@ -3073,7 +2749,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected symbol: designator, received symbol: "
 					+ symToString());
-			reporter.println();
 			return HString.getHString(sb.toString());
 		}
 		sb.append(strBuffer);
@@ -3086,7 +2761,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 						+ " at Line " + lineNumber
 						+ " expected symbol: designator, received symbol: "
 						+ symToString());
-				reporter.println();
 				return HString.getHString(sb.toString());
 			}
 			sb.append(".");
@@ -3105,16 +2779,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 					+ " at Line " + lineNumber
 					+ " expected: rootclasses, received symbol: "
 					+ symToString());
-			reporter.println();
 			return tempList;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return tempList;
 		}
 		do {
@@ -3133,10 +2803,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		} while (sym == sComma);
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return tempList;
 		}
 		next();
@@ -3152,16 +2819,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber
 					+ " expected: libpath, received symbol: " + symToString());
-			reporter.println();
 			return s;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return s;
 		}
 		String str;
@@ -3182,9 +2845,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return s;
 		}
 		next();
@@ -3198,25 +2859,18 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber + " expected: exception"
 					+ ", received symbol: " + symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
 			return res;
 		}
 		next();
 		if (sym != sNumber) {
 			nOfErrors++;
-			reporter.error(errDigitExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: number, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errDigitExp, "in " + currentFile + " at Line " + lineNumber);
 			return res;
 		}
 		res = intNumber;
@@ -3224,9 +2878,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+					+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -3240,35 +2892,25 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber + " expected: printlevel"
 					+ ", received symbol: " + symToString());
-			reporter.println();
 			return res;
 		}
 		next();
 		if (sym != sEqualsSign) {
 			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: =, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errAssignExp, "in " + currentFile + " at Line "	+ lineNumber);
 			return res;
 		}
 		next();
 		if (sym != sNumber) {
 			nOfErrors++;
-			reporter.error(errDigitExp, "in " + currentFile + " at Line "
-					+ lineNumber + " expected: number, received symbol: "
-					+ symToString());
-			reporter.println();
+			reporter.error(errDigitExp, "in " + currentFile + " at Line " + lineNumber);
 			return res;
 		}
 		res = intNumber;
 		next();
 		if (sym != sSemicolon) {
 			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFile
-					+ " befor Line " + lineNumber
-					+ " expected symbol: ;, received symbol: " + symToString());
-			reporter.println();
+			reporter.error(errSemicolonMissExp, "in " + currentFile	+ " before Line " + lineNumber);
 			return res;
 		}
 		next();
@@ -3306,7 +2948,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return check.getChecksum().getValue();
 		} catch (FileNotFoundException e) {
 			reporter.error(errIOExp, rootfile.toString() + " not found!");
-			reporter.println();
 		} catch (IOException e) {
 		}
 		return 0;

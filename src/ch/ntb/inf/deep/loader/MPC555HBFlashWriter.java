@@ -23,8 +23,7 @@ public class MPC555HBFlashWriter implements MemoryWriter {
 	@Override
 	public int writeSequence(TargetMemorySegment seg) {
 		if(!unlocked){
-			ErrorReporter.reporter.error("bypass is not unlocked");
-			ErrorReporter.reporter.println();
+			ErrorReporter.reporter.error(Downloader.errBypassNotUnlocked);
 			return 0;
 		}
 		int i;
@@ -36,8 +35,7 @@ public class MPC555HBFlashWriter implements MemoryWriter {
 					StdStreams.out.print(".");
 				}
 			} catch (DownloaderException e) {
-				ErrorReporter.reporter.error("programming failed");
-				ErrorReporter.reporter.println();
+				ErrorReporter.reporter.error(Downloader.errProgrammFailed);
 				return i;
 			}
 		}
@@ -62,7 +60,7 @@ public class MPC555HBFlashWriter implements MemoryWriter {
 			bdi.setMem(dev.getbaseAddress()+ 0x1554, 0x08000800, 4);
 			waitByDataPoll(dev.getbaseAddress(), 0xFFFFFFFF, 30000);
 		} catch (DownloaderException e) {
-			ErrorReporter.reporter.error("Connection to target lost while erasing device");
+			ErrorReporter.reporter.error(Downloader.errConnectionLost,"while erasing device");
 		}
 		
 	}
@@ -82,7 +80,7 @@ public class MPC555HBFlashWriter implements MemoryWriter {
 					bdi.setMem(current.getBaseAddress(), 0x0C000C00, 4);
 					waitByDataPoll(current.getBaseAddress(), 0xFFFFFFFF, 5000);
 				} catch (DownloaderException e) {
-					ErrorReporter.reporter.error("Connection to target lost while erasing sector");
+					ErrorReporter.reporter.error(Downloader.errConnectionLost,"while erasing sector");
 					return;
 				}
 			}

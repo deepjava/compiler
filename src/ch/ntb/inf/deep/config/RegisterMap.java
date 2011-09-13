@@ -76,8 +76,7 @@ public class RegisterMap implements ErrorCodes {
 		current = gpr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				ErrorReporter.reporter.error("it is not allowed to set a init value for gpr register " + registername);
-				ErrorReporter.reporter.println();
+				ErrorReporter.reporter.error(errInitNotSupported, "for gpr register " + registername);
 				Parser.nOfErrors++;
 				return null;
 			}
@@ -86,16 +85,14 @@ public class RegisterMap implements ErrorCodes {
 		current = fpr;
 		while (current != null) {
 			if (current.name.equals(registername)) {
-				ErrorReporter.reporter.error("it is not allowed to set a init value for fpr register " + registername);
-				ErrorReporter.reporter.println();
+				ErrorReporter.reporter.error(errInitNotSupported, "for fpr register " + registername);
 				Parser.nOfErrors++;
 				return null;
 			}
 			current = current.next;
 		}
 		//register not found
-		ErrorReporter.reporter.error(errNoSuchRegister, "register " + registername + " not found");
-		ErrorReporter.reporter.println();
+		ErrorReporter.reporter.error(errNoSuchRegister, registername.toString());
 		Parser.nOfErrors++;
 		return null;
 		
@@ -339,8 +336,7 @@ public class RegisterMap implements ErrorCodes {
 		} else if (reg.type == Parser.sFPSCR) {
 			setFPSCRRegister(reg);
 		} else {
-			ErrorReporter.reporter.error(errInvalidType, "Invalide register type in register "	+ reg.getName().toString());
-			ErrorReporter.reporter.println();
+			ErrorReporter.reporter.error(errInvalidType, "register " + reg.getName().toString());
 			Parser.nOfErrors++;
 			return;
 		}

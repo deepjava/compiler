@@ -754,7 +754,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				
 				clfInStrm.close();
 			}catch (FileNotFoundException fnfE){
-				errRep.error("class file not found: " + fnfE.getMessage()); errRep.println();
+				errRep.error(300, fnfE.getMessage());
 				fnfE.getCause();
 			}
 		}
@@ -863,12 +863,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			while(systemMeth != null){
 				Item method = cls.methods.getItemByName(systemMeth.name);
 				if(method == null){
-					errRep.error("method "+systemMeth.name +" in system class "+systemClass.name + " not found");
+					errRep.error(301, systemMeth.name +" in system class "+systemClass.name);
 				}else{
 					if(verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
 					int methIndex  = (systemMeth.attributes-1)&0xFF;
 					if( methIndex >= nofNewMethods ){
-						errRep.error("method id of"+systemMeth.name +" in system class "+systemClass.name + " out of range");
+						errRep.error(302, systemMeth.name +" in system class "+systemClass.name);
 					}else{
 						if(verbose) vrb.println(" ldSysCls: newMethInx="+methIndex);
 						systemClassAttributes |= method.accAndPropFlags & dpfSetSysMethProperties;

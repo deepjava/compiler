@@ -8,7 +8,7 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class ClassFileAdmin {
 	public static final String classFileType =  ".class";
-	public static final String errMsgIllegalParentDir = "illegal parent dir of class files";
+	public static int errChangingParentDir = 303, errMsgIllegalParentDir = 304;
 
 	private static File[] parentDirs; // parent directories of class files
 
@@ -27,7 +27,7 @@ public class ClassFileAdmin {
 		PrintStream log = StdStreams.log;
 		log.println("registering parent dirs of class files:");
 		if(ClassFileAdmin.parentDirs != null)
-			ErrorReporter.reporter.error("changing parent dirs of class files");
+			ErrorReporter.reporter.error(errChangingParentDir);
 		else{
 			int nofPaths = parentDirectories.length;
 			ClassFileAdmin.parentDirs = new File[nofPaths];
@@ -37,7 +37,7 @@ public class ClassFileAdmin {
 				log.print("  registering: "+ parentPath + '\t');
 				File parentDir = new File( parentPath );
 				if( ! parentDir.exists() || ! parentDir.isDirectory() ){
-					log.println(errMsgIllegalParentDir);
+					log.println("Errorcode " + errMsgIllegalParentDir);
 					ErrorReporter.reporter.error(errMsgIllegalParentDir);
 					error = true;
 				}

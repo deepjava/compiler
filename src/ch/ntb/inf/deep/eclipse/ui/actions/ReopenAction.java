@@ -7,6 +7,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 
@@ -33,8 +34,7 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 			StdStreams.out.println("Device succesfully reopened");
 		} catch (DownloaderException e) {
 			bdi.closeConnection();
-			ErrorReporter.reporter.error("Reopen failed");
-			ErrorReporter.reporter.println();
+			ErrorReporter.reporter.error(Downloader.errReopenFailed);
 		} catch (InterruptedException e) {
 		}
 	}

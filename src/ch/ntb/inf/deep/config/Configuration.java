@@ -81,9 +81,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				segDesignator = segDesignator.substring(index + 1);
 				Device dev = memoryMap.getDeviceByName(name);
 				if (dev == null) {
-					ErrorReporter.reporter.error(errNoSuchDevice, "Device: "
-							+ name.toString() + "with segment for "
-							+ "const not found\n");
+					ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for const not found");
 					return null;
 				}
 				index = segDesignator.indexOf('.');
@@ -158,10 +156,8 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				segDesignator = segDesignator.substring(index + 1);
 				Device dev = memoryMap.getDeviceByName(name);
 				if (dev == null) {
-					ErrorReporter.reporter.error(errNoSuchDevice, "Device: "
-							+ name.toString() + "with segment for "
-							+ contentAttribute.toString() + " not found");
-					ErrorReporter.reporter.println();
+					ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for "
+							+ contentAttribute.toString());
 					return null;
 				}
 				index = segDesignator.indexOf('.');
@@ -348,9 +344,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 			res = sysConst.getConstByName(constName);
 		}
 		if (res == Integer.MAX_VALUE) {
-			ErrorReporter.reporter.error(errUndefinedConst, constName
-					.toString()
-					+ " is not defined\n");
+			ErrorReporter.reporter.error(errUndefinedConst, constName.toString());
 			Parser.incrementErrors();
 		}
 		return res;
@@ -462,9 +456,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	public static void setHeapSegmentRef(Segment heapSegment) {
 		if (nofHeapSegments >= maxNumbersOfHeaps) {
-			ErrorReporter.reporter.error(errMaxNofReached,
-					"Max number of heap segments(" + maxNumbersOfHeaps
-							+ ") is reached\n");
+			ErrorReporter.reporter.error(errMaxNofReached, "heap segments(" + maxNumbersOfHeaps + ")");
 			Parser.incrementErrors();
 			return;
 		}
@@ -474,9 +466,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	public static void setStackSegmentRef(Segment stackSegment) {
 		if (nofStackSegments >= maxNumbersOfStacks) {
-			ErrorReporter.reporter.error(errMaxNofReached,
-					"Max number of stck segments(" + maxNumbersOfStacks
-							+ ") is reached\n");
+			ErrorReporter.reporter.error(errMaxNofReached, "stack segments(" + maxNumbersOfStacks	+ ")");
 			Parser.incrementErrors();
 			return;
 		}
@@ -520,8 +510,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 					segDesignator = segDesignator.substring(index + 1);
 					Device dev = memoryMap.getDeviceByName(name);
 					if (dev == null) {
-						ErrorReporter.reporter.error(errNoSuchDevice, "Device: " + name.toString() + "with segment for systab not found");
-						ErrorReporter.reporter.println();
+						ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for systab");
 						return null;
 					}
 					index = segDesignator.indexOf('.');
@@ -531,8 +520,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 						if(seg != null){
 							noticeSegment(seg);
 						}else{
-							ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
-							ErrorReporter.reporter.println();
+							ErrorReporter.reporter.error(errNoSuchSegment, segDesignator.toString() + "with attribute systab");
 						}
 						
 					}else{
@@ -549,8 +537,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 						if(seg != null){
 							noticeSegment(seg);
 						}else{
-							ErrorReporter.reporter.error(errInvalideParameter, "Segment: " + segDesignator.toString() + "with attribute systab not found");
-							ErrorReporter.reporter.println();
+							ErrorReporter.reporter.error(errNoSuchSegment, segDesignator.toString() + "with attribute systab");
 						}
 					}
 				}
@@ -676,7 +663,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 			activeTarConf = activeTarConf.next;
 		}
 		if (activeTarConf == null) {
-			ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration which is set is not found\n");
+			ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration which is set is not found");
 		}
 	}
 

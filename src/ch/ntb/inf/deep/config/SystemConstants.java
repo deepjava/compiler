@@ -29,11 +29,7 @@ public class SystemConstants implements ErrorCodes {
 		while (current != null) {
 			if (current.name.hashCode() == constHash) {
 				if (current.name.equals(sysConst.name)) {
-					ErrorReporter.reporter
-							.error(
-									errOverwriteProtectedConst,
-									constName.toString()
-											+ " is allready set, overwriting is not allowed\n");
+					ErrorReporter.reporter.error(errOverwriteProtectedConst, constName.toString());
 					return;
 				}
 			}

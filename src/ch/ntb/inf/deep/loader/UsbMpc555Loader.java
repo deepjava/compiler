@@ -118,8 +118,7 @@ public class UsbMpc555Loader extends Downloader {
 		// get code from the Devices
 		if (!isFreezeAsserted()) {
 			nofErrors++;
-			ErrorReporter.reporter.error("Bdi is not in Debug mode!");
-			ErrorReporter.reporter.println();
+			ErrorReporter.reporter.error(errTargetNotInDebugMode);
 			return;
 		}
 		TargetMemorySegment image = Linker32.targetImage;
@@ -197,16 +196,14 @@ public class UsbMpc555Loader extends Downloader {
 					}
 				}else{// other devices not implemented yet
 						nofErrors++;
-						ErrorReporter.reporter.error("MemoryWriter for Device " + image.segment.owner.getName().toString() + " isn't implemented yet!");
-						ErrorReporter.reporter.println();
+						ErrorReporter.reporter.error(errMemWriterNotImplemented,"for Device " + image.segment.owner.getName().toString());
 						return;
 					
 					
 				}
 			}else{ // other technologies not implemented yet
 				nofErrors++;
-				ErrorReporter.reporter.error("MemoryWriter for Device " + image.segment.owner.getName().toString() + " isn't implemented yet!");
-				ErrorReporter.reporter.println();
+				ErrorReporter.reporter.error(errMemWriterNotImplemented, "for Device " + image.segment.owner.getName().toString());
 				return;
 			}
 			image = image.next;	

@@ -1,0 +1,47 @@
+ErrorNr;Description;Solution
+200;wrong number format;
+201;missing right parenthesis;
+202;missing right brace;
+203;missing right bracket;
+204;missing quotation mark;
+205;IO-Exception;
+206;Unexpected Symbol;
+207;missing left brace;
+208;missing left bracket;
+209;missing semicolon;
+210;missing assignment sign;
+220;no such device;
+221;no devices;create device before adding segments
+222;syntax error;
+223;inconsistent attributes;
+224;invalid type;
+225;invalid parameter;
+226;overwrite protected;
+227;undefined constant;
+228;max number of reached;
+229;missing tag;
+230;no such register;
+231;no default segment defined;
+232;no system table segment defined;
+233;to set an init value is not supported;
+234;fix addresses for methods are only in exception methods supported;
+235;no such segment;
+
+300;class file not found;
+301;systemmethod not found;
+302;id for Systemmethod out of range;
+303;changing parent dirs of class files;
+304;illegal parent dir of class files;
+
+500;generating of the linenumber tabel failed;
+
+800;target not found!(USB connection failed);
+801;a error occurs while downloading!(Try to reopen);
+802;no target image to load;
+803;connection to target lost;
+804;reopen failed;
+805;starting of Device failed;
+806;bdi is not in Debug mode;
+807;memmory writer is not implemented;
+808;bypass is not unlocked;
+809;programming failed;

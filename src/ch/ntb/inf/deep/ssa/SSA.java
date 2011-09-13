@@ -382,7 +382,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 				}
 			}
 		}else{
-			ErrorReporter.reporter.print("SSA: generating linenumbertable for method " + cfg.method.name.toString() + " in class " + cfg.method.owner.name.toString() + " failed!");
+			ErrorReporter.reporter.error(500,"for method " + cfg.method.name.toString() + " in class " + cfg.method.owner.name.toString());
 		}
 	}
 	

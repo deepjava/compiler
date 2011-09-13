@@ -50,7 +50,9 @@ public class Launcher implements ICclassFileConsts {
 			clearVisitedFlagsForAllClasses();
 			Item item = Type.classList;
 			Method method;
-			out.println("Loaded classes");
+			if (reporter.nofErrors <= 0) {				
+				out.println("Loaded classes");
+			}
 			while (item != null && reporter.nofErrors <= 0) {
 				if(item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 					
@@ -169,18 +171,15 @@ public class Launcher implements ICclassFileConsts {
 					// System.out.println("++++++++ Start Target!+++++++++");
 //					bdi.startTarget();
 				}else{
-					reporter.error("Target not found!(USB connection failed)");
-					reporter.println();
+					reporter.error(Downloader.errTargetNotFound);
 					reporter.nofErrors++;
 				}
 			} catch (DownloaderException e) {
-				reporter.error("A error occurs while downloading!(Try to reopen)");
-				reporter.println();
+				reporter.error(Downloader.errDownloadFailed);
 				reporter.nofErrors++;
 			}
 		} else {
-			reporter.error("No target image to load");
-			reporter.println();
+			reporter.error(Downloader.errNoTargetImage);
 			reporter.nofErrors++;
 		}
 	}
@@ -192,8 +191,7 @@ public class Launcher implements ICclassFileConsts {
 				try {
 					bdi.startTarget();
 				} catch (DownloaderException e) {
-					reporter.error("Starting of Device failed");
-					reporter.println();
+					reporter.error(Downloader.errStartTargetFailed);
 					reporter.nofErrors++;
 				}
 			}

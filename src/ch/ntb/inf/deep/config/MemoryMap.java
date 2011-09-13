@@ -40,8 +40,7 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 
 	public void addSegment(Segment seg) {
 		if (this.dev == null) {
-			ErrorReporter.reporter.error(errNoDevices,
-					"Create device befor adding segments");
+			ErrorReporter.reporter.error(errNoDevices);
 		}
 		int indexOf = seg.name.indexOf('.', 0);
 		if (indexOf != -1) {
@@ -82,7 +81,7 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 			}
 		} else {
 			ErrorReporter.reporter.error(errSyntax,
-					"Error in memorymap segement definition ("
+					"in memorymap segement definition ("
 							+ seg.name.toString()
 							+ "), segment names starts with the device name!");
 		}
