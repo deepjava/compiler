@@ -823,7 +823,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		root.accAndPropFlags |= (1<<dpfRootClass);
 		assert root.next == null;
 		root.loadClass(userReqAttributes);
-		root.comleteLoadingOfRootClass();
+		root.completeLoadingOfRootClass();
 		
 		if(verbose) vrb.println("<loadRootClass");
 	}
@@ -856,7 +856,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		cls.loadClass(userReqAttributes);
 		cls.accAndPropFlags |= systemClassAttributes & dpfSetSysClassProperties;
-		cls.comleteLoadingOfRootClass();
+		cls.completeLoadingOfRootClass();
 
 		if( (systemClassAttributes & (1<<dpfNew)) != 0 ){// set up new memory method table
 			SystemMethod systemMeth = systemClass.methods;
@@ -904,7 +904,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 	}
 
-	private static void repalceConstPoolStubs(){
+	private static void replaceConstPoolStubs(){
 //		final boolean verbose = true;
 		if(verbose) vrb.println(">repalceConstPoolStubs:");
 		Item type = classList;
@@ -999,8 +999,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 	}
 
-	private void comleteLoadingOfRootClass(){
-		repalceConstPoolStubs();
+	private void completeLoadingOfRootClass(){
+		replaceConstPoolStubs();
 //		fixUpObjectSize();
 		selectAndMoveInitClasses();
 	}
@@ -1015,11 +1015,11 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	
 		Class clsObject = (Class)wellKnownTypes[txObject];
 		clsObject.loadClass(userReqAttributes);
-		clsObject.comleteLoadingOfRootClass();
+		clsObject.completeLoadingOfRootClass();
 
 		Class clsString = (Class)wellKnownTypes[txString];
 		clsString.loadClass(userReqAttributes);
-		clsString.comleteLoadingOfRootClass();
+		clsString.completeLoadingOfRootClass();
 
 		loadSystemClasses(sysClasses, userReqAttributes);
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
