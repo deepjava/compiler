@@ -182,4 +182,18 @@ public class Segment implements IAttributes {
 		}
 		StdStreams.vrb.println("}");
 	}
+	@Override
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		sb.append("Name:       " + name.toString() + "\n");
+		sb.append("Owner:      " + owner.getName().toString() + "\n");
+		sb.append("Attributes: 0x" + Integer.toHexString(attributes) + "\n");
+		sb.append("Width:      " + width + " Bytes\n");
+		sb.append("Base:       0x" + Integer.toHexString(baseAddress) + "\n");
+		sb.append("Size:       0x" + Integer.toHexString(size) + " (" + size + ")" + " Bytes\n");
+		if(size > 0){			
+			sb.append("Used:       0x" + Integer.toHexString(usedSize) + " (" + usedSize + ")" + " Bytes" + " -> " + String.format("%.1f", ((float)(usedSize*100))/size) + "%\n");
+		}
+		return sb.toString();
+	}
 }

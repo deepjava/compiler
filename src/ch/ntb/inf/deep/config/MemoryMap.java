@@ -14,6 +14,7 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 	private static MemoryMap memoryMap = null;
 
 	private Device dev;
+	private int nofDevices;
 	private Module modulesMap;
 
 	private MemoryMap() {
@@ -29,6 +30,7 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 	public void addDevice(Device dev) {
 		if (this.dev == null) {
 			this.dev = dev;
+			nofDevices++;
 			return;
 		}
 		Device current = this.dev;
@@ -36,6 +38,7 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 			current = current.next;
 		}
 		current.next = dev;
+		nofDevices++;
 	}
 
 	public void addSegment(Segment seg) {
@@ -116,6 +119,10 @@ public class MemoryMap implements IAttributes, ErrorCodes {
 
 	public Device getDevices() {
 		return dev;
+	}
+	
+	public int getNofDevices(){
+		return nofDevices;
 	}
 
 	public Module getModules() {

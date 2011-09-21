@@ -14,13 +14,18 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
@@ -36,6 +41,10 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.NamedConst;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Device;
+import ch.ntb.inf.deep.config.MemoryMap;
+import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.linker.BlockItem;
 import ch.ntb.inf.deep.linker.FixedValueItem;
 import ch.ntb.inf.deep.ssa.SSA;
@@ -43,11 +52,12 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class ClassTreeView extends ViewPart implements ISelectionChangedListener, ICclassFileConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView";
-	private TreeViewer treeViewer;
+	private TreeViewer classTreeViewer;
+	private TreeViewer deviceTreeViewer;
 	private TextViewer textViewer;
 	private Action refresh;
 
-	class MyTreeLabelProvider extends LabelProvider {
+	class ClassTreeLabelProvider extends LabelProvider {
 		public Image getImage(Object element) {
 			return null;
 		}
@@ -69,7 +79,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		}
 	}
 
-	class MyTreeContentProvider implements ITreeContentProvider {
+	class ClassTreeContentProvider implements ITreeContentProvider {
 
 		public Object[] getChildren(Object parent) {
 			Object[] item = null;
@@ -155,6 +165,19 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 					return item;
 				}
 			}
+			if(parent instanceof RootElement){
+				if(Type.nofClasses < 1)return new Object[]{"No Classses loaded"};
+				Item[] classes = new Item[Type.nofClasses];
+				int count = 0;
+				Item classmember = ((RootElement)parent).children;
+				while(classmember != null && count < classes.length){
+					if(classmember instanceof Class){
+						classes[count++] = classmember;
+					}
+					classmember = classmember.next;
+				}			
+				return classes;
+			}
 			return item;
 		}
 
@@ -181,18 +204,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 		@Override
 		public Object[] getElements(Object inputElement) {
-			if(!(inputElement instanceof RootElement))return new Object[]{""};
-			if(Type.nofClasses < 1)return new Object[]{"No Classses loaded"};
-			Item[] classes = new Item[Type.nofClasses];
-			int count = 0;
-			Item item = ((RootElement)inputElement).children;
-			while(item != null && count < classes.length){
-				if(item instanceof Class){
-					classes[count++] = item;
-				}
-				item = item.next;
-			}			
-			return classes;
+			if(!(inputElement instanceof TreeInput))return new Object[]{""};
+			return new Object[]{((TreeInput)inputElement).obj};
 		}
 
 		@Override
@@ -203,26 +216,154 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {		
 		}
 	}
+	
+	class DeviceTreeLabelProvider extends LabelProvider {
+		public Image getImage(Object element) {
+			return null;
+		}
+		public String getText(Object element) {
+			if(element instanceof MemoryMap){
+				return "Memory Map";					
+			}
+			if(element instanceof Device){
+				return((Device)element).getName().toString();
+			}
+			if(element instanceof Segment){
+				return ((Segment)element).getName().toString();
+			}
+			if(element instanceof String){
+				return (String)element;
+			}
+			
+			return "";
+		}
+	}
+	
+	class DeviceTreeContentProvider implements ITreeContentProvider {
 
+		@Override
+		public Object[] getChildren(Object parentElement) {
+			if(parentElement instanceof MemoryMap){
+				MemoryMap memMap = (MemoryMap)parentElement;
+				if(memMap.getDevices() == null)return new Object[]{"No memory map loaded"};
+				Device[] devices = new Device[memMap.getNofDevices()];
+				Device dev = memMap.getDevices();
+				for(int i = 0; i < devices.length && dev != null;i++){
+					devices[i] = dev;
+					dev = dev.next;
+				}			
+				return devices;
+			}			
+			if(parentElement instanceof Device){
+				Segment segs =((Device)parentElement).segments;
+				Segment current = segs;
+				int count;
+				for(count = 0; current != null; count++)current = current.next;
+				if(count > 0){
+					Segment seg[] = new Segment[count];
+					for(int i = 0; i < seg.length && segs != null; i++){
+						seg[i] = segs;
+						segs = segs.next;
+					}
+					return seg;
+				}				
+			}
+			if(parentElement instanceof Segment){
+				Segment segs =((Device)parentElement).segments;
+				Segment current = segs;
+				int count;
+				for(count = 0; current != null; count++)current = current.next;
+				if(count > 0){
+					Segment seg[] = new Segment[count];
+					for(int i = 0; i < seg.length && segs != null; i++){
+						seg[i] = segs;
+						segs = segs.next;
+					}
+					return seg;
+				}				
+			}
+			return null;
+		}
+
+		@Override
+		public Object getParent(Object element) {
+			if(element instanceof Segment){
+				Segment seg = (Segment)element;
+				if(seg.parent != null)return seg.parent;
+				return seg.owner;
+			}
+			return null;
+		}
+
+		@Override
+		public boolean hasChildren(Object element) {
+			if(element instanceof MemoryMap){
+				return true;
+			}			
+			if(element instanceof Device){
+				if(((Device)element).segments != null){
+					return true;
+				}
+			}
+			if(element instanceof Segment){
+				if(((Segment)element).subSegments != null){
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public Object[] getElements(Object inputElement) {
+			if(!(inputElement instanceof TreeInput))return new Object[]{""};
+			return new Object[]{((TreeInput)inputElement).obj};
+		}
+
+		@Override
+		public void dispose() {
+		}
+
+		@Override
+		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+		}
+		
+	}
+	
+	
 	@Override
 	public void createPartControl(Composite parent) {
-		GridLayout layout = new GridLayout(3, true);
+		GridLayout layout = new GridLayout(5, true);
 		parent.setLayout(layout);
+
+		classTreeViewer = new TreeViewer(parent, SWT.SINGLE);
+		GridData classTreeViewerData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		classTreeViewerData.horizontalSpan = 2;
+		classTreeViewer.getControl().setLayoutData(classTreeViewerData);
+		classTreeViewer.setLabelProvider(new ClassTreeLabelProvider());
+		classTreeViewer.setContentProvider(new ClassTreeContentProvider());
+		classTreeViewer.setAutoExpandLevel(2);
+		classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("ClassList"), Type.classList)));
+		classTreeViewer.addSelectionChangedListener(this);
 		
-		treeViewer = new TreeViewer(parent, SWT.SINGLE);
-		GridData treeViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
-		treeViewer.getControl().setLayoutData(treeViewerData);
-		treeViewer.setLabelProvider(new MyTreeLabelProvider());
-		treeViewer.setContentProvider(new MyTreeContentProvider());
-		treeViewer.setInput(new RootElement(HString.getHString("ClassList"), Type.classList));
-		treeViewer.addSelectionChangedListener(this);
-			
+		
 		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
 		GridData textViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
-		textViewerData.horizontalSpan = 2;
+		textViewerData.horizontalSpan = 3;
+		textViewerData.verticalSpan = 3;
 		textViewer.getControl().setLayoutData(textViewerData);
 		Document doc = new Document();
 		textViewer.setDocument(doc);
+		
+		deviceTreeViewer = new TreeViewer(parent, SWT.SINGLE);
+		GridData deviceTreeViewerData = new GridData(SWT.FILL, SWT.FILL,true, true);
+		deviceTreeViewerData.horizontalSpan = 2;
+		deviceTreeViewer.getControl().setLayoutData(deviceTreeViewerData);
+		deviceTreeViewer.setLabelProvider(new DeviceTreeLabelProvider());
+		deviceTreeViewer.setContentProvider(new DeviceTreeContentProvider());
+		deviceTreeViewer.setAutoExpandLevel(2);
+		deviceTreeViewer.setInput(new TreeInput(MemoryMap.getInstance()));
+		deviceTreeViewer.addSelectionChangedListener(this);
+		
 		
 		//get Display needs to set the font
 		Display d =parent.getShell().getDisplay();
@@ -239,15 +380,18 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 	@Override
 	public void setFocus() {
-		treeViewer.getControl().setFocus();
+		classTreeViewer.getControl().setFocus();
 	}
 	
 	private void createActions() {
 		refresh = new Action(){
 			public void run(){
-				treeViewer.setInput(new RootElement(HString.getHString("ClassList"), Type.classList));
-				treeViewer.getControl().setEnabled(true);
-				treeViewer.refresh();
+				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("ClassList"), Type.classList)));
+				classTreeViewer.getControl().setEnabled(true);
+				classTreeViewer.refresh();
+				deviceTreeViewer.setInput(new TreeInput(MemoryMap.getInstance()));
+				deviceTreeViewer.getControl().setEnabled(true);
+				deviceTreeViewer.refresh();
 			}
 		};
 		refresh.setText("Refresh");
@@ -285,6 +429,14 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		RootElement(HString name, Item children){
 			this.name = name;
 			this.children = children;
+		}
+	}
+	
+	class TreeInput{
+		public Object obj;
+		
+		TreeInput(Object obj){
+			this.obj = obj;
 		}
 	}
 
@@ -411,7 +563,19 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			textViewer.getDocument().set(machineCode.toString());
 			textViewer.refresh();
 			return;
-		}		
+		}
+		if(obj instanceof Device){
+			Device dev = (Device)obj;
+			textViewer.getDocument().set(dev.toString());
+			textViewer.refresh();
+			return;
+		}
+		if(obj instanceof Segment){
+			Segment seg = (Segment)obj;
+			textViewer.getDocument().set(seg.toString());
+			textViewer.refresh();
+			return;
+		}
 	}
 	
 	private String decodeFieldType(HString type){

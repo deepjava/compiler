@@ -194,4 +194,29 @@ public class Device implements ErrorCodes{
 		}
 		StdStreams.out.println("}");
 	}
+	
+	public String toString(){
+		StringBuilder sb = new StringBuilder();
+		sb.append("Name:        " + name.toString() + "\n");
+		sb.append("Technology:  ");
+		if(technology == 0){
+			sb.append("Ram\n");
+		}else if(technology == 1){
+			sb.append("Flash\n");
+		}else{
+			sb.append("Unkown\n");
+		}
+		sb.append("Attributes:  0x" + Integer.toHexString(attributes) + "\n");
+		sb.append("Width:       " + width + " Bytes\n");
+		sb.append("Base:        0x" + Integer.toHexString(baseAddress) + "\n");
+		sb.append("Size:        0x" + Integer.toHexString(size) + " (" + size + ")" + " Bytes\n");
+		int usedSize = 0;
+		Segment current = segments;
+		while(current != null){
+			usedSize += current.getUsedSize();
+			current = current.next;
+		}
+		sb.append("Used:        0x" + Integer.toHexString(usedSize) + " (" + usedSize + ")" + " Bytes" + " -> " + String.format("%.1f", ((float)(usedSize*100))/size) + "%\n");
+		return sb.toString();
+	}
 }
