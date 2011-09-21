@@ -349,7 +349,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
 		GridData textViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
 		textViewerData.horizontalSpan = 3;
-		textViewerData.verticalSpan = 3;
+		textViewerData.verticalSpan = 2;
 		textViewer.getControl().setLayoutData(textViewerData);
 		Document doc = new Document();
 		textViewer.setDocument(doc);
