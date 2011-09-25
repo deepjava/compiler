@@ -1,8 +1,13 @@
 package ch.ntb.inf.deep.host;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 import ch.ntb.inf.deep.strings.HString;
 
@@ -11,7 +16,6 @@ public class ClassFileAdmin {
 	public static int errChangingParentDir = 303, errMsgIllegalParentDir = 304;
 
 	private static File[] parentDirs; // parent directories of class files
-
 	public static void  clear(){
 		parentDirs = null;
 	}
@@ -36,7 +40,7 @@ public class ClassFileAdmin {
 				String parentPath = parentDirectories[path];
 				log.print("  registering: "+ parentPath + '\t');
 				File parentDir = new File( parentPath );
-				if( ! parentDir.exists() || ! parentDir.isDirectory() ){
+				if( ! parentDir.exists() || (! parentDir.isDirectory() &&  !parentDir.getName().endsWith(".jar") )){
 					log.println("Errorcode " + errMsgIllegalParentDir);
 					ErrorReporter.reporter.error(errMsgIllegalParentDir);
 					error = true;
@@ -54,17 +58,43 @@ public class ClassFileAdmin {
 	 * @param className
 	 * @return  File reference of the class file or <code>null</code>
 	 */
-	public static File getClassFile(HString className){
+	public static InputStream getClassFileInputStream(HString className){
 		if( parentDirs == null ) return null;
-		File clsFile;
+		InputStream inStrm = null;
 		String clsFileName = className.toString() + classFileType;
 		int pd = 0;
 		do{
-			clsFile = new File(parentDirs[pd], clsFileName);
+			if(parentDirs[pd].isDirectory()){
+				File clsFile;
+				clsFile = new File(parentDirs[pd], clsFileName);
+				if(clsFile.isFile()){
+					try {
+						inStrm = new FileInputStream(clsFile);
+					} catch (FileNotFoundException fnfE) {
+						ErrorReporter.reporter.error(300, fnfE.getMessage());
+						fnfE.getCause();
+					}
+				}
+			}else{
+				JarFile jar = null;
+				ZipEntry entry = null;
+				try {
+					jar = new JarFile(parentDirs[pd]);
+					entry = jar.getEntry(clsFileName);
+				}catch(IOException e1){
+				}
+				try{
+					if(entry != null){
+						inStrm = jar.getInputStream(entry);
+					}
+				} catch (IOException e) {
+					ErrorReporter.reporter.error(300, e.getMessage());
+					e.getCause();
+				}
+			}
 			++pd;
-		}while( !clsFile.isFile() && pd < parentDirs.length);
-		if( ! clsFile.isFile() ) clsFile = null;
-		return clsFile;
+		}while( inStrm == null && pd < parentDirs.length);
+		return inStrm;
 	}
 
 	public static void printParentDirs(){

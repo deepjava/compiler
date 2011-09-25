@@ -1,8 +1,6 @@
 package ch.ntb.inf.deep.classItems;
 
 import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +10,7 @@ import ch.ntb.inf.deep.config.SystemClass;
 import ch.ntb.inf.deep.config.SystemMethod;
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.linker.BlockItem;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
@@ -685,12 +684,13 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private void loadClass(int userReqAttributes) throws IOException{
 		if(verbose) vrb.println(">loadClass:");
 		if( (accAndPropFlags & ((1<<dpfClassLoaded)|(1<<dpfSynthetic)) ) == 0 ){// if not yet loaded
-			try{
-				File classFile = ClassFileAdmin.getClassFile(name);
+				InputStream inStrm = ClassFileAdmin.getClassFileInputStream(name); // new FileInputStream
 				log.println("opening class file of class: "+name );
 
-				if(classFile == null) throw new FileNotFoundException(name.toString());
-				InputStream inStrm = new FileInputStream(classFile); // new FileInputStream
+				if(inStrm == null){
+					errRep.error(300, name.toString());
+					return;
+				}
 				DataInputStream clfInStrm = new DataInputStream(inStrm); // new DataInputStream
 
 				loadConstPool(clfInStrm);
@@ -753,10 +753,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //				printReducedConstPool("reduced cp, state: 3");
 				
 				clfInStrm.close();
-			}catch (FileNotFoundException fnfE){
-				errRep.error(300, fnfE.getMessage());
-				fnfE.getCause();
-			}
 		}
 		//--- load referenced classes
 		if( (accAndPropFlags & (1<<dpfClassLoaded)) != 0){

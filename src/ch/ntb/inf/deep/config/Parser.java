@@ -5,11 +5,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.jar.JarFile;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
+import java.util.zip.ZipEntry;
 
 import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
@@ -94,32 +97,33 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	private int lineNumber = 1;
 	private HString currentFile;
 
-	public Parser(HString file) {
-		try {
-			currentFile = file;
-			importList = new ArrayList<HString>();
-			configFile = new BufferedReader(new FileReader(file.toString()));
-		} catch (FileNotFoundException e) {
-			reporter.error(errIOExp, e.getMessage());
-		}
+	public Parser(BufferedInputStream inStrm, HString filename) {
+		currentFile = filename;
+		importList = new ArrayList<HString>();
+		configFile = new BufferedReader(new InputStreamReader(inStrm));
 	}
 
 	static void incrementErrors() {
 		nOfErrors++;
 	}
 
-	private void parseImport(HString location, HString file) {
-		HString fileToRead = HString.getHString(location.toString()	+ file.toString());
-		Parser par = new Parser(fileToRead);
+	private void parseImport(BufferedInputStream inStrm, HString location, HString file){ 
+		inStrm.mark(Integer.MAX_VALUE);
+		Parser par = new Parser(inStrm, file);
 		if(reporter.nofErrors > 0){
 			return;
 		}
 		par.currentFile = file;
-		checksum.add(par.calculateChecksum(fileToRead));
+		checksum.add(par.calculateChecksum(inStrm));
+		try {
+			inStrm.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		importedFiles.add(file);
 		locForImportedFiles.add(location);
 		par.config();
-
+		
 	}
 
 	protected int config() {
@@ -867,16 +871,57 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			if (!contains && reporter.nofErrors <= 0) {
 				File f = new File(loc.toString() + toCmp.toString());
 				if (f.exists()) {
-					parseImport(loc, toCmp);
+					try {
+						InputStream inStrm = new FileInputStream(f);
+						BufferedInputStream bufStrm = new BufferedInputStream(inStrm);
+						parseImport(bufStrm, loc, toCmp);
+						inStrm.close();
+					} catch (FileNotFoundException e) {
+						reporter.error(errIOExp, toCmp.toString() + " is not on searchpath");
+					} catch (IOException e) {
+					}
 				} else {
 					if (libPaths != null) {
 						HString path = libPaths;
 						boolean parsed = false;
 						while(path != null){
-							f = new File( path.toString()+ toCmp.toString());
-							if(f.exists()){
-								parseImport(path, toCmp);
+							BufferedInputStream bufStrm = null;
+							String sPath = path.toString();
+							if(sPath.endsWith(".jar")){
+								JarFile jar = null;
+								ZipEntry entry = null;
+								try {
+									jar = new JarFile(sPath);
+									entry = jar.getEntry(toCmp.toString());
+								}catch(IOException e1){
+									reporter.error(errIOExp, "by reading of " + sPath);
+								}
+								try{
+									if(entry != null){
+										InputStream inStrm = jar.getInputStream(entry);
+										bufStrm = new BufferedInputStream(inStrm);
+									}
+								} catch (IOException e) {
+									reporter.error(errIOExp, "by reading of " + toCmp.toString());
+								}
+							}else{
+								f = new File( path.toString()+ toCmp.toString());
+								if(f.exists()){
+									try {
+										InputStream inStrm = new FileInputStream(f);
+										bufStrm = new BufferedInputStream(inStrm);
+									} catch (FileNotFoundException e) {
+										reporter.error(errIOExp, toCmp.toString() + " is not on searchpath");
+									}
+								}
+							}					
+							if(bufStrm != null){
+								parseImport(bufStrm, path, toCmp);
 								parsed = true;
+								try {
+									bufStrm.close();
+								} catch (IOException e) {
+								}
 								break;
 							}
 							path = path.next;
@@ -1842,10 +1887,43 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				HString path = libPaths;
 				boolean parsed = false;
 				while(path != null){
-					File f = new File( path.toString()+ toCmp.toString());
-					if(f.exists()){
-						parseImport(path, toCmp);
+					BufferedInputStream bufStrm = null;
+					String sPath = path.toString();
+					if(sPath.endsWith(".jar")){
+						JarFile jar = null;
+						ZipEntry entry = null;
+						try {
+							jar = new JarFile(sPath);
+							entry = jar.getEntry(toCmp.toString());
+						}catch(IOException e1){
+							reporter.error(errIOExp, "by reading of " + sPath);
+						}
+						try{
+							if(entry != null){
+								InputStream inStrm = jar.getInputStream(entry);
+								bufStrm = new BufferedInputStream(inStrm);
+							}
+						} catch (IOException e) {
+							reporter.error(errIOExp, "by reading of " + toCmp.toString());
+						}
+					}else{
+						File f = new File( path.toString()+ toCmp.toString());
+						if(f.exists()){
+							try {
+								InputStream inStrm = new FileInputStream(f);
+								bufStrm = new BufferedInputStream(inStrm);
+							} catch (FileNotFoundException e) {
+								reporter.error(errIOExp, toCmp.toString() + " is not on searchpath");
+							}
+						}
+					}					
+					if(bufStrm != null){
+						parseImport(bufStrm, path, toCmp);
 						parsed = true;
+						try {
+							bufStrm.close();
+						} catch (IOException e) {
+						}
 						break;
 					}
 					path = path.next;
@@ -2832,7 +2910,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			next();
 			str = readString();
 			if (str.length() > 0 && str.charAt(str.length() - 1) != '/') {
-				str = str + '/';
+				if(!str.endsWith(".jar")){
+					str = str + '/';
+				}
 			}
 			if (tempList == null) {
 				tempList = HString.getHString(str);
@@ -2919,16 +2999,48 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 
 	protected boolean hasChanged(HString rootfile) {
 		long sum;
-		if (!rootfile.equals(HString.getHString(locForImportedFiles.get(0)
-				.toString()
-				+ importedFiles.get(0).toString()))) {
+		if (!rootfile.equals(HString.getHString(locForImportedFiles.get(0).toString() + importedFiles.get(0).toString()))) {
 			return true;
 		}
 		for (int i = 0; i < importedFiles.size(); i++) {
-			sum = calculateChecksum(HString.getHString(locForImportedFiles.get(
-					i).toString()
-					+ importedFiles.get(i).toString()));
-			if (sum != checksum.get(i)) {
+			InputStream inStrm = null;
+			String sPath = locForImportedFiles.get(i).toString();
+			if(sPath.endsWith(".jar")){
+				JarFile jar = null;
+				ZipEntry entry = null;
+				try {
+					jar = new JarFile(sPath);
+					entry = jar.getEntry(importedFiles.get(i).toString());
+				}catch(IOException e1){
+					reporter.error(errIOExp, "by reading of " + sPath);
+				}
+				try{
+					if(entry != null){
+						inStrm = jar.getInputStream(entry);
+					}
+				} catch (IOException e) {
+					reporter.error(errIOExp, "by reading of " + importedFiles.get(i).toString());
+				}
+			}else{
+				File f = new File(sPath + importedFiles.get(i).toString());
+				if(f.exists()){
+					try {
+						inStrm = new FileInputStream(f);
+					} catch (FileNotFoundException e) {
+						reporter.error(errIOExp, importedFiles.get(i).toString() + " is not on searchpath");
+					}
+				}
+			}					
+			if(inStrm != null){
+				sum = calculateChecksum(inStrm);
+				try {
+					inStrm.close();
+				} catch (IOException e) {
+				}
+				if (sum != checksum.get(i)) {
+					return true;
+				}
+			}else{
 				return true;
 			}
 		}
@@ -2936,18 +3048,14 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		return false;
 	}
 
-	protected long calculateChecksum(HString rootfile) {
-		FileInputStream file;
-		try {
-			file = new FileInputStream(rootfile.toString());
-			CheckedInputStream check = new CheckedInputStream(file, new CRC32());
-			BufferedInputStream in = new BufferedInputStream(check);
+	protected long calculateChecksum(InputStream fileInput) {
+		CheckedInputStream check = new CheckedInputStream(fileInput, new CRC32());
+		BufferedInputStream in = new BufferedInputStream(check);
+		try{
 			while (in.read() != -1) {
 				// Read file in completely
 			}
 			return check.getChecksum().getValue();
-		} catch (FileNotFoundException e) {
-			reporter.error(errIOExp, rootfile.toString() + " not found!");
 		} catch (IOException e) {
 		}
 		return 0;

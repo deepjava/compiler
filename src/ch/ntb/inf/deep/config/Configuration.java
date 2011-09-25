@@ -1,8 +1,12 @@
 package ch.ntb.inf.deep.config;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.eclipse.core.runtime.Path;
 
@@ -203,7 +207,11 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		String[] paths = new String[count + 1];
 		paths[0] = location + "bin/";
 		for (int i = 1; i <= count; i++) {
-			paths[i] = libPaths.toString() + "bin/";
+			if(libPaths.toString().endsWith("/")){				
+				paths[i] = libPaths.toString() + "bin/";
+			}else{
+				paths[i] = libPaths.toString();
+			}
 			libPaths = libPaths.next;
 		}
 		return paths;
@@ -669,19 +677,36 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	public static void parseAndCreateConfig(String file, String targetConfigurationName) {
 		int index = file.lastIndexOf('/');
-		HString fileToRead = HString.getHString(file);
 		location = file.substring(0, index + 1);
 		Parser.loc = HString.getHString(location);
-		Parser par = new Parser(fileToRead);
-		// if (importedFiles.size() < 1 || par.hasChanged(file)) {
-		clear();
-		Parser.checksum.add(par.calculateChecksum(fileToRead));
-		Parser.importedFiles.add(fileToRead.substring(index + 1));
-		Parser.locForImportedFiles.add(Parser.loc);
-		par.config();
-		// }
-		if(ErrorReporter.reporter.nofErrors <=0) setActiveTargetConfig(HString.getHString(targetConfigurationName));
+		HString filename = HString.getHString(file.substring(index + 1));
+		BufferedInputStream bufStrm = null;
+		File f = new File(file);
+		if(f.exists()){
+			try {
+				bufStrm = new BufferedInputStream(new FileInputStream(f));
+			} catch (FileNotFoundException e) {
+				ErrorReporter.reporter.error(errIOExp, file + " is not on searchpath");
+			}
+		}
+		if(bufStrm != null){
+			bufStrm.mark(Integer.MAX_VALUE);
+			Parser par = new Parser(bufStrm, filename);
+			// if (importedFiles.size() < 1 || par.hasChanged(bufStrm)) {
+			clear();
+			Parser.checksum.add(par.calculateChecksum(bufStrm));
+			try {
+				bufStrm.reset();
+				Parser.importedFiles.add(filename);
+				Parser.locForImportedFiles.add(Parser.loc);
+				par.config();
+				bufStrm.close();
+			} catch (IOException e) {
+			}
+			// }
+			if(ErrorReporter.reporter.nofErrors <=0) setActiveTargetConfig(HString.getHString(targetConfigurationName));
+		}else{
+			ErrorReporter.reporter.error(errIOExp, file + " is not on searchpath");
+		}
 	}
-
-
 }
