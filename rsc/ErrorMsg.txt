@@ -36,7 +36,7 @@ ErrorNr;Description;Solution
 500;generating of the linenumber tabel failed;
 
 800;target not found!(USB connection failed);
-801;a error occurs while downloading!(Try to reopen);
+801;an error occurs while downloading!(Try to reopen);
 802;no target image to load;
 803;connection to target lost;
 804;reopen failed;
