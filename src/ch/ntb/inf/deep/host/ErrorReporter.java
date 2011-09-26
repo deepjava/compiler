@@ -40,11 +40,16 @@ public class ErrorReporter {
 		clear();
 		errPrStream = StdStreams.err;
 		String home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6);//get jar name
-		if(home.endsWith("jar")){
+		if(home.endsWith("jar")){//used when launched as a builded Plugin 
 			try {
 				jar = new JarFile(home);
 			} catch (IOException e) {
 			}
+		}else{
+			if(home.endsWith("bin/")){//used when launched with Testlauncher
+				home = home.substring(0, home.length() - 4);
+			}
+			errorMsgFilePath = home + errorMsgFilePath; // used when launched from Plugin-Development environment 
 		}
 						
 		this.maxNofErrors = Integer.MAX_VALUE;
