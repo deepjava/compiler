@@ -80,13 +80,15 @@
    <extension
          point="org.eclipse.ui.propertyPages">
       <page
-            adaptable="true"
             class="ch.ntb.inf.deep.eclipse.ui.properties.ProjectPage"
             icon="icons/full/obj16/deep.gif"
             id="ch.ntb.inf.deep.ui.properties.ProjectPage"
-            name="Target configuration"
-            objectClass="org.eclipse.core.resources.IResource">
-         <enabledWhen></enabledWhen>
+            name="Target configuration">
+         <enabledWhen>
+            <adapt
+                  type="org.eclipse.core.resources.IProject">
+            </adapt>
+         </enabledWhen>
       </page>
    </extension>
    <extension
