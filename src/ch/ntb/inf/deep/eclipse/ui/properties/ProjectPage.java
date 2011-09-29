@@ -166,7 +166,7 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 	}
 
 	private IEclipsePreferences getPref() {
-		IProject project = (IProject) getElement();
+		IProject project =  (IProject) getElement().getAdapter(IProject.class);
 		ProjectScope scope = new ProjectScope(project);
 		return scope.getNode("deepStart");
 	}
