@@ -35,7 +35,7 @@ public class DeepTabGroup extends AbstractLaunchConfigurationTabGroup {
 				new JavaArgumentsTab(),
 				new JavaJRETab(),
 				new JavaClasspathTab(),
-				new SourceLookupTab(),
+//				new SourceLookupTab(),
 				new EnvironmentTab(),
 				new CommonTab()
 		});

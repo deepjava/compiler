@@ -207,9 +207,23 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 			String targetConf = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, BOOT_FROM_RAM);
 			if(targetConf.endsWith(BOOT_FROM_RAM)){
 				ram.setSelection(true);
+				flash.setSelection(false);
+				if(other.getSelection()){
+					other.setSelection(false);
+					targetConfig.setEnabled(false);
+					targetConfig.setText("");
+				}
 			}else if(targetConf.equals(BOOT_FROM_FLASH)){
+				ram.setSelection(false);
 				flash.setSelection(true);
+				if(other.getSelection()){
+					other.setSelection(false);
+					targetConfig.setEnabled(false);
+					targetConfig.setText("");
+				}
 			}else{
+				ram.setSelection(false);
+				flash.setSelection(false);
 				other.setSelection(true);
 				targetConfig.setEnabled(true);
 				targetConfig.setText(targetConf);
