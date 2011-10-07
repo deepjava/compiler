@@ -45,3 +45,5 @@ ErrorNr;Description;Solution
 807;memmory writer is not implemented;
 808;bypass is not unlocked;
 809;programming failed;
+
+900;connection lost;
