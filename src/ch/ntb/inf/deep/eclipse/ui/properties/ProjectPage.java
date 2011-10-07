@@ -212,7 +212,7 @@ public class ProjectPage extends PropertyPage implements IWorkbenchPropertyPage 
 
 	private void performChanges() {
 		GregorianCalendar cal = new GregorianCalendar();
-		IProject project = (IProject) getElement();
+		IProject project = (IProject) getElement().getAdapter(IProject.class);
 		ConfigFileChanger cfc = new ConfigFileChanger(project.getLocation()
 				+ "/" + project.getName() + ".deep");
 		ClasspathFileChanger classpathfile = new ClasspathFileChanger(project.getLocation() + "/.classpath");
