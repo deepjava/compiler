@@ -33,6 +33,8 @@ ErrorNr;Description;Solution
 303;changing parent dirs of class files;
 304;illegal parent dir of class files;
 
+400;cfgNode not found;
+
 500;generating of the linenumber tabel failed;
 
 800;target not found!(USB connection failed);
