@@ -46,7 +46,7 @@ ErrorNr;Description;Solution
 621;no such branch instruction;
 622;wrong branche instruction;
 623;is not followed by branch instruction;
-624;enexpected instruction;
+624;unexpected instruction;
 
 800;target not found!(USB connection failed);
 801;an error occurs while downloading!(Try to reopen);
