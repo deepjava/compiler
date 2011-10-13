@@ -58,8 +58,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static int nofParamGPR, nofParamFPR;	 
 	// maximum nof registers used by this method
 	static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
-	// gives required stack space for parameters if not enough registers
-	static int paramSlotsOnStack;
+	// gives required stack space for parameters of this method if not enough registers
+	static int recParamSlotsOnStack;
+	// gives required stack space for parameters of any call in this method if not enough registers
+	static int callParamSlotsOnStack;
 	// type of parameter, set by SSA, includes "this", long and doubles count as 2 parameters
 	static int[] paramType = new int[maxNofParam];
 	// register type of parameter, long and doubles count as 2 parameters
@@ -102,7 +104,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		tempStorage = false;
 		enFloatsInExc = false;
-		paramSlotsOnStack = 0;
+		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
 		if (dbg) StdStreams.out.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 		for (int i = 0; i < maxNofParam; i++) {
 			paramType[i] = tVoid;
@@ -155,17 +157,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			RegAllocator.printJoins();
 		}
 		if(dbg) {
-			StdStreams.out.print("nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
-			StdStreams.out.print(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
-			StdStreams.out.println(", paramSlotsOnStack = " + paramSlotsOnStack);
+			StdStreams.out.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
+			StdStreams.out.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
+			StdStreams.out.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
+			StdStreams.out.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
+			StdStreams.out.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
 			StdStreams.out.print("parameter end at instr no: ");
 			for (int n = 0; n < nofParam; n++) 
 				if (paramRegEnd[n] != -1) StdStreams.out.print(paramRegEnd[n] + "  "); 
 			StdStreams.out.println();
-			if (paramSlotsOnStack > 0) StdStreams.out.println("nof param on stack " + paramSlotsOnStack); 
 		}
-		if (dbg) ssa.print(0);
-		
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// reset has no prolog
 			} else {
@@ -229,7 +230,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		} else {
 			insertEpilog(stackSize);
 		}
-		if (dbg) print();
+		if (dbg) {ssa.print(0); print();}
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
@@ -294,7 +295,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
 						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
-						else reg = RegAllocator.reserveReg(gpr, false);
+						else {
+							reg = RegAllocator.reserveReg(gpr, false);
+							moveGPR[nofMoveGPR] = nofParamGPR;
+							nofMoveGPR++;
+						}
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.out.print(reg);
 					}
@@ -303,11 +308,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			}
 			if (i < nofParam - 1) if(dbg) StdStreams.out.print(", ");
 		}
+		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
+		if (nof > 0) recParamSlotsOnStack = nof;
+		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
+		if (nof > 0) recParamSlotsOnStack += nof*2;
+		
 		if(dbg) StdStreams.out.println("]");
 	}
 
 	private static int calcStackSize() {
-		int size = 16 + paramSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
+		int size = 16 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
 		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
@@ -322,7 +332,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	private static int calcStackSizeException() {
-		int size = 24 + paramSlotsOnStack * 4 + nofGPR * 4 + (tempStorage? 8 : 0);
+		int size = 24 + nofGPR * 4 + (tempStorage? 8 : 0);
 		if (enFloatsInExc) {
 			size += nofNonVolFPR * 8;
 			size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
@@ -2214,10 +2224,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	private void copyParameters(SSAValue[] opds) {
+		int offset = 0;
 		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
 		for (int k = 0; k < nofFPR; k++) {srcFPR[k] = 0; srcFPRcount[k] = 0;}
 
-		// get info about register location of parameters
+		// get info about in which register parameters are located
+		// parameters which go onto the stack are treated equally
 		for (int k = 0, kGPR = 0, kFPR = 0; k < opds.length; k++) {
 			int type = opds[k].type & ~(1<<ssaTaFitIntoInt);
 			if (type == tLong) {
@@ -2250,7 +2262,15 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		// handle move to itself
 		i = paramStartGPR;
 		while (srcGPR[i] != 0) {
-			if (srcGPR[i] == i) srcGPRcount[i]--;
+			if (srcGPR[i] == i) {
+				if (i <= paramEndGPR) srcGPRcount[i]--;
+				else {	// copy to stack
+					srcGPRcount[i]--;
+//					if (dbg) StdStreams.out.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
+//					createIrSrAsimm(ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
+//					offset += 4;
+				}
+			}
 			i++;
 		}
 		i = paramStartFPR;
@@ -2265,9 +2285,17 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			i = paramStartGPR; done = true;
 			while (srcGPR[i] != 0) {
 				if (srcGPRcount[i] == 0) {
-					createIrArSrB(ppcOr, i, srcGPR[i], srcGPR[i]);
-					srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
-					done = false;
+					if (i <= paramEndGPR) {
+						createIrArSrB(ppcOr, i, srcGPR[i], srcGPR[i]);
+						srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
+						done = false;
+					} else {	// copy to stack
+						if (dbg) StdStreams.out.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
+						createIrSrAsimm(ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
+						offset += 4;
+						srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
+						done = false;
+					}
 				}
 				i++; 
 			}
@@ -2606,17 +2634,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMffs, 0);
 			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
 		}
-		for (int i = 0; i < nofMoveGPR; i++)
-			createIrArSrB(ppcOr, topGPR-i, moveGPR[i]+paramStartGPR, moveGPR[i]+paramStartGPR);
-		for (int i = 0; i < nofMoveFPR; i++)
-			createIrDrB(ppcFmr, topFPR-i, moveFPR[i]+paramStartFPR);
-		
-		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) {
-			for (int i = 0; i < nof; i++) {
-				createIrDrAd(ppcLwz, paramRegNr[paramEndGPR - paramStartGPR + 1 + i], stackPtr, stackSize + paramOffset + i * 4);
+		for (int i = 0; i < nofMoveGPR; i++) {
+			if (moveGPR[i]+paramStartGPR <= paramEndGPR) // copy into non volatile register
+				createIrArSrB(ppcOr, topGPR-i, moveGPR[i]+paramStartGPR, moveGPR[i]+paramStartGPR);
+			else { // copy from stack slot
+				if (dbg) StdStreams.out.println("Prolog: copy parameter " + (i+(paramEndGPR-paramStartGPR+1)) + " from stack slot into register " + (paramRegNr[paramEndGPR - paramStartGPR + 1 + i]));
+				createIrDrAd(ppcLwz, paramRegNr[paramEndGPR - paramStartGPR + 1 + i], stackPtr, stackSize + paramOffset + (i)*4);
 			}
 		}
+		for (int i = 0; i < nofMoveFPR; i++)
+			createIrDrB(ppcFmr, topFPR-i, moveFPR[i]+paramStartFPR);
 	}
 
 	private void insertPrologException() {

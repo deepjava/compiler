@@ -164,7 +164,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	private static void markInDominators(SSANode origin, SSANode current, int index) {
 		SSANode node = current;
-		while (node.idom != null && node.idom != origin) {
+		while (node.idom != null && node != origin && node.idom != origin) {
 			node = (SSANode)node.idom;
 			SSAValue val = node.exitSet[index];
 			if (val != null) {
@@ -308,7 +308,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		for (int i = 0; i < maxNofJoins; i++) {
 			SSAValue val = joins[i];
 			while (val != null) {
-				for (int k = val.start+1; k < val.end; k++) {
+				for (int k = val.start; k < val.end; k++) {
 					SSAInstruction instr1 = instrs[k];
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
@@ -622,7 +622,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					else gpr++;
 				}
 				if (gpr > nofParamGPR) nofParamGPR = gpr; 
-				if (fpr > nofParamFPR) nofParamGPR = fpr; 
+				if (fpr > nofParamFPR) nofParamFPR = fpr; 
 			}
 		}
 		CodeGen.nofNonVolGPR = nofNonVolGPR;
@@ -630,9 +630,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		CodeGen.nofVolGPR = nofVolGPR;
 		CodeGen.nofVolFPR = nofVolFPR;
 		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) CodeGen.paramSlotsOnStack = nof;
+		if (nof > 0) CodeGen.callParamSlotsOnStack = nof;
 		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
-		if (nof > 0) CodeGen.paramSlotsOnStack += nof*2;
+		if (nof > 0) CodeGen.callParamSlotsOnStack += nof*2;
 	}
 
 	private static void findReg(SSAValue res) {
