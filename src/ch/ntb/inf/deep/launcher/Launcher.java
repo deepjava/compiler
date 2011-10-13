@@ -23,6 +23,7 @@ import ch.ntb.inf.deep.ssa.SSA;
 
 public class Launcher implements ICclassFileConsts {
 	private static ErrorReporter reporter = ErrorReporter.reporter;
+	private static final boolean dbg = false;
 	private static PrintStream out = StdStreams.out;
 	private static PrintStream vrb = StdStreams.vrb;
 
@@ -40,13 +41,13 @@ public class Launcher implements ICclassFileConsts {
 				Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 	
 			
-			// 2a) Initialize linker
+			// 3) Initialize linker
 			if (reporter.nofErrors <= 0) {
 				Linker32.init();
 				CodeGen.init();
 			}
 			
-			// 3) Loop One
+			// 4) Loop One
 			clearVisitedFlagsForAllClasses();
 			Item item = Type.classList;
 			Method method;
@@ -67,7 +68,7 @@ public class Launcher implements ICclassFileConsts {
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
 						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-//							StdStreams.vrb.println(">>>> Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+							if(dbg)vrb.println(">>>> Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 
 							// 3.2) Create CFG
 							if (reporter.nofErrors <= 0)
@@ -94,70 +95,70 @@ public class Launcher implements ICclassFileConsts {
 			}
 			out.println();
 
-			// 4) Linker: freeze memory map
+			// 5) Linker: freeze memory map
 			if (reporter.nofErrors <= 0) {
 				Linker32.calculateSystemTableSize();
 				Linker32.calculateGlobalConstantTableSize();
 				Linker32.freezeMemoryMap();
 			}
 			
-			// 5) Loop Two 
+			// 6) Loop Two 
 			item = Type.classList;
 			while (item != null && reporter.nofErrors <= 0) {
-				// 5.1) Linker: calculate absolute addresses
-				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
-					Linker32.calculateAbsoluteAddresses((Class)item);
-				}
-				else if(item instanceof Array) {
-					Linker32.calculateAbsoluteAddresses((Array)item);
-				}
-				
-				item = item.next;
-			}
-			
-			Linker32.createGlobalConstantTable();
-			
-			clearVisitedFlagsForAllClasses();
-			item = Type.classList;
-			while (item != null && reporter.nofErrors <= 0) { // TODO: why is here another loop??? -> move to loop two?
-				// 5.3) Linker: Create constant block
 				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 					Class clazz = (Class) item;
-					Linker32.updateConstantBlock(clazz);
-
+					// 6.1) Linker: calculate absolute addresses
+					Linker32.calculateAbsoluteAddresses(clazz);
+					// 6.2) Linker: arrange constant
+					Linker32.updateConstantBlock(clazz);					
+				}
+				else if(item instanceof Array) {
+					// 6.1) Linker: calculate absolute addresses
+					Linker32.calculateAbsoluteAddresses((Array)item);
+				}	
+				item = item.next;
+			}
+			// 7) create constant table
+			Linker32.createGlobalConstantTable();
+			
+			
+			clearVisitedFlagsForAllClasses();
+			// 8) Loop Three
+			item = Type.classList;
+			while (item != null && reporter.nofErrors <= 0) {//before we do the fix up all addresses must be calculated
+				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
+					Class clazz = (Class) item;
 					method = (Method) clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
 						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-							// 5.2) Code generator: fix up
+							// 8.1) Code generator: fix up
 							method.machineCode.doFixups();
 						}
 						method = (Method) method.next;
 					}
 				}
 				else if(item instanceof Array) {
+					// 8.2) Linker: create type descriptor for Arrays
 					Linker32.createTypeDescriptor((Array)item);
 				}
-
 				item = item.next;
 			}
 
-			// 6) Linker: Create system table
+			// 9) Linker: Create system table
 			if (reporter.nofErrors <= 0)
 				Linker32.createSystemTable();
 
-			// 7) Linker: Create target image
+			// 10) Linker: Create target image
 			if (reporter.nofErrors <= 0)
 				Linker32.generateTargetImage();
 			if (reporter.nofErrors > 0) {
 				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 				out.println();
 			} else {
-				//TODO fix linenumbertable
 				out.println("Compilation and target image generation successfully finished");
 				out.println();
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -168,8 +169,6 @@ public class Launcher implements ICclassFileConsts {
 			try {
 				if(bdi != null){
 					bdi.init();
-					// System.out.println("++++++++ Start Target!+++++++++");
-//					bdi.startTarget();
 				}else{
 					reporter.error(Downloader.errTargetNotFound);
 					reporter.nofErrors++;
