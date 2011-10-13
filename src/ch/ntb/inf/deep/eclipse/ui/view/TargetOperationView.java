@@ -44,7 +44,6 @@ import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterMap;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.OperationObject;
-import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.loader.Downloader;
 import ch.ntb.inf.deep.loader.DownloaderException;
 import ch.ntb.inf.deep.loader.UsbMpc555Loader;
@@ -55,7 +54,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
 	private TableViewer viewer;
 	private OperationObject[] elements;
-	private Downloader bdi;
 	private Action toChar;
 	private Action toHex;
 	private Action toDez;
@@ -75,11 +73,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	tDouble = 7, tByte = 8, tShort = 9, tInteger = 10, tLong = 11;
 
 	static final byte slotSize = 4; // 4 bytes
-	static {
-		assert (slotSize & (slotSize - 1)) == 0; // assert: slotSize == power of
-		// 2
-	}
-	
+		
 	class ViewLabelProvider extends LabelProvider implements
 			ITableLabelProvider {
 
@@ -463,14 +457,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}else if(choise[op.operation].equals("TargetCMD")){
 				sendCMD(op, param);
 			}else if(choise[op.operation].equals("send over SCI1")){
+				Downloader bdi = UsbMpc555Loader.getInstance();
 				if(bdi == null){
-					bdi = UsbMpc555Loader.getInstance();//Needs only to connect to the device
+					op.errorMsg = "target not connected";
+					return;
 				}
 				if(!bdi.isConnected()){
 					try{
 						bdi.openConnection();
 					}catch(DownloaderException e){
-						e.printStackTrace();
+						op.errorMsg = "target not initialized";
+						return;
 					}
 				}
 				Uart0.write(param.getBytes(), param.length());
@@ -760,19 +757,22 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}else if(choise[op.operation].equals("TargetCMD")){
 					sendCMD(op, op.description);					
 				}else if(choise[op.operation].equals("send over SCI1")){
+					Downloader bdi = UsbMpc555Loader.getInstance();
 					if(bdi == null){
-						bdi = UsbMpc555Loader.getInstance();//Needs only to connect to the device
+						op.errorMsg = "target not connected";
+						return false;
 					}
 					if(!bdi.isConnected()){
 						try{
 							bdi.openConnection();
 						}catch(DownloaderException e){
-							e.printStackTrace();
+							op.errorMsg = "target not initialized";
+							return false;
 						}
 					}
 					Uart0.write(op.description.getBytes(), op.description.length());					
 				}				
-			return false;//TODO check this
+			return false;
 			
 		}
 		
@@ -815,9 +815,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if (meth != null) {
 				//Save address for display
 				op.addr = meth.address;
-				
-				if (bdi == null) {
-					bdi = UsbMpc555Loader.getInstance();
+				Downloader bdi = UsbMpc555Loader.getInstance();
+				if(bdi == null){
+					op.errorMsg = "target not connected";
+					return;
 				}
 				try {
 					if(!bdi.isConnected()){
@@ -835,9 +836,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.startTarget();
 					}
 				} catch (DownloaderException e) {
-					bdi.closeConnection();
-					StdStreams.err.println("USB connection error");
-					bdi = null;
+					op.errorMsg = "target not initialized";
 				}
 			}else{
 				op.errorMsg = "method not found";
@@ -849,8 +848,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void readFromAddress(OperationObject op){
 		boolean wasFreezeAsserted;
-		if (bdi == null) {
-			bdi = UsbMpc555Loader.getInstance();
+		Downloader bdi = UsbMpc555Loader.getInstance();
+		if(bdi == null){
+			op.errorMsg = "target not connected";
+			return;
 		}
 		try {
 			if(!bdi.isConnected()){
@@ -869,9 +870,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.startTarget();
 			}
 		} catch (DownloaderException e) {
-			bdi.closeConnection();
-			StdStreams.err.println("USB connection error");
-			bdi = null;
+			op.errorMsg = "target not initialized";
 		}
 
 		
@@ -901,8 +900,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if(var != null){
 				//save address for display
 				op.addr = var.address;
+				Downloader bdi = UsbMpc555Loader.getInstance();
 				if(bdi == null){
-					bdi = UsbMpc555Loader.getInstance();
+					op.errorMsg = "target not connected";
+					return;
 				}
 				try{
 					if(!bdi.isConnected()){
@@ -951,9 +952,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					op.isReaded = true;
 					op.description = fullQualName;
 				}catch(DownloaderException e){
-					bdi.closeConnection();
-					StdStreams.err.println("USB connection error");
-					bdi = null;
+					op.errorMsg = "target not initialized";
 				}
 			}else{
 				op.errorMsg = "field not found";
@@ -1043,8 +1042,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 		if(found){
 			boolean wasFreezeAsserted;
-			if (bdi == null) {
-				bdi = UsbMpc555Loader.getInstance();
+			Downloader bdi = UsbMpc555Loader.getInstance();
+			if(bdi == null){
+				op.errorMsg = "target not connected";
+				return;
 			}
 			try {
 				if(!bdi.isConnected()){
@@ -1083,9 +1084,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					bdi.startTarget();
 				}
 			} catch (DownloaderException e) {
-				bdi.closeConnection();
-				StdStreams.err.println("USB connection error");
-				bdi = null;
+				op.errorMsg = "target not initialized";
 			}
 		}else{
 			op.errorMsg = "register not found";
@@ -1094,8 +1093,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void setToAddress(OperationObject op){
 		boolean wasFreezeAsserted;
-		if (bdi == null) {
-			bdi = UsbMpc555Loader.getInstance();
+		Downloader bdi = UsbMpc555Loader.getInstance();
+		if(bdi == null){
+			op.errorMsg = "target not connected";
+			return;
 		}
 		try {
 			if(!bdi.isConnected()){
@@ -1113,9 +1114,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.startTarget();
 			}
 		} catch (DownloaderException e) {
-			bdi.closeConnection();
-			StdStreams.err.println("USB connection error");
-			bdi = null;
+			op.errorMsg = "target not initialized";
 		}
 		
 	}
@@ -1140,8 +1139,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 			DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
 			if(var != null){
+				Downloader bdi = UsbMpc555Loader.getInstance();
 				if(bdi == null){
-					bdi = UsbMpc555Loader.getInstance();
+					op.errorMsg = "target not connected";
+					return;
 				}
 				try{
 					long val = Long.decode(value);
@@ -1167,9 +1168,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.startTarget();
 					}
 				}catch(DownloaderException e){
-					bdi.closeConnection();
-					StdStreams.err.println("USB connection error");
-					bdi = null;
+					op.errorMsg = "target not initialized";
 				}
 			}else{
 				op.errorMsg = "field not found";
@@ -1181,8 +1180,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private void setToRegister(OperationObject op){
 
 		boolean wasFreezeAsserted;
-		if (bdi == null) {
-			bdi = UsbMpc555Loader.getInstance();
+		Downloader bdi = UsbMpc555Loader.getInstance();
+		if(bdi == null){
+			op.errorMsg = "target not connected";
+			return;
 		}
 		try {
 			if(!bdi.isConnected()){
@@ -1215,9 +1216,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.startTarget();
 			}
 		} catch (DownloaderException e) {
-			bdi.closeConnection();
-			StdStreams.err.println("USB connection error");
-			bdi = null;
+			op.errorMsg = "target not initialized";
 		}
 
 	}

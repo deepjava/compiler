@@ -68,7 +68,6 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 	private Action suspend;
 	private Action resume;
 	private RegModel model;
-	private Downloader module;
 	private final String helpContextId = "ch.ntb.inf.deep.ui.register.viewer";
 
 	/*
@@ -88,10 +87,11 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 
 		public Object[] getElements(Object parent) {
 			Register dummy = new Register();
-			Register[] regs;
+			Register[] regs = null;
 			if (model != null) {
 				regs = model.getMod(4);
-			} else {
+			} 
+			if(model == null || model.getMod(4) == null){
 				// Defaul all is Zero
 				regs = new Register[11];
 				regs[0] = new Register("DSISR", 0, 0);
@@ -106,6 +106,9 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 				regs[9] = new Register("PVR", 0, 0);
 				regs[10] = new Register("FPECR", 0, 0);
 
+			}
+			if(regs.length < 11){
+				return regs;
 			}
 			// Group in blocks of 4 elements
 			int regCount = 0;
@@ -191,7 +194,7 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 			column.getColumn().setText(titels[i]);
 			column.getColumn().setWidth(bounds[i]);
-			column.getColumn().setResizable(false);
+			column.getColumn().setResizable(true);
 			column.getColumn().setMoveable(false);
 		}
 		Table table = viewer.getTable();
@@ -307,15 +310,15 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 		refresh.setImageDescriptor(img);
 		suspend = new Action() {
 			public void run() {
-				if (module == null) {
-					module = UsbMpc555Loader.getInstance();
-				}
+				Downloader bdi = UsbMpc555Loader.getInstance();
+				if (bdi == null)return;
+
 				try {
-					if(!module.isConnected()){//reopen
-						module.openConnection();
+					if(!bdi.isConnected()){//reopen
+						bdi.openConnection();
 					}
-					if (!module.isFreezeAsserted()) {
-						module.stopTarget();
+					if (!bdi.isFreezeAsserted()) {
+						bdi.stopTarget();
 					}
 				} catch (DownloaderException e) {
 					e.printStackTrace();
@@ -330,15 +333,15 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 		suspend.setImageDescriptor(img);
 		resume = new Action() {
 			public void run() {
-				if (module == null) {
-					module = UsbMpc555Loader.getInstance();
-				}
+				Downloader bdi = UsbMpc555Loader.getInstance();
+				if (bdi == null)return;
+
 				try {
-					if(!module.isConnected()){//reopen
-						module.openConnection();
+					if(!bdi.isConnected()){//reopen
+						bdi.openConnection();
 					}
-					if (module.isFreezeAsserted()) {
-						module.startTarget();
+					if (bdi.isFreezeAsserted()) {
+						bdi.startTarget();
 					}
 				} catch (DownloaderException e) {
 					e.printStackTrace();
@@ -362,13 +365,14 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 	private synchronized void update() {
 		if (model == null) {
 			model = RegModel.getInstance();
-			model.getMod(2);
 		}else{
 			model.updateSuLeSPRMod();
 		}
-		viewer.setInput(model);
-		viewer.getControl().setEnabled(true);
-		viewer.refresh();
+		if(model.getMod(4) != null){
+			viewer.setInput(model);
+			viewer.getControl().setEnabled(true);
+			viewer.refresh();
+		}
 	}
 
 	public Viewer getViewer() {
@@ -377,6 +381,7 @@ public class SuLeSPRView extends ViewPart implements ISelectionListener {
 
 	@Override
 	public void dispose() {
+		model.clearMod(4);
 		getSite().getWorkbenchWindow().getSelectionService()
 				.removeSelectionListener(IDebugUIConstants.ID_DEBUG_VIEW, this);
 		super.dispose();

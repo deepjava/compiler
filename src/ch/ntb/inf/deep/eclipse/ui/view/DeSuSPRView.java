@@ -70,7 +70,6 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 	private Action suspend;
 	private Action resume;
 	private RegModel model;
-	private Downloader module;
 	private final String helpContextId = "ch.ntb.inf.deep.ui.register.viewer";
 
 	/*
@@ -90,10 +89,11 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 
 		public Object[] getElements(Object parent) {
 			Register dummy = new Register();
-			Register[] regs;
+			Register[] regs = null;
 			if (model != null) {
 				regs = model.getMod(5);
-			} else {
+			}
+			if(model == null || model.getMod(5) == null) {
 				// Defaul all is Zero
 				regs = new Register[16];
 				regs[0] = new Register("CMPA",0,0);
@@ -113,10 +113,13 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 				regs[14] = new Register("ICTRL",0,0);
 				regs[15] = new Register("BAR",0,0);
 			}
+			if(regs.length < 16){
+				return regs;
+			}
 			//Group in blocks of 4 elements
 			int regCount = 0;
 			Register[] deSuSPR = new Register[19];
-			for(int i = 0;i < deSuSPR.length;i++){
+			for(int i = 0; i < deSuSPR.length; i++){
 				if(i == 4 || i == 9 || i == 14){
 					deSuSPR[i] = dummy;
 				}else{
@@ -193,7 +196,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 			TableViewerColumn column = new TableViewerColumn(viewer,SWT.NONE);
 			column.getColumn().setText(titels[i]);
 			column.getColumn().setWidth(bounds[i]);
-			column.getColumn().setResizable(false);
+			column.getColumn().setResizable(true);
 			column.getColumn().setMoveable(false);
 		}
 		Table table = viewer.getTable();
@@ -307,15 +310,14 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		refresh.setImageDescriptor(img);
 		suspend = new Action(){
 			public void run(){
-				if(module == null){
-					module = UsbMpc555Loader.getInstance();
-				}
+				Downloader bdi = UsbMpc555Loader.getInstance();
+				if (bdi == null)return;
 				try {
-					if(!module.isConnected()){//reopen
-						module.openConnection();
+					if(!bdi.isConnected()){//reopen
+						bdi.openConnection();
 					}
-					if(!module.isFreezeAsserted()){
-						module.stopTarget();
+					if(!bdi.isFreezeAsserted()){
+						bdi.stopTarget();
 					}
 				} catch (DownloaderException e) {
 					e.printStackTrace();
@@ -329,15 +331,14 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		suspend.setImageDescriptor(img);
 		resume = new Action(){
 			public void run(){
-				if(module == null){
-					module = UsbMpc555Loader.getInstance();
-				}
+				Downloader bdi = UsbMpc555Loader.getInstance();
+				if (bdi == null)return;
 				try {
-					if(!module.isConnected()){//reopen
-						module.openConnection();
+					if(!bdi.isConnected()){//reopen
+						bdi.openConnection();
 					}
-					if(module.isFreezeAsserted()){
-						module.startTarget();
+					if(bdi.isFreezeAsserted()){
+						bdi.startTarget();
 					}
 				} catch (DownloaderException e) {
 					e.printStackTrace();
@@ -356,13 +357,14 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 	private synchronized void update() {
 		if (model == null) {
 			model = RegModel.getInstance();
-			model.getMod(5);
 		}else{
 			model.updateDeSuSPRMod();
 		}
-		viewer.setInput(model);
-		viewer.getControl().setEnabled(true);
-		viewer.refresh();
+		if(model.getMod(5) != null){
+			viewer.setInput(model);
+			viewer.getControl().setEnabled(true);
+			viewer.refresh();
+		}
 	}
 
 	public Viewer getViewer() {
@@ -371,6 +373,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 
 	@Override
 	public void dispose() {
+		model.clearMod(5);
 		getSite().getWorkbenchWindow().getSelectionService()
 				.removeSelectionListener(IDebugUIConstants.ID_DEBUG_VIEW, this);
 		super.dispose();

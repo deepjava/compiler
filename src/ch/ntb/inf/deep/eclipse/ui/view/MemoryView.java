@@ -34,18 +34,19 @@ public class MemoryView extends ViewPart implements Listener {
 	private Text addr;
 	private Text count;
 	private Button button;
-	private Downloader bdi;
 	
 	static final byte slotSize = 4; // 4 bytes
-	static {
-		assert (slotSize & (slotSize - 1)) == 0; // assert: slotSize == power of
-													// 2
-	}
-
+	
 	class ViewLabelProvider extends LabelProvider implements
 			ITableLabelProvider {
 
 		public String getColumnText(Object obj, int index) {
+			if(obj instanceof String){
+				if(index == 0) 
+					return (String)obj;
+				
+				return "";
+			}
 			switch (index) {
 			case 0:
 				if (((MemorySegment) obj).addr == -1) {
@@ -217,14 +218,19 @@ public class MemoryView extends ViewPart implements Listener {
 			}else{
 				size = Integer.decode(count.getText());
 			}
+			Downloader bdi = UsbMpc555Loader.getInstance();
 			if (bdi == null) {
-				bdi = UsbMpc555Loader.getInstance();
+				viewer.setInput(new String[]{"target not connected"});
+				viewer.refresh();
+				return;
 			}
 			if(!bdi.isConnected()){//reopen
 				try {
 					bdi.openConnection();
 				} catch (DownloaderException e) {
-					e.printStackTrace();
+					viewer.setInput(new String[]{"target not initialized"});
+					viewer.refresh();
+					return;
 				}
 			}
 			if (size > 0) {
@@ -242,7 +248,9 @@ public class MemoryView extends ViewPart implements Listener {
 						bdi.startTarget();
 					}
 				} catch (DownloaderException e1) {
-					e1.printStackTrace();
+					viewer.setInput(new String[]{"target not initialized"});
+					viewer.refresh();
+					return;
 				}
 				viewer.setInput(segs);
 				viewer.refresh();
@@ -315,8 +323,11 @@ public class MemoryView extends ViewPart implements Listener {
 			if ("Value".equals(property)){
 				try{
 					p.value =Integer.decode((String) value);
+					Downloader bdi = UsbMpc555Loader.getInstance();
 					if(bdi == null){
-						bdi = UsbMpc555Loader.getInstance();
+						viewer.setInput(new String[]{"target not connected"});
+						viewer.refresh();
+						return;
 					}
 					
 					boolean wasFreezeAsserted = bdi.isFreezeAsserted();
@@ -329,7 +340,9 @@ public class MemoryView extends ViewPart implements Listener {
 					}
 				}catch (NumberFormatException e) {
 				}catch (DownloaderException e1){
-					e1.printStackTrace();
+					viewer.setInput(new String[]{"target not initialized"});
+					viewer.refresh();
+					return;
 				}
 
 			// Force the viewer to refresh

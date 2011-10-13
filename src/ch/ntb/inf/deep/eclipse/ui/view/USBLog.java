@@ -16,7 +16,6 @@ import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 
 public class USBLog extends ViewPart {
 	public static final String ID = "ch.ntb.inf.deep.ui.view.USBLog";
@@ -28,17 +27,15 @@ public class USBLog extends ViewPart {
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		//Needs only to connect to the device
-		UsbMpc555Loader.getInstance();
 		
 		//get Display
-		Display d =parent.getShell().getDisplay();
+		Display d = parent.getShell().getDisplay();
 		
 		//Create view
+		
 		viewer = new TextViewer(parent, SWT.WRAP | SWT.V_SCROLL | SWT.SCROLL_PAGE);
 		GridData viewerData = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(viewerData);
-		
 		if(d != null){
 			FontData defaultFont = new FontData("Courier", 10, SWT.NORMAL);
 			Font font = new Font(d, defaultFont);
@@ -51,7 +48,19 @@ public class USBLog extends ViewPart {
 		log = new IOConsole("USBLog", null);
 		out = log.newOutputStream();
 		viewer.setDocument(log.getDocument());
-		
+//		viewer.addTextListener(new ITextListener() {
+//			
+//			@Override
+//			public void textChanged(TextEvent event) {
+////				viewer.getDocument().getLength();//nr of chars in doc
+////				viewer.getBottomIndexEndOffset();//last visible character
+//				if(viewer.getDocument().getLength() > viewer.getBottomIndexEndOffset()){
+//					Cursor cur = viewer.getControl().getDisplay().;
+//				}
+//			
+//				
+//			}
+//		});
 		writer = new USBLogWriter("Uart0", out);
 		writer.start();
 		

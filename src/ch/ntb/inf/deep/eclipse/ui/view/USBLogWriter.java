@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.eclipse.ui.view;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import ch.ntb.inf.deep.loader.UsbMpc555Loader;
 import ch.ntb.inf.mcdp.ide.uart.Uart0;
 
 public class USBLogWriter extends Thread {
@@ -19,11 +20,15 @@ public class USBLogWriter extends Thread {
 		byte[] readed = null;
 		try {
 			while(isRunning){
-				readed = Uart0.read();
-				if(readed != null){
-					out.write(readed);
+				if(UsbMpc555Loader.getInstance() == null){
+					Thread.sleep(500);
+				}else{					
+					readed = Uart0.read();
+					if(readed != null){
+						out.write(readed);
+					}
+					Thread.sleep(50);
 				}
-			Thread.sleep(50);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

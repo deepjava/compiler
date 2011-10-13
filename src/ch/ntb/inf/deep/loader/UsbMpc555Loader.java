@@ -80,6 +80,9 @@ public class UsbMpc555Loader extends Downloader {
 	}
 
 	public static UsbMpc555Loader getInstance() {
+		if(loader != null && !loader.isConnected()){
+			loader = null;
+		}
 		if (loader == null) {
 			loader = new UsbMpc555Loader();
 			try {
@@ -89,6 +92,7 @@ public class UsbMpc555Loader extends Downloader {
 				loader = null;
 			}
 		}
+		
 		return loader;
 	}
 
