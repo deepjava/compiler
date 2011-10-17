@@ -169,7 +169,7 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		if (dialog.open() == Window.OK) {
 			Object[] files = dialog.getResult();
 			IFile file = (IFile) files[0];
-			locationPath = file.getProject().getLocation().toString();
+			locationPath = file.getProject().getFullPath().toString();
 //			String temp = fProgramText.getText();
 //			if (!temp.equals("")) {
 //				temp = temp + ";";
@@ -256,7 +256,7 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		// perform resource mapping for contextual launch
 		IResource[] resources = null;
 		if (program != null) {
-			IPath path = new Path(program);
+			IPath path = new Path(locationPath + "/" + program);
 			IResource res = ResourcesPlugin.getWorkspace().getRoot()
 					.findMember(path);
 			if (res != null) {

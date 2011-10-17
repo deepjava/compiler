@@ -1,7 +1,10 @@
 package ch.ntb.inf.deep.eclipse.launcher;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
@@ -22,6 +25,16 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		if(!mode.equals(ILaunchManager.RUN_MODE)){
 			return;
 		}
+		
+		//terminate all other DebugTargets
+		ILaunchManager lm = DebugPlugin.getDefault().getLaunchManager();
+		ILaunch[] launches =lm.getLaunches();
+		for(int i = 0; i < launches.length; i++){
+			if(launches[i].getDebugTarget() != null){
+				launches[i].getDebugTarget().terminate();
+			}
+		}
+		
 		ConsoleDisplayMgr cdm = ConsoleDisplayMgr.getDefault();
 
 		String targetConfig = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, "");
@@ -41,8 +54,11 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 			monitor.done();
 			return;
 		}		
-		
-		Launcher.buildAll(location +"/" +program, targetConfig);
+		if(location.charAt(0) == IPath.SEPARATOR ){			
+			Launcher.buildAll(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + IPath.SEPARATOR + location + IPath.SEPARATOR +program, targetConfig);			
+		}else{
+			Launcher.buildAll(location + IPath.SEPARATOR + program, targetConfig);
+		}
 		
 		monitor.worked(60);
 		if (monitor.isCanceled()) {

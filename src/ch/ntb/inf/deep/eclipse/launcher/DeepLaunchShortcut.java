@@ -162,7 +162,7 @@ public class DeepLaunchShortcut implements ILaunchShortcut2 {
 			ILaunchConfigurationType configType = getConfigurationType();
 			wc = configType.newInstance(null, name);
 			wc.setAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, fileToLaunch.getProjectRelativePath().toString());
-			wc.setAttribute(DeepPlugin.ATTR_DEEP_LOCATION, fileToLaunch.getProject().getLocation().toString());
+			wc.setAttribute(DeepPlugin.ATTR_DEEP_LOCATION, fileToLaunch.getProject().getFullPath().toString());
 			wc.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG, "BootFromRam");
 			// CONTEXTLAUNCHING
 			wc.setMappedResources(new IResource[] { fileToLaunch });
