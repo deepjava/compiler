@@ -43,8 +43,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	public static final String ATTR_DEEP_PROGRAM = ID_DEEP_MODEL + ".ATTR_DEEP_PROGRAM";
 	/**
 	 * Launch configuration attribute key. Value is a path to a java
-	 * project. The path is a string representing a full path
-	 * to the project folder in the workspace. 
+	 * project. The path is a string representing workspace relative path. 
 	 */
 	public static final String ATTR_DEEP_LOCATION = ID_DEEP_MODEL + ".ATTR_DEEP_LOCATION";
 	/**
