@@ -4,7 +4,10 @@ import java.io.OutputStream;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.text.TextViewer;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextListener;
+import org.eclipse.jface.text.TextEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -13,6 +16,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.console.IOConsole;
+import org.eclipse.ui.console.TextConsoleViewer;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
@@ -22,7 +26,7 @@ public class USBLog extends ViewPart {
 	private IOConsole log;
 	private Action clear;
 	private USBLogWriter writer;
-	private TextViewer viewer;
+	private TextConsoleViewer viewer;
 	protected OutputStream out;
 	
 	@Override
@@ -32,8 +36,10 @@ public class USBLog extends ViewPart {
 		Display d = parent.getShell().getDisplay();
 		
 		//Create view
-		
-		viewer = new TextViewer(parent, SWT.WRAP | SWT.V_SCROLL | SWT.SCROLL_PAGE);
+
+		log = new IOConsole("USBLog", null);
+		out = log.newOutputStream();
+		viewer = new TextConsoleViewer(parent, log);
 		GridData viewerData = new GridData(GridData.FILL_BOTH);
 		viewer.getControl().setLayoutData(viewerData);
 		if(d != null){
@@ -43,24 +49,22 @@ public class USBLog extends ViewPart {
 		}
 		
 		viewer.setEditable(false);
+		viewer.addTextListener(new ITextListener() {
+			@Override
+			public void textChanged(TextEvent event) {//autoscroll
+				
+				IDocument document= viewer.getDocument();
+				int nofLines = document.getNumberOfLines();
+				try {
+					int start= document.getLineOffset(nofLines - 1);
+					int length= document.getLineLength(nofLines - 1);
+					viewer.getTextWidget().setSelection(start, start);
+					viewer.revealRange(start, length);
+				} catch (BadLocationException x) {
+				}
+			}
+		});
 		
-		
-		log = new IOConsole("USBLog", null);
-		out = log.newOutputStream();
-		viewer.setDocument(log.getDocument());
-//		viewer.addTextListener(new ITextListener() {
-//			
-//			@Override
-//			public void textChanged(TextEvent event) {
-////				viewer.getDocument().getLength();//nr of chars in doc
-////				viewer.getBottomIndexEndOffset();//last visible character
-//				if(viewer.getDocument().getLength() > viewer.getBottomIndexEndOffset()){
-//					Cursor cur = viewer.getControl().getDisplay().;
-//				}
-//			
-//				
-//			}
-//		});
 		writer = new USBLogWriter("Uart0", out);
 		writer.start();
 		
@@ -72,6 +76,7 @@ public class USBLog extends ViewPart {
 	}
 	
 	protected void createAction(){
+		
 		clear = new Action(){
 			public void run(){
 				log.clearConsole();

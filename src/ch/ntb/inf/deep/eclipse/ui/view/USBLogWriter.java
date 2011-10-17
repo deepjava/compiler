@@ -20,15 +20,14 @@ public class USBLogWriter extends Thread {
 		byte[] readed = null;
 		try {
 			while(isRunning){
-				if(UsbMpc555Loader.getInstance() == null){
+				while(UsbMpc555Loader.getInstance() == null){
 					Thread.sleep(500);
-				}else{					
-					readed = Uart0.read();
-					if(readed != null){
-						out.write(readed);
-					}
-					Thread.sleep(50);
+				}					
+				readed = Uart0.read();
+				if(readed != null){
+					out.write(readed);
 				}
+				Thread.sleep(50);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
