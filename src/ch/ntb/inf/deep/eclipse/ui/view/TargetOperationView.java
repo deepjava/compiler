@@ -304,7 +304,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		// contentProvider
 		elements = new OperationObject[32];
 		if(vars.length > 1){
-			for(int i = 0; i < vars.length; i++){
+			for(int i = 0; i < vars.length && i < elements.length; i++){
 				String[] obj = vars[i].split(",");
 				if(obj.length > 1){
 					elements[i] = new OperationObject(Integer.decode(obj[0]),obj[1]);
