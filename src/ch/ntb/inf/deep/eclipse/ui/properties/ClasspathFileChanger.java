@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.eclipse.ui.properties;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -39,7 +40,12 @@ public class ClasspathFileChanger {
 		int indexOfKey = fileContent.indexOf(key + oldPath);
 		if(indexOfKey > -1){
 			int indexOfEndtoken = fileContent.indexOf("/>", indexOfKey);
-			fileContent.replace(indexOfKey, indexOfEndtoken, key + newPath + "/bin\"");
+			File srcFolder = new File(newPath + "/src");
+			if(srcFolder.exists()){
+				fileContent.replace(indexOfKey, indexOfEndtoken, key + newPath + "/bin\" sourcepath=\"" + newPath + "/src\"");
+			}else{				
+				fileContent.replace(indexOfKey, indexOfEndtoken, key + newPath + "/bin\"");
+			}
 		}else{
 			throw new IOException();
 		}
