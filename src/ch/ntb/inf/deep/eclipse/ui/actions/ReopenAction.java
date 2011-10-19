@@ -26,7 +26,11 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 
 	@Override
 	public void run(IAction action) {
-		UsbMpc555Loader bdi = UsbMpc555Loader.getInstance();
+		Downloader bdi = UsbMpc555Loader.getInstance();
+		if(bdi == null){
+			ErrorReporter.reporter.error(Downloader.errTargetNotFound);
+			return;
+		}
 		bdi.closeConnection();
 		try {
 			Thread.sleep(500);//Give OS time 
