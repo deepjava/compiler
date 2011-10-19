@@ -39,12 +39,23 @@ public class ErrorReporter {
 	private  ErrorReporter() {
 		clear();
 		errPrStream = StdStreams.err;
-		String home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6);//get jar name
+		String home = "";
+		if(System.getProperty("os.name").contains("Windows")){
+			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6);//get jar name
+			//getClass().getProtectionDomain().getCodeSource().getLocation().toString() returns file:/PATHTOTHEJAR
+			//we need only PATHTOTHEJAR without file:/
+		}else{
+			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(5);//get jar name
+			//getClass().getProtectionDomain().getCodeSource().getLocation().toString() returns file:/PATHTOTHEJAR
+			//we need /PATHTOTHEJAR without file:
+		}
 		if(home.endsWith("jar")){//used when launched as a builded Plugin 
-			try {
-				jar = new JarFile(home);
-			} catch (IOException e) {
-			}
+				try {
+					jar = new JarFile(home);
+				} catch (IOException e) {
+					e.printStackTrace(errPrStream);
+				}
+			
 		}else{
 			if(home.endsWith("bin/")){//used when launched with Testlauncher
 				home = home.substring(0, home.length() - 4);
@@ -104,10 +115,12 @@ public class ErrorReporter {
 				br.close();
 				isr.close();
 			} catch (IOException e) {
+				e.printStackTrace(errPrStream);
 				try {
 					br.close();
 					isr.close();
 				} catch (IOException e1) {
+					e.printStackTrace(errPrStream);
 				}
 			}
 		}else{
@@ -129,11 +142,14 @@ public class ErrorReporter {
 					br.close();
 					fr.close();
 				} catch (FileNotFoundException e) {
+					e.printStackTrace(errPrStream);
 				} catch (IOException e) {
+					e.printStackTrace(errPrStream);
 					try {
 						fr.close();
 						br.close();
 					} catch (IOException e1) {
+						e.printStackTrace(errPrStream);
 					}
 				}
 			}
