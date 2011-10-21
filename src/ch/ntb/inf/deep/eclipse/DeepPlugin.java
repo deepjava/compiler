@@ -81,7 +81,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 			cdm.clear();
 			PrintStream out = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_INFORMATION));
 			PrintStream err = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_ERROR));
-			PrintStream vrb = new PrintStream(cdm.getNewIOConsoleOutputStream(0));
+			PrintStream vrb = new PrintStream(cdm.getNewIOConsoleOutputStream(ConsoleDisplayMgr.MSG_VERBOSE));
 			StdStreams.vrb = vrb;
 //			StdStreams.log = vrb;
 			StdStreams.out = out;
