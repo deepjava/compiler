@@ -40,6 +40,8 @@ public class ConsoleDisplayMgr
 	public static final int MSG_INFORMATION = 1;
 	public static final int MSG_ERROR = 2;
 	public static final int MSG_WARNING = 3;
+	public static final int MSG_VERBOSE = 4;
+	
 		
 	private ConsoleDisplayMgr(String messageTitle)
 	{		
@@ -113,8 +115,10 @@ public class ConsoleDisplayMgr
 			case MSG_WARNING:
 				ioConsoleStream.setColor(DARK_YELLOW);
 				break;
-			default:
+			case MSG_VERBOSE:
 				ioConsoleStream.setColor(BLUE);
+				break;
+			default:
 		}	
 
 		return ioConsoleStream;
