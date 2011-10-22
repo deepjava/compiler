@@ -6,6 +6,7 @@ import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
@@ -84,7 +85,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	private static void findLastNodeOfPhi(SSA ssa) {
-		if (dbg) StdStreams.out.println("determine end of range for phi functions in loop headers");
+		if (dbg) StdStreams.vrb.println("determine end of range for phi functions in loop headers");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		int last;
 		while (b != null) {
@@ -114,7 +115,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	private static void markUsedPhiFunctions() {
 		// determine which deleted phi-functions are still used further down
-		if (dbg) StdStreams.out.println("determine which phi functions are used further down");
+		if (dbg) StdStreams.vrb.println("determine which phi functions are used further down");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue[] opds = instr.getOperands();
@@ -125,7 +126,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
 						if (phi.deleted && phi != instr) {
-							if (dbg) StdStreams.out.println("\tphi-function is deleted");
+							if (dbg) StdStreams.vrb.println("\tphi-function is deleted");
 							phi.used = true;
 							SSAValue delPhiOpd = phi.getOperands()[0];
 							opdInstr = delPhiOpd.owner;
@@ -178,7 +179,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	private static void resolvePhiFunctions() {
-		if (dbg) StdStreams.out.println("resolving phi functions, set joins");
+		if (dbg) StdStreams.vrb.println("resolving phi functions, set joins");
 		// first run
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
@@ -205,14 +206,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					joinVal.end = res.end;
 					joinVal.type = res.type;
 				} else {
-//						System.out.println("res: " + res.start + " to " + res.end);
-//						System.out.println("joinVal: " + joinVal.start + " to " + joinVal.end);
+//						StdStreams.vrb.println("res: " + res.start + " to " + res.end);
+//						StdStreams.vrb.println("joinVal: " + joinVal.start + " to " + joinVal.end);
 					if (res.start <= joinVal.end) { // does range overlap with current join?
-//						System.out.println("joinVal overlaps");
+//						StdStreams.vrb.println("joinVal overlaps");
 						SSAValue prevJoin = joins[res.index];
 						while (prevJoin.next != null && prevJoin.next.next != null) prevJoin = prevJoin.next;
 						if (res.start <= prevJoin.end && prevJoin != joinVal) { // does range overlap with previous join, then merge
-//							System.out.println("merge joins: prevJoin:" + prevJoin.start + " to " + prevJoin.end + ", join:" + joinVal.start + " to " + joinVal.end);
+//							StdStreams.vrb.println("merge joins: prevJoin:" + prevJoin.start + " to " + prevJoin.end + ", join:" + joinVal.start + " to " + joinVal.end);
 							assert prevJoin.next == joinVal; 
 							res.join = prevJoin;
 							prevJoin.next = null;
@@ -225,7 +226,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						if (res.start < joinVal.start) joinVal.start = res.start;
 						if (res.end > joinVal.end) joinVal.end = res.end;
 					} else {	// does not overlap, create new join
-//						System.out.println("joinVal does not overlap, create new join value");
+//						StdStreams.vrb.println("joinVal does not overlap, create new join value");
 						joinVal.next = new SSAValue();
 						joinVal = joinVal.next;
 						joinVal.start = res.start;
@@ -259,7 +260,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	// computes the live ranges of all SSAValues 
 	private static void calcLiveRange(SSA ssa) {
-		if (dbg) StdStreams.out.println("calculating live ranges");
+		if (dbg) StdStreams.vrb.println("calculating live ranges");
 		for (int i = 0; i < nofInstructions; i++) {
 //			instr.print(2);
 			SSAInstruction instr = instrs[i];
@@ -276,15 +277,15 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			if (res.join != null) {	// set start of join
 				if (res.join.start > currNo) {
-//					StdStreams.out.println("start was: " + res.join.start);
+//					StdStreams.vrb.println("start was: " + res.join.start);
 					res.join.start = currNo;
-//					StdStreams.out.println("start set to: " + currNo);
+//					StdStreams.vrb.println("start set to: " + currNo);
 				}
 			}
 			
 			if (opds != null) {
 				for (SSAValue opd : opds) {
-					if (dbg) StdStreams.out.println("\t\topd : " + opd.n);
+					if (dbg) StdStreams.vrb.println("\t\topd : " + opd.n);
 					SSAInstruction opdInstr = opd.owner;
 					if (opd.join == null) {	// regular operand
 						if (opd.end < currNo) opd.end = currNo; 
@@ -363,12 +364,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 */
 	static void assignRegisters(CodeGen code) {
 		// handle loadLocal first, 
-		if (dbg) StdStreams.out.println("\thandle load local:");
+		if (dbg) StdStreams.vrb.println("\thandle load local:");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
 			if (instr.ssaOpcode == sCloadLocal) {
-				if (dbg) {StdStreams.out.print("\tassign reg for instr "); instr.print(0);}
+				if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
 				int type = res.type;
 				if (type == tLong) {
 					res.regLong = CodeGen.paramRegNr[res.index - maxStackSlots];
@@ -388,15 +389,15 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						joinVal.reg = res.reg;
 					}
 				}
-				if (dbg) StdStreams.out.println("\treg = " + res.reg);
+				if (dbg) StdStreams.vrb.println("\treg = " + res.reg);
 			} 
 		}
 		
-		if (dbg) StdStreams.out.println("\thandle all other instructions:");
+		if (dbg) StdStreams.vrb.println("\thandle all other instructions:");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
-			if (dbg) {StdStreams.out.print("\tassign reg for instr "); instr.print(0);}
+			if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
 //			if (instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted && ((PhiFunction)instr).start >= i && instr.result.join == null) continue; 
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
@@ -428,8 +429,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				res.regAux5 = reserveReg(fpr, false);
 			}
 			if (dbg) {
-				if (res.regAux1 != -1) StdStreams.out.print("\tauxReg1 = " + res.regAux1);
-				if (res.regAux2 != -1) StdStreams.out.print("\tauxReg2 = " + res.regAux2);
+				if (res.regAux1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regAux1);
+				if (res.regAux2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regAux2);
 			}
 			
 			// reserve temporary storage on the stack for certain fpr operations
@@ -446,9 +447,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			} else if (res.join != null) {
 				SSAValue joinVal = res.join;
 //				instr.print(2);
-//				StdStreams.out.println("\tjoinVal != null");
-//				StdStreams.out.println("\tjoinVal.reg = " + joinVal.reg);
-				if (dbg) StdStreams.out.println("\tjoinVal != null");
+//				StdStreams.vrb.println("\tjoinVal != null");
+//				StdStreams.vrb.println("\tjoinVal.reg = " + joinVal.reg);
+				if (dbg) StdStreams.vrb.println("\tjoinVal != null");
 				if (joinVal.reg < 0) {	// join: register not assigned yet
 					if (res.type == tLong) {
 						joinVal.regLong = reserveReg(gpr, joinVal.nonVol);
@@ -464,7 +465,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						res.reg = joinVal.reg;
 					}
 				} else {// assign same register as phi function
-					if (dbg) StdStreams.out.println("\tassign same reg as join val");
+					if (dbg) StdStreams.vrb.println("\tassign same reg as join val");
 					if (res.type == tLong) {
 						res.regLong = joinVal.regLong;	
 						res.reg = joinVal.reg;
@@ -487,7 +488,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 //				if (imm && res.index < 0 && res.join == null) {
 				if (imm && res.index < maxStackSlots && res.join == null) {
-					if (dbg) StdStreams.out.println("\timmediate");
+					if (dbg) StdStreams.vrb.println("\timmediate");
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 
 					// and opd must have join == null
@@ -535,22 +536,22 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (res.reg < 0) 	// not yet assigned
 					findReg(res);
 			}
-			if (dbg) StdStreams.out.println("\t\treg = " + res.reg);
+			if (dbg) StdStreams.vrb.println("\t\treg = " + res.reg);
 
 			if (res.regAux1 != -1) {
-				freeReg(gpr, res.regAux1);	if (dbg) StdStreams.out.println("\tfreeing aux reg1");
+				freeReg(gpr, res.regAux1);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg1");
 			}
 			if (res.regAux2 != -1) {
-				freeReg(gpr, res.regAux2);	if (dbg) StdStreams.out.println("\tfreeing aux reg2");
+				freeReg(gpr, res.regAux2);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg2");
 			}
 			if (res.regAux3 != -1) {
-				freeReg(fpr, res.regAux3);	if (dbg) StdStreams.out.println("\tfreeing aux reg3");
+				freeReg(fpr, res.regAux3);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg3");
 			}
 			if (res.regAux4 != -1) {
-				freeReg(fpr, res.regAux4);	if (dbg) StdStreams.out.println("\tfreeing aux reg4");
+				freeReg(fpr, res.regAux4);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg4");
 			}
 			if (res.regAux5 != -1) {
-				freeReg(fpr, res.regAux5);	if (dbg) StdStreams.out.println("\tfreeing aux reg5");
+				freeReg(fpr, res.regAux5);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg5");
 			}
 
 			// free registers of operands if end of live range reached 
@@ -649,8 +650,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	static int reserveReg(boolean isGPR, boolean isNonVolatile) {
-		if (dbg) StdStreams.out.println("\tbefore reserving " + Integer.toHexString(regsGPR));
-		int regs;
+		if (dbg) StdStreams.vrb.println("\tbefore reserving " + Integer.toHexString(regsGPR));
 		if (isGPR) {
 			int i;
 			if (!isNonVolatile) {	// is volatile
@@ -673,7 +673,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 				i--;
 			}
-			assert false: "not enough registers for GPRs";
+			ErrorReporter.reporter.error(603);
+			assert false: "not enough GPR's for locals";
 			return 0;
 		} else {
 			int i;
@@ -697,7 +698,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 				i--;
 			}
-			assert false: "not enough registers for FPRs";
+			ErrorReporter.reporter.error(604);
+			assert false: "not enough FPR's for locals";
 			return 0;
 		}
 	}
@@ -716,30 +718,30 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		} else {
 			regsFPR |= 1 << reg;
 		}
-		if (dbg) StdStreams.out.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
+		if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 	}
 	
 	static void printJoins() {
-		StdStreams.out.print("joins at index: [");
+		StdStreams.vrb.print("joins at index: [");
 		for (int i = 0; i < 32; i++) {
-			if (joins[i] != null) StdStreams.out.print("x");
-			StdStreams.out.print(",");
+			if (joins[i] != null) StdStreams.vrb.print("x");
+			StdStreams.vrb.print(",");
 		}
-		StdStreams.out.println("]\nlive ranges of phi functions");
+		StdStreams.vrb.println("]\nlive ranges of phi functions");
 		for (int i = 0; i < 32; i++) {
 			if (joins[i] != null) {
-				StdStreams.out.print("\tindex=" + joins[i].index);
+				StdStreams.vrb.print("\tindex=" + joins[i].index);
 				SSAValue next = joins[i];
 				while (next != null) {
-					StdStreams.out.print(": start=" + next.start);
-					StdStreams.out.print(", end=" + next.end);
-					if (next.nonVol) StdStreams.out.print(", nonVol"); else StdStreams.out.print(", vol");
-					StdStreams.out.print(", type=" + next.typeName());
-					StdStreams.out.print(", reg=" + next.reg);
-					if (next.regAux1 > -1) StdStreams.out.print(", regAux1=" + next.regAux1);
+					StdStreams.vrb.print(": start=" + next.start);
+					StdStreams.vrb.print(", end=" + next.end);
+					if (next.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
+					StdStreams.vrb.print(", type=" + next.typeName());
+					StdStreams.vrb.print(", reg=" + next.reg);
+					if (next.regAux1 > -1) StdStreams.vrb.print(", regAux1=" + next.regAux1);
 					next = next.next;
 				}
-				StdStreams.out.println();
+				StdStreams.vrb.println();
 			}
 		}
 

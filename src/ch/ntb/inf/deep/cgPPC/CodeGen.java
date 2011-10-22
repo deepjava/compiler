@@ -4,6 +4,7 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.*;
@@ -105,7 +106,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		tempStorage = false;
 		enFloatsInExc = false;
 		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-		if (dbg) StdStreams.out.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
+		if (dbg) StdStreams.vrb.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
 		for (int i = 0; i < maxNofParam; i++) {
 			paramType[i] = tVoid;
 			paramRegNr[i] = -1;
@@ -123,20 +124,20 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			i++;
 		}
 		nofParam = i - maxStackSlots;
-		assert nofParam <= maxNofParam : "method has too many parameters";
-		if (dbg) StdStreams.out.println("nofParam = " + nofParam);
+		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
+		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
 		
-		if (dbg) StdStreams.out.println("build intervals");
+		if (dbg) StdStreams.vrb.println("build intervals");
 //		ssa.cfg.printToLog();
 //		ssa.print(0);
 		RegAllocator.buildIntervals(ssa);
 //		if (dbg) {
-//			StdStreams.out.println("phi functions resolved");
+//			StdStreams.vrb.println("phi functions resolved");
 //			RegAllocator.printJoins();
 //		}
 //		ssa.print(0);
 		
-		if(dbg) StdStreams.out.println("assign registers to parameters");
+		if(dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b.next != null) {
 			b = (SSANode) b.next;
@@ -145,27 +146,27 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		// determine, which parameters go into which register
 		parseExitSet(lastExitSet, maxStackSlots);
 		if(dbg) {
-			StdStreams.out.print("parameter go into register: ");
-			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.out.print(paramRegNr[n] + "  "); 
-			StdStreams.out.println();
+			StdStreams.vrb.print("parameter go into register: ");
+			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
+			StdStreams.vrb.println();
 		}
 		
-		if(dbg) StdStreams.out.println("allocate registers");
+		if(dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocator.assignRegisters(this);
 		if (dbg) {
-			StdStreams.out.println("phi functions resolved");
+			StdStreams.vrb.println("phi functions resolved");
 			RegAllocator.printJoins();
 		}
 		if(dbg) {
-			StdStreams.out.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
-			StdStreams.out.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
-			StdStreams.out.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
-			StdStreams.out.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
-			StdStreams.out.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
-			StdStreams.out.print("parameter end at instr no: ");
+			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
+			StdStreams.vrb.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
+			StdStreams.vrb.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
+			StdStreams.vrb.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
+			StdStreams.vrb.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
+			StdStreams.vrb.print("parameter end at instr no: ");
 			for (int n = 0; n < nofParam; n++) 
-				if (paramRegEnd[n] != -1) StdStreams.out.print(paramRegEnd[n] + "  "); 
-			StdStreams.out.println();
+				if (paramRegEnd[n] != -1) StdStreams.vrb.print(paramRegEnd[n] + "  "); 
+			StdStreams.vrb.println();
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// reset has no prolog
@@ -236,13 +237,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
 		nofParamGPR = 0; nofParamFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
-		if(dbg) StdStreams.out.print("[");
+		if(dbg) StdStreams.vrb.print("[");
 		for (int i = 0; i < nofParam; i++) {
 			int type = paramType[i];
-			if(dbg) StdStreams.out.print("(" + svNames[type] + ")");
+			if(dbg) StdStreams.vrb.print("(" + svNames[type] + ")");
 			if (type == tLong) {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
-					if(dbg) StdStreams.out.print("r");
+					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(gpr, true);
 						int regLong = RegAllocator.reserveReg(gpr, true);
@@ -251,7 +252,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						nofMoveGPR += 2;
 						paramRegNr[i] = reg;
 						paramRegNr[i+1] = regLong;
-						if(dbg) StdStreams.out.print(reg + ",r" + regLong);
+						if(dbg) StdStreams.vrb.print(reg + ",r" + regLong);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
 						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
@@ -261,37 +262,37 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						else regLong = RegAllocator.reserveReg(gpr, false);
 						paramRegNr[i] = reg;
 						paramRegNr[i+1] = regLong;
-						if(dbg) StdStreams.out.print(reg + ",r" + regLong);
+						if(dbg) StdStreams.vrb.print(reg + ",r" + regLong);
 					}
 				}
 				nofParamGPR += 2;
 				i++;
 			} else if (type == tFloat || type == tDouble) {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
-					if(dbg) StdStreams.out.print("fr");
+					if(dbg) StdStreams.vrb.print("fr");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(fpr, true);
 						moveFPR[nofMoveFPR] = nofParamFPR;
 						nofMoveFPR++;
 						paramRegNr[i] = reg;
-						if(dbg) StdStreams.out.print(reg);
+						if(dbg) StdStreams.vrb.print(reg);
 					} else {
 						RegAllocator.reserveReg(fpr, paramStartFPR + nofParamFPR);
 						paramRegNr[i] = paramStartFPR + nofParamFPR;
-						if(dbg) StdStreams.out.print(paramStartFPR + nofParamFPR);
+						if(dbg) StdStreams.vrb.print(paramStartFPR + nofParamFPR);
 					}
 				}
 				nofParamFPR++;
 				if (type == tDouble) i++;
 			} else {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
-					if(dbg) StdStreams.out.print("r");
+					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(gpr, true);
 						moveGPR[nofMoveGPR] = nofParamGPR;
 						nofMoveGPR++;
 						paramRegNr[i] = reg;
-						if(dbg) StdStreams.out.print(reg);
+						if(dbg) StdStreams.vrb.print(reg);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
 						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
@@ -301,19 +302,19 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 							nofMoveGPR++;
 						}
 						paramRegNr[i] = reg;
-						if(dbg) StdStreams.out.print(reg);
+						if(dbg) StdStreams.vrb.print(reg);
 					}
 				}
 				nofParamGPR++;
 			}
-			if (i < nofParam - 1) if(dbg) StdStreams.out.print(", ");
+			if (i < nofParam - 1) if(dbg) StdStreams.vrb.print(", ");
 		}
 		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
 		if (nof > 0) recParamSlotsOnStack = nof;
 		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
 		if (nof > 0) recParamSlotsOnStack += nof*2;
 		
-		if(dbg) StdStreams.out.println("]");
+		if(dbg) StdStreams.vrb.println("]");
 	}
 
 	private static int calcStackSize() {
@@ -362,7 +363,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			SSAValue res = instr.result;
 			instr.machineCodeOffset = iCount;
 			
-//			if (dbg) StdStreams.out.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
+//			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -423,7 +424,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 							loadConstantAndFixup(res.reg, res.constant);
 						break;
 					default:
-						assert false : "cg: wrong type";
+						ErrorReporter.reporter.error(610);
+						assert false : "result of SSA instruction has wrong type";
+						return;
 					}
 				} else 
 				break;	// sCloadConst
@@ -476,7 +479,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrAd(ppcLfd, res.reg, sReg1, offset);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	// sCloadFromField
 			case sCloadFromArray:
@@ -497,7 +502,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
 						break;
 					default:
-						assert false : "cg: type not implemented";
+						ErrorReporter.reporter.error(610);
+						assert false : "result of SSA instruction has wrong type";
+						return;
 					}
 				} else {
 					refReg = opds[0].reg;	// ref to array
@@ -544,7 +551,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrDrArB(ppcLhzx, res.reg, res.regAux1, res.regAux2);
 						break;
 					default:
-						assert false : "cg: type not implemented";
+						ErrorReporter.reporter.error(610);
+						assert false : "result of SSA instruction has wrong type";
+						return;
 					}
 				}
 				break;	// sCloadFromArray
@@ -593,7 +602,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrSrAd(ppcStfd, sReg1, refReg, offset);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(611);
+					assert false : "operand of SSA instruction has wrong type";
+					return;
 				}
 				break;	// sCstoreToField
 			case sCstoreToArray:
@@ -654,7 +665,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrSrArB(ppcStfdx, valReg, res.regAux1, res.regAux2);
 						break;
 					default:
-						assert false : "cg: type not implemented";
+						ErrorReporter.reporter.error(611);
+						assert false : "operand of SSA instruction has wrong type";
+						return;
 					}
 				}
 				break;	// sCstoreToArray
@@ -686,7 +699,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcFadd, dReg, sReg1, sReg2);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	//sCadd
 			case sCsub:
@@ -717,7 +732,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcFsub, dReg, sReg1, sReg2);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	// sCsub
 			case sCmul:
@@ -752,7 +769,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArC(ppcFmul, dReg, sReg1, sReg2);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	//sCmul
 			case sCdiv:
@@ -894,7 +913,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcFdiv, res.reg, opds[0].reg, opds[1].reg);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	// sCdiv
 			case sCrem:
@@ -1039,8 +1060,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcMullw, res.reg, res.reg, opds[1].reg);
 					
 					createIrDrArB(ppcSubfc, res.reg, res.reg, opds[0].reg);
-					createIrDrArB(ppcSubfe, res.regLong, res.regLong, opds[0].regLong);
-					
+					createIrDrArB(ppcSubfe, res.regLong, res.regLong, opds[0].regLong);				
 					break;
 				case tFloat:	// correct if a / b < 32 bit
 					createIrDrArB(ppcFdiv, res.reg, opds[0].reg, opds[1].reg);
@@ -1077,7 +1097,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcFsub, res.reg, opds[0].reg, res.reg);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	// sCrem
 			case sCneg:
@@ -1090,8 +1112,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrA(ppcSubfze, res.regLong, opds[0].regLong);
 				} else if (type == tFloat || type == tDouble)
 					createIrDrB(ppcFneg, res.reg, opds[0].reg);
-				else
-					assert false : "cg: wrong type";
+				else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;	// sCneg
 			case sCshl:
 				opds = instr.getOperands();
@@ -1128,8 +1153,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, res.regLong, res.regLong, 0);
 						createIrArSrB(ppcSlw, dReg, sReg1, sReg2);
 					}
-				} else
-					assert false : "cg: wrong type";
+				} else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;	// sCshl
 			case sCshr:
 				opds = instr.getOperands();
@@ -1173,8 +1201,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSuimm(ppcOri, dReg, 0, 0);
 						createIrArSrB(ppcSraw, res.regLong, opds[0].regLong, sReg2);
 					}
-				} else
-					assert false : "cg: wrong type";
+				} else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;	// sCshr
 			case sCushr:
 				opds = instr.getOperands();
@@ -1214,8 +1245,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, dReg, dReg, 0);
 						createIrArSrB(ppcSrw, res.regLong, opds[0].regLong, sReg2);
 					}
-				} else
-					assert false : "cg: wrong type";
+				} else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;	// sCushr
 			case sCand:
 				opds = instr.getOperands();
@@ -1266,8 +1300,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcAnd, res.regLong, opds[0].regLong, opds[1].regLong);
 						createIrArSrB(ppcAnd, dReg, sReg1, sReg2);
 					}
-				} else
-					assert false : "cg: wrong type";
+				} else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 			break;	// sCand
 			case sCor:
 				opds = instr.getOperands();
@@ -1308,8 +1345,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, res.regLong, opds[0].regLong, opds[1].regLong);
 						createIrArSrB(ppcOr, dReg, sReg1, sReg2);
 					}
-				} else
-					assert false : "cg: wrong type";
+				} else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;	//sCor
 			case sCxor:
 				opds = instr.getOperands();
@@ -1360,8 +1400,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcXor, res.regLong, opds[0].regLong, opds[1].regLong);
 						createIrArSrB(ppcXor, dReg, sReg1, sReg2);
 					}
-				} else
-					assert false : "cg: wrong type";
+				} else {
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;	// sCxor
 			case sCconvInt:	// int -> other type
 				opds = instr.getOperands();
@@ -1407,7 +1450,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcFsub, dReg, 0, dReg);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;	// sCconvInt
 			case sCconvLong:	// long -> other type
@@ -1473,7 +1518,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArCrB(ppcFmadd, dReg, dReg, 0, res.regAux3);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;
 			case sCconvFloat:	// float -> other type
@@ -1562,7 +1609,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrB(ppcFmr, dReg, sReg1);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;
 			case sCconvDouble:	// double -> other type
@@ -1651,7 +1700,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrB(ppcFrsp, dReg, sReg1);
 					break;
 				default:
-					assert false : "cg: wrong type";
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;
 			case sCcmpl: case sCcmpg:
@@ -1691,8 +1742,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIcrbDcrbAcrbB(ppcCrand, CRF1LT, CRF0EQ, CRF1GT);
 						createIcrbDcrbAcrbB(ppcCror, CRF0LT, CRF1LT, CRF0GT);
 						createIBOBIBD(ppcBc, BOfalse, CRF0LT, 0);
-					} else 
-						assert false : "wrong branch instruction after sCcompl";
+					} else {
+						ErrorReporter.reporter.error(623);
+						assert false : "sCcompl or sCcompg is not followed by branch instruction";
+						return;
+					}
 				} else if (type == tFloat  || type == tDouble) {
 					createICRFrArB(ppcFcmpu, CRF1, sReg1, sReg2);
 					instr = node.instructions[i+1];
@@ -1710,10 +1764,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIBOBIBD(ppcBc, BOtrue, CRF1GT, 0);
 					else if (bci == bCifle)
 						createIBOBIBD(ppcBc, BOfalse, CRF1GT, 0);
-					else 
-						assert false : "wrong branch instruction after sCcompl";
-				} else 
-					assert false : "cg: wrong type";
+					else {
+						ErrorReporter.reporter.error(623);
+						assert false : "sCcompl or sCcompg is not followed by branch instruction";
+						return;
+					}
+				} else {
+					ErrorReporter.reporter.error(611);
+					assert false : "operand of SSA instruction has wrong type";
+					return;
+				}
 				i++;
 				break;
 			case sCinstanceof:
@@ -1944,7 +2004,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
 						loadConstantAndFixup(paramStartGPR + 2, item);	// ref
-//						System.out.println("Item = "); item.printName(); item.print(1);
+//						StdStreams.vrb.println("Item = "); item.printName(); item.print(1);
 						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
@@ -1979,7 +2039,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
 					default:
-						assert false : "cg: instruction not implemented";
+						ErrorReporter.reporter.error(612);
+						assert false : "operand of new instruction has wrong type";
+						return;
 					}
 				} else { // bCmultianewarray:
 					method = Class.getNewMemoryMethod(bCmultianewarray);
@@ -1989,10 +2051,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
 					for (int k = 0; k < opds.length; k++) 
 						srcGPR[opds[k].reg] = k + paramStartGPR + 2;				
-//StdStreams.out.println("destGPR = ");
+//StdStreams.vrb.println("destGPR = ");
 //for (int h=0; h < 32; h++) 
-//	StdStreams.out.print(destGPR[h] + ",");
-//StdStreams.out.println();
+//	StdStreams.vrb.print(destGPR[h] + ",");
+//StdStreams.vrb.println();
 					for (int k = 0; k < nofGPR; k++) {
 						if (srcGPR[k] != 0 && srcGPR[k] != k) {
 							if (srcGPR[srcGPR[k]] == 0) {
@@ -2034,7 +2096,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrB(ppcFmr, returnFPR, opds[0].reg);
 					break;
 				default:
-					assert false : "cg: return instruction not implemented";
+					ErrorReporter.reporter.error(620);
+					assert false : "return instruction not implemented";
+					return;
 				}
 				if (node.next != null)	// last node needs no branch
 					createIli(ppcB, 0, false);
@@ -2194,7 +2258,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIli(ppcB, nofPairs, true);
 					break;
 				default:
-					assert false : "cg: no such branch instruction";
+					ErrorReporter.reporter.error(621);
+					assert false : "branch instruction not implemented";
+					return;
 				}
 				break;
 			case sCregMove:
@@ -2213,12 +2279,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrB(ppcFmr, res.reg, opds[0].reg);
 					break;
 				default:
-					StdStreams.out.println("type = " + (res.type& 0x7fffffff));
-					assert false : "type not implemented";
+					if (dbg) StdStreams.vrb.println("type = " + (res.type& 0x7fffffff));
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
 				}
 				break;
 			default:
-				assert false : "cg: no code generated for " + instr.scMnemonics[instr.ssaOpcode] + " function";
+				ErrorReporter.reporter.error(625);
+				assert false : "SSA instruction not implemented" + instr.scMnemonics[instr.ssaOpcode] + " function";
+				return;
 			}
 		}
 	}
@@ -2251,12 +2321,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		i = paramStartFPR;
 		while (srcFPR[i] != 0) srcFPRcount[srcFPR[i++]]++;
 //		if (dbg) {
-//			StdStreams.out.print("srcGPR = ");
-//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.out.print(srcGPR[i] + ","); 
-//			StdStreams.out.println();
-//			StdStreams.out.print("srcGPRcount = ");
-//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.out.print(srcGPRcount[i] + ","); 
-//			StdStreams.out.println();
+//			StdStreams.vrb.print("srcGPR = ");
+//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPR[i] + ","); 
+//			StdStreams.vrb.println();
+//			StdStreams.vrb.print("srcGPRcount = ");
+//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPRcount[i] + ","); 
+//			StdStreams.vrb.println();
 //		}
 		
 		// handle move to itself
@@ -2266,7 +2336,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				if (i <= paramEndGPR) srcGPRcount[i]--;
 				else {	// copy to stack
 					srcGPRcount[i]--;
-//					if (dbg) StdStreams.out.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
+//					if (dbg) StdStreams.vrb.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
 //					createIrSrAsimm(ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
 //					offset += 4;
 				}
@@ -2290,7 +2360,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
 						done = false;
 					} else {	// copy to stack
-						if (dbg) StdStreams.out.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
+						if (dbg) StdStreams.vrb.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
 						createIrSrAsimm(ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
 						offset += 4;
 						srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
@@ -2553,7 +2623,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 	
 	private void loadConstantAndFixup(int reg, Item item) {
-		assert lastFixup >= 0 && lastFixup <= 32768 : "fixup is out of range";
+		if (lastFixup < 0 || lastFixup > 32768) {ErrorReporter.reporter.error(602); return;}
 		createIrDrAsimm(ppcAddi, reg, 0, lastFixup);
 		createIrDrAsimm(ppcAddis, reg, reg, 0);
 		lastFixup = iCount - 2;
@@ -2579,10 +2649,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			else 
 				addr = fixups[currFixup].address;
 //			if (dbg) { 
-//				StdStreams.out.print("\t fix item ");
-//				if(item == null) StdStreams.out.print("null"); 
+//				StdStreams.vrb.print("\t fix item ");
+//				if(item == null) StdStreams.vrb.print("null"); 
 //				else item.printName();
-//				StdStreams.out.println(" at address = " + Integer.toHexString(addr));
+//				StdStreams.vrb.println(" at address = " + Integer.toHexString(addr));
 //			}
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
@@ -2638,7 +2708,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			if (moveGPR[i]+paramStartGPR <= paramEndGPR) // copy into non volatile register
 				createIrArSrB(ppcOr, topGPR-i, moveGPR[i]+paramStartGPR, moveGPR[i]+paramStartGPR);
 			else { // copy from stack slot
-				if (dbg) StdStreams.out.println("Prolog: copy parameter " + (i+(paramEndGPR-paramStartGPR+1)) + " from stack slot into register " + (paramRegNr[paramEndGPR - paramStartGPR + 1 + i]));
+				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + (i+(paramEndGPR-paramStartGPR+1)) + " from stack slot into register " + (paramRegNr[paramEndGPR - paramStartGPR + 1 + i]));
 				createIrDrAd(ppcLwz, paramRegNr[paramEndGPR - paramStartGPR + 1 + i], stackPtr, stackSize + paramOffset + (i)*4);
 			}
 		}
@@ -2737,21 +2807,21 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 	
 	public void print(){
-		StdStreams.out.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor);
+		StdStreams.vrb.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor);
 		for (int i = 0; i < iCount; i++){
-			StdStreams.out.print("\t" + Integer.toHexString(instructions[i]));
-			StdStreams.out.print("\t[0x");
-			StdStreams.out.print(Integer.toHexString(i*4));
-			StdStreams.out.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+			StdStreams.vrb.print("\t" + Integer.toHexString(instructions[i]));
+			StdStreams.vrb.print("\t[0x");
+			StdStreams.vrb.print(Integer.toHexString(i*4));
+			StdStreams.vrb.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
 		if (opcode == 0x10) {
 			int BD = (short)(instructions[i] & 0xFFFC);
-			StdStreams.out.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+			StdStreams.vrb.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
 		} else if (opcode == 0x12) {
 			int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-			StdStreams.out.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+			StdStreams.vrb.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
 		}
-		StdStreams.out.println();
+		StdStreams.vrb.println();
 		}
 	}
 
@@ -2811,8 +2881,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				heapNewstringMethod = (Method)heapClass.methods.getItemByName("newstring"); // TODO improve this
 			}
 			if(dbg) {
-				if (stringNewstringMethod != null) StdStreams.out.println("stringNewstringMethod = " + stringNewstringMethod.name + stringNewstringMethod.methDescriptor); else StdStreams.out.println("stringNewstringMethod: not found");
-				if (heapNewstringMethod != null) StdStreams.out.println("heapNewstringMethod = " + heapNewstringMethod.name + heapNewstringMethod.methDescriptor); else StdStreams.out.println("heapNewstringMethod: not found");
+				if (stringNewstringMethod != null) StdStreams.vrb.println("stringNewstringMethod = " + stringNewstringMethod.name + stringNewstringMethod.methDescriptor); else StdStreams.vrb.println("stringNewstringMethod: not found");
+				if (heapNewstringMethod != null) StdStreams.vrb.println("heapNewstringMethod = " + heapNewstringMethod.name + heapNewstringMethod.methDescriptor); else StdStreams.vrb.println("heapNewstringMethod: not found");
 			}
 			
 			Method m = (Method)stringClass.methods;		
@@ -2824,8 +2894,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				m = (Method)m.next;
 			}		
 			if(dbg) {
-				if (strInitC != null) StdStreams.out.println("stringInitC = " + strInitC.name + strInitC.methDescriptor); else StdStreams.out.println("stringInitC: not found");
-				if (strInitCII != null) StdStreams.out.println("stringInitCII = " + strInitCII.name + strInitCII.methDescriptor); else StdStreams.out.println("stringInitCII: not found");
+				if (strInitC != null) StdStreams.vrb.println("stringInitC = " + strInitC.name + strInitC.methDescriptor); else StdStreams.vrb.println("stringInitC: not found");
+				if (strInitCII != null) StdStreams.vrb.println("stringInitCII = " + strInitCII.name + strInitCII.methDescriptor); else StdStreams.vrb.println("stringInitCII: not found");
 			}
 			
 			m = (Method)stringClass.methods;		
@@ -2837,8 +2907,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				m = (Method)m.next;
 			}		
 			if(dbg) {
-				if (strAllocC != null) StdStreams.out.println("allocateStringC = " + strAllocC.name + strAllocC.methDescriptor); else StdStreams.out.println("allocateStringC: not found");
-				if (strAllocCII != null) StdStreams.out.println("allocateStringCII = " + strAllocCII.name + strAllocCII.methDescriptor); else StdStreams.out.println("allocateStringCII: not found");
+				if (strAllocC != null) StdStreams.vrb.println("allocateStringC = " + strAllocC.name + strAllocC.methDescriptor); else StdStreams.vrb.println("allocateStringC: not found");
+				if (strAllocCII != null) StdStreams.vrb.println("allocateStringCII = " + strAllocCII.name + strAllocCII.methDescriptor); else StdStreams.vrb.println("allocateStringCII: not found");
 			}
 		}
 	}

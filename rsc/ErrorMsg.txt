@@ -35,18 +35,20 @@ ErrorNr;Description;Solution
 
 400;cfgNode not found;
 
-500;generating of the linenumber tabel failed;
+500;generating of the linenumber table failed;
 
 600;no code generated;
-601;method has too many parameter;
+601;method has too many parameters;
 602;fixup out of range;
-610;wrong type;
-611;type not implemented;
-620;instruction not implemented;
-621;no such branch instruction;
-622;wrong branche instruction;
-623;is not followed by branch instruction;
-624;unexpected instruction;
+603;not enough GPR's for locals;
+604;not enough FPR's for locals;
+610;result of SSA instruction has wrong type;
+611;operand of SSA instruction has wrong type;
+612;operand of SSA new instruction has wrong type;
+620;SSA return instruction not implemented;
+621;SSA branch instruction not implemented;
+623;sCcompl or sCcompg is not followed by branch instruction;
+625;SSA instruction not implemented;
 
 800;target not found!(USB connection failed);
 801;an error occurs while downloading!(Try to reopen);
