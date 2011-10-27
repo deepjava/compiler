@@ -50,7 +50,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	static int nofNonVolGPR, nofNonVolFPR;
 	static int nofVolGPR, nofVolFPR;
 	// used to find call in this method with most parameters -> gives stack size
-	static int nofParamGPR, nofParamFPR;
+	static int maxNofParamGPR, maxNofParamFPR;
 	
 	// local and linear copy of all SSA-instructions of all nodes
 	private static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
@@ -70,7 +70,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		regsFPR = regsFPRinitial;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
-		nofParamGPR = 0; nofParamFPR = 0;
+		maxNofParamGPR = 0; maxNofParamFPR = 0;
 		range = 0;
 		for (int i = 0; i < maxNofJoins; i++) {
 			rootJoins[i] = null;
@@ -324,6 +324,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	// assign volatile or nonvolatile register 
+	// checks if user wants to use floats in exception handlers
 	private static void assignRegType() {
 		// handle all live ranges of phi functions first
 		for (int i = 0; i < maxNofJoins; i++) {
@@ -381,6 +382,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	/**
 	 * Assign a register or memory location to all SSAValues
+	 * finally, it determines how many parameters are passed on the stack
 	 */
 	static void assignRegisters(CodeGen code) {
 		// handle loadLocal first, 
@@ -642,17 +644,17 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					else if (type == tFloat || type == tDouble) fpr++;
 					else gpr++;
 				}
-				if (gpr > nofParamGPR) nofParamGPR = gpr; 
-				if (fpr > nofParamFPR) nofParamFPR = fpr; 
+				if (gpr > maxNofParamGPR) maxNofParamGPR = gpr; 
+				if (fpr > maxNofParamFPR) maxNofParamFPR = fpr; 
 			}
 		}
 		CodeGen.nofNonVolGPR = nofNonVolGPR;
 		CodeGen.nofNonVolFPR = nofNonVolFPR;
 		CodeGen.nofVolGPR = nofVolGPR;
 		CodeGen.nofVolFPR = nofVolFPR;
-		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
+		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
 		if (nof > 0) CodeGen.callParamSlotsOnStack = nof;
-		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
+		nof = maxNofParamFPR - (paramEndFPR - paramStartFPR + 1);
 		if (nof > 0) CodeGen.callParamSlotsOnStack += nof*2;
 	}
 

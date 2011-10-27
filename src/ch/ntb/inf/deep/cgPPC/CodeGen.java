@@ -35,7 +35,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
-	private static final int defaultNofInstr = 16;
+	private static final int defaultNofInstr = 32;
 	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
 
@@ -94,10 +94,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	
 	// information about into which registers parameters of this method go 
 	private static int nofMoveGPR, nofMoveFPR;
-	private static int[] moveGPR = new int[maxNofParam];
-	private static int[] moveFPR = new int[maxNofParam];
+	private static int[] moveGPRsrc = new int[maxNofParam];
+	private static int[] moveGPRdst = new int[maxNofParam];
+	private static int[] moveFPRsrc = new int[maxNofParam];
+	private static int[] moveFPRdst = new int[maxNofParam];
 	
-	// information about the src registers for parameters of a call to a method 
+	// information about the src registers for parameters of a call to a method within this method
 	private static int[] srcGPR = new int[nofGPR];
 	private static int[] srcFPR = new int[nofFPR];
 	private static int[] srcGPRcount = new int[nofGPR];
@@ -251,7 +253,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		} else {
 			insertEpilog(stackSize);
 		}
-		if (dbg) {ssa.print(0); print();}
+		if (dbg) {ssa.print(0); StdStreams.vrb.print(toString());}
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
@@ -267,50 +269,65 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(gpr, true);
 						int regLong = RegAllocator.reserveReg(gpr, true);
-						moveGPR[nofMoveGPR] = nofParamGPR;
-						moveGPR[nofMoveGPR+1] = nofParamGPR+1;
-						nofMoveGPR += 2;
+						moveGPRsrc[nofMoveGPR] = nofParamGPR;
+						moveGPRsrc[nofMoveGPR+1] = nofParamGPR+1;
+						moveGPRdst[nofMoveGPR++] = reg;
+						moveGPRdst[nofMoveGPR++] = regLong;
 						paramRegNr[i] = reg;
 						paramRegNr[i+1] = regLong;
 						if(dbg) StdStreams.vrb.print(reg + ",r" + regLong);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
 						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
-						else reg = RegAllocator.reserveReg(gpr, false);
+						else {
+							reg = RegAllocator.reserveReg(gpr, false);
+							moveGPRsrc[nofMoveGPR] = nofParamGPR;
+							moveGPRdst[nofMoveGPR++] = reg;
+						}
 						int regLong = paramStartGPR + nofParamGPR + 1;
 						if (regLong <= paramEndGPR) RegAllocator.reserveReg(gpr, regLong);
-						else regLong = RegAllocator.reserveReg(gpr, false);
+						else {
+							regLong = RegAllocator.reserveReg(gpr, false);
+							moveGPRsrc[nofMoveGPR] = nofParamGPR + 1;
+							moveGPRdst[nofMoveGPR++] = regLong;
+						}
 						paramRegNr[i] = reg;
 						paramRegNr[i+1] = regLong;
 						if(dbg) StdStreams.vrb.print(reg + ",r" + regLong);
 					}
 				}
-				nofParamGPR += 2;
+				nofParamGPR += 2;	// see comment below for else type 
 				i++;
 			} else if (type == tFloat || type == tDouble) {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("fr");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(fpr, true);
-						moveFPR[nofMoveFPR] = nofParamFPR;
-						nofMoveFPR++;
+						moveFPRsrc[nofMoveFPR] = nofParamFPR;
+						moveFPRdst[nofMoveFPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
-						RegAllocator.reserveReg(fpr, paramStartFPR + nofParamFPR);
-						paramRegNr[i] = paramStartFPR + nofParamFPR;
-						if(dbg) StdStreams.vrb.print(paramStartFPR + nofParamFPR);
+						int reg = paramStartFPR + nofParamFPR;
+						if (reg <= paramEndFPR) RegAllocator.reserveReg(fpr, reg);
+						else {
+							reg = RegAllocator.reserveReg(fpr, false);
+							moveFPRsrc[nofMoveFPR] = nofParamFPR;
+							moveFPRdst[nofMoveFPR++] = reg;
+						}
+						paramRegNr[i] = reg;
+						if(dbg) StdStreams.vrb.print(reg);
 					}
 				}
-				nofParamFPR++;
+				nofParamFPR++;	// see comment below for else type 
 				if (type == tDouble) i++;
 			} else {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
 						int reg = RegAllocator.reserveReg(gpr, true);
-						moveGPR[nofMoveGPR] = nofParamGPR;
-						nofMoveGPR++;
+						moveGPRsrc[nofMoveGPR] = nofParamGPR;
+						moveGPRdst[nofMoveGPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
@@ -318,14 +335,15 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
 						else {
 							reg = RegAllocator.reserveReg(gpr, false);
-							moveGPR[nofMoveGPR] = nofParamGPR;
-							nofMoveGPR++;
+							moveGPRsrc[nofMoveGPR] = nofParamGPR;
+							moveGPRdst[nofMoveGPR++] = reg;
 						}
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					}
 				}
-				nofParamGPR++;
+				nofParamGPR++;	// even if the parameter is not used, the calling method
+				// assigns a register and we have to do here the same
 			}
 			if (i < nofParam - 1) if(dbg) StdStreams.vrb.print(", ");
 		}
@@ -339,7 +357,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 	private static int calcStackSize() {
 		int size = 16 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
-		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
+//		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
 		LRoffset = size - 4;
@@ -355,8 +373,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static int calcStackSizeException() {
 		int size = 24 + nofGPR * 4 + (tempStorage? 8 : 0);
 		if (enFloatsInExc) {
-			size += nofNonVolFPR * 8;
-			size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
+			size += nofNonVolFPR * 8;	// save used nonvolatile FPR's
+			size += nonVolStartFPR * 8 + 8;	// save all volatile FPR's and FPSCR
 		}
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
@@ -1940,6 +1958,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					}
 					
 					// copy parameters into registers and to stack if not enough registers
+					if (dbg) StdStreams.vrb.println("call to " + call.item.name + ": copy parameters");
 					copyParameters(opds);
 					
 					if (newString) {
@@ -1982,7 +2001,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				Item method;
 				if (opds == null) {	// bCnew
 					if (item == Type.wktString) {
-						newString = true;	// allocation for strings is postponed
+						newString = true;	// allocation of strings is postponed
 						strReg = res.reg;
 						loadConstantAndFixup(res.reg, item);	// ref to string
 					} else {
@@ -2353,19 +2372,26 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		i = paramStartGPR;
 		while (srcGPR[i] != 0) {
 			if (srcGPR[i] == i) {
+//				if (dbg) StdStreams.vrb.println("move to itself");
 				if (i <= paramEndGPR) srcGPRcount[i]--;
-				else {	// copy to stack
-					srcGPRcount[i]--;
-//					if (dbg) StdStreams.vrb.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
-//					createIrSrAsimm(ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
-//					offset += 4;
-				}
+				else srcGPRcount[i]--;	// copy to stack
 			}
 			i++;
 		}
+//		if (dbg) {
+//			StdStreams.vrb.print("srcGPR = ");
+//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPR[i] + ","); 
+//			StdStreams.vrb.println();
+//			StdStreams.vrb.print("srcGPRcount = ");
+//			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPRcount[i] + ","); 
+//			StdStreams.vrb.println();
+//		}
 		i = paramStartFPR;
 		while (srcFPR[i] != 0) {
-			if (srcFPR[i] == i) srcFPRcount[i]--;
+			if (srcFPR[i] == i) {
+				if (i <= paramEndFPR) srcFPRcount[i]--;
+				else srcFPRcount[i]--;	// copy to stack
+			}
 			i++;
 		}
 
@@ -2374,15 +2400,18 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		while (!done) {
 			i = paramStartGPR; done = true;
 			while (srcGPR[i] != 0) {
-				if (srcGPRcount[i] == 0) {
-					if (i <= paramEndGPR) {
-						createIrArSrB(ppcOr, i, srcGPR[i], srcGPR[i]);
-						srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
-						done = false;
-					} else {	// copy to stack
-						if (dbg) StdStreams.vrb.println("Call: put parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
+				if (i > paramEndGPR) {	// copy to stack
+					if (srcGPRcount[i] >= 0) { // check if not done yet
+						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
 						createIrSrAsimm(ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
 						offset += 4;
+						srcGPRcount[i]=-1; srcGPRcount[srcGPR[i]]--; 
+						done = false;
+					}
+				} else {
+					if (srcGPRcount[i] == 0) { // check if register no longer used for parameter
+						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to " + i);
+						createIrArSrB(ppcOr, i, srcGPR[i], srcGPR[i]);
 						srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
 						done = false;
 					}
@@ -2390,16 +2419,26 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				i++; 
 			}
 		}
+		if (dbg) StdStreams.vrb.println();
 		done = false;
 		while (!done) {
 			i = paramStartFPR; done = true;
 			while (srcFPR[i] != 0) {
-				if (srcFPRcount[i] == 0) {
-					createIrDrB(ppcFmr, i, srcFPR[i]);
-					srcFPRcount[i]--; srcFPRcount[srcFPR[i]]--;
-					done = false;
+				if (i > paramEndFPR) {	// copy to stack
+					if (srcFPRcount[i] >= 0) { // check if not done yet
+						createIrSrAd(ppcStfd, srcFPR[i], stackPtr, paramOffset + offset);
+						offset += 8;
+						srcFPRcount[i]=-1; srcFPRcount[srcFPR[i]]--; 
+						done = false;
+					}
+				} else {
+					if (srcFPRcount[i] == 0) { // check if register no longer used for parameter
+						createIrDrB(ppcFmr, i, srcFPR[i]);
+						srcFPRcount[i]--; srcFPRcount[srcFPR[i]]--; 
+						done = false;
+					}
 				}
-				i++;
+				i++; 
 			}
 		}
 
@@ -2704,11 +2743,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		if (nofNonVolGPR > 0) {
 			createIrSrAd(ppcStmw, nofGPR-nofNonVolGPR, stackPtr, GPRoffset);
 		}
-		if (enFloatsInExc) {
-			createIrD(ppcMfmsr, 0);
-			createIrArSuimm(ppcOri, 0, 0, 0x2000);
-			createIrS(ppcMtmsr, 0);
-		}
+//		if (enFloatsInExc) {
+//			createIrD(ppcMfmsr, 0);
+//			createIrArSuimm(ppcOri, 0, 0, 0x2000);
+//			createIrS(ppcMtmsr, 0);
+//		}
 		int offset = 0;
 		if (nofNonVolFPR > 0) {
 			for (int i = 0; i < nofNonVolFPR; i++) {
@@ -2716,24 +2755,44 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				offset += 8;
 			}
 		}
-		if (enFloatsInExc) {
-			for (int i = 0; i < nonVolStartFPR; i++) {
-				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + offset);
-				offset += 8;
-			}
-			createIrD(ppcMffs, 0);
-			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
-		}
+//		if (enFloatsInExc) {
+//			for (int i = 0; i < nonVolStartFPR; i++) {
+//				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + offset);
+//				offset += 8;
+//			}
+//			createIrD(ppcMffs, 0);
+//			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
+//		}
+//		if (dbg) {
+//			StdStreams.vrb.print("moveGPRsrc = ");
+//			for (int i = 0; moveGPRsrc[i] != 0; i++) StdStreams.vrb.print(moveGPRsrc[i] + ","); 
+//			StdStreams.vrb.println();
+//			StdStreams.vrb.print("moveGPRdst = ");
+//			for (int i = 0; moveGPRdst[i] != 0; i++) StdStreams.vrb.print(moveGPRdst[i] + ","); 
+//			StdStreams.vrb.println();
+//			StdStreams.vrb.print("moveFPRsrc = ");
+//			for (int i = 0; moveFPRsrc[i] != 0; i++) StdStreams.vrb.print(moveFPRsrc[i] + ","); 
+//			StdStreams.vrb.println();
+//			StdStreams.vrb.print("moveFPRdst = ");
+//			for (int i = 0; moveFPRdst[i] != 0; i++) StdStreams.vrb.print(moveFPRdst[i] + ","); 
+//			StdStreams.vrb.println();
+//		}
 		for (int i = 0; i < nofMoveGPR; i++) {
-			if (moveGPR[i]+paramStartGPR <= paramEndGPR) // copy into non volatile register
-				createIrArSrB(ppcOr, topGPR-i, moveGPR[i]+paramStartGPR, moveGPR[i]+paramStartGPR);
+			if (moveGPRsrc[i]+paramStartGPR <= paramEndGPR) // copy from parameter register
+				createIrArSrB(ppcOr, moveGPRdst[i], moveGPRsrc[i]+paramStartGPR, moveGPRsrc[i]+paramStartGPR);
 			else { // copy from stack slot
-				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + (i+(paramEndGPR-paramStartGPR+1)) + " from stack slot into register " + (paramRegNr[paramEndGPR - paramStartGPR + 1 + i]));
-				createIrDrAd(ppcLwz, paramRegNr[paramEndGPR - paramStartGPR + 1 + i], stackPtr, stackSize + paramOffset + (i)*4);
+				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + (i+(paramEndGPR-paramStartGPR+1)) + " from stack slot into GPR " + (paramRegNr[paramEndGPR - paramStartGPR + 1 + i]));
+				createIrDrAd(ppcLwz, moveGPRdst[i], stackPtr, stackSize + paramOffset + (i)*4);
 			}
 		}
-		for (int i = 0; i < nofMoveFPR; i++)
-			createIrDrB(ppcFmr, topFPR-i, moveFPR[i]+paramStartFPR);
+		for (int i = 0; i < nofMoveFPR; i++) {
+			if (moveFPRsrc[i]+paramStartFPR <= paramEndFPR) // copy from parameter register
+				createIrDrB(ppcFmr, moveFPRdst[i], moveFPRsrc[i]+paramStartFPR);
+			else { // copy from stack slot
+				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + (i+(paramEndFPR-paramStartFPR+1)) + " from stack slot into FPR " + (paramRegNr[paramEndFPR - paramStartFPR + 1 + i]));
+				createIrDrAd(ppcLfd, moveFPRdst[i], stackPtr, stackSize + paramOffset + (i)*8);
+			}
+		}
 	}
 
 	private void insertPrologException() {
@@ -2774,15 +2833,15 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 	private void insertEpilog(int stackSize) {
 		int offset = (nonVolStartFPR + nofNonVolFPR + 1) * 8;
-		if (enFloatsInExc) {
-			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
-			createIFMrB(ppcMtfsf, 0xff, 0);
-			offset -= 8;
-			for (int i = 0; i < nonVolStartFPR; i++) {
-				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
-				offset -= 8;
-			}
-		}
+//		if (enFloatsInExc) {
+//			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
+//			createIFMrB(ppcMtfsf, 0xff, 0);
+//			offset -= 8;
+//			for (int i = 0; i < nonVolStartFPR; i++) {
+//				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
+//				offset -= 8;
+//			}
+//		}
 		if (nofNonVolFPR > 0) {
 			for (int i = 0; i < nofNonVolFPR; i++)
 				createIrDrAd(ppcLfd, topFPR-i, stackPtr, FPRoffset + i * 8);
@@ -2826,29 +2885,30 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		createIrfi(ppcRfi);
 	}
 	
-	public void print(){
-		StdStreams.vrb.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor);
-		for (int i = 0; i < iCount; i++){
-			StdStreams.vrb.print("\t" + Integer.toHexString(instructions[i]));
-			StdStreams.vrb.print("\t[0x");
-			StdStreams.vrb.print(Integer.toHexString(i*4));
-			StdStreams.vrb.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
-			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
-		if (opcode == 0x10) {
-			int BD = (short)(instructions[i] & 0xFFFC);
-			StdStreams.vrb.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
-		} else if (opcode == 0x12) {
-			int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-			StdStreams.vrb.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
-		}
-		StdStreams.vrb.println();
-		}
-	}
+//	public void print(){
+//		StdStreams.vrb.println("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor);
+//		for (int i = 0; i < iCount; i++){
+//			StdStreams.vrb.print("\t" + Integer.toHexString(instructions[i]));
+//			StdStreams.vrb.print("\t[0x");
+//			StdStreams.vrb.print(Integer.toHexString(i*4));
+//			StdStreams.vrb.print("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+//			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
+//		if (opcode == 0x10) {
+//			int BD = (short)(instructions[i] & 0xFFFC);
+//			StdStreams.vrb.print(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+//		} else if (opcode == 0x12) {
+//			int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+//			StdStreams.vrb.print(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+//		}
+//		StdStreams.vrb.println();
+//		}
+//	}
 
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
 		for (int i = 0; i < iCount; i++){
+//			sb.append("\t" + String.format("%08X",instructions[i]));
 			sb.append("\t" + String.format("%08X",instructions[i]));
 			sb.append("\t[0x");
 			sb.append(Integer.toHexString(i*4));
