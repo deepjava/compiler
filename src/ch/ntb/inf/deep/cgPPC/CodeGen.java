@@ -357,7 +357,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 	private static int calcStackSize() {
 		int size = 16 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
-//		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
+		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
 		LRoffset = size - 4;
@@ -2743,11 +2743,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		if (nofNonVolGPR > 0) {
 			createIrSrAd(ppcStmw, nofGPR-nofNonVolGPR, stackPtr, GPRoffset);
 		}
-//		if (enFloatsInExc) {
-//			createIrD(ppcMfmsr, 0);
-//			createIrArSuimm(ppcOri, 0, 0, 0x2000);
-//			createIrS(ppcMtmsr, 0);
-//		}
+		if (enFloatsInExc) {
+			createIrD(ppcMfmsr, 0);
+			createIrArSuimm(ppcOri, 0, 0, 0x2000);
+			createIrS(ppcMtmsr, 0);
+		}
 		int offset = 0;
 		if (nofNonVolFPR > 0) {
 			for (int i = 0; i < nofNonVolFPR; i++) {
@@ -2755,14 +2755,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				offset += 8;
 			}
 		}
-//		if (enFloatsInExc) {
-//			for (int i = 0; i < nonVolStartFPR; i++) {
-//				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + offset);
-//				offset += 8;
-//			}
-//			createIrD(ppcMffs, 0);
-//			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
-//		}
+		if (enFloatsInExc) {
+			for (int i = 0; i < nonVolStartFPR; i++) {
+				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + offset);
+				offset += 8;
+			}
+			createIrD(ppcMffs, 0);
+			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
+		}
 //		if (dbg) {
 //			StdStreams.vrb.print("moveGPRsrc = ");
 //			for (int i = 0; moveGPRsrc[i] != 0; i++) StdStreams.vrb.print(moveGPRsrc[i] + ","); 
@@ -2833,15 +2833,15 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 	private void insertEpilog(int stackSize) {
 		int offset = (nonVolStartFPR + nofNonVolFPR + 1) * 8;
-//		if (enFloatsInExc) {
-//			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
-//			createIFMrB(ppcMtfsf, 0xff, 0);
-//			offset -= 8;
-//			for (int i = 0; i < nonVolStartFPR; i++) {
-//				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
-//				offset -= 8;
-//			}
-//		}
+		if (enFloatsInExc) {
+			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
+			createIFMrB(ppcMtfsf, 0xff, 0);
+			offset -= 8;
+			for (int i = 0; i < nonVolStartFPR; i++) {
+				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
+				offset -= 8;
+			}
+		}
 		if (nofNonVolFPR > 0) {
 			for (int i = 0; i < nofNonVolFPR; i++)
 				createIrDrAd(ppcLfd, topFPR-i, stackPtr, FPRoffset + i * 8);
