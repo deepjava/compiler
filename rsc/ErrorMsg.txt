@@ -50,6 +50,17 @@ ErrorNr;Description;Solution
 623;sCcompl or sCcompg is not followed by branch instruction;
 625;SSA instruction not implemented;
 
+701;Class not loaded;
+710;Segment not found;
+711;Segment size error;
+720;Address not set;
+721;Offset not set;
+722;Index not set;
+723;ID not set;
+724;Base address not set;
+730;Method not found;
+790;Runtime System error;
+
 800;target not found!(USB connection failed);
 801;an error occurs while downloading!(Try to reopen);
 802;no target image to load;

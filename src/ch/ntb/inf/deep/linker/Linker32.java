@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
@@ -25,12 +27,14 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
+
 	public static final byte slotSize = 4; // 4 bytes
 	static{
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean enableInterfaces = false;
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -89,28 +93,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static void init() {
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
 		
-		if(dbg) vrb.print("  a) Setting size of string header: ");
+		if(dbg) vrb.print("  Setting size of string header: ");
 		stringHeaderSize = stringHeaderConstSize + Type.wktObject.getObjectSize();
-		if(dbg) vrb.println( stringHeaderSize + " byte");
+		if(dbg) vrb.println(stringHeaderSize + " byte");
 		
-		if(dbg) vrb.println("  b) Looking for String class: ");
-		stringClass = (Class)Type.wktString;
-		if(stringClass != null) {
-			if(dbg) vrb.println("     -> found: " + stringClass.name);
-		}
-		else reporter.error(9999, "String class not found!");
-		
-		if(dbg) vrb.println("  c) Looking for segments for the system table: ");
+		if(dbg) vrb.println("  Looking for segments for the system table: ");
 		sysTabSegments = Configuration.getSysTabSegments();
 		if(sysTabSegments != null && sysTabSegments.length > 0) {
 			if(dbg) {
 				for(int i = 0; i < sysTabSegments.length; i++) {
-					vrb.println("     -> found: " + sysTabSegments[0].getName());
+					vrb.println("     -> found: " + sysTabSegments[i].getName());
 				}
 			}
 		}
+		else {
+			reporter.error(702, "No segment(s) for the systemtable defined!");
+		}
 		
-		if(dbg) vrb.println("  d) Deleting old target image... ");
+		if(dbg) vrb.println("  Deleting old target image... ");
 		targetImage = null;
 		lastTargetMemorySegment = null;
 		
@@ -156,34 +156,60 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		((FixedValueItem)clazz.ptrList).setValue(ptrCounter);
 		clazz.constantBlock.append(clazz.ptrList);
 		
-		// Type descriptor
-		if(dbg) vrb.println("    Creating type descriptor");
+		// Type descriptor: size and extension level
+		if(dbg) vrb.println("   Creating type descriptor");
 		if(dbg) vrb.println("    - Beginning with size");
 		clazz.typeDescriptor = new FixedValueItem("size");
 		if(dbg) vrb.println("    - Inserting the extension level");
 		clazz.typeDescriptor.insertBefore(new FixedValueItem("extensionLevel", clazz.extensionLevel));
 
-//		if(clazz.interfaces != null && clazz.interfaces.length > 0) {
-//			
+		// Type descriptor: interface table
+		if(enableInterfaces) {
+			extendInterfaceTable(clazz, clazz.typeDescriptor.getHead());
+		}
+//		if(clazz.interfaces != null && clazz.interfaces.length > 0) {			
 //			if(dbg) vrb.println("    - Inserting interfaces:");
 //			for(int i = 0; i < clazz.interfaces.length; i++) {
 //				if(dbg) vrb.println("      > " + clazz.interfaces[i].name);
-//				clazz.typeDescriptor.getHead().insertBefore(new InterfaceItem(clazz.interfaces[i], -1)); 
+//				clazz.typeDescriptor.getHead().insertBefore(new InterfaceItem(clazz.interfaces[i].name, clazz.interfaces[i], -1)); 
 //			}
-//			
 //		}
 		
-		Item m;
+		// Type descriptor: method table
+		Item cm;
 		if(dbg) vrb.println("    - Inserting method table:");
 		for(int i = 0; i < clazz.methTabLength; i++) {
-			m = clazz.getMethod(i);
-			assert m != null : "[Error] No method with index " + i + " found!";
-			if(dbg) vrb.println("      > " + m.name);
-			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(m)); 
+			cm = clazz.getMethod(i);
+			assert cm != null : "[Error] No method with index " + i + " found!";
+			if(dbg) vrb.println("      > " + cm.name);
+			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(cm)); 
 		}
-
+		
+		if(enableInterfaces) {
+			// Type descriptor: interface method table
+			Item im;
+			if(dbg) vrb.println("    - Inserting interface method table:");
+			if(clazz.interfaces != null) {
+				for(int j = 0; j < clazz.interfaces.length; j++) {
+					if(dbg) vrb.println("      Interface " + clazz.interfaces[j].name + ":");
+					for(int i = 0; i < clazz.interfaces[j].methTabLength; i++) {
+						im = clazz.interfaces[j].getMethod(i);
+						if(im == null) {
+							reporter.error(730, "Index: " + i);
+							return;
+						}
+						if(dbg) vrb.println("      > " + im.name);
+						clazz.typeDescriptor.getHead().insertBefore(new AddressItem(im));
+					}
+				}
+			}
+		}
+		
+		// Type descriptor: class name address
 		if(dbg) vrb.println("    - Inserting class name address");
 		clazz.typeDescriptor.insertAfter(new FixedValueItem("classNameAddr", 0x12345678));
+		
+		// Type descriptor: base classes
 		if(dbg) vrb.println("    - Inserting base classes");
 		Class baseClass = (Class)clazz.type;
 		AddressItem bctable = new AddressItem(clazz);
@@ -373,7 +399,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				s = Configuration.getCodeSegmentOf(c.name);
 				if(dbg) vrb.println("  Proceeding Class " + c.name);
 				
-				if(s == null) reporter.error(731, "Can't get a memory segment for the code of class " + c.name + "!\n");
+				if(s == null) reporter.error(710, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
 					int codeSize = ((FixedValueItem)c.codeBase.next).getValue();
 					if(s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, codeSize);
@@ -388,7 +414,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				// Var
 				s = Configuration.getVarSegmentOf(c.name);
-				if(s == null) reporter.error(731, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
+				if(s == null) reporter.error(710, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
 					c.varOffset = s.getUsedSize();
@@ -399,7 +425,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				// Const
 				s = Configuration.getConstSegmentOf(c.name);
-				if(s == null) reporter.error(731, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
+				if(s == null) reporter.error(710, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
 				else {
 					int constBlockSize = ((FixedValueItem)c.constantBlock).getValue();
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, constBlockSize);
@@ -415,7 +441,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				if(dbg) vrb.println("  Proceeding Array " + a.name);
 				
-				if(s == null) reporter.error(731, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
+				if(s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 				else {
 					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, cdSizeForArrays);
 					a.offset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
@@ -436,36 +462,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				sysTabSegments[i].addToUsedSize(systemTableSize); 
 			}
 		}
-		else reporter.error(731, "Can't get a memory segment for the systemtable!");
-	
-		
-		
-		
-		
+		else reporter.error(710, "No segment(s) defined for the system table!");
 		
 		s = Configuration.getDefaultConstSegment();
 		
 		if(dbg) vrb.println("  Proceeding global constant table");
 		
-		if(s == null) reporter.error(731, "Can't get a memory segment for the global constant table!\n");
+		if(s == null) reporter.error(710, "Can't get a memory segment for the global constant table!\n");
 		else {
 			if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, globalConstantTable.length * 4);
-			globalConstantTableOffset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
+			globalConstantTableOffset = roundUpToNextWord(s.getUsedSize());
 			s.addToUsedSize(globalConstantTable.length * 4);
 			globalConstantTableSegment = s;
 			if(dbg) vrb.println("    Segment for global constant table: " + globalConstantTableSegment.getName());
 		}	
 		
-		
-		
-		
-		
-		
-		
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
 		while(d != null) {
-//			StdStreams.vrb.println("Device: " + d.getName() + "\n");
 			if(d.lastSegment != null) setSegmentSize(d.lastSegment);
 			d = d.next;
 		}
@@ -511,14 +525,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			Item field = clazz.classFields; // class fields and constant fields
 			if(dbg) vrb.println("  Static fields:");
 			while(field != null) {
-				if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field
+				if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field // TODO @Martin If-Teil sollte eigentlich ueberhaupt nicht notwendig sein, da konstante Referenzen das Const-Flag gar nicht gesetzt haben -> If-Teil entfernen?
 					if(((Type)field.type).category == tcRef) { // reference but not literal string
 						if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 					}
 				}
 				else { // non constant field -> var section
 					if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
-					else reporter.error(9999, "varBase of class " + clazz.name + " not set or offset of field " + field.name + " not set!");
+					else {
+						if(varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
+						if(field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
+					}
 				}
 				if(dbg) vrb.print("    > " + field.name + ": Offset = 0x" + Integer.toHexString(field.offset) + ", Index = 0x" + Integer.toHexString(field.index) + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 				field = field.next;
@@ -551,11 +568,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				cpe = clazz.constPool[i];
 				if(cpe instanceof StdConstant && (cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble])) { // constant float or double value -> constant pool
 					if(cpe.offset != -1) cpe.address = constPoolBase + cpe.offset;
-					else reporter.error(9999, "Offset of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
+					else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
 				}
 				else if(cpe instanceof StringLiteral) { // string literal -> string pool
 					if(cpe.offset != -1) cpe.address = stringPoolBase + cpe.offset + 8;
-					else reporter.error(9999, "Offset of class pool entry #" + i + " (" + cpe.type.name + ") not set!");
+					else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
 				}
 				if(dbg) {
 					if(cpe.type != null) vrb.print("    - #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
@@ -776,8 +793,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static void writeCommandTableToFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing command table to file: \"" + fileName +"\":\n");
 		
+		SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date buildTime = new Date();
+		
         BufferedWriter tctFile = new BufferedWriter(new FileWriter(fileName));
-        tctFile.write("#dtct-0\n\n");
+        tctFile.write("#dtct-0\n");
+        tctFile.write("#File created: " + f.format(buildTime));
+        tctFile.write("\n\n");
         
         DataItem cmdAddrField;
         int cmdAddr = -1;
@@ -789,9 +811,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         		if(dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
         		cmdAddr = cmdAddrField.address;
         	}
-        	else reporter.error(9999, "cmdAddrField is null"); // TODO set correct error number and message
+        	else reporter.error(790, "Field cmdAddrField in the Kernel not set");
         }
-        else reporter.error(9999, "kernel is null"); // TODO set correct error number and message
+        else reporter.error(701, "Kernel (" + Configuration.getKernelClassname() + ")");
         
         tctFile.write("cmdAddr@");
         tctFile.write(String.valueOf(cmdAddr));
@@ -802,6 +824,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         
         while(clazz != null) {
         	if(clazz instanceof Class) {
+        		if(dbg) vrb.println("  Proceeding class \"" + clazz.name + "\"");
 	        	method = (Method)((Class)clazz).methods;
 	        	
 	        	tctFile.write('>');
@@ -812,6 +835,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	        	
 	        	while(method != null) {
 	        		if((method.accAndPropFlags & (1 << dpfCommand)) != 0) {
+	        			if(dbg) vrb.println("\t\"" + method.name + "\" added");
 		        		tctFile.write("\t!");
 		        		tctFile.write(method.name.toString());
 		        		tctFile.write('@');
@@ -915,7 +939,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			s.setSize(roundUpToNextWord(s.getUsedSize()));
 		}
 		else if(s.getSize() < s.getUsedSize()) { 
-			reporter.error(560, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getUsedSize() + " byte!\n");
+			reporter.error(711, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getUsedSize() + " byte!\n");
 		}
 //		StdStreams.vrb.println("  Segment " + s.getName() + ": size = " + s.getSize() + "byte!\n");
 		if(s.prev != null) {
@@ -954,11 +978,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		return cpe instanceof StdConstant && ((cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble]));
 	}
 	
-	private static int getNofInterfaceWithMethods(Class c) {
+	private static int getNofInterfacesWithMethods(Class c) {
 		int counter = 0;
 		Class baseClass = (Class)c.type;
 		while(baseClass != null) {
-			counter += getNofInterfaceWithMethods(baseClass);
+			counter += getNofInterfacesWithMethods(baseClass);
 			baseClass = (Class)baseClass.type;
 		}
 		if(c.nofInterfaces > 0) {
@@ -967,6 +991,22 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 		}
 		return counter;
+	}
+	
+	private static void extendInterfaceTable(Class c, BlockItem it) {
+		Class baseClass = (Class)c.type;
+		while(baseClass != null) {
+			extendInterfaceTable(baseClass, it);
+			baseClass = (Class)baseClass.type;
+		}
+				
+		if(c.interfaces != null && c.interfaces.length > 0) {			
+			if(dbg) vrb.println("    - Inserting interfaces:");
+			for(int i = 0; i < c.interfaces.length; i++) {
+				if(dbg) vrb.println("      > " + c.interfaces[i].name);
+				it.getHead().insertBefore(new InterfaceItem(c.interfaces[i].name, c.interfaces[i], -1)); 
+			}
+		}
 	}
 	
 	/* ---------- debug primitives ---------- */
@@ -1147,7 +1187,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("    Code segment:                " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
 				vrb.println("    Var segment:                 " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
 				vrb.println("    Const segment:               " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
-				vrb.println("    Type descriptor address:    0x" + Integer.toHexString(c.address));
+				vrb.println("    Type descriptor address:     0x" + Integer.toHexString(c.address));
 				vrb.println("    Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
 				vrb.println("    Code base address:           0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
 				vrb.println("    Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));

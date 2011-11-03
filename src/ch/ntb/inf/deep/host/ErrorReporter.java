@@ -60,36 +60,35 @@ public class ErrorReporter {
 		clear();
 		errPrStream = StdStreams.err;
 		String home = "";
-		if(System.getProperty("os.name").contains("Windows")){
-			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6);//get jar name
-			//getClass().getProtectionDomain().getCodeSource().getLocation().toString() returns file:/PATHTOTHEJAR
-			//we need only PATHTOTHEJAR without file:/
-		}else{
-			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(5);//get jar name
-			//getClass().getProtectionDomain().getCodeSource().getLocation().toString() returns file:/PATHTOTHEJAR
-			//we need /PATHTOTHEJAR without file:
+		
+		if(System.getProperty("os.name").contains("Windows")){ // Running on Microsoft Windows
+			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6); // get jar name
+			// we have to remove the first 6 characters of the returned _absolute_ path to the JAR file,
+			// because the string starts with "file:/" which is not a valid file name!
+			// Example: file:/I:\eclipse\..
+		} else { // Running on Linux, Mac OS X or another UNIX system
+			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(5); // get jar name
+			// we have to remove the first 5 characters of the returned _absolute_ path to the JAR file,
+			// because the string starts with "file:" which is not a valid file name!
+			// Example: file:/opt/eclipse/..
 		}
-		if(home.endsWith("jar")){//used when launched as a builded Plugin 
+		
+		if(home.endsWith("jar")) { // used when running as an eclipse plugin 
 				try {
 					jar = new JarFile(home);
 				} catch (IOException e) {
 					e.printStackTrace(errPrStream);
 				}
 			
-		}else{
-			if(home.endsWith("bin/")){//used when launched with Testlauncher
+		} else {
+			if(home.endsWith("bin/")) { // used when started directly in eclipse (e.g. with the Testlauncher)
 				home = home.substring(0, home.length() - 4);
 			}
-			errorMsgFilePath = home + errorMsgFilePath; // used when launched from Plugin-Development environment 
+			errorMsgFilePath = home + errorMsgFilePath;
 		}
 						
 		this.maxNofErrors = Integer.MAX_VALUE;
-		// printErrorPos = false;
 	}
-
-//	public void setPrintStream(PrintStream errStream) {
-//		errPrStream = errStream;
-//	}
 
 	public void setMaxNrOfErrors(int maxNofErrors) {
 		this.maxNofErrors = maxNofErrors;
@@ -177,13 +176,13 @@ public class ErrorReporter {
 
 		if(found){
 			if(elements.length > 1){
-				msg += elements[1] + ",";
+				msg += elements[1];
 			}
 			if(additionalInfo != null){
-				msg += " " + additionalInfo + ".";
+				msg += " (" + additionalInfo + ").";
 			}
 			if(elements.length > 2){
-				msg += " possible solution: " + elements[2] + ".";
+				msg += " Possible solution: " + elements[2] + ".";
 			}
 			
 		}else{
@@ -203,12 +202,11 @@ public class ErrorReporter {
 				errPrStream.print(" col ");	errPrStream.print(column);
 				printErrorPos = false;
 			}
-			errPrStream.print(" error: ");
+			errPrStream.print("[ERROR #");
 			if (errNr != 0)   errPrStream.print(errNr);
-			if (errMsg != null)  errPrStream.print(" \"" + errMsg + '\"');
+			if (errMsg != null)  errPrStream.print("] " + errMsg);
 			errPrStream.println();
 		}
-//		assert false;
 	}
 	
 }
