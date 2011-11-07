@@ -34,7 +34,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 
 	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
-	private static final boolean enableInterfaces = false;
+	private static final boolean enableInterfaces = false; // enable/disable support for interfaces
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -610,12 +610,38 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 
 	public static void createTypeDescriptor(Array array) {
+		if(dbg) vrb.println("[LINKER] START: Creating type descriptor for array \"" + array.name +"\":");
+		if(dbg) vrb.println("  Element type: " + array.componentType.name);
+		if(dbg) vrb.println("  Element size: " + array.componentType.sizeInBits / 8 + " byte (" + array.componentType.sizeInBits + " bit)");
+		if(dbg) vrb.println("  Dimension:    " + array.dimension);
+						
 		array.typeDescriptor = new int[cdSizeForArrays / 4];
-		array.typeDescriptor[0] = 1; // extensionLevel
-		array.typeDescriptor[1] = Type.wktObject.objectSize; // size of object
-		array.typeDescriptor[2] = 0x44444444; // not used
-		array.typeDescriptor[3] = Type.wktObject.address; // base class address -> address of java/lang/Object
+		
+		// Extentsion level
+		array.typeDescriptor[0] = 1; // the base type of an array is always object!
+		
+		// Size
+		if(array.dimension > 1) { // mutlidim array -> element size is alwas 4 byte (reference)
+			array.typeDescriptor[1] = Type.wellKnownTypes[txObject].sizeInBits / 8;
+		}
+		else { // single dimension array -> element size is size of element type
+			array.typeDescriptor[1] = array.componentType.sizeInBits / 8;
+		}
+		
+		// Class name address -> special use (address of type descriptor of the array with dim-1)
+		array.typeDescriptor[2] = -1;
+		if(array.dimension > 1) {
+			Array lowDimArray = (Array)Type.classList.getItemByName(array.name.substring(1).toString());
+			if(lowDimArray != null) {
+				array.typeDescriptor[2] = lowDimArray.address;
+			}
+		}
+		
+		// Base class address
+		array.typeDescriptor[3] = Type.wktObject.address; // the base type of an array is always object!
+		
 		array.typeDescriptor[4] = array.address; // address of own type descriptor
+		if(dbg) vrb.println("[LINKER] END: Creating type descriptor for array \"" + array.name +"\"\n");
 	}
 	
 	public static void createSystemTable() {
@@ -1164,8 +1190,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("    Type descriptor:");
 				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[0]); vrb.println("] extension level");
 				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[1]); vrb.println("] size of an array element in byte");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[2]); vrb.println("] not used");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] address of base class object");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[2]); vrb.println("] type descriptor of array with dim - 1");
+				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] address of base class (java/lang/object)");
 				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[4]); vrb.println("] the address of the array type descriptor itself");
 			}
 		
