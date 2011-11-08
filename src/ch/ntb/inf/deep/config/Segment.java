@@ -124,6 +124,19 @@ public class Segment implements IAttributes {
 		return name;
 	}
 	
+	public HString getFullName() {
+		String name = this.name.toString();
+		Segment ps = this.parent;
+		Segment ts = this;
+		while(ps != null) {
+			name = ps.name + "." + name;
+			if(ps.parent == null) ts = ps;
+			ps = ps.parent;
+		}
+		name = ts.owner.name + "." + name;
+		return HString.getHString(name);
+	}
+	
 	public int getAttributes(){
 		return attributes;
 	}

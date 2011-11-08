@@ -51,6 +51,7 @@ ErrorNr;Description;Solution
 625;SSA instruction not implemented;
 
 701;Class not loaded;
+702;Class not found;
 710;Segment not found;
 711;Segment size error;
 720;Address not set;

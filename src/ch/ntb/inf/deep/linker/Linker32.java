@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2011 NTB Interstate University of Applied Sciences of Technology Buchs.
+ *
+ * http://www.ntb.ch/inf
+ * 
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Eclipse Public License for more details.
+ * 
+ * Contributors:
+ *     NTB - initial implementation
+ * 
+ */
+
 package ch.ntb.inf.deep.linker;
 
 import java.io.BufferedWriter;
@@ -79,8 +99,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static TargetMemorySegment lastTargetMemorySegment;
 
 	// System table
-	private static int[] systemTable;
 	private static int systemTableSize;
+	private static BlockItem systemTable;
 	private static Segment[] sysTabSegments;
 	
 	// Global constants
@@ -312,7 +332,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.typeDescriptorOffset = offset;
 				
 		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
-		
 	}
 		
 	public static void calculateCodeSizeAndOffsets(Class clazz) {
@@ -342,13 +361,64 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("\n[LINKER] END:Calculating code size for class \"" + clazz.name +"\"\n");
 	}
 	
-	public static void calculateSystemTableSize() {
-		if(dbg) vrb.println("[LINKER] START: Calculating the size of the system table:\n");
+	public static void createSystemTable() {
+		if(dbg) vrb.println("[LINKER] START: Preparing system table:\n");
 		
-		systemTableSize = stConstantSize +
-			(2 * Configuration.getNumberOfStacks() +
-			 2 * Configuration.getNumberOfHeaps() +
-			 Type.nofClasses) * 4;
+		// Number of stacks, heaps and classes
+		int nOfStacks = Configuration.getNumberOfStacks();
+		int nOfHeaps = Configuration.getNumberOfHeaps();
+		if(dbg) vrb.println("  Number of stacks:  " + nOfStacks);
+		if(dbg) vrb.println("  Number of heaps:   " + nOfHeaps);
+		if(dbg) vrb.println("  Number of classes: " + Type.nofClasses);
+		
+		// Find the kernel
+		HString kernelClassName = Configuration.getKernelClassname();
+		Item kernelClass = Type.classList.getItemByName(kernelClassName.toString());
+		Item kernelClinit = null;
+		int kernelClinitAddr = -1;
+		if(kernelClass != null) {
+			kernelClinit = ((Class)kernelClass).getClassConstructor();
+			if(kernelClinit != null) {
+				kernelClinitAddr = kernelClinit.address;
+			}
+			else {
+				reporter.error(730, kernelClassName.toString() + ".<clinit>");
+			}
+		}
+		else {
+			reporter.error(702, kernelClassName.toString());
+		}
+		
+		if(dbg) vrb.println("  Kernel class:      " + kernelClass.name);
+		if(dbg) vrb.println("  -> Clinit Addr.:   " + kernelClinitAddr);
+		
+		// Create the system table
+		systemTable = new FixedValueItem("classConstOffset", 6 + 2 * nOfStacks + 2 * nOfHeaps);
+		systemTable.append(new FixedValueItem("stackOffset", 5));
+		systemTable.append(new FixedValueItem("heapOffset", 5 + 2 * nOfStacks));
+		systemTable.append(new AddressItem(kernelClinit));
+		systemTable.append(new FixedValueItem("nofStacks", nOfStacks));
+		for(int i = 0; i < nOfStacks; i++) { // reference to each stack and the size of each stack
+			systemTable.append(new AddressItem("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
+			systemTable.append(new FixedValueItem("sizeStack" + i, Configuration.getStackSegments()[i].getSize()));
+		}
+		systemTable.append(new FixedValueItem("nofHeaps", nOfHeaps));
+		for(int i = 0; i < nOfHeaps; i++) { //reference to each heap and the size of each heap
+			systemTable.append(new AddressItem("baseHeap" + i + ": ", Configuration.getHeapSegments()[i])); // base address
+			systemTable.append(new FixedValueItem("sizeHeap" + i, Configuration.getHeapSegments()[i].getSize()));
+		}
+		systemTable.append(new FixedValueItem("nofClasses", Type.nofClasses)); // TODO @Martin: Type.nofClasses is the number of all classes + the number of all interfaces, but here we need only the number of classes -> Fix this
+		Item clazz = Type.classList; int i = 0;
+		while(clazz != null) { // reference to the constant block of each class
+			if( clazz instanceof Class  && ((clazz.accAndPropFlags & (1 << apfInterface)) == 0)) {
+				systemTable.append(new ConstantBlockItem("constBlkBaseClass" + i + ": ", (Class)clazz));
+				i++;
+			}
+			clazz = clazz.next;
+		}
+		systemTable.append(new FixedValueItem("endOfSystemTable", 0));
+		
+		systemTableSize = systemTable.getBlockSize();
 		
 		if(dbg) vrb.println("  Size of the system table: " + systemTableSize + " byte (0x" + Integer.toHexString(systemTableSize) + ")");
 		
@@ -621,12 +691,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		array.typeDescriptor[0] = 1; // the base type of an array is always object!
 		
 		// Size
-		if(array.dimension > 1) { // mutlidim array -> element size is alwas 4 byte (reference)
-			array.typeDescriptor[1] = Type.wellKnownTypes[txObject].sizeInBits / 8;
-		}
-		else { // single dimension array -> element size is size of element type
-			array.typeDescriptor[1] = array.componentType.sizeInBits / 8;
-		}
+		array.typeDescriptor[1] = array.componentType.sizeInBits / 8;
+
 		
 		// Class name address -> special use (address of type descriptor of the array with dim-1)
 		array.typeDescriptor[2] = -1;
@@ -643,92 +709,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		array.typeDescriptor[4] = array.address; // address of own type descriptor
 		if(dbg) vrb.println("[LINKER] END: Creating type descriptor for array \"" + array.name +"\"\n");
 	}
-	
-	public static void createSystemTable() {
 		
-		// TODO@Martin: Implement system table as list
-		
-		if(dbg) vrb.println("[LINKER] START: Creating systemtable:\n");
-		
-		int nOfStacks = Configuration.getNumberOfStacks();
-		int nOfHeaps = Configuration.getNumberOfHeaps();
-		
-		if(dbg) vrb.println("  Number of stacks: " + nOfStacks);
-		if(dbg) vrb.println("  Number of heaps: " + nOfHeaps);
-		if(dbg) vrb.println("  Number of classes: " + Type.nofClasses);
-		
-		
-		// create the system table
-		systemTable = new int[systemTableSize];
-		
-		if(dbg) vrb.println("  Size of the system table: " + systemTable.length * 4 + " byte  -> array size: " + systemTable.length);
-		
-		
-		// offset to the beginning of the class references
-		systemTable[0] = 6 + 2 * nOfStacks + 2 * nOfHeaps;
-		
-		// offset to the beginning of the stack information 
-		systemTable[1] = 5;
-		
-		// offset to the beginning of the heap information
-		systemTable[2] = 5 + 2 * nOfStacks;
-		
-		Item c = Type.classList;
-		
-		HString kernelClassName = Configuration.getKernelClassname();
-		Item kernelClinit = null;
-		int kernelClinitAddr = 0;
-		while(c != null && !c.name.equals(kernelClassName)) {
-			c = c.next;
-		}
-		if(c != null) {
-			kernelClinit = ((Class)c).getClassConstructor();
-			if(kernelClinit != null) {
-				kernelClinitAddr = kernelClinit.address;
-			}
-		}
-		systemTable[3] = kernelClinitAddr;
-		
-		// number of stacks
-		systemTable[4] = nOfStacks;
-		
-		// reference to each stack and the size of each stack
-		for(int i = 0; i < nOfStacks; i++) {
-			systemTable[5 + 2 * i] = Configuration.getStackSegments()[i].getBaseAddress();
-			systemTable[5 + 2 * i + 1] = Configuration.getStackSegments()[i].getSize();
-		}
-		
-		// number of heaps
-		systemTable[5 + 2 * nOfStacks] = nOfHeaps;
-		
-		//reference to each heap and the size of each heap
-		for(int i = 0; i < nOfHeaps; i++) {
-			systemTable[6 + 2 * nOfStacks + 2 * i] = Configuration.getHeapSegments()[i].getBaseAddress();
-			systemTable[6 + 2 * nOfStacks + 2 * i + 1] = Configuration.getHeapSegments()[i].getSize();
-		}
-		
-		systemTable[7 + 2 * nOfStacks + 2 * nOfHeaps] = Type.nofClasses;
-		
-		// reference to the constant block of each class
-		Item item = Type.classList;
-		int i = 7 + 2 * nOfStacks + 2 * nOfHeaps;
-		while(item != null) {
-			//systemTable[i] = clazz.address;
-			if( item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
-				Class clazz = (Class)item;
-				systemTable[i] = clazz.constSegment.getBaseAddress() + clazz.constOffset;
-				
-				i++;
-			}
-			item = item.next;
-		}
-		
-		// End of system table -> should always be zero!
-		systemTable[systemTable.length - 1] = 0;
-		
-		if(dbg) vrb.println("[LINKER] END: Creating systemtable\n");
-	}
-	
 	public static void createGlobalConstantTable() {
 						
 		// Inserting data and setting address
@@ -875,6 +856,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         	clazz = clazz.next;
         }
         tctFile.close();
+        
+        vrb.println("Command table written to \"" + fileName + "\"");
 	
 		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
 	}
@@ -1038,31 +1021,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	/* ---------- debug primitives ---------- */
 	
 	public static void printSystemTable() {
-		int i = 0;
-		int nOfStacks = systemTable[4];
-		int nOfHeaps = systemTable[5 + 2 * nOfStacks];
-		int nOfClasses = Type.nofClasses;
-		vrb.print("System table:\n");
-		vrb.print("  size: " + systemTableSize + " byte\n");
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] classConstOffset\n"); i++;
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] stackOffset\n"); i++;
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] heapOffset\n"); i++;
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] kernelClinitAddr\n"); i++;
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofStacks\n"); i++;
-		for(int j = 0; j < nOfStacks; j++) {
-			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] baseStack" + j + "\n"); i++;
-			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] sizeStack" + j + "\n"); i++;
-		}
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofHeaps\n"); i++;
-		for(int j = 0; j < nOfHeaps; j++) {
-			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] baseHeap" + j + "\n"); i++;
-			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] sizeHeap" + j + "\n"); i++;
-		}
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] nofClasses\n"); i++;
-		for(int j = 0; j < nOfClasses; j++) {
-			vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] constBlkBaseClass" + j + "\n"); i++;
-		}
-		vrb.printf("  >%4d", i); vrb.print(" ["); vrb.printf("%8x", systemTable[i]); vrb.print("] endOfSysTab\n"); i++;
+		vrb.println("Size: " + systemTableSize + " byte");
+		systemTable.printList();
 	}
 
 	public static void printTargetImage() {

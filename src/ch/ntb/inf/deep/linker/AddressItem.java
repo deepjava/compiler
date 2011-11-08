@@ -21,18 +21,39 @@
 package ch.ntb.inf.deep.linker;
 
 import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.strings.HString;
 
 public class AddressItem extends BlockItem {
 	
 	private static final int size = 4;
 	
-	Item ref;
+	Item itemRef;
+	Segment segmentRef;
+	boolean isSegment = false;
 	
 	public AddressItem(Item ref) {
-		this.ref = ref;
+		this.itemRef = ref;
 		if(ref.name != null) this.name = ref.name;
 		else name = HString.getHString("???");
+	}
+	
+	public AddressItem(String prefix, Item ref) {
+		this.itemRef = ref;
+		if(ref.name != null) this.name = HString.getHString(prefix + ref.name);
+		else name = HString.getHString(prefix + "???");
+	}
+	
+	public AddressItem(Segment ref) {
+		this.segmentRef = ref;
+		this.name = ref.getFullName();
+		this.isSegment = true;
+	}
+	
+	public AddressItem(String prefix, Segment ref) {
+		this.segmentRef = ref;
+		this.name = HString.getHString(prefix + ref.getFullName());
+		this.isSegment = true;
 	}
 	
 	protected int getItemSize() {
@@ -40,21 +61,30 @@ public class AddressItem extends BlockItem {
 	}
 	
 	protected int insertIntoArray(int[] a, int offset) {
+		int address;
+		if(isSegment) address = segmentRef.getBaseAddress();
+		else address = itemRef.address;
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
-			a[index] = ref.address;
+			a[index] = address;
 			written = size;
 		}
 		return written;
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", ref.address) + " (" + name + ")";
+		int address;
+		if(isSegment) address = segmentRef.getBaseAddress();
+		else address = itemRef.address;
+		return String.format("[%08X]", address) + " (" + name + ")";
 	}
 	
 	public int getAddress() {
-		return ref.address;
+		int address;
+		if(isSegment) address = segmentRef.getBaseAddress();
+		else address = itemRef.address;
+		return address;
 	}
 
 }

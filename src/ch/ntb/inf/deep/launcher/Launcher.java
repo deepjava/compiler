@@ -115,9 +115,9 @@ public class Launcher implements ICclassFileConsts {
 			}
 			out.println();
 
-			// 5) Linker: freeze memory map
+			// 5) Linker: create system table and freeze memory map
 			if (reporter.nofErrors <= 0) {
-				Linker32.calculateSystemTableSize();
+				Linker32.createSystemTable();
 				Linker32.calculateGlobalConstantTableSize();
 				Linker32.freezeMemoryMap();
 			}
@@ -163,10 +163,6 @@ public class Launcher implements ICclassFileConsts {
 				}
 				item = item.next;
 			}
-
-			// 9) Linker: Create system table
-			if (reporter.nofErrors <= 0)
-				Linker32.createSystemTable();
 
 			// 10) Linker: Create target image
 			if (reporter.nofErrors <= 0)
