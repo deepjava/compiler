@@ -67,15 +67,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int cblkPtrAddr0Offset = 7 * 4;
 	
 	// Class/type descriptor:
-	public static final int cdInterface0AddrOffset = 2 * 4; // TODO @Martin: rename class descriptor to type descriptor
-	public static final int cdExtensionLevelOffset = 1 * 4;
-	public static final int cdSizeOffset = 0;
-	public static final int cdClassNameAddrOffset = 1 * 4;
-	public static final int cdBaseClass0Offset = 2 * 4;
-	public static final int cdConstantSize = 3 * 4;
-	public static final int cblkConstantSize = 8 * 4;
-	public static final int cdSizeForArrays = 5 * 4;
-	private static int arrayOffsetCounter = 0;
+	public static final int tdInterface0AddrOffset = 2 * 4;
+	public static final int tdExtensionLevelOffset = 1 * 4;
+	public static final int tdSizeOffset = 0;
+	public static final int tdClassNameAddrOffset = 1 * 4;
+	public static final int tdBaseClass0Offset = 2 * 4;
+	public static final int tdConstantSize = 3 * 4;
+	public static final int tblkConstantSize = 8 * 4;
+	public static final int tdSizeForArrays = 5 * 4;
 	
 	// System table:
 	public static final int stStackOffset = 1 * 4;
@@ -96,7 +95,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 
 	// Target image
 	public static TargetMemorySegment targetImage;
-	private static TargetMemorySegment lastTargetMemorySegment;
 
 	// System table
 	private static int systemTableSize;
@@ -132,7 +130,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Deleting old target image... ");
 		targetImage = null;
-		lastTargetMemorySegment = null;
 		
 		if(dbg) vrb.println("[LINKER] END: Initializing.\n");
 	}
@@ -358,11 +355,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		((FixedValueItem)clazz.codeBase.next).setValue(codeSize);
 		if(dbg) vrb.println("    Total code size: " + codeSize + " byte");
 		
-		if(dbg) vrb.println("\n[LINKER] END:Calculating code size for class \"" + clazz.name +"\"\n");
+		if(dbg) vrb.println("\n[LINKER] END: Calculating code size for class \"" + clazz.name +"\"\n");
 	}
 	
 	public static void createSystemTable() {
-		if(dbg) vrb.println("[LINKER] START: Preparing system table:\n");
+		if(dbg) vrb.println("[LINKER] START: Create system table:\n");
 		
 		// Number of stacks, heaps and classes
 		int nOfStacks = Configuration.getNumberOfStacks();
@@ -373,6 +370,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		// Find the kernel
 		HString kernelClassName = Configuration.getKernelClassname();
+		if(kernelClassName == null) {
+			kernelClassName = HString.getHString("<undefined>");
+			reporter.error(740, "kernel class not set");
+		}
 		Item kernelClass = Type.classList.getItemByName(kernelClassName.toString());
 		Item kernelClinit = null;
 		int kernelClinitAddr = -1;
@@ -396,7 +397,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		systemTable = new FixedValueItem("classConstOffset", 6 + 2 * nOfStacks + 2 * nOfHeaps);
 		systemTable.append(new FixedValueItem("stackOffset", 5));
 		systemTable.append(new FixedValueItem("heapOffset", 5 + 2 * nOfStacks));
-		systemTable.append(new AddressItem(kernelClinit));
+		systemTable.append(new AddressItem("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
 		systemTable.append(new FixedValueItem("nofStacks", nOfStacks));
 		for(int i = 0; i < nOfStacks; i++) { // reference to each stack and the size of each stack
 			systemTable.append(new AddressItem("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
@@ -422,7 +423,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Size of the system table: " + systemTableSize + " byte (0x" + Integer.toHexString(systemTableSize) + ")");
 		
-		if(dbg) vrb.println("[LINKER] END: Calculating the size of the system table.\n");
+		if(dbg) vrb.println("[LINKER] END: Create system table.\n");
 	}
 	
 	public static void calculateGlobalConstantTableSize() {
@@ -513,9 +514,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				if(s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 				else {
-					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, cdSizeForArrays);
+					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, tdSizeForArrays);
 					a.offset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					s.addToUsedSize(cdSizeForArrays);
+					s.addToUsedSize(tdSizeForArrays);
 					a.segment = s;
 					if(dbg) vrb.println("    Segment for type descriptor: " + a.segment.getName());
 				}	
@@ -685,7 +686,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  Element size: " + array.componentType.sizeInBits / 8 + " byte (" + array.componentType.sizeInBits + " bit)");
 		if(dbg) vrb.println("  Dimension:    " + array.dimension);
 						
-		array.typeDescriptor = new int[cdSizeForArrays / 4];
+		array.typeDescriptor = new int[tdSizeForArrays / 4];
 		
 		// Extentsion level
 		array.typeDescriptor[0] = 1; // the base type of an array is always object!
@@ -902,7 +903,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 	}
 	
-	//private static long gc1Value = Double.doubleToLongBits(4503599627370496L + 2147483648L); // 2^52 + 2^31
 	
 	/* ---------- private helper methods ---------- */
 	
@@ -964,7 +964,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(targetImage == null) {
 			if(dbg) vrb.println("      >>>> Adding target memory segment #" + tms.id);
 			targetImage = tms;
-			lastTargetMemorySegment = tms;
 		}
 		else {
 			TargetMemorySegment current = targetImage;
@@ -1043,9 +1042,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void printClassList() {
-		vrb.println("\n[LINKER] PRINT: This is a list of all classes with their methodes, fields and constant blocks\n");
 		printClassList(true, true, true, true);
-		vrb.println("\n[LINKER] PRINT: End of class list\n");
 	}
 
 	public static void printClassList(boolean printMethods, boolean printFields, boolean printConstantFields, boolean printConstantBlock) {
@@ -1159,9 +1156,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 	}
 	
-	public static void printGlobalConstantTable() {
-		vrb.println("\n[LINKER] PRINT: Global constants\n");
-		
+	public static void printGlobalConstantTable() {	
 		int i = 0;
 		Item cgc = globalConstantList;
 		vrb.println("  Global constants:");
@@ -1177,8 +1172,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		for(int j = 0; j < globalConstantTable.length; j++) {
 			vrb.print("    ["); vrb.printf("%8x", globalConstantTable[j]); vrb.println("]");
 		}
-		
-		vrb.println("\n[LINKER] PRINT: End of global constants\n");
 	}
 	
 }

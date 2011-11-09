@@ -60,6 +60,7 @@ ErrorNr;Description;Solution
 723;ID not set;
 724;Base address not set;
 730;Method not found;
+740;Configuration error;
 790;Runtime System error;
 
 800;target not found!(USB connection failed);
