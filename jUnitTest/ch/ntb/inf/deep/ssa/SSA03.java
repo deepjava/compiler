@@ -89,4 +89,8 @@ public class SSA03 extends TestSSA {
 		testNode(nodes[9], 1, 1, 2);
 	}
 
+	@Test
+	public void testSwitchWhile(){
+		SSANode[] nodes = getAndTestSSA("switchWhile", 10, 0);
+	}
 }

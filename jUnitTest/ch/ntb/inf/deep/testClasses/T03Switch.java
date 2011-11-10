@@ -46,23 +46,36 @@ public class T03Switch {
 	
 	public static int switchFar2(int i) {
 		switch(i) {
-			case -100: return -100;
-			case 0: 
-				switch (i) {
-					case 0: break;
-					case 1: return 2;
-					case 2: i += 2;
-					case 3: break;
-					case 4: return 3;
-				}
-			case 100: 
-				switch (i) {
-					case 0: break;
-					case 2: i += 2;		
-					case 5: break;
-					default: return -1;
-				}
+		case -100: return -100;
+		case 0: 
+			switch (i) {
+			case 0: break;
+			case 1: return 2;
+			case 2: i += 2;
+			case 3: break;
+			case 4: return 3;
+			}
+		case 100: 
+			switch (i) {
+			case 0: break;
+			case 2: i += 2;		
+			case 5: break;
+			default: return -1;
+			}
 		}
 		return i;
+	}
+
+	protected boolean terminated;
+
+	public void switchWhile() {
+		switch (0) {
+		case 0: 
+			while (terminated)
+				terminated = false;
+			break;
+		default:
+			break;
+		}
 	}
 }

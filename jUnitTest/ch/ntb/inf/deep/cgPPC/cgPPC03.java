@@ -75,4 +75,9 @@ public class cgPPC03 extends TestCgPPC {
 			assertNull("wrong join", getJoin(i));
 	}
 
+	@Test
+	public void switchWhile() {
+		CodeGen code = getCode("switchWhile");
+	}
+
 }
