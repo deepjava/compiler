@@ -35,7 +35,7 @@ ErrorNr;Description;Solution
 
 400;cfgNode not found;
 
-500;generating of the linenumber table failed;
+500;Generation of linenumber table failed;
 
 600;no code generated;
 601;method has too many parameters;

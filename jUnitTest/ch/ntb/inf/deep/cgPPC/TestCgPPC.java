@@ -40,7 +40,7 @@ public class TestCgPPC implements ICclassFileConsts {
 		code[i] = new CodeGen(ssa[i]);
 //		ssa[i].cfg.printToLog();
 //		code[i].ssa.print(0);
-//		code[i].print();
+//		System.out.print(code[i].toString());
 //		System.out.println();
 		return code[i];
 	}

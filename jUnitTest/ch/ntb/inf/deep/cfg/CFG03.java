@@ -8,6 +8,7 @@ import org.junit.Test;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.ssa.SSANode;
 
 public class CFG03 extends TestCFG implements ICclassFileConsts {
 
@@ -78,5 +79,14 @@ public class CFG03 extends TestCFG implements ICclassFileConsts {
 		testNode(nodes[9], 139, 140, false, nodes[0], new int[] {0,89,131}, new int[] {});
 	}
 
+	@Test
+	public void testSwitchWhile(){
+		CFGNode[] nodes = getAndTestNodes("switchWhile", 5);
+		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {28,38});
+		testNode(nodes[1], 23, 25, false, nodes[2], new int[] {28}, new int[] {28});
+		testNode(nodes[2], 28, 32, true, nodes[0], new int[] {0,23}, new int[] {23,35});
+		testNode(nodes[3], 35, 35, false, nodes[2], new int[] {28}, new int[] {38});
+		testNode(nodes[4], 38, 38, false, nodes[0], new int[] {0,35}, new int[] {});
+	}
 
 }

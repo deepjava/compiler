@@ -480,7 +480,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_m1:
@@ -493,7 +493,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_0:
@@ -506,7 +506,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_1:
@@ -519,7 +519,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_2:
@@ -532,7 +532,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_3:
@@ -545,7 +545,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_4:
@@ -558,7 +558,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiconst_5:
@@ -571,7 +571,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClconst_0:
@@ -584,7 +584,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClconst_1:
@@ -597,7 +597,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfconst_0:
@@ -610,7 +610,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfconst_1:
@@ -623,7 +623,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfconst_2:
@@ -636,7 +636,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdconst_0:
@@ -649,7 +649,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdconst_1:
@@ -662,7 +662,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCbipush:
@@ -678,7 +678,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 1, instr);
+				owner.createLineNrPair(bca - 1, instr);
 				pushToStack(result);
 				break;
 			case bCsipush:
@@ -695,7 +695,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCldc:
@@ -734,7 +734,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 1, instr);
+				owner.createLineNrPair(bca - 1, instr);
 				pushToStack(result);
 				break;
 			case bCldc_w:
@@ -773,7 +773,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCldc2_w:
@@ -801,7 +801,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCiload:
@@ -983,7 +983,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClaload:
@@ -996,7 +996,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfaload:
@@ -1009,7 +1009,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdaload:
@@ -1022,7 +1022,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCaaload:
@@ -1038,7 +1038,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCbaload:
@@ -1053,7 +1053,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCcaload:
@@ -1066,7 +1066,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCsaload:
@@ -1079,7 +1079,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCistore:
@@ -1238,7 +1238,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bClastore:
 				value3 = popFromStack();
@@ -1251,7 +1251,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCfastore:
 				value3 = popFromStack();
@@ -1264,7 +1264,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCdastore:
 				value3 = popFromStack();
@@ -1277,7 +1277,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCaastore:
 				value3 = popFromStack();
@@ -1290,7 +1290,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCbastore:
 				value3 = popFromStack();
@@ -1303,7 +1303,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCcastore:
 				value3 = popFromStack();
@@ -1316,7 +1316,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCsastore:
 				value3 = popFromStack();
@@ -1329,11 +1329,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				break;
 			case bCpop:
 				popFromStack();
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCpop2:
 				value1 = popFromStack();
@@ -1341,13 +1341,13 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				if (!((value1.type == SSAValue.tLong) || (value1.type == SSAValue.tDouble))) {
 					popFromStack();
 				}
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCdup:
 				value1 = popFromStack();
 				pushToStack(value1);
 				pushToStack(value1);
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCdup_x1:
 				value1 = popFromStack();
@@ -1355,7 +1355,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				pushToStack(value1);
 				pushToStack(value2);
 				pushToStack(value1);
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCdup_x2:
 				value1 = popFromStack();
@@ -1373,7 +1373,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					pushToStack(value2);
 					pushToStack(value1);
 				}
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCdup2:
 				value1 = popFromStack();
@@ -1388,7 +1388,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					pushToStack(value2);
 					pushToStack(value1);
 				}
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCdup2_x1:
 				value1 = popFromStack();
@@ -1406,7 +1406,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					pushToStack(value2);
 					pushToStack(value1);
 				}
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCdup2_x2:
 				value1 = popFromStack();
@@ -1451,14 +1451,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 						pushToStack(value1);
 					}
 				}
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCswap:
 				value1 = popFromStack();
 				value2 = popFromStack();
 				pushToStack(value1);
 				pushToStack(value2);
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCiadd:
 				value2 = popFromStack();
@@ -1469,7 +1469,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCladd:
@@ -1481,7 +1481,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfadd:
@@ -1493,7 +1493,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdadd:
@@ -1505,7 +1505,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCisub:
@@ -1517,7 +1517,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClsub:
@@ -1529,7 +1529,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfsub:
@@ -1541,7 +1541,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdsub:
@@ -1553,7 +1553,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCimul:
@@ -1565,7 +1565,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClmul:
@@ -1577,7 +1577,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfmul:
@@ -1589,7 +1589,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdmul:
@@ -1601,7 +1601,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCidiv:
@@ -1613,7 +1613,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCldiv:
@@ -1625,7 +1625,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfdiv:
@@ -1637,7 +1637,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCddiv:
@@ -1649,7 +1649,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCirem:
@@ -1661,7 +1661,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClrem:
@@ -1673,7 +1673,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfrem:
@@ -1685,7 +1685,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdrem:
@@ -1697,7 +1697,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCineg:
@@ -1708,7 +1708,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClneg:
@@ -1719,7 +1719,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfneg:
@@ -1730,7 +1730,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdneg:
@@ -1741,7 +1741,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCishl:
@@ -1753,7 +1753,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClshl:
@@ -1765,7 +1765,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCishr:
@@ -1777,7 +1777,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClshr:
@@ -1789,7 +1789,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiushr:
@@ -1801,7 +1801,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClushr:
@@ -1813,7 +1813,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiand:
@@ -1825,7 +1825,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCland:
@@ -1837,7 +1837,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCior:
@@ -1849,7 +1849,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClor:
@@ -1861,7 +1861,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCixor:
@@ -1873,7 +1873,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClxor:
@@ -1885,7 +1885,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCiinc:
@@ -1920,9 +1920,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result.owner = instr;
 				addInstruction(instr);
 				if(wide){
-					owner.checkAndCreateLineNrPair(bca - 4, instr);
+					owner.createLineNrPair(bca - 4, instr);
 				}else{
-					owner.checkAndCreateLineNrPair(bca - 2, instr);
+					owner.createLineNrPair(bca - 2, instr);
 				}
 				wide = false;
 				result = new SSAValue();
@@ -1944,7 +1944,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCi2f:
@@ -1955,7 +1955,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCi2d:
@@ -1966,7 +1966,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCl2i:
@@ -1977,7 +1977,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCl2f:
@@ -1988,7 +1988,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCl2d:
@@ -1999,7 +1999,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCf2i:
@@ -2010,7 +2010,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCf2l:
@@ -2021,7 +2021,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCf2d:
@@ -2032,7 +2032,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCd2i:
@@ -2043,7 +2043,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCd2l:
@@ -2054,7 +2054,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCd2f:
@@ -2065,7 +2065,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCi2b:
@@ -2076,7 +2076,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCi2c:
@@ -2087,7 +2087,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCi2s:
@@ -2098,7 +2098,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bClcmp:
@@ -2110,7 +2110,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfcmpl:
@@ -2122,7 +2122,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCfcmpg:
@@ -2134,7 +2134,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdcmpl:
@@ -2146,7 +2146,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCdcmpg:
@@ -2158,7 +2158,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCifeq:
@@ -2172,7 +2172,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCif_icmpeq:
@@ -2189,7 +2189,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto:
@@ -2199,16 +2199,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCjsr:
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				// I think it isn't necessary to push the address onto the stack
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCret:
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				if (wide) {
 					bca = bca + 2; // step over indexbyte1 and indexbyte2
 					wide = false;
@@ -2218,11 +2218,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCtableswitch:
 				value1 = popFromStack();
-				instr = new Branch(sCbranch, value1);
+				instr = new Branch(sCbranch, value1, true);
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// Step over whole bytecode instruction
 				bca++;
 				// pad bytes
@@ -2241,11 +2241,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bClookupswitch:
 				value1 = popFromStack();
-				instr = new Branch(sCbranch, value1);
+				instr = new Branch(sCbranch, value1, true);
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// Step over whole bytecode instruction
 				bca++;
 				// pad bytes
@@ -2265,7 +2265,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// discard Stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2279,7 +2279,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// discard Stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2293,7 +2293,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// discard Stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2307,7 +2307,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// discard Stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2321,7 +2321,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// discard Stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2334,7 +2334,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// discard Stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2422,7 +2422,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCputstatic:
@@ -2442,7 +2442,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				break;
 			case bCgetfield:
 				bca++;
@@ -2526,7 +2526,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCputfield:
@@ -2547,7 +2547,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				break;
 			case bCinvokevirtual:
 				bca++;
@@ -2567,7 +2567,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
@@ -2590,7 +2590,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result.owner = instr;
 				((Call) instr).invokespecial = true;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
@@ -2612,7 +2612,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
@@ -2635,7 +2635,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 4, instr);
+				owner.createLineNrPair(bca - 4, instr);
 				if (result.type != SSAValue.tVoid) {
 					pushToStack(result);
 				}
@@ -2658,7 +2658,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCnewarray:
@@ -2674,7 +2674,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 1, instr);
+				owner.createLineNrPair(bca - 1, instr);
 				pushToStack(result);
 				break;
 			case bCanewarray:
@@ -2694,7 +2694,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);				
+				owner.createLineNrPair(bca - 2, instr);				
 				pushToStack(result);
 				break;
 			case bCarraylength:
@@ -2705,7 +2705,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
 				break;
 			case bCathrow:
@@ -2715,7 +2715,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				// clear stack
 				while (stackpointer >= 0) {
 					exitSet[stackpointer] = null;
@@ -2739,7 +2739,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result.owner = instr;
 				pushToStack(value1);
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				break;
 			case bCinstanceof:
 				bca++;
@@ -2758,20 +2758,20 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 2, instr);
+				owner.createLineNrPair(bca - 2, instr);
 				pushToStack(result);
 				break;
 			case bCmonitorenter:
 				popFromStack();
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCmonitorexit:
 				popFromStack();
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCwide:
 				wide = true;
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				break;
 			case bCmultianewarray:
 				bca++;
@@ -2794,7 +2794,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca - 3, instr);
+				owner.createLineNrPair(bca - 3, instr);
 				pushToStack(result);
 				break;
 			case bCifnull:
@@ -2804,20 +2804,20 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
-				owner.checkAndCreateLineNrPair(bca, instr);
+				owner.createLineNrPair(bca, instr);
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto_w:
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				bca = bca + 4; // step over branchbyte1 and branchbyte2...
 				break;
 			case bCjsr_w:
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				// I think it isn't necessary to push the adress onto the stack
 				bca = bca + 4; // step over branchbyte1 and branchbyte2...
 				break;
 			case bCbreakpoint:
-				owner.checkAndCreateLineNrPair(bca, null);
+				owner.createLineNrPair(bca, null);
 				// do nothing
 				break;
 			default:
@@ -2899,9 +2899,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			instr.result.owner = instr;
 			addInstruction(instr);
 			exitSet[index] = result;
-			owner.checkAndCreateLineNrPair(bca, instr);
+			owner.createLineNrPair(bca, instr);
 		}else{
-			owner.checkAndCreateLineNrPair(bca, null);
+			owner.createLineNrPair(bca, null);
 		}
 
 		pushToStack(result);
@@ -3319,9 +3319,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		if (value1 == value2) {
 			exitSet[index] = value1;
 			exitSet[index].index = index;
-			owner.checkAndCreateLineNrPair(bca, null);
+			owner.createLineNrPair(bca, null);
 		}else{
-			owner.checkAndCreateLineNrPair(bca, value2.owner);			
+			owner.createLineNrPair(bca, value2.owner);			
 		}
 	}
 	

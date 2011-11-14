@@ -22,8 +22,9 @@ public class TestSSA implements ICclassFileConsts{
 		ssa = new SSA[TestCFG.cfg.length];
 		for (int i = 0; i < TestCFG.cfg.length; i++){
 			ssa[i] = new SSA(TestCFG.cfg[i]);
-			System.out.println();
-			ssa[i].print(0);
+//			System.out.println();
+//			ssa[i].print(0);
+//			ssa[i].printLineNumTab();
 		}
 	}
 

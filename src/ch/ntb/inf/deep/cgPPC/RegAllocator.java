@@ -532,7 +532,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTGPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTFPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((((Call)instr1).item.accAndPropFlags & sysMethCodeMask) == CodeGen.idPUTSPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger ))) {
+							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger))
+									&& !((Branch)instr1).isSwitch) // tableswitch and lookupswitch have immediate already for the second operand
+						{
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
 							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);

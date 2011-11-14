@@ -51,7 +51,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertNull("wrong join", getJoin(2));
 		assertNull("wrong join", getJoin(3));
 		assertTrue("wrong join", checkJoin(getJoin(4), 0, 13, nonVol, false));
-		assertTrue("wrong join", checkJoin(getJoin(5), 1, 15, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(5), 1, 15, nonVol, false));
 		assertTrue("wrong join", checkJoin(getJoin(6), 2, 13, vol, false));
 		for (int i = 7; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));

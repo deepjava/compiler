@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.ssa;
 import java.io.IOException;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
@@ -25,12 +26,14 @@ public class SSA03 extends TestSSA {
 		}
 	}
 
+//	@Ignore
 	@Test
 	public void testConstructor() {
 		SSANode[] nodes = getAndTestSSA("<init>", 1, 0);
 		testNode(nodes[0], 3, 0, 2);
 	}
 	
+//	@Ignore
 	@Test
 	public void testSwitchNear1(){
 		SSANode[] nodes = getAndTestSSA("switchNear1", 5, 0);
@@ -41,6 +44,7 @@ public class SSA03 extends TestSSA {
 		testNode(nodes[4], 2, 0, 2);
 	}
 	
+//	@Ignore
 	@Test
 	public void testSwitchNear2(){
 		SSANode[] nodes = getAndTestSSA("switchNear2", 9, 0);
@@ -55,6 +59,7 @@ public class SSA03 extends TestSSA {
 		testNode(nodes[8], 3, 1, 3);
 	}
 	
+//	@Ignore
 	@Test
 	public void testSwitchNear3(){
 		SSANode[] nodes = getAndTestSSA("switchNear3", 4, 0);
@@ -64,6 +69,7 @@ public class SSA03 extends TestSSA {
 		testNode(nodes[3], 4, 0, 6);
 	}
 	
+//	@Ignore
 	@Test
 	public void testSwitchFar1(){
 		SSANode[] nodes = getAndTestSSA("switchFar1", 5, 0);
@@ -74,6 +80,7 @@ public class SSA03 extends TestSSA {
 		testNode(nodes[4], 2, 0, 2);		
 	}
 	
+//	@Ignore
 	@Test
 	public void testSwitchFar2(){
 		SSANode[] nodes = getAndTestSSA("switchFar2", 10, 0);
@@ -91,6 +98,12 @@ public class SSA03 extends TestSSA {
 
 	@Test
 	public void testSwitchWhile(){
-		SSANode[] nodes = getAndTestSSA("switchWhile", 10, 0);
+		SSANode[] nodes = getAndTestSSA("switchWhile", 6, 1);
+		testNode(nodes[0], 3, 0, 3);
+		testNode(nodes[1], 2, 0, 3);
+		testNode(nodes[2], 2, 0, 3);
+		testNode(nodes[3], 1, 0, 3);
+		testNode(nodes[4], 1, 0, 3);
+		testNode(nodes[5], 1, 1, 3);
 	}
 }

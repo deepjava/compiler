@@ -2019,31 +2019,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						method = Class.getNewMemoryMethod(bCnewarray);
 						loadConstantAndFixup(res.regAux1, method);	// addr of newarray
 						createIrSspr(ppcMtspr, LR, res.regAux1);
-						// copy parameters
-						for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
-						for (int k = 0; k < opds.length; k++) 
-							srcGPR[opds[k].reg] = k + paramStartGPR;				
-						for (int k = 0; k < nofGPR; k++) {
-							if (srcGPR[k] != 0 && srcGPR[k] != k) {
-								if (srcGPR[srcGPR[k]] == 0) {
-									createIrArSrB(ppcOr, srcGPR[k], k, k);
-									srcGPR[k] = 0;
-								} else {
-									createIrArSrB(ppcOr, 0, srcGPR[k], srcGPR[k]);
-									createIrArSrB(ppcOr, srcGPR[k], k, k);
-									createIrArSrB(ppcOr, k, 0, 0);
-									int temp = srcGPR[k];
-									srcGPR[k] = srcGPR[temp];
-									srcGPR[temp] = temp;
-									k--;
-								}
-							}
-						}
-//						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
+						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
-						loadConstantAndFixup(paramStartGPR + 2, item);	// ref
-//						StdStreams.vrb.println("Item = "); item.printName(); item.print(1);
+						loadConstantAndFixup(paramStartGPR + 2, item);	// ref to type descriptor
 						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
@@ -2051,29 +2030,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						method = Class.getNewMemoryMethod(bCanewarray);
 						loadConstantAndFixup(res.regAux1, method);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, res.regAux1);
-						// copy parameters
-						for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
-						for (int k = 0; k < opds.length; k++) 
-							srcGPR[opds[k].reg] = k + paramStartGPR;				
-						for (int k = 0; k < nofGPR; k++) {
-							if (srcGPR[k] != 0 && srcGPR[k] != k) {
-								if (srcGPR[srcGPR[k]] == 0) {
-									createIrArSrB(ppcOr, srcGPR[k], k, k);
-									srcGPR[k] = 0;
-								} else {
-									createIrArSrB(ppcOr, 0, srcGPR[k], srcGPR[k]);
-									createIrArSrB(ppcOr, srcGPR[k], k, k);
-									createIrArSrB(ppcOr, k, 0, 0);
-									int temp = srcGPR[k];
-									srcGPR[k] = srcGPR[temp];
-									srcGPR[temp] = temp;
-									k--;
-								}
-							}
-						}
-//						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
+						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
 						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
-						loadConstantAndFixup(paramStartGPR + 1, item);	// ref
+						loadConstantAndFixup(paramStartGPR + 1, item);	// ref to type descriptor
 						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
@@ -2087,30 +2046,83 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					loadConstantAndFixup(res.regAux1, method);	// addr of multianewarray
 					createIrSspr(ppcMtspr, LR, res.regAux1);
 					// copy dimensions
-					for (int k = 0; k < nofGPR; k++) srcGPR[k] = 0;
-					for (int k = 0; k < opds.length; k++) 
-						srcGPR[opds[k].reg] = k + paramStartGPR + 2;				
-//StdStreams.vrb.println("destGPR = ");
-//for (int h=0; h < 32; h++) 
-//	StdStreams.vrb.print(destGPR[h] + ",");
-//StdStreams.vrb.println();
-					for (int k = 0; k < nofGPR; k++) {
-						if (srcGPR[k] != 0 && srcGPR[k] != k) {
-							if (srcGPR[srcGPR[k]] == 0) {
-								createIrArSrB(ppcOr, srcGPR[k], k, k);
-								srcGPR[k] = 0;
-							} else {
-								createIrArSrB(ppcOr, 0, srcGPR[k], srcGPR[k]);
-								createIrArSrB(ppcOr, srcGPR[k], k, k);
-								createIrArSrB(ppcOr, k, 0, 0);
-								int temp = srcGPR[k];
-								srcGPR[k] = srcGPR[temp];
-								srcGPR[temp] = temp;
-								k--;
-							}
+					offset = 0;
+					for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
+
+					// get info about in which register parameters are located
+					// the first two parameter registers are used for nofDim and ref
+					// therefore start is at paramStartGPR + 2
+					for (int k = 0, kGPR = 0; k < opds.length; k++) {
+						type = opds[k].type & ~(1<<ssaTaFitIntoInt);
+						if (type == tLong) {
+							srcGPR[kGPR + paramStartGPR + 2] = opds[k].regLong;	
+							srcGPR[kGPR + 1 + paramStartGPR + 2] = opds[k].reg;
+							kGPR += 2;
+						} else {
+							srcGPR[kGPR + paramStartGPR + 2] = opds[k].reg;
+							kGPR++;
 						}
 					}
-					loadConstantAndFixup(paramStartGPR, item);	// ref
+					
+					// count register usage
+					int cnt = paramStartGPR + 2;
+					while (srcGPR[cnt] != 0) srcGPRcount[srcGPR[cnt++]]++;
+					
+					// handle move to itself
+					cnt = paramStartGPR + 2;
+					while (srcGPR[cnt] != 0) {
+						if (srcGPR[cnt] == cnt) srcGPRcount[cnt]--;
+						cnt++;
+					}
+
+					// move registers 
+					boolean done = false;
+					while (!done) {
+						cnt = paramStartGPR + 2; done = true;
+						while (srcGPR[cnt] != 0) {
+							if (srcGPRcount[cnt] == 0) { // check if register no longer used for parameter
+								if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (cnt-paramStartGPR) + " from register " + srcGPR[cnt] + " to " + cnt);
+								createIrArSrB(ppcOr, cnt, srcGPR[cnt], srcGPR[cnt]);
+								srcGPRcount[cnt]--; srcGPRcount[srcGPR[cnt]]--; 
+								done = false;
+							}
+							cnt++; 
+						}
+					}
+					if (dbg) StdStreams.vrb.println();
+
+					// resolve cycles
+					done = false;
+					while (!done) {
+						cnt = paramStartGPR + 2; done = true;
+						while (srcGPR[cnt] != 0) {
+							int src = 0;
+							if (srcGPRcount[cnt] == 1) {
+								src = cnt;
+								createIrArSrB(ppcOr, 0, srcGPR[cnt], srcGPR[cnt]);
+								srcGPRcount[srcGPR[cnt]]--;
+								done = false;
+							}
+							boolean done1 = false;
+							while (!done1) {
+								int k = paramStartGPR + 2; done1 = true;
+								while (srcGPR[k] != 0) {
+									if (srcGPRcount[k] == 0 && k != src) {
+										createIrArSrB(ppcOr, k, srcGPR[k], srcGPR[k]);
+										srcGPRcount[k]--; srcGPRcount[srcGPR[k]]--; 
+										done1 = false;
+									}
+									k++; 
+								}
+							}
+							if (src != 0) {
+								createIrArSrB(ppcOr, src, 0, 0);
+								srcGPRcount[src]--;
+							}
+							cnt++;
+						}
+					}
+					loadConstantAndFixup(paramStartGPR, item);	// ref to type descriptor
 					createIrDrAsimm(ppcAddi, paramStartGPR+1, 0, opds.length);	// nofDimensions
 					createIBOBILK(ppcBclr, BOalways, 0, true);
 					createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);

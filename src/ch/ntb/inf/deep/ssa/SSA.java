@@ -37,12 +37,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public int nofLoopheaders;
 	public boolean isParam[];
 	public int paramType[];
-	private LineNrSSAInstrPair[] linenumberTable; //entries are sorted by bca
+	private LineNrSSAInstrPair[] lineNumTab; //entries are sorted by bca
 	public int highestLineNr;
 	public int lowestLineNr;	
-	private int lineNrTabEntryCount;
-	private int lineNrTabIndex;
-	private int elimGotoCnt;
+	private int lineNumTabEntryCnt;
+	private int lineNumTabIndex;
 	private int returnCount;
 	private SSANode returnNodes[];
 	private SSANode loopHeaders[];
@@ -57,14 +56,13 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		returnNodes = new SSANode[4];
 		nofLoopheaders = 0;
 		nofSortedNodes = 0;	
-		lineNrTabEntryCount = 0;
-		lineNrTabIndex = 0;
-		elimGotoCnt = 0;
+		lineNumTabEntryCnt = 0;
+		lineNumTabIndex = 0;
 		highestLineNr = 0;
 		lowestLineNr = 0;
 		
 		if(cfg.method.lineNrTab != null)
-			linenumberTable = new LineNrSSAInstrPair[cfg.method.lineNrTab.length];
+			lineNumTab = new LineNrSSAInstrPair[cfg.method.lineNrTab.length];
 		
 		determineParam();
 		sortNodes((SSANode)cfg.rootNode);
@@ -87,7 +85,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		
 		determineStateArray();
-		fillAndSortLinetable();
+		sortLineNumTable();
 		
 		//if the method have multiple return statements, so check if in the last node all required params are loaded
 		if(returnCount > 1){
@@ -361,75 +359,69 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		returnNodes[returnCount++] = node; 
 	}
 	
-	protected void checkAndCreateLineNrPair(int bca, SSAInstruction instr){
-		if(linenumberTable == null || (lineNrTabEntryCount == linenumberTable.length && linenumberTable[lineNrTabEntryCount - 1].instr != null))
+	protected void createLineNrPair(int bca, SSAInstruction instr){
+		if (lineNumTabEntryCnt == lineNumTab.length && lineNumTab[lineNumTabEntryCnt - 1].instr != null){
 			return;
+		}
 		
-		if(lineNrTabIndex < linenumberTable.length && bca == ((cfg.method.lineNrTab[lineNrTabIndex] >> 16) & 0xFFFF)){
-			linenumberTable[lineNrTabEntryCount++] = new LineNrSSAInstrPair(bca, cfg.method.lineNrTab[lineNrTabIndex++] & 0xFFFF, instr);
-			setHighestLowestLineNr(cfg.method.lineNrTab[lineNrTabIndex-1] & 0xFFFF);
-		}else{
-			if(lineNrTabEntryCount > 0 && linenumberTable[lineNrTabEntryCount - 1].instr == null){
-				linenumberTable[lineNrTabEntryCount - 1].instr = instr;
+		if (lineNumTabIndex < lineNumTab.length && bca == ((cfg.method.lineNrTab[lineNumTabIndex] >> 16) & 0xFFFF)){
+			lineNumTab[lineNumTabEntryCnt++] = new LineNrSSAInstrPair(bca, cfg.method.lineNrTab[lineNumTabIndex++] & 0xFFFF, instr);
+			setHighestLowestLineNr(cfg.method.lineNrTab[lineNumTabIndex-1] & 0xFFFF);
+		} else {
+			if (lineNumTabEntryCnt > 0 && lineNumTab[lineNumTabEntryCnt - 1].instr == null){
+				lineNumTab[lineNumTabEntryCnt - 1].instr = instr;
 			}
 		}
 	}
 	
 	public LineNrSSAInstrPair[] getLineNrTable(){
-		return linenumberTable;
+		return lineNumTab;
 	}
 	
-	public int  getNumberOfLineNrEntries(){
-		return lineNrTabEntryCount;
+	public int getNumberOfLineNrEntries(){
+		return lineNumTabEntryCnt;
 	}
 	
 	protected void setLineNrTabIndex(int bca){
 		int i;
-		for(i = 0;i < cfg.method.lineNrTab.length && bca != ((cfg.method.lineNrTab[i] >> 16) & 0xFFFF); i++);
+		for(i = 0; i < cfg.method.lineNrTab.length && bca != ((cfg.method.lineNrTab[i] >> 16) & 0xFFFF); i++);
 		if(i < cfg.method.lineNrTab.length)
-			lineNrTabIndex = i;
+			lineNumTabIndex = i;
 	}
 	
-	private void fillAndSortLinetable(){
-		addLineNrTabEntriesForEliminatedGotos();
-		if(lineNrTabEntryCount == linenumberTable.length){
-			for(int i = 0; i < linenumberTable.length - 1; i++){
-				for(int j = i; j < linenumberTable.length - 1 && linenumberTable[j].bca > linenumberTable[j + 1].bca ; j++){
-					LineNrSSAInstrPair temp = linenumberTable[j + 1];
-					linenumberTable[j + 1] = linenumberTable[j];
-					linenumberTable[j] = temp;
-					i = 0;//check from array beginning
+	private void sortLineNumTable(){
+		addEntriesForEliminatedGotos();
+		if (lineNumTabEntryCnt == lineNumTab.length){
+			for (int i = 0; i < lineNumTab.length - 1; i++){
+				for (int j = i; j < lineNumTab.length - 1 && lineNumTab[j].bca > lineNumTab[j + 1].bca ; j++){
+					LineNrSSAInstrPair temp = lineNumTab[j + 1];
+					lineNumTab[j + 1] = lineNumTab[j];
+					lineNumTab[j] = temp;
+					i = 0; //check from start of array 
 				}
 			}
-		}else{
-			ErrorReporter.reporter.error(500,"for method " + cfg.method.name.toString() + " in class " + cfg.method.owner.name.toString());
+		} else {
+			ErrorReporter.reporter.error(500," for method " + cfg.method.name.toString() + " in class " + cfg.method.owner.name.toString());
 		}
 	}
 	
-	private void addLineNrTabEntriesForEliminatedGotos(){
-		//search not added entries
-		for(int j = 0; lineNrTabEntryCount < linenumberTable.length && j < linenumberTable.length; j++){
-			int i =  0;
-			while(i < lineNrTabEntryCount){
-				if((cfg.method.lineNrTab[j] & 0xFFFF) == linenumberTable[i].lineNr){
-					break;
-				}
+	private void addEntriesForEliminatedGotos(){
+		//search for missing entries
+		for (int j = 0; lineNumTabEntryCnt < lineNumTab.length && j < lineNumTab.length; j++){
+			int i = 0;
+			while (i < lineNumTabEntryCnt){
+				if (((cfg.method.lineNrTab[j]>>16) & 0xFFFF) == lineNumTab[i].bca)	break;
 				i++;
 			}
-			if(i >= lineNrTabEntryCount && ((cfg.code[(cfg.method.lineNrTab[j] >> 16) & 0xFFFF] & 0xFF) == 0xa7 || (cfg.code[(cfg.method.lineNrTab[j] >> 16) & 0xFFFF] & 0xFF) == 0xc8)){ // it must be goto or goto_w
-				linenumberTable[lineNrTabEntryCount++] = new LineNrSSAInstrPair((cfg.method.lineNrTab[j] >> 16) & 0xFFFF, cfg.method.lineNrTab[j] & 0xFFFF, null);
+			if (i >= lineNumTabEntryCnt && ((cfg.code[(cfg.method.lineNrTab[j] >> 16) & 0xFFFF] & 0xFF) == 0xa7 || (cfg.code[(cfg.method.lineNrTab[j] >> 16) & 0xFFFF] & 0xFF) == 0xc8)){ // it must be goto or goto_w
+				lineNumTab[lineNumTabEntryCnt++] = new LineNrSSAInstrPair((cfg.method.lineNrTab[j] >> 16) & 0xFFFF, cfg.method.lineNrTab[j] & 0xFFFF, null);
 				setHighestLowestLineNr(cfg.method.lineNrTab[j] & 0xFFFF);
-				elimGotoCnt++;
 			}
 		}
-	}
-	
-	public int getNofEliminatedGotos(){
-		return elimGotoCnt;
 	}
 	
 	private void setHighestLowestLineNr(int lineNr){
-		if(highestLineNr < 1){//no lineNr is set befor
+		if(highestLineNr < 1){ //no lineNr is set before
 			highestLineNr = lineNr;
 			lowestLineNr = lineNr;
 		}
@@ -439,6 +431,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		if(lineNr < lowestLineNr){
 			lowestLineNr = lineNr;
 		}		
+	}
+
+	public void printLineNumTab() {
+		StdStreams.vrb.println("lineNumTabEntryCnt=" + lineNumTabEntryCnt + " lineNumTab.length="+lineNumTab.length);
+		for (int i = 0; i < lineNumTab.length && lineNumTab[i]!=null; i++) StdStreams.vrb.println(lineNumTab[i].toString());
 	}
 
 }

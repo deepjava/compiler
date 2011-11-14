@@ -554,7 +554,7 @@ public class cgPPC04 extends TestCgPPC {
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
-		assertTrue("wrong join", checkJoin(getJoin(3), 1, 23, vol, false));	// a
+		assertTrue("wrong join", checkJoin(getJoin(3), 1, 23, nonVol, false));	// a
 		assertTrue("wrong join", checkJoin(getJoin(4), 2, 23, vol, true));	// i
 		assertTrue("wrong join", checkJoin(getJoin(4).next, 24, 33, vol, false));	// n
 		assertTrue("wrong join", checkJoin(getJoin(5), 4, 15, vol, false));	// b

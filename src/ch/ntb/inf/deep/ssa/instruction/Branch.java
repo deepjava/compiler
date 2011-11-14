@@ -24,6 +24,7 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Branch extends SSAInstruction {
+	public boolean isSwitch;
 	
 	public Branch(int opCode, SSAValue operand1, SSAValue operand2){
 		ssaOpcode = opCode;
@@ -37,6 +38,12 @@ public class Branch extends SSAInstruction {
 
 	public Branch(int opCode){
 		ssaOpcode = opCode;
+	}
+
+	public Branch(int opCode, SSAValue operand1, boolean isSwitch) {
+		ssaOpcode = opCode;
+		operands = new SSAValue[]{operand1};
+		this.isSwitch = isSwitch;
 	}
 
 	@Override
