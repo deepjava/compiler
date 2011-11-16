@@ -29,9 +29,8 @@ public interface SSAInstructionOpcs {
 	sCor = 16, sCxor = 17, sCconvInt = 18, sCconvLong = 19,
 	sCconvFloat = 20, sCconvDouble = 21, sCcmpl = 22, sCcmpg = 23, 
 	sCinstanceof = 24, sCalength = 25, sCcall = 26, sCnew = 27,
-	sCreturn = 28, sCthrow = 29, sCbranch = 30, sCregMove = 31,
-	sCPhiFunc = 32
-	;
+	sCreturn = 28, sCthrow = 29, sCbranch = 30, sCswitch = 31,
+	sCregMove = 32, sCPhiFunc = 33;
 
 	byte  // attributes of SSA instructions
 	ssaApBase = 8, 
@@ -84,6 +83,7 @@ public interface SSAInstructionOpcs {
 			0x00000000 + sCreturn, 		
 			0x00010000 + sCthrow, 		
 			0x00000000 | (1<<ssaApImmOpd) + sCbranch, 		
+			0x00000000 + sCswitch, 		
 			
 			0x00000000 + sCregMove, 		
 			

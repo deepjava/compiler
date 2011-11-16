@@ -508,7 +508,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				// check if operand can be used with immediate instruction format
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
-//				if (imm && res.index < 0 && res.join == null) {
 				if (imm && res.index < maxStackSlots && res.join == null) {
 					if (dbg) StdStreams.vrb.println("\timmediate");
 					// opd must be used in an instruction with immediate form available
@@ -532,8 +531,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTGPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTFPR")) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && ((((Call)instr1).item.accAndPropFlags & sysMethCodeMask) == CodeGen.idPUTSPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger))
-									&& !((Branch)instr1).isSwitch) // tableswitch and lookupswitch have immediate already for the second operand
+							// calls to some unsafe methods
+							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
+							// branches but not switches (the second operand of a switch is already constant)
 						{
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {

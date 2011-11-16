@@ -52,9 +52,10 @@ public interface SSAInstructionMnemonics extends SSAInstructionOpcs {
 		"sCnew",
 		"sCreturn",
 		"sCthrow",
-		"sCBranch",
-		"sCRegMove",		
-		"sCPhiFunc"
+		"sCbranch",
+		"sCswitch",
+		"sCregMove",		
+		"sCphiFunc"
 	};
 
 }

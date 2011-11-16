@@ -2218,7 +2218,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCtableswitch:
 				value1 = popFromStack();
-				instr = new Branch(sCbranch, value1, true);
+				instr = new Branch(sCswitch, value1);
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
@@ -2241,7 +2241,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bClookupswitch:
 				value1 = popFromStack();
-				instr = new Branch(sCbranch, value1, true);
+				instr = new Branch(sCswitch, value1);
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
 				addInstruction(instr);
@@ -2860,7 +2860,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			instructions = newArray;
 
 		}
-		if ((nofInstr > 0)	&& (instructions[nofInstr - 1].ssaOpcode == sCbranch)) { // insert before branch instruction
+		if ((nofInstr > 0)	&& ((instructions[nofInstr - 1].ssaOpcode == sCbranch) || (instructions[nofInstr - 1].ssaOpcode == sCswitch))) { // insert before branch instruction
 			if(nofInstr > 1 &&  (instructions[nofInstr - 2].ssaOpcode == sCcmpl || instructions[nofInstr - 2].ssaOpcode == sCcmpg)){ //insert befor cmp instructions
 				instructions[nofInstr] = instructions[nofInstr - 1];
 				instructions[nofInstr - 1] = instructions[nofInstr - 2];

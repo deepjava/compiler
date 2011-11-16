@@ -211,7 +211,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		node = (SSANode)ssa.cfg.rootNode;
 		while (node != null) {	// resolve local branch targets
 			if (node.nofInstr > 0) {
-				if (node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) {
+				if ((node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) || (node.instructions[node.nofInstr-1].ssaOpcode == sCswitch)) {
 					int code = this.instructions[node.codeEndAddr];
 					CFGNode[] successors = node.successors;
 					switch (code & 0xfc000000) {
@@ -2171,6 +2171,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 //				createIrArSrB(ppcOr, res.reg, sReg1, sReg1);				
 				break;
 			case sCbranch:
+			case sCswitch:
 				bci = ssa.cfg.code[node.lastBCA] & 0xff;
 				switch (bci) {
 				case bCgoto:
