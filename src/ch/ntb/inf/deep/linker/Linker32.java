@@ -702,9 +702,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(lowDimArray != null) {
 				array.typeDescriptor[2] = lowDimArray.address;
 			}
-			else {
-				reporter.error(703, name);
-			}
 		}
 		else {
 			if(array.name.charAt(1) == tcRef) {
