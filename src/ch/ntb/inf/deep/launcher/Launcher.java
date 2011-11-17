@@ -72,7 +72,7 @@ public class Launcher implements ICclassFileConsts {
 			Item item = Type.classList;
 			Method method;
 			if (reporter.nofErrors <= 0) {				
-				out.println("Loaded classes");
+				out.println("Loaded classes:");
 			}
 			while (item != null && reporter.nofErrors <= 0) {
 				if(item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
@@ -81,7 +81,7 @@ public class Launcher implements ICclassFileConsts {
 
 					// 3.1) Linker: calculate offsets
 					if (reporter.nofErrors <= 0)
-						Linker32.prepareConstantBlock(clazz);
+						Linker32.createConstantBlock(clazz);
 
 					out.printf("Class: %1$s\n", clazz.name);
 					

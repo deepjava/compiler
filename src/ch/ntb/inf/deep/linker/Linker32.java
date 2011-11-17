@@ -134,7 +134,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("[LINKER] END: Initializing.\n");
 	}
 	
-	public static void prepareConstantBlock(Class clazz) {
+	public static void createConstantBlock(Class clazz) {
 			
 		if(dbg) vrb.println("[LINKER] START: Preparing constant block for class \"" + clazz.name +"\":");
 
@@ -362,10 +362,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("[LINKER] START: Create system table:\n");
 		
 		// Number of stacks, heaps and classes
-		int nOfStacks = Configuration.getNumberOfStacks();
-		int nOfHeaps = Configuration.getNumberOfHeaps();
-		if(dbg) vrb.println("  Number of stacks:  " + nOfStacks);
-		if(dbg) vrb.println("  Number of heaps:   " + nOfHeaps);
+		int nofStacks = Configuration.getNumberOfStacks();
+		int nofHeaps = Configuration.getNumberOfHeaps();
+		if(dbg) vrb.println("  Number of stacks:  " + nofStacks);
+		if(dbg) vrb.println("  Number of heaps:   " + nofHeaps);
 		if(dbg) vrb.println("  Number of classes: " + Type.nofClasses);
 		
 		// Find the kernel
@@ -394,17 +394,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  -> Clinit Addr.:   " + kernelClinitAddr);
 		
 		// Create the system table
-		systemTable = new FixedValueItem("classConstOffset", 6 + 2 * nOfStacks + 2 * nOfHeaps);
+		systemTable = new FixedValueItem("classConstOffset", 6 + 2 * nofStacks + 2 * nofHeaps);
 		systemTable.append(new FixedValueItem("stackOffset", 5));
-		systemTable.append(new FixedValueItem("heapOffset", 5 + 2 * nOfStacks));
+		systemTable.append(new FixedValueItem("heapOffset", 5 + 2 * nofStacks));
 		systemTable.append(new AddressItem("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
-		systemTable.append(new FixedValueItem("nofStacks", nOfStacks));
-		for(int i = 0; i < nOfStacks; i++) { // reference to each stack and the size of each stack
+		systemTable.append(new FixedValueItem("nofStacks", nofStacks));
+		for(int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
 			systemTable.append(new AddressItem("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
 			systemTable.append(new FixedValueItem("sizeStack" + i, Configuration.getStackSegments()[i].getSize()));
 		}
-		systemTable.append(new FixedValueItem("nofHeaps", nOfHeaps));
-		for(int i = 0; i < nOfHeaps; i++) { //reference to each heap and the size of each heap
+		systemTable.append(new FixedValueItem("nofHeaps", nofHeaps));
+		for(int i = 0; i < nofHeaps; i++) { //reference to each heap and the size of each heap
 			systemTable.append(new AddressItem("baseHeap" + i + ": ", Configuration.getHeapSegments()[i])); // base address
 			systemTable.append(new FixedValueItem("sizeHeap" + i, Configuration.getHeapSegments()[i].getSize()));
 		}
@@ -693,14 +693,29 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		// Size
 		array.typeDescriptor[1] = array.componentType.sizeInBits / 8;
-
 		
-		// Class name address -> special use (address of type descriptor of the array with dim-1)
+		// address of type descriptor of the array with dim-1 or of the base type if the array is of type [L
 		array.typeDescriptor[2] = -1;
 		if(array.dimension > 1) {
-			Array lowDimArray = (Array)Type.classList.getItemByName(array.name.substring(1).toString());
+			String name = array.name.substring(1).toString();
+			Array lowDimArray = (Array)Type.classList.getItemByName(name);
 			if(lowDimArray != null) {
 				array.typeDescriptor[2] = lowDimArray.address;
+			}
+			else {
+				reporter.error(703, name);
+			}
+		}
+		else {
+			if(array.name.charAt(1) == tcRef) {
+				String name = array.name.substring(2, array.name.length() - 1).toString();
+				Class baseType = (Class)Type.classList.getItemByName(name);
+				if(baseType != null) {
+					array.typeDescriptor[2] = baseType.address;
+				}
+				else {
+					reporter.error(702, name);
+				}
 			}
 		}
 		
