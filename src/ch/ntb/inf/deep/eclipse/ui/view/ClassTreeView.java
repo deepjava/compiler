@@ -473,7 +473,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("Number of interfaces:        " + c.nofInterfaces + "\n");
 			sb.append("Number of base classes:      " + c.extensionLevel + "\n");
 			sb.append("Number of references:        " + c.nofClassRefs + "\n");
-			sb.append("Max extension level:         " + Class.maxExtensionLevel + "\n");
+			sb.append("Max extension level:         " + Class.maxExtensionLevelStdClasses + "\n");
 			if((c.accAndPropFlags & (1 << apfInterface)) == 0){	
 				sb.append("Machine code base address:   0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset) + "\n");				
 				sb.append("Machine code size:           " + ((FixedValueItem)c.codeBase.next).getValue() + " byte\n");
