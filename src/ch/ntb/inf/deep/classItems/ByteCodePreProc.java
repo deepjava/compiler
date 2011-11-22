@@ -205,6 +205,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 					break;
 				case bCinvokeinterface:
 					item = fix2ByteCpIndexAndSetAccFlags(addr, (1<<dpfInterfCall) );
+					if( item instanceof ItemStub ) ((ItemStub)item).owner.accAndPropFlags |= (1<<dpfInterfCall);
 					if(assertions) {
 						assert item != null;
 //						assert item instanceof Method;

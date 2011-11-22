@@ -56,9 +56,12 @@ public class ItemStub extends Item {
 	public void print(int indentLevel){
 		indent(indentLevel);
 		vrb.print("stub of ");
-		if( type == null) vrb.printf("method: name=%1$s, d=%2$s", name, descriptor);
+		if( type == null) vrb.printf("method: (%1$s).%2$s, d=%3$s", owner.name, name, descriptor);
 		else vrb.printf("field: name=%1$s, t=%2$s", name, type.name);
 		vrb.print(", dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags);
+		if( owner != null ){
+			vrb.print(", owner.Flags:");  Dbg.printDeepAccAndPropertyFlags(owner.accAndPropFlags);			
+		}
 	}
 
 	public void printShort(int indentLevel){

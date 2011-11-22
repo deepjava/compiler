@@ -45,9 +45,18 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	static{
 		assert fieldSizeUnit >= 4 && (fieldSizeUnit & (fieldSizeUnit-1)) == 0;
 	}
+
+	public static Class[] elOrdredClasses, elOrdredInterfaceClasses;
+//	private static Class enums, enumArrays;
+	public static Array arrayClasses;
+	
+	private static short curentInterfaceId = 0;
 	public static int maxExtensionLevel;
+	public static int maxMethTabLen; // max methTabLength
+	public static int maxInterfMethTabLen; // max number of methods in any interface
 	
 	//--- instance fields
+	public Class nextClass;
 	public Item[] constPool; // reduced constant pool
 
 	public int extensionLevel; // extensionLevel of class java.lang.Object is 0
@@ -99,6 +108,11 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		name = registeredCpClassName;
 		category = tcRef;
 		sizeInBits = 32;
+	}
+
+	private static int getNextInterfaceId(){
+		curentInterfaceId++;
+		return curentInterfaceId;
 	}
 
 	/**
@@ -371,12 +385,18 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	private void readInterfaces(DataInputStream clfInStrm) throws IOException{
 		int cnt = clfInStrm.readUnsignedShort();
-		nofInterfaces = cnt;
 		if(cnt > 0){
-			interfaces = new Class[cnt];
-			for (int intf = 0; intf < cnt; intf++){
+			if( (this.accAndPropFlags&(1<<apfInterface)) != 0){// interface
 				int intfInx = clfInStrm.readUnsignedShort();
-				interfaces[intf] = (Class)cpItems[intfInx];
+				type = (Class)cpItems[intfInx];
+//	vrb.printf(" >>readInterfaces: name=%1$s, type.name=%2$s\n", name, type.name);
+			}else{// standard class or enum
+				nofInterfaces = cnt;
+				interfaces = new Class[cnt];
+				for (int intf = 0; intf < cnt; intf++){
+					int intfInx = clfInStrm.readUnsignedShort();
+					interfaces[intf] = (Class)cpItems[intfInx];
+				}
 			}
 		}
 	}
@@ -811,7 +831,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		Class cls = new Class(hsClassConstrName); // currently insert stub, later on root class referencing all classes with a calss constructor
 		classList = cls; classInitListTail = cls; classListTail = cls;
 		nofClasses = 0;
-		
+
 		setUpBaseTypeTable();
 		setClassFileAttributeTable(stab);
 		
@@ -992,6 +1012,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			}else{
 				type.selectAndMoveInitClasses();
 				Class baseCls = (Class)type;
+				baseCls.accAndPropFlags |= (1<<dpfExtended);
 				objectSize = baseCls.objectSize;
 				extensionLevel = baseCls.extensionLevel + 1;
 				if( extensionLevel > maxExtensionLevel ) maxExtensionLevel = extensionLevel;
@@ -1021,6 +1042,49 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		selectAndMoveInitClasses();
 	}
 
+	private static void splitClassGroupsAndClearMarkFlags(){
+vrb.println(">createInterfaceIdents:");
+		Item classItem = classList;
+
+		//--- split class groups, count referenced interfaces
+		elOrdredClasses = new Class[maxExtensionLevel+1];
+		elOrdredInterfaceClasses = new Class[maxExtensionLevel+1];
+		arrayClasses = null;
+		int nofRefIntf = 0;
+		while(classItem != null){
+			classItem.accAndPropFlags &= ~(1<<dpfClassMark); // clear classMark
+			int propFlags = classItem.accAndPropFlags;
+			if( classItem instanceof Class){
+				Class cls = (Class)classItem;
+				int extLevel = cls.extensionLevel;
+				if( (propFlags&(1<<apfInterface)) != 0 ){
+					if( (propFlags&(1<<dpfInterfCall)) != 0 ) nofRefIntf++;
+					if( cls.methTabLength > maxInterfMethTabLen ) maxInterfMethTabLen = cls.methTabLength;
+					cls.nextClass = elOrdredInterfaceClasses[extLevel];
+					elOrdredInterfaceClasses[extLevel] = cls;
+				}else{// standard class, enum, enumArray
+					if( cls.methTabLength > maxMethTabLen ) maxMethTabLen = cls.methTabLength;
+					cls.nextClass = elOrdredClasses[extLevel];
+					elOrdredClasses[extLevel] = cls;
+				}
+//				}else if( (propFlags & (1<<apfEnum) ) != 0 ){
+//					cls.nextClass = enums;
+//					enums = cls;
+//				}else if( (propFlags & (1<<apfEnumArray) ) != 0 ){
+//					cls.nextClass = enumArrays;
+//					enumArrays = cls;
+//				}
+			}else{// assert classItem instanceof Array;
+				Array a = (Array)classItem;
+				a.nextArray = arrayClasses;
+				arrayClasses = a;
+			}
+			classItem = classItem.next;
+		}
+
+		vrb.println("<createInterfaceIdents");
+	}
+
 	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
 		errRep.nofErrors = 0;
 		Type.nofRootClasses = 0;
@@ -1048,6 +1112,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 
 		fixUpClassList();
+		
+		splitClassGroupsAndClearMarkFlags();
 		
 //		boolean verbose = true;
 //		if(verbose) {
@@ -1107,7 +1173,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printMethods(int indentLevel){
 		indent(indentLevel);
-		vrb.printf("methods: (instMeths #=%1$d,  clsMeths #=%2$d)\n", nofInstMethods, nofClassMethods);
+		vrb.printf("methods: (clsMeths #=%1$d, instMeths #=%2$d,  methTabLength=%3$d)\n", nofClassMethods, nofInstMethods, methTabLength);
 		Item item = methods;
 		while(item != null){
 			item.println(indentLevel+1);
@@ -1193,14 +1259,22 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 	}
 
+	public void printInterface(Class interf){
+		String icall;
+		if( (interf.accAndPropFlags&(1<<dpfInterfCall)) == 0 ) icall = ""; else icall = "iCall, ";
+		vrb.printf("%1$s(%2$sid=%3$d, el=%4$d, mtl=%5$d)", interf.name, icall, interf.index, interf.extensionLevel, interf.methTabLength);
+	}
+
 	public void printInterfaces(int indentLevel){
 		if(interfaces != null){
 			indent(indentLevel);
-			vrb.print("implements "); vrb.print(interfaces[0].name);
+			vrb.print("implements: ");
+			printInterface(interfaces[0]);
 			int nofIntf = interfaces.length;
-			for(int inf = 1; inf < nofIntf; inf++){
-				vrb.print(", ");  vrb.print(interfaces[inf].name);
+			for(int n = 1; n < nofIntf; n++){
+				vrb.print(", "); printInterface(interfaces[n]);
 			}
+			vrb.println();
 		}
 	}
 
@@ -1230,7 +1304,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		Dbg.printJavaAccAndPropertyFlags(accAndPropFlags, 'C');  vrb.printf(" class %1$s", name);
 		if(type != null)  vrb.printf(" extends %1$s", type.name);
 		vrb.print(" //dFlags");  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
-		indent(indentLevel+1);  vrb.printf("source file: %1$s, extLevel=%2$d(max=%3$d)\n", srcFileName, this.extensionLevel, maxExtensionLevel);
+		indent(indentLevel+1);
+		vrb.printf("source file: %1$s, extLevel=%2$d(max=%3$d)", srcFileName, this.extensionLevel, maxExtensionLevel);
+		if( (this.accAndPropFlags&(1<<apfInterface)) != 0) vrb.print(", ident=");  else vrb.print(", index=");
+		vrb.println( index );
 		printImports(indentLevel+1);
 		printInterfaces(indentLevel+1);
 		printFields(indentLevel+1);

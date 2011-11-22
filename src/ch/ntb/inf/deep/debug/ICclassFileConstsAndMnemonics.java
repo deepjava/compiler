@@ -62,17 +62,18 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 
 			//--- field flags:
 			"|Cmark|Fconst", // 20 constant field, marked class
-			"readAccess", // 21 one or more read accesses to this item
+			"|Cextended|FreadAccess", // 21 class has extensions | one or more read accesses to this field
 			"writeAccess", // 22 one or more write accesses to this item
 			//"Synthetic", //31 synthetic field or method (items not in source text
 
 			//--- method flags:
 			"command", //23 method is a command, i.e. this method is invoked by an outside client
 			"call",	//24 method gets called by the bc instructions invokestatic or invokevirtual
-			"interfCall",	//25 method gets invoked by the bc instruction invokeinterface
-			"excHndCall",	//26 method gets invoked directly or indirectly by an exception handler method
-			"excHnd", //27 method is an exception handler, i.e. this method is invoked by hardware
+			"excHndCall",	//25 method gets invoked directly or indirectly by an exception handler method
+			"excHnd", //26 method is an exception handler, i.e. this method is invoked by hardware
 
+			//--- class and method flags:
+			"interfCall",	//27 method gets invoked by the bc instruction invokeinterface
 			"new",	//28 method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 			"unsave",	//29 method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 			"SysPrimitive", //30 method is a system primitive

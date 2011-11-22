@@ -25,7 +25,8 @@ import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Array extends Type {
-	
+	public Array nextArray;
+
 	public Type componentType;
 	public byte dimension; // array dimension
 

@@ -62,6 +62,7 @@ public interface ICclassFileConsts {
 		dpfTypeTest = dpfBase+4,	// there are type tests with this type (instructions: checkcast, instanceof)
 
 		dpfClassMark = dpfBase+5, // mark flag during traverses (dpfConst = dpfClassMark !)
+		dpfExtended = dpfBase+6, // class has extensions (one or more)
 
 		//--- field flags:
 		dpfConst = dpfBase+5,	// constant field (dpfConst = dpfClassMark !)
@@ -71,14 +72,15 @@ public interface ICclassFileConsts {
 		//--- method flags:
 		dpfCommand = dpfBase+8,	// method is a command, i.e. this method is invoked by an outside client
 		dpfCall = dpfBase+9,	// method gets called by the bc instructions invokestatic or invokevirtual
-		dpfInterfCall = dpfBase+10,	// method gets invoked by the bc instruction invokeinterface
-		dpfExcHndCall = dpfBase+11,	// method gets invoked directly or indirectly by an exception handler method
-		dpfExcHnd = dpfBase+12,	// method is an exception handler, i.e. this method is invoked by hardware
+//		dpfInterfCall = dpfBase+10,	// method gets invoked by the bc instruction invokeinterface ==> moved to "class and method flags"
+		dpfExcHndCall = dpfBase+10,	// method gets invoked directly or indirectly by an exception handler method
+		dpfExcHnd = dpfBase+11,	// method is an exception handler, i.e. this method is invoked by hardware
 		//--- shared flag positions with fields:
 		dpfDone = dpfBase+6,	// for class constructors only
 
 		//--- class and method flags:
 		//--- meaning as class flag: class has method(s) with this flag (at least one)
+		dpfInterfCall = dpfBase+12,	// method gets invoked by the bc instruction invokeinterface,  interface(class) is referenced by invokeinterface
 		dpfNew = dpfBase+13, // method flag: method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 		dpfUnsafe = dpfBase+14,	// method is unsafe
 		dpfSysPrimitive = dpfBase+15,	// method is a system primitive
@@ -88,7 +90,7 @@ public interface ICclassFileConsts {
 			|(1<<apfNative)	|(1<<apfTransient)|(1<<apfVolatile)|(1<<apfSynchronized) |(1<<apfSuper) |(1<<apfFinal)
 			|(1<<apfStatic) |(1<<apfProtected) |(1<<apfPrivate) |(1<<apfPublic);
 
-	int dpfSetClassProperties =(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded)|(1<<dpfSynthetic)|(1<<dpfDeprecated);
+	int dpfSetClassProperties =(1<<dpfInterfCall)|(1<<dpfExtended)|(1<<dpfClassMark)|(1<<dpfTypeTest)|(1<<dpfInstances)|(1<<dpfDeclaration)|(1<<dpfRootClass)|(1<<dpfClassLoaded)|(1<<dpfSynthetic)|(1<<dpfDeprecated);
 
 	int dpfSetFieldProperties = (1<<dpfConst)|(1<<dpfReadAccess)|(1<<dpfWriteAccess);
 	
