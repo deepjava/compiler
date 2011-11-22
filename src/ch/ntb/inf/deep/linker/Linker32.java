@@ -230,7 +230,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("    - Inserting base classes");
 		Class baseClass = (Class)clazz.type;
 		AddressItem bctable = new AddressItem(clazz);
-		for(int i = 0; i < Class.maxExtensionLevel; i++) {
+		for(int i = 0; i < Class.maxExtensionLevelStdClasses; i++) {
 			if(baseClass != null) {
 				//clazz.typeDescriptor.getTail().insertAfter(new AddressItem(bc));
 				bctable.getHead().insertBefore(new AddressItem(baseClass));
@@ -1073,7 +1073,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("    Number of interfaces:        " + c.nofInterfaces);
 				vrb.println("    Number of base classes:      " + c.extensionLevel);
 				vrb.println("    Number of references:        " + c.nofClassRefs);
-				vrb.println("    Max extension level:         " + Class.maxExtensionLevel);
+				vrb.println("    Max extension level:         " + Class.maxExtensionLevelStdClasses);
 				vrb.println("    Machine code size:           " + ((FixedValueItem)c.codeBase.next).getValue() + " byte");
 				vrb.println("    Constant block size:         " + ((FixedValueItem)c.constantBlock).getValue() + " byte");
 				vrb.println("    Class fields size:           " + c.classFieldsSize + " byte");

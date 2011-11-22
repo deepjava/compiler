@@ -10,7 +10,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class cgPPC08 extends TestCgPPC {
@@ -29,8 +28,8 @@ public class cgPPC08 extends TestCgPPC {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (Type.nofRootClasses > 0) {
-			createCgPPC(Type.rootClasses[0]);
+		if (Class.nofRootClasses > 0) {
+			createCgPPC(Class.rootClasses[0]);
 		}
 	}
 

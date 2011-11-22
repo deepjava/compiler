@@ -6,7 +6,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 
 public class SSA09 extends TestSSA {
@@ -19,8 +18,8 @@ public class SSA09 extends TestSSA {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (Type.nofRootClasses > 0) {
-			createSSA(Type.rootClasses[0]);
+		if (Class.nofRootClasses > 0) {
+			createSSA(Class.rootClasses[0]);
 		}
 	}
 

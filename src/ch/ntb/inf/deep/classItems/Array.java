@@ -72,4 +72,9 @@ public class Array extends Type {
 		indent(indentLevel);
 		vrb.println("methods: none");
 	}
+
+	public void print(int indentLevel){
+		printShort( indentLevel ); vrb.println();
+		printFields( indentLevel+1 );
+	}
 }

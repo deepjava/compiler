@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.classItems.Type;
 
 /**
  * - create and test CFG<br>
@@ -29,8 +28,8 @@ public class CFG02 extends TestCFG implements ICclassFileConsts {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (Type.nofRootClasses > 0) {
-			createCFG(Type.rootClasses[0]);
+		if (Class.nofRootClasses > 0) {
+			createCFG(Class.rootClasses[0]);
 		}
 	}
 

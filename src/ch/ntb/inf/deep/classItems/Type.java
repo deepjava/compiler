@@ -38,21 +38,15 @@ public class Type extends Item {
 	public static final Array[] primTypeArrays = new Array[nofWellKnownTypes];
 	public static Type wktObject;
 	public static Type wktString;
-	
+
 	//-- registered well known names
 	static HString hsNumber, hsString; // names for number and literal string objects (objects of type Constant, i.e. StdConstant, StringLiteral)
 	static HString hsClassConstrName;// name of the class constructor method
 	static HString hsCommandDescriptor;// descriptor of a command method
 
-	public static Class[] rootClasses;
-	public static int nofRootClasses;
-
-	public static Type classList, classInitListTail, classListTail; // currently objects of type Class or Array
-	public static int nofClasses, nofInitClasses;
-//	public static Array arrayList;
-	public static int nofArrays;
-
-	//-- const pool arrays
+	public static Type classList, classListTail; // currently objects of type Class or Array
+	public static int nofClasses; // total number of Objects of categories {(Std-)Class, (Interface-)Class, (Enum-)Class, (EnumArray-)Class, (Array-)Class}
+//-- const pool arrays
 	static Item[] cpItems;
 	static HString[] cpStrings;
 	static int[]  cpIndices;
@@ -73,7 +67,7 @@ public class Type extends Item {
 
 		classListTail.next = newType;
 		classListTail = newType;
-		if(newType.category == tcRef) nofClasses++;   else nofArrays++;
+		nofClasses++;
 	}
 
 	/**
@@ -86,33 +80,39 @@ public class Type extends Item {
 		return size;
 	}
 
-	protected void moveThisClassToInitList(){
-		Item pred = classInitListTail, item = pred.next;
-		while(item != null && item != this){
-			pred = item;
-			item = item.next;
-		}
-		if(enAssertion){
-			assert item != null;
-			assert item == this;
-		}
-		if(this == classListTail) classListTail = (Type)pred;
-		pred.next = item.next;
-		this.next = classInitListTail.next;
-		classInitListTail.next = this;
-		if(classInitListTail == classListTail)  classListTail = this;
-		classInitListTail = this;
-		nofInitClasses++;
-	}
+//	protected void moveThisClassToInitList(){
+//		Item pred = classInitListTail, item = pred.next;
+//		while(item != null && item != this){
+//			pred = item;
+//			item = item.next;
+//		}
+//		if(enAssertion){
+//			assert item != null;
+//			assert item == this;
+//		}
+//		if(this == classListTail) classListTail = (Type)pred;
+//		pred.next = item.next;
+//		this.next = classInitListTail.next;
+//		classInitListTail.next = this;
+//		if(classInitListTail == classListTail)  classListTail = this;
+//		classInitListTail = this;
+//		nofInitClasses++;
+//	}
+
+//	protected static void fixUpClassList(){
+//		//-- delete front stub
+//		if( classList == classInitListTail )  classInitListTail = null;
+//		classList = (Type)classList.next;
+//	}
 
 	protected static void fixUpClassList(){
 		//-- delete front stub
-		if( classList == classInitListTail )  classInitListTail = null;
+//		if( classList == classInitListTail )  classInitListTail = null;
 		classList = (Type)classList.next;
 	}
 
 	protected static void appendRootClass(Class newRootClass){
-		rootClasses[nofRootClasses++] = newRootClass;
+		Class.rootClasses[Class.nofRootClasses++] = newRootClass;
 		appendClass(newRootClass);
 	}
 
