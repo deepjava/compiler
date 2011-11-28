@@ -48,7 +48,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public static Class initClasses, initClassesTail;
 	public static Class nonInitClasses, nonInitClassesTail;
 	public static Class[] elOrdredClasses, elOrdredInterfaceClasses;
-	public static Class    elOrdredClassesHead;// references the first class of the (std-)Class chain (nextClass)
+//	public static Class    elOrdredClassesHead;// references the first class of the (std-)Class chain (nextClass)
 //	private static Class enums, enumArrays;
 	public static Array arrayClasses;
 
@@ -1128,17 +1128,17 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 
 		
-		//-- link members on different extension levels of elOrdredClasses and set elOrdredClassesHead
-		elOrdredClassesHead = elOrdredClasses[maxExtensionLevelStdClasses];
-		for(int exl = maxExtensionLevelStdClasses;  exl > 0; exl--){
-			Class preTail = null;
-			Class cls = elOrdredClasses[exl];
-			while(cls != null){
-				preTail = cls;
-				cls = cls.nextExtLevelClass;
-			}
-			preTail.nextExtLevelClass = elOrdredClasses[exl-1];
-		}
+//		//-- link members on different extension levels of elOrdredClasses and set elOrdredClassesHead
+//		elOrdredClassesHead = elOrdredClasses[maxExtensionLevelStdClasses];
+//		for(int exl = maxExtensionLevelStdClasses;  exl > 0; exl--){
+//			Class preTail = null;
+//			Class cls = elOrdredClasses[exl];
+//			while(cls != null){
+//				preTail = cls;
+//				cls = cls.nextExtLevelClass;
+//			}
+//			preTail.nextExtLevelClass = elOrdredClasses[exl-1];
+//		}
 
 //		vrb.println("<splitClassGroups..");
 	}
