@@ -48,148 +48,190 @@ public class Launcher implements ICclassFileConsts {
 	private static PrintStream vrb = StdStreams.vrb;
 
 	public static void buildAll(String projectConfigFile, String targetConfiguration) {
-
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
+		
+		Class clazz;
+		Method method;
+		Array array;
+		
+		// Reset error reporter
 		reporter.clear();
 		
-		// 1) Read configuration
+		// Read configuration
+		if(dbg) vrb.println("Loading Configuration");
 		Configuration.parseAndCreateConfig(projectConfigFile, targetConfiguration);
 		
 		try {
-			// 2) Read requiered classes
-			if (reporter.nofErrors <= 0)
-				Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
-	
+			// Read requiered classes
+			if(reporter.nofErrors <= 0) {
+				if(dbg) vrb.println("Loading Classfiles");
+				Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(),
+						Configuration.getSystemPrimitives(), attributes);
+			}
 			
-			// 3) Initialize linker
-			if (reporter.nofErrors <= 0) {
+			// Initialize compiler components
+			if(reporter.nofErrors <= 0) {
+				if(dbg) vrb.println("Initializing Linker");
 				Linker32.init();
+				if(dbg) vrb.println("Initializing Code Generator");
 				CodeGen.init();
 			}
 			
-			// 4) Loop One
-			clearVisitedFlagsForAllClasses();
-			Item item = Type.classList;
-			Method method;
-			if (reporter.nofErrors <= 0) {				
-				out.println("Loaded classes:");
+			// Proceeding Arrays: Loop One
+			if(dbg) vrb.println("Proceeding arrays (loop one):");
+			array = Class.arrayClasses;
+			while(array != null) {
+				if(dbg) vrb.println("> Array: " + array.name);
+				if(dbg) vrb.println("  creating type descritpor");
+				Linker32.createTypeDescriptor(array);
+				array = array.nextArray;
 			}
-			while (item != null && reporter.nofErrors <= 0) {
-				if(item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
+			
+			// Proceeding Classes: Loop One
+			if(dbg) vrb.println("Proceeding classes (loop one):");
+			for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+				if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
+				clazz = Class.elOrdredClasses[extLevel];
+				while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
+					if(dbg) vrb.println("  > Class: " + clazz.name);
 					
-					Class clazz = (Class) item;
-
-					// 3.1) Linker: calculate offsets
-					if (reporter.nofErrors <= 0)
+					// Create constant block
+					if(reporter.nofErrors <= 0) {
+						if(dbg) vrb.println("    creating constant block");
 						Linker32.createConstantBlock(clazz);
-
-					out.printf("Class: %1$s\n", clazz.name);
+					}
 					
-					method = (Method) clazz.methods;
+					method = (Method)clazz.methods;
 					while (method != null && reporter.nofErrors <= 0) {
-						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-							if(dbg)vrb.println(">>>> Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+							if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 
-							// 3.2) Create CFG
-							if (reporter.nofErrors <= 0)
+							// Create CFG
+							if(reporter.nofErrors <= 0) {
+								if(dbg) vrb.println("      building CFG");
 								method.cfg = new CFG(method);
-							// method.cfg.printToLog();
+							}
 
-							// 3.3) Create SSA
-							if (reporter.nofErrors <= 0)
+							// Create SSA
+							if(reporter.nofErrors <= 0) {
+								if(dbg) vrb.println("      building SSA");
 								method.ssa = new SSA(method.cfg);
+							}
 
-							// 3.4) Create machine code
-							if (reporter.nofErrors <= 0)
+							// Create machine code
+							if(reporter.nofErrors <= 0) {
+								if(dbg) vrb.println("      creating machine code");
 								method.machineCode = new CodeGen(method.ssa);
+							}
 
 						}
-						method = (Method) method.next;
+						method = (Method)method.next;
 					}
 
-					// 3.5) Linker: calculate required size
-					if (reporter.nofErrors <= 0)
+					// Linker: calculate required size
+					if(reporter.nofErrors <= 0) {
+						if(dbg) vrb.println("    calculating code size and offsets");
 						Linker32.calculateCodeSizeAndOffsets(clazz);
+					}
+					
+					clazz = clazz.nextExtLevelClass;
 				}
-				item = item.next;
 			}
-			out.println();
 
-			// 5) Linker: create system table and freeze memory map
-			if (reporter.nofErrors <= 0) {
+			// Linker: create system table and freeze memory map
+			if(reporter.nofErrors <= 0) {
+				if(dbg) vrb.println("Creating system table");
 				Linker32.createSystemTable();
-				Linker32.calculateGlobalConstantTableSize();
+				if(dbg) vrb.println("Freezing memory map");
 				Linker32.freezeMemoryMap();
 			}
 			
-			// 6) Loop Two 
-			item = Type.classList;
-			while (item != null && reporter.nofErrors <= 0) {
-				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
-					Class clazz = (Class) item;
-					// 6.1) Linker: calculate absolute addresses
-					Linker32.calculateAbsoluteAddresses(clazz);
-					// 6.2) Linker: arrange constant
-					Linker32.updateConstantBlock(clazz);					
-				}
-				else if(item instanceof Array) {
-					// 6.1) Linker: calculate absolute addresses
-					Linker32.calculateAbsoluteAddresses((Array)item);
-				}	
-				item = item.next;
+			// Proceeding Arrays: Loop Two
+			if(dbg) vrb.println("Proceeding arrays (loop one):");
+			array = Class.arrayClasses;
+			while(array != null) {
+				if(dbg) vrb.println("> Array: " + array.name);
+				if(dbg) vrb.println("  calculating absoute addresses");
+				Linker32.calculateAbsoluteAddresses(array);
+				array = array.nextArray;
 			}
-			// 7) create constant table
-			Linker32.createGlobalConstantTable();
 			
-			
-			clearVisitedFlagsForAllClasses();
-			// 8) Loop Three
-			item = Type.classList;
-			while (item != null && reporter.nofErrors <= 0) {//before we do the fix up all addresses must be calculated
-				if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
-					Class clazz = (Class) item;
-					method = (Method) clazz.methods;
-					while (method != null && reporter.nofErrors <= 0) {
-						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) {
-							// 8.1) Code generator: fix up
-							method.machineCode.doFixups();
-						}
-						method = (Method) method.next;
-					}
+			// Proceeding Classes: Loop Two
+			if(dbg) vrb.println("Proceeding classes (loop two):");
+			for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+				if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
+				clazz = Class.elOrdredClasses[extLevel];
+				while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
+					if(dbg) vrb.println("  > Class: " + clazz.name);
+					
+					// Linker: calculate absolute addresses
+					if(dbg) vrb.println("    calculating absolute addresses");
+					Linker32.calculateAbsoluteAddresses(clazz);
+					
+					// Linker: arrange constant
+					if(dbg) vrb.println("    updating constant block");
+					Linker32.updateConstantBlock(clazz);
+					clazz = clazz.nextExtLevelClass;
 				}
-				else if(item instanceof Array) {
-					// 8.2) Linker: create type descriptor for Arrays
-					Linker32.createTypeDescriptor((Array)item);
-				}
-				item = item.next;
 			}
 
-			// 10) Linker: Create target image
-			if (reporter.nofErrors <= 0)
+			// Create global constant table
+			if(dbg) vrb.println("Creating global constant table");
+			Linker32.createGlobalConstantTable();
+			
+			// Proceeding Classes: Loop Three
+			if(dbg) vrb.println("Proceeding classes (loop two):");
+			for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+				if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
+				clazz = Class.elOrdredClasses[extLevel];
+				while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
+					if(dbg) vrb.println("  > Class: " + clazz.name);
+					
+					method = (Method)clazz.methods;
+					while(method != null && reporter.nofErrors <= 0) {
+						if((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+							if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+
+							// Code generator: fix up
+							if(dbg) vrb.println("      doing fixups");
+							method.machineCode.doFixups();
+						}
+						method = (Method)method.next;
+					}
+					
+					clazz = clazz.nextExtLevelClass;
+				}
+			}
+			
+			// Linker: Create target image
+			if(reporter.nofErrors <= 0) {
+				if(dbg) vrb.println("Generating target image");
 				Linker32.generateTargetImage();
-			if (reporter.nofErrors > 0) {
+			}
+			
+			if(reporter.nofErrors > 0) {
 				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 				out.println();
 			} else {
 				out.println("Compilation and target image generation successfully finished");
 				out.println();
 			}
-		} catch (IOException e) {
+		} catch(IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public static void downloadTargetImage() {
-		if (reporter.nofErrors <= 0) {
+		if(reporter.nofErrors <= 0) {
 			Downloader bdi = UsbMpc555Loader.getInstance();
 			try {
 				if(bdi != null){
 					bdi.init();
-				}else{
+				} else {
 					reporter.error(Downloader.errTargetNotFound);
 					reporter.nofErrors++;
 				}
-			} catch (DownloaderException e) {
+			} catch(DownloaderException e) {
 				reporter.error(Downloader.errDownloadFailed);
 				reporter.nofErrors++;
 			}
@@ -202,7 +244,7 @@ public class Launcher implements ICclassFileConsts {
 	public static void startTarget() {
 		if (reporter.nofErrors <= 0) {
 			Downloader bdi = UsbMpc555Loader.getInstance();
-			if (bdi != null) {
+			if(bdi != null) {
 				try {
 					bdi.startTarget();
 				} catch (DownloaderException e) {
@@ -214,7 +256,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static void saveTargetImageToFile(String fileName) {
-		if (reporter.nofErrors <= 0){
+		if(reporter.nofErrors <= 0){
 			try {
 				Linker32.writeTargetImageToFile(fileName);
 			} catch(IOException e) {
@@ -233,7 +275,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void saveCommandTableToFile(String fileName) {
-		if (reporter.nofErrors <= 0){
+		if(reporter.nofErrors <= 0){
 			try {
 				Linker32.writeCommandTableToFile(fileName);
 			} catch (IOException e) { 

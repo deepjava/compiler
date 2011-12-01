@@ -101,4 +101,8 @@ public class ConstantItem extends BlockItem implements ICdescAndTypeConsts {
 	public void setOffset(int offset) {
 		ref.offset = offset;
 	}
+	
+	public void setAddress(int address) {
+		ref.address = address;
+	}
 }

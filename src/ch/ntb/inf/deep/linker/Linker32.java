@@ -74,7 +74,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int tdBaseClass0Offset = 2 * 4;
 	public static final int tdConstantSize = 3 * 4;
 	public static final int tblkConstantSize = 8 * 4;
-	public static final int tdSizeForArrays = 5 * 4;
+	//public static final int tdSizeForArrays = 5 * 4;
 	
 	// System table:
 	public static final int stStackOffset = 1 * 4;
@@ -102,9 +102,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static Segment[] sysTabSegments;
 	
 	// Global constants
-	private static StdConstant globalConstantList;
-	private static StdConstant globalConstantListTail;
-	private static int[] globalConstantTable;
+	private static BlockItem globalConstantTable;
 	private static int globalConstantTableOffset = -1;
 	private static Segment globalConstantTableSegment;
 	
@@ -331,8 +329,70 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
 	}
 		
-	public static void calculateCodeSizeAndOffsets(Class clazz) {
+	public static void createTypeDescriptor(Array array) {
+		if(dbg) vrb.println("[LINKER] START: Creating type descriptor for array \"" + array.name +"\":");
+		if(dbg) vrb.println("  Element type: " + array.componentType.name);
+		if(dbg) vrb.println("  Element size: " + array.componentType.sizeInBits / 8 + " byte (" + array.componentType.sizeInBits + " bit)");
+		if(dbg) vrb.println("  Dimension:    " + array.dimension);
+				
+		// Extentsion level
+		array.typeDescriptor = new FixedValueItem("extensionLevel", 1); // the base type of an array is always object!
 		
+		// Size
+		array.typeDescriptor.append(new FixedValueItem("size", (1 << 31) | (array.componentType.sizeInBits / 8)));
+		//array.typeDescriptor.append(new FixedValueItem("size", array.componentType.sizeInBits / 8));
+		
+		if(array.dimension > 1) { // array with dimension 2 or higher
+			String name = array.name.substring(1).toString();
+			Array lowDimArray = (Array)Type.classList.getItemByName(name);
+			if(lowDimArray != null) { // array with dim - 1 available
+				array.typeDescriptor.append(new AddressItem("lowerDimArray: ", lowDimArray));
+			}
+			else { // array with dim - 1 not available
+				array.typeDescriptor.append(new FixedValueItem("lowerDimArray: <not found>", -1));
+			}
+		}
+		else { // array with dimension 1
+			if(array.name.charAt(1) == tcRef) { // non primitive base type
+				String name = array.name.substring(2, array.name.length() - 1).toString();
+				Class baseType = (Class)Type.classList.getItemByName(name);
+				if(baseType != null) { // td of base type found
+					array.typeDescriptor.append(new AddressItem("baseType: ", baseType));
+				}
+				else { // td of base type not found
+					reporter.error(702, name);
+					array.typeDescriptor.append(new FixedValueItem("baseType: <not found>", -1));
+				}
+			}
+			else { // primitive base type
+				array.typeDescriptor.append(new FixedValueItem("baseType: <primitive>", -1));
+			}
+		}
+		
+		// Base class address
+		array.typeDescriptor.append(new AddressItem("baseClass: ", Type.wktObject)); // the base type of an array is always object!
+		
+		array.typeDescriptor.append(new AddressItem("this: ", array)); // address of own type descriptor
+		if(dbg) vrb.println("[LINKER] END: Creating type descriptor for array \"" + array.name +"\"\n");
+	}
+
+	public static void createGlobalConstantTable() {
+		if(dbg) vrb.println("[LINKER] START: Creating global constant table:\n");
+		int offset = 0, index = 0;
+		ConstantItem constant = (ConstantItem)globalConstantTable;
+
+		while(constant != null) {
+			constant.setIndex(index);
+			constant.setOffset(offset);
+			constant.setAddress(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset + offset);
+			index++;
+			offset += constant.getItemSize();
+			constant = (ConstantItem)constant.next;
+		}
+		if(dbg) vrb.println("[LINKER] END: Creating global constant table\n");
+	}
+	
+	public static void calculateCodeSizeAndOffsets(Class clazz) {
 		if(dbg) vrb.println("[LINKER] START: Calculating code size for class \"" + clazz.name +"\":\n");
 		
 		// machine code size
@@ -394,7 +454,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  -> Clinit Addr.:   " + kernelClinitAddr);
 		
 		// Create the system table
-		systemTable = new FixedValueItem("classConstOffset", 6 + 2 * nofStacks + 2 * nofHeaps);
+		systemTable = new FixedValueItem("classConstOffset", (7 + 2 * nofStacks + 2 * nofHeaps) * 4);
 		systemTable.append(new FixedValueItem("stackOffset", 5));
 		systemTable.append(new FixedValueItem("heapOffset", 5 + 2 * nofStacks));
 		systemTable.append(new AddressItem("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
@@ -408,14 +468,22 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			systemTable.append(new AddressItem("baseHeap" + i + ": ", Configuration.getHeapSegments()[i])); // base address
 			systemTable.append(new FixedValueItem("sizeHeap" + i, Configuration.getHeapSegments()[i].getSize()));
 		}
-		systemTable.append(new FixedValueItem("nofClasses", Type.nofClasses)); // TODO @Martin: Type.nofClasses is the number of all classes + the number of all interfaces, but here we need only the number of classes -> Fix this
-		Item clazz = Type.classList; int i = 0;
-		while(clazz != null) { // reference to the constant block of each class
+		systemTable.append(new FixedValueItem("nofClasses", Class.nofInitClasses + Class.nofNonInitClasses));
+		Class clazz = Class.initClasses; int i = 0;
+		while(clazz != null) { // reference to the constant block of each class with a class constructor (clinit)
 			if( clazz instanceof Class  && ((clazz.accAndPropFlags & (1 << apfInterface)) == 0)) {
-				systemTable.append(new ConstantBlockItem("constBlkBaseClass" + i + ": ", (Class)clazz));
+				systemTable.append(new ConstantBlockItem("constBlkBaseClass" + i + ": ", clazz));
 				i++;
 			}
-			clazz = clazz.next;
+			clazz = clazz.nextClass;
+		}
+		clazz = Class.nonInitClasses;
+		while(clazz != null) { // reference to the constant block of each class without a class constructor (no clinit)
+			if( clazz instanceof Class  && ((clazz.accAndPropFlags & (1 << apfInterface)) == 0)) {
+				systemTable.append(new ConstantBlockItem("constBlkBaseClass" + i + ": ", clazz));
+				i++;
+			}
+			clazz = clazz.nextClass;
 		}
 		systemTable.append(new FixedValueItem("endOfSystemTable", 0));
 		
@@ -425,38 +493,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("[LINKER] END: Create system table.\n");
 	}
-	
-	public static void calculateGlobalConstantTableSize() {
-		if(dbg) vrb.println("[LINKER] START: Calculating the size of the global constant table:\n");
 		
-		// Calculate requried size, indexes and offsets
-		Item cgc = globalConstantList;
-		int cgtsize = 0, indexCounter = 0;
-		while(cgc != null) {
-			if(cgc.type != null) {
-				cgc.index = indexCounter;
-				cgc.offset = cgtsize;
-				if(((Type)cgc.type).sizeInBits == 64) {
-					indexCounter += 2;
-					cgtsize += 8;
-				}
-				else {
-					indexCounter++;
-					cgtsize += 4;
-				}
-			}
-			else {
-				vrb.println("Warning: global constant skipped because type is not set!");
-			}
-			cgc = cgc.next;
-		}
-		
-		// Create table
-		globalConstantTable = new int[cgtsize/4];
-		
-		if(dbg) vrb.println("[LINKER] END: Calculating the size of the global constant table.\n");
-	}
-	
 	public static void freezeMemoryMap() {
 		if(dbg) vrb.println("[LINKER] START: Freeze memory map:\n");
 		
@@ -514,9 +551,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				if(s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 				else {
-					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, tdSizeForArrays);
+					if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, a.typeDescriptor.getBlockSize());
 					a.offset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-					s.addToUsedSize(tdSizeForArrays);
+					s.addToUsedSize(a.typeDescriptor.getBlockSize());
 					a.segment = s;
 					if(dbg) vrb.println("    Segment for type descriptor: " + a.segment.getName());
 				}	
@@ -541,9 +578,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(s == null) reporter.error(710, "Can't get a memory segment for the global constant table!\n");
 		else {
-			if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, globalConstantTable.length * 4);
+			if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, globalConstantTable.getBlockSize());
 			globalConstantTableOffset = roundUpToNextWord(s.getUsedSize());
-			s.addToUsedSize(globalConstantTable.length * 4);
+			s.addToUsedSize(globalConstantTable.getBlockSize());
 			globalConstantTableSegment = s;
 			if(dbg) vrb.println("    Segment for global constant table: " + globalConstantTableSegment.getName());
 		}	
@@ -678,66 +715,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		((FixedValueItem)clazz.typeDescriptor).setValue(clazz.objectSize); // size
 		
 		if(dbg) vrb.println("\n[LINKER] END: Updating constant block for class \"" + clazz.name +"\"\n");
-	}
-
-	public static void createTypeDescriptor(Array array) {
-		if(dbg) vrb.println("[LINKER] START: Creating type descriptor for array \"" + array.name +"\":");
-		if(dbg) vrb.println("  Element type: " + array.componentType.name);
-		if(dbg) vrb.println("  Element size: " + array.componentType.sizeInBits / 8 + " byte (" + array.componentType.sizeInBits + " bit)");
-		if(dbg) vrb.println("  Dimension:    " + array.dimension);
-						
-		array.typeDescriptor = new int[tdSizeForArrays / 4];
-		
-		// Extentsion level
-		array.typeDescriptor[0] = 1; // the base type of an array is always object!
-		
-		// Size
-		array.typeDescriptor[1] = array.componentType.sizeInBits / 8;
-		
-		// address of type descriptor of the array with dim-1 or of the base type if the array is of type [L
-		array.typeDescriptor[2] = -1;
-		if(array.dimension > 1) {
-			String name = array.name.substring(1).toString();
-			Array lowDimArray = (Array)Type.classList.getItemByName(name);
-			if(lowDimArray != null) {
-				array.typeDescriptor[2] = lowDimArray.address;
-			}
-		}
-		else {
-			if(array.name.charAt(1) == tcRef) {
-				String name = array.name.substring(2, array.name.length() - 1).toString();
-				Class baseType = (Class)Type.classList.getItemByName(name);
-				if(baseType != null) {
-					array.typeDescriptor[2] = baseType.address;
-				}
-				else {
-					reporter.error(702, name);
-				}
-			}
-		}
-		
-		// Base class address
-		array.typeDescriptor[3] = Type.wktObject.address; // the base type of an array is always object!
-		
-		array.typeDescriptor[4] = array.address; // address of own type descriptor
-		if(dbg) vrb.println("[LINKER] END: Creating type descriptor for array \"" + array.name +"\"\n");
-	}
-		
-	public static void createGlobalConstantTable() {
-						
-		// Inserting data and setting address
-		Item cgc = globalConstantList;
-		while(cgc != null) {
-			if(cgc.index >= 0) {
-				cgc.address = globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset + cgc.offset;
-				
-				globalConstantTable[cgc.index] = ((StdConstant)cgc).valueH;
-				if(((Type)cgc.type).sizeInBits == 64) {
-					globalConstantTable[cgc.index + 1] = ((StdConstant)cgc).valueL;
-				}
-			}
-			cgc = cgc.next;
-		}
 	}
 	
 	public static void generateTargetImage() {
@@ -874,44 +851,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
 	}
-	
-	public static StdConstant addGlobalConstant(int val) {
-		StdConstant gconst = new StdConstant(val, 0);
-		gconst.type = Type.wellKnownTypes[txInt];
-		addGlobalConstant(gconst);
-		return gconst;
-	}
-	
-	public static StdConstant addGlobalConstant(long val) {
-		StdConstant gconst = new StdConstant((int)(val >> 32 & 0xFFFFFFFF), (int)(val & 0xFFFFFFFF));
-		gconst.type = Type.wellKnownTypes[txLong];
-		addGlobalConstant(gconst);
-		return gconst;
-	}
-	
-	public static StdConstant addGlobalConstant(float val) {
-		StdConstant gconst = new StdConstant(Float.floatToIntBits(val), 0);
-		gconst.type = Type.wellKnownTypes[txFloat];
-		addGlobalConstant(gconst);
-		return gconst;
-	}
-	
-	public static StdConstant addGlobalConstant(double val) {
-		long tempval = Double.doubleToLongBits(val);
-		StdConstant gconst = new StdConstant((int)(tempval >> 32 & 0xFFFFFFFF), (int)(tempval & 0xFFFFFFFF));
-		gconst.type = Type.wellKnownTypes[txDouble];
-		addGlobalConstant(gconst);
-		return gconst;
-	}
-	
+		
 	public static void addGlobalConstant(StdConstant gconst) {
-		if(globalConstantList == null) {
-			globalConstantList = gconst;
-			globalConstantListTail = globalConstantList;
+		if(globalConstantTable == null) {
+			globalConstantTable = new ConstantItem(gconst);
 		}
 		else {
-			globalConstantListTail.next = gconst;
-			globalConstantListTail = (StdConstant)globalConstantListTail.next;
+			globalConstantTable.append(new ConstantItem(gconst));
 		}
 	}
 	
@@ -993,9 +939,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 	}
 	
-	private static boolean checkConstantPoolType(Item cpe) {
+	private static boolean checkConstantPoolType(Item item) {
 		// TODO @Martin: Make this configurable...
-		return cpe instanceof StdConstant && ((cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble]));
+		return item instanceof StdConstant && ((item.type == Type.wellKnownTypes[txFloat] || item.type == Type.wellKnownTypes[txDouble]));
 	}
 	
 	private static int getNofInterfacesWithMethods(Class c) {
@@ -1065,81 +1011,81 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		while(item != null) {
 			if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 				Class c = (Class)item;
-				vrb.println("  Class: " + c.name + " (#" + cc++ + ")");
-				vrb.println("    Number of class methods:     " + c.nofClassMethods);
-				vrb.println("    Number of instance methods:  " + c.nofInstMethods);
-				vrb.println("    Number of class fields:      " + c.nofClassFields);
-				vrb.println("    Number of instance fields:   " + c.nofInstFields);
-				vrb.println("    Number of interfaces:        " + c.nofInterfaces);
-				vrb.println("    Number of base classes:      " + c.extensionLevel);
-				vrb.println("    Number of references:        " + c.nofClassRefs);
-				vrb.println("    Max extension level:         " + Class.maxExtensionLevelStdClasses);
-				vrb.println("    Machine code size:           " + ((FixedValueItem)c.codeBase.next).getValue() + " byte");
-				vrb.println("    Constant block size:         " + ((FixedValueItem)c.constantBlock).getValue() + " byte");
-				vrb.println("    Class fields size:           " + c.classFieldsSize + " byte");
-				vrb.println("    Code offset:                 0x" + Integer.toHexString(c.codeOffset));
-				vrb.println("    Var offset:                  0x" + Integer.toHexString(c.varOffset));
-				vrb.println("    Const offset:                0x" + Integer.toHexString(c.constOffset));
-				vrb.println("    Code segment:                " + c.codeSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
-				vrb.println("    Var segment:                 " + c.varSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
-				vrb.println("    Const segment:               " + c.constSegment.getName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
-				vrb.println("    Type descriptor address:     0x" + Integer.toHexString(c.address));
-				vrb.println("    Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
-				vrb.println("    Code base address:           0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
-				vrb.println("    Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
+				vrb.println("CLASS: " + c.name + " (#" + cc++ + ")");
+				vrb.println("Number of class methods:     " + c.nofClassMethods);
+				vrb.println("Number of instance methods:  " + c.nofInstMethods);
+				vrb.println("Number of class fields:      " + c.nofClassFields);
+				vrb.println("Number of instance fields:   " + c.nofInstFields);
+				vrb.println("Number of interfaces:        " + c.nofInterfaces);
+				vrb.println("Number of base classes:      " + c.extensionLevel);
+				vrb.println("Number of references:        " + c.nofClassRefs);
+				vrb.println("Max extension level:         " + Class.maxExtensionLevelStdClasses);
+				vrb.println("Machine code size:           " + ((FixedValueItem)c.codeBase.next).getValue() + " byte");
+				vrb.println("Constant block size:         " + ((FixedValueItem)c.constantBlock).getValue() + " byte");
+				vrb.println("Class fields size:           " + c.classFieldsSize + " byte");
+				vrb.println("Code offset:                 0x" + Integer.toHexString(c.codeOffset));
+				vrb.println("Var offset:                  0x" + Integer.toHexString(c.varOffset));
+				vrb.println("Const offset:                0x" + Integer.toHexString(c.constOffset));
+				vrb.println("Code segment:                " + c.codeSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
+				vrb.println("Var segment:                 " + c.varSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
+				vrb.println("Const segment:               " + c.constSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
+				vrb.println("Type descriptor address:     0x" + Integer.toHexString(c.address));
+				vrb.println("Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
+				vrb.println("Code base address:           0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
+				vrb.println("Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
 				
 				if(printMethods) {
-					vrb.println("    Methods:");
+					vrb.println("Methods:");
 					m = (Method)c.methods;
 					mc = 0;
-					if(m == null) vrb.println("      No methods in this class");
+					if(m == null) vrb.println(">  No methods in this class");
 					else {
 						while(m != null) {
-							vrb.println("      > Method #" + mc++ + ": " + m.name +  m.methDescriptor);
-							vrb.println("        Flags:     0x" + Integer.toHexString(m.accAndPropFlags));
+							vrb.println("> Method #" + mc++ + ": " + m.name +  m.methDescriptor);
+							vrb.println("  Flags:     0x" + Integer.toHexString(m.accAndPropFlags));
 							if((m.accAndPropFlags & ((1 << dpfNew) | (1 << dpfUnsafe) | (1 << dpfSysPrimitive) | (1 << dpfSynthetic))) != 0) {	
 								if((m.accAndPropFlags & (1 << dpfNew)) != 0) {
-									vrb.println("        Special:   New");
+									vrb.println("  Special:   New");
 								}
 								if((m.accAndPropFlags & (1 << dpfUnsafe)) != 0) {
-									vrb.println("        Special:   Unsafe");
+									vrb.println("  Special:   Unsafe");
 								}
 								if((m.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) {
-									vrb.println("        Special:   System primitive");
+									vrb.println("  Special:   System primitive");
 								}
 								if((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
-									vrb.println("        Special:   Synthetic");
+									vrb.println("  Special:   Synthetic");
 								}
-								vrb.println("        Static:    yes");
+								vrb.println("  Static:    yes");
 							}
 							else {
 								if((m.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static:    yes"); else vrb.println("        Static:    no");
 							}
-							vrb.println("        address:   0x" + Integer.toHexString(m.address));
-							vrb.println("        offset:    0x" + Integer.toHexString(m.offset));
-							vrb.println("        index:     0x" + Integer.toHexString(m.index));
+							vrb.println("  address:   0x" + Integer.toHexString(m.address));
+							vrb.println("  offset:    0x" + Integer.toHexString(m.offset));
+							vrb.println("  index:     0x" + Integer.toHexString(m.index));
 							if(m.machineCode != null)
-								vrb.println("        Code size: 0x" + Integer.toHexString(m.machineCode.iCount * 4) + " (" + m.machineCode.iCount * 4 +" byte)");
+								vrb.println("  Code size: 0x" + Integer.toHexString(m.machineCode.iCount * 4) + " (" + m.machineCode.iCount * 4 +" byte)");
 							m = (Method)m.next;
 						}
 					}
 				}
 				if(printFields) {
-					vrb.println("    Field list:");
+					vrb.println("Fields:");
 					f = c.instFields;
 					fc = 0;
-					if(f == null) vrb.println("      No fields in this class");
+					if(f == null) vrb.println("  No fields in this class");
 					else {
 						while(f != null) {
 							if(printConstantFields || (f.accAndPropFlags & (1 << dpfConst)) == 0) { // printConstantsField || !constant
-								vrb.println("      > Field #" + fc++ + ": " + f.name);
-								vrb.println("        Type:     " + f.type.name);
-								vrb.println("        Flags:    0x" + Integer.toHexString(f.accAndPropFlags));
-								if((f.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("        Static:   yes"); else vrb.println("        Static:   no");
-								if((f.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("        Constant: yes"); else vrb.println("        Constant: no");
-								vrb.println("        address:  0x" + Integer.toHexString(f.address));
-								vrb.println("        offset:   0x" + Integer.toHexString(f.offset));
-								vrb.println("        index:    0x" + Integer.toHexString(f.index));
+								vrb.println("> Field #" + fc++ + ": " + f.name);
+								vrb.println("  Type:     " + f.type.name);
+								vrb.println("  Flags:    0x" + Integer.toHexString(f.accAndPropFlags));
+								if((f.accAndPropFlags & (1 << apfStatic)) != 0) vrb.println("  Static:   yes"); else vrb.println("        Static:   no");
+								if((f.accAndPropFlags & (1 << dpfConst)) != 0) vrb.println("  Constant: yes"); else vrb.println("        Constant: no");
+								vrb.println("  address:  0x" + Integer.toHexString(f.address));
+								vrb.println("  offset:   0x" + Integer.toHexString(f.offset));
+								vrb.println("  index:    0x" + Integer.toHexString(f.index));
 							}
 							f = f.next;
 						}
@@ -1147,43 +1093,27 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				}
 				
 				if(printConstantBlock) {
-					vrb.println("    Constant block:");
+					vrb.println("Constant block:");
 					c.printConstantBlock();
 				}
-				vrb.println("  ----------------------------------------------------------------------");
+				vrb.println("----------------------------------------------------------------------");
 			}
 			
 			else if(item instanceof Array) {
 				Array a = (Array)item;
-				vrb.println("  Array: " + a.name);
-				vrb.println("    Type descriptor:");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[0]); vrb.println("] extension level");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[1]); vrb.println("] size of an array element in byte");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[2]); vrb.println("] type descriptor of array with dim - 1");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[3]); vrb.println("] address of base class (java/lang/object)");
-				vrb.print("    ["); vrb.printf("%8x", a.typeDescriptor[4]); vrb.println("] the address of the array type descriptor itself");
+				
+				vrb.println("ARRAY: " + a.name);
+				vrb.println("Type descriptor:");
+				a.typeDescriptor.printList();
+				vrb.println("----------------------------------------------------------------------");
 			}
-		
 			item = item.next;
 		}
 	}
 	
 	public static void printGlobalConstantTable() {	
-		int i = 0;
-		Item cgc = globalConstantList;
-		vrb.println("  Global constants:");
-		while(cgc != null) {
-			vrb.println("    #" + i++ + ":");
-			vrb.println("    > Index: 0x" + Integer.toHexString(cgc.index));
-			vrb.println("    > Offset: 0x" + Integer.toHexString(cgc.offset));
-			vrb.println("    > Address: 0x" + Integer.toHexString(cgc.address));
-			cgc = cgc.next;
-		}
-		
-		vrb.println("  Table: (length = " + globalConstantTable.length + ")");
-		for(int j = 0; j < globalConstantTable.length; j++) {
-			vrb.print("    ["); vrb.printf("%8x", globalConstantTable[j]); vrb.println("]");
-		}
+		vrb.println("Size: " + globalConstantTable.getBlockSize() + " byte");
+		globalConstantTable.printList();
 	}
 	
 }

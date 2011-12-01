@@ -2963,9 +2963,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		idBitsToDouble = 0x107;
 		objectSize = Type.wktObject.getObjectSize();
 		stringSize = Type.wktString.getObjectSize();
-		int2floatConst1 = Linker32.addGlobalConstant((double)(0x10000000000000L + 0x80000000L));
-		int2floatConst2 = Linker32.addGlobalConstant((double)0x100000000L);
-		int2floatConst3 = Linker32.addGlobalConstant((double)0x10000000000000L);
+		int2floatConst1 = new StdConstant(HString.getHString("int2floatConst1"), (double)(0x10000000000000L + 0x80000000L));
+		int2floatConst2 =  new StdConstant(HString.getHString("int2floatConst2"), (double)0x100000000L);
+		int2floatConst3 =  new StdConstant(HString.getHString("int2floatConst3"), (double)0x10000000000000L);
+		Linker32.addGlobalConstant(int2floatConst1);
+		Linker32.addGlobalConstant(int2floatConst2);
+		Linker32.addGlobalConstant(int2floatConst3);
 		final Class stringClass = (Class)Type.wktString;
 		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
 		if (stringClass != null) {

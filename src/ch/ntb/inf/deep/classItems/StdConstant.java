@@ -37,6 +37,22 @@ public class StdConstant extends Constant {
 		this(stab.undefIdent, null, valueHigh, valueLow);
 	}
 
+	public StdConstant(HString name, int val) {
+		this(name, Type.wellKnownTypes[txInt], val, 0);
+	}
+	
+	public StdConstant(HString name, long val) {
+		this(name, Type.wellKnownTypes[txLong], (int)(val >> 32 & 0xFFFFFFFF), (int)(val & 0xFFFFFFFF));
+	}
+	
+	public StdConstant(HString name, float val) {
+		this(name, Type.wellKnownTypes[txFloat], Float.floatToIntBits(val), 0);
+	}
+	
+	public StdConstant(HString name, double val) {
+		this(name, Type.wellKnownTypes[txDouble], (int)(Double.doubleToLongBits(val) >> 32 & 0xFFFFFFFF), (int)(Double.doubleToLongBits(val) & 0xFFFFFFFF));
+
+	}
 
 	//--- debug primitives
 	public void printShort(int indentLevel){
