@@ -41,6 +41,7 @@ interface InstructionOpcs {
 	final int LT = 0;
 	final int GT = 1;
 	final int EQ = 2;
+	final int XER = 1;
 	final int LR = 8;
 	final int CTR = 9;
 	final int SRR0 = 26;

@@ -60,7 +60,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static Method strAllocCII;
 
 	private static int LRoffset;	
-	private static int CTRoffset;	
+	private static int XERoffset;	
 	private static int CRoffset;	
 	private static int SRR0offset;	
 	private static int SRR1offset;	
@@ -379,7 +379,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
 		LRoffset = size - 4;
-		CTRoffset = size - 8;
+		XERoffset = size - 8;
 		CRoffset = size - 12;
 		SRR0offset = size - 20;
 		SRR1offset = size - 16;
@@ -2819,8 +2819,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		createIrSspr(ppcMtspr, EID, 0);
 		createIrSspr(ppcMfspr, LR, 0);
 		createIrSrAsimm(ppcStw, 0, stackPtr, LRoffset);
-		createIrSspr(ppcMfspr, CTR, 0);
-		createIrSrAsimm(ppcStw, 0, stackPtr, CTRoffset);
+		createIrSspr(ppcMfspr, XER, 0);
+		createIrSrAsimm(ppcStw, 0, stackPtr, XERoffset);
 		createIrD(ppcMfcr, 0);
 		createIrSrAsimm(ppcStw, 0, stackPtr, CRoffset);
 		createIrSrAd(ppcStmw, 2, stackPtr, GPRoffset + 8);
@@ -2885,8 +2885,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		createIrDrAd(ppcLmw, 2, stackPtr, GPRoffset + 8);
 		createIrDrAd(ppcLwz, 0, stackPtr, CRoffset);
 		createICRMrS(ppcMtcrf, 0xff, 0);
-		createIrDrAd(ppcLwz, 0, stackPtr, CTRoffset);
-		createIrSspr(ppcMtspr, CTR, 0);
+		createIrDrAd(ppcLwz, 0, stackPtr, XERoffset);
+		createIrSspr(ppcMtspr, XER, 0);
 		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
 		createIrSspr(ppcMtspr, LR, 0);
 		createIrDrAd(ppcLwz, 0, stackPtr, SRR1offset);
