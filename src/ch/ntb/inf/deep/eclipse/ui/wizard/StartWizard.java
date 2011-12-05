@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2011 NTB Interstate University of Applied Sciences of Technology Buchs.
  *
  * http://www.ntb.ch/inf
@@ -261,7 +261,7 @@ public class StartWizard extends Wizard implements INewWizard{
 	
 	private void save(){
 		ProjectScope scope = new ProjectScope(project);
-		IEclipsePreferences pref = scope.getNode("deepStart");//TODO �berpr�fen ob es diesen Node gibt
+		IEclipsePreferences pref = scope.getNode("deepStart");//TODO implement check if this node exists...
 		pref.put("proc", wizPage1.getProcessorValue());
 		pref.put("board", wizPage1.getBoardValue());
 		pref.put("rts", wizPage1.getRunTimeSystemValue());

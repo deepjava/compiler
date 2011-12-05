@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2011 NTB Interstate University of Applied Sciences of Technology Buchs.
  *
  * http://www.ntb.ch/inf
