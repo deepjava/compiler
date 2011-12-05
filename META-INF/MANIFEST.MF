@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: DevPlugIn4deep
+Bundle-Name: Eclipse deep Plugin
 Bundle-SymbolicName: ch.ntb.inf.deep;singleton:=true
-Bundle-Version: 0.0.23
+Bundle-Version: 0.0.24
 Bundle-Activator: ch.ntb.inf.deep.eclipse.DeepPlugin
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.5.0",
  org.eclipse.core.resources;bundle-version="3.5.2",
@@ -40,3 +40,4 @@ Export-Package: ch.ntb.inf.deep.cgPPC,
 Bundle-ClassPath: tempLibs/ch.ntb.inf.libusbJava.jar,
  tempLibs/ch.ntb.inf.mcdp.ide.jar,
  .
+Bundle-Vendor: www.ntb.ch/inf
