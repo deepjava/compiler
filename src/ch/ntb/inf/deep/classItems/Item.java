@@ -81,6 +81,10 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return null;
 	}
 
+	protected int createInterfaceIdsToRoot(){
+		return 0;
+	}
+
 	Item getReplacedStub(){
 		return this;
 	}

@@ -33,6 +33,7 @@ public class Method extends ClassMember {
 
 //	public Class owner;
 	public byte[] code; // java byte code of this method
+	boolean fixed;
 	
 	public CodeGen machineCode; // machine code of this method
 	public CFG cfg; // cfg of this method
@@ -46,6 +47,10 @@ public class Method extends ClassMember {
 	public int maxStackSlots, maxLocals;
 
 	//--- constructors
+	public Method(HString name){
+		super(name, null);
+	}
+
 	public Method(HString name, Type returnType, HString methDescriptor){
 		super(name, returnType);
 		this.methDescriptor = methDescriptor;
@@ -53,9 +58,6 @@ public class Method extends ClassMember {
 	}
 
 	//--- instance methods
-//	public void markCall(){ accAndPropFlags += (1<<dpfCall);  }
-//	public void markInterfaceCall(){ accAndPropFlags += (1<<dpfInterfCall);  }
-
 
 	protected Method getMethod(HString name, HString descriptor){
 		Method item = this;
@@ -145,6 +147,16 @@ public class Method extends ClassMember {
 		Dbg.printJavaAccAndPropertyFlags(flags, 'M');
 		type.printTypeCategory(); type.printName(); // return type
 		vrb.print(' ');  vrb.print(name);  vrb.print(methDescriptor);
+	}
+
+	public void printHeaderX(int indentLevel){
+		indent(indentLevel);
+		char methAttr;
+		if( index == -1 ) methAttr = 'I'; // interface method
+		else if( fixed ) methAttr = 'F';
+		else methAttr = '~';
+		vrb.printf("%1$c<%2$d> %3$s.%4$s%5$s", methAttr, index, owner.name, name, methDescriptor);  
+		Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
 	}
 
 	public void printShort(int indentLevel){

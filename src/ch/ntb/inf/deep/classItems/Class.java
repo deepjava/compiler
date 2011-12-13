@@ -69,14 +69,15 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public Class nextExtLevelClass, nextClass;
 	public Item[] constPool; // reduced constant pool
 
-	public int extensionLevel; // extensionLevel of class java.lang.Object is 0
-
 	public Item methods; // list with all methods
+	public Method[] extMethTable; // syntax: { instanceMethod } im
 	public int nofMethods; // number of methods
 	public int nofInstMethods, nofClassMethods; // number of methods
 	public int methTabLength; // number of methods for the class descriptor
 	public int ifaceTabLength; // number of interfaces with methods for the class descriptor
 	
+	public int extensionLevel; // extensionLevel of class java.lang.Object is 0
+
 	public Item instFields, firstInstReference; // (fields), chained to list with all fields
 	public Item classFields, firstClassReference; // list of class fields
 	public Item constFields; // list of const fields (static final <primitive type>)
@@ -123,6 +124,11 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private static int getNextInterfaceId(){
 		curentInterfaceId++;
 		return curentInterfaceId;
+	}
+
+	protected static void appendRootClass(Class newRootClass){
+		Class.rootClasses[Class.nofRootClasses++] = newRootClass;
+		appendClass(newRootClass);
 	}
 
 	/**
@@ -991,7 +997,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 	}
 
-	protected void fixUpMethods(){
+	protected void initializeMethodIndices(){
 		Item meth = methods;
 		if( type == null){//  java/lang/Object
 			methTabLength = 0;
@@ -1012,6 +1018,14 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 				}
 				meth = meth.next;
 			}
+		}
+	}
+
+	private void fixInstanceMethodsOfThisClass(){
+		Item meth = methods;
+		while(meth != null){
+			if( meth.index >= 0) ((Method)meth).fixed = true;
+			meth = meth.next;
 		}
 	}
 
@@ -1050,7 +1064,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			}
 			fixUpInstanceFields();
 			fixUpClassFields();
-			fixUpMethods();
+			initializeMethodIndices();
 
 			if(imports != null){
 				for(int index = imports.length-1; index >= 0; index--)  imports[index].selectAndMoveInitClasses();
@@ -1075,6 +1089,172 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		selectAndMoveInitClasses();
 	}
 
+
+	protected int createInterfaceIdsToRoot(){
+		assert (accAndPropFlags & (1<<apfInterface)) != 0;
+
+		if( index <= 0 ){
+			if( type != null && type.type != null ){
+				index = type.createInterfaceIdsToRoot();
+				type.accAndPropFlags |= (1<<dpfExtended);
+			}else
+				index = getNextInterfaceId();
+		}else{// index != 0: index already defined
+			if( (accAndPropFlags & (1<<dpfExtended)) != 0 ) return getNextInterfaceId();
+		}
+		return index;
+	}
+
+	protected int cleanUpInterfaceMethsAndGetMethTabLength(){
+		if ( extensionLevel > 0 && (accAndPropFlags & (1<<dpfClassMark)) == 0 ){
+			assert (accAndPropFlags & (1<<apfInterface)) != 0;
+//vrb.printf(" >cleanUp: cls.name=%1$s, extLevel=%2$d, dflags=", name, extensionLevel); Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
+			accAndPropFlags |= (1<<dpfClassMark);
+			methTabLength = ((Class)type).cleanUpInterfaceMethsAndGetMethTabLength();
+			if( extensionLevel == 1 ) methTabLength = 0;
+
+			Item meth = methods;
+			Item pred = null;
+			while(meth != null){
+				meth.index = methTabLength;
+//vrb.printf(" =cleanUp: cls.name=%1$s, extLevel=%2$d, nofInstMethods=%3$d, meth.name=%4$s, meth.index=%5$d\n", name, this.extensionLevel, nofInstMethods, meth.name, meth.index);
+				boolean remove = false;
+				Item item = null;
+				if( (meth.accAndPropFlags & (1<<dpfInterfCall)) == 0) remove = true;
+				else item = type.getMethod( meth.name, ((Method)meth).methDescriptor );
+				if( item != null | remove ){
+					nofInstMethods--;
+//vrb.printf(" -cleanUp: cls.name=%1$s, extLevel=%2$d, nofInstMethods=%3$d, meth.name=%4$s, meth.index=%5$d\n", name, this.extensionLevel, nofInstMethods, meth.name, meth.index);
+					if( pred == null ) methods = meth.next;  else  pred.next =  meth.next;
+				}else{
+					methTabLength++;
+					pred = meth;
+				}
+				meth = meth.next;
+			}
+//vrb.printf(" <cleanUp: name=%1$s, dflags=", name); Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
+		}
+		return methTabLength;
+	}
+
+	void getMethodTable( Method[] methTable, int[] levelIndices ){
+		// assert  index of static methods is less than 0,  formal: ((meth.accAndPropFlags & (1<<apfStatic)) != 0)  == (meth.index < 0)
+//vrb.printf(" >getMethodTable: name=%1$s, index=%2$d, extensionLevel=%3$d\n", name, index, extensionLevel);
+
+		Method meth = (Method)methods;
+		if( extensionLevel == 0 ){
+			levelIndices[0] = 0;
+			while( meth != null ){
+				if( meth.index >= 0) methTable[ meth.index ] = meth; // just for instance methods
+				meth = (Method)meth.next;
+			}			
+		}else{// extensionLevel > 0
+			Class baseType = (Class)type;
+			baseType.getMethodTable( methTable, levelIndices );
+			while( meth != null ){
+				if( meth.index >= 0){// just for instance methods
+					if( meth.index < levelIndices[this.extensionLevel]){// replace this index by the index of this meth of the base class
+						Method baseMeth = (Method)baseType.getMethod( meth.name, meth.methDescriptor );
+						meth.index = baseMeth.index;
+						meth.fixed = baseMeth.fixed;
+					}
+					methTable[ meth.index ] = meth;
+				}
+				meth = (Method)meth.next;
+			}						
+		}
+		levelIndices[this.extensionLevel+1] = this.methTabLength;
+
+//vrb.printf(" <getMethodTable: name=%1$s, index=%2$d\n", name, index);
+	}
+
+	private int getMethodPosition( Method[] methTable, int nofMethods, Method method ){
+		assert nofMethods >= 1 && method != null;
+		int pos = nofMethods;
+		HString name = method.name;
+		HString desc = method.methDescriptor;
+		do{
+			pos--;
+			if( pos < 0) break;
+			method = methTable[pos];
+		}while( name != method.name || desc != method.methDescriptor );
+		return pos;
+	}
+
+	void updateMethodList( Method[] methTable, int nofMethods ){
+		// assert  index of static methods is less than 0,  formal: ((meth.accAndPropFlags & (1<<apfStatic)) != 0)  == (meth.index < 0)
+//vrb.printf(" >updateMethodList: name=%1$s, index=%2$d, extensionLevel=%3$d, #meths=%4$d\n", name, index, extensionLevel, nofMethods);
+
+		if( type != null) ((Class)type).updateMethodList( methTable, nofMethods );
+		
+		Method meth = (Method)methods;
+		while( meth != null){
+//vrb.printf(" =updateML 10: meth.name=%1$s%2$s [%3$d], cls.name=%4$s\n", meth.name, meth.methDescriptor, meth.index, name );
+			if( meth.index >= 0 ){// for instance methods
+				int index = getMethodPosition( methTable, nofMethods,  meth );
+				assert index >= 0;
+				meth.index = index;
+				meth.fixed = methTable[ index ].fixed;
+			}
+			meth = (Method)meth.next;
+		}
+
+//vrb.printf(" <updateMethodList: name=%1$s, index=%2$d\n", name, index);
+	}
+
+
+	void getInterfaceMethodTable( Method[] methTable ){
+//vrb.printf(" >getInterfaceMethodTable: name=%1$s, index=%2$d, extensionLevel=%3$d\n", name, index, extensionLevel);
+
+		if( extensionLevel > 1 ) ((Class)type).getInterfaceMethodTable( methTable );
+		Method meth = (Method)methods;
+		while( meth != null ){
+			methTable[meth.index] = meth;
+			meth = (Method)meth.next;
+		}			
+//vrb.printf(" <getInterfaceMethodTable: name=%1$s, index=%2$d\n", name, index);
+	}
+
+	void collectCallInterfacesFromTopExtLevelTo0( InterfaceList interfList ){
+		assert (accAndPropFlags&(1<<apfInterface)) == 0; // object must not be an interface
+		Item item = this;
+		do{
+			Class cls = (Class)item;
+			if( cls.interfaces != null ){
+				for(int n = 0; n < cls.interfaces.length; n++ ){
+					Class interf = cls.interfaces[n];
+					if( (interf.accAndPropFlags&(1<<dpfInterfCall)) != 0 ) interfList.append( interf );
+				}
+			}
+			item = item.type;
+		}while( item != null );
+	}
+
+	private int getInterfaceSortKey( Class interf ){
+		assert interf.extensionLevel<(1<<8) && interf.methTabLength<(1<<12);
+		int key = 0;
+		if( (interf.accAndPropFlags&(1<<dpfInterfCall)) != 0 ) key = 1;
+		key = ((key<<8) | interf.extensionLevel)<<12 |  interf.methTabLength;
+		return key;
+	}
+
+	private void sortInterfaces(){// descending (bubble sort)
+		if( interfaces != null ){
+			int maxIndex = interfaces.length-1;
+			for(int left = 0; left < maxIndex; left++){
+				for(int right = maxIndex-1; right >= left; right--){
+					int leftKey = getInterfaceSortKey(interfaces[right]);
+					int rightKey = getInterfaceSortKey(interfaces[right+1]);
+					if( leftKey < rightKey ){ // swap
+						Class intf = interfaces[right];
+						interfaces[right] = interfaces[right+1];
+						interfaces[right+1] = intf;
+					}
+				}
+			}
+		}
+	}
+
 	private static void splitClassGroupsAndClearMarkFlags(){
 		//--- preconditions:
 		// a) list of classes with class constructors in correct initialization sequence referenced by  "initClasses",
@@ -1083,7 +1263,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		//    linked by "nextInitClass" and terminated by "nonInitClassesTail".
 		// c) extension level of each (std-)class, (Interface-)class defined.
 
-		//vrb.println(">splitClassGroups..:");
+//vrb.println(">splitClassGroups..:");
 		Item classItem = classList;
 
 		//--- split class groups, count referenced interfaces, 
@@ -1091,16 +1271,15 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		elOrdredInterfaceClasses = new Class[maxExtensionLevelInterfaces+1];
 		arrayClasses = null;
 		
-		Class tailCls = initClassesTail;
-		int nofRefIntf = 0;
+//		int nofRefIntf = 0;
 		while(classItem != null){
 			classItem.accAndPropFlags &= ~(1<<dpfClassMark); // clear classMark
 			int propFlags = classItem.accAndPropFlags;
 			if( classItem instanceof Class){
 				Class cls = (Class)classItem;
 				int extLevel = cls.extensionLevel;
-				if( (propFlags&(1<<apfInterface)) != 0 ){
-					if( (propFlags&(1<<dpfInterfCall)) != 0 ) nofRefIntf++;
+				if( (propFlags&(1<<apfInterface)) != 0 ){// interface-Class
+//					if( (propFlags&(1<<dpfInterfCall)) != 0 ) nofRefIntf++;
 					if( cls.methTabLength > maxInterfMethTabLen ) maxInterfMethTabLen = cls.methTabLength;
 					cls.nextExtLevelClass = elOrdredInterfaceClasses[extLevel];
 					elOrdredInterfaceClasses[extLevel] = cls;
@@ -1110,6 +1289,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 					cls.nextExtLevelClass = elOrdredClasses[extLevel];
 					elOrdredClasses[extLevel] = cls;
 					nofStdClasses++;
+					cls.sortInterfaces();
 				}
 //				}else if( (propFlags & (1<<apfEnum) ) != 0 ){
 //					cls.nextClass = enums;
@@ -1126,19 +1306,38 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			}
 			classItem = classItem.next;
 		}
-
 		
-//		//-- link members on different extension levels of elOrdredClasses and set elOrdredClassesHead
-//		elOrdredClassesHead = elOrdredClasses[maxExtensionLevelStdClasses];
-//		for(int exl = maxExtensionLevelStdClasses;  exl > 0; exl--){
-//			Class preTail = null;
-//			Class cls = elOrdredClasses[exl];
-//			while(cls != null){
-//				preTail = cls;
-//				cls = cls.nextExtLevelClass;
-//			}
-//			preTail.nextExtLevelClass = elOrdredClasses[exl-1];
-//		}
+		//--- set interface identifiers (from max. extension level to 0)
+		for(int exl = maxExtensionLevelInterfaces; exl > 0; exl--){
+			Class cls = elOrdredInterfaceClasses[exl];
+			while(cls != null){
+				if( cls.index <= 0 && (cls.accAndPropFlags&(1<<dpfInterfCall)) != 0){
+					cls.createInterfaceIdsToRoot();
+					cls.cleanUpInterfaceMethsAndGetMethTabLength();
+				}
+				cls = cls.nextExtLevelClass;
+			}
+		}
+
+		//--- arrange instance methods according to interfaces
+		MethodArrangement methA= new MethodArrangement( maxExtensionLevelStdClasses, maxMethTabLen, maxInterfMethTabLen );
+		for(int exl = maxExtensionLevelStdClasses; exl > 0; exl--){
+			Class cls = elOrdredClasses[exl];
+			while(cls != null){
+				methA.arrangeInterfaceMethodsForThisClassStack( cls );
+				cls = cls.nextExtLevelClass;
+			}
+		}
+
+		//--- generate instance method tables
+		for(int exl = 0; exl <= maxExtensionLevelStdClasses; exl++){
+			Class cls = elOrdredClasses[exl];
+			while(cls != null){
+				cls.fixInstanceMethodsOfThisClass();
+				methA.generateMethodTableForThisClass( cls );
+				cls = cls.nextExtLevelClass;
+			}
+		}
 
 //		vrb.println("<splitClassGroups..");
 	}
@@ -1174,7 +1373,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		
 //		boolean verbose = true;
 //		if(verbose) {
-//			printClassList("end state, class list:");
+			printClassList("end state, class list:");
 //			printConstPools();
 //		}
 		
@@ -1202,11 +1401,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public static void printStdClasses(){
 		vrb.printf("\n--- standard classes: (#=%1$d)\n", nofStdClasses);
-		elOrdredClasses[0].print( 1 );// print Object
-		for( int exl = 1; exl <= maxExtensionLevelStdClasses; exl++){
-			Class tailCls = elOrdredClasses[exl-1];
+		for( int exl = 0; exl <= maxExtensionLevelStdClasses; exl++){
 			Class cls = elOrdredClasses[exl];
-			while( cls != tailCls ){
+			while( cls != null ){
 				cls.print( 1 );
 				cls = cls.nextExtLevelClass;
 			}
@@ -1263,12 +1460,26 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public void printMethods(int indentLevel){
 		indent(indentLevel);
-		vrb.printf("methods: (clsMeths #=%1$d, instMeths #=%2$d,  methTabLength=%3$d)\n", nofClassMethods, nofInstMethods, methTabLength);
-		Item item = methods;
-		while(item != null){
-			item.println(indentLevel+1);
-			item = item.next;
+		vrb.printf("methods: clsMeths #=%1$d, instMeths #=%2$d, methTabLength=%3$d", nofClassMethods, nofInstMethods, methTabLength);
+		if( extMethTable != null ){
+			vrb.printf( ", extMethTable.length=%1$d\n", extMethTable.length );
+			int n = 0;
+			while( n < extMethTable.length ){
+				indent(indentLevel+1);
+				vrb.printf("[%1$2d] ", n);
+				extMethTable[n].printHeaderX(0);
+				vrb.println();
+				n++;
+			}
+		}else{
+			vrb.println();
+			Item item = methods;
+			while(item != null){
+				item.println(indentLevel+1);
+				item = item.next;
+			}
 		}
+		vrb.println();
 	}
 
 	private static void printConstPools(){
@@ -1352,19 +1563,18 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public void printInterface(Class interf){
 		String icall;
 		if( (interf.accAndPropFlags&(1<<dpfInterfCall)) == 0 ) icall = ""; else icall = "iCall, ";
-		vrb.printf("%1$s(%2$sid=%3$d, el=%4$d, mtl=%5$d)", interf.name, icall, interf.index, interf.extensionLevel, interf.methTabLength);
+		vrb.printf("%1$s{%2$sid=%3$d, el=%4$d, mtl=%5$d}", interf.name, icall, interf.index, interf.extensionLevel, interf.methTabLength);
 	}
 
 	public void printInterfaces(int indentLevel){
 		if(interfaces != null){
-			indent(indentLevel);
-			vrb.print("implements: ");
-			printInterface(interfaces[0]);
+			indent(indentLevel++);
+			vrb.println("implements:");
+			indent(indentLevel); printInterface(interfaces[0]); vrb.println(); 
 			int nofIntf = interfaces.length;
 			for(int n = 1; n < nofIntf; n++){
-				vrb.print(", "); printInterface(interfaces[n]);
+				indent(indentLevel); printInterface(interfaces[n]); vrb.println(); 
 			}
-			vrb.println();
 		}
 	}
 
