@@ -22,7 +22,7 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 	private int nofInterfMethods;
 
 	private InterfaceList interfList;
-	private Method imDelegNull;
+//	private Method imDelegNull;
 	private Method imDelegI1Mm;
 	private Method imDelegIiMm;
 
@@ -35,11 +35,11 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 		interfMethods = new Method[maxInterfMethTabLen];
 		interfList = new InterfaceList( );
 		swapLog = new int[maxInterfMethTabLen];
-		Item clsLowLevel = Type.classList.getItemByName("deep/lowLevel/LL");
+		Item clsLowLevel = Type.classList.getItemByName("ch/ntb/inf/deep/lowLevel/LL"); // TODO @Martin: get name by configuration
 //		vrb.printf(" ../LL=%1$s\n", clsLowLevel.name);
 
 		Class lowLevel = (Class)clsLowLevel;
-		imDelegNull = (Method)lowLevel.methods.getItemByName( "imDelegNull" );
+		//imDelegNull = (Method)lowLevel.methods.getItemByName( "imDelegNull" );
 		imDelegI1Mm = (Method)lowLevel.methods.getItemByName( "imDelegI1Mm" );
 		imDelegIiMm  = (Method)lowLevel.methods.getItemByName( "imDelegIiMm" );
 //vrb.printf(" iMxy: iM1m=%1$s, iMim=%2$s\n", imDelegI1Mm.name, imDelegIiMm.name);
@@ -282,7 +282,7 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 		interfList.clear();
 
 		if(assertions) assert nofInstMethods == cls.methTabLength;
-		instMethods[ nofInstMethods ] = imDelegNull;
+//		instMethods[ nofInstMethods ] = imDelegNull;
 		
 		Method[] methTable;
 		int totalMethTabLength = cls.methTabLength;
