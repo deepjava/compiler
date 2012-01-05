@@ -959,7 +959,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						}
 					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
 						op.value = bdi.getMem(var.address, slotSize);
-						op.value = op.value << (8 * slotSize) | bdi.getMem(var.address + slotSize, slotSize);
+						op.value = op.value << (8 * slotSize) | (bdi.getMem(var.address + slotSize, slotSize) & 0xffffffffL);
 						if(var.type == Type.wellKnownTypes[txLong]){
 							op.valueType = tLong;
 						}else{
