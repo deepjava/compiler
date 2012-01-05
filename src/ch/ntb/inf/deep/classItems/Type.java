@@ -181,11 +181,12 @@ public class Type extends Item {
 	}
 
 	protected static void skipAttributeAndLogCond(DataInputStream clfInStrm, int attrLength, int cpIndexOfAttribute) throws IOException{
-		if(cpIndexOfAttribute > 0){
-			log.print(" skipped attribute: ");
-			log.printf("length=%1$d, cp[%2$d] = ", attrLength, cpIndexOfAttribute);
-			log.println(cpStrings[cpIndexOfAttribute]);
-		}
+		if(verbose) 
+			if (cpIndexOfAttribute > 0){
+				vrb.print(" skipped attribute: ");
+				vrb.printf("length=%1$d, cp[%2$d] = ", attrLength, cpIndexOfAttribute);
+				vrb.println(cpStrings[cpIndexOfAttribute]);
+			}
 		clfInStrm.skipBytes(attrLength);
 	}
 

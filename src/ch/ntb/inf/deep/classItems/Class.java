@@ -1372,10 +1372,10 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		splitClassGroupsAndClearMarkFlags();
 		
 //		boolean verbose = true;
-//		if(verbose) {
+		if(verbose) {
 			printClassList("end state, class list:");
 //			printConstPools();
-//		}
+		}
 		
 		releaseLoadingResources();
 		log.printf("number of errors %1$d\n", errRep.nofErrors);
