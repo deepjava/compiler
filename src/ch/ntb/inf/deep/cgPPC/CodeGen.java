@@ -1949,7 +1949,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 //						offset = Linker.cdInterface0AddrOffset + ((Method)call.item).owner.nofInterfaces * Linker.slotSize; // TODO @ Urs implement this
-						offset = Linker32.tdInterface0AddrOffset;
+						offset = Linker32.tdMethTabOffset;
 						offset += call.item.index * Linker32.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);

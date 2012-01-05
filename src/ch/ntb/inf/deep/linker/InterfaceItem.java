@@ -27,28 +27,22 @@ public class InterfaceItem extends BlockItem {
 	
 	private static final int size = 4;
 	
-	int offset;
-	Item iface;
+	HString name;
+	short ifaceID;
+	short bmo;
 		
-	public InterfaceItem(HString name, Item iface, int offset) {
-		this.name = name;
-		this.iface = iface;
-		this.offset = offset;
-	}
-	
-	public InterfaceItem(Item iface, int offset) {
-		if(iface != null) this.name = iface.name;
-		else this.name = HString.getHString("???");
-		this.iface = iface;
-		this.offset = offset;
+	public InterfaceItem(HString ifaceName, short ifaceID, short bmo) {
+		this.name = ifaceName;
+		this.ifaceID = ifaceID;
+		this.bmo = bmo;
 	}
 	
 	public int getOffset() {
-		return this.offset;
+		return this.bmo;
 	}
-
-	public void setOffset(int offset) {
-		this.offset = offset;
+	
+	public int getID() {
+		return this.ifaceID;
 	}
 	
 	protected int getItemSize() {
@@ -59,14 +53,14 @@ public class InterfaceItem extends BlockItem {
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
-			a[index] = offset << 16 & (short)-1;
+			a[index] = this.ifaceID << 16 & this.bmo;
 			written = size;
 		}
 		return written;
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", offset << 16 & (short)-1) + " (" + name + ")";
+		return String.format("[%08X]", this.ifaceID << 16 & this.bmo) + " (" + name + ")";
 	}
 
 }

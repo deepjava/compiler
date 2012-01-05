@@ -53,8 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
-	private static final boolean enableInterfaces = false; // enable/disable support for interfaces
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -67,7 +66,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int cblkPtrAddr0Offset = 7 * 4;
 	
 	// Class/type descriptor:
-	public static final int tdInterface0AddrOffset = 2 * 4;
+	public static final int tdMethTabOffset = 2 * 4;
 	public static final int tdExtensionLevelOffset = 1 * 4;
 	public static final int tdSizeOffset = 0;
 	public static final int tdClassNameAddrOffset = 1 * 4;
@@ -177,72 +176,91 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.typeDescriptor = new FixedValueItem("size");
 		if(dbg) vrb.println("    - Inserting the extension level");
 		clazz.typeDescriptor.insertBefore(new FixedValueItem("extensionLevel", clazz.extensionLevel));
-
-		// Type descriptor: interface table
-		if(enableInterfaces) {
-			extendInterfaceTable(clazz, clazz.typeDescriptor.getHead());
-		}
-//		if(clazz.interfaces != null && clazz.interfaces.length > 0) {			
-//			if(dbg) vrb.println("    - Inserting interfaces:");
-//			for(int i = 0; i < clazz.interfaces.length; i++) {
-//				if(dbg) vrb.println("      > " + clazz.interfaces[i].name);
-//				clazz.typeDescriptor.getHead().insertBefore(new InterfaceItem(clazz.interfaces[i].name, clazz.interfaces[i], -1)); 
-//			}
-//		}
 		
-		// Type descriptor: method table
-		Item cm;
+		// Type descriptor: create method table
+	//	Item cm;
 		if(dbg) vrb.println("    - Inserting method table:");
-		for(int i = 0; i < clazz.methTabLength; i++) {
+	/*	for(int i = 0; i < clazz.methTabLength; i++) {
 			cm = clazz.getMethod(i);
 			assert cm != null : "[Error] No method with index " + i + " found!";
 			if(dbg) vrb.println("      > " + cm.name);
 			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(cm)); 
+		}*/
+		for(int i = 0; i < clazz.methTabLength; i++) {
+			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(clazz.extMethTable[i])); 
 		}
 		
-		if(enableInterfaces) {
-			// Type descriptor: interface method table
-			Item im;
-			if(dbg) vrb.println("    - Inserting interface method table:");
-			if(clazz.interfaces != null) {
-				for(int j = 0; j < clazz.interfaces.length; j++) {
-					if(dbg) vrb.println("      Interface " + clazz.interfaces[j].name + ":");
-					for(int i = 0; i < clazz.interfaces[j].methTabLength; i++) {
-						im = clazz.interfaces[j].getMethod(i);
-						if(im == null) {
-							reporter.error(730, "Index: " + i);
-							return;
-						}
-						if(dbg) vrb.println("      > " + im.name);
-						clazz.typeDescriptor.getHead().insertBefore(new AddressItem(im));
-					}
-				}
-			}
-		}
 		
-		// Type descriptor: class name address
+		// Type descriptor: insert class name address
 		if(dbg) vrb.println("    - Inserting class name address");
 		clazz.typeDescriptor.insertAfter(new FixedValueItem("classNameAddr", 0x12345678));
 		
-		// Type descriptor: base classes
+		// Type descriptor: create type table (base classes and interfaces)
+//		if(dbg) vrb.println("    - Inserting base classes and interfaces");
+//		int typeTableSize = 1;
+//		Class baseClass = (Class)clazz.type;
+//		AddressItem typeTable = new AddressItem(clazz);
+//		while(baseClass != null) {
+//			typeTable.getHead().insertBefore(new AddressItem(baseClass));
+//			typeTableSize++;
+//			baseClass = (Class)baseClass.type;
+//		}
+//		AddressItem currentElement = (AddressItem)typeTable.getTail();
+//		Class currentClass;
+//		while(currentElement != null) {
+//			currentClass = (Class)currentElement.itemRef;
+//			for(int i = 0; i < currentClass.nofInterfaces; i++) {
+//				currentElement.insertAfter(new AddressItem(currentClass.interfaces[i]));
+//				typeTableSize++;
+//			}
+//			currentElement = (AddressItem)currentElement.prev;
+//		}
+//		while(typeTableSize < Class.maxExtensionLevelStdClasses * 2 + 1) { // TODO @Martin: This works only for a few cases -> improve this
+//			typeTable.append(new FixedValueItem("padding", 0));
+//			typeTableSize++;
+//		}
 		if(dbg) vrb.println("    - Inserting base classes");
 		Class baseClass = (Class)clazz.type;
-		AddressItem bctable = new AddressItem(clazz);
+		AddressItem typeTable = new AddressItem(clazz);
 		for(int i = 0; i < Class.maxExtensionLevelStdClasses; i++) {
 			if(baseClass != null) {
-				//clazz.typeDescriptor.getTail().insertAfter(new AddressItem(bc));
-				bctable.getHead().insertBefore(new AddressItem(baseClass));
+				typeTable.getHead().insertBefore(new AddressItem(baseClass));
 				baseClass = (Class)baseClass.type;
 			}
 			else {
-				bctable.getTail().insertAfter(new FixedValueItem("padding", 0));
+				typeTable.getTail().insertAfter(new FixedValueItem("padding", 0));
 			}
 		}
-		clazz.typeDescriptor.append(bctable.getHead());
+		clazz.typeDescriptor.append(typeTable.getHead());
+		
+		// Type descriptor: add interface table
+		if(clazz.extMethTable.length > clazz.methTabLength) {
+			if(dbg) vrb.println("    - Inserting interface table");
+			int counter = clazz.methTabLength;
+			if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: " + clazz.extMethTable[counter].name);
+			AddressItem interfaceTable = new AddressItem(clazz.extMethTable[counter++]);
+			short id, bmo;
+			vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
+			for(int i = 0; i <= clazz.nofInterfaces && counter < clazz.extMethTable.length; i++) { // TODO @Martin: should use ifaceTabLength instead of nofInterfaces, but ifaceTabLength is always 0!!!
+				id = (short)(clazz.extMethTable[counter].index >>> 16);
+				bmo = (short)(clazz.extMethTable[counter].index & 0xFFFF);
+				if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: ID = " + id + "; bmo = " + bmo);
+				interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].name, id, bmo));
+				counter++;
+			}
+			while(counter < clazz.extMethTable.length) {
+				interfaceTable.append(new AddressItem(clazz.extMethTable[counter++]));
+			}
+			clazz.typeDescriptor.append(interfaceTable.getHead());
+		}
+		
+		// calculate type descriptor size
 		clazz.typeDescriptorSize = clazz.typeDescriptor.getBlockSize();
+		
+		// add type descriptor to constant block
 		clazz.constantBlock.append(clazz.typeDescriptor.getHead());
 		
-		// String pool
+		// create string pool
 		if(dbg) vrb.println("  Creating string pool");
 		if(clazz.constPool != null) {
 			Item cpe;
@@ -259,7 +277,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			clazz.constantBlock.append(clazz.stringPool);
 		}
 		
-		// Constant pool
+		// create constant pool
 		if(dbg) vrb.println("  Creating constant pool");
 		if(clazz.constPool != null) {
 			Item cpe;
@@ -276,7 +294,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			clazz.constantBlock.append(clazz.constantPool);
 		}
 		
-		// Checksum
+		// calculate checksum
 		if(dbg) vrb.println("  Calculating checksum");
 		clazz.constantBlockChecksum = new FixedValueItem("fcs", 0); // TODO @Martin calculate checksum here...
 		clazz.constantBlock.append(clazz.constantBlockChecksum);
@@ -340,7 +358,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		// Size
 		array.typeDescriptor.append(new FixedValueItem("size", (1 << 31) | (array.componentType.sizeInBits / 8)));
-		//array.typeDescriptor.append(new FixedValueItem("size", array.componentType.sizeInBits / 8));
 		
 		if(array.dimension > 1) { // array with dimension 2 or higher
 			String name = array.name.substring(1).toString();
@@ -959,21 +976,21 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		return counter;
 	}
 	
-	private static void extendInterfaceTable(Class c, BlockItem it) {
-		Class baseClass = (Class)c.type;
-		while(baseClass != null) {
-			extendInterfaceTable(baseClass, it);
-			baseClass = (Class)baseClass.type;
-		}
-				
-		if(c.interfaces != null && c.interfaces.length > 0) {			
-			if(dbg) vrb.println("    - Inserting interfaces:");
-			for(int i = 0; i < c.interfaces.length; i++) {
-				if(dbg) vrb.println("      > " + c.interfaces[i].name);
-				it.getHead().insertBefore(new InterfaceItem(c.interfaces[i].name, c.interfaces[i], -1)); 
-			}
-		}
-	}
+//	private static void extendInterfaceTable(Class c, BlockItem it) {
+//		Class baseClass = (Class)c.type;
+//		while(baseClass != null) {
+//			extendInterfaceTable(baseClass, it);
+//			baseClass = (Class)baseClass.type;
+//		}
+//				
+//		if(c.interfaces != null && c.interfaces.length > 0) {			
+//			if(dbg) vrb.println("    - Inserting interfaces:");
+//			for(int i = 0; i < c.interfaces.length; i++) {
+//				if(dbg) vrb.println("      > " + c.interfaces[i].name);
+//				it.getHead().insertBefore(new InterfaceItem(c.interfaces[i].name, c.interfaces[i], -1)); 
+//			}
+//		}
+//	}
 	
 	/* ---------- debug primitives ---------- */
 	
@@ -1103,6 +1120,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				Array a = (Array)item;
 				
 				vrb.println("ARRAY: " + a.name);
+				vrb.println("Component type: " + a.componentType.name);
+				//vrb.println("Check type: " + a.checkType.name);
 				vrb.println("Type descriptor:");
 				a.typeDescriptor.printList();
 				vrb.println("----------------------------------------------------------------------");
