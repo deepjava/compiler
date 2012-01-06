@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -239,13 +239,21 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			int counter = clazz.methTabLength;
 			if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: " + clazz.extMethTable[counter].name);
 			AddressItem interfaceTable = new AddressItem(clazz.extMethTable[counter++]);
-			short id, bmo;
-			vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
-			for(int i = 0; i <= clazz.nofInterfaces && counter < clazz.extMethTable.length; i++) { // TODO @Martin: should use ifaceTabLength instead of nofInterfaces, but ifaceTabLength is always 0!!!
-				id = (short)(clazz.extMethTable[counter].index >>> 16);
-				bmo = (short)(clazz.extMethTable[counter].index & 0xFFFF);
+			int id, bmo;
+			//vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
+			while(counter < clazz.extMethTable.length && (clazz.extMethTable[counter].index >>> 16) >= 0) {
+//				id = clazz.extMethTable[counter].index >>> 16;
+//				bmo = clazz.extMethTable[counter].index & 0xFFFF;
+//				if(bmo > clazz.methTabLength) {
+//					bmo = -bmo * 4; // TODO @Martin: fix offset (bmo = -(maxExtensionLevelStdClass + 4 + ifaceTabLength + 4 * bmo)) 
+//				}
+//				else {
+//					bmo = tdMethTabOffset + bmo * 4;
+//				}
+				id = 0;
+				bmo = 0;
 				if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: ID = " + id + "; bmo = " + bmo);
-				interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].name, id, bmo));
+				interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].owner.name, (short)id, (short)bmo));
 				counter++;
 			}
 			while(counter < clazz.extMethTable.length) {

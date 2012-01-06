@@ -74,7 +74,6 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public int nofMethods; // number of methods
 	public int nofInstMethods, nofClassMethods; // number of methods
 	public int methTabLength; // number of methods for the class descriptor
-	public int ifaceTabLength; // number of interfaces with methods for the class descriptor
 	
 	public int extensionLevel; // extensionLevel of class java.lang.Object is 0
 
