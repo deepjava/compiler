@@ -364,40 +364,39 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		// Extentsion level
 		array.typeDescriptor = new FixedValueItem("extensionLevel", 1); // the base type of an array is always object!
 		
-		// Size
-		array.typeDescriptor.append(new FixedValueItem("size", (1 << 31) | (array.componentType.sizeInBits / 8)));
+		// Array dimension and component size
+		array.typeDescriptor.append(new FixedValueItem("dimension/size", ((1 << 31) | array.dimension << 16) | (array.componentType.sizeInBits / 8)));
 		
-		if(array.dimension > 1) { // array with dimension 2 or higher
-			String name = array.name.substring(1).toString();
-			Array lowDimArray = (Array)Type.classList.getItemByName(name);
-			if(lowDimArray != null) { // array with dim - 1 available
-				array.typeDescriptor.append(new AddressItem("lowerDimArray: ", lowDimArray));
-			}
-			else { // array with dim - 1 not available
-				array.typeDescriptor.append(new FixedValueItem("lowerDimArray: <not found>", -1));
-			}
-		}
-		else { // array with dimension 1
-			if(array.name.charAt(1) == tcRef) { // non primitive base type
-				String name = array.name.substring(2, array.name.length() - 1).toString();
-				Class baseType = (Class)Type.classList.getItemByName(name);
-				if(baseType != null) { // td of base type found
-					array.typeDescriptor.append(new AddressItem("baseType: ", baseType));
-				}
-				else { // td of base type not found
-					reporter.error(702, name);
-					array.typeDescriptor.append(new FixedValueItem("baseType: <not found>", -1));
-				}
-			}
-			else { // primitive base type
-				array.typeDescriptor.append(new FixedValueItem("baseType: <primitive>", -1));
-			}
-		}
+		// Array name address
+		array.typeDescriptor.append(new FixedValueItem("arrayNameAddr", 0x12345678));
 		
 		// Base class address
 		array.typeDescriptor.append(new AddressItem("baseClass: ", Type.wktObject)); // the base type of an array is always object!
 		
-		array.typeDescriptor.append(new AddressItem("this: ", array)); // address of own type descriptor
+		// Address of this type descriptor itself
+		//array.typeDescriptor.append(new AddressItem("this: ", array)); // address of own type descriptor
+		
+		// List of type descriptors of arrays with the same component type
+		String arrayName; Item lowDimArray;
+		for(int i = array.dimension; i > 0; i--) {
+			arrayName = array.name.substring(array.dimension - i).toString();
+			lowDimArray = Type.classList.getItemByName(arrayName);
+			if(lowDimArray != null) {
+				array.typeDescriptor.append(new AddressItem("arrayTD[" + i + "]: ", lowDimArray));
+			}
+			else {
+				array.typeDescriptor.append(new FixedValueItem("arrayTD[" + i + "]: <not available> (" + arrayName + ")", -1));
+			}
+		}
+		
+		// Component type
+		if(array.componentType.category == tcPrimitive) {
+			array.typeDescriptor.append(new FixedValueItem("arrayComponentTD: <primitive> (" + array.componentType.name + ")", -1));
+		}
+		else {
+			array.typeDescriptor.append(new AddressItem("arrayComponentTD: ", array.componentType));
+		}
+		
 		if(dbg) vrb.println("[LINKER] END: Creating type descriptor for array \"" + array.name +"\"\n");
 	}
 
