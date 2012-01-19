@@ -15,7 +15,7 @@ public class SSA06 extends TestSSA {
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T06Operators" };
 		Configuration.parseAndCreateConfig(config[0], config[1]);
 		try {
-			Class.buildSystem(rootClassNames,Configuration.getSearchPaths(),null, (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));} catch (IOException e) {
+			Class.buildSystem(rootClassNames,Configuration.getSearchPaths(),Configuration.getSystemPrimitives(), (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.config.Configuration;
 
 /**
  * - create and test CFG<br>
@@ -18,8 +19,9 @@ public class CFG00 extends TestCFG implements ICclassFileConsts {
 	public static void setUp() {
 		String workspace =System.getProperty("user.dir")+ "/bin";
 		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T00EmptyClass" };
+		Configuration.parseAndCreateConfig(config[0], config[1]);
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},null, (1 << atxCode)
+			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},Configuration.getSystemPrimitives(), (1 << atxCode)
 					| (1 << atxLocalVariableTable)
 					| (1 << atxLineNumberTable)
 					| (1 << atxExceptions));

@@ -1,0 +1,12 @@
+#deep-0
+
+meta {
+	version = "2010-12-02";
+	description = "Project File for jUnit Test";
+	import = "config/ntbMpc555STS.deep", "config/ntbMpc555HB.deep";
+}
+
+project {
+	libpath = "M:/EUser/JCC/bsp";
+	rootclasses = "";
+}
