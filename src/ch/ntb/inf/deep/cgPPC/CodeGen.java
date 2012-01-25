@@ -31,7 +31,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
-public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts {
+public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
 	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
@@ -401,7 +401,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			SSAValue res = instr.result;
 			instr.machineCodeOffset = iCount;
 			
-//			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
+			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + instr.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -455,7 +455,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 							createIrDrAd(ppcLfd, res.reg, res.regAux1, 0);
 						}
 						break;
-					case tRef:
+					case tRef: case tAbyte: case tAshort: case tAchar: case tAinteger:
+					case tAlong: case tAfloat: case tAdouble: case tAboolean: case tAref:
 						if (res.constant == null) // object = null
 							loadConstant(0, dReg);
 						else	// ref to constant string
@@ -1820,20 +1821,105 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 				MonadicRef ref = (MonadicRef)instr;
 				Type t = (Type)ref.item;
-				if (t instanceof Class) offset = ((Class)t).extensionLevel;
-				else offset = 1;	// object is an array
-				createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
-				createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
-				createIrDrAsimm(ppcAddi, res.reg, 0, 0);
-				createIBOBIBD(ppcBc, BOalways, 4*CRF0, 7);	// jump to end
-				// label 1
-				createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
-				createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
-				loadConstantAndFixup(res.regAux1, t);	// addr of type
-				createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
-				createIrD(ppcMfcr, res.reg);
-				createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+				if (t.category == tcRef) {	// object is regular class
+					offset = ((Class)t).extensionLevel;
+					createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+					createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+					createIBOBIBD(ppcBc, BOalways, 4*CRF0, 7);	// jump to end
+					// label 1
+					createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);
+					createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);
+					loadConstantAndFixup(res.regAux1, t);	// addr of type
+					createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
+					createIrD(ppcMfcr, res.reg);
+					createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+				} else {	// object is an array
+					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
+						int nofDim = ((Array)t).dimension;
+						// test if not null
+						Item firstDimArray = Class.arrayClasses.getItemByName(tcArray + ((Array)t).componentType.name.toString());
+//						System.out.println("aaaaa: " + firstDimArray.name);
+//						System.out.println("aaaaa: " + nofDim);
+					} else {	// array of regular class
+						offset = ((Class)(((Array)t).componentType)).extensionLevel;
+					}
+					offset = 1;	
+				}
 				break;
+//				opds = instr.getOperands();
+//				sReg1 = opds[0].reg;
+//
+//				MonadicRef ref = (MonadicRef)instr;
+//				Type t = (Type)ref.item;
+//				if (t.category == tcRef) {	// object is regular class
+//					offset = ((Class)t).extensionLevel;
+//					createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+//					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+//					createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+//					createIBOBIBD(ppcBc, BOalways, 4*CRF0, 8);	// jump to end
+//					// label 1
+//					createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);	// get tag
+//					createIrDrAd(ppcLwz, 0, res.regAux1, 8 + offset * 4);	// get type
+//					loadConstantAndFixup(res.regAux1, t);	// addr of type
+//					createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
+//					createIrD(ppcMfcr, res.reg);
+//					createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+//				} else {	// object is an array
+//					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
+//						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+//						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+//						createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+//						createIBOBIBD(ppcBc, BOalways, 4*CRF0, 7);	// jump to end
+//						// label 1
+//						createIrDrAd(ppcLwz, 0, sReg1, -4);	
+//						loadConstantAndFixup(res.regAux1, t);	// addr of type
+//						createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
+//						createIrD(ppcMfcr, res.reg);
+//						createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+//					} else {	// array of regular class
+//						offset = ((Class)(((Array)t).componentType)).extensionLevel;
+//						int nofDim = ((Array)t).dimension;
+////						System.out.println("bbbbb name " + (tcArray + ((Array)t).componentType.name.toString()));
+////						Item firstDimArray = Class.arrayClasses.getItemByName(tcArray + ((Array)t).componentType.name.toString());
+////						System.out.println("aaaaa: " + firstDimArray.name);
+//						System.out.println("aaaaa: nofDim = " + nofDim);
+//						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+//						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+//						createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+//						createIBOBIBD(ppcBc, BOalways, 4*CRF0, 8 + 7 * (nofDim-1));	// jump to end
+//						// label 1
+//						createIrDrAd(ppcLwz, res.regAux1, sReg1, -4);	// get tag
+//						createIrDrAd(ppcLwz, 0, res.regAux1, 0);	// get array desc entry 0
+//						for (int n = 1; n < nofDim; n++) {
+//							createICRFrAsimm(ppcCmpi, CRF0, 0, 0);	// test array bit
+//							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 3);	// jump to label 2
+//							createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+//							createIBOBIBD(ppcBc, BOalways, 4*CRF0, 8 + 7 * (nofDim-2));	// jump to end
+//							// label 2
+////							createIrArSrB(ppcOr, res.regAux1, 0, 0);
+//							createIrDrAd(ppcLwz, res.regAux1, res.regAux1, 4);	
+//							createIrDrAd(ppcLwz, 0, res.regAux1, 0);
+//							createIBOBIBD(ppcBc, BOalways, 4*CRF0, 0);	// jump to end
+//						}
+//						loadConstantAndFixup(res.regAux1, t);	// addr of type
+//						createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
+//						createIrD(ppcMfcr, res.reg);
+//						createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+//
+////						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);
+////						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+////						createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+////						createIBOBIBD(ppcBc, BOalways, 4*CRF0, 6);	// jump to end
+////						// label 1
+////						createIrDrAd(ppcLwz, 0, sReg1, -4);	
+////						loadConstantAndFixup(res.regAux1, t);	// addr of type
+////						createICRFrArB(ppcCmpl, CRF0, 0, res.regAux1);
+////						createIrD(ppcMfcr, res.reg);
+////						createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+//					}
+//				}
+//				break;
 			case sCalength:
 				opds = instr.getOperands();
 				refReg = opds[0].reg;

@@ -205,6 +205,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAInstruction instr = instrs[i];
 //				instr.print(2);
 			if (instr.ssaOpcode == sCPhiFunc) {
+//				StdStreams.vrb.print("processing: "); instr.print(0);
 				PhiFunction phi = (PhiFunction)instr;
 				if (phi.deleted && !phi.used) continue;
 				SSAValue[] opds = instr.getOperands();
@@ -226,22 +227,27 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					joinVal.end = res.end;
 					joinVal.type = res.type;
 				} else {
-//						StdStreams.vrb.println("res: " + res.start + " to " + res.end);
-//						StdStreams.vrb.println("joinVal: " + joinVal.start + " to " + joinVal.end);
+//					StdStreams.vrb.println("\tjoin val exists for index: " + res.index + " res: " + res.start + " to " + res.end + " joinVal: " + joinVal.start + " to " + joinVal.end);
 					if (res.start <= joinVal.end) { // does range overlap with current join?
-//						StdStreams.vrb.println("joinVal overlaps");
-						SSAValue prevJoin = joins[res.index];
-						while (prevJoin.next != null && prevJoin.next.next != null) prevJoin = prevJoin.next;
-						if (res.start <= prevJoin.end && prevJoin != joinVal) { // does range overlap with previous join, then merge
-//							StdStreams.vrb.println("merge joins: prevJoin:" + prevJoin.start + " to " + prevJoin.end + ", join:" + joinVal.start + " to " + joinVal.end);
-							assert prevJoin.next == joinVal; 
-							res.join = prevJoin;
-							prevJoin.next = null;
-							for (int k = 0; k < nofInstructions; k++) {
-								if (instrs[k].ssaOpcode == sCPhiFunc && instrs[k].result.join == joinVal) 
-									instrs[k].result.join = prevJoin;
+//						StdStreams.vrb.println("\t\tjoinVal overlaps");
+						// it could even overlap with previous joins
+						SSAValue join = joins[res.index]; 
+						while (join.next != null) {
+							if (res.start <= join.end) { // does range overlap with previous join, then merge
+//								StdStreams.vrb.println("\t\tmerge joins: prevJoin:" + join.start + " to " + join.end);
+								res.join = join;
+								SSAValue ptr = join.next;
+								while (ptr != null) {
+									for (int k = 0; k < nofInstructions; k++) {
+										if (instrs[k].ssaOpcode == sCPhiFunc && instrs[k].result.join == ptr) 
+											instrs[k].result.join = join;
+									}						
+									ptr = ptr.next;
+								}
+								join.next = null;
+								joinVal = join;
 							}
-							joinVal = prevJoin;
+							if (join.next != null) join = join.next;
 						}
 						if (res.start < joinVal.start) joinVal.start = res.start;
 						if (res.end > joinVal.end) joinVal.end = res.end;
