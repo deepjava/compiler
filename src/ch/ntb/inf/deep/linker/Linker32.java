@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -364,18 +364,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		// Extentsion level
 		array.typeDescriptor = new FixedValueItem("extensionLevel", 1); // the base type of an array is always object!
 		
-		// Array dimension and component size
-		array.typeDescriptor.append(new FixedValueItem("dimension/size", ((1 << 31) | array.dimension << 16) | (array.componentType.sizeInBits / 8)));
+		// Array dimension, component size and array type flag
+		byte arrayOfPrimitives = 0;
+		if(array.componentType.category == tcPrimitive) arrayOfPrimitives = 1;
+		array.typeDescriptor.append(new FixedValueItem("dimension/size", ((arrayOfPrimitives << 31) | array.dimension << 16) | (array.componentType.sizeInBits / 8)));
 		
 		// Array name address
 		array.typeDescriptor.append(new FixedValueItem("arrayNameAddr", 0x12345678));
-		
-		// Base class address
-		array.typeDescriptor.append(new AddressItem("baseClass: ", Type.wktObject)); // the base type of an array is always object!
-		
-		// Address of this type descriptor itself
-		//array.typeDescriptor.append(new AddressItem("this: ", array)); // address of own type descriptor
-		
+				
 		// List of type descriptors of arrays with the same component type
 		String arrayName; Item lowDimArray;
 		for(int i = array.dimension; i > 0; i--) {
@@ -386,12 +382,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 			else {
 				array.typeDescriptor.append(new FixedValueItem("arrayTD[" + i + "]: <not available> (" + arrayName + ")", -1));
+				// TODO @Martin: insert warning or error!
 			}
 		}
 		
 		// Component type
 		if(array.componentType.category == tcPrimitive) {
-			array.typeDescriptor.append(new FixedValueItem("arrayComponentTD: <primitive> (" + array.componentType.name + ")", -1));
+			array.typeDescriptor.append(new FixedValueItem("arrayComponentTD: <primitive> (" + array.componentType.name + ")", 0));
 		}
 		else {
 			array.typeDescriptor.append(new AddressItem("arrayComponentTD: ", array.componentType));
