@@ -2686,8 +2686,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				SSAValue[] opnd = { value1 };
 				if (owner.cfg.method.owner.constPool[val] instanceof Type) { // TODO @Martin: improve the lookup of the array reference
 					Item arrayRef = Type.classList.getItemByName("[L" + owner.cfg.method.owner.constPool[val].name.toString() + ";");
-					if(arrayRef != null) instr = new Call(sCnew,	(Type)arrayRef, opnd);
-					else instr = new Call(sCnew, ((Type)owner.cfg.method.owner.constPool[val]), opnd);
+					instr = new Call(sCnew,	(Type)arrayRef, opnd);
+//					if(arrayRef != null) instr = new Call(sCnew,	(Type)arrayRef, opnd);
+//					else instr = new Call(sCnew, ((Type)owner.cfg.method.owner.constPool[val]), opnd);
 				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in anewarray";
