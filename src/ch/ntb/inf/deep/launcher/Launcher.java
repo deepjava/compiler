@@ -178,6 +178,8 @@ public class Launcher implements ICclassFileConsts {
 				}
 			}
 
+			Linker32.calculateAbsoluteAddressesForCompSpecificMethods();
+			
 			// Create global constant table
 			if(dbg) vrb.println("Creating global constant table");
 			Linker32.createGlobalConstantTable();

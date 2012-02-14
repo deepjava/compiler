@@ -104,14 +104,26 @@ public class Method extends ClassMember {
 		return maxStackSlots;
 	}
 
-	public static Method getCompSpecMethod(HString name) {
+	public static Method createCompSpecMethod(String jname) {
 		Method m = null;
+		Method list = compSpecMethods;
 		if(compSpecMethods != null) {
-			m = (Method)compSpecMethods.getItemByName(name);
+			m = (Method)compSpecMethods.getItemByName(jname);
 		}
 		if(m == null) { // method doesn't exist -> create it
+			HString name = HString.getHString(jname);
+			name.register();
 			compSpecMethods = new Method(name);
+			if(list != null) compSpecMethods.next = list;
 			m = compSpecMethods;
+		}
+		return m;
+	}
+	
+	public static Method getCompSpecMethod(String jname) {
+		Method m = null;
+		if(compSpecMethods != null) {
+			m = (Method)compSpecMethods.getItemByName(jname);
 		}
 		return m;
 	}
@@ -198,5 +210,15 @@ public class Method extends ClassMember {
 
 	public void println(int indentLevel){
 		print(indentLevel);  vrb.println();
+	}
+	
+	public static void printCompSpecificMethods() {
+		Method m = compSpecMethods;
+		while(m != null) {
+			vrb.println("Name:    " + m.name);
+			vrb.println("Offset:  " + m.offset);
+			vrb.println("Address: " + m.address);
+			m = (Method)m.next;
+		}
 	}
 }

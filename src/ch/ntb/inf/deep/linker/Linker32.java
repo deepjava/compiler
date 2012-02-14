@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -246,7 +246,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(clazz.extMethTable.length > clazz.methTabLength) {
 			if(dbg) vrb.println("    - Inserting interface table");
 			int counter = clazz.methTabLength;
-			if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: " + clazz.extMethTable[counter].name);
+			if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: " + clazz.extMethTable[counter].name + " (Owner: " + clazz.extMethTable[counter].owner + ")");
 			AddressItem interfaceTable = new AddressItem(clazz.extMethTable[counter++]);
 			int id, bmo;
 			//vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
@@ -765,6 +765,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		array.address = array.segment.getBaseAddress() + array.offset + 4;
 	}
 	
+	public static void calculateAbsoluteAddressesForCompSpecificMethods() {
+		if(dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for compiler specific methods:\n");
+		Method m = Method.compSpecMethods;
+		while(m != null) {
+			m.address = compilerSpecificMethodsSegment.getBaseAddress() + compilerSpecificMethodsOffset;
+			if(dbg) vrb.print("    > " + m.name + ": Offset = 0x" + Integer.toHexString(m.offset) + ", Index = 0x" + Integer.toHexString(m.index) + ", Address = 0x" + Integer.toHexString(m.address) + "\n");
+			m = (Method)m.next;
+		}
+		if(dbg) vrb.println("\n[LINKER] END: Calculating absolute addresses for compiler specific methods.\n");
+	}
+	
 	public static void updateConstantBlock(Class clazz) {
 		if(dbg) vrb.println("[LINKER] START: Updating constant block for class \"" + clazz.name +"\":\n");
 
@@ -824,6 +835,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Proceeding global constant table:");
 		addTargetMemorySegment(new TargetMemorySegment(globalConstantTableSegment, globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable));
+		
+		if(dbg) vrb.println("  Proceeding compiler specific methods:");
+		Method csm = Method.compSpecMethods;
+		while(csm != null) {			
+			addTargetMemorySegment(new TargetMemorySegment(compilerSpecificMethodsSegment, csm.address, csm.machineCode.instructions, csm.machineCode.iCount));
+			csm = (Method)csm.next;
+		}
+		
 		
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}

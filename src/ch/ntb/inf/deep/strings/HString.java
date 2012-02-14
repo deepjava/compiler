@@ -191,6 +191,10 @@ if (testAssertion) {
 	public int length() {
 		return length;
 	}
+	
+	public void register() {
+		stab.insertCondAndGetEntry(this);
+	}
 
     /**
      * Returns the <code>char</code> value at the specified index.
