@@ -143,6 +143,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			
 		if(dbg) vrb.println("[LINKER] START: Preparing constant block for class \"" + clazz.name +"\":");
 
+		if(dbg) {
+			vrb.println("=== Extended Method Table ===");
+			for(int i = 0; i < clazz.extMethTable.length; i++) {
+				vrb.println("[" + i + "] Name = " + clazz.extMethTable[i].name + " Index = " + Integer.toHexString(clazz.extMethTable[i].index));
+			}
+			vrb.println("=============================");
+		}
+		
 		// Header
 		if(dbg) vrb.println("   Creating header");
 		clazz.constantBlock = new FixedValueItem("constBlockSize");
@@ -250,24 +258,29 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			AddressItem interfaceTable = new AddressItem(clazz.extMethTable[counter++]);
 			int id, bmo;
 			//vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
-			while(counter < clazz.extMethTable.length && (clazz.extMethTable[counter].index >>> 16) >= 0) {
-//				id = clazz.extMethTable[counter].index >>> 16;
-//				bmo = clazz.extMethTable[counter].index & 0xFFFF;
-//				if(bmo > clazz.methTabLength) {
-//					bmo = -bmo * 4; // TODO @Martin: fix offset (bmo = -(maxExtensionLevelStdClass + 4 + ifaceTabLength + 4 * bmo)) 
-//				}
-//				else {
-//					bmo = tdMethTabOffset + bmo * 4;
-//				}
-				id = 0;
-				bmo = 0;
-				if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: ID = " + id + "; bmo = " + bmo);
-				interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].owner.name, (short)id, (short)bmo));
-				counter++;
+			
+			if (counter < clazz.extMethTable.length)
+			{
+				do {
+					id = clazz.extMethTable[counter].index >>> 16;
+					bmo = clazz.extMethTable[counter].index & 0xFFFF;
+					if(bmo > clazz.methTabLength) {
+						bmo = 8 + typeTableLength + (clazz.nofInterfaces + bmo - clazz.methTabLength) * 4; // TODO @Martin: fix offset (only interfaces with methods should be honored) 
+					}
+					else {
+						bmo = -(tdMethTabOffset + bmo * 4);
+					}
+					if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: ID = " + id + "; bmo = " + bmo);
+					interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].owner.name, (short)id, (short)bmo));
+				}
+				while ((clazz.extMethTable[counter++].index >>> 16) > 0);
+
+				while(counter < clazz.extMethTable.length) {
+					if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: Method = " + clazz.extMethTable[counter].name);
+					interfaceTable.append(new AddressItem(clazz.extMethTable[counter++]));
+				}
 			}
-			while(counter < clazz.extMethTable.length) {
-				interfaceTable.append(new AddressItem(clazz.extMethTable[counter++]));
-			}
+			
 			clazz.typeDescriptor.append(interfaceTable.getHead());
 		}
 		

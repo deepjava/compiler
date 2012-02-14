@@ -60,7 +60,7 @@ public class InterfaceItem extends BlockItem {
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", this.ifaceID << 16 & this.bmo) + " (" + name + ")";
+		return String.format("[%08X]", (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF)) + " (" + name + ")";
 	}
 
 }
