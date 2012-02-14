@@ -74,7 +74,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int tdConstantSize = 3 * 4;
 	public static final int tblkConstantSize = 8 * 4;
 	//public static final int tdSizeForArrays = 5 * 4;
-	public static int typeTableLenth = -1; // in byte!
+	public static int typeTableLength = -1; // in byte!
 	
 	// System table:
 	public static final int stStackOffset = 1 * 4;
@@ -239,7 +239,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				typeTable.getTail().insertAfter(new FixedValueItem("padding", 0));
 			}
 		}
-		typeTableLenth = typeTable.getBlockSize();
+		typeTableLength = typeTable.getBlockSize();
 		clazz.typeDescriptor.append(typeTable.getHead());
 		
 		// Type descriptor: add interface table
@@ -362,8 +362,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.typeDescriptorOffset = offset;
 		
 		if(imDelegOffset < 0) {
-			imDelegOffset = 4 + typeTableLenth;
+			imDelegOffset = 8 + typeTableLength;
 		}
+		
+		if(dbg) {
+			if(imDelegOffset != 8 + typeTableLength) reporter.error(799, "imDelegOffset != 8 + typeTableLenth -> typeTableLength wrong?");
+		}
+		
 		
 		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
 	}
