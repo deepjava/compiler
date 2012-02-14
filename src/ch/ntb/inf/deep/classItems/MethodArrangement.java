@@ -22,9 +22,6 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 	private int nofInterfMethods;
 
 	private InterfaceList interfList;
-//	private Method imDelegNull;
-	private Method imDelegI1Mm;
-	private Method imDelegIiMm;
 
 	private int[] swapLog;
 	private int swapLogTop;
@@ -35,14 +32,6 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 		interfMethods = new Method[maxInterfMethTabLen];
 		interfList = new InterfaceList( );
 		swapLog = new int[maxInterfMethTabLen];
-		Item clsLowLevel = Type.classList.getItemByName("ch/ntb/inf/deep/lowLevel/LL"); // TODO @Martin: get name by configuration
-//		vrb.printf(" ../LL=%1$s\n", clsLowLevel.name);
-
-		Class lowLevel = (Class)clsLowLevel;
-		//imDelegNull = (Method)lowLevel.methods.getItemByName( "imDelegNull" );
-		imDelegI1Mm = (Method)lowLevel.methods.getItemByName( "imDelegI1Mm" );
-		imDelegIiMm  = (Method)lowLevel.methods.getItemByName( "imDelegIiMm" );
-//vrb.printf(" iMxy: iM1m=%1$s, iMim=%2$s\n", imDelegI1Mm.name, imDelegIiMm.name);
 	}
 
 	void clearInstMethodArray( int length ){
@@ -347,7 +336,7 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 						methTable[ mtIndex++ ] = instMethods[ baseIndex ];
 //if(trace)vrb.printf(" =generateMT 142: MTL=%1$d, TMTL=%2$d, baseIndex=%3$d\n", cls.methTabLength, totalMethTabLength, baseIndex);
 					}else if( interf.methTabLength > 1 ){// 1 interface with m methods (m>1)
-						methTable[ mtIndex++ ] = imDelegI1Mm;
+						methTable[ mtIndex++ ] = Method.getCompSpecMethod(HString.getHString("imDelegI1Mm")); // imDelegI1Mm
 						InterfaceTabEntry intfTabEntry;
 						if( baseIndex >= 0 ){
 //if(trace)vrb.printf(" =generateMT 146: mtIndex=%1$d, TMTL=%2$d, baseIndex=%3$d\n", mtIndex, totalMethTabLength, baseIndex);
@@ -372,7 +361,7 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 				}else{// i interfaces (i>1), each with m methods (m>=1)
 //if(trace)vrb.printf(" =generateMT 150: MTL=%1$d, TMTL=%2$d\n", cls.methTabLength, totalMethTabLength);
 					if(assertions) assert mtIndex == cls.methTabLength;
-					methTable[ mtIndex++ ] = imDelegIiMm;
+					methTable[ mtIndex++ ] = Method.getCompSpecMethod(HString.getHString("imDelegIiMm")); //imDelegIiMm;
 					int itIndex = mtIndex;
 					mtIndex += nofCallInterfaces;
 					InterfaceTabEntry intfTabEntry = null;

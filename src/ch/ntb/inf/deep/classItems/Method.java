@@ -27,6 +27,8 @@ import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Method extends ClassMember {
+	
+	public static Method compSpecMethods;
 
 	//--- instance fields
 	public HString methDescriptor;
@@ -102,6 +104,18 @@ public class Method extends ClassMember {
 		return maxStackSlots;
 	}
 
+	public static Method getCompSpecMethod(HString name) {
+		Method m = null;
+		if(compSpecMethods != null) {
+			m = (Method)compSpecMethods.getItemByName(name);
+		}
+		if(m == null) { // method doesn't exist -> create it
+			compSpecMethods = new Method(name);
+			m = compSpecMethods;
+		}
+		return m;
+	}
+	
 	//--- debug primitives
 	public void printItemCategory(){
 		vrb.print("meth");

@@ -92,11 +92,23 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return getSegmentOf(clazz, HString.getHString("var"));
 	}
 
-	public static Segment getDefaultConstSegment(){
+	public static Segment getDefaultCodeSegment() {
+		return getDefaultSegment(HString.getHString("code"));
+	}
+	
+	public static Segment getDefaultConstSegment() {
+		return getDefaultSegment(HString.getHString("const"));
+	}
+	
+	public static Segment getDefaultVarSegment() {
+		return getDefaultSegment(HString.getHString("var"));
+	}
+	
+	private static Segment getDefaultSegment(HString contentType){
 		Segment seg;
 		SegmentAssignment segAss = activeTarConf.getModuleByName(HString.getHString("default")).getSegmentAssignments();
 		while (segAss != null) {
-			if (segAss.contentAttribute.equals(HString.getHString("const"))) {
+			if (segAss.contentAttribute.equals(contentType)) {
 				String segDesignator = segAss.segmentDesignator.toString();
 				int index = segDesignator.indexOf('.');
 				// Determine Device name
@@ -130,9 +142,10 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 			segAss = segAss.next;
 		}
 
-		// default segment for const not set
+		// default segment for given content type not set
 		return null;
 	}
+	
 	private static Segment getSegmentOf(HString clazz, HString contentAttribute) {
 		Segment seg;
 		SegmentAssignment segAss = null;

@@ -138,6 +138,9 @@ public class Launcher implements ICclassFileConsts {
 				}
 			}
 
+			// calculate code size and offsets for compiler specific methods
+			Linker32.calculateCodeSizeAndOffsetsForCompilerSpecificMethods();
+			
 			// Linker: create system table and freeze memory map
 			if(reporter.nofErrors <= 0) {
 				if(dbg) vrb.println("Creating system table");

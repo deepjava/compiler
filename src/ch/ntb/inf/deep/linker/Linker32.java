@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -74,6 +74,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int tdConstantSize = 3 * 4;
 	public static final int tblkConstantSize = 8 * 4;
 	//public static final int tdSizeForArrays = 5 * 4;
+	public static int typeTableLenth = -1; // in byte!
 	
 	// System table:
 	public static final int stStackOffset = 1 * 4;
@@ -105,6 +106,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static int globalConstantTableOffset = -1;
 	private static Segment globalConstantTableSegment;
 	
+	// Compiler specific methods
+	private static int compilerSpecificMethodsCodeSize = 0;
+	private static int compilerSpecificMethodsOffset = -1;
+	private static Segment compilerSpecificMethodsSegment;
+	public static int imDelegOffset = -1;
+	
+	
 	public static void init() {
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
 		
@@ -124,7 +132,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		else {
 			reporter.error(702, "No segment(s) for the systemtable defined!");
 		}
-		
+				
 		if(dbg) vrb.println("  Deleting old target image... ");
 		targetImage = null;
 		
@@ -231,6 +239,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				typeTable.getTail().insertAfter(new FixedValueItem("padding", 0));
 			}
 		}
+		typeTableLenth = typeTable.getBlockSize();
 		clazz.typeDescriptor.append(typeTable.getHead());
 		
 		// Type descriptor: add interface table
@@ -351,7 +360,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			i = i.next;
 		}
 		clazz.typeDescriptorOffset = offset;
-				
+		
+		if(imDelegOffset < 0) {
+			imDelegOffset = 4 + typeTableLenth;
+		}
+		
 		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
 	}
 		
@@ -437,6 +450,23 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("    Total code size: " + codeSize + " byte");
 		
 		if(dbg) vrb.println("\n[LINKER] END: Calculating code size for class \"" + clazz.name +"\"\n");
+	}
+	
+	public static void calculateCodeSizeAndOffsetsForCompilerSpecificMethods() {
+		if(dbg) vrb.println("[LINKER] START: Calculating code size for compiler specific methods:\n");
+		Method m = Method.compSpecMethods;
+		int codeSize = 0; // machine code size for the hole class
+		while(m != null) {
+			if(m.machineCode != null) {
+				m.offset = codeSize;
+				codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
+				if(dbg) vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
+			}
+			m = (Method)m.next;
+		}
+		compilerSpecificMethodsCodeSize = codeSize;
+		if(dbg) vrb.println("    Total code size: " + codeSize + " byte");
+		if(dbg) vrb.println("\n[LINKER] END: Calculating code size for compiler specific methods\n");
 	}
 	
 	public static void createSystemTable() {
@@ -593,10 +623,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		else reporter.error(710, "No segment(s) defined for the system table!");
 		
-		s = Configuration.getDefaultConstSegment();
-		
 		if(dbg) vrb.println("  Proceeding global constant table");
-		
+		s = Configuration.getDefaultConstSegment();
 		if(s == null) reporter.error(710, "Can't get a memory segment for the global constant table!\n");
 		else {
 			if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, globalConstantTable.getBlockSize());
@@ -604,7 +632,18 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			s.addToUsedSize(globalConstantTable.getBlockSize());
 			globalConstantTableSegment = s;
 			if(dbg) vrb.println("    Segment for global constant table: " + globalConstantTableSegment.getName());
-		}	
+		}
+		
+		if(dbg) vrb.println("  Proceeding compiler specific methods");
+		s = Configuration.getDefaultConstSegment();
+		if(s == null) reporter.error(710, "Can't get a memory segment for the compiler specific methods!\n");
+		else {
+			if(s.subSegments != null) s = getFirstFittingSegment(s, atrCode, compilerSpecificMethodsCodeSize);
+			compilerSpecificMethodsOffset = roundUpToNextWord(s.getUsedSize());
+			s.addToUsedSize(compilerSpecificMethodsCodeSize);
+			compilerSpecificMethodsSegment = s;
+			if(dbg) vrb.println("    Segment for compiler specific methods: " + compilerSpecificMethodsSegment.getName());
+		}
 		
 		// 2) Check and set the size for each used segment
 		Device d = Configuration.getFirstDevice();
