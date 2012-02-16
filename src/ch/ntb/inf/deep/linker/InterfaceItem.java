@@ -53,7 +53,7 @@ public class InterfaceItem extends BlockItem {
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
-			a[index] = this.ifaceID << 16 & this.bmo;
+			a[index] = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
 			written = size;
 		}
 		return written;

@@ -110,7 +110,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static int compilerSpecificMethodsCodeSize = 0;
 	private static int compilerSpecificMethodsOffset = -1;
 	private static Segment compilerSpecificMethodsSegment;
-	public static int imDelegOffset = -1;
+	//public static int imDelegOffset = -1;
 	
 	
 	public static void init() {
@@ -235,15 +235,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 //			typeTable.append(new FixedValueItem("padding", 0));
 //			typeTableSize++;
 //		}
-		if(dbg) vrb.println("    - Inserting base classes");
+		if(dbg) vrb.println("    - Inserting base classes:");
 		Class baseClass = (Class)clazz.type;
 		AddressItem typeTable = new AddressItem(clazz);
 		for(int i = 0; i < Class.maxExtensionLevelStdClasses; i++) {
 			if(baseClass != null) {
+				if(dbg) vrb.println("      > " + baseClass.name);
 				typeTable.getHead().insertBefore(new AddressItem(baseClass));
 				baseClass = (Class)baseClass.type;
 			}
 			else {
+				if(dbg) vrb.println("      > 0 (padding)");
 				typeTable.getTail().insertAfter(new FixedValueItem("padding", 0));
 			}
 		}
@@ -374,13 +376,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		clazz.typeDescriptorOffset = offset;
 		
-		if(imDelegOffset < 0) {
-			imDelegOffset = 8 + typeTableLength;
-		}
-		
-		if(dbg) {
-			if(imDelegOffset != 8 + typeTableLength) reporter.error(799, "imDelegOffset != 8 + typeTableLenth -> typeTableLength wrong?");
-		}
+//		if(imDelegOffset < 0) {
+//			imDelegOffset = 8 + typeTableLength;
+//		}
+//		
+//		if(dbg) {
+//			if(imDelegOffset != 8 + typeTableLength) reporter.error(799, "imDelegOffset != 8 + typeTableLenth -> typeTableLength wrong?");
+//		}
 		
 		
 		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");

@@ -256,6 +256,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		if (dbg) {ssa.print(0); StdStreams.vrb.print(toString());}
 	}
 
+	public CodeGen() {
+		// TODO Auto-generated constructor stub
+	}
+
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
 		nofParamGPR = 0; nofParamFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
@@ -2018,10 +2022,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						}
 					} else if ((call.item.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						refReg = opds[0].reg;
-						offset = call.item.index; // stimmt nicht mehr
+						offset = (Class.maxExtensionLevelStdClasses + 1) * 4 + 8;
+System.out.println("maxExtensionLevelStdClasses = " + offset);
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regAux1, refReg, -4);
-						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, -offset);	// delegate method
+						createIrDrAd(ppcLwz, res.regAux1, res.regAux1, offset);	// delegate method
 						createIrSspr(ppcMtspr, LR, res.regAux1);
 					} else if (call.invokespecial) {	// invokespecial
 						if (newString) {	// special treatment for strings
@@ -2038,7 +2043,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						}
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
-//						offset = Linker.cdInterface0AddrOffset + ((Method)call.item).owner.nofInterfaces * Linker.slotSize; // TODO @ Urs implement this
 						offset = Linker32.tdMethTabOffset;
 						offset += call.item.index * Linker32.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -2053,7 +2057,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					
 					if ((call.item.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						// interface info goes into r0
-						loadConstant(0, 0x1111);	// interface id and method offset
+						loadConstant(0, ((Method)call.item).owner.index << 16 | (((Method)call.item).index * 4));	// interface id and method offset
+						System.out.println("Interface ID = " + ((Method)call.item).owner.index);
+						System.out.println("Interface-Method Index = " + ((Method)call.item).index);
 						// check if param = maxParam in reg -2
 					}
 					
@@ -3144,17 +3150,44 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			// invokevirtual, offset in Linker prüfen (siehe oben)
 			int regAux1 = paramEndGPR; // use parameter registers
 			int regAux2 = paramEndGPR - 1; // use parameter registers
+			int regAux3 = paramEndGPR - 2; // use parameter registers
 			
-			// imDelegI1Mm
-//			createIrDrAd(ppcLwz, regAux1, paramStartGPR, -4);	// get tag
-//			createIrDrAd(ppcLwz, regAux1, regAux1, offset + Linker32.slotSize);	// get interface
-//			createIrArSuimm(ppcAndi, 0, 0, 0xffff);	// mask method number
-//			createIrDrArB(ppcLwzx, 0, regAux1, 0);
+			Method m = Method.getCompSpecMethod("imDelegI1Mm");
+//				System.out.println("bbbb");
+			if (m != null) { 
+				m.machineCode = new CodeGen();
+				// imDelegI1Mm
+				m.machineCode.instructions = new int[16];
+				m.machineCode.iCount = 0;
+//				m.machineCode.createIrArSuimm(ppcAddi, 10, 0, 0x1234);	
+				m.machineCode.createIrDrAd(ppcLwz, regAux1, paramStartGPR, -4);	// get tag
+				m.machineCode.createIrDrAd(ppcLwz, regAux2, regAux1, (Class.maxExtensionLevelStdClasses + 1) * 4 + 8 + 4);	// get interface
+				m.machineCode.createIrArS(ppcExtsh, regAux2, regAux2);
+				m.machineCode.createIrArSuimm(ppcAndi, 0, 0, 0xffff);	// mask method number
+//				m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0, 0);
+				m.machineCode.createIrDrArB(ppcAdd, regAux2, regAux2, 0);	
+//				m.machineCode.createIrArSSHMBME(ppcRlwinm, 0, 0, 2, 0, 31);
+				m.machineCode.createIrDrArB(ppcLwzx, 0, regAux1, regAux2);
+				m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
+//				m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0, 0);				
+				m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
+//				System.out.println(("aaaa" + m.machineCode.iCount));
+			}
+			
+			// imDelegIiMm
+//			createIrArSuimm(ppcOri, regAux1, 0, 0xffff);
+//			createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
+//			createIrDrAsimm(ppcAddi, regAux2, regAux2, imo);
+//			createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);
+//			createIrDrAd(ppcLwz, regAux3, regAux2, 0);	
+//			createICRFrArB(ppcCmpl, CRF0, regAux3, regAux1);
+//			createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);	
+//			createIrArSuimm(ppcAndis, regAux3, regAux3, 0);	
+//			createIrDrArB(ppcAdd, regAux2, regAux2, regAux3);
+//			createIrArSuimm(ppcAndis, 0, 0, 0);		
+//			createIrDrArB(ppcLwzx, 0, regAux2, 0);
 //			createIrSspr(ppcMtspr, LR, 0);
-//			createIBOBILK(ppcBclr, BOalways, 0, false);
-//			
-//			// imDelegIiMm
-//			siehe Notizen
+//			createIBOBILK(ppcBclr, BOalways, 0, false);	// no linking
 		}
 	}
 

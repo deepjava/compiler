@@ -183,6 +183,7 @@ interface InstructionOpcs {
 		ppcB = (0x12 << 26),
 		ppcBl = (0x12 << 26) | 1,
 		ppcBc = (0x10 << 26),
+		ppcBcctr = (0x13 << 26) | (0x210 << 1),
 		ppcBclr = (0x13 << 26) | (0x10 << 1),
 		ppcCmp = (0x1f << 26),
 		ppcCmpi = (0x0b << 26),
