@@ -3147,14 +3147,15 @@ System.out.println("maxExtensionLevelStdClasses = " + offset);
 		}
 		
 		if (true) {
-			// invokevirtual, offset in Linker prüfen (siehe oben)
+			// invokevirtual, offset in Linker pruefen (siehe oben)
 			int regAux1 = paramEndGPR; // use parameter registers
 			int regAux2 = paramEndGPR - 1; // use parameter registers
 			int regAux3 = paramEndGPR - 2; // use parameter registers
 			
-			Method m = Method.getCompSpecMethod("imDelegI1Mm");
+			Method m = Method.getCompSpecSubroutine("imDelegI1Mm");
 //				System.out.println("bbbb");
 			if (m != null) { 
+				/*if(dbg)*/ StdStreams.vrb.println("[CG] Init: imDelegI1Mm in use, genarating machine code");
 				m.machineCode = new CodeGen();
 				// imDelegI1Mm
 				m.machineCode.instructions = new int[16];
@@ -3172,6 +3173,17 @@ System.out.println("maxExtensionLevelStdClasses = " + offset);
 //				m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0, 0);				
 				m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
 //				System.out.println(("aaaa" + m.machineCode.iCount));
+			}
+			else {
+				/*if(dbg)*/ StdStreams.vrb.println("[CG] Init: imDelegI1Mm not used, nothing to do...");
+			}
+			
+			m = Method.getCompSpecSubroutine("imDelegIiMm");
+			if (m != null) {
+				/*if(dbg)*/ StdStreams.vrb.println("[CG] Init: imDelegIiMm in use, genarating machine code");
+			}
+			else {
+				/*if(dbg)*/ StdStreams.vrb.println("[CG] Init: imDelegIiMm not used, nothing to do...");
 			}
 			
 			// imDelegIiMm

@@ -28,7 +28,7 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Method extends ClassMember {
 	
-	public static Method compSpecMethods;
+	public static Method compSpecSubroutines;
 
 	//--- instance fields
 	public HString methDescriptor;
@@ -104,26 +104,44 @@ public class Method extends ClassMember {
 		return maxStackSlots;
 	}
 
-	public static Method createCompSpecMethod(String jname) {
+	public static Method createCompSpecSubroutine(String jname) {
 		Method m = null;
-		Method list = compSpecMethods;
-		if(compSpecMethods != null) {
-			m = (Method)compSpecMethods.getItemByName(jname);
+		Method list = compSpecSubroutines;
+		
+		//System.out.println("******* " + jname + " *******");
+		//System.out.println("1A-------------------------");
+		//printCompSpecificSubroutines();
+		//System.out.println("1E-------------------------");
+		
+		System.out.println(">>> Looking for: " + jname);
+		if(list != null) {
+			m = (Method)compSpecSubroutines.getItemByName(jname);
 		}
 		if(m == null) { // method doesn't exist -> create it
+			System.out.println("    Not found, creating: " + jname);
 			HString name = HString.getHString(jname);
 			name.register();
-			compSpecMethods = new Method(name);
-			if(list != null) compSpecMethods.next = list;
-			m = compSpecMethods;
+			compSpecSubroutines = new Method(name);
+			if(list != null) compSpecSubroutines.next = list;
+			m = compSpecSubroutines;
 		}
+		else {
+			System.out.println("    Found, nothing to do");
+		}
+		
+		//System.out.println("2A-------------------------");
+		//printCompSpecificSubroutines();
+		//System.out.println("2E-------------------------");
+		//System.out.println("***************************");
+		
+		
 		return m;
 	}
 	
-	public static Method getCompSpecMethod(String jname) {
+	public static Method getCompSpecSubroutine(String jname) {
 		Method m = null;
-		if(compSpecMethods != null) {
-			m = (Method)compSpecMethods.getItemByName(jname);
+		if(compSpecSubroutines != null) {
+			m = (Method)compSpecSubroutines.getItemByName(jname);
 		}
 		return m;
 	}
@@ -212,8 +230,8 @@ public class Method extends ClassMember {
 		print(indentLevel);  vrb.println();
 	}
 	
-	public static void printCompSpecificMethods() {
-		Method m = compSpecMethods;
+	public static void printCompSpecificSubroutines() {
+		Method m = compSpecSubroutines;
 		while(m != null) {
 			vrb.println("Name:    " + m.name);
 			vrb.println("Offset:  " + m.offset);

@@ -1343,7 +1343,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 
 	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
 		errRep.nofErrors = 0;
-		Method.compSpecMethods = null; // /TODO move this to init function?
+		Method.compSpecSubroutines = null; // /TODO move this to init function?
 		ClassFileAdmin.registerParentDirs(parentDirsOfClassFiles);
 		
 		int nofRootClasses = rootClassNames.length;

@@ -336,7 +336,7 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 						methTable[ mtIndex++ ] = instMethods[ baseIndex ];
 //if(trace)vrb.printf(" =generateMT 142: MTL=%1$d, TMTL=%2$d, baseIndex=%3$d\n", cls.methTabLength, totalMethTabLength, baseIndex);
 					}else if( interf.methTabLength > 1 ){// 1 interface with m methods (m>1)
-						methTable[ mtIndex++ ] = Method.createCompSpecMethod("imDelegI1Mm"); // imDelegI1Mm
+						methTable[ mtIndex++ ] = Method.createCompSpecSubroutine("imDelegI1Mm"); // imDelegI1Mm
 						InterfaceTabEntry intfTabEntry;
 						if( baseIndex >= 0 ){
 //if(trace)vrb.printf(" =generateMT 146: mtIndex=%1$d, TMTL=%2$d, baseIndex=%3$d\n", mtIndex, totalMethTabLength, baseIndex);
@@ -361,7 +361,7 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 				}else{// i interfaces (i>1), each with m methods (m>=1)
 //if(trace)vrb.printf(" =generateMT 150: MTL=%1$d, TMTL=%2$d\n", cls.methTabLength, totalMethTabLength);
 					if(assertions) assert mtIndex == cls.methTabLength;
-					methTable[ mtIndex++ ] = Method.createCompSpecMethod("imDelegIiMm"); //imDelegIiMm;
+					methTable[ mtIndex++ ] = Method.createCompSpecSubroutine("imDelegIiMm"); //imDelegIiMm;
 					int itIndex = mtIndex;
 					mtIndex += nofCallInterfaces;
 					InterfaceTabEntry intfTabEntry = null;

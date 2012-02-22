@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -109,7 +109,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	// Compiler specific methods
 	private static int compilerSpecificMethodsCodeSize = 0;
 	private static int compilerSpecificMethodsOffset = -1;
-	private static Segment compilerSpecificMethodsSegment;
+	private static Segment compilerSpecSubroutinesSegment;
 	//public static int imDelegOffset = -1;
 	
 	
@@ -274,8 +274,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					}
 					if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: ID = " + id + "; bmo = " + bmo);
 					interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].owner.name, (short)id, (short)bmo));
-				}
-				while ((clazz.extMethTable[counter++].index >>> 16) > 0);
+				} while ((clazz.extMethTable[counter++].index >>> 16) > 0);
 
 				while(counter < clazz.extMethTable.length) {
 					if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: Method = " + clazz.extMethTable[counter].name);
@@ -474,7 +473,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 	public static void calculateCodeSizeAndOffsetsForCompilerSpecificMethods() {
 		if(dbg) vrb.println("[LINKER] START: Calculating code size for compiler specific methods:\n");
-		Method m = Method.compSpecMethods;
+		Method m = Method.compSpecSubroutines;
 		int codeSize = 0; // machine code size for the hole class
 		while(m != null) {
 			if(m.machineCode != null) {
@@ -661,8 +660,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(s.subSegments != null) s = getFirstFittingSegment(s, atrCode, compilerSpecificMethodsCodeSize);
 			compilerSpecificMethodsOffset = roundUpToNextWord(s.getUsedSize());
 			s.addToUsedSize(compilerSpecificMethodsCodeSize);
-			compilerSpecificMethodsSegment = s;
-			if(dbg) vrb.println("    Segment for compiler specific methods: " + compilerSpecificMethodsSegment.getName());
+			compilerSpecSubroutinesSegment = s;
+			if(dbg) vrb.println("    Segment for compiler specific methods: " + compilerSpecSubroutinesSegment.getName());
 		}
 		
 		// 2) Check and set the size for each used segment
@@ -782,9 +781,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 	public static void calculateAbsoluteAddressesForCompSpecificMethods() {
 		if(dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for compiler specific methods:\n");
-		Method m = Method.compSpecMethods;
+		Method m = Method.compSpecSubroutines;
 		while(m != null) {
-			m.address = compilerSpecificMethodsSegment.getBaseAddress() + compilerSpecificMethodsOffset;
+			m.address = compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset;
 			if(dbg) vrb.print("    > " + m.name + ": Offset = 0x" + Integer.toHexString(m.offset) + ", Index = 0x" + Integer.toHexString(m.index) + ", Address = 0x" + Integer.toHexString(m.address) + "\n");
 			m = (Method)m.next;
 		}
@@ -852,10 +851,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		addTargetMemorySegment(new TargetMemorySegment(globalConstantTableSegment, globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable));
 		
 		if(dbg) vrb.println("  Proceeding compiler specific methods:");
-		Method csm = Method.compSpecMethods;
-		while(csm != null) {			
-			addTargetMemorySegment(new TargetMemorySegment(compilerSpecificMethodsSegment, csm.address, csm.machineCode.instructions, csm.machineCode.iCount));
-			csm = (Method)csm.next;
+		Method cssr = Method.compSpecSubroutines;
+		while(cssr != null) {
+			if(cssr.machineCode != null) {				
+				addTargetMemorySegment(new TargetMemorySegment(compilerSpecSubroutinesSegment, cssr.address, cssr.machineCode.instructions, cssr.machineCode.iCount));
+			}
+			else {
+				reporter.error(750, "of compiler specific subroutine: " + cssr.name);
+			}
+			cssr = (Method)cssr.next;
 		}
 		
 		
