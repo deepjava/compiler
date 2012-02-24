@@ -105,12 +105,11 @@ public class Method extends ClassMember {
 	}
 
 	public static Method createCompSpecSubroutine(String jname) {
-		HString name = HString.getHString(jname);
+		HString name = HString.getRegisteredHString(jname);
 		Method m = null;
 		if (compSpecSubroutines == null) {
 			System.out.println(">>> create first subroutine: " + jname);
 			m = new Method(name);
-			name.register();
 			compSpecSubroutines = m;
 			System.out.println(">>> done ");
 		} else {

@@ -137,6 +137,19 @@ public abstract class HString implements IhStringConsts {
 		return hstring;
 	}
 
+	public static HString getRegisteredHString(String string) {
+		if(string == null) return null;
+		int length = string.length();
+		if (length > charBuffer.length)  charBuffer = new char[length];
+		string.getChars(0, length, charBuffer, 0);
+		HString hstring;
+		if ( isH8CharArray(charBuffer, length) )
+			hstring = new H8String(charBuffer, length);
+		else
+			hstring = new H16String(charBuffer, length);
+		return stab.insertCondAndGetEntry(hstring);
+	}
+	
 	public static int readUTF(DataInput classFileInput) throws IOException {// DataInputStream
 		int utfLength = classFileInput.readUnsignedShort();
 		if (utfLength > byteBuffer.length) {
@@ -192,9 +205,9 @@ if (testAssertion) {
 		return length;
 	}
 	
-	public void register() {
-		stab.insertCondAndGetEntry(this);
-	}
+//	public HString register() {
+//		return stab.insertCondAndGetEntry(this);
+//	}
 
     /**
      * Returns the <code>char</code> value at the specified index.

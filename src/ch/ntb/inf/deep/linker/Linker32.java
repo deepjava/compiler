@@ -471,10 +471,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("\n[LINKER] END: Calculating code size for class \"" + clazz.name +"\"\n");
 	}
 	
-	public static void calculateCodeSizeAndOffsetsForCompilerSpecificMethods() {
+	public static void calculateCodeSizeAndOffsetsForCompilerSpecSubroutines() {
 		if(dbg) vrb.println("[LINKER] START: Calculating code size for compiler specific methods:\n");
 		Method m = Method.compSpecSubroutines;
-		int codeSize = 0; // machine code size for the hole class
+		int codeSize = 0; // machine code size for all compiler specific subroutines
 		while(m != null) {
 			if(m.machineCode != null) {
 				m.offset = codeSize;
@@ -779,11 +779,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		array.address = array.segment.getBaseAddress() + array.offset + 4;
 	}
 	
-	public static void calculateAbsoluteAddressesForCompSpecificMethods() {
+	public static void calculateAbsoluteAddressesForCompSpecSubroutines() {
 		if(dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for compiler specific methods:\n");
 		Method m = Method.compSpecSubroutines;
 		while(m != null) {
-			m.address = compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset;
+			m.address = compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset + m.offset;
 			if(dbg) vrb.print("    > " + m.name + ": Offset = 0x" + Integer.toHexString(m.offset) + ", Index = 0x" + Integer.toHexString(m.index) + ", Address = 0x" + Integer.toHexString(m.address) + "\n");
 			m = (Method)m.next;
 		}
