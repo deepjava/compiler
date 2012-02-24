@@ -105,44 +105,40 @@ public class Method extends ClassMember {
 	}
 
 	public static Method createCompSpecSubroutine(String jname) {
+		HString name = HString.getHString(jname);
 		Method m = null;
-		Method list = compSpecSubroutines;
-		
-		//System.out.println("******* " + jname + " *******");
-		//System.out.println("1A-------------------------");
-		//printCompSpecificSubroutines();
-		//System.out.println("1E-------------------------");
-		
-		System.out.println(">>> Looking for: " + jname);
-		if(list != null) {
-			m = (Method)compSpecSubroutines.getItemByName(jname);
-		}
-		if(m == null) { // method doesn't exist -> create it
-			System.out.println("    Not found, creating: " + jname);
-			HString name = HString.getHString(jname);
+		if (compSpecSubroutines == null) {
+			System.out.println(">>> create first subroutine: " + jname);
+			m = new Method(name);
 			name.register();
-			compSpecSubroutines = new Method(name);
-			if(list != null) compSpecSubroutines.next = list;
+			compSpecSubroutines = m;
+			System.out.println(">>> done ");
+		} else {
+//			m = (Method)compSpecSubroutines.getItemByName(jname);
 			m = compSpecSubroutines;
-		}
-		else {
-			System.out.println("    Found, nothing to do");
-		}
-		
-		//System.out.println("2A-------------------------");
-		//printCompSpecificSubroutines();
-		//System.out.println("2E-------------------------");
-		//System.out.println("***************************");
-		
-		
+			while(m != null && !m.name.equals(name)) m = (Method) m.next; 
+			if(m == null) { // method doesn't exist -> create it
+				System.out.println(">>> not found, creating: " + jname);
+				m = new Method(name);
+//				name.register();
+				m.next = compSpecSubroutines;
+				compSpecSubroutines = m;
+			} else {
+				System.out.println(">>> found: " + jname + " nothing to do");
+			}
+			System.out.println(">>> done ");
+		}		
 		return m;
 	}
 	
 	public static Method getCompSpecSubroutine(String jname) {
+		HString name = HString.getHString(jname);
 		Method m = null;
-		if(compSpecSubroutines != null) {
-			m = (Method)compSpecSubroutines.getItemByName(jname);
-		}
+//		if(compSpecSubroutines != null) {
+//			m = (Method)compSpecSubroutines.getItemByName(name);
+//		}
+		m = compSpecSubroutines;
+		while(m != null && !m.name.equals(name)) m = (Method) m.next; 
 		return m;
 	}
 	
@@ -233,9 +229,7 @@ public class Method extends ClassMember {
 	public static void printCompSpecificSubroutines() {
 		Method m = compSpecSubroutines;
 		while(m != null) {
-			vrb.println("Name:    " + m.name);
-			vrb.println("Offset:  " + m.offset);
-			vrb.println("Address: " + m.address);
+			vrb.println("Name:    " + m.name + "\tOffset:  " + m.offset + "\tAddress: " + m.address);
 			m = (Method)m.next;
 		}
 	}
