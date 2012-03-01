@@ -108,36 +108,31 @@ public class Method extends ClassMember {
 		HString name = HString.getRegisteredHString(jname);
 		Method m = null;
 		if (compSpecSubroutines == null) {
-			System.out.println(">>> create first subroutine: " + jname);
+			//System.out.println(">>> create first subroutine: " + name);
 			m = new Method(name);
 			compSpecSubroutines = m;
-			System.out.println(">>> done ");
+			//System.out.println(">>> done ");
 		} else {
-//			m = (Method)compSpecSubroutines.getItemByName(jname);
-			m = compSpecSubroutines;
-			while(m != null && !m.name.equals(name)) m = (Method) m.next; 
+			m = (Method)compSpecSubroutines.getItemByName(name);
 			if(m == null) { // method doesn't exist -> create it
-				System.out.println(">>> not found, creating: " + jname);
+				//System.out.println(">>> not found, creating: " + jname);
 				m = new Method(name);
-//				name.register();
 				m.next = compSpecSubroutines;
 				compSpecSubroutines = m;
 			} else {
-				System.out.println(">>> found: " + jname + " nothing to do");
+				//System.out.println(">>> found: " + jname + " nothing to do");
 			}
-			System.out.println(">>> done ");
+			//System.out.println(">>> done ");
 		}		
 		return m;
 	}
 	
 	public static Method getCompSpecSubroutine(String jname) {
-		HString name = HString.getHString(jname);
+		HString name = HString.getRegisteredHString(jname);
 		Method m = null;
-//		if(compSpecSubroutines != null) {
-//			m = (Method)compSpecSubroutines.getItemByName(name);
-//		}
-		m = compSpecSubroutines;
-		while(m != null && !m.name.equals(name)) m = (Method) m.next; 
+		if(compSpecSubroutines != null) {
+			m = (Method)compSpecSubroutines.getItemByName(name);
+		}
 		return m;
 	}
 	

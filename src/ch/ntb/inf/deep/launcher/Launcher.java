@@ -152,7 +152,7 @@ public class Launcher implements ICclassFileConsts {
 			// Proceeding Arrays: Loop Two
 			if(dbg) vrb.println("Proceeding arrays (loop one):");
 			array = Class.arrayClasses;
-			while(array != null) {
+			while(array != null && reporter.nofErrors <= 0) {
 				if(dbg) vrb.println("> Array: " + array.name);
 				if(dbg) vrb.println("  calculating absoute addresses");
 				Linker32.calculateAbsoluteAddresses(array);

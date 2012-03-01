@@ -245,7 +245,7 @@ public class Type extends Item {
 			if( cls != null) type = (Type)cls;
 			else{
 				type = new Array(registredTypeName);
-				appendClass(type);				
+				appendClass(type);
 			}
 		}else
 			assert false;

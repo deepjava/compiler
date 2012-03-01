@@ -36,6 +36,7 @@ public class Array extends Type {
 	
 	Array(HString regName){
 		super(regName, wktObject); // base type is java/lang/Object
+		//System.out.println(">>> creating ARRAY: " + regName);
 		category = tcArray;
 		sizeInBits = 32;
 
