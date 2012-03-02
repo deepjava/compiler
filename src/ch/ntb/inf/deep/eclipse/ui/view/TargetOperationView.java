@@ -56,7 +56,9 @@ import org.osgi.service.prefs.BackingStoreException;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.DataItem;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.NamedConst;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
@@ -201,19 +203,19 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					switch(op.operation){
 					case 1:
 						if(op.isReaded && op.registerType == Parser.sIOR){
-							return String.format("0x%8X", op.addr);
+							return String.format("0x%08X", op.addr);
 						}else{
 							return "";
 						}
 					case 2:
 						if(op.isReaded){
-							return String.format("0x%8X", op.addr);
+							return String.format("0x%08X", op.addr);
 						}else{
 							return "";
 						}
 					case 4:
 						if(op.cmdSend){
-							return String.format("0x%8X", op.addr);
+							return String.format("0x%08X", op.addr);
 						}else{
 							return "";
 						}
@@ -742,6 +744,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			viewer.refresh();
 		}
 	}
+	
 	public class DownloadEditingSupport extends EditingSupport {
 		
 		private final TableViewer viewer;
@@ -892,10 +895,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		} catch (DownloaderException e) {
 			op.errorMsg = "target not initialized";
 		}
-
-		
-		
 	}
+
 	private void readVariable(OperationObject op, String fullQualName){
 		boolean wasFreezeAsserted;
 		int lastDot = fullQualName.lastIndexOf(".");
@@ -916,10 +917,23 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.errorMsg = "no fields";
 				return;
 			}
-			DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
+			Item var = clazz.classFields.getItemByName(varName);
 			if(var != null){
 				//save address for display
 				op.addr = var.address;
+				
+				if(var instanceof NamedConst) {
+					var = ((NamedConst)var).getConstantItem();
+					if(var.type == Type.wellKnownTypes[txFloat] || var.type == Type.wellKnownTypes[txDouble]) { // constant is in constant pool // TODO: Replace by Linker32.checkConstantPoolType()
+						op.errorMsg = "Warning: field is a constant!";
+						op.addr = var.address;
+					}
+					else {
+						op.errorMsg = "Only constants of type float or double can be read!";
+						return;
+					}
+				}
+				
 				Downloader bdi = UsbMpc555Loader.getInstance();
 				if(bdi == null){
 					op.errorMsg = "target not connected";
@@ -934,21 +948,21 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
 					}
-					if(((Type)var.type).sizeInBits <= 2 * slotSize ) {
+					if(((Type)var.type).sizeInBits <= 2 * slotSize ) { // 1 or 8 bit
 						op.value = bdi.getMem(var.address, slotSize/4);
 						if(((Type)var.type).sizeInBits == 1 ){
 							op.valueType = tBoolean;
 						}else{
 							op.valueType = tByte;										
 						}
-					}else if(((Type)var.type).sizeInBits == 4 * slotSize){
+					}else if(((Type)var.type).sizeInBits == 4 * slotSize){ // 16 bit
 						op.value = bdi.getMem(var.address, slotSize/2);
 						if(var.type == Type.wellKnownTypes[txChar]){
 							op.valueType = tChar;
 						}else{
 							op.valueType = tShort;										
 						}
-					}else if(((Type)var.type).sizeInBits == 8 * slotSize){
+					}else if(((Type)var.type).sizeInBits == 8 * slotSize){ // 32 bit
 						op.value = bdi.getMem(var.address, slotSize);
 						if(var.type == Type.wellKnownTypes[txInt]){
 							op.valueType = tInteger;
@@ -957,7 +971,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						}else{
 							op.valueType = tRef;
 						}
-					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
+					}else if(((Type)var.type).sizeInBits > 8 * slotSize) { // 64 bit
 						op.value = bdi.getMem(var.address, slotSize);
 						op.value = op.value << (8 * slotSize) | (bdi.getMem(var.address + slotSize, slotSize) & 0xffffffffL);
 						if(var.type == Type.wellKnownTypes[txLong]){
@@ -1138,6 +1152,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 		
 	}
+	
 	private void setVariable(OperationObject op, String value){
 		boolean wasFreezeAsserted;
 		int lastDot = op.description.lastIndexOf(".");
@@ -1157,8 +1172,14 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.errorMsg = "no fields";
 				return;
 			}
-			DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
+			Item var = clazz.classFields.getItemByName(varName);
 			if(var != null){
+				
+				if(var instanceof NamedConst) {
+					op.errorMsg = "Constant field, value can't be changed!";
+					return;
+				}
+				
 				Downloader bdi = UsbMpc555Loader.getInstance();
 				if(bdi == null){
 					op.errorMsg = "target not connected";
