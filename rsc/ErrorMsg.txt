@@ -62,6 +62,7 @@ ErrorNr;Description;Solution
 724;Base address not set;
 730;Method not found;
 740;Configuration error;
+750;Machine code not generated;
 790;Runtime System error;
 
 800;target not found!(USB connection failed);
