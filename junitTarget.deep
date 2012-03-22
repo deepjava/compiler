@@ -36,7 +36,7 @@ project {
 #	rootclasses = "ch/ntb/junitTarget/comp/objects/InterfaceTest";
 
 #	Tests für alle Various  
-	rootclasses = "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
+#	rootclasses = "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
 
 #	Tests für alle Compiler-Testklassen  
 #	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest", "ch/ntb/junitTarget/comp/primitives/LongTest", "ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest",
@@ -55,8 +55,11 @@ project {
 #	Tests für bsp-Tests  
 #	rootclasses = "ch/ntb/junitTarget/lib/MathTest";
 #	rootclasses = "ch/ntb/junitTarget/lib/GenericsTest";
+#	rootclasses = "ch/ntb/junitTarget/lib/TaskTest";
 
 #	Tests für alle bsp-Tests
-#	rootclasses = "ch/ntb/junitTarget/lib/MathTest","ch/ntb/junitTarget/lib/GenericsTest";
+	rootclasses = "ch/ntb/junitTarget/lib/MathTest",
+				  "ch/ntb/junitTarget/lib/GenericsTest",
+				  "ch/ntb/junitTarget/lib/TaskTest";
 
 }
