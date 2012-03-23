@@ -1,14 +1,24 @@
 #deep-0
 
 meta {
-	version = "2010-12-02";
+	version = "2012-23-03";
 	description = "Example project file";
-	import = "rsc/ntbMpc555STS.deep", "rsc/ntbMpc555HB.deep";
+	import = "config/ntbMpc555STS.deep", "config/ntbMpc555HB.deep";
 }
 
 project {
-	libpath = "../RuntimeSystem";
-	rootclasses = "ch/ntb/inf/deep/testClasses/T10Constants";
-	debuglevel = 3;
-	printlevel = 3;
+	libpath = "../bsp";
+#	libpath = "../bsp", "../junitTarget";
+
+#	rootclasses = "ch/ntb/inf/deep/testClasses/T04Loops";
+
+#	rootclasses = "ch/ntb/junitTarget/comp/primitives/LongTest";
+#	rootclasses = "ch/ntb/junitTarget/comp/conditions/ConditionTest";
+
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/OutTest1";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication", "ch/ntb/inf/deep/runtime/mpc555/test/OutTest4";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/RTBoardTest2";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ArrayTest2";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/Heap";
+
 }

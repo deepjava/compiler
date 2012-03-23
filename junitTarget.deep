@@ -39,14 +39,14 @@ project {
 #	rootclasses = "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
 
 #	Tests für alle Compiler-Testklassen  
-#	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest", "ch/ntb/junitTarget/comp/primitives/LongTest", "ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest",
-#				  "ch/ntb/junitTarget/comp/statements/DoWhileTest","ch/ntb/junitTarget/comp/statements/ForTest","ch/ntb/junitTarget/comp/statements/IfTest","ch/ntb/junitTarget/comp/statements/SwitchTest","ch/ntb/junitTarget/comp/statements/WhileTest",
-#				  "ch/ntb/junitTarget/comp/conditions/ConditionTest","ch/ntb/junitTarget/comp/conditions/LongCompTest","ch/ntb/junitTarget/comp/conditions/FloatDoubleCompTest",
-#				  "ch/ntb/junitTarget/comp/arrays/ArrayTest","ch/ntb/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/junitTarget/comp/arrays/StringTest",
-#				  "ch/ntb/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/junitTarget/comp/unsafe/LowLevelTest",
-#				  "ch/ntb/junitTarget/comp/casts/ByteCastTest","ch/ntb/junitTarget/comp/casts/ShortCastTest","ch/ntb/junitTarget/comp/casts/CharCastTest","ch/ntb/junitTarget/comp/casts/IntCastTest","ch/ntb/junitTarget/comp/casts/LongCastTest","ch/ntb/junitTarget/comp/casts/FloatCastTest","ch/ntb/junitTarget/comp/casts/DoubleCastTest",
-#				  "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InheritanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest",
-#				  "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
+	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest", "ch/ntb/junitTarget/comp/primitives/LongTest", "ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest",
+				  "ch/ntb/junitTarget/comp/statements/DoWhileTest","ch/ntb/junitTarget/comp/statements/ForTest","ch/ntb/junitTarget/comp/statements/IfTest","ch/ntb/junitTarget/comp/statements/SwitchTest","ch/ntb/junitTarget/comp/statements/WhileTest",
+				  "ch/ntb/junitTarget/comp/conditions/ConditionTest","ch/ntb/junitTarget/comp/conditions/LongCompTest","ch/ntb/junitTarget/comp/conditions/FloatDoubleCompTest",
+				  "ch/ntb/junitTarget/comp/arrays/ArrayTest","ch/ntb/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/junitTarget/comp/arrays/StringTest",
+				  "ch/ntb/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/junitTarget/comp/unsafe/LowLevelTest",
+				  "ch/ntb/junitTarget/comp/casts/ByteCastTest","ch/ntb/junitTarget/comp/casts/ShortCastTest","ch/ntb/junitTarget/comp/casts/CharCastTest","ch/ntb/junitTarget/comp/casts/IntCastTest","ch/ntb/junitTarget/comp/casts/LongCastTest","ch/ntb/junitTarget/comp/casts/FloatCastTest","ch/ntb/junitTarget/comp/casts/DoubleCastTest",
+				  "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InheritanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest",
+				  "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
 
 
 
@@ -58,8 +58,8 @@ project {
 #	rootclasses = "ch/ntb/junitTarget/lib/TaskTest";
 
 #	Tests für alle bsp-Tests
-	rootclasses = "ch/ntb/junitTarget/lib/MathTest",
-				  "ch/ntb/junitTarget/lib/GenericsTest",
-				  "ch/ntb/junitTarget/lib/TaskTest";
+#	rootclasses = "ch/ntb/junitTarget/lib/MathTest",
+#				  "ch/ntb/junitTarget/lib/GenericsTest",
+#				  "ch/ntb/junitTarget/lib/TaskTest";
 
 }
