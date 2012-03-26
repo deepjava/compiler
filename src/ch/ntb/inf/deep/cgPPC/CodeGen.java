@@ -2997,12 +2997,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	private void insertEpilog(int stackSize) {
-		int offset = (nonVolStartFPR + nofNonVolFPR + 1) * 8;
+		int offset = (nonVolStartFPR + nofNonVolFPR) * 8;
 		if (enFloatsInExc) {
 			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
 			createIFMrB(ppcMtfsf, 0xff, 0);
 			offset -= 8;
-			for (int i = 0; i < nonVolStartFPR; i++) {
+			for (int i = nonVolStartFPR - 1; i >= 0; i--) {
 				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
 				offset -= 8;
 			}
