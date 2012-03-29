@@ -62,6 +62,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static int LRoffset;	
 	private static int XERoffset;	
 	private static int CRoffset;	
+	private static int CTRoffset;	
 	private static int SRR0offset;	
 	private static int SRR1offset;	
 	private static int paramOffset;
@@ -360,22 +361,21 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	private static int calcStackSize() {
-		int size = 16 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
 		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
 		LRoffset = size - 4;
-		GPRoffset = size - 12 - nofNonVolGPR * 4;
+		GPRoffset = LRoffset - nofNonVolGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
-		if (tempStorage) tempStorageOffset = FPRoffset - 8;
-		else tempStorageOffset = FPRoffset;
+		tempStorageOffset = FPRoffset - 8;
 		paramOffset = 4;
 		return size;
 	}
 
 	private static int calcStackSizeException() {
-		int size = 24 + nofGPR * 4 + (tempStorage? 8 : 0);
+		int size = 28 + nofGPR * 4 + (tempStorage? 8 : 0);
 		if (enFloatsInExc) {
 			size += nofNonVolFPR * 8;	// save used nonvolatile FPR's
 			size += nonVolStartFPR * 8 + 8;	// save all volatile FPR's and FPSCR
@@ -383,15 +383,15 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
 		LRoffset = size - 4;
-		XERoffset = size - 8;
-		CRoffset = size - 12;
-		SRR0offset = size - 20;
-		SRR1offset = size - 16;
-		GPRoffset = size - 20 - nofGPR * 4;
+		XERoffset = LRoffset - 4;
+		CRoffset = XERoffset - 4;
+		CTRoffset = CRoffset - 4;
+		SRR1offset = CTRoffset - 4;
+		SRR0offset = SRR1offset - 4;
+		GPRoffset = SRR0offset - nofGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
-		if (tempStorage) tempStorageOffset = FPRoffset - 8;
-		else tempStorageOffset = FPRoffset;
+		tempStorageOffset = FPRoffset - 8;
 		paramOffset = 4;
 		return size;
 	}
@@ -856,11 +856,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcMullw, 0, res.regAux2, 0);
 					createIrDrArB(ppcSubf, 0, 0, res.regAux1);
 					createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
-					createICRFrAsimm(ppcCmpi, CRF2, opds[0].regLong, 0); // and dividend negativ?
+					createICRFrAsimm(ppcCmpi, CRF2, opds[0].regLong, 0); // and dividend negative?
 					createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
 					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
 					createIrDrAsimm(ppcAddi, res.reg, res.reg, 1);	
-					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negativ?
+					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negative?
 					createIrDrAsimm(ppcSubfic, res.reg, res.reg, 0);	// negate result
 					createIrDrA(ppcSubfze, res.regLong, res.regLong);
 					createIBOBIBD(ppcBc, BOalways, 0, 76);	// jump to end
@@ -971,12 +971,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcSubf, res.reg, 0 ,opds[0].reg);
 					break;
 				case tLong:
-					createICRFrAsimm(ppcCmpi, CRF1, opds[1].regLong, -1); // is divisor negativ?
+					createICRFrAsimm(ppcCmpi, CRF1, opds[1].regLong, -1); // is divisor negative?
 					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 4);	
 					createIrDrAsimm(ppcSubfic, res.regAux2, opds[1].reg, 0);	// negate divisor
 					createIrDrA(ppcSubfze, res.regAux1, opds[1].regLong);
 					createIBOBIBD(ppcBc, BOalways, 0, 3);
-					createIrArSrB(ppcOr, res.regAux1, opds[1].regLong, opds[1].regLong); // copy if not negativ
+					createIrArSrB(ppcOr, res.regAux1, opds[1].regLong, opds[1].regLong); // copy if not negative
 					createIrArSrB(ppcOr, res.regAux2, opds[1].reg, opds[1].reg);
 					createICRFrAsimm(ppcCmpi, CRF0, res.regAux1, 0);	// test if divisor < 2^32
 					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 31);	// jump to label 1
@@ -985,7 +985,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcDivw, res.regLong, opds[0].regLong, res.regAux2);
 					createIrDrArB(ppcMullw, 0, res.regAux2, res.regLong);
 					createIrDrArB(ppcSubf, 0, 0, opds[0].regLong);
-					createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negativ?
+					createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negative?
 					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
 					createIrDrArB(ppcAdd, 0, 0, res.regAux2);	// add divisor
 					createIrDrAsimm(ppcAddi, res.regLong, res.regLong, -1);	
@@ -1002,19 +1002,19 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrArB(ppcMullw, 0, res.regAux2, 0);
 					createIrDrArB(ppcSubf, 0, 0, res.regAux1);
 					createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
-					createICRFrAsimm(ppcCmpi, CRF2, opds[0].regLong, 0); // and dividend negativ?
+					createICRFrAsimm(ppcCmpi, CRF2, opds[0].regLong, 0); // and dividend negative?
 					createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
 					createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
 					createIrDrAsimm(ppcAddi, res.reg, res.reg, 1);	
-					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negativ?
+					createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negative?
 					createIrDrAsimm(ppcSubfic, res.reg, res.reg, 0);	// negate result
 					createIrDrA(ppcSubfze, res.regLong, res.regLong);
 					createIBOBIBD(ppcBc, BOalways, 0, 76);	// jump to label 4
 
 					//label 1
-					//TODO optimize load const
-					Item item = int2floatConst1;	// ref to 2^52+2^31;					
-					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					//TODO optimize load constant
+					Item item = int2floatConst1;	// reference to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// load 2^52
 					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
 					createIrArSuimm(ppcXoris, 0, opds[0].regLong, 0x8000);
 					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
@@ -1023,18 +1023,18 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(ppcFsub, res.regAux4, 0, res.regAux4);
 					createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset+4);
-					item = int2floatConst3;	// ref to 2^52;
+					item = int2floatConst3;	// reference to 2^52;
 					loadConstantAndFixup(res.regAux1, item);
 					createIrDrAd(ppcLfd, res.regAux3, res.regAux1, 0);
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(ppcFsub, res.regAux3, 0, res.regAux3);					
-					item = int2floatConst2;	// ref to 2^32;
+					item = int2floatConst2;	// reference to 2^32;
 					loadConstantAndFixup(res.regAux1, item);
 					createIrDrAd(ppcLfd, 0, res.regAux1, 0);
 					createIrDrArCrB(ppcFmadd, res.regAux4, res.regAux4, 0, res.regAux3);
 					
-					item = int2floatConst1;	// ref to 2^52+2^31;					
-					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+					item = int2floatConst1;	// reference to 2^52+2^31;					
+					createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// load 2^52
 					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
 					createIrArSuimm(ppcXoris, 0, opds[1].regLong, 0x8000);
 					createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
@@ -1043,12 +1043,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(ppcFsub, res.regAux5, 0, res.regAux5);
 					createIrSrAd(ppcStw, opds[1].reg, stackPtr, tempStorageOffset+4);
-					item = int2floatConst3;	// ref to 2^52;
+					item = int2floatConst3;	// reference to 2^52;
 					loadConstantAndFixup(res.regAux1, item);
 					createIrDrAd(ppcLfd, res.regAux3, res.regAux1, 0);
 					createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(ppcFsub, res.regAux3, 0, res.regAux3);					
-					item = int2floatConst2;	// ref to 2^32;
+					item = int2floatConst2;	// reference to 2^32;
 					loadConstantAndFixup(res.regAux1, item);
 					createIrDrAd(ppcLfd, 0, res.regAux1, 0);
 					createIrDrArCrB(ppcFmadd, res.regAux5, res.regAux5, 0, res.regAux3);
@@ -2913,20 +2913,20 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
 		}
-		int offset = 0;
+		int offset = FPRoffset;
 		if (nofNonVolFPR > 0) {
 			for (int i = 0; i < nofNonVolFPR; i++) {
-				createIrSrAd(ppcStfd, topFPR-i, stackPtr, FPRoffset + offset);
+				createIrSrAd(ppcStfd, topFPR-i, stackPtr, offset);
 				offset += 8;
 			}
 		}
 		if (enFloatsInExc) {
 			for (int i = 0; i < nonVolStartFPR; i++) {
-				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + offset);
+				createIrSrAd(ppcStfd, i, stackPtr, offset);
 				offset += 8;
 			}
 			createIrD(ppcMffs, 0);
-			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
+			createIrSrAd(ppcStfd, 0, stackPtr, offset);
 		}
 //		if (dbg) {
 //			StdStreams.vrb.print("moveGPRsrc = ");
@@ -2960,6 +2960,31 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 	}
 
+	private void insertEpilog(int stackSize) {
+		int offset = GPRoffset - 8;
+		if (enFloatsInExc) {
+			createIrDrAd(ppcLfd, 0, stackPtr, offset);
+			createIFMrB(ppcMtfsf, 0xff, 0);
+			offset -= 8;
+			for (int i = nonVolStartFPR - 1; i >= 0; i--) {
+				createIrDrAd(ppcLfd, i, stackPtr, offset);
+				offset -= 8;
+			}
+		}
+		if (nofNonVolFPR > 0) {
+			for (int i = nofNonVolFPR - 1; i >= 0; i--) {
+				createIrDrAd(ppcLfd, topFPR-i, stackPtr, offset);
+				offset -= 8;
+			}
+		}
+		if (nofNonVolGPR > 0)
+			createIrDrAd(ppcLmw, nofGPR - nofNonVolGPR, stackPtr, GPRoffset);
+		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
+		createIrSspr(ppcMtspr, LR, 0);
+		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
+		createIBOBILK(ppcBclr, BOalways, 0, false);
+	}
+
 	private void insertPrologException() {
 		iCount = 0;
 		createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -stackSize);
@@ -2973,6 +2998,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		createIrSrAsimm(ppcStw, 0, stackPtr, LRoffset);
 		createIrSspr(ppcMfspr, XER, 0);
 		createIrSrAsimm(ppcStw, 0, stackPtr, XERoffset);
+		createIrSspr(ppcMfspr, CTR, 0);
+		createIrSrAsimm(ppcStw, 0, stackPtr, CTRoffset);
 		createIrD(ppcMfcr, 0);
 		createIrSrAsimm(ppcStw, 0, stackPtr, CRoffset);
 		createIrSrAd(ppcStmw, 2, stackPtr, GPRoffset + 8);
@@ -2980,63 +3007,44 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
-			int offset = 0;
+			int offset = FPRoffset;
 			if (nofNonVolFPR > 0) {
 				for (int i = 0; i < nofNonVolFPR; i++) {
-					createIrSrAd(ppcStfd, topFPR-i, stackPtr, FPRoffset + offset);
+					createIrSrAd(ppcStfd, topFPR-i, stackPtr, offset);
 					offset += 8;
 				}
 			}
 			for (int i = 0; i < nonVolStartFPR; i++) {
-				createIrSrAd(ppcStfd, i, stackPtr, FPRoffset + offset);
+				createIrSrAd(ppcStfd, i, stackPtr, offset);
 				offset += 8;
 			}
 			createIrD(ppcMffs, 0);
-			createIrSrAd(ppcStfd, 0, stackPtr, FPRoffset + offset);
+			createIrSrAd(ppcStfd, 0, stackPtr, offset);
 		}
-	}
-
-	private void insertEpilog(int stackSize) {
-		int offset = (nonVolStartFPR + nofNonVolFPR) * 8;
-		if (enFloatsInExc) {
-			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
-			createIFMrB(ppcMtfsf, 0xff, 0);
-			offset -= 8;
-			for (int i = nonVolStartFPR - 1; i >= 0; i--) {
-				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
-				offset -= 8;
-			}
-		}
-		if (nofNonVolFPR > 0) {
-			for (int i = 0; i < nofNonVolFPR; i++)
-				createIrDrAd(ppcLfd, topFPR-i, stackPtr, FPRoffset + i * 8);
-		}
-		if (nofNonVolGPR > 0)
-			createIrDrAd(ppcLmw, nofGPR - nofNonVolGPR, stackPtr, GPRoffset);
-		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
-		createIrSspr(ppcMtspr, LR, 0);
-		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
-		createIBOBILK(ppcBclr, BOalways, 0, false);
 	}
 
 	private void insertEpilogException(int stackSize) {
-		int offset = (nonVolStartFPR + nofNonVolFPR + 1) * 8;
+		int offset = GPRoffset - 8;
 		if (enFloatsInExc) {
-			createIrDrAd(ppcLfd, 0, stackPtr, FPRoffset + offset);
+			createIrDrAd(ppcLfd, 0, stackPtr, offset);
 			createIFMrB(ppcMtfsf, 0xff, 0);
 			offset -= 8;
-			for (int i = 0; i < nonVolStartFPR; i++) {
-				createIrDrAd(ppcLfd, i, stackPtr, FPRoffset + offset);
+			for (int i = nonVolStartFPR - 1; i >= 0; i--) {
+				createIrDrAd(ppcLfd, i, stackPtr, offset);
 				offset -= 8;
 			}
 		}
 		if (nofNonVolFPR > 0) {
-			for (int i = 0; i < nofNonVolFPR; i++)
-				createIrDrAd(ppcLfd, topFPR-i, stackPtr, FPRoffset + i * 8);
+			for (int i = nofNonVolFPR - 1; i >= 0; i--) {
+				createIrDrAd(ppcLfd, topFPR-i, stackPtr, offset);
+				offset -= 8;
+			}
 		}
 		createIrDrAd(ppcLmw, 2, stackPtr, GPRoffset + 8);
 		createIrDrAd(ppcLwz, 0, stackPtr, CRoffset);
 		createICRMrS(ppcMtcrf, 0xff, 0);
+		createIrDrAd(ppcLwz, 0, stackPtr, CTRoffset);
+		createIrSspr(ppcMtspr, CTR, 0);
 		createIrDrAd(ppcLwz, 0, stackPtr, XERoffset);
 		createIrSspr(ppcMtspr, XER, 0);
 		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
