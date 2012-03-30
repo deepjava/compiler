@@ -467,7 +467,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		owner.setLineNrTabIndex(this.firstBCA);
 		// determine top of the stack
 		for (stackpointer = maxStack - 1; stackpointer >= 0	&& exitSet[stackpointer] == null; stackpointer--);
-		for (int bca = this.firstBCA; bca <= this.lastBCA; bca++) {
+		for (int bca = this.firstBCA; bca <= this.lastBCA || wide; bca++) {
 			if(dbg)StdStreams.vrb.println("BCA: " + bca + ", nofStackItems: " + (stackpointer + 1));
 			switch (owner.cfg.code[bca] & 0xff) {
 			case bCnop:

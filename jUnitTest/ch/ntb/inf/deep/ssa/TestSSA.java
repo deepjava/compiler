@@ -7,7 +7,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.strings.HString;
 
 public class TestSSA implements ICclassFileConsts{
-	static String[] config = new String[] {System.getProperty("user.dir") + "/jUnitTest.deep","BootFromRam"};
+	static String[] config = new String[] {System.getProperty("user.dir") + "/junitTest.deep","BootFromRam"};
 
 	static public SSA[] ssa;
 

@@ -13,7 +13,7 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.strings.HString;
 
 public class TestCFG {
-	static String[] config = new String[] {System.getProperty("user.dir") + "/jUnitTest.deep","BootFromRam"};
+	static String[] config = new String[] {System.getProperty("user.dir") + "/junitTest.deep","BootFromRam"};
 
 	/**
 	 * Class file reader
