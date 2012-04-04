@@ -148,7 +148,7 @@
             name="Floating Point Register View"
             restorable="true">
          <description>
-            Display the content of the floatingpoint registers
+            Display the content of the floating point registers
          </description>
       </view>
       <view
@@ -198,24 +198,13 @@
          <description>
             View to interact with the target. Possible actions are:
 TargetCommands, read from address, write to address, read and modify static variables, 
-read and modify registers and send strings to the target.
+read and modify registers
          </description>
       </view>
       <category
             id="ch.ntb.inf.deep.ui.Log"
             name="Deep Logs">
       </category>
-      <view
-            category="ch.ntb.inf.deep.ui.Log"
-            class="ch.ntb.inf.deep.eclipse.ui.view.USBLog"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.view.USBLog"
-            name="USB Log"
-            restorable="true">
-         <description>
-            Displays the outprints, which was send from the target over the usb.
-         </description>
-      </view>
       <view
             category="ch.ntb.inf.deep.ui.Log"
             class="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"

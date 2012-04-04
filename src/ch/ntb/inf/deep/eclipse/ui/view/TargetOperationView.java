@@ -85,7 +85,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private static String KERNEL;
 	private static String cmdAddrName = "cmdAddr";
 
-	private String[] choise =new String[]{"", "Register", "Variable","Address", "TargetCMD", "send over SCI1" };
+	private String[] choice =new String[]{"", "Register", "Variable","Address", "TargetCMD"};
 
 	private static Image UP = DeepPlugin.createImage("full/obj32/up.gif");
 	private static Image DOWN = DeepPlugin.createImage("full/obj32/down.gif");
@@ -103,11 +103,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if ((obj instanceof OperationObject)) {
 				OperationObject op = (OperationObject)obj;
 				if(index == 0){
-					return choise[op.operation];
+					return choice[op.operation];
 				}else if(index == 1){
 					return op.description;
 				}else if(index == 2){
-					if(op.isReaded && !choise[op.operation].equals("")){
+					if(op.isReaded && !choice[op.operation].equals("")){
 						switch(op.operation){
 							case 1:
 								switch(op.registerType){
@@ -452,14 +452,14 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 			op.errorMsg = "";
 			String param = String.valueOf(value);
-			if(choise[op.operation].equals("Register")){
+			if(choice[op.operation].equals("Register")){
 				HString register = HString.getHString(param.toUpperCase());
 				readFromRegister(op, register);				
-			}else if(choise[op.operation].equals("Variable")){
+			}else if(choice[op.operation].equals("Variable")){
 				if(!param.equals("")){
 					readVariable(op, param);
 				}
-			}else if(choise[op.operation].equals("Address")){
+			}else if(choice[op.operation].equals("Address")){
 				try{
 					if(param.length() > 0){
 						//work around for problem when in hex-int-number the most significant bit is set;
@@ -476,24 +476,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}catch (Exception e) {
 				}				
 				
-			}else if(choise[op.operation].equals("TargetCMD")){
+			}else if(choice[op.operation].equals("TargetCMD")){
 				sendCMD(op, param);
-			}else if(choise[op.operation].equals("send over SCI1")){
-				Downloader bdi = UsbMpc555Loader.getInstance();
-				if(bdi == null){
-					op.errorMsg = "target not connected";
-					return;
-				}
-				if(!bdi.isConnected()){
-					try{
-						bdi.openConnection();
-					}catch(DownloaderException e){
-						op.errorMsg = "target not initialized";
-						return;
-					}
-				}
-				Uart0.write(param.getBytes(), param.length());
-				op.description = param;
 			}else if(param.equals("stirb!!!")){
 				MessageDialog dialog = new MessageDialog( viewer.getControl().getShell(), "bye bye", null, "aaaaaaaaaaahhhhhhhh",  MessageDialog.ERROR, new String[] { "tot" }, 0);
 		        dialog.open();
@@ -622,7 +606,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		protected void setValue(Object element, Object value) {
 			OperationObject op = (OperationObject)element;
 			try{
-				if(choise[op.operation].equals("Register")){
+				if(choice[op.operation].equals("Register")){
 					if(((OperationObject)element).registerType != -1){
 						if(((OperationObject)element).registerType == Parser.sFPR){
 							op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
@@ -631,15 +615,15 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						}
 						setToRegister(op);
 					}
-				}else if(choise[op.operation].equals("Variable")){
+				}else if(choice[op.operation].equals("Variable")){
 					setVariable(op,String.valueOf(value));
-				}else if(choise[op.operation].equals("Address")){
+				}else if(choice[op.operation].equals("Address")){
 					try{
 						op.value = Long.decode(String.valueOf(value));
 						setToAddress(op);
 					}catch (Exception e) {
 					}
-				}else if(choise[op.operation].equals("TargetCMD")){
+				}else if(choice[op.operation].equals("TargetCMD")){
 					op.value = Long.decode(String.valueOf(value));
 					
 				}				
@@ -660,7 +644,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 			@Override
 			protected CellEditor getCellEditor(Object element) {
-				return new ComboBoxCellEditor(viewer.getTable(), choise);
+				return new ComboBoxCellEditor(viewer.getTable(), choice);
 			}
 
 			@Override
@@ -682,7 +666,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					op.operation = 0;
 				}else{
 					op.operation = (Integer)value;
-					if(!choise[op.operation].equals("Register")){
+					if(!choice[op.operation].equals("Register")){
 						op.registerType = -1;
 					}
 				}
@@ -726,13 +710,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		protected Object getValue(Object element) {
 			OperationObject op = (OperationObject)element;
 			op.errorMsg = "";
-			if(choise[op.operation].equals("Register")){
+			if(choice[op.operation].equals("Register")){
 				if(((OperationObject)element).registerType != -1){
 					readFromRegister(op, HString.getHString(op.description));						
 				}
-			}else if(choise[op.operation].equals("Variable")){
+			}else if(choice[op.operation].equals("Variable")){
 				readVariable(op,op.description);
-			}else if(choise[op.operation].equals("Address")){
+			}else if(choice[op.operation].equals("Address")){
 				readFromAddress(op);
 			}
 			viewer.refresh();
@@ -769,31 +753,16 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		protected Object getValue(Object element) {
 			OperationObject op = (OperationObject)element;
 			op.errorMsg = "";
-				if(choise[op.operation].equals("Register")){
+				if(choice[op.operation].equals("Register")){
 					if(((OperationObject)element).registerType != -1){
 						setToRegister(op);						
 					}
-				}else if(choise[op.operation].equals("Variable")){
+				}else if(choice[op.operation].equals("Variable")){
 					setVariable(op,String.valueOf(op.value));
-				}else if(choise[op.operation].equals("Address")){
+				}else if(choice[op.operation].equals("Address")){
 					setToAddress(op);
-				}else if(choise[op.operation].equals("TargetCMD")){
+				}else if(choice[op.operation].equals("TargetCMD")){
 					sendCMD(op, op.description);					
-				}else if(choise[op.operation].equals("send over SCI1")){
-					Downloader bdi = UsbMpc555Loader.getInstance();
-					if(bdi == null){
-						op.errorMsg = "target not connected";
-						return false;
-					}
-					if(!bdi.isConnected()){
-						try{
-							bdi.openConnection();
-						}catch(DownloaderException e){
-							op.errorMsg = "target not initialized";
-							return false;
-						}
-					}
-					Uart0.write(op.description.getBytes(), op.description.length());					
 				}				
 			return false;
 			
