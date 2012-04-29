@@ -116,7 +116,7 @@ public class PhiFunction extends SSAInstruction {
 			}
 			if (res.regLong != -1) sb.append(", regLong=" + res.regLong);
 			if (res.reg != -1) sb.append(", reg=" + res.reg);
-			if (res.regAux1 != -1) sb.append(", regAux1=" + res.regAux1);
+			if (res.regGPR1 != -1) sb.append(", regAux1=" + res.regGPR1);
 		}
 		if (last != 0) sb.append(", last=" + last);
 		if (deleted) sb.append(" del");

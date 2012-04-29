@@ -429,36 +429,44 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 //			if (instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted && ((PhiFunction)instr).start >= i && instr.result.join == null) continue; 
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
-			int nofAuxReg = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
-			int nofAuxRegFpr = 0;
-			if (nofAuxReg == 4 && res.type == tLong) nofAuxReg = 2;
-			else if ((nofAuxReg == 5 && res.type == tLong)
-					|| ((nofAuxReg == 6 && (res.type == tFloat || res.type == tDouble)))) nofAuxReg = 1;
-			else if (nofAuxReg == 7) {
-				if (res.type == tFloat || res.type == tDouble) nofAuxReg = 1;
-				else nofAuxReg = 0;
-			} else if (nofAuxReg == 8) {
-				if (res.type == tFloat || res.type == tDouble) {nofAuxReg = 1; nofAuxRegFpr = 1;}
-				else nofAuxReg = 0;
-			} else if (nofAuxReg == 9) {
-				if (res.type == tLong) {nofAuxReg = 2; nofAuxRegFpr = 3;}
-				else nofAuxReg = 1;
+			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
+			int nofAuxRegFPR = 0;
+			if (nofAuxRegGPR == 4 && res.type == tLong) nofAuxRegGPR = 2;
+			else if ((nofAuxRegGPR == 5 && res.type == tLong)
+					|| ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble)))) nofAuxRegGPR = 1;
+			else if (nofAuxRegGPR == 7) {
+				if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
+				else nofAuxRegGPR = 0;
+			} else if (nofAuxRegGPR == 8) {
+				if (res.type == tFloat || res.type == tDouble) {nofAuxRegGPR = 1; nofAuxRegFPR = 1;}
+				else nofAuxRegGPR = 0;
+			} else if (nofAuxRegGPR == 9) {
+				if (res.type == tLong) {nofAuxRegGPR = 2; nofAuxRegFPR = 3;}
+				else nofAuxRegGPR = 1;
+			} else if (nofAuxRegGPR == 0xa) {
+				if (res.type == tLong) {nofAuxRegGPR = 4; nofAuxRegFPR = 3;}
+				else nofAuxRegGPR = 1;
 			}
 			
-			if (nofAuxReg == 1) res.regAux1 = reserveReg(gpr, false);
-			else if (nofAuxReg == 2) {
-				res.regAux1 = reserveReg(gpr, false);
-				res.regAux2 = reserveReg(gpr, false);
+			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false);
+			else if (nofAuxRegGPR == 2) {
+				res.regGPR1 = reserveReg(gpr, false);
+				res.regGPR2 = reserveReg(gpr, false);
+			} else if (nofAuxRegGPR == 4) {
+				res.regGPR1 = reserveReg(gpr, false);
+				res.regGPR2 = reserveReg(gpr, false);
+				res.regGPR3 = reserveReg(gpr, false);
+				res.regGPR4 = reserveReg(gpr, false);
 			}
-			if (nofAuxRegFpr == 1) res.regAux3 = reserveReg(fpr, false);
-			else if (nofAuxRegFpr == 3) {
-				res.regAux3 = reserveReg(fpr, false);
-				res.regAux4 = reserveReg(fpr, false);
-				res.regAux5 = reserveReg(fpr, false);
+			if (nofAuxRegFPR == 1) res.regFPR1 = reserveReg(fpr, false);
+			else if (nofAuxRegFPR == 3) {
+				res.regFPR1 = reserveReg(fpr, false);
+				res.regFPR2 = reserveReg(fpr, false);
+				res.regFPR3 = reserveReg(fpr, false);
 			}
 			if (dbg) {
-				if (res.regAux1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regAux1);
-				if (res.regAux2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regAux2);
+				if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
+				if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
 			}
 			
 			// reserve temporary storage on the stack for certain fpr operations
@@ -519,11 +527,48 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 
 					// and opd must have join == null
-					if (((instr1.ssaOpcode == sCadd) && ((res.type & 0x7fffffff) == tInteger))	
-							|| ((instr1.ssaOpcode == sCsub) && ((res.type & 0x7fffffff) == tInteger))
-							|| ((instr1.ssaOpcode == sCmul) && ((res.type & 0x7fffffff) == tInteger))
-							// add, sub, mul only with integer
-							|| (instr1.ssaOpcode == sCand)
+					int type = res.type & 0x7fffffff;
+					if (((instr1.ssaOpcode == sCadd) && ((type == tInteger) || (type == tLong)))	
+							|| ((instr1.ssaOpcode == sCsub) && ((type == tInteger) || (type == tLong)))) {
+							// add, sub only with integer and long
+						StdConstant constant = (StdConstant)res.constant;
+						if (res.type == tLong) {
+							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+							if ((immValLong >= -32768) && (immValLong <= 32767)) {} else findReg(res);
+						} else {	
+							int immVal = constant.valueH;
+							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
+						}
+					} else if (instr1.ssaOpcode == sCmul) {
+						StdConstant constant = (StdConstant)res.constant;
+						boolean isPowerOf2; int immVal = 0;
+						if (type == tLong) {
+							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+							isPowerOf2 = isPowerOf2(immValLong);
+						} else {	
+							immVal = constant.valueH;
+							isPowerOf2 = isPowerOf2(immVal);
+						}
+						if (((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1]) && isPowerOf2) {							
+							// check if multiplication by const which is a power of 2, const must be multiplicator and positive
+							res.reg = -2;
+						} else if (type == tInteger) { 
+							// check if multiplication by const which is smaller than 2^15
+							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
+						} else findReg(res);
+					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
+						// check if division by const which is a power of 2, const must be divisor and positive
+						StdConstant constant = (StdConstant)res.constant;
+						boolean isPowerOf2;
+						if (type == tLong) {
+							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+							isPowerOf2 = isPowerOf2(immValLong);
+						} else {	
+							int immVal = constant.valueH;
+							isPowerOf2 = isPowerOf2(immVal);
+						}
+						if (!isPowerOf2) findReg(res);	
+					} else if ((instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)
 							// logical operators with integer and long
@@ -544,44 +589,44 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
 							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-							if ((immValLong >= -32768) && (immValLong <= 32767)) {
-							} else
-								findReg(res);
+							if ((immValLong >= -32768) && (immValLong <= 32767)) {} else findReg(res);
 						} else {	
 							int immVal = constant.valueH;
-							if ((immVal >= -32768) && (immVal <= 32767)) {
-							} else 
-								findReg(res);
+							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						}
 					} else if (((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("ASM")))
 							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("ADR_OF_METHOD")))) {
 						// asm instruction
-					} 
-					else {	// opd has index != -1 or cannot be used as immediate opd	
+					} else 	// opd cannot be used as immediate opd	
 						findReg(res);			
-					}
-				} else 
-					findReg(res);	
+				} else 	// opd has index != -1 or cannot be used as immediate opd	
+					findReg(res);			
 			} else {	// all other instructions
 				if (res.reg < 0) 	// not yet assigned
 					findReg(res);
 			}
 			if (dbg) StdStreams.vrb.println("\t\treg = " + res.reg);
 
-			if (res.regAux1 != -1) {
-				freeReg(gpr, res.regAux1);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg1");
+			if (res.regGPR1 != -1) {
+				freeReg(gpr, res.regGPR1);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg1");
 			}
-			if (res.regAux2 != -1) {
-				freeReg(gpr, res.regAux2);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg2");
+			if (res.regGPR2 != -1) {
+				freeReg(gpr, res.regGPR2);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg2");
 			}
-			if (res.regAux3 != -1) {
-				freeReg(fpr, res.regAux3);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg3");
+			if (res.regGPR3 != -1) {
+				freeReg(gpr, res.regGPR3);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg3");
 			}
-			if (res.regAux4 != -1) {
-				freeReg(fpr, res.regAux4);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg4");
+			if (res.regGPR4 != -1) {
+				freeReg(gpr, res.regGPR4);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg4");
 			}
-			if (res.regAux5 != -1) {
-				freeReg(fpr, res.regAux5);	if (dbg) StdStreams.vrb.println("\tfreeing aux reg5");
+			if (res.regFPR1 != -1) {
+				freeReg(fpr, res.regFPR1);	if (dbg) StdStreams.vrb.println("\tfreeing aux FPR reg1");
+			}
+			if (res.regFPR2 != -1) {
+				freeReg(fpr, res.regFPR2);	if (dbg) StdStreams.vrb.println("\tfreeing aux FPR reg2");
+			}
+			if (res.regFPR3 != -1) {
+				freeReg(fpr, res.regFPR3);	if (dbg) StdStreams.vrb.println("\tfreeing aux FPR reg3");
 			}
 
 			// free registers of operands if end of live range reached 
@@ -664,6 +709,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		if (nof > 0) CodeGen.callParamSlotsOnStack = nof;
 		nof = maxNofParamFPR - (paramEndFPR - paramStartFPR + 1);
 		if (nof > 0) CodeGen.callParamSlotsOnStack += nof*2;
+	}
+
+	public static boolean isPowerOf2(long val) {
+		return (val > 0) && (val & (val-1)) == 0;
 	}
 
 	private static void findReg(SSAValue res) {
@@ -768,7 +817,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (next.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
 					StdStreams.vrb.print(", type=" + next.typeName());
 					StdStreams.vrb.print(", reg=" + next.reg);
-					if (next.regAux1 > -1) StdStreams.vrb.print(", regAux1=" + next.regAux1);
+					if (next.regGPR1 > -1) StdStreams.vrb.print(", regAux1=" + next.regGPR1);
 					next = next.next;
 				}
 				StdStreams.vrb.println();
