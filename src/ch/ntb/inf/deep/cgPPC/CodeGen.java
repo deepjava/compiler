@@ -2193,7 +2193,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrDrAd(ppcLfd, res.reg, stackPtr, tempStorageOffset);
 					}
 				} else {	// no synthetic method
-					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0) {	// invokestatic
+					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0 ||
+							call.item.name.equals(HString.getHString("newPrimTypeArray")) ||
+							call.item.name.equals(HString.getHString("newRefArray"))
+							) {	// invokestatic
 						if (call.item == stringNewstringMethod) {	// replace newstring stub with Heap.newstring
 							call.item = heapNewstringMethod;
 							loadConstantAndFixup(res.regGPR1, call.item);	
