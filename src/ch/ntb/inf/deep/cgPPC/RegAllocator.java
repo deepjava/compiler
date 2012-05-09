@@ -440,10 +440,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			} else if (nofAuxRegGPR == 8) {
 				if (res.type == tFloat || res.type == tDouble) {nofAuxRegGPR = 1; nofAuxRegFPR = 1;}
 				else nofAuxRegGPR = 0;
-			} else if (nofAuxRegGPR == 9) {
-				if (res.type == tLong) {nofAuxRegGPR = 2; nofAuxRegFPR = 3;}
+			} else if (nofAuxRegGPR == 9) {	// scDiv
+				if (res.type == tLong) {nofAuxRegGPR = 3; nofAuxRegFPR = 3;}
 				else nofAuxRegGPR = 1;
-			} else if (nofAuxRegGPR == 0xa) {
+			} else if (nofAuxRegGPR == 0xa) {	// scRem
 				if (res.type == tLong) {nofAuxRegGPR = 4; nofAuxRegFPR = 3;}
 				else nofAuxRegGPR = 1;
 			}
@@ -452,6 +452,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			else if (nofAuxRegGPR == 2) {
 				res.regGPR1 = reserveReg(gpr, false);
 				res.regGPR2 = reserveReg(gpr, false);
+			} else if (nofAuxRegGPR == 3) {
+				res.regGPR1 = reserveReg(gpr, false);
+				res.regGPR2 = reserveReg(gpr, false);
+				res.regGPR3 = reserveReg(gpr, false);
 			} else if (nofAuxRegGPR == 4) {
 				res.regGPR1 = reserveReg(gpr, false);
 				res.regGPR2 = reserveReg(gpr, false);

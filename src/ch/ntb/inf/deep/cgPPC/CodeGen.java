@@ -930,42 +930,29 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, res.regGPR1, opds[1].regLong, opds[1].regLong); // copy if not negative
 						createIrArSrB(ppcOr, res.regGPR2, sReg2, sReg2);
 						createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// test if divisor < 2^32
-						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 44);	// jump to label 1
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 32);	// jump to label 1
 						createICRFrAsimm(ppcCmpli, CRF0, res.regGPR2, 0x7fff);	// test if divisor < 2^15
-						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 42);	// jump to label 1
+						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 30);	// jump to label 1
 						
-						// this code would be more efficient if 3 GPR's would be reserved as aux registers
 						createICRFrAsimm(ppcCmpi, CRF2, opds[0].regLong, 0); // is dividend negative?
-						createIrDrArB(ppcDivw, res.regGPR1, opds[0].regLong, res.regGPR2);
-						createIrDrArB(ppcMullw, 0, res.regGPR2, res.regGPR1);
+						createIrDrArB(ppcDivw, res.regGPR3, opds[0].regLong, res.regGPR2);
+						createIrDrArB(ppcMullw, 0, res.regGPR2, res.regGPR3);
 						createIrDrArB(ppcSubf, 0, 0, opds[0].regLong);
 						createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negative?
 						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
 						createIrDrArB(ppcAdd, 0, 0, res.regGPR2);	// add divisor
-						createIrDrAsimm(ppcAddi, res.regGPR1, res.regGPR1, -1);	
-						createIrArSrB(ppcOr, res.regLong, res.regGPR1, res.regGPR1);
+						createIrDrAsimm(ppcAddi, res.regGPR3, res.regGPR3, -1);	
+						createIrArSrB(ppcOr, res.regLong, res.regGPR3, res.regGPR3);
 						createIrArSSHMBME(ppcRlwinm, res.regGPR1, 0, 16, 0, 15);
 						createIrArSSHMBME(ppcRlwimi, res.regGPR1, sReg1, 16, 16, 31);
-						createIrDrArB(ppcDivwu, res.regGPR2, res.regGPR1, res.regGPR2);
-						createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	
-						createIrDrAsimm(ppcSubfic, 0, sReg2, 0);	// negate and load divisor
-						createIBOBIBD(ppcBc, BOalways, 0, 2);
-						createIrArSrB(ppcOr, 0, sReg2, sReg2);	// load divisor
-						createIrDrArB(ppcMullw, 0, 0, res.regGPR2);
+						createIrDrArB(ppcDivwu, res.regGPR3, res.regGPR1, res.regGPR2);
+						createIrDrArB(ppcMullw, 0, res.regGPR2, res.regGPR3);
 						createIrDrArB(ppcSubf, 0, 0, res.regGPR1);
 						createIrArSSHMBME(ppcRlwinm, res.regGPR1, 0, 16, 0, 15);
 						createIrArSSHMBME(ppcRlwimi, res.regGPR1, sReg1, 0, 16, 31);
-						createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	
-						createIrDrAsimm(ppcSubfic, 0, sReg2, 0);	// negate and load divisor
-						createIBOBIBD(ppcBc, BOalways, 0, 2);
-						createIrArSrB(ppcOr, 0, sReg2, sReg2);	// load divisor
-						createIrDrArB(ppcDivwu, 0, res.regGPR1, 0);
-						createIrArSSHMBME(ppcRlwinm, dReg, res.regGPR2, 16, 0, 15);
+						createIrDrArB(ppcDivwu, 0, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(ppcRlwinm, dReg, res.regGPR3, 16, 0, 15);
 						createIrArSSHMBME(ppcRlwimi, dReg, 0, 0, 16, 31);
-						createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	
-						createIrDrAsimm(ppcSubfic, res.regGPR2, sReg2, 0);	// negate and load divisor
-						createIBOBIBD(ppcBc, BOalways, 0, 2);
-						createIrArSrB(ppcOr, res.regGPR2, sReg2, sReg2);	// load divisor
 						createIrDrArB(ppcMullw, 0, res.regGPR2, 0);
 						createIrDrArB(ppcSubf, 0, 0, res.regGPR1);
 						createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
