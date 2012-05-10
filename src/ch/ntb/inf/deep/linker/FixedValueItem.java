@@ -67,6 +67,15 @@ public class FixedValueItem extends BlockItem {
 		return written;
 	}
 	
+	public byte[] getBytes() {
+		byte[] bytes = new byte[size];
+		for (int i = 0; i < size; ++i) {
+		    int shift = i << 3; // i * 8
+		    bytes[(size - 1) - i] = (byte)((val & (0xff << shift)) >>> shift);
+		}
+		return bytes;
+	}
+	
 	public String toString() {
 		return String.format("[%08X]", val) + " (" + name + ")";
 	}

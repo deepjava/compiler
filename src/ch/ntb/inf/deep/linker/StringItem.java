@@ -70,6 +70,31 @@ public class StringItem extends BlockItem {
 		return written;
 	}
 	
+	public byte[] getBytes() {
+		HString s = ((StringLiteral)ref).string;
+		int size = getItemSize();
+		byte[] bytes = new byte[size];
+		int offset = 0; int word = 0; int c = 0;
+		inserteBytes(bytes, offset, tag); offset += 4;
+		inserteBytes(bytes, offset, getStringClassAddr()); offset += 4;
+		for(int i = getHeaderSize() - constHeaderSize; i > 0; i--) {
+			bytes[offset] = 0;
+			offset++;
+		}
+		inserteBytes(bytes, offset, getNumberOfChars()); offset += 4;
+		for(int j = 0; j < getNumberOfChars(); j++) {
+			word = (word << 16) + s.charAt(j);
+			c++;
+			if(c > 1 || j == s.length() - 1) {
+				if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
+				inserteBytes(bytes, offset, word); offset += 4;
+				c = 0;
+				word = 0;
+			}
+		}
+		return bytes;
+	}
+	
 	private int getNumberOfChars() {
 		return ((StringLiteral)ref).string.length();
 	}

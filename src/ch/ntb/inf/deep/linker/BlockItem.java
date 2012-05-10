@@ -20,6 +20,8 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.util.zip.CRC32;
+
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -82,6 +84,26 @@ public class BlockItem {
 		return -1;
 	}
 	
+	public byte[] getBytes() {
+		return null;
+	}
+	
+	public static int setCRC32(FixedValueItem fcsItem) {
+		CRC32 checksum = new CRC32();
+		BlockItem i = fcsItem.getHead();
+		//System.out.println("> Calculating CRC32:"); System.out.print("  ");
+		while(i != fcsItem) {
+			checksum.update(i.getBytes());
+			//printByteArray(i.getBytes());
+			i = i.next;
+		}
+		//System.out.println();
+		int fcs = (int)checksum.getValue();
+		fcsItem.setValue(fcs);
+		return fcs;
+	}
+	
+	
 	public String toString(){
 		return new String("empty Block");
 	}
@@ -106,5 +128,25 @@ public class BlockItem {
 		for(int i = 0; i < a.length; i++) {
 			StdStreams.vrb.printf("[%8x]\n", a[i]);
 		}
+	}
+	
+	protected void inserteBytes(byte[] bytes, int offset, int val) {
+		for (int i = 0; i < 4; ++i) {
+		    int shift = i << 3; // i * 8
+		    bytes[3 - i] = (byte)((val & (0xff << shift)) >>> shift);
+		}
+	}
+	
+	// debug primitives
+	private static void printByteArray(byte[] bytes) {
+		final byte[] hexchars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+		StringBuilder s = new StringBuilder(3 * bytes.length);
+		 for (int i = 0; i < bytes.length; i++) {
+			 int v = bytes[i] & 0xff;
+			 s.append((char)hexchars[v >> 4]);
+			 s.append((char)hexchars[v & 0xf]);
+			 s.append(" ");
+		 }
+		 System.out.print(s);
 	}
 }

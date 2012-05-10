@@ -66,6 +66,17 @@ public class ConstantItem extends BlockItem implements ICdescAndTypeConsts {
 		return written;
 	}
 	
+	public byte[] getBytes() {
+		int size = getItemSize();
+		byte[] bytes = new byte[size];
+		for (int i = 0; i < size; ++i) {
+		    int shift = i << 3; // i * 8
+		    long value = ((StdConstant)ref).valueH << 32 | ((StdConstant)ref).valueL;
+		    bytes[(size - 1) - i] = (byte)((value & (0xff << shift)) >>> shift);
+		}
+		return bytes;
+	}
+	
 	public String toString() {
 		int size = this.getItemSize();
 		StringBuilder sb = new StringBuilder();

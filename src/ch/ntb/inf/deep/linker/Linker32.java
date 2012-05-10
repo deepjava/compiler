@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	private static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -194,14 +194,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.typeDescriptor.insertBefore(new FixedValueItem("extensionLevel", clazz.extensionLevel));
 		
 		// Type descriptor: create method table
-	//	Item cm;
 		if(dbg) vrb.println("    - Inserting method table:");
-	/*	for(int i = 0; i < clazz.methTabLength; i++) {
-			cm = clazz.getMethod(i);
-			assert cm != null : "[Error] No method with index " + i + " found!";
-			if(dbg) vrb.println("      > " + cm.name);
-			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(cm)); 
-		}*/
 		for(int i = 0; i < clazz.methTabLength; i++) {
 			clazz.typeDescriptor.getHead().insertBefore(new AddressItem(clazz.extMethTable[i])); 
 		}
@@ -211,30 +204,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("    - Inserting class name address");
 		clazz.typeDescriptor.insertAfter(new FixedValueItem("classNameAddr", 0x12345678));
 		
-		// Type descriptor: create type table (base classes and interfaces)
-//		if(dbg) vrb.println("    - Inserting base classes and interfaces");
-//		int typeTableSize = 1;
-//		Class baseClass = (Class)clazz.type;
-//		AddressItem typeTable = new AddressItem(clazz);
-//		while(baseClass != null) {
-//			typeTable.getHead().insertBefore(new AddressItem(baseClass));
-//			typeTableSize++;
-//			baseClass = (Class)baseClass.type;
-//		}
-//		AddressItem currentElement = (AddressItem)typeTable.getTail();
-//		Class currentClass;
-//		while(currentElement != null) {
-//			currentClass = (Class)currentElement.itemRef;
-//			for(int i = 0; i < currentClass.nofInterfaces; i++) {
-//				currentElement.insertAfter(new AddressItem(currentClass.interfaces[i]));
-//				typeTableSize++;
-//			}
-//			currentElement = (AddressItem)currentElement.prev;
-//		}
-//		while(typeTableSize < Class.maxExtensionLevelStdClasses * 2 + 1) { // TODO @Martin: This works only for a few cases -> improve this
-//			typeTable.append(new FixedValueItem("padding", 0));
-//			typeTableSize++;
-//		}
+		// Type descriptor: create type table (base classes)
 		if(dbg) vrb.println("    - Inserting base classes:");
 		Class baseClass = (Class)clazz.type;
 		AddressItem typeTable = new AddressItem(clazz);
@@ -324,15 +294,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			clazz.constantPoolSize = clazz.constantPool.getBlockSize();
 			clazz.constantBlock.append(clazz.constantPool);
 		}
-		
-		// calculate checksum
-		if(dbg) vrb.println("  Calculating checksum");
-		clazz.constantBlockChecksum = new FixedValueItem("fcs", 0); // TODO @Martin calculate checksum here...
+				
+		// append block item for checksum
+		clazz.constantBlockChecksum = new FixedValueItem("fcs", 0);
 		clazz.constantBlock.append(clazz.constantBlockChecksum);
 		
-		// Calculating size of constant block
+		// Calculate size of constant block
 		((FixedValueItem)clazz.constantBlock).setValue(clazz.constantBlock.getBlockSize());
-		
+				
 		// Calculating indexes and offsets for the string- and constant pool
 		int offset, index;
 		
@@ -803,6 +772,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Inserting object size");
 		((FixedValueItem)clazz.typeDescriptor).setValue(clazz.objectSize); // size
+		
+		// Calculate checksum
+		if(dbg) vrb.print("  Calculating checksum:");
+		int fcs = BlockItem.setCRC32((FixedValueItem)clazz.constantBlockChecksum);
+		if(dbg) vrb.println(String.format("[0x%08X]", fcs));
 		
 		if(dbg) vrb.println("\n[LINKER] END: Updating constant block for class \"" + clazz.name +"\"\n");
 	}
