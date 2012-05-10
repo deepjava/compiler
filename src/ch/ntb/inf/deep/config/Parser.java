@@ -64,9 +64,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 	// -------- Content attribute: 
 	private static final short g6 = g5 + 2, sConst = g6, sCode = g6 + 1,
 			sVar = g6 + 2, sHeap = g6 + 3, sStack = g6 + 4, sSysTab = g6 + 5,
-			sDefault = g6 + 6;
+			sDefault = g6 + 6, sNone = g6 + 7;
 	// --------Types and flags: 
-	public static final short g7 = g6 + 7, sGPR = g7, sFPR = g7 + 1,
+	public static final short g7 = g6 + 8, sGPR = g7, sFPR = g7 + 1,
 			sSPR = g7 + 2, sIOR = g7 + 3, sUnsafe = g7 + 4, sSynthetic = g7 + 5,
 			sNew = g7 + 6, sMSR = g7 + 7, sCR = g7 + 8, sFPSCR = g7 + 9, sExcHnd = g7 + 10;
 	// -------- Register representation: 
@@ -81,9 +81,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			sUs = g9 + 13, sAddr = g9 + 14, sType = g9 + 15, sRepr = g9 + 16,
 			sLibPath = g9 + 17, sDebugLevel = g9 + 18, sPrintLevel = g9 + 19,
 			sLowlevel = g9 + 20, sClass = g9 + 21, sId = g9 + 22, sException = g9 + 23, sOffset = g9 + 24,
-			sTechnology = g9 + 25, sMemorytype = g9 + 26, sNofSectors = g9 + 27, sSectorSize = g9 + 28, sSystemtable = g9 + 29;
+			sTechnology = g9 + 25, sMemorytype = g9 + 26, sNofSectors = g9 + 27, sSectorSize = g9 + 28, sSystemtable = g9 + 29, sTctFile = g9 + 30;
 	// -------- Block keywords: 
-	private static final short g10 = g9 + 30, sMeta = g10,
+	private static final short g10 = g9 + 31, sMeta = g10,
 			sConstants = g10 + 1, sDevice = g10 + 2, sReginit = g10 + 3,
 			sSegment = g10 + 4, sMemorymap = g10 + 5,
 			sModules = g10 + 6, sTargetConf = g10 + 7, sProject = g10 + 8,
@@ -385,6 +385,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			} else if (str.equals("nofsectors")){
 				sym = sNofSectors;
 				return true;
+			} else if (str.equals("none")){
+				sym = sNone;
+				return true;
 			}
 			break;
 		case 'o':
@@ -476,6 +479,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				return true;
 			} else if (str.equals("technology")){
 				sym = sTechnology;
+				return true;
+			} else if (str.equals("tctfile")){
+				sym = sTctFile;
 				return true;
 			}
 		case 'u':
@@ -848,6 +854,10 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			return "ram";
 		case sFlash:
 			return "flash";
+		case sTctFile:
+			return "tctfile";
+		case sNone:
+			return "none";
 		default:
 			return "";
 		}
@@ -1868,7 +1878,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		}
 		next();
 		Project proj = new Project();
-		while (sym == sRootclasses || sym == sLibPath || sym == sDebugLevel	|| sym == sPrintLevel) {
+		while (sym == sRootclasses || sym == sLibPath || sym == sDebugLevel	|| sym == sPrintLevel || sym == sTctFile) {
 			if (sym == sRootclasses) {
 				HString classes = rootClassesAssignment();
 				proj.setRootClasses(classes);
@@ -1879,6 +1889,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 				proj.setDebugLevel(debugLevelAssignment());
 			} else if (sym == sPrintLevel) {
 				proj.setPrintLevel(printLevelAssignment());
+			} else if (sym == sTctFile) {
+				proj.setTctFile(tctFileAssignment());
 			}
 		}
 		if (sym != sRBrace) {
@@ -2815,7 +2827,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFile
 					+ " at Line " + lineNumber
-					+ " expected: rootclasses, received symbol: "
+					+ " expected: rootclasses, received symbol: "	// TODO check this: rootclasses or classes???
 					+ symToString());
 			return null;
 		}
@@ -2952,6 +2964,51 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts,
 		return tempList;
 	}
 
+	private HString tctFileAssignment() {
+		HString s = HString.getHString("");
+		HString tctFile = null;
+		if (sym != sTctFile) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFile
+					+ " at Line " + lineNumber
+					+ " expected: target command table file, received symbol: " + symToString());
+			return s;
+		}
+		next();
+		if (sym != sEqualsSign) {
+			nOfErrors++;
+			reporter.error(errAssignExp, "in " + currentFile + " at Line " + lineNumber);
+			return s;
+		}
+		String str;
+		next();
+		if(sym == sNone) {
+			tctFile = null;
+			next();
+		}
+		else if (sym == sDefault) {
+			tctFile = HString.getHString("tct/commandTable.dtct");
+			next();
+		}
+		else if(sym == sQuotationMark){
+			str = readString();
+			if(str.length() > 0) {
+				tctFile = HString.getHString(str);
+			}
+			else {
+				tctFile = null;
+			}
+		}
+		if (sym != sSemicolon) {
+			nOfErrors++;
+			reporter.error(errSemicolonMissExp, "in " + currentFile
+					+ " before Line " + lineNumber);
+			return s;
+		}
+		next();
+		return tctFile;
+	}
+	
 	private int debugLevelAssignment() {
 		int res = Integer.MAX_VALUE;
 		if (sym != sDebugLevel) {

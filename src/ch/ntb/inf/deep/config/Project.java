@@ -27,6 +27,7 @@ public class Project {
 	private HString rootClasses;
 	private HString libPath;
 	private HString targetconf;
+	private HString tctFile;
 	private int debugLevel;
 	private int printLevel;
 
@@ -45,6 +46,10 @@ public class Project {
 
 	public void setTagetConfig(HString targetConf) {
 		this.targetconf = targetConf;
+	}
+	
+	public void setTctFile(HString tctFile) {
+		this.tctFile = tctFile;
 	}
 
 	public void setDebugLevel(int level) {
@@ -66,7 +71,10 @@ public class Project {
 	public HString getTargetConfig() {
 		return targetconf;
 	}
-
+	
+	public HString getTctFile() {
+		return tctFile;
+	}
 	public int getDebugLevel() {
 		return debugLevel;
 	}
@@ -97,6 +105,11 @@ public class Project {
 			StdStreams.vrb.print("  ");
 		}
 		StdStreams.vrb.println("libpath = " + libPath.toString());
+		
+		for (int i = indentLevel+1; i > 0; i--) {
+			StdStreams.vrb.print("  ");
+		}
+		StdStreams.vrb.println("tctfile = " + tctFile.toString());
 		
 		for (int i = indentLevel+1; i > 0; i--) {
 			StdStreams.vrb.print("  ");

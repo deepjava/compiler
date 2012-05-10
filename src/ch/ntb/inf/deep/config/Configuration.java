@@ -668,6 +668,11 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	}
 
+	public static String getTctFile() {
+		if(project.getTctFile() != null) return project.getTctFile().toString();
+		return null;
+	}
+	
 	public static void clear() {
 		Parser.clear();
 		project = null;

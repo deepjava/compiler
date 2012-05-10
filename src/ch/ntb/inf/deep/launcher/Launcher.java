@@ -214,6 +214,13 @@ public class Launcher implements ICclassFileConsts {
 				Linker32.generateTargetImage();
 			}
 			
+			// Create target command table file if necessary
+			if(reporter.nofErrors <= 0) {
+				if(Configuration.getTctFile() != null) {
+					saveCommandTableToFile(Configuration.getTctFile());
+				}
+			}
+			
 			if(reporter.nofErrors > 0) {
 				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 				out.println();
@@ -281,31 +288,13 @@ public class Launcher implements ICclassFileConsts {
 	
 	public static void saveCommandTableToFile(String fileName) {
 		if(reporter.nofErrors <= 0){
+			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));
+			path.mkdirs(); // create directories if not existing
 			try {
 				Linker32.writeCommandTableToFile(fileName);
 			} catch (IOException e) { 
 				e.printStackTrace();
 			}
-		}
-		
-	}
-
-	public static void saveCommandTableToFile() {
-		String tctDirName = "tct";
-		File tctDir = new File(tctDirName);
-		if(!tctDir.isDirectory()) {
-			tctDir.mkdir();
-		}
-		saveCommandTableToFile(tctDirName + "/commandTable.dtct");
-	}
-	
-	private static void clearVisitedFlagsForAllClasses() {
-		Item item = Type.classList;
-		while(item != null) {
-			if((item.accAndPropFlags & 1<<dpfClassMark) != 0 ) { // if visited flag is set
-				item.accAndPropFlags &= ~(1<<dpfClassMark);		 // delete it
-			}
-			item = item.next;
 		}
 	}
 }
