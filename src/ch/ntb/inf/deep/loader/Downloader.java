@@ -49,7 +49,7 @@ public abstract class Downloader {
 	 */
 	private FileInputStream fis;
 	
-	public static int errTargetNotFound = 800, errDownloadFailed = 801, errNoTargetImage = 802,
+	public static final int errTargetNotFound = 800, errDownloadFailed = 801, errNoTargetImage = 802,
 					  errConnectionLost = 803, errReopenFailed = 804, errStartTargetFailed = 805,
 					  errTargetNotInDebugMode = 806, errMemWriterNotImplemented = 807, errBypassNotUnlocked = 808,
 					  errProgrammFailed = 809;
