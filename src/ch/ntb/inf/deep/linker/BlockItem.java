@@ -88,16 +88,24 @@ public class BlockItem {
 		return null;
 	}
 	
+	/**
+	 * Calculates the CRC32 checksum of the list for all
+	 * elements from the beginning to the given item and
+	 * saves the result in the given item. 
+	 * 
+	 * @param fcsItem item to write the checksum in.
+	 * @return the CRC32 checksum
+	 */
 	public static int setCRC32(FixedValueItem fcsItem) {
 		CRC32 checksum = new CRC32();
 		BlockItem i = fcsItem.getHead();
-		//System.out.println("> Calculating CRC32:"); System.out.print("  ");
+		System.out.println("> Calculating CRC32:"); System.out.print("  ");
 		while(i != fcsItem) {
 			checksum.update(i.getBytes());
-			//printByteArray(i.getBytes());
+			printByteArray(i.getBytes());
 			i = i.next;
 		}
-		//System.out.println();
+		System.out.println();
 		int fcs = (int)checksum.getValue();
 		fcsItem.setValue(fcs);
 		return fcs;
@@ -133,7 +141,7 @@ public class BlockItem {
 	protected void inserteBytes(byte[] bytes, int offset, int val) {
 		for (int i = 0; i < 4; ++i) {
 		    int shift = i << 3; // i * 8
-		    bytes[3 - i] = (byte)((val & (0xff << shift)) >>> shift);
+		    bytes[offset + 3 - i] = (byte)((val & (0xff << shift)) >>> shift);
 		}
 	}
 	
