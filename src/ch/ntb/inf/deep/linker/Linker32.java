@@ -494,8 +494,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		// Create the system table
 		systemTable = new FixedValueItem("classConstOffset", (7 + 2 * nofStacks + 2 * nofHeaps) * 4);
-		systemTable.append(new FixedValueItem("stackOffset", 5));
-		systemTable.append(new FixedValueItem("heapOffset", 5 + 2 * nofStacks));
+		systemTable.append(new FixedValueItem("stackOffset", 5 * 4));
+		systemTable.append(new FixedValueItem("heapOffset", (5 + 2 * nofStacks + 1) * 4));
 		systemTable.append(new AddressItem("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
 		systemTable.append(new FixedValueItem("nofStacks", nofStacks));
 		for(int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
