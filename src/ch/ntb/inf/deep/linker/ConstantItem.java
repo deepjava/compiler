@@ -69,10 +69,32 @@ public class ConstantItem extends BlockItem implements ICdescAndTypeConsts {
 	public byte[] getBytes() {
 		int size = getItemSize();
 		byte[] bytes = new byte[size];
-		for (int i = 0; i < size; ++i) {
-		    int shift = i << 3; // i * 8
-		    long value = ((StdConstant)ref).valueH << 32 | ((StdConstant)ref).valueL;
-		    bytes[(size - 1) - i] = (byte)((value & (0xff << shift)) >>> shift);
+		
+		switch(size) {
+		case 8: // long/double
+			for (int i = 0; i < 4; ++i) {
+			    int shift = i << 3; // i * 8
+			    bytes[7 - i] = (byte)((((StdConstant)ref).valueL & (0xff << shift)) >>> shift);
+			}
+			for (int i = 0; i < 4; ++i) {
+			    int shift = i << 3; // i * 8
+			    bytes[3 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
+			}
+			break;
+		case 4: // int/float
+			for (int i = 0; i < size; ++i) {
+			    int shift = i << 3; // i * 8
+			    bytes[3 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
+			}
+			break;
+		case 2: // short/char
+			// TODO @Martin implement this
+			break;
+		case 1:	// byte/boolean 
+			// TODO @Martin implement this
+			break;
+		default: // error
+			break;
 		}
 		return bytes;
 	}
