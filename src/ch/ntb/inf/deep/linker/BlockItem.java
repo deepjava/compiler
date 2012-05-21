@@ -107,6 +107,8 @@ public class BlockItem {
 		}
 		if(Linker32.dbg) System.out.println();
 		int fcs = (int)checksum.getValue();
+		// change endianess and complement
+		fcs = ((((byte)fcs)<<24) | ((((byte)(fcs>>8))<<16)&0xff0000) | ((((byte)(fcs>>16))<<8)&0xff00) | (((byte)(fcs>>24))&0xff)) ^ 0xffffffff;
 		fcsItem.setValue(fcs);
 		return fcs;
 	}
