@@ -99,7 +99,7 @@ public class BlockItem {
 	public static int setCRC32(FixedValueItem fcsItem) {
 		CRC32 checksum = new CRC32();
 		BlockItem i = fcsItem.getHead();
-		if(Linker32.dbg) System.out.println("> Calculating CRC32:"); System.out.print("  ");
+		if(Linker32.dbg) {System.out.println("> Calculating CRC32:"); System.out.print("  ");}
 		while(i != fcsItem) {
 			checksum.update(i.getBytes());
 			if(Linker32.dbg) printByteArray(i.getBytes());
