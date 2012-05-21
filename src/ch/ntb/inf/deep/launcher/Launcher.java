@@ -89,52 +89,54 @@ public class Launcher implements ICclassFileConsts {
 			
 			// Proceeding Classes: Loop One
 			if(dbg) vrb.println("Proceeding classes (loop one):");
-			for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-				if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
-				clazz = Class.elOrdredClasses[extLevel];
-				while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
-					if(dbg) vrb.println("  > Class: " + clazz.name);
-					
-					// Create constant block
-					if(reporter.nofErrors <= 0) {
-						if(dbg) vrb.println("    creating constant block");
-						Linker32.createConstantBlock(clazz);
-					}
-					
-					method = (Method)clazz.methods;
-					while (method != null && reporter.nofErrors <= 0) {
-						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
-							if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-
-							// Create CFG
-							if(reporter.nofErrors <= 0) {
-								if(dbg) vrb.println("      building CFG");
-								method.cfg = new CFG(method);
-							}
-
-							// Create SSA
-							if(reporter.nofErrors <= 0) {
-								if(dbg) vrb.println("      building SSA");
-								method.ssa = new SSA(method.cfg);
-							}
-
-							// Create machine code
-							if(reporter.nofErrors <= 0) {
-								if(dbg) vrb.println("      creating machine code");
-								method.machineCode = new CodeGen(method.ssa);
-							}
-
+			if(reporter.nofErrors <= 0) {
+				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+					if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
+					clazz = Class.elOrdredClasses[extLevel];
+					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
+						if(dbg) vrb.println("  > Class: " + clazz.name);
+						
+						// Create constant block
+						if(reporter.nofErrors <= 0) {
+							if(dbg) vrb.println("    creating constant block");
+							Linker32.createConstantBlock(clazz);
 						}
-						method = (Method)method.next;
+						
+						method = (Method)clazz.methods;
+						while (method != null && reporter.nofErrors <= 0) {
+							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+								if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+	
+								// Create CFG
+								if(reporter.nofErrors <= 0) {
+									if(dbg) vrb.println("      building CFG");
+									method.cfg = new CFG(method);
+								}
+	
+								// Create SSA
+								if(reporter.nofErrors <= 0) {
+									if(dbg) vrb.println("      building SSA");
+									method.ssa = new SSA(method.cfg);
+								}
+	
+								// Create machine code
+								if(reporter.nofErrors <= 0) {
+									if(dbg) vrb.println("      creating machine code");
+									method.machineCode = new CodeGen(method.ssa);
+								}
+	
+							}
+							method = (Method)method.next;
+						}
+	
+						// Linker: calculate required size
+						if(reporter.nofErrors <= 0) {
+							if(dbg) vrb.println("    calculating code size and offsets");
+							Linker32.calculateCodeSizeAndOffsets(clazz);
+						}
+						
+						clazz = clazz.nextExtLevelClass;
 					}
-
-					// Linker: calculate required size
-					if(reporter.nofErrors <= 0) {
-						if(dbg) vrb.println("    calculating code size and offsets");
-						Linker32.calculateCodeSizeAndOffsets(clazz);
-					}
-					
-					clazz = clazz.nextExtLevelClass;
 				}
 			}
 
@@ -171,9 +173,6 @@ public class Launcher implements ICclassFileConsts {
 					if(dbg) vrb.println("    calculating absolute addresses");
 					Linker32.calculateAbsoluteAddresses(clazz);
 					
-					// Linker: arrange constant
-					if(dbg) vrb.println("    updating constant block");
-					Linker32.updateConstantBlock(clazz);
 					clazz = clazz.nextExtLevelClass;
 				}
 			}
@@ -185,12 +184,16 @@ public class Launcher implements ICclassFileConsts {
 			Linker32.createGlobalConstantTable();
 			
 			// Proceeding Classes: Loop Three
-			if(dbg) vrb.println("Proceeding classes (loop two):");
+			if(dbg) vrb.println("Proceeding classes (loop three):");
 			for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 				if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
 				clazz = Class.elOrdredClasses[extLevel];
 				while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
 					if(dbg) vrb.println("  > Class: " + clazz.name);
+	
+					// Linker: update constant block
+					if(dbg) vrb.println("    updating constant block");
+					Linker32.updateConstantBlock(clazz);
 					
 					method = (Method)clazz.methods;
 					while(method != null && reporter.nofErrors <= 0) {

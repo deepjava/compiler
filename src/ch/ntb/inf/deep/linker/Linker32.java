@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	private static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	public static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -161,7 +161,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.varBase.append(new FixedValueItem("varSize"));
 		clazz.constantBlock.append(clazz.varBase);
 		Method classConstructor = clazz.getClassConstructor();
-		if(classConstructor != null) {			
+		if(classConstructor != null) {
 			clazz.constantBlock.append(new AddressItem(classConstructor));
 		}
 		else {
@@ -774,9 +774,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		((FixedValueItem)clazz.typeDescriptor).setValue(clazz.objectSize); // size
 		
 		// Calculate checksum
-		if(dbg) vrb.print("  Calculating checksum:");
+		if(dbg) vrb.println("  Calculating checksum:");
 		int fcs = BlockItem.setCRC32((FixedValueItem)clazz.constantBlockChecksum);
-		if(dbg) vrb.println(String.format("[0x%08X]", fcs));
+		if(dbg) vrb.println(String.format("CRC32: 0x%08X", fcs));
 		
 		if(dbg) vrb.println("\n[LINKER] END: Updating constant block for class \"" + clazz.name +"\"\n");
 	}
