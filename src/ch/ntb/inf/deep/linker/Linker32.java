@@ -168,23 +168,23 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			clazz.constantBlock.append(new FixedValueItem("<clinit>", -1));
 		}
 		
-		// Pointer list
-		if(dbg) vrb.println("   Creating pointer list");
-		clazz.ptrList = new FixedValueItem("nofPtrs");
+		// Pointer list (list of class fields which are references)
+		if(dbg) vrb.println("   Creating pointer list (class fields)");
+		clazz.classPtrList = new FixedValueItem("nofClassPtrs");
 		int ptrCounter = 0;
 		if(clazz.nofClassRefs > 0) {
-			Item field = clazz.classFields;
-			while(field != null) {
+			Item field = clazz.firstClassReference;
+			while(field != clazz.constFields) {
 				if((field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) != 0 && (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
-					clazz.ptrList.append(new AddressItem(field));
+					clazz.classPtrList.append(new AddressItem(field));
 					ptrCounter++;
 				}
 				field = field.next;
 			}
 			assert ptrCounter == clazz.nofClassRefs : "[Error] Number of added pointers (" + ptrCounter + ") not equal to number of pointers in class (" + clazz.nofClassRefs + ")!";
 		}
-		((FixedValueItem)clazz.ptrList).setValue(ptrCounter);
-		clazz.constantBlock.append(clazz.ptrList);
+		((FixedValueItem)clazz.classPtrList).setValue(ptrCounter);
+		clazz.constantBlock.append(clazz.classPtrList);
 		
 		// Type descriptor: size and extension level
 		if(dbg) vrb.println("   Creating type descriptor");
@@ -203,6 +203,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		// Type descriptor: insert class name address
 		if(dbg) vrb.println("    - Inserting class name address");
 		clazz.typeDescriptor.insertAfter(new FixedValueItem("classNameAddr", 0x12345678));
+		
+		// Type descriptor: insert instance pointers offset
+		if(dbg) vrb.println("    - Inserting instance pointer offset");
+		clazz.instPtrOffset = new FixedValueItem("instPtrOffset");
+		clazz.typeDescriptor.append(clazz.instPtrOffset);
 		
 		// Type descriptor: create type table (base classes)
 		if(dbg) vrb.println("    - Inserting base classes:");
@@ -254,6 +259,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			
 			clazz.typeDescriptor.append(interfaceTable.getHead());
 		}
+		
+		// Instance pointer list (list of instance fields which are references)
+		if(dbg) vrb.println("   Creating pointer list (instance fields)");
+		clazz.instPtrList = new FixedValueItem("nofInstPtrs");
+		ptrCounter = 0;
+		if(clazz.nofInstRefs > 0) {
+			Item field = clazz.firstInstReference;
+			while(field != clazz.classFields) {
+				if((field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) == 0 && (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
+					clazz.instPtrList.append(new OffsetItem("instPtrOffset[" + ptrCounter + "]: ", field));
+					ptrCounter++;
+				}
+				field = field.next;
+			}
+			assert ptrCounter == clazz.nofInstRefs : "[Error] Number of added pointers (" + ptrCounter + ") not equal to number of pointers in class (" + clazz.nofClassRefs + ")!";
+		}
+		((FixedValueItem)clazz.instPtrList).setValue(ptrCounter);
+		clazz.typeDescriptor.append(clazz.instPtrList);
 		
 		// calculate type descriptor size
 		clazz.typeDescriptorSize = clazz.typeDescriptor.getBlockSize();
@@ -309,7 +332,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(dbg) vrb.println("  Calculating indexes and offsets for the string pool entries");
 			BlockItem s = clazz.stringPool;
 			offset = 0; index = 0;
-			while(s != clazz.constantPool && s != clazz.constantBlockChecksum) {
+			while(s != clazz.constantPool && s != clazz.instPtrList && s != clazz.constantBlockChecksum) {
 				((StringItem)s).setIndex(index);
 				((StringItem)s).setOffset(offset);
 				
@@ -324,7 +347,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(dbg) vrb.println("  Calculating indexes and offsets for the constant pool entries");
 			BlockItem c = clazz.constantPool;
 			offset = 0; index = 0;
-			while(c != clazz.constantBlockChecksum) {
+			while(c != clazz.instPtrList && c != clazz.constantBlockChecksum) {
 				((ConstantItem)c).setIndex(index);
 				((ConstantItem)c).setOffset(offset);
 				
@@ -344,13 +367,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		clazz.typeDescriptorOffset = offset;
 		
-//		if(imDelegOffset < 0) {
-//			imDelegOffset = 8 + typeTableLength;
-//		}
-//		
-//		if(dbg) {
-//			if(imDelegOffset != 8 + typeTableLength) reporter.error(799, "imDelegOffset != 8 + typeTableLenth -> typeTableLength wrong?");
-//		}
+		// Calculating instance pointer list offset
+		i = clazz.typeDescriptor;
+		offset = 0;
+		while(i != clazz.instPtrList) {
+			offset += i.getItemSize();
+			i = i.next;
+		}
+		clazz.instPtrOffset.setValue(offset);
 		
 		
 		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");

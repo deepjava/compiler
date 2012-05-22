@@ -30,6 +30,7 @@ import ch.ntb.inf.deep.config.SystemMethod;
 import ch.ntb.inf.deep.debug.Dbg;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.linker.BlockItem;
+import ch.ntb.inf.deep.linker.FixedValueItem;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
@@ -92,10 +93,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public BlockItem constantBlock; // reference to the first entry of the constant block (=constBlockSize entry)
 	public BlockItem codeBase; // reference to the codeBase entry
 	public BlockItem varBase; // reference to the varBase entry
-	public BlockItem ptrList; // reference to the beginning of the pointer list (=nofPtrs entry)
+	public BlockItem classPtrList; // reference to the beginning of the pointer list (class fields) (=nofPtrs entry)
 	public BlockItem typeDescriptor; // reference to the type descriptor (size entry)
 	public BlockItem stringPool; // reference to the beginning of the string pool
 	public BlockItem constantPool; // reference to the beginning of the constant pool
+	public BlockItem instPtrList; // reference to the beginning of the pointer list (instance fields)
+	public FixedValueItem instPtrOffset;
 	public BlockItem constantBlockChecksum; // reference to the end of the constant block (=fcs entry)
 	
 	public int typeDescriptorSize; // size of the type descriptor on the target (in byte)

@@ -21,28 +21,25 @@
 package ch.ntb.inf.deep.linker;
 
 import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.strings.HString;
 
-public class InterfaceItem extends BlockItem {
+public class OffsetItem extends BlockItem {
 	
 	private static final int size = 4;
 	
-	HString name;
-	short ifaceID;
-	short bmo;
-		
-	public InterfaceItem(HString ifaceName, short ifaceID, short bmo) {
-		this.name = ifaceName;
-		this.ifaceID = ifaceID;
-		this.bmo = bmo;
+	Item itemRef;
+	
+	public OffsetItem(Item ref) {
+		this.itemRef = ref;
+		if(ref.name != null) this.name = ref.name;
+		else name = HString.getHString("???");
 	}
 	
-	public int getOffset() {
-		return this.bmo;
-	}
-	
-	public int getID() {
-		return this.ifaceID;
+	public OffsetItem(String prefix, Item ref) {
+		this.itemRef = ref;
+		if(ref.name != null) this.name = HString.getHString(prefix + ref.name);
+		else name = HString.getHString(prefix + "???");
 	}
 	
 	protected int getItemSize() {
@@ -50,10 +47,11 @@ public class InterfaceItem extends BlockItem {
 	}
 	
 	protected int insertIntoArray(int[] a, int offset) {
+		int value = itemRef.offset;
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
-			a[index] = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
+			a[index] = value;
 			written = size;
 		}
 		return written;
@@ -61,16 +59,19 @@ public class InterfaceItem extends BlockItem {
 	
 	public byte[] getBytes() {
 		byte[] bytes = new byte[size];
-		int value = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
 		for (int i = 0; i < size; ++i) {
 		    int shift = i << 3; // i * 8
-		    bytes[(size - 1) - i] = (byte)((value & (0xff << shift)) >>> shift);
+		    bytes[(size - 1) - i] = (byte)((itemRef.offset & (0xff << shift)) >>> shift);
 		}
 		return bytes;
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF)) + " (" + name + ")";
+		return String.format("[%08X]", itemRef.offset) + " (" + name + ")";
+	}
+	
+	public int getOffset() {
+		return itemRef.offset;
 	}
 
 }
