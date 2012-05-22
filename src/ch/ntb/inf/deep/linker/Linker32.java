@@ -57,36 +57,35 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
-	public static final int cblkCodeBaseOffset = 1 * 4;
-	public static final int cblkCodeSizeOffset = 2 * 4;
-	public static final int cblkVarBaseOffset = 3 * 4;
-	public static final int cblkVarSizeOffset = 4 * 4;
-	public static final int cblkClinitAddrOffset = 5 * 4;
-	public static final int cblkNofPtrsOffset = 6 * 4;
-	public static final int cblkPtrAddr0Offset = 7 * 4;
+	public static final int cblkCodeBaseOffset = cblkConstBlockSizeOffset + 4;
+	public static final int cblkCodeSizeOffset = cblkCodeBaseOffset + 4;
+	public static final int cblkVarBaseOffset = cblkCodeSizeOffset + 4;
+	public static final int cblkVarSizeOffset = cblkVarBaseOffset + 4;
+	public static final int cblkClinitAddrOffset = cblkVarSizeOffset + 4;
+	public static final int cblkNofClassPtrsOffset = cblkClinitAddrOffset + 4;
+	public static final int cblkPtrAddr0Offset = cblkNofClassPtrsOffset + 4;
 	
 	// Class/type descriptor:
-	public static final int tdMethTabOffset = 2 * 4;
-	public static final int tdExtensionLevelOffset = 1 * 4;
 	public static final int tdSizeOffset = 0;
-	public static final int tdClassNameAddrOffset = 1 * 4;
-	public static final int tdBaseClass0Offset = 2 * 4;
-	public static final int tdConstantSize = 3 * 4;
-	public static final int tblkConstantSize = 8 * 4;
-	//public static final int tdSizeForArrays = 5 * 4;
-	public static int typeTableLength = -1; // in byte!
+	public static final int tdExtensionLevelOffset = tdSizeOffset + 4;
+	public static final int tdMethTabOffset = tdExtensionLevelOffset + 4;
+	public static final int tdClassNameAddrOffset = tdSizeOffset + 4;
+	public static final int tdInstPtrOffsetOffset = tdClassNameAddrOffset + 4;
+	public static final int tdBaseClass0Offset = tdInstPtrOffsetOffset + 4;
+	public static int typeTableLength = -1;
 	
 	// System table:
-	public static final int stStackOffset = 1 * 4;
-	public static final int stHeepOffset = 2 * 4;
-	public static final int stKernelClinitAddr = 3 * 4;
+	public static final int stClassConstOffset = 0;
+	public static final int stStackOffset = stClassConstOffset + 4;
+	public static final int stHeepOffset = stStackOffset + 4;
+	public static final int stKernelClinitAddr = stHeepOffset + 4;
 	public static final int stConstantSize = 8 * 4;
 	
 	// String pool:
-	public static final int stringHeaderConstSize = 3 * 4; // byte
+	public static final int stringHeaderConstSize = 3 * 4;
 	public static final int spTagIndex = 1;
 	public static final int spTagOffset = spTagIndex * 4;
-	public static int stringHeaderSize = -1; // byte
+	public static int stringHeaderSize = -1;
 	public static Class stringClass;
 	
 	// Error reporter and stdout:
@@ -684,7 +683,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
 		int constBlockBase =  clazz.constSegment.getBaseAddress() + clazz.constOffset;
-		int classDescriptorBase = constBlockBase + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
+		int classDescriptorBase = constBlockBase + cblkNofClassPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
 		int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		
