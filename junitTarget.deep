@@ -1,7 +1,7 @@
 #deep-0
 
 meta {
-	version = "2010-12-02";
+	version = "2012-05-22";
 	description = "Example project file";
 	import = "config/ntbMpc555STS.deep", "config/ntbMpc555HB.deep";
 }
@@ -9,36 +9,36 @@ meta {
 project {
 	libpath = "../bsp", "../junitTarget";
 
-#	Tests für Compiler-Testklassen 
+#	Tests for compiler test classes 
  
-#	Tests für alle Primitives
+#	Tests for all primitives
 #	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest",
 #				  "ch/ntb/junitTarget/comp/primitives/LongTest","ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest";
 				  
-#	Tests für alle Statements 
+#	Tests for all statements 
 #	rootclasses = "ch/ntb/junitTarget/comp/statements/DoWhileTest","ch/ntb/junitTarget/comp/statements/ForTest","ch/ntb/junitTarget/comp/statements/IfTest","ch/ntb/junitTarget/comp/statements/SwitchTest","ch/ntb/junitTarget/comp/statements/WhileTest";
 
-#	Tests für alle Conditions  
+#	Tests for all conditions  
 #	rootclasses = "ch/ntb/junitTarget/comp/conditions/ConditionTest","ch/ntb/junitTarget/comp/conditions/LongCompTest","ch/ntb/junitTarget/comp/conditions/FloatDoubleCompTest";
 
-#	Tests für alle Arrays   
+#	Tests for all arrays   
 #	rootclasses = "ch/ntb/junitTarget/comp/arrays/ArrayTest","ch/ntb/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/junitTarget/comp/arrays/StringTest";
 
-#	Tests für alle Unsafes  
+#	Tests for all unsafes  
 #	rootclasses = "ch/ntb/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/junitTarget/comp/unsafe/LowLevelTest";
 
-#	Tests für alle Casts  
+#	Tests for all casts  
 #	rootclasses = "ch/ntb/junitTarget/comp/casts/ByteCastTest","ch/ntb/junitTarget/comp/casts/ShortCastTest","ch/ntb/junitTarget/comp/casts/CharCastTest","ch/ntb/junitTarget/comp/casts/IntCastTest","ch/ntb/junitTarget/comp/casts/LongCastTest","ch/ntb/junitTarget/comp/casts/FloatCastTest","ch/ntb/junitTarget/comp/casts/DoubleCastTest";
 
-#	Tests für alle Objects  
+#	Tests for all objects  
 #	rootclasses = "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InheritanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest";
 #	rootclasses = "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest";
 #	rootclasses = "ch/ntb/junitTarget/comp/objects/InterfaceTest";
 
-#	Tests für alle Various  
+#	Tests for all various  
 #	rootclasses = "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
 
-#	Tests für alle Compiler-Testklassen  
+#	Tests for all compiler test classes  
 	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest", "ch/ntb/junitTarget/comp/primitives/LongTest", "ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest",
 				  "ch/ntb/junitTarget/comp/statements/DoWhileTest","ch/ntb/junitTarget/comp/statements/ForTest","ch/ntb/junitTarget/comp/statements/IfTest","ch/ntb/junitTarget/comp/statements/SwitchTest","ch/ntb/junitTarget/comp/statements/WhileTest",
 				  "ch/ntb/junitTarget/comp/conditions/ConditionTest","ch/ntb/junitTarget/comp/conditions/LongCompTest","ch/ntb/junitTarget/comp/conditions/FloatDoubleCompTest",
@@ -49,17 +49,17 @@ project {
 				  "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
 
 
-
-
-
-#	Tests für bsp-Tests  
+#	Tests for bsp tests  
 #	rootclasses = "ch/ntb/junitTarget/lib/MathTest";
 #	rootclasses = "ch/ntb/junitTarget/lib/GenericsTest";
 #	rootclasses = "ch/ntb/junitTarget/lib/TaskTest";
 
-#	Tests für alle bsp-Tests
+#	Tests for all bsp tests
 #	rootclasses = "ch/ntb/junitTarget/lib/MathTest",
 #				  "ch/ntb/junitTarget/lib/GenericsTest",
 #				  "ch/ntb/junitTarget/lib/TaskTest";
+
+# Target command table file
+	tctfile = "../junitTarget/tct/commandTable.dtct";
 
 }
