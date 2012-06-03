@@ -325,7 +325,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					}
 				}
 				nofParamFPR++;	// see comment below for else type 
-				if (type == tDouble) i++;
+				if (type == tDouble) {i++; paramRegNr[i] = paramRegNr[i-1];}
 			} else {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("r");
@@ -2754,13 +2754,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				i++; 
 			}
 		}
-		if (dbg) StdStreams.vrb.println();
+//		if (dbg) StdStreams.vrb.println();
 		done = false;
 		while (!done) {
 			i = paramStartFPR; done = true;
 			while (srcFPR[i] != 0) {
 				if (i > paramEndFPR) {	// copy to stack
 					if (srcFPRcount[i] >= 0) { // check if not done yet
+						if (dbg) StdStreams.vrb.println("\tFPR: parameter " + (i-paramStartFPR) + " from register " + srcFPR[i] + " to stack slot");
 						createIrSrAd(ppcStfd, srcFPR[i], stackPtr, paramOffset + offset);
 						offset += 8;
 						srcFPRcount[i]=-1; srcFPRcount[srcFPR[i]]--; 
@@ -2768,6 +2769,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					}
 				} else {
 					if (srcFPRcount[i] == 0) { // check if register no longer used for parameter
+						if (dbg) StdStreams.vrb.println("\tFPR: parameter " + (i-paramStartFPR) + " from register " + srcFPR[i] + " to " + i);
 						createIrDrB(ppcFmr, i, srcFPR[i]);
 						srcFPRcount[i]--; srcFPRcount[srcFPR[i]]--; 
 						done = false;
@@ -3114,20 +3116,23 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 //			for (int i = 0; moveFPRdst[i] != 0; i++) StdStreams.vrb.print(moveFPRdst[i] + ","); 
 //			StdStreams.vrb.println();
 //		}
+		offset = 0;
 		for (int i = 0; i < nofMoveGPR; i++) {
 			if (moveGPRsrc[i]+paramStartGPR <= paramEndGPR) // copy from parameter register
 				createIrArSrB(ppcOr, moveGPRdst[i], moveGPRsrc[i]+paramStartGPR, moveGPRsrc[i]+paramStartGPR);
 			else { // copy from stack slot
-				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + (i+(paramEndGPR-paramStartGPR+1)) + " from stack slot into GPR " + (paramRegNr[paramEndGPR - paramStartGPR + 1 + i]));
-				createIrDrAd(ppcLwz, moveGPRdst[i], stackPtr, stackSize + paramOffset + (i)*4);
+				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveGPRsrc[i] + " from stack slot into GPR" + moveGPRdst[i]);
+				createIrDrAd(ppcLwz, moveGPRdst[i], stackPtr, stackSize + paramOffset + offset);
+				offset += 4;
 			}
 		}
 		for (int i = 0; i < nofMoveFPR; i++) {
 			if (moveFPRsrc[i]+paramStartFPR <= paramEndFPR) // copy from parameter register
 				createIrDrB(ppcFmr, moveFPRdst[i], moveFPRsrc[i]+paramStartFPR);
 			else { // copy from stack slot
-				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + (i+(paramEndFPR-paramStartFPR+1)) + " from stack slot into FPR " + (paramRegNr[paramEndFPR - paramStartFPR + 1 + i]));
-				createIrDrAd(ppcLfd, moveFPRdst[i], stackPtr, stackSize + paramOffset + (i)*8);
+				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveFPRsrc[i] + " from stack slot into FPR" + moveFPRdst[i]);
+				createIrDrAd(ppcLfd, moveFPRdst[i], stackPtr, stackSize + paramOffset + offset);
+				offset += 8;
 			}
 		}
 	}
