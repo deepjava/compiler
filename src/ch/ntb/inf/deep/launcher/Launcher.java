@@ -62,7 +62,7 @@ public class Launcher implements ICclassFileConsts {
 		Configuration.parseAndCreateConfig(projectConfigFile, targetConfiguration);
 		
 		try {
-			// Read requiered classes
+			// Read required classes
 			if(reporter.nofErrors <= 0) {
 				if(dbg) vrb.println("Loading Classfiles");
 				Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(),
@@ -140,6 +140,8 @@ public class Launcher implements ICclassFileConsts {
 				}
 			}
 
+			CodeGen.generateCompSpecSubroutines();
+			
 			// calculate code size and offsets for compiler specific methods
 			Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
 			
@@ -210,6 +212,14 @@ public class Launcher implements ICclassFileConsts {
 					clazz = clazz.nextExtLevelClass;
 				}
 			}
+			Method m = Method.compSpecSubroutines;	// Code generator: fix up
+			while(m != null) {
+				if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+				if(dbg) vrb.println("      doing fixups");
+				m.machineCode.doFixups();
+				m = (Method)m.next;
+			}
+
 			
 			// Linker: Create target image
 			if(reporter.nofErrors <= 0) {

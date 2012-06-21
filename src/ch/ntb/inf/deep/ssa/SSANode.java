@@ -1675,6 +1675,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
+//				Method.createCompSpecSubroutine("remLongSmall"); 
+//				Method.createCompSpecSubroutine("remLong"); 
 				break;
 			case bCfrem:
 				value2 = popFromStack();

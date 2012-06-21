@@ -38,7 +38,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static final int defaultNofInstr = 32;
 	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
-
+	private static final int tempStorageSize = 8;
+	
 	private static int objectSize, stringSize;
 	private static StdConstant int2floatConst1 = null;	// 2^52+2^31, for int -> float conversions
 	private static StdConstant int2floatConst2 = null;	// 2^32, for long -> float conversions
@@ -361,7 +362,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	private static int calcStackSize() {
-		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? 8 : 0);
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? tempStorageSize : 0);
 		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
@@ -369,13 +370,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		GPRoffset = LRoffset - nofNonVolGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
-		tempStorageOffset = FPRoffset - 8;
+		tempStorageOffset = FPRoffset - tempStorageSize;
 		paramOffset = 4;
 		return size;
 	}
 
 	private static int calcStackSizeException() {
-		int size = 28 + nofGPR * 4 + (tempStorage? 8 : 0);
+		int size = 28 + nofGPR * 4 + (tempStorage? tempStorageSize : 0);
 		if (enFloatsInExc) {
 			size += nofNonVolFPR * 8;	// save used nonvolatile FPR's
 			size += nonVolStartFPR * 8 + 8;	// save all volatile FPR's and FPSCR
@@ -391,7 +392,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		GPRoffset = SRR0offset - nofGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
-		tempStorageOffset = FPRoffset - 8;
+		tempStorageOffset = FPRoffset - tempStorageSize;
 		paramOffset = 4;
 		return size;
 	}
@@ -3245,16 +3246,60 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			sb.append(Integer.toHexString(i*4));
 			sb.append("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
-				if (opcode == 0x10) {
-					int BD = (short)(instructions[i] & 0xFFFC);
-					sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
-				} else if (opcode == 0x12) {
-					int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-					sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
-				}
-				sb.append("\n");
+		if (opcode == 0x10) {
+			int BD = (short)(instructions[i] & 0xFFFC);
+			sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+		} else if (opcode == 0x12) {
+			int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+			sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+		}
+		sb.append("\n");
 		}
 		return sb.toString();
+	}
+
+	public static void generateCompSpecSubroutines() {
+		int regAux1 = paramEndGPR; // use parameter registers
+		int regAux2 = paramEndGPR - 1; // use parameter registers
+		int regAux3 = paramEndGPR - 2; // use parameter registers
+
+		Method m = Method.getCompSpecSubroutine("imDelegI1Mm");
+		if (m != null) { 
+			m.machineCode = new CodeGen();
+			// imDelegI1Mm
+			m.machineCode.instructions = new int[16];
+			m.machineCode.iCount = 0;
+			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
+			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset + 4);	// get interface
+			m.machineCode.createIrArS(ppcExtsh, 0, 0);
+			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
+			m.machineCode.createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
+			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
+			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
+			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
+		}
+
+		m = Method.getCompSpecSubroutine("imDelegIiMm");
+		if (m != null) { 
+			m.machineCode = new CodeGen();
+			// imDelegIiMm
+			m.machineCode.instructions = new int[16];
+			m.machineCode.iCount = 0;
+			m.machineCode.createIrArSuimm(ppcOri, regAux3, regAux1, 0xffff);	// interface id
+			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
+			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset);	// set to address before first interface 
+			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);	// set to next interface
+			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, 0);	// get interface
+			m.machineCode.createICRFrArB(ppcCmpl, CRF0, 0, regAux3);
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);;
+			m.machineCode.createIrArS(ppcExtsh, 0, 0);
+			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
+			m.machineCode.createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
+			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// reload tag
+			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
+			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
+			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
+		}
 	}
 
 	public static void init() { 
@@ -3327,49 +3372,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				if (strAllocC != null) StdStreams.vrb.println("allocateStringC = " + strAllocC.name + strAllocC.methDescriptor); else StdStreams.vrb.println("allocateStringC: not found");
 				if (strAllocCII != null) StdStreams.vrb.println("allocateStringCII = " + strAllocCII.name + strAllocCII.methDescriptor); else StdStreams.vrb.println("allocateStringCII: not found");
 			}
-		}
-
-		int regAux1 = paramEndGPR; // use parameter registers
-		int regAux2 = paramEndGPR - 1; // use parameter registers
-		int regAux3 = paramEndGPR - 2; // use parameter registers
-
-		Method m = Method.getCompSpecSubroutine("imDelegI1Mm");
-		if (m != null) { 
-			m.machineCode = new CodeGen();
-			// imDelegI1Mm
-			m.machineCode.instructions = new int[16];
-			m.machineCode.iCount = 0;
-			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
-			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset + 4);	// get interface
-			m.machineCode.createIrArS(ppcExtsh, 0, 0);
-			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
-			m.machineCode.createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
-			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
-			// m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0, 0);				
-			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
-			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
-		}
-
-		m = Method.getCompSpecSubroutine("imDelegIiMm");
-		if (m != null) { 
-			m.machineCode = new CodeGen();
-			// imDelegIiMm
-			m.machineCode.instructions = new int[16];
-			m.machineCode.iCount = 0;
-			m.machineCode.createIrArSuimm(ppcOri, regAux3, regAux1, 0xffff);	// interface id
-			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
-			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset);	// set to address before first interface 
-			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);	// set to next interface
-			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, 0);	// get interface
-			m.machineCode.createICRFrArB(ppcCmpl, CRF0, 0, regAux3);
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);;
-			m.machineCode.createIrArS(ppcExtsh, 0, 0);
-			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
-			m.machineCode.createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
-			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// reload tag
-			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
-			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
-			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
 		}
 	}
 }

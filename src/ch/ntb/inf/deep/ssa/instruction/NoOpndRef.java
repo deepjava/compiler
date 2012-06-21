@@ -74,6 +74,8 @@ public class NoOpndRef extends NoOpnd {
 			if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
 			if (result.reg != -1) sb.append(", reg=" + result.reg);
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
+			if (result.regGPR2 != -1) sb.append(", regAux2=" + result.regGPR2);
+			if (result.regGPR3 != -1) sb.append(", regAux3=" + result.regGPR3);
 		}
 		return sb.toString();
 	}

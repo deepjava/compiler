@@ -376,12 +376,15 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 			}
 			
-			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions
+			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
 				Call call = (Call)instr;
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
 					if ((call.item.accAndPropFlags & sysMethCodeMask) == CodeGen.idENABLE_FLOATS) {
 					CodeGen.enFloatsInExc = true;
 				}
+				int id = call.item.accAndPropFlags & sysMethCodeMask;
+				if (id == CodeGen.idDoubleToBits || (id == CodeGen.idBitsToDouble))  // DoubleToBits or BitsToDouble
+					CodeGen.tempStorage = true;
 			}
 		}
 	}
@@ -426,7 +429,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
 			if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
-//			if (instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted && ((PhiFunction)instr).start >= i && instr.result.join == null) continue; 
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
 			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
@@ -445,7 +447,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				else nofAuxRegGPR = 1;
 			} else if (nofAuxRegGPR == 0xa) {	// scRem
 				if (res.type == tLong) {nofAuxRegGPR = 4; nofAuxRegFPR = 3;}
-				else nofAuxRegGPR = 1;
+				else if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
 			}
 			
 			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false);
@@ -478,7 +480,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				CodeGen.tempStorage = true;
 			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
 				CodeGen.tempStorage = true;
-			if (instr.ssaOpcode == sCdiv && res.type == tLong)
+			if ((instr.ssaOpcode == sCdiv || instr.ssaOpcode == sCrem) && res.type == tLong)
 				CodeGen.tempStorage = true;
 
 			// reserve register for result of instruction
@@ -820,6 +822,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					StdStreams.vrb.print(", end=" + next.end);
 					if (next.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
 					StdStreams.vrb.print(", type=" + next.typeName());
+					if (next.typeName() == "Long") StdStreams.vrb.print(", regLong=" + next.regLong);
 					StdStreams.vrb.print(", reg=" + next.reg);
 					if (next.regGPR1 > -1) StdStreams.vrb.print(", regAux1=" + next.regGPR1);
 					next = next.next;

@@ -21,31 +21,37 @@
 package ch.ntb.inf.deep.cgPPC;
 
 interface Registers {
-	final int nofGPR = 32;
+	final int nofGPR = 32;	
 	final int nofFPR = 32;
 	
-	final int topGPR = 31;
-	final int topFPR = 31;
+	final int topGPR = 31;	// highest numbered GPR
+	final int topFPR = 31;	// highest numbered FPR
 	
-	final int paramStartGPR = 2;
-	final int paramStartFPR = 1;
+	final int paramStartGPR = 2;	// GPR with first parameter
+	final int paramStartFPR = 1;	// FPR with first parameter
 	
-	final int paramEndGPR = 10;	// must be < nonVolStartGPR
-	final int paramEndFPR = 8;	// must be < nonVolStartFPR
+	final int paramEndGPR = 10;	// GPR with last parameter, must be < nonVolStartGPR
+	final int paramEndFPR = 8;	// FPR with last parameter, must be < nonVolStartFPR
 	
-	final int nonVolStartGPR = 13;
-	final int nonVolStartFPR = 13;
+	final int nonVolStartGPR = 13;	// first nonvolatile GPR
+	final int nonVolStartFPR = 13;	// first nonvolatile FPR
 	
-	final int returnGPR1 = 2;
-	final int returnGPR2 = 3;
-	final int returnFPR = 1;
+	final int returnGPR1 = 2;	// GPR with return value
+	final int returnGPR2 = 3;	// GPR with return value used for longs
+	final int returnFPR = 1;	// FPR with return value
 
 	final int stackPtr = 1;	// register for stack pointer
 
-	final int regsGPRinitial = 0xfffffffc;
-	final int regsFPRinitial = 0xfffffffe;
+	final int regsGPRinitial = 0xfffffffc;	// initial mask for GPR's, '1' means register is free
+	final int regsFPRinitial = 0xfffffffe;	// initial mask for FPR's, '1' means register is free
 
 	final boolean gpr = true;
 	final boolean fpr = false;
+	
+	// register definitions for compiler specific subroutines
+	final int subResRegLong	= 26;
+	final int subResReg = 27;
+	final int subAux1Reg = 25;
+	final int subAux2Reg = 24;
 
 }
