@@ -2479,6 +2479,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					case 'L':
 						result.type = SSAValue.tAref;
 						break;
+					case '[':
+						result.type = SSAValue.tAref;
+						break;
 					default:
 						result.type = SSAValue.tVoid;
 					}
