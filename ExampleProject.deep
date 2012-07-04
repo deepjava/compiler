@@ -1,24 +1,23 @@
-#deep-0
+#deep-1
 
 meta {
-	version = "2012-23-03";
+	version = "2012-07-04";
 	description = "Example project file";
-	import = "config/ntbMpc555STS.deep", "config/ntbMpc555HB.deep";
 }
 
-project {
-	libpath = "../bsp";
-#	libpath = "../bsp", "../junitTarget";
+project exampleProject {
+	libpath = "../RuntimeSystem";
+	
+	boardtype = ntbMpc555HB;
+	ostype = ntbMpc555STS;
+	
+	programmertype = ntbMpc555UsbBdi;
+	
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication";
 
-#	rootclasses = "ch/ntb/inf/deep/testClasses/T04Loops";
+#	imgfile = "out/exampleProject.bin"
+#	imgformat = bin;
 
-#	rootclasses = "ch/ntb/junitTarget/comp/primitives/LongTest";
-#	rootclasses = "ch/ntb/junitTarget/comp/conditions/ConditionTest";
-
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/OutTest1";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication", "ch/ntb/inf/deep/runtime/mpc555/test/OutTest4";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/RTBoardTest2";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ArrayTest2";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/Heap";
+#	tctfile = "tct/targetCommands.dtct";
 
 }

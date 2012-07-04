@@ -139,23 +139,23 @@ if(verbose) vrb.println("createSingleton: undefIdent="+undefIdent);
 	}
 
 	public HString insertCondAndGetEntry(HString newString) {
-if(verbose) {vrb.print(">insertCondAndGetString_HS: newString="); vrb.println(newString); }
+		if(verbose) {vrb.print(">insertCondAndGetString_HS: newString="); vrb.println(newString); }
 		int length = newString.length();
 		int hashCode = newString.hashCode();
-		int tabIndex = hashCode  & hashCodeMask;
+		int tabIndex = hashCode & hashCodeMask;
 		HString entry = tab[tabIndex];
 
 		HString pred = null;
 		while (entry != null && length > entry.length)  { pred = entry;   entry = entry.next; }
 
 		HString foundStr = null;
-		while (entry != null && length == entry.length) {
+		while(entry != null && length == entry.length) {
 			if (hashCode == entry.hash) {
-if(verbose) {
-	vrb.print(">insertCondAndGetString_HS 10: length="+length + ", entry.length="+(int)entry.length+ ", entry: "); vrb.println(entry);
-}
-				if (newString.equals(entry)) {
-if(verbose) vrb.println("<str found>");
+				if(verbose) {
+					vrb.print(">insertCondAndGetString_HS 10: length="+length + ", entry.length="+(int)entry.length+ ", entry: "); vrb.println(entry);
+				}
+				if(newString.equals(entry)) {
+					if(verbose) vrb.println("<str found>");
 					foundStr = entry;
 					break;
 				}
@@ -163,11 +163,11 @@ if(verbose) vrb.println("<str found>");
 			entry = entry.next;
 		}
 
-if(verbose) {
-	vrb.print(">insertCondAndGetString_HS 20: length="+length);
-	if(entry == null) vrb.print(" entry==null ");  else  vrb.println(entry);
-	vrb.println();
-}
+		if(verbose) {
+			vrb.print(">insertCondAndGetString_HS 20: length="+length);
+			if(entry == null) vrb.print(" entry==null ");  else  vrb.println(entry);
+			vrb.println();
+		}
 
 		if (foundStr == null) {// insert new String
 			nofEntries++;
@@ -179,7 +179,7 @@ if(verbose) {
 				newString.next = pred.next;  pred.next = newString;
 			}
 		}
-if(verbose) { vrb.print("<insertCondAndGetString_HS: foundStr="); vrb.println(foundStr);}
+		if(verbose) { vrb.print("<insertCondAndGetString_HS: foundStr="); vrb.println(foundStr);}
 		return foundStr;
 	}
 

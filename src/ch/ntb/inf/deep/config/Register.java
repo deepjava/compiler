@@ -23,10 +23,8 @@ package ch.ntb.inf.deep.config;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Register {
-	public Register next;
+public class Register extends ConfigElement {
 	public Register nextWithInitValue;
-	HString name;
 	int type = -1;
 	int addr = -1;
 	int size = -1;
@@ -71,47 +69,43 @@ public class Register {
 		return repr;
 	}
 	
-	public HString getName(){
-		return name;
-	}
-	
 	public HString getTypeName(){
 		if(type == Parser.sGPR){
-			return HString.getHString("GPR");
+			return HString.getRegisteredHString("GPR");
 		}
 		if(type == Parser.sFPR){
-			return HString.getHString("FPR");
+			return HString.getRegisteredHString("FPR");
 		}
 		if(type == Parser.sSPR){
-			return HString.getHString("SPR");
+			return HString.getRegisteredHString("SPR");
 		}
 		if(type == Parser.sIOR){
-			return HString.getHString("IOR");
+			return HString.getRegisteredHString("IOR");
 		}
 		if (type == Parser.sMSR){
-			return HString.getHString("MSR");
+			return HString.getRegisteredHString("MSR");
 		}
 		if (type == Parser.sCR){
-			return HString.getHString("CR");
+			return HString.getRegisteredHString("CR");
 		}
 		if (type == Parser.sFPSCR){
-			return HString.getHString("FPSCR");
+			return HString.getRegisteredHString("FPSCR");
 		}
 		
-		return HString.getHString("Undefined Type");
+		return HString.getRegisteredHString("Undefined Type");
 	}
 	
 	public HString getReprName(){
 		if(repr == Parser.sDez){
-			return HString.getHString("Dez");
+			return HString.getRegisteredHString("Dez");
 		}
 		if(repr == Parser.sBin){
-			return HString.getHString("Bin");
+			return HString.getRegisteredHString("Bin");
 		}
 		if(repr == Parser.sHex){
-			return HString.getHString("Hex");
+			return HString.getRegisteredHString("Hex");
 		}
-		return HString.getHString("Undefined Representation");
+		return HString.getRegisteredHString("Undefined Representation");
 	}
 	
 	public void println(int indentLevel){

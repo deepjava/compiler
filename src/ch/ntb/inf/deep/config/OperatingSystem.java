@@ -22,8 +22,10 @@ package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.strings.HString;
 
-public class OperatingSystem implements ICclassFileConsts {
+public class OperatingSystem extends ConfigElement implements ICclassFileConsts {
+	private HString description;
 	private SystemClass kernel;
 	private SystemClass heap;
 	private SystemClass exceptionBaseClass;
@@ -31,6 +33,10 @@ public class OperatingSystem implements ICclassFileConsts {
 	private SystemClass us;
 	private SystemClass lowlevel;
 	private SystemClass list;
+
+	public OperatingSystem(String jname) {
+		this.name = HString.getRegisteredHString(jname);
+	}
 
 	public void setKernel(SystemClass kernel) {
 		this.kernel = kernel;
@@ -43,21 +49,24 @@ public class OperatingSystem implements ICclassFileConsts {
 	}
 
 	public void addException(SystemClass exception) {
-		// check if already exists
-		SystemClass current = exceptions;
-		while (current != null) {
-			if (current.name.equals(exception.name)) {
-				current.attributes = exception.attributes;
-				current.methods = exception.methods;
-				return;
+		if(Configuration.dbg) StdStreams.vrb.println("[CONF] OperatingSystem: adding exception " + exception.getName());
+		if(exceptions != null) {
+			if(Configuration.dbg) StdStreams.vrb.print("  Looking for exception " + exception.getName());
+			SystemClass e = (SystemClass)exceptions.getElementByName(exception.name);
+			if(e == null) {
+				if(Configuration.dbg) StdStreams.vrb.println(" -> not found -> adding exception");
+				exceptions.insertBefore(exception);
+				exceptions = exception;
 			}
-			current = current.next;
+			else {
+				if(Configuration.dbg) StdStreams.vrb.println(" -> found -> noting to do");
+			}
 		}
-		// add SystemClass
-		exception.next = this.exceptions;
-		this.exceptions = exception;
-		this.addClass(exception);
-
+		else {
+			if(Configuration.dbg) StdStreams.vrb.println("  Adding first exception");
+			this.exceptions = exception;
+			this.addClass(exception);
+		}
 	}
 
 	public void setExceptionBaseClass(SystemClass exceptionBaseClass) {
@@ -75,6 +84,10 @@ public class OperatingSystem implements ICclassFileConsts {
 		this.addClass(lowlevel);
 	}
 
+	public void setDescription(String desc) {
+		this.description = HString.getRegisteredHString(desc);
+	}
+	
 	public SystemClass getKernel() {
 		return kernel;
 	}
@@ -103,6 +116,10 @@ public class OperatingSystem implements ICclassFileConsts {
 		return list;
 	}
 
+	public HString getDescription() {
+		return description;
+	}
+	
 	public void println(int indentLevel) {
 		for (int i = indentLevel; i > 0; i--) {
 			StdStreams.vrb.print("  ");
@@ -140,7 +157,7 @@ public class OperatingSystem implements ICclassFileConsts {
 				StdStreams.vrb.print("  ");
 			}
 			StdStreams.vrb.println("}");
-			current = current.next;
+			current = (SystemClass)current.next;
 		}
 
 		for (int i = indentLevel + 1; i > 0; i--) {
@@ -180,7 +197,11 @@ public class OperatingSystem implements ICclassFileConsts {
 	}
 
 	private void addClass(SystemClass clazz) {
-		clazz.next = list;
-		list = clazz;
+		if(list == null) {
+			list = clazz;
+		}
+		else {
+			list.append(clazz);
+		}
 	}
 }

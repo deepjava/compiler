@@ -18,16 +18,20 @@
  * 
  */
 
-package ch.ntb.inf.deep.loader;
+package ch.ntb.inf.deep.target;
 
-import ch.ntb.inf.deep.config.Device;
-import ch.ntb.inf.deep.linker.TargetMemorySegment;
+/**
+ * Download Exception
+ */
+public class TargetConnectionException extends Exception {
 
-public interface MemoryWriter {
-	public void eraseDevice(Device dev);
-	public void eraseMarkedSectors(Device dev);
-	public int writeSequence(TargetMemorySegment seg);
-	public int writeWord(int addr, int data);
-	public int writeByte(int addr, byte data);
+	private static final long serialVersionUID = -7783915136427481365L;
+	
+	public TargetConnectionException(String msg) {
+		super(msg);
+	}
 
+	public TargetConnectionException(String msg, Exception e) {
+		super(msg, e);
+	}
 }

@@ -56,6 +56,7 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.NamedConst;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.MemoryMap;
 import ch.ntb.inf.deep.config.Segment;
@@ -264,7 +265,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				Device dev = memMap.getDevices();
 				for(int i = 0; i < devices.length && dev != null;i++){
 					devices[i] = dev;
-					dev = dev.next;
+					dev = (Device)dev.next;
 				}			
 				return devices;
 			}			
@@ -272,12 +273,12 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				Segment segs =((Device)parentElement).segments;
 				Segment current = segs;
 				int count;
-				for(count = 0; current != null; count++)current = current.next;
+				for(count = 0; current != null; count++)current = (Segment)current.next;
 				if(count > 0){
 					Segment seg[] = new Segment[count];
 					for(int i = 0; i < seg.length && segs != null; i++){
 						seg[i] = segs;
-						segs = segs.next;
+						segs = (Segment)segs.next;
 					}
 					return seg;
 				}				
@@ -286,12 +287,12 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				Segment segs =((Device)parentElement).segments;
 				Segment current = segs;
 				int count;
-				for(count = 0; current != null; count++)current = current.next;
+				for(count = 0; current != null; count++)current = (Segment)current.next;
 				if(count > 0){
 					Segment seg[] = new Segment[count];
 					for(int i = 0; i < seg.length && segs != null; i++){
 						seg[i] = segs;
-						segs = segs.next;
+						segs = (Segment)segs.next;
 					}
 					return seg;
 				}				
@@ -356,7 +357,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		classTreeViewer.setLabelProvider(new ClassTreeLabelProvider());
 		classTreeViewer.setContentProvider(new ClassTreeContentProvider());
 		classTreeViewer.setAutoExpandLevel(2);
-		classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("ClassList"), Type.classList)));
+		classTreeViewer.setInput(new TreeInput(new RootElement(HString.getRegisteredHString("ClassList"), Type.classList)));
 		classTreeViewer.addSelectionChangedListener(this);
 		
 		
@@ -375,7 +376,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		deviceTreeViewer.setLabelProvider(new DeviceTreeLabelProvider());
 		deviceTreeViewer.setContentProvider(new DeviceTreeContentProvider());
 		deviceTreeViewer.setAutoExpandLevel(2);
-		deviceTreeViewer.setInput(new TreeInput(MemoryMap.getInstance()));
+		deviceTreeViewer.setInput(Configuration.getBoard().getMemoryMap()); // TODO add CPU memory map here
 		deviceTreeViewer.addSelectionChangedListener(this);
 		
 		
@@ -403,7 +404,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("ClassList"), Type.classList)));
 				classTreeViewer.getControl().setEnabled(true);
 				classTreeViewer.refresh();
-				deviceTreeViewer.setInput(new TreeInput(MemoryMap.getInstance()));
+				deviceTreeViewer.setInput(new TreeInput(Configuration.getBoard().getMemoryMap())); // TODO add CPU memory map here
 				deviceTreeViewer.getControl().setEnabled(true);
 				deviceTreeViewer.refresh();
 			}

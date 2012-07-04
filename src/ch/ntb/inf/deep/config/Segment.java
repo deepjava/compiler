@@ -21,52 +21,52 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Segment implements IAttributes {
+public class Segment extends ConfigElement implements IAttributes {
 	public Device owner;
 	public Segment subSegments;
 	public Segment parent;
-	public Segment lastSubSegment;
-	public Segment next;
-	public Segment prev;
 	
-	HString name;
 	int attributes = 0;
 	int baseAddress = -1;
 	int size = 0;
 	int usedSize = 0;
 	int width = 0;
 	
+	public Segment(String jname, Device owner){
+		this.name = HString.getRegisteredHString(jname);
+		this.owner = owner;
+	}
+	
 	public Segment(HString name, Device owner){
 		this.name = name;
 		this.owner = owner;
 	}
 	
-	public Segment(HString name, Device owner, int baseAddress) {
-		this.name = name;
+	public Segment(String jname, Device owner, int baseAddress) {
+		this.name = HString.getRegisteredHString(jname);
 		this.baseAddress = baseAddress;
 		this.owner = owner;
 	}
 	
-	public Segment(HString name, Device owner, int baseAddress, int size) {
-		this.name = name;
+	public Segment(String jname, Device owner, int baseAddress, int size) {
+		this.name = HString.getRegisteredHString(jname);
 		this.baseAddress = baseAddress;
 		this.size = size;
 		this.owner = owner;
 	}
 	
-	public Segment(HString name, Device owner, int baseAddress, int size, int width) {
-		this.name = name;
+	public Segment(String jname, Device owner, int baseAddress, int size, int width) {
+		this.name = HString.getRegisteredHString(jname);
 		this.baseAddress = baseAddress;
 		this.size = size;
 		this.width = width;
 		this.owner = owner;
 	}
 	
-	public Segment(HString name, Device owner, int baseAddress, int size, int width, int attributes) {
-		this.name = name;
+	public Segment(String name, Device owner, int baseAddress, int size, int width, int attributes) {
+		this.name = HString.getRegisteredHString(name);
 		this.baseAddress = baseAddress;
 		this.size = size;
 		this.width = width;
@@ -74,10 +74,6 @@ public class Segment implements IAttributes {
 		this.owner = owner;
 	}
 		
-	public void setAttribute(int attributes) {
-		this.attributes = attributes;
-	}
-	
 	public void addAttributes(int attributes) {
 		this.attributes |= attributes;
 	}
@@ -119,11 +115,7 @@ public class Segment implements IAttributes {
 	public int getWidth() {
 		return width;
 	}
-	
-	public HString getName(){
-		return name;
-	}
-	
+		
 	public HString getFullName() {
 		String name = this.name.toString();
 		Segment ps = this.parent;
@@ -134,66 +126,51 @@ public class Segment implements IAttributes {
 			ps = ps.parent;
 		}
 		name = ts.owner.name + "." + name;
-		return HString.getHString(name);
+		return HString.getRegisteredHString(name);
 	}
 	
 	public int getAttributes(){
 		return attributes;
 	}
-
 	
 	public boolean addSubSegment(Segment s) {
+		if(Configuration.dbg) StdStreams.vrb.println("[CONF] Segment: adding new sub segment " + s.getName() + " to segment " + this.getName());
 		s.parent = this;
 		if(s.width == this.width) {
 			if(subSegments == null) {
 				subSegments = s;
-				lastSubSegment = subSegments;
 			}
 			else {
-				lastSubSegment.next = s;
-				s.prev = lastSubSegment;
-				lastSubSegment = lastSubSegment.next;
+				subSegments.append(s);
 			}
 			return true;
 		}
 		return false;
 	}
 	
-	/**
-	 * Add Size to usedSize.
-	 * @param size
-	 */
 	public void addToUsedSize(int size){
 		usedSize += size;
 	}
 	
-	
-	/**
-	 * @return the used size of the segment.
-	 */
 	public int getUsedSize(){
 		return usedSize;
 	}
 	
-	public Segment getSubSegmentByName(HString name){
-		int segHash = name.hashCode();
-		Segment current = subSegments;
-		while(current != null){
-			if(current.name.hashCode() == segHash){
-				if(current.name.equals(name)){
-					return current;
-				}
-			}
-			current = current.next;
-		}
-		return current;
+	public Segment getSubSegmentByName(HString name) {		
+		if(subSegments != null)	return (Segment)subSegments.getElementByName(name);
+		return null;
+	}
+	
+	public Segment getSubSegmentByName(String jname){
+		if(subSegments != null)	return (Segment)subSegments.getElementByName(jname);
+		return null;
 	}
 	
 	public void println(int indentLevel){
 		for(int i = indentLevel; i > 0; i--){
 			StdStreams.vrb.print("  ");
 		}
-		StdStreams.vrb.println("segment " + name.toString() + "{");
+		StdStreams.vrb.println("segment " + name.toString() + " {");
 		for(int i = indentLevel + 1; i > 0; i--){
 			StdStreams.vrb.print("  ");
 		}
@@ -208,13 +185,14 @@ public class Segment implements IAttributes {
 		Segment current = subSegments;
 		while(current != null){
 			current.println(indentLevel + 1);
-			current = current.next;
+			current = (Segment)current.next;
 		}
 		for(int i = indentLevel; i > 0; i--){
 			StdStreams.vrb.print("  ");
 		}
 		StdStreams.vrb.println("}");
 	}
+	
 	@Override
 	public String toString(){
 		StringBuilder sb = new StringBuilder();

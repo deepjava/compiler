@@ -26,10 +26,9 @@ import java.io.PrintStream;
 
 
 public abstract class HString implements IhStringConsts {
-	static final boolean verbose = false, testAssertion = true, checkPre = true, checkPost = true;
+	static final boolean dbg = false, testAssertion = true, checkPre = true, checkPost = true;
 	static PrintStream vrb = System.out;
 
-//	private static DataInput clsIn;
 	private static StringTable stab;
 
 	// --- static fields
@@ -48,17 +47,14 @@ public abstract class HString implements IhStringConsts {
 	char arrayLen; // int-array length (number of int values)
 	int flags; // set {sattrIs7bitChars, sattrIs8bitChars, sattrIs16bitChars}
 
-//	public static void setClassFileInput(DataInput classFileInput){
-//		clsIn = classFileInput;
-//	}
-
 	public static void releaseBuffers(){
 		if(byteBuffer.length > 100){
 			byteBuffer = new byte[100];
 			charBuffer = new char[100];			
 		}
 	}
-	public static void setStringTable(StringTable stringTable){
+	
+	private static void setStringTable(StringTable stringTable){
 		stab = stringTable;
 	}
 
@@ -72,14 +68,14 @@ public abstract class HString implements IhStringConsts {
 	public static int getHashCode(char[] chars, int length) {
     	if(checkPre) if( length < 0 || length > chars.length) throw new StringIndexOutOfBoundsException(length);
 		int hash = 0;
-		for(int index = 0; index < length; index++) hash = hash*31 + chars[index];
+		for(int index = 0; index < length; index++) hash = hash * 31 + chars[index];
 		return hash;
 	}
 
 	public static boolean isH8CharArray(char[] chars, int length) {
 	   	if(checkPre && (length < 0 || length > chars.length) ) throw new StringIndexOutOfBoundsException(length);
 		int charSet = 0;
-		while (--length > 0) charSet = charSet | chars[length];
+		while(--length > 0) charSet = charSet | chars[length];
 		return (charSet& -0x100) == 0;
 	}
 
@@ -100,18 +96,18 @@ public abstract class HString implements IhStringConsts {
 		   	if(startIndex < 0 || startIndex > endIndex) throw new StringIndexOutOfBoundsException(startIndex);
     	}
 		int length = endIndex - startIndex;
-//vrb.println(">getH8Array10: src"); printChars(chars, length);
+		//vrb.println(">getH8Array10: src"); printChars(chars, length);
 		int arrLength = (length+1)>>1;
 		char[] h8Array = new char[arrLength];
 		int coupleLength = length>>1;
-//vrb.println("getH8Array20: startIndex="+startIndex +", endIndex="+endIndex +", arrLength="+arrLength +", coupleLength="+coupleLength);
+		//vrb.println("getH8Array20: startIndex="+startIndex +", endIndex="+endIndex +", arrLength="+arrLength +", coupleLength="+coupleLength);
 		int n = 0;
 		while(n < coupleLength){
 			h8Array[n] = (char)( (jchars[startIndex++]<<8) | (jchars[startIndex++]& 0xFF)); // truncate high byte
 			n++;
 		}
 		if( (length&1) != 0)  h8Array[n] = (char)(jchars[startIndex]<<8);
-//		vrb.println("<getH8Array: dst"); printChars(h8Array, h8Array.length);
+		//vrb.println("<getH8Array: dst"); printChars(h8Array, h8Array.length);
 		return h8Array;
 	}
 
@@ -125,28 +121,32 @@ public abstract class HString implements IhStringConsts {
 	public static HString getHString(String string) {
 		if(string == null) return null;
 		int length = string.length();
-//vrb.println(">getHString: string="+string + ", length="+string);
+		//vrb.println(">getHString: string="+string + ", length="+string);
 		if (length > charBuffer.length)  charBuffer = new char[length];
 		string.getChars(0, length, charBuffer, 0);
 		HString hstring;
-		if ( isH8CharArray(charBuffer, length) )
+		if(isH8CharArray(charBuffer, length)) {
 			hstring = new H8String(charBuffer, length);
-		else
+		}
+		else {
 			hstring = new H16String(charBuffer, length);
-//vrb.println("<getHString");
+		}
+		//vrb.println("<getHString");
 		return hstring;
 	}
 
 	public static HString getRegisteredHString(String string) {
 		if(string == null) return null;
 		int length = string.length();
-		if (length > charBuffer.length)  charBuffer = new char[length];
+		if(length > charBuffer.length) charBuffer = new char[length];
 		string.getChars(0, length, charBuffer, 0);
 		HString hstring;
-		if ( isH8CharArray(charBuffer, length) )
+		if(isH8CharArray(charBuffer, length)) {
 			hstring = new H8String(charBuffer, length);
-		else
+		}
+		else {
 			hstring = new H16String(charBuffer, length);
+		}
 		return stab.insertCondAndGetEntry(hstring);
 	}
 	
@@ -160,15 +160,15 @@ public abstract class HString implements IhStringConsts {
 
 		int hashCode = 0;
 		int inByteNr = 0;
-		int charSet = 0;
+		//int charSet = 0;
 		int stringLength = 0;
 		int bx = 0;
 		while (inByteNr < utfLength) {
 			int charValue = byteBuffer[bx++];
-if (verbose) vrb.println("\ncp A: byteNr=" + inByteNr + ", bx=" + bx + ", stringLength=" + stringLength + ", ch=0x" + Integer.toHexString(charValue));
+			//if(dbg) vrb.println("\ncp A: byteNr=" + inByteNr + ", bx=" + bx + ", stringLength=" + stringLength + ", ch=0x" + Integer.toHexString(charValue));
 
 			if (charValue < 0) {// char consists of more then 1 byte
-//				charValue &= 0x1F;
+				//charValue &= 0x1F;
 				if ((charValue >> 5 & 0x7) - 6 == 0) {// 2 byte (1 follow byte) char
 					charValue = ( (charValue << 6) | (byteBuffer[bx++] & 0x3F) ) & 0x7FF;
 					inByteNr++;
@@ -179,19 +179,19 @@ if (verbose) vrb.println("\ncp A: byteNr=" + inByteNr + ", bx=" + bx + ", string
 				}
 			}
 			charBuffer[stringLength++] = (char)charValue;
-			charSet |= charValue;
+			//charSet |= charValue;
 			hashCode = hashCode * 31 + charValue;
 			inByteNr++;
 		}
-if (verbose) 	vrb.println("cp G: byteNr=" + inByteNr + ", bx=" + bx + ", stringLength=" + stringLength + ", ch=0x" + Integer.toHexString(0xFF) + ", utfLength=" + utfLength);
+		//if (dbg) vrb.println("cp G: byteNr=" + inByteNr + ", bx=" + bx + ", stringLength=" + stringLength + ", ch=0x" + Integer.toHexString(0xFF) + ", utfLength=" + utfLength);
 
-if (testAssertion) {
+		if(testAssertion) {
 			assert inByteNr == utfLength;
-//			String str = new String(charBuffer);
-//			int hc = str.hashCode();
-//			assert hc == hashCode;
-}
-			charBuffer[stringLength] = 0; // in case of odd string length of 8 bit strings (latin1, H8String)
+			//String str = new String(charBuffer);
+			//int hc = str.hashCode();
+			//assert hc == hashCode;
+		}
+		charBuffer[stringLength] = 0; // in case of odd string length of 8 bit strings (latin1, H8String)
 		return stringLength;
 	}
 
@@ -205,10 +205,6 @@ if (testAssertion) {
 		return length;
 	}
 	
-//	public HString register() {
-//		return stab.insertCondAndGetEntry(this);
-//	}
-
     /**
      * Returns the <code>char</code> value at the specified index.
      * An index ranges from <code>0</code> to <code>length() - 1</code>. The first <code>char</code> value of the sequence
@@ -232,7 +228,7 @@ if (testAssertion) {
 	public abstract void getChars(int srcStartIndex, int srcEndIndex, char[] dstChars, int dstStartIndex);
 
 	public boolean equals(HString cmpStr) {
-//		assert hash != 0 && cmpStr.hash != 0;
+		//assert hash != 0 && cmpStr.hash != 0;
 		if (hash != cmpStr.hash || length != cmpStr.length) return false;
 		int n = this.arrayLen - 1;
 		char[] chars = this.chars;
@@ -257,5 +253,14 @@ if (testAssertion) {
 	public static void printlnChars(char[] chars, int length){
 		int len = Math.min(length, chars.length);
 		for(int n = 0; n < len; n++)  vrb.printf("[%1$d]=0x%2$4x\n", n, (int)chars[n]);
+	}
+	
+	static { // TODO move this to launcher
+		if(StringTable.getInstance() != null) StringTable.resetTable();
+		else{
+			StringTable.createSingleton(1000, "??");
+			stab = StringTable.getInstance();
+			HString.setStringTable(stab);
+		}
 	}
 }

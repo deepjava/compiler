@@ -1,12 +1,14 @@
 #deep-0
 
 meta {
-	version = "2010-12-02";
+	version = "2012-07-04";
 	description = "Project File for junit Test, CFG, SSA, cgPPC";
-	import = "config/ntbMpc555STS.deep", "config/ntbMpc555HB.deep";
 }
 
-project {
+project junitTestProject {
 	libpath = "../bsp";
+	boardtype = ntbMpc555HB;
+	ostype = ntbMpc555STS;
+	programmertype = ntbMpc555UsbBdi;
 	rootclasses = "";
 }

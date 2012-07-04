@@ -53,14 +53,18 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.osgi.service.prefs.BackingStoreException;
 
+import ch.ntb.inf.deep.config.Library;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
 
 public class StartWizard extends Wizard implements INewWizard{
 	private WizPage1 wizPage1;
 	private WizPage2 wizPage2;
+	private WizPage3 wizPage3;
 
 	private IProject project;
+	
+	private Library lib = null;
 
 	/*
 	 * (non-Javadoc)
@@ -103,14 +107,18 @@ public class StartWizard extends Wizard implements INewWizard{
 	}
 
 	public void addPages() {
-		wizPage1 = new WizPage1("Start Page");
-		wizPage1.setTitle("Target configuration");
-		wizPage1.setDescription("Please choose your processor");
+		wizPage1 = new WizPage1("First Page", lib, wizPage2);
+		wizPage1.setTitle("Target Library");
+		wizPage1.setDescription("Please choose the target library to use for this project");
 		addPage(wizPage1);
-		wizPage2 = new WizPage2("Second Page");
-		wizPage2.setTitle("Projectname");
-		wizPage2.setDescription("Please define your projectname");
+		wizPage2 = new WizPage2("Second Page", lib);
+		wizPage2.setTitle("Target configuration");
+		wizPage2.setDescription("Please choose the board and operating system for this project");
 		addPage(wizPage2);
+		wizPage3 = new WizPage3("Third Page");
+		wizPage3.setTitle("Projectname");
+		wizPage3.setDescription("Please define your projectname");
+		addPage(wizPage3);
 	}
 
 	private ImageDescriptor getImageDescriptor(String relativePath) {
@@ -171,45 +179,22 @@ public class StartWizard extends Wizard implements INewWizard{
 	}
 	
 	private InputStream getDeepFileContent(){
-		String board, processor, rts;
 		GregorianCalendar cal = new GregorianCalendar();
 		StringBuffer sb = new StringBuffer();
-		sb.append("#deep-0\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
-		sb.append("\tdescription = \"Deep project file for " + project.getName() + "\";\n");
-		sb.append("\timport = ");
+		sb.append("#deep-1\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
+		sb.append("\tdescription = \"deep project file for " + project.getName() + "\";\n");
+		sb.append("}\n\n");
 		
-		processor = wizPage1.getProcessorValue();
-		board = wizPage1.getBoardValue();
-		rts = wizPage1.getRunTimeSystemValue();
-		
-		if(processor.equals("MPC555")){
-			if(board.equals("NTB MPC555 Headerboard")){
-				sb.append("\"config/ntbMpc555HB.deep\"");
-				if(rts.equals("Simple tasking system")){
-					sb.append(", \"config/ntbMpc555STS.deep\"");
-				}else if(rts.equals("uCos")){
-					sb.append(", \"config/ntbMpc555uCOS.deep\"");
-				}	 
-			}else if(board.equals("phyCORE-mpc555")){
-				sb.append("\"config/phyMpc555Core.deep\"");
-				if(rts.equals("Simple tasking system")){
-					sb.append(", \"config/ntbMpc555STS.deep\"");
-				}else if(rts.equals("uCos")){
-					sb.append(", \"config/ntbMpc555uCOS.deep\"");
-				}					 
-			}
-			sb.append(";\n}\n\n");
-		}else{
-			sb.append("\"\";\n}\n\n");
-		}
-		
-		sb.append("project {\n\tlibpath = ");
+		sb.append("project " + project.getName() + "{\n\tlibpath = ");
 		if(wizPage1.useDefaultLibPath()){
 			sb.append("\"" + wizPage1.getDefaultLibPath() + "\";\n");		
 		}else{
 			sb.append("\"" + wizPage1.getChosenLibPath() + "\";\n");
 		}
 		
+		sb.append("\tboardtype = \"\";\n");
+		sb.append("\tostype = \"\";\n");
+		sb.append("\tprogrammertype = \"\";\n");
 		sb.append("\trootclasses = \"\";\n}\n");
 		
 		return new ByteArrayInputStream(sb.toString().getBytes());
@@ -229,11 +214,11 @@ public class StartWizard extends Wizard implements INewWizard{
 	private void createProject(IProgressMonitor monitor) {
 		monitor.beginTask("Creating project", 20);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		project = wizPage2.getProjectHandle();
+		project = wizPage3.getProjectHandle();
 		IProjectDescription description = workspace.newProjectDescription(project.getName());
 		
-		if (!Platform.getLocation().equals(wizPage2.getLocationPath())) {
-			description.setLocation(wizPage2.getLocationPath());
+		if (!Platform.getLocation().equals(wizPage3.getLocationPath())) {
+			description.setLocation(wizPage3.getLocationPath());
 		}					
 		
 		try {
@@ -262,9 +247,8 @@ public class StartWizard extends Wizard implements INewWizard{
 	private void save(){
 		ProjectScope scope = new ProjectScope(project);
 		IEclipsePreferences pref = scope.getNode("deepStart");//TODO implement check if this node exists...
-		pref.put("proc", wizPage1.getProcessorValue());
-		pref.put("board", wizPage1.getBoardValue());
-		pref.put("rts", wizPage1.getRunTimeSystemValue());
+//		pref.put("board", wizPage2.getBoardValue());
+//		pref.put("rts", wizPage2.getRunTimeSystemValue());
 		if(wizPage1.useDefaultLibPath()){
 			pref.putBoolean("useDefault", true);
 			pref.put("libPath", wizPage1.getDefaultLibPath());

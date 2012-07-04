@@ -21,14 +21,15 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.strings.HString;
 
-public class RegisterInit {
+public class RegisterInit extends ConfigElement {
 	
-	public Register register;
-	public int initValue;
-	public RegisterInit next;
+	private Register register;
+	private int initValue;
 	
 	public RegisterInit(Register register, int initValue){
+		this.name = HString.getRegisteredHString(register.getName() + "_init");
 		this.register = register;
 		this.initValue = initValue;
 	}
@@ -46,10 +47,29 @@ public class RegisterInit {
 		StdStreams.vrb.println(register.getName().toString() + String.format(" = 0x%08X", initValue));	
 	}
 	
+	public RegisterInit getRegisterInitByRegister(Register reg) {
+		RegisterInit ri = (RegisterInit)this.getHead();
+		while(ri != null && ri.register != reg) {
+			ri = (RegisterInit)ri.next;
+		}
+		return ri;
+	}
+	
+	public void setInitValue(int val) {
+		this.initValue = val;
+	}
+	
 	@Override
 	public String toString(){
 		return register.getName().toString() + String.format(" = 0x%08X", initValue);
 	}
 
+	public Register getRegister() {
+		return register;
+	}
+	
+	public int getInitValue() {
+		return initValue;
+	}
 
 }

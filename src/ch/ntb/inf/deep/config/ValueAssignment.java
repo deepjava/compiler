@@ -23,26 +23,20 @@ package ch.ntb.inf.deep.config;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class ValueAssignment {
+public class ValueAssignment extends ConfigElement {
 	
-	HString name;
 	int value;
-	public ValueAssignment next;
 	
-	public ValueAssignment(HString name, int value){
-		this.name = name;
+	public ValueAssignment(String jname, int value){
+		this.name = HString.getRegisteredHString(jname);
 		this.value = value;
 	}
 	
-	public HString getName(){
-		return name;
-	}
-	
-	public int getValue(){
+	public int getValue() {
 		return value;
 	}
 	
-	public void setValue(int value){
+	public void setValue(int value) {
 		this.value = value;
 	}
 	

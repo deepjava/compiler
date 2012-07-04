@@ -26,7 +26,9 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class BlockItem {
-		
+	
+	protected static final HString UNDEF = HString.getRegisteredHString("???");
+	
 	public BlockItem next;
 	public BlockItem prev;
 	
@@ -99,14 +101,15 @@ public class BlockItem {
 	public static int setCRC32(FixedValueItem fcsItem) {
 		CRC32 checksum = new CRC32();
 		BlockItem i = fcsItem.getHead();
-		if(Linker32.dbg) {System.out.println("> Calculating CRC32:"); System.out.print("  ");}
+		if(Linker32.dbg) {StdStreams.vrb.println("  > Calculating CRC32:"); System.out.print("    ");}
 		while(i != fcsItem) {
 			checksum.update(i.getBytes());
 			if(Linker32.dbg) printByteArray(i.getBytes());
 			i = i.next;
 		}
-		if(Linker32.dbg) System.out.println();
+		if(Linker32.dbg) StdStreams.vrb.println();
 		int fcs = (int)checksum.getValue();
+		if(Linker32.dbg) StdStreams.vrb.println("    fsc = 0x" + Integer.toHexString(fcs));
 		// change endianess and complement
 		fcs = ((((byte)fcs)<<24) | ((((byte)(fcs>>8))<<16)&0xff0000) | ((((byte)(fcs>>16))<<8)&0xff00) | (((byte)(fcs>>24))&0xff)) ^ 0xffffffff;
 		fcsItem.setValue(fcs);
@@ -157,6 +160,6 @@ public class BlockItem {
 			 s.append((char)hexchars[v & 0xf]);
 			 s.append(" ");
 		 }
-		 System.out.print(s);
+		 StdStreams.vrb.print(s);
 	}
 }

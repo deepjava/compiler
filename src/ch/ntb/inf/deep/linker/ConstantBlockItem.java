@@ -36,7 +36,7 @@ public class ConstantBlockItem extends BlockItem {
 	
 	public ConstantBlockItem(String prefix, Class clazz) {
 		this.clazz = clazz;
-		this.name = HString.getHString(prefix + clazz.name);
+		this.name = HString.getRegisteredHString(prefix + clazz.name);
 	}
 	
 	protected int getItemSize() {

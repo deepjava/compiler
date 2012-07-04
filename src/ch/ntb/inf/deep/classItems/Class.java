@@ -21,6 +21,7 @@
 package ch.ntb.inf.deep.classItems;
 
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -743,7 +744,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(verbose) vrb.println(">loadClass:");
 		if( (accAndPropFlags & ((1<<dpfClassLoaded)|(1<<dpfSynthetic)) ) == 0 ){// if not yet loaded
 				InputStream inStrm = ClassFileAdmin.getClassFileInputStream(name); // new FileInputStream
-				log.println("opening class file of class: "+name );
+				log.println("Opening class file of class: " + name);
 
 				if(inStrm == null){
 					errRep.error(300, name.toString());
@@ -839,12 +840,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		
 		prevCpLenth = 0;  constPoolCnt = 0;
 
-		if(StringTable.getInstance() != null) StringTable.resetTable();
-		else{
-			StringTable.createSingleton(1000, "??");
-			stab = StringTable.getInstance();
-			HString.setStringTable(stab);
-		}
+		
+		
+		stab = StringTable.getInstance();
 		registerWellKnownNames();
 		Class cls = new Class(hsClassConstrName); // currently insert stub
 		classList = cls; classListTail = cls;
@@ -898,7 +896,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private static void loadSystemClass(SystemClass systemClass, int userReqAttributes) throws IOException{
 		final boolean verbose = false;
 
-		String systemClassName = systemClass.name;
+		String systemClassName = systemClass.getName().toString();
 		int systemClassAttributes = systemClass.attributes | unitedSysMethodFlags(systemClass);
 
 		if(verbose) vrb.println(">loadSystemClass: "+systemClassName);
@@ -919,12 +917,12 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 			while(systemMeth != null){
 				Item method = cls.methods.getItemByName(systemMeth.name);
 				if(method == null){
-					errRep.error(301, systemMeth.name +" in system class "+systemClass.name);
+					errRep.error(301, systemMeth.name +" in system class " + systemClass.getName());
 				}else{
 					if(verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
 					int methIndex  = (systemMeth.attributes-1)&0xFF;
 					if( methIndex >= nofNewMethods ){
-						errRep.error(302, systemMeth.name +" in system class "+systemClass.name);
+						errRep.error(302, systemMeth.name +" in system class " + systemClass.getName());
 					}else{
 						if(verbose) vrb.println(" ldSysCls: newMethInx="+methIndex);
 						systemClassAttributes |= method.accAndPropFlags & dpfSetSysMethProperties;
@@ -956,7 +954,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	private static void loadSystemClasses(SystemClass sysClasses, int userReqAttributes) throws IOException{
 		while(sysClasses != null){
 			loadSystemClass(sysClasses, userReqAttributes); 
-			sysClasses = sysClasses.next;
+			sysClasses = (SystemClass)sysClasses.next;
 		}
 	}
 
@@ -1344,7 +1342,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 //		vrb.println("<splitClassGroups..");
 	}
 
-	public static void buildSystem(String[] rootClassNames, String[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
+	public static void buildSystem(HString[] rootClassNames, File[] parentDirsOfClassFiles, SystemClass sysClasses, int userReqAttributes) throws IOException{
 		errRep.nofErrors = 0;
 		Method.compSpecSubroutines = null; // /TODO move this to init function?
 		ClassFileAdmin.registerParentDirs(parentDirsOfClassFiles);
@@ -1364,7 +1362,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(verbose) printClassList("state: sysClasses loaded, class list:");
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
-			String sname = rootClassNames[rc];
+			String sname = rootClassNames[rc].toString();
 			if(verbose) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass( sname, userReqAttributes);
 			if(errRep.nofErrors > 0) break;

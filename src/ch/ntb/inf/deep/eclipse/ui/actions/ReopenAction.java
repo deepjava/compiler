@@ -24,12 +24,11 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class ReopenAction implements IWorkbenchWindowActionDelegate {
 
@@ -46,9 +45,9 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 
 	@Override
 	public void run(IAction action) {
-		Downloader bdi = UsbMpc555Loader.getInstance();
+		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
-			ErrorReporter.reporter.error(Downloader.errTargetNotFound);
+			ErrorReporter.reporter.error(TargetConnection.errTargetNotFound);
 			return;
 		}
 		bdi.closeConnection();
@@ -56,9 +55,9 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 			Thread.sleep(500);//Give OS time 
 			bdi.openConnection();
 			StdStreams.out.println("Device succesfully reopened");
-		} catch (DownloaderException e) {
+		} catch (TargetConnectionException e) {
 			bdi.closeConnection();
-			ErrorReporter.reporter.error(Downloader.errReopenFailed);
+			ErrorReporter.reporter.error(TargetConnection.errReopenFailed);
 		} catch (InterruptedException e) {
 		}
 	}

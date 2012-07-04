@@ -51,9 +51,9 @@ import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.eclipse.ui.model.RegModel;
 import ch.ntb.inf.deep.eclipse.ui.model.Register;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 /**
  * The view is connected to the model using a content provider.
@@ -294,16 +294,16 @@ public class UsLeSPRView extends ViewPart implements ISelectionListener {
 		refresh.setImageDescriptor(img);
 		suspend = new Action(){
 			public void run(){
-				Downloader bdi = UsbMpc555Loader.getInstance();
+				TargetConnection bdi = Launcher.getTargetConnection();
 				if (bdi == null)return;
 				try {
 					if(!bdi.isConnected()){//reopen
 						bdi.openConnection();
 					}
-					if (!bdi.isFreezeAsserted()) {
+					if (bdi.getTargetState() != TargetConnection.stateDebug) {
 						bdi.stopTarget();
 					}
-				} catch (DownloaderException e) {
+				} catch (TargetConnectionException e) {
 					e.printStackTrace();
 				}
 				update();
@@ -315,16 +315,16 @@ public class UsLeSPRView extends ViewPart implements ISelectionListener {
 		suspend.setImageDescriptor(img);
 		resume = new Action(){
 			public void run(){
-				Downloader bdi = UsbMpc555Loader.getInstance();
+				TargetConnection bdi = Launcher.getTargetConnection();
 				if (bdi == null)return;
 				try {
 					if(!bdi.isConnected()){//reopen
 						bdi.openConnection();
 					}
-					if (!bdi.isFreezeAsserted()) {
+					if (bdi.getTargetState() != TargetConnection.stateDebug) {
 						bdi.stopTarget();
 					}
-				} catch (DownloaderException e) {
+				} catch (TargetConnectionException e) {
 					e.printStackTrace();
 				}
 			}

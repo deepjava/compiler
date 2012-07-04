@@ -1,13 +1,15 @@
 #deep-0
 
 meta {
-	version = "2012-05-22";
-	description = "Example project file";
-	import = "config/ntbMpc555STS.deep", "config/ntbMpc555HB.deep";
+	version = "2012-07-04";
+	description = "Project file for junit target tests";
 }
 
-project {
+project junitTargetTestProject {
 	libpath = "../bsp", "../junitTarget";
+	boardtype = ntbMpc555HB;
+	ostype = ntbMpc555STS;
+	programmertype = ntbMpc555UsbBdi;
 
 #	Tests for compiler test classes 
  

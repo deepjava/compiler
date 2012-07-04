@@ -6,17 +6,17 @@ ErrorNr;Description;Solution
 204;missing quotation mark;
 205;IO-Exception;
 206;Unexpected Symbol;
-207;missing left brace;
+207;Missing left brace;
 208;missing left bracket;
 209;missing semicolon;
 210;missing assignment sign;
-220;no such device;
-221;no devices;create device before adding segments
+220;Device not found;
+221;Device not found;Make sure, to define the device first, before adding segments
 222;syntax error;
 223;inconsistent attributes;
 224;invalid type;
 225;invalid parameter;
-226;overwrite protected;
+226;Overwrite protected constant;
 227;undefined constant;
 228;max number of reached;
 229;missing tag;
@@ -26,6 +26,10 @@ ErrorNr;Description;Solution
 233;to set an init value is not supported;
 234;fix addresses for methods are only in exception methods supported;
 235;no such segment;
+236;Module not found;
+237;System module not found;
+238;Board not found;
+239;Operating system not found;
 
 300;class file not found;
 301;systemmethod not found;

@@ -56,15 +56,15 @@ import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.ReadVariableElement;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.view.ReadVariableView";
 	private TableViewer viewer;
 	private ReadVariableElement[] elements;
-	private Downloader bdi;
+	private TargetConnection bdi;
 	private Action toChar;
 	private Action toHex;
 	private Action toDez;
@@ -74,8 +74,7 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 
 	static final byte slotSize = 4; // 4 bytes
 	static {
-		assert (slotSize & (slotSize - 1)) == 0; // assert: slotSize == power of
-													// 2
+		assert (slotSize & (slotSize - 1)) == 0; // assert: slotSize == power of 2
 	}
 
 	class ViewLabelProvider extends LabelProvider implements
@@ -286,32 +285,32 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 						DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
 						if(var != null){
 							if(bdi == null){
-								bdi = UsbMpc555Loader.getInstance();
+								bdi = Launcher.getTargetConnection();
 							}
 							try{
 								if(!bdi.isConnected()){
 									bdi.openConnection();
 								}
-								wasFreezeAsserted = bdi.isFreezeAsserted();
+								wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 								if(!wasFreezeAsserted){
 									bdi.stopTarget();
 								}
 								if(((Type)var.type).sizeInBits <= 2 * slotSize ) {
-									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize/4);
+									((ReadVariableElement)obj).result = bdi.readByte(var.address);
 									if(((Type)var.type).sizeInBits == 1 ){
 										((ReadVariableElement)obj).type = ReadVariableElement.tBoolean;
 									}else{
 										((ReadVariableElement)obj).type = ReadVariableElement.tByte;										
 									}
 								}else if(((Type)var.type).sizeInBits == 4 * slotSize){
-									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize/2);
+									((ReadVariableElement)obj).result = bdi.readWord(var.address); // TODO mask?
 									if(var.type == Type.wellKnownTypes[txChar]){
 										((ReadVariableElement)obj).type = ReadVariableElement.tChar;
 									}else{
 										((ReadVariableElement)obj).type = ReadVariableElement.tShort;										
 									}
 								}else if(((Type)var.type).sizeInBits == 8 * slotSize){
-									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize);
+									((ReadVariableElement)obj).result = bdi.readWord(var.address);
 									if(var.type == Type.wellKnownTypes[txInt]){
 										((ReadVariableElement)obj).type = ReadVariableElement.tInteger;
 									}else{
@@ -319,8 +318,8 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 									}
 //								System.out.println("High: " +Long.toHexString(((ReadVariableElement)obj).result));
 								}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
-									((ReadVariableElement)obj).result = bdi.getMem(var.address, slotSize);
-									((ReadVariableElement)obj).result = (((ReadVariableElement)obj).result << (8 * slotSize)) | bdi.getMem(var.address + slotSize, slotSize);
+									((ReadVariableElement)obj).result = bdi.readWord(var.address);
+									((ReadVariableElement)obj).result = (((ReadVariableElement)obj).result << (8 * slotSize)) | bdi.readWord(var.address + slotSize);
 									if(var.type == Type.wellKnownTypes[txLong]){
 										((ReadVariableElement)obj).type = ReadVariableElement.tLong;
 									}else{
@@ -331,7 +330,7 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 									bdi.startTarget();
 								}
 								((ReadVariableElement)obj).isReaded = true;
-							}catch(DownloaderException e){
+							}catch(TargetConnectionException e){
 								e.printStackTrace();
 							}
 						}

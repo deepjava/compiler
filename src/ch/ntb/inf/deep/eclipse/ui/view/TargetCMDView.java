@@ -56,9 +56,9 @@ import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 
 public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
@@ -67,7 +67,7 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 	private static final String cmdAddrName = "cmdAddr";
 	private TableViewer viewer;
 	private MethodCall[] elements;
-	private Downloader bdi;
+	private TargetConnection bdi;
 	private Action send;
 	private IEclipsePreferences prefs;
 
@@ -184,22 +184,22 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 						Method meth = (Method)clazz.methods.getItemByName(methName);
 						if(meth != null){
 							if(bdi == null){
-								bdi = UsbMpc555Loader.getInstance();
+								bdi = Launcher.getTargetConnection();
 							}
 							try{
 								if(!bdi.isConnected()){
 									bdi.openConnection();
 								}
-								wasFreezeAsserted = bdi.isFreezeAsserted();
+								wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 								if(!wasFreezeAsserted){
 									bdi.stopTarget();
 								}
-								bdi.setMem(cmdAddr, meth.address, 4);
+								bdi.writeWord(cmdAddr, meth.address);
 								
 								if(!wasFreezeAsserted){
 									bdi.startTarget();
 								}
-							}catch(DownloaderException e){
+							}catch(TargetConnectionException e){
 								e.printStackTrace();
 							}
 						}

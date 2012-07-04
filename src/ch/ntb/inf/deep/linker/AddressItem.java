@@ -35,13 +35,13 @@ public class AddressItem extends BlockItem {
 	public AddressItem(Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = ref.name;
-		else name = HString.getHString("???");
+		else name = UNDEF;
 	}
 	
 	public AddressItem(String prefix, Item ref) {
 		this.itemRef = ref;
-		if(ref.name != null) this.name = HString.getHString(prefix + ref.name);
-		else name = HString.getHString(prefix + "???");
+		if(ref.name != null) this.name = HString.getRegisteredHString(prefix + ref.name);
+		else name = UNDEF;
 	}
 	
 	public AddressItem(Segment ref) {
@@ -52,7 +52,7 @@ public class AddressItem extends BlockItem {
 	
 	public AddressItem(String prefix, Segment ref) {
 		this.segmentRef = ref;
-		this.name = HString.getHString(prefix + ref.getFullName());
+		this.name = HString.getRegisteredHString(prefix + ref.getFullName());
 		this.isSegment = true;
 	}
 	

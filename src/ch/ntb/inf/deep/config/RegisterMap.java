@@ -25,7 +25,6 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class RegisterMap implements ErrorCodes {
-	private static RegisterMap regMap;
 	int nofGprs = 0;
 	Register gpr;
 	int nofFprs = 0;
@@ -38,292 +37,89 @@ public class RegisterMap implements ErrorCodes {
 	Register cr;
 	Register fpscr;
 
-	private RegisterMap() {
-	}
-
-	public static RegisterMap getInstance() {
-		if (regMap == null) {
-			regMap = new RegisterMap();
-		}
-		return regMap;
-	}
 	
 	public Register getRegister(HString registername){
-		// search register
-		Register current = spr;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				return current;
-			}
-			current = current.next;
-		}
-		current = ior;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				if (current.name.equals(registername)) {
-					return current;
-				}
-			}
-			current = current.next;
-		}
-		current = fpscr;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				if (current.name.equals(registername)) {
-					return current;
-				}
-			}
-			current = current.next;
-		}
-		current = cr;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				if (current.name.equals(registername)) {
-					return current;
-				}
-			}
-			current = current.next;
-		}
-		current = msr;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				if (current.name.equals(registername)) {
-					return current;
-				}
-			}
-			current = current.next;
-		}
-		current = gpr;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				ErrorReporter.reporter.error(errInitNotSupported, "for gpr register " + registername);
-				Parser.nOfErrors++;
-				return null;
-			}
-			current = current.next;
-		}
-		current = fpr;
-		while (current != null) {
-			if (current.name.equals(registername)) {
-				ErrorReporter.reporter.error(errInitNotSupported, "for fpr register " + registername);
-				Parser.nOfErrors++;
-				return null;
-			}
-			current = current.next;
-		}
+		Register r;
+		
+		r = (Register)spr.getElementByName(registername);
+		if(r != null) return r;
+		
+		r = (Register)ior.getElementByName(registername);
+		if(r != null) return r;
+		
+		r = (Register)fpscr.getElementByName(registername);
+		if(r != null) return r;
+		
+		r = (Register)cr.getElementByName(registername);
+		if(r != null) return r;
+		
+		r = (Register)msr.getElementByName(registername);
+		if(r != null) return r;
+		
+		r = (Register)gpr.getElementByName(registername);
+		if(r != null) return r;
+
+		r = (Register)fpr.getElementByName(registername);
+		if(r != null) return r;
+		
 		//register not found
-		ErrorReporter.reporter.error(errNoSuchRegister, registername.toString());
-		Parser.nOfErrors++;
 		return null;
-		
-		
+	}
+	
+	public Register getRegister(String jname) {
+		return getRegister(HString.getRegisteredHString(jname));
 	}
 
-//	public void addInitValueFor(HString registername, ValueAssignment init) {
-//		// search register
-//		Register current = spr;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				if (current.getInit() != null) {
-//					current.setInit(init);
-//					return;
-//				}
-//				current.setInit(init);
-//				current.nextWithInitValue = regWithInitalValue;
-//				regWithInitalValue = current;
-//				return;
-//			}
-//			current = current.next;
-//		}
-//		current = ior;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				if (current.getInit() != null) {
-//					current.setInit(init);
-//					return;
-//				}
-//				current.setInit(init);
-//				current.nextWithInitValue = regWithInitalValue;
-//				regWithInitalValue = current;
-//				return;
-//			}
-//			current = current.next;
-//		}
-//		current = fpscr;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				if (current.getInit() != null) {
-//					current.setInit(init);
-//					return;
-//				}
-//				current.setInit(init);
-//				current.nextWithInitValue = regWithInitalValue;
-//				regWithInitalValue = current;
-//				return;
-//			}
-//			current = current.next;
-//		}
-//		current = cr;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				if (current.getInit() != null) {
-//					current.setInit(init);
-//					return;
-//				}
-//				current.setInit(init);
-//				current.nextWithInitValue = regWithInitalValue;
-//				regWithInitalValue = current;
-//				return;
-//			}
-//			current = current.next;
-//		}
-//		current = msr;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				if (current.getInit() != null) {
-//					current.setInit(init);
-//					return;
-//				}
-//				current.setInit(init);
-//				current.nextWithInitValue = regWithInitalValue;
-//				regWithInitalValue = current;
-//				return;
-//			}
-//			current = current.next;
-//		}
-//		current = gpr;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				ErrorReporter.reporter
-//						.error("it is not allowed to set a init value for a gpr register");
-//			}
-//			current = current.next;
-//		}
-//		current = fpr;
-//		while (current != null) {
-//			if (current.name.equals(registername)) {
-//				ErrorReporter.reporter
-//						.error("it is not allowed to set a init value for a fpr register");
-//			}
-//			current = current.next;
-//		}
-//		// if Register doesn't exist yet create one;
-//		Register reg = new Register(registername);
-//		reg.setInit(init);
-//		reg.nextWithInitValue = regWithInitalValue;
-//		regWithInitalValue = reg;
-//	}
-
-	private void addGprRegister(Register reg) {
+	private boolean addGprRegister(Register reg) {
 		nofGprs++;
 		if (gpr == null) {
 			gpr = reg;
-			return;
+			return true;
 		}
-		Register current = gpr;
-		Register prev = null;
-		int regHash = reg.name.hashCode();
-		while (current != null) {
-			if (current.name.hashCode() == regHash) {
-				if (current.name.equals(reg.name)) {
-					reg.next = current.next;
-					if (prev != null) {
-						prev.next = reg;
-					} else {
-						gpr = reg;
-					}
-					return;
-				}
-			}
-			prev = current;
-			current = current.next;
+		if((Register)gpr.getElementByName(reg.name) != null) {
+			return false;
 		}
-		// if no match prev shows the tail of the list
-		prev.next = reg;
+		gpr.append(reg);
+		return true;
 	}
 
-	private void addFprRegister(Register reg) {
+	private boolean addFprRegister(Register reg) {
 		nofFprs++;
 		if (fpr == null) {
 			fpr = reg;
-			return;
+			return true;
 		}
-		Register current = fpr;
-		Register prev = null;
-		int regHash = reg.name.hashCode();
-		while (current != null) {
-			if (current.name.hashCode() == regHash) {
-				if (current.name.equals(reg.name)) {
-					reg.next = current.next;
-					if (prev != null) {
-						prev.next = reg;
-					} else {
-						fpr = reg;
-					}
-					return;
-				}
-			}
-			prev = current;
-			current = current.next;
+		if((Register)fpr.getElementByName(reg.name) != null) {
+			return false;
 		}
-		// if no match prev shows the tail of the list
-		prev.next = reg;
+		fpr.append(reg);
+		return true;
 	}
 
-	private void addSprRegister(Register reg) {
+	private boolean addSprRegister(Register reg) {
 		nofSprs++;
 		if (spr == null) {
 			spr = reg;
-			return;
+			return true;
 		}
-		Register current = spr;
-		Register prev = null;
-		int regHash = reg.name.hashCode();
-		while (current != null) {
-			if (current.name.hashCode() == regHash) {
-				if (current.name.equals(reg.name)) {
-					reg.next = current.next;
-					if (prev != null) {
-						prev.next = reg;
-					} else {
-						spr = reg;
-					}
-					return;
-				}
-			}
-			prev = current;
-			current = current.next;
+		if((Register)spr.getElementByName(reg.name) != null) {
+			return false;
 		}
-		// if no match prev shows the tail of the list
-		prev.next = reg;
+		spr.append(reg);
+		return true;
 	}
 
-	private void addIorRegister(Register reg) {
+	private boolean addIorRegister(Register reg) {
 		nofIors++;
 		if (ior == null) {
 			ior = reg;
-			return;
+			return true;
 		}
-		Register current = ior;
-		Register prev = null;
-		int regHash = reg.name.hashCode();
-		while (current != null) {
-			if (current.name.hashCode() == regHash) {
-				if (current.name.equals(reg.name)) {
-					reg.next = current.next;
-					if (prev != null) {
-						prev.next = reg;
-					} else {
-						ior = reg;
-					}
-					return;
-				}
-			}
-			prev = current;
-			current = current.next;
+		if((Register)ior.getElementByName(reg.name) != null) {
+			return false;
 		}
-		// if no match prev shows the tail of the list
-		prev.next = reg;
+		ior.append(reg);
+		return true;
 	}
 
 	private void setMSRRegister(Register reg) {
@@ -338,71 +134,81 @@ public class RegisterMap implements ErrorCodes {
 		fpscr = reg;
 	}
 
-	public void addRegister(Register reg) {
-		// if a register init is set before all register was set we have to
+	public boolean addRegister(Register reg) {
+		// TODO if a register init is set before all register was set we have to
 		// check and merge
 		if (reg.type == Parser.sGPR) {
-			addGprRegister(reg);
-		} else if (reg.type == Parser.sFPR) {
-			addFprRegister(reg);
-		} else if (reg.type == Parser.sSPR) {
-			addSprRegister(reg);
-		} else if (reg.type == Parser.sIOR) {
-			addIorRegister(reg);
-		} else if (reg.type == Parser.sMSR) {
+			return addGprRegister(reg);
+		}
+		else if (reg.type == Parser.sFPR) {
+			return addFprRegister(reg);
+		}
+		else if (reg.type == Parser.sSPR) {
+			return addSprRegister(reg);
+		}
+		else if (reg.type == Parser.sIOR) {
+			return addIorRegister(reg);
+		}
+		else if (reg.type == Parser.sMSR) {
 			setMSRRegister(reg);
-		} else if (reg.type == Parser.sCR) {
+			return true;
+		}
+		else if (reg.type == Parser.sCR) {
 			setCRRegister(reg);
-		} else if (reg.type == Parser.sFPSCR) {
+			return true;
+		}
+		else if (reg.type == Parser.sFPSCR) {
 			setFPSCRRegister(reg);
-		} else {
+			return true;
+		}
+		else { // TODO improve error handling
 			ErrorReporter.reporter.error(errInvalidType, "register " + reg.getName().toString());
 			Parser.nOfErrors++;
-			return;
+			return false;
 		}
 	}
 
-	public Register getGprRegister() {
+	public Register getGprRegisters() {
 		return gpr;
 	}
 
-	public Register getFprRegister() {
+	public Register getFprRegisters() {
 		return fpr;
 	}
 
-	public Register getSprRegister() {
+	public Register getSprRegisters() {
 		return spr;
 	}
 	
-	public Register getIorRegister(){
+	public Register getIorRegisters() {
 		return ior;
 	}
 	
-	public Register getMSR(){
+	public Register getMSR() {
 		return msr;
 	}
 	
-	public Register getCR(){
+	public Register getCR() {
 		return cr;
 	}
 	
-	public Register getFpscr(){
+	public Register getFpscr() {
 		return fpscr;
 	}
 	
-	public int getNofGprs(){
+	public int getNofGprs() {
 		return nofGprs;
 	}
 
-	public int getNofFprs(){
+	public int getNofFprs() {
 		return nofFprs;
 	}
 	
-	public int getNofSprs(){
+	public int getNofSprs() {
 		return nofSprs;
 	}
 	
-	public int getNofIors(){
+	public int getNofIors() {
 		return nofIors;
 	}
 	public void println(int indentLevel) {
@@ -418,23 +224,23 @@ public class RegisterMap implements ErrorCodes {
 		Register current = gpr;
 		while (current != null) {
 			current.println(indentLevel + 1);
-			current = current.next;
+			current = (Register)current.next;
 		}
 		fpscr.println(indentLevel + 1);
 		current = fpr;
 		while (current != null) {
 			current.println(indentLevel + 1);
-			current = current.next;
+			current = (Register)current.next;
 		}
 		current = spr;
 		while (current != null) {
 			current.println(indentLevel + 1);
-			current = current.next;
+			current = (Register)current.next;
 		}
 		current = ior;
 		while (current != null) {
 			current.println(indentLevel + 1);
-			current = current.next;
+			current = (Register)current.next;
 		}
 
 		for (int i = indentLevel; i > 0; i--) {
@@ -442,9 +248,4 @@ public class RegisterMap implements ErrorCodes {
 		}
 		StdStreams.vrb.println("}");
 	}
-
-	public static void clear() {
-		regMap = null;
-	}
-
 }

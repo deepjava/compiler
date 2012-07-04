@@ -24,11 +24,10 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-
 import ch.ntb.inf.deep.host.ErrorReporter;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class SuspendAction implements IWorkbenchWindowActionDelegate {
 
@@ -45,19 +44,19 @@ public class SuspendAction implements IWorkbenchWindowActionDelegate {
 
 	@Override
 	public void run(IAction action) {
-		Downloader bdi = UsbMpc555Loader.getInstance();
+		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
-			ErrorReporter.reporter.error(Downloader.errTargetNotFound);
+			ErrorReporter.reporter.error(TargetConnection.errTargetNotFound);
 			return;
 		}
 		try {
 		if(!bdi.isConnected()){//reopen
 			bdi.openConnection();
 		}
-		if(!bdi.isFreezeAsserted()){
+		if(bdi.getTargetState() == TargetConnection.stateRunning){
 			bdi.stopTarget();
 		}
-		} catch (DownloaderException e) {
+		} catch (TargetConnectionException e) {
 		}
 
 	}

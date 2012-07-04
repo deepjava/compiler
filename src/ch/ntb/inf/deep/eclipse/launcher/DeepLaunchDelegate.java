@@ -35,6 +35,7 @@ import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.linker.Linker32;
 
 
 public class DeepLaunchDelegate extends JavaLaunchDelegate{
@@ -85,9 +86,12 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 			monitor.done();
 			return;
 		}
-		if(ErrorReporter.reporter.nofErrors == 0 ){
+		if(ErrorReporter.reporter.nofErrors == 0 ) {
+			Launcher.openTargetConnection();
 			Launcher.downloadTargetImage();
-			Launcher.startTarget();
+			//Launcher.startTarget();
+			Linker32.printSystemTable(); // TODO remove this!
+			Linker32.printTargetImage();
 		}
 		monitor.worked(100);
 		monitor.done();

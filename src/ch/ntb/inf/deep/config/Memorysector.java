@@ -23,30 +23,26 @@ package ch.ntb.inf.deep.config;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Memorysector {
-	public Memorysector next;
-	public Memorysector prev;
-	public boolean used = false;
+public class Memorysector extends ConfigElement {
 	
-	HString name;
+	public boolean used = false;
 	int baseAddress = -1;
 	int size = 0;
 	
-	public Memorysector(HString name){
-		this.name = name;
+	public Memorysector(String jname) {
+		this.name = HString.getRegisteredHString(jname);
 	}
 	
-	public Memorysector(HString name, int baseAddress) {
-		this.name = name;
+	public Memorysector(String jname, int baseAddress) {
+		this.name = HString.getRegisteredHString(jname);
 		this.baseAddress = baseAddress;
 	}
 	
-	public Memorysector(HString name, int baseAddress, int size) {
-		this.name = name;
+	public Memorysector(String jname, int baseAddress, int size) {
+		this.name = HString.getRegisteredHString(jname);
 		this.baseAddress = baseAddress;
 		this.size = size;
 	}
-	
 	
 	public void setBaseAddress(int baseAddress) {
 		this.baseAddress = baseAddress;
@@ -68,6 +64,14 @@ public class Memorysector {
 		return name;
 	}
 
+	public void insertByAddress(Memorysector newSector) {
+		Memorysector sector = (Memorysector)this.getHead();
+		while(sector.baseAddress + sector.size < newSector.baseAddress) {
+			sector = (Memorysector)sector.next;
+		}
+		sector.insertAfter(newSector);
+	}
+	
 	public void println(int indentLevel){
 		for(int i = indentLevel; i > 0; i--){
 			StdStreams.vrb.print("  ");

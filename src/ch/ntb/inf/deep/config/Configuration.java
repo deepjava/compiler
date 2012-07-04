@@ -20,124 +20,171 @@
 
 package ch.ntb.inf.deep.config;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.eclipse.core.runtime.Path;
-
+import java.io.PrintStream;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts {
-	private static Project project;
-	private static SystemConstants sysConst = SystemConstants.getInstance();
-	private static Consts consts = Consts.getInstance();
-	private static MemoryMap memoryMap = MemoryMap.getInstance();
-	private static RegisterMap registerMap = RegisterMap.getInstance();
-	private static RegisterInit regInit;	
-	private static TargetConfiguration targetConfig;
-	private static TargetConfiguration activeTarConf;
-	private static OperatingSystem os;
-	private static String location;
-	private static final int maxNumbersOfHeaps = 4;
-	private static final int maxNumbersOfStacks = 4;
-	private static final int defaultLength = 32;
-	private static int nofHeapSegments = 0;
-	private static int nofStackSegments = 0;
-	private static Segment[] heaps = new Segment[maxNumbersOfHeaps];
-	private static Segment[] stacks = new Segment[maxNumbersOfStacks];
-	private static Segment[] segs;
-	private static int segsCount = 0;
+		
+	public static final boolean dbg = false; // enable/disable debugging outputs for the configuration
+	
+	protected static final int maxNofRootClasses = 64;
+	protected static final int maxNofLibPaths = 8;
+	protected static final int maxNumbersOfHeaps = 4;
+	protected static final int maxNumbersOfStacks = 4;
+	protected static final int maxNumbersOfSystables = 4;
+	
+	protected static final String defaultTctFileName = "tct/commandTable.dtct";
+	
+	public static final int BIN = 0;
+	public static final int HEX = 1;
+	public static final int SREC = 2;
+	public static final int DTIM = 3;
+	
+	public static final HString CODE = HString.getRegisteredHString("code");
+	public static final HString CONST = HString.getRegisteredHString("const");
+	public static final HString VAR = HString.getRegisteredHString("var");
+	public static final HString SYSTAB = HString.getRegisteredHString("systab");
+	public static final HString DEFAULT = HString.getRegisteredHString("default");
+	public static final HString KERNEL = HString.getRegisteredHString("kernel");
+	public static final HString HEAP = HString.getRegisteredHString("heap");
+	public static final HString STACK = HString.getRegisteredHString("stack");
+	public static final HString EXCEPTION = HString.getRegisteredHString("exception");
+	public static final HString SYSTEMTABLE = HString.getRegisteredHString("systemtable");
+	public static final HString AM29LV160D = HString.getRegisteredHString("Am29LV160d");
 
-	/**
-	 * Returns the first Segment which contains the code for the given
-	 * classname. If no such segment exists the method returns null.
-	 * 
-	 * @param clazz
-	 *            the name of the desired Class
-	 * @return a Segment or null
-	 */
+	private static final ErrorReporter reporter = ErrorReporter.reporter;
+	private static PrintStream vrb = StdStreams.vrb;
+	
+	public static Library libs; // list of all available libraries
+	public static Project projects; // list of all open projects
+	private static Project activeProject; // the currently active project
+	
+	public static Library addLibrary(HString path) {
+		if(dbg) vrb.println("[CONF] Configuration: adding Library " + path);
+		Library lib;
+		boolean readConfigFiles = false;
+		if(libs == null) {
+			if(dbg) vrb.println("  Adding first lib");
+			libs = new Library(path);
+			lib = libs;
+			readConfigFiles = true;
+		}
+		else {
+			if(dbg) vrb.print("  Looking if library is already registered");
+			lib = (Library)libs.getElementByName(path);
+			if(lib == null) {
+				if(dbg) vrb.println(" -> not found -> adding");
+				lib = new Library(path);
+				libs.append(lib);
+				readConfigFiles = true;
+			}
+			else {
+				if(dbg) vrb.println(" -> found -> updating");
+				lib = new Library(path); // TODO improve this!
+				readConfigFiles = true;
+			}
+		}
+		if(readConfigFiles) {
+			if(dbg) vrb.println("  Reading config files from " + lib.getPathAsString());
+			lib.readConfig();
+		}
+		return lib;
+	}
+	
+	public static Library addLibrary(String path) {
+		return addLibrary(HString.getRegisteredHString(path));
+	}
+	
+	public static Project addProject(String projectFile) {
+		if(dbg) vrb.println("[CONF] Configuration: adding project " + projectFile);
+		Project project;
+		if(projects == null) {
+			if(dbg) vrb.println("  Adding first project");
+			projects = new Project(projectFile);
+			project = projects;
+		}
+		else {
+			if(dbg) vrb.print("  Checking if project is already registered");
+			project = projects.getProjectByFileName(HString.getRegisteredHString(projectFile)); // 
+			if(project == null) {
+				if(dbg) vrb.println(" -> not found -> adding new project");
+				project = new Project(projectFile);
+				projects.append(project);
+			}
+			else {
+				if(dbg) vrb.println(" -> found -> nothing to do");
+			}
+		}
+		if(dbg) vrb.println("  Reading project file " + projectFile);
+		project.readProjectFile();
+		return project;
+	}
+	
+	public static void clear() { // TODO check this
+		Parser.clear();
+		projects = null;
+		activeProject = null;
+		libs = null;
+	}
+	
 	public static Segment getCodeSegmentOf(HString clazz) {
-		return getSegmentOf(clazz, HString.getHString("code"));
+		return getSegmentOf(clazz, CODE);
 	}
 
-	/**
-	 * Returns the first Segment which contains the constants for the given
-	 * classname. If no such segment exists the method returns null.
-	 * 
-	 * @param clazz
-	 *            the name of the desired Class
-	 * @return a Segment or null
-	 */
 	public static Segment getConstSegmentOf(HString clazz) {
-		return getSegmentOf(clazz, HString.getHString("const"));
+		return getSegmentOf(clazz, CONST);
 	}
 
-	/**
-	 * Returns the first Segment which contains the variables for the given
-	 * classname. If no such segment exists the method returns null.
-	 * 
-	 * @param clazz
-	 *            the name of the desired Class
-	 * @return a Segment or null
-	 */
 	public static Segment getVarSegmentOf(HString clazz) {
-		return getSegmentOf(clazz, HString.getHString("var"));
+		return getSegmentOf(clazz, VAR);
 	}
 
 	public static Segment getDefaultCodeSegment() {
-		return getDefaultSegment(HString.getHString("code"));
+		return getDefaultSegment(CODE);
 	}
 	
 	public static Segment getDefaultConstSegment() {
-		return getDefaultSegment(HString.getHString("const"));
+		return getDefaultSegment(CONST);
 	}
 	
 	public static Segment getDefaultVarSegment() {
-		return getDefaultSegment(HString.getHString("var"));
+		return getDefaultSegment(VAR);
 	}
 	
 	private static Segment getDefaultSegment(HString contentType){
 		Segment seg;
-		SegmentAssignment segAss = activeTarConf.getModuleByName(HString.getHString("default")).getSegmentAssignments();
-		while (segAss != null) {
-			if (segAss.contentAttribute.equals(contentType)) {
+		SegmentAssignment segAss = activeProject.getActiveTargetConfiguration().getModuleByName(DEFAULT).getSegmentAssignments();
+		while(segAss != null) {
+			if(segAss.contentAttribute.equals(contentType)) {
 				String segDesignator = segAss.segmentDesignator.toString();
 				int index = segDesignator.indexOf('.');
 				// Determine Device name
-				HString name = HString.getHString(segDesignator.substring(0,
-						index));
+				HString name = HString.getRegisteredHString(segDesignator.substring(0, index));
 				segDesignator = segDesignator.substring(index + 1);
-				Device dev = memoryMap.getDeviceByName(name);
+				Device dev = activeProject.board.getDeviceByName(name);
 				if (dev == null) {
-					ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for const not found");
+					ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for " + contentType + " not found");
 					return null;
 				}
 				index = segDesignator.indexOf('.');
 				if (index == -1) {
-					return dev.getSegementByName(HString
-							.getHString(segDesignator));
+					return dev.getSegementByName(HString.getRegisteredHString(segDesignator));
 				}
-				name = HString.getHString(segDesignator.substring(0, index));
+				name = HString.getRegisteredHString(segDesignator.substring(0, index));
 				segDesignator = segDesignator.substring(index + 1);
 				seg = dev.getSegementByName(name);
 				index = segDesignator.indexOf('.');
 				while (index != -1) {
-					name = HString
-							.getHString(segDesignator.substring(0, index));
+					name = HString.getRegisteredHString(segDesignator.substring(0, index));
 					segDesignator = segDesignator.substring(index + 1);
 					seg = seg.getSubSegmentByName(name);
 					index = segDesignator.indexOf('.');
 				}
-				return seg.getSubSegmentByName(HString
-						.getHString(segDesignator));
+				return seg.getSubSegmentByName(HString.getRegisteredHString(segDesignator));
 			}
 			segAss = segAss.next;
 		}
@@ -147,39 +194,50 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 	
 	private static Segment getSegmentOf(HString clazz, HString contentAttribute) {
+		if(dbg) vrb.print("[CONF] looking for " + contentAttribute + " segment for class " + clazz);
 		Segment seg;
 		SegmentAssignment segAss = null;
 
 		// first check if clazz is a system class
-		if (os.getKernel().name.equals(clazz.toString())) {
-			segAss = activeTarConf.getModuleByName(HString.getHString("kernel")).getSegmentAssignments();
-		} else if (os.getHeap().name.equals(clazz.toString())) {
-			segAss = activeTarConf.getModuleByName(HString.getHString("heap")).getSegmentAssignments();
-		} else if (os.getExceptionBaseClass().name.equals(clazz.toString())) {
-			segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
-		} else {
-			SystemClass tempCls = os.getExceptions();
-			while (tempCls != null && (tempCls.attributes & (1 << dpfExcHnd)) != 0  && (tempCls != os.getExceptionBaseClass())) {
-				if (tempCls.name.equals(clazz.toString())) {
-					segAss = activeTarConf.getModuleByName(	HString.getHString("exception")).getSegmentAssignments();
+		if(activeProject.getOperatingSystem().getKernel().name.equals(clazz)) {
+			if(dbg) vrb.print("  -> KERNEL");
+			segAss = activeProject.activeTargetConf.getModuleByName(KERNEL).getSegmentAssignments();
+		}
+		else if (activeProject.getOperatingSystem().getHeap().name.equals(clazz)) {
+			if(dbg) vrb.print("  -> HEAP");
+			segAss = activeProject.activeTargetConf.getModuleByName(HEAP).getSegmentAssignments();
+		}
+		else if (activeProject.getOperatingSystem().getExceptionBaseClass().name.equals(clazz)) {
+			if(dbg) vrb.print("  -> EXCEPTION BASE");
+			segAss = activeProject.activeTargetConf.getModuleByName(EXCEPTION).getSegmentAssignments();
+		}
+		else {
+			if(dbg) vrb.print("  -> Looking for exception: ");
+			SystemClass tempCls = activeProject.getOperatingSystem().getExceptions();
+			while (tempCls != null && (tempCls.attributes & (1 << dpfExcHnd)) != 0  && (tempCls != activeProject.getOperatingSystem().getExceptionBaseClass())) {
+				if(dbg) vrb.print(tempCls.getName());
+				if(tempCls.name.equals(clazz)) {
+					if(dbg) vrb.println(" -> found");
+					segAss = activeProject.activeTargetConf.getModuleByName(EXCEPTION).getSegmentAssignments();
 					break;
 				}
-				tempCls = tempCls.next;
+				else {
+					if(dbg) vrb.print(" -> skiped, next: ");
+				}
+				tempCls = (SystemClass)tempCls.next;
 			}
 			if (segAss == null) {
 				// Class is not a system class
-
-				Module mod = activeTarConf.getModuleByName(clazz);
-				if (mod == null) {
-					mod = memoryMap.getModuleByName(clazz);
-				}
+				if(dbg) vrb.print(" -> class is not a system class -> looking for module");
+				Module mod = activeProject.activeTargetConf.getModuleByName(clazz);
 				if (mod != null) {
+					if(dbg) vrb.println(" -> found");
 					segAss = mod.getSegmentAssignments();
-				} else {
+				}
+				else {
+					if(dbg) vrb.println(" -> not found -> using default segment");
 					// module for Class not found load default
-					segAss = activeTarConf.getModuleByName(
-							HString.getHString("default"))
-							.getSegmentAssignments();
+					segAss = activeProject.activeTargetConf.getModuleByName(DEFAULT).getSegmentAssignments();
 				}
 			}
 		}
@@ -188,432 +246,210 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				String segDesignator = segAss.segmentDesignator.toString();
 				int index = segDesignator.indexOf('.');
 				// Determine Device name
-				HString name = HString.getHString(segDesignator.substring(0,
-						index));
+				HString name = HString.getRegisteredHString(segDesignator.substring(0, index));
 				segDesignator = segDesignator.substring(index + 1);
-				Device dev = memoryMap.getDeviceByName(name);
+				Device dev = activeProject.board.getDeviceByName(name);
 				if (dev == null) {
-					ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for "
-							+ contentAttribute.toString());
+					ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for "	+ contentAttribute.toString());
 					return null;
 				}
 				index = segDesignator.indexOf('.');
 				if (index == -1) {
 					return dev.getSegementByName(HString
-							.getHString(segDesignator));
+							.getRegisteredHString(segDesignator));
 				}
-				name = HString.getHString(segDesignator.substring(0, index));
+				name = HString.getRegisteredHString(segDesignator.substring(0, index));
 				segDesignator = segDesignator.substring(index + 1);
 				seg = dev.getSegementByName(name);
 				index = segDesignator.indexOf('.');
 				while (index != -1) {
-					name = HString
-							.getHString(segDesignator.substring(0, index));
+					name = HString.getRegisteredHString(segDesignator.substring(0, index));
 					segDesignator = segDesignator.substring(index + 1);
 					seg = seg.getSubSegmentByName(name);
 					index = segDesignator.indexOf('.');
 				}
-				return seg.getSubSegmentByName(HString
-						.getHString(segDesignator));
+				return seg.getSubSegmentByName(HString.getRegisteredHString(segDesignator));
 			}
 			segAss = segAss.next;
 		}
 
-		// segment for contentattribute not set
+		// segment for content attribute not set
 		return null;
 	}
 
-	public static Device getFirstDevice() {
-		return memoryMap.getDevices();
-	}
-
-	public static String[] getSearchPaths() {
-		int count = 0;
-		HString libPaths = project.getLibPaths();
-		HString current = libPaths;
-		// count
-		while (current != null) {
-			count++;
-			current = current.next;
-		}
-
-		String[] paths = new String[count + 1];
-		paths[0] = location + "bin/";
-		for (int i = 1; i <= count; i++) {
-			if(libPaths.toString().endsWith("/")){				
-				paths[i] = libPaths.toString() + "bin/";
-			}else{
-				paths[i] = libPaths.toString();
+	public static Segment getSegmentByFullName(String fullQualifiedName) {
+		if(dbg) vrb.println("[CONF] Configuration: getSegmentByFullName");
+		String[] name = fullQualifiedName.split("\\.");
+		if(dbg) vrb.println("  Looking for: " + name[0]);
+		if(dbg) {
+			for(int i = 1; i < name.length; i++) {
+				indent(i + 1);
+				vrb.println("  " + name[i]);
 			}
-			libPaths = libPaths.next;
 		}
-		return paths;
+		int i = 0;
+		Device dev = getDeviceByName(name[i++]);
+		Segment seg = null;
+		if(dev != null && name.length > 1) {
+			if(dbg) vrb.println("  Device found: " + dev.getName());
+			seg = dev.getSegementByName(name[i++]);
+			if(dbg) {
+				if(seg != null) vrb.println("  Segment found: " + seg.getName());
+				else vrb.println("  Segment not found: " + name[i - 1]);
+			}
+			while(seg != null && i < name.length){
+				seg = seg.getSubSegmentByName(name[i++]);
+			}
+			if(i != name.length) {
+				vrb.println("  i != name.length -> returning null");
+				seg = null;
+			}
+		}
+		return seg;
+	}
+	
+	public static Device getDeviceByName(String devName) {
+		return activeProject.getBoard().getDeviceByName(devName);
+	}
+	
+	public static Device getFirstDevice() {
+		return (Device)activeProject.board.memorymap.getDevices().getHead();
 	}
 
-	/**
-	 * Sets the projectblock of this configuration. If a Project is already set
-	 * it will be overwritten.
-	 * 
-	 * @param project
-	 */
-	public static void setProject(Project project) {
-		Configuration.project = project;
-
+	public static File[] getSearchPaths() {
+		File[] libPaths = activeProject.getLibPathAsFileArray();
+		File[] javaSearchPaths = new File[libPaths.length + 1];
+		javaSearchPaths[0] = new File(activeProject.getProjectDir().getAbsolutePath() + File.separator + "bin" + File.separator);
+		for(int i = 0; i < libPaths.length; i++) {
+			if(libPaths[i].isDirectory()){ // directory
+				javaSearchPaths[i + 1] = new File(libPaths[i].getAbsolutePath() + File.separator + "bin" + File.separator);
+			}
+			else { // jar file
+				javaSearchPaths[i + 1] = libPaths[i];
+			}
+		}
+		return javaSearchPaths;
 	}
 
-	/**
-	 * @return the project which was set or null.
-	 */
-	public static Project getProject() {
-		return Configuration.project;
+	public static void setActiveProject(Project project) {
+		Configuration.activeProject = project;
+
+	}
+	
+	public static Project getActiveProject() {
+		return Configuration.activeProject;
 	}
 
-	/**
-	 * @return the number of defined stacks.
-	 */
 	public static int getNumberOfStacks() {
-		return nofStackSegments;
+		return activeProject.getNumberOfStacks();
 	}
 
-	/**
-	 * @return the number of defined heaps.
-	 */
 	public static int getNumberOfHeaps() {
-		return nofHeapSegments;
+		return activeProject.getNumberOfHeaps();
 	}
 
 	public static HString getHeapClassname() {
-		return HString.getHString(os.getHeap().name);
+		if(activeProject.getOperatingSystem() != null) {
+			if(activeProject.getOperatingSystem().getHeap() != null) {				
+				return activeProject.getOperatingSystem().getHeap().getName();
+			}
+			else {
+				reporter.error(999, "Heap not set for os " + activeProject.getOperatingSystem().getName());
+			}
+		}
+		reporter.error(errOsNotFound, "Operationg system not set for project " + activeProject.getName());
+		return null;
 	}
 
 	public static HString getKernelClassname() {
-		if(os == null){
-			return null;
-		}
-		return HString.getHString(os.getKernel().name);
+		return activeProject.getOperatingSystem().getKernel().name;
 	}
 
+	public static Board getBoard() {
+		return activeProject.getBoard();
+	}
+	
+	public static CPU getCpu() {
+		return activeProject.getBoard().getCPU();
+	}
+	
+	public static Programmer getProgrammer() {
+		return activeProject.getProgrammer();
+	}
+	
 	public static HString getExceptionClassname() {
-		return HString.getHString(os.getExceptionBaseClass().name);
+		return activeProject.getOperatingSystem().getExceptionBaseClass().name;
 	}
 
 	public static void setOperatingSystem(OperatingSystem os) {
-		Configuration.os = os;
+		activeProject.setOperatingSystem(os);
 	}
 
 	public static OperatingSystem getOperatingSystem() {
-		return os;
+		return activeProject.getOperatingSystem();
 	}
 
-	public static void addTargetConfiguration(TargetConfiguration targetConf) {
-		if (Configuration.targetConfig == null) {
-			targetConfig = targetConf;
-			return;
-		}
-		TargetConfiguration current = targetConfig;
-		TargetConfiguration prev = null;
-		int nameHash = targetConf.name.hashCode();
-		while (current != null) {
-			if (current.name.hashCode() == nameHash) {
-				if (current.name.equals(targetConf.name)) {
-					targetConf.next = current.next;
-					if (prev != null) {
-						prev.next = targetConf;
-					} else {
-						targetConfig = targetConf;
-					}
-					return;
-				}
-			}
-			prev = current;
-			current = current.next;
-		}
-		// if no match prev shows the tail of the list
-		prev.next = targetConf;
+	public static TargetConfiguration getActiveTargetConfiguration() {
+		return activeProject.getActiveTargetConfiguration();
 	}
 
-	public static TargetConfiguration getTargetConfigurations() {
-		return targetConfig;
+	public static Project getProjectByName(String projectName) {
+		return getProjectByName(HString.getRegisteredHString(projectName));
 	}
 
-	public static void setRegInit(HString name, int initValue) {
-		Register reg = registerMap.getRegister(name);
-		if(regInit == null){
-			regInit = new RegisterInit(reg, initValue);
-			return;
-		}
-		//check if register initialization already exist
-		RegisterInit current = regInit;
-		RegisterInit prev = null;
-		while(current != null){
-			if(reg == current.register){
-				current.initValue = initValue;
-				return;
-			}
-			prev = current;
-			current = current.next;
-		}
-		//if no initialization exist, so append new one
-		// if no match prev shows the tail of the list
-		prev.next = new RegisterInit(reg, initValue);
+	public static Project getProjectByName(HString registeredProjectName) {
+		return (Project)projects.getElementByName(registeredProjectName);
 	}
-
-	public static RegisterInit[] getInitializedRegisters() {
-		RegisterInit[] reg = new RegisterInit[2];
-		reg[0] = regInit; //Global scope
-		reg[1] = activeTarConf.getRegInit(); //active target config scope
-		return reg;
-	}
-
-	public static ValueAssignment getConstant() {
-		if (sysConst == null) {
-			return null;
-		}
-		return sysConst.getSysConst();
-	}
-
-	public static int getSysConstValue(HString name) {
-		if (consts == null) {
-			return Integer.MAX_VALUE;
-		}
-		return sysConst.getConstByName(name);
-	}
-
-	public static int getValueFor(HString constName) {
-		int res = consts.getConstByName(constName);
-		if (res == Integer.MAX_VALUE) {
-			res = sysConst.getConstByName(constName);
-		}
-		if (res == Integer.MAX_VALUE) {
-			ErrorReporter.reporter.error(errUndefinedConst, constName.toString());
-			Parser.incrementErrors();
-		}
-		return res;
-	}
-
-	public static void print() {
-		StdStreams.vrb.println("configuration {");
-		if (project != null) {
-			project.println(1);
-		}
-		sysConst.println(1);
-		consts.println(1);
-		TargetConfiguration tarConf = targetConfig;
-		while (tarConf != null) {
-			tarConf.print(1);
-			tarConf = tarConf.next;
-		}
-		if (os != null) {
-			os.println(1);
-		}
-		registerMap.println(1);
-		if (regInit != null) {
-			StdStreams.vrb.println("  reginit{");
-			RegisterInit initReg = regInit;
-			while (initReg != null) {
-				for (int i = 2; i > 0; i--) {
-					StdStreams.vrb.print("  ");
-				}
-				StdStreams.vrb.println(initReg.register.getName().toString() + String.format(" = 0x%X", initReg.initValue));
-				initReg = initReg.next;
-			}
-			StdStreams.vrb.println("  }");
-		}
-		memoryMap.println(1);
-	}
-
-	public static void createInterfaceFile(HString fileToCreate) {
-		int indexOf;
-		String pack;
-		String className;
-		try {
-			indexOf = fileToCreate.lastIndexOf(Path.SEPARATOR);
-			if (indexOf != -1) {
-				className = fileToCreate.substring(indexOf + 1).toString();
-				pack = fileToCreate.substring(0, indexOf).toString();
-			} else {
-				className = fileToCreate.toString();
-				pack = "";
-			}
-			// check if path exists
-			File f = new File(fileToCreate.substring(0, indexOf).toString());
-			if (!f.exists()) {
-				f.mkdirs();
-			}
-			FileWriter fw = new FileWriter(fileToCreate.toString());
-			indexOf = pack.lastIndexOf(Path.SEPARATOR);
-			if (indexOf != -1) {
-				pack = pack.substring(indexOf + 1) + ";";
-			}
-			pack = pack.replace(Path.SEPARATOR, '.');
-			fw.write("package ch.ntb.inf.deep.runtime." + pack + "\n\n");
-			indexOf = className.indexOf(".");
-			fw.write("public interface " + className.substring(0, indexOf)
-					+ "{\n");
-			fw.write("\t//Systemconstants\n");
-			ValueAssignment current = sysConst.getSysConst();
-			while (current != null) {
-				fw.write("\tpublic static final int "
-						+ current.getName().toString() + " = 0x"
-						+ Integer.toHexString(current.getValue()) + ";\n");
-				current = current.next;
-			}
-			fw.write("\n\t//Registermap GPR\n");
-			Register reg = registerMap.gpr;
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.addr) + ";\n");
-				reg = reg.next;
-			}
-			fw.write("\n\t//Registermap FPR\n");
-			reg = registerMap.fpr;
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.addr) + ";\n");
-				reg = reg.next;
-			}
-			fw.write("\n\t//Registermap SPR\n");
-			reg = registerMap.spr;
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.addr) + ";\n");
-				reg = reg.next;
-			}
-			fw.write("\n\t//Registermap IOR\n");
-			reg = registerMap.ior;
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.addr) + ";\n");
-				reg = reg.next;
-			}
-			fw.write("}");
-			fw.flush();
-			fw.close();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void setHeapSegmentRef(Segment heapSegment) {
-		if (nofHeapSegments >= maxNumbersOfHeaps) {
-			ErrorReporter.reporter.error(errMaxNofReached, "heap segments(" + maxNumbersOfHeaps + ")");
-			Parser.incrementErrors();
-			return;
-		}
-		heaps[nofHeapSegments] = heapSegment;
-		nofHeapSegments++;
-	}
-
-	public static void setStackSegmentRef(Segment stackSegment) {
-		if (nofStackSegments >= maxNumbersOfStacks) {
-			ErrorReporter.reporter.error(errMaxNofReached, "stack segments(" + maxNumbersOfStacks	+ ")");
-			Parser.incrementErrors();
-			return;
-		}
-		stacks[nofStackSegments] = stackSegment;
-		nofStackSegments++;
-	}
-
+	
 	public static Segment[] getHeapSegments() {
-		Segment[] res = new Segment[nofHeapSegments];
-		for (int i = 0; i < nofHeapSegments; i++) {
-			res[i] = heaps[i];
-		}
-		return res;
+		return activeProject.getHeapSegments();
 	}
 
 	public static Segment[] getStackSegments() {
-		Segment[] res = new Segment[nofStackSegments];
-		for (int i = 0; i < nofStackSegments; i++) {
-			res[i] = stacks[i];
-		}
-		return res;
+		return activeProject.getStackSegments();
 	}
 
 	public static Segment[] getSysTabSegments() {
-		segsCount = 0;// reset if it was used befor
-		segs = new Segment[defaultLength];
-		
-		Module sysMod = activeTarConf.getSystemModules();
-		while(sysMod != null){
-			SegmentAssignment segAss = null;
-			if(sysMod.name.equals(HString.getHString("systemtable"))){
-				segAss = sysMod.getSegmentAssignments();
-			}
-			//search all systab segments from active target config
-			while (segAss != null) {
-				if (segAss.contentAttribute.equals(HString.getHString("systab"))) {
-					String segDesignator = segAss.segmentDesignator.toString();
-					int index = segDesignator.indexOf('.');
-					// Determine Device name
-					HString name = HString.getHString(segDesignator.substring(0, index));
-					segDesignator = segDesignator.substring(index + 1);
-					Device dev = memoryMap.getDeviceByName(name);
-					if (dev == null) {
-						ErrorReporter.reporter.error(errNoSuchDevice, name.toString() + "with segment for systab");
-						return null;
-					}
-					index = segDesignator.indexOf('.');
-					Segment seg;
-					if (index == -1) {
-						seg = dev.getSegementByName(HString.getHString(segDesignator));
-						if(seg != null){
-							noticeSegment(seg);
-						}else{
-							ErrorReporter.reporter.error(errNoSuchSegment, segDesignator.toString() + "with attribute systab");
-						}
-						
-					}else{
-						name = HString.getHString(segDesignator.substring(0, index));
-						segDesignator = segDesignator.substring(index + 1);
-						seg = dev.getSegementByName(name);
-						index = segDesignator.indexOf('.');
-						while (index != -1) {
-							name = HString.getHString(segDesignator.substring(0, index));
-							segDesignator = segDesignator.substring(index + 1);
-							seg = seg.getSubSegmentByName(name);
-							index = segDesignator.indexOf('.');
-						}
-						if(seg != null){
-							noticeSegment(seg);
-						}else{
-							ErrorReporter.reporter.error(errNoSuchSegment, segDesignator.toString() + "with attribute systab");
-						}
-					}
+		if(dbg) vrb.println("[CONF] getSysTabSegments");
+		Segment[] sysTabSegments = new Segment[maxNumbersOfSystables];
+		int count = 0;
+		Module sysTabModule = (Module)activeProject.getActiveTargetConfiguration().getSystemModules().getElementByName(SYSTEMTABLE);
+		if(sysTabModule == null) {
+			reporter.error(errSysModNotFound, SYSTEMTABLE.toString());
+			return null;
+		}
+		if(dbg) vrb.println("  Looking for " + SYSTAB + " assignments in system module " + sysTabModule.getName() + ":");
+		SegmentAssignment segAssignment = sysTabModule.getSegmentAssignments();
+		while(segAssignment != null && count < sysTabSegments.length) {
+			if(dbg) vrb.print("  Content attribute of segment assignment: " + segAssignment.contentAttribute);
+			if(segAssignment.contentAttribute == SYSTAB) {
+				if(dbg) vrb.print(" -> looking for segment " + segAssignment.segmentDesignator);
+				sysTabSegments[count] = getSegmentByFullName(segAssignment.segmentDesignator.toString());
+				if(sysTabSegments[count] == null) {
+					if(dbg) vrb.println(" -> not found");
+					reporter.error(errNoSuchSegment, segAssignment.segmentDesignator.toString());
+					return null;
 				}
-				segAss = segAss.next;
+				else {
+					if(dbg) vrb.println(" -> found");
+					count++;
+				}
 			}
-			sysMod = sysMod.next;
-		}
-
-		Segment[] sysTabSegs = new Segment[segsCount];
-		for (int i = 0; i < segsCount; i++) {
-			sysTabSegs[i] = segs[i];
-		}
-		return sysTabSegs;
-	}
-
-	private static void noticeSegment(Segment s) {
-		if (s == null)
-			return;
-		if (segsCount >= segs.length) {
-			Segment[] temp = new Segment[segs.length * 2];
-			for (int i = 0; i < segs.length; i++) {
-				temp[i] = segs[i];
+			else {
+				if(dbg) vrb.println(" -> skip");
 			}
-			segs = temp;
+			segAssignment = segAssignment.next;
 		}
-		segs[segsCount++] = s;
-	}
-
-	public static RegisterMap getRegisterMap() {
-		return registerMap;
+		Segment[] availableSysTabSegments = new Segment[count];
+		for(int i = 0; i < availableSysTabSegments.length; i++) {
+			availableSysTabSegments[i] = sysTabSegments[i];
+		}
+		return availableSysTabSegments;
 	}
 	
-	public static int getSystemMethodIdOf(String name){
+	public static int getSystemMethodIdOf(String name){ // TODO improve this
 		int hash = name.hashCode();
-		SystemClass clazz = os.getClassList();
+		SystemClass clazz = activeProject.getOperatingSystem().getClassList();
 		while(clazz != null){
 			SystemMethod meth = clazz.methods;
 			while(meth != null){
@@ -624,16 +460,17 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				}
 				meth = meth.next;
 			}
-			clazz = clazz.next;			
+			clazz = (SystemClass)clazz.next;			
 		}		
 		return 0;
 	}
-	public static String getSystemMethodForID(int id){
+	
+	public static String getSystemMethodForID(int id){ // TODO improve this
 		if((id & 0xFFFFF000) != 0){
 			ErrorReporter.reporter.error(errInvalideParameter,
 					"getSystemMethodForID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
 		}
-		SystemClass clazz = os.getClassList();
+		SystemClass clazz = activeProject.getOperatingSystem().getClassList();
 		while(clazz != null){
 			SystemMethod meth = clazz.methods;
 			while(meth != null){
@@ -642,109 +479,59 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				}
 				meth = meth.next;
 			}
-			clazz = clazz.next;
+			clazz = (SystemClass)clazz.next;
 		}
 		return null;
 	}
 
-	public static String[] getRootClassNames() {
-		int count = 0;
-		HString classNamesRoot = project.getRootClasses();
-		HString current = classNamesRoot;
-		// count
-		while (current != null) {
-			count++;
-			current = current.next;
-		}
-		if (count > 0) {
-			String[] classNames = new String[count];
-			for (int i = 0; i < count; i++) {
-				classNames[i] = classNamesRoot.toString();
-				classNamesRoot = classNamesRoot.next;
-			}
-			return classNames;
-		}
-		return null;
-
+	public static HString[] getRootClassNames() {
+		return activeProject.getRootClasses();
 	}
 
-	public static String getTctFile() {
-		if(project.getTctFile() != null) return project.getTctFile().toString();
+	public static String getTctFileName() {
+		if(activeProject.getTctFile() != null) return activeProject.getTctFile().toString();
 		return null;
 	}
 	
-	public static void clear() {
-		Parser.clear();
-		project = null;
-		SystemConstants.clear();
-		sysConst = SystemConstants.getInstance();
-		Consts.clear();
-		consts = Consts.getInstance();
-		MemoryMap.clear();
-		memoryMap = MemoryMap.getInstance();
-		RegisterMap.clear();
-		registerMap = RegisterMap.getInstance();
-		regInit = null;
-		targetConfig = null;
-		activeTarConf = null;
-		os = null;
-		nofHeapSegments = 0;
-		nofStackSegments = 0;
-		heaps = new Segment[maxNumbersOfHeaps];
-		stacks = new Segment[maxNumbersOfStacks];
-
-	}
-
 	public static SystemClass getSystemPrimitives() {
-		return os.getClassList();
+		return activeProject.getOperatingSystem().getClassList();
 	}
 
-	protected static void setActiveTargetConfig(HString targetConfigName) {
-		// determine active configuration if it is not set
-		activeTarConf = targetConfig;
-		while (activeTarConf != null) {
-			if (activeTarConf.name.equals(targetConfigName)) {
-				break;
-			}
-			activeTarConf = activeTarConf.next;
+	public static int getMemoryBaseAddress() {
+		if(activeProject.getBoard() != null) {
+			return activeProject.getBoard().getCPU().getInternalMemoryBase();
 		}
-		if (activeTarConf == null) {
-			ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration which is set is not found");
+		
+		return -1;
+	}
+	
+	public static Register getRegiststerByName(String regName) {
+		if(activeProject.getBoard() != null) {
+			return activeProject.getBoard().getCPU().getRegisterMap().getRegister(regName);
+		}
+		return null;
+	}
+	
+	public static Device[] getDevicesByType(HString memoryType) {
+		if(activeProject.getBoard() != null) {
+			return activeProject.getBoard().getDevicesByType(memoryType);
+		}
+		return null;
+	}
+	
+	protected static boolean setActiveTargetConfig(HString targetConfigName) {
+		TargetConfiguration targetConfig = (TargetConfiguration)activeProject.board.targetConfigs.getElementByName(targetConfigName);
+		if(targetConfig != null) {
+			activeProject.setActiveTargetConfiguration(targetConfig);
+		}
+		ErrorReporter.reporter.error(errInconsistentattributes,	"Targetconfiguration \"" + targetConfigName + "\" not found");
+		return false;
+	}
+	
+	private static void indent(int indentLevel) {
+		for (int i = indentLevel; i > 0; i--) {
+			StdStreams.vrb.print("  ");
 		}
 	}
 
-	public static void parseAndCreateConfig(String file, String targetConfigurationName) {
-		int index = file.lastIndexOf('/');
-		location = file.substring(0, index + 1);
-		Parser.loc = HString.getHString(location);
-		HString filename = HString.getHString(file.substring(index + 1));
-		BufferedInputStream bufStrm = null;
-		File f = new File(file);
-		if(f.exists()){
-			try {
-				bufStrm = new BufferedInputStream(new FileInputStream(f));
-			} catch (FileNotFoundException e) {
-				ErrorReporter.reporter.error(errIOExp, file + " is not on searchpath");
-			}
-		}
-		if(bufStrm != null){
-			bufStrm.mark(Integer.MAX_VALUE);
-			Parser par = new Parser(bufStrm, filename);
-			// if (importedFiles.size() < 1 || par.hasChanged(bufStrm)) {
-			clear();
-			Parser.checksum.add(par.calculateChecksum(bufStrm));
-			try {
-				bufStrm.reset();
-				Parser.importedFiles.add(filename);
-				Parser.locForImportedFiles.add(Parser.loc);
-				par.config();
-				bufStrm.close();
-			} catch (IOException e) {
-			}
-			// }
-			if(ErrorReporter.reporter.nofErrors <=0) setActiveTargetConfig(HString.getHString(targetConfigurationName));
-		}else{
-			ErrorReporter.reporter.error(errIOExp, file + " is not on searchpath");
-		}
-	}
 }

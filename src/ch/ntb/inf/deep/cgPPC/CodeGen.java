@@ -193,7 +193,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			StdStreams.vrb.println();
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-			if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// reset has no prolog
+			if (ssa.cfg.method.name.equals(HString.getRegisteredHString("reset"))) {	// reset has no prolog
 			} else {
 				stackSize = calcStackSizeException();
 				insertPrologException();
@@ -485,7 +485,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					loadConstantAndFixup(sReg1, field);
 				} else {	// getfield
 					if ((ssa.cfg.method.owner == Type.wktString) &&	// string access needs special treatment
-							((MonadicRef)instr).item.name.equals(HString.getHString("value"))) {
+							((MonadicRef)instr).item.name.equals(HString.getRegisteredHString("value"))) {
 						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);	// result contains ref to string
 						stringCharRef = ((MonadicRef)instr).item;	// ref to "value"
 						stringCharOffset = ((MonadicRef)instr).item.index;	// offset is start of char array
@@ -3328,9 +3328,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		objectSize = Type.wktObject.getObjectSize();
 		stringSize = Type.wktString.getObjectSize();
 		
-		int2floatConst1 = new StdConstant(HString.getHString("int2floatConst1"), (double)(0x10000000000000L + 0x80000000L));
-		int2floatConst2 =  new StdConstant(HString.getHString("int2floatConst2"), (double)0x100000000L);
-		int2floatConst3 =  new StdConstant(HString.getHString("int2floatConst3"), (double)0x10000000000000L);
+		int2floatConst1 = new StdConstant(HString.getRegisteredHString("int2floatConst1"), (double)(0x10000000000000L + 0x80000000L));
+		int2floatConst2 =  new StdConstant(HString.getRegisteredHString("int2floatConst2"), (double)0x100000000L);
+		int2floatConst3 =  new StdConstant(HString.getRegisteredHString("int2floatConst3"), (double)0x10000000000000L);
 		Linker32.addGlobalConstant(int2floatConst1);
 		Linker32.addGlobalConstant(int2floatConst2);
 		Linker32.addGlobalConstant(int2floatConst3);
@@ -3349,9 +3349,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			
 			Method m = (Method)stringClass.methods;		
 			while (m != null) {
-				if (m.name.equals(HString.getHString("<init>"))) {
-					if (m.methDescriptor.equals(HString.getHString("([C)V"))) strInitC = m; 
-					else if (m.methDescriptor.equals(HString.getHString("([CII)V"))) strInitCII = m;
+				if (m.name.equals(HString.getRegisteredHString("<init>"))) {
+					if (m.methDescriptor.equals(HString.getRegisteredHString("([C)V"))) strInitC = m; 
+					else if (m.methDescriptor.equals(HString.getRegisteredHString("([CII)V"))) strInitCII = m;
 				}
 				m = (Method)m.next;
 			}		
@@ -3362,9 +3362,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			
 			m = (Method)stringClass.methods;		
 			while (m != null) {
-				if (m.name.equals(HString.getHString("allocateString"))) {
-					if (m.methDescriptor.equals(HString.getHString("(I[C)Ljava/lang/String;"))) strAllocC = m; 
-					else if (m.methDescriptor.equals(HString.getHString("(I[CII)Ljava/lang/String;"))) strAllocCII = m;
+				if (m.name.equals(HString.getRegisteredHString("allocateString"))) {
+					if (m.methDescriptor.equals(HString.getRegisteredHString("(I[C)Ljava/lang/String;"))) strAllocC = m; 
+					else if (m.methDescriptor.equals(HString.getRegisteredHString("(I[CII)Ljava/lang/String;"))) strAllocCII = m;
 				}
 				m = (Method)m.next;
 			}		

@@ -23,16 +23,16 @@ package ch.ntb.inf.deep.config;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Module {
+public class Module extends ConfigElement {
 	SegmentAssignment root;
 	SegmentAssignment tail;
-	HString name;
 	
-	public Module next;
+	public Module(String jname) {
+		this.name = HString.getRegisteredHString(jname);
+	}
 	
-
-	public Module(HString module){
-		name = module;
+	public Module(HString name) {
+		this.name = name;
 	}
 	
 	public void setSegmentAssignment(SegmentAssignment assign){

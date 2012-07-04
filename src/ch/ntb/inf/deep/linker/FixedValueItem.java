@@ -34,7 +34,7 @@ public class FixedValueItem extends BlockItem {
 	}
 	
 	public FixedValueItem(int val) {
-		this(HString.getHString("???"), val);
+		this(UNDEF, val);
 	}
 	
 	public FixedValueItem(HString name) {
@@ -42,11 +42,11 @@ public class FixedValueItem extends BlockItem {
 	}
 	
 	public FixedValueItem(String name) {
-		this(HString.getHString(name), -1);
+		this(HString.getRegisteredHString(name), -1);
 	}
 	
 	public FixedValueItem(String name, int val) {
-		this(HString.getHString(name), val);
+		this(HString.getRegisteredHString(name), val);
 	}
 	
 	public void setValue(int val) {

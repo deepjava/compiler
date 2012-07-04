@@ -50,6 +50,9 @@ import ch.ntb.inf.deep.strings.HString;
 public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		SSAInstructionOpcs, ICdescAndTypeConsts {
 	private static boolean dbg = false;
+	
+	private static final HString CONSTNAME = HString.getRegisteredHString("#");
+	
 	private SSA owner;
 	boolean traversed;
 	public int nofInstr;
@@ -487,7 +490,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(-1, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -500,7 +503,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(0, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -513,7 +516,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(1, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -526,7 +529,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(2, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -539,7 +542,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(3, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -552,7 +555,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(4, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -565,7 +568,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(5, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -578,7 +581,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				result.constant = new StdConstant(0, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txLong];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -591,7 +594,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tLong;
 				result.constant = new StdConstant(0, 1);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txLong];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -604,7 +607,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				result.constant = new StdConstant(Float.floatToIntBits(0.0f), 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -617,7 +620,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				result.constant = new StdConstant(Float.floatToIntBits(1.0f), 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -630,7 +633,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tFloat;
 				result.constant = new StdConstant(Float.floatToIntBits(2.0f), 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txFloat];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -643,7 +646,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				result.constant = new StdConstant((int) (Double.doubleToLongBits(0.0) >> 32), (int) (Double.doubleToLongBits(0.0)));
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txDouble];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -656,7 +659,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tDouble;
 				result.constant = new StdConstant((int) (Double.doubleToLongBits(1.0) >> 32), (int) (Double.doubleToLongBits(1.0)));
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txDouble];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -672,7 +675,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(val, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;
@@ -689,7 +692,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 				result.constant = new StdConstant(val, 0);
-				result.constant.name = HString.getHString("#");
+				result.constant.name = CONSTNAME;
 				result.constant.type = Type.wellKnownTypes[txInt];
 				instr = new NoOpnd(sCloadConst);
 				instr.result = result;

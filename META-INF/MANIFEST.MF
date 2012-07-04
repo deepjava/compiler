@@ -33,7 +33,7 @@ Export-Package: ch.ntb.inf.deep.cgPPC,
  ch.ntb.inf.deep.host,
  ch.ntb.inf.deep.launcher,
  ch.ntb.inf.deep.linker,
- ch.ntb.inf.deep.loader,
+ ch.ntb.inf.deep.target,
  ch.ntb.inf.deep.ssa,
  ch.ntb.inf.deep.ssa.instruction,
  ch.ntb.inf.deep.strings

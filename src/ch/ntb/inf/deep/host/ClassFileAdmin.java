@@ -47,9 +47,9 @@ public class ClassFileAdmin {
 	 * <br>During registering, each given directory is checked for existence. An error is reported if it does not exist or if it is not a directory.
 	 * @param parentDirectories   parent directories
 	 */
-	public static void registerParentDirs(String[] parentDirectories){
-		PrintStream log = StdStreams.log;
-		log.println("registering parent dirs of class files:");
+	public static void registerParentDirs(File[] parentDirectories){
+		PrintStream out = StdStreams.vrb;
+		out.println("Registering parent dirs of class files:");
 		if(ClassFileAdmin.parentDirs != null)
 			ErrorReporter.reporter.error(errChangingParentDir);
 		else{
@@ -57,16 +57,15 @@ public class ClassFileAdmin {
 			ClassFileAdmin.parentDirs = new File[nofPaths];
 			boolean error = false;
 			for(int path = 0; path < nofPaths; path++){
-				String parentPath = parentDirectories[path];
-				log.print("  registering: "+ parentPath + '\t');
-				File parentDir = new File( parentPath );
-				if( ! parentDir.exists() || (! parentDir.isDirectory() &&  !parentDir.getName().endsWith(".jar") )){
-					log.println("Errorcode " + errMsgIllegalParentDir);
+				//String parentPath = parentDirectories[path];
+				out.print("  Registering: "+ parentDirectories[path].getAbsolutePath() + '\t');
+				//File parentDir = new File( parentPath );
+				if(!parentDirectories[path].exists() || (!parentDirectories[path].isDirectory() && !parentDirectories[path].getName().endsWith(".jar"))){
 					ErrorReporter.reporter.error(errMsgIllegalParentDir);
 					error = true;
 				}
-				ClassFileAdmin.parentDirs[path] = parentDir;
-				log.println();
+				ClassFileAdmin.parentDirs[path] = parentDirectories[path];
+				out.println();
 			}
 			if(error) clear();
 		}
@@ -118,14 +117,14 @@ public class ClassFileAdmin {
 	}
 
 	public static void printParentDirs(){
-		PrintStream out = StdStreams.out;
-		out.println("registered parent dirs of class files:");
+		PrintStream out = StdStreams.vrb;
+		out.println("Registered parent dirs of class files:");
 		if( parentDirs != null ){
 			int nofPaths = parentDirs.length;
 			for(int pd = 0; pd < nofPaths; pd++){
 				File parentDir = parentDirs[pd];
 				try{
-					out.printf("  parent dir [%1$d] = %2$s, name = %3$s", pd, parentDir.getCanonicalPath(), parentDir.getName() );
+					out.printf("  Parent dir [%1$d] = %2$s, name = %3$s", pd, parentDir.getCanonicalPath(), parentDir.getName() );
 				}catch(IOException e){
 					e.printStackTrace();
 				}

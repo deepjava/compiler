@@ -66,11 +66,10 @@ import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterMap;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.OperationObject;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
 import ch.ntb.inf.deep.strings.HString;
-import ch.ntb.inf.mcdp.ide.uart.Uart0;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
@@ -807,7 +806,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if (meth != null) {
 				//Save address for display
 				op.addr = meth.address;
-				Downloader bdi = UsbMpc555Loader.getInstance();
+				TargetConnection bdi = Launcher.getTargetConnection();
 				if(bdi == null){
 					op.errorMsg = "target not connected";
 					return;
@@ -816,18 +815,18 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(!bdi.isConnected()){
 						bdi.openConnection();
 					}
-					wasFreezeAsserted = bdi.isFreezeAsserted();
+					wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if (!wasFreezeAsserted) {
 						bdi.stopTarget();
 					}
-					bdi.setMem(cmdAddr, meth.address, 4);
+					bdi.writeWord(cmdAddr, meth.address);
 					op.description = param;
 					op.cmdSend = true;
 					
 					if (!wasFreezeAsserted) {
 						bdi.startTarget();
 					}
-				} catch (DownloaderException e) {
+				} catch (TargetConnectionException e) {
 					op.errorMsg = "target not initialized";
 				}
 			}else{
@@ -840,7 +839,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void readFromAddress(OperationObject op){
 		boolean wasFreezeAsserted;
-		Downloader bdi = UsbMpc555Loader.getInstance();
+		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
 			op.errorMsg = "target not connected";
 			return;
@@ -850,18 +849,18 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.openConnection();
 			}
 			
-			wasFreezeAsserted = bdi.isFreezeAsserted();
+			wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted) {
 				bdi.stopTarget();
 			}
 			
-			op.value = bdi.getMem(op.addr, 4);
+			op.value = bdi.readWord(op.addr);
 			op.isReaded = true;
 			
 			if (!wasFreezeAsserted) {
 				bdi.startTarget();
 			}
-		} catch (DownloaderException e) {
+		} catch (TargetConnectionException e) {
 			op.errorMsg = "target not initialized";
 		}
 	}
@@ -903,7 +902,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					}
 				}
 				
-				Downloader bdi = UsbMpc555Loader.getInstance();
+				TargetConnection bdi = Launcher.getTargetConnection();
 				if(bdi == null){
 					op.errorMsg = "target not connected";
 					return;
@@ -913,26 +912,26 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.openConnection();
 					}
 					
-					wasFreezeAsserted = bdi.isFreezeAsserted();
+					wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
 					}
 					if(((Type)var.type).sizeInBits <= 2 * slotSize ) { // 1 or 8 bit
-						op.value = bdi.getMem(var.address, slotSize/4);
+						op.value = bdi.readByte(var.address);
 						if(((Type)var.type).sizeInBits == 1 ){
 							op.valueType = tBoolean;
 						}else{
 							op.valueType = tByte;										
 						}
 					}else if(((Type)var.type).sizeInBits == 4 * slotSize){ // 16 bit
-						op.value = bdi.getMem(var.address, slotSize/2);
+						op.value = bdi.readWord(var.address); // TDOO mask?
 						if(var.type == Type.wellKnownTypes[txChar]){
 							op.valueType = tChar;
 						}else{
 							op.valueType = tShort;										
 						}
 					}else if(((Type)var.type).sizeInBits == 8 * slotSize){ // 32 bit
-						op.value = bdi.getMem(var.address, slotSize);
+						op.value = bdi.readWord(var.address);
 						if(var.type == Type.wellKnownTypes[txInt]){
 							op.valueType = tInteger;
 						}else if(var.type == Type.wellKnownTypes[txFloat]){
@@ -941,8 +940,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 							op.valueType = tRef;
 						}
 					}else if(((Type)var.type).sizeInBits > 8 * slotSize) { // 64 bit
-						op.value = bdi.getMem(var.address, slotSize);
-						op.value = op.value << (8 * slotSize) | (bdi.getMem(var.address + slotSize, slotSize) & 0xffffffffL);
+						op.value = bdi.readWord(var.address);
+						op.value = op.value << (8 * slotSize) | (bdi.readWord(var.address + slotSize) & 0xffffffffL);
 						if(var.type == Type.wellKnownTypes[txLong]){
 							op.valueType = tLong;
 						}else{
@@ -954,7 +953,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					}
 					op.isReaded = true;
 					op.description = fullQualName;
-				}catch(DownloaderException e){
+				}catch(TargetConnectionException e){
 					op.errorMsg = "target not initialized";
 				}
 			}else{
@@ -966,7 +965,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	}
 	
 	private void readFromRegister(OperationObject op, HString register){		
-		RegisterMap regMap = Configuration.getRegisterMap();
+		RegisterMap regMap = Configuration.getActiveProject().getBoard().getCPU().getRegisterMap();
 		boolean found = false;
 		
 		Register current = regMap.getCR();
@@ -996,7 +995,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			found = true;
 		}
 		
-		current = regMap.getGprRegister();
+		current = regMap.getGprRegisters();
 		while(!found && current != null){
 			if(current.getName().equals(register)){
 				op.registerSize = current.getSize();
@@ -1005,10 +1004,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.description = register.toString();		
 				found = true;
 			}
-			current = current.next;
+			current = (Register)current.next;
 		}
 		
-		current = regMap.getFprRegister();
+		current = regMap.getFprRegisters();
 		while(!found && current != null){
 			if(current.getName().equals(register)){
 				op.registerSize = current.getSize();
@@ -1017,10 +1016,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.description = register.toString();		
 				found = true;
 			}
-			current = current.next;
+			current = (Register)current.next;
 		}
 		
-		current = regMap.getSprRegister();
+		current = regMap.getSprRegisters();
 		while(!found && current != null){
 			if(current.getName().equals(register)){
 				op.registerSize = current.getSize();
@@ -1029,10 +1028,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.description = register.toString();		
 				found = true;
 			}
-			current = current.next;
+			current = (Register)current.next;
 		}
 		
-		current = regMap.getIorRegister();
+		current = regMap.getIorRegisters();
 		while(!found && current != null){
 			if(current.getName().equals(register)){
 				op.registerSize = current.getSize();
@@ -1041,11 +1040,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.description = register.toString();		
 				found = true;
 			}
-			current = current.next;
+			current = (Register)current.next;
 		}
 		if(found){
 			boolean wasFreezeAsserted;
-			Downloader bdi = UsbMpc555Loader.getInstance();
+			TargetConnection bdi = Launcher.getTargetConnection();
 			if(bdi == null){
 				op.errorMsg = "target not connected";
 				return;
@@ -1054,31 +1053,31 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				if(!bdi.isConnected()){
 					bdi.openConnection();
 				}				
-				wasFreezeAsserted = bdi.isFreezeAsserted();
+				wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 				if (!wasFreezeAsserted) {
 					bdi.stopTarget();
 				}
 				switch(op.registerType){
 				case Parser.sCR:
-					op.value = bdi.getCR();
+					op.value = bdi.getRegisterValue("CR");
 					break;
 				case Parser.sMSR:
-					op.value = bdi.getMSR();
+					op.value = bdi.getRegisterValue("MSR");
 					break;
 				case Parser.sFPSCR:
-					op.value = bdi.getFPSCR();
+					op.value = bdi.getRegisterValue("FPSCR");
 					break;
 				case Parser.sGPR:
-					op.value = bdi.getGPR(op.addr);
+					op.value = bdi.getGprValue(op.addr);
 					break;
 				case Parser.sFPR:
-					op.value = bdi.getFPR(op.addr);
+					op.value = bdi.getFprValue(op.addr);
 					break;
 				case Parser.sSPR:
-					op.value = bdi.getSPR(op.addr);
+					op.value = bdi.getSprValue(op.addr);
 					break;
 				case Parser.sIOR:
-					op.value = bdi.getMem(op.addr, op.registerSize);
+					op.value = bdi.readWord(op.addr);
 					break;
 				default:
 				}
@@ -1086,7 +1085,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				if (!wasFreezeAsserted) {
 					bdi.startTarget();
 				}
-			} catch (DownloaderException e) {
+			} catch (TargetConnectionException e) {
 				op.errorMsg = "target not initialized";
 			}
 		}else{
@@ -1096,7 +1095,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void setToAddress(OperationObject op){
 		boolean wasFreezeAsserted;
-		Downloader bdi = UsbMpc555Loader.getInstance();
+		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
 			op.errorMsg = "target not connected";
 			return;
@@ -1106,17 +1105,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.openConnection();
 			}
 			
-			wasFreezeAsserted = bdi.isFreezeAsserted();
+			wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted) {
 				bdi.stopTarget();
 			}
 			
-			bdi.setMem(op.addr, (int)op.value, 4);
+			bdi.writeWord(op.addr, (int)op.value);
 			
 			if (!wasFreezeAsserted) {
 				bdi.startTarget();
 			}
-		} catch (DownloaderException e) {
+		} catch (TargetConnectionException e) {
 			op.errorMsg = "target not initialized";
 		}
 		
@@ -1149,7 +1148,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					return;
 				}
 				
-				Downloader bdi = UsbMpc555Loader.getInstance();
+				TargetConnection bdi = Launcher.getTargetConnection();
 				if(bdi == null){
 					op.errorMsg = "target not connected";
 					return;
@@ -1159,25 +1158,25 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(!bdi.isConnected()){
 						bdi.openConnection();
 					}
-					wasFreezeAsserted = bdi.isFreezeAsserted();
+					wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
 					}
 					if(((Type)var.type).sizeInBits <= 2 * slotSize ) {
-						bdi.setMem(var.address,(int)(val & 0xFF), slotSize/4);
+						bdi.writeByte(var.address,(byte)(val & 0xFF));
 					}else if(((Type)var.type).sizeInBits == 4 * slotSize){
-						bdi.setMem(var.address,(int)(val & 0xFFFF), slotSize/2);
+						bdi.writeHalfWord(var.address,(short)(val & 0xFFFF));
 					}else if(((Type)var.type).sizeInBits == 8 * slotSize){
-						bdi.setMem(var.address,(int)(val & 0xFFFFFFFF), slotSize);
+						bdi.writeWord(var.address,(int)(val & 0xFFFFFFFF));
 					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
-						bdi.setMem(var.address,(int)((val >> 32) & 0xFFFFFFFF), slotSize);
-						bdi.setMem(var.address,(int)(val + slotSize & 0xFFFFFFFF), slotSize);
+						bdi.writeWord(var.address,(int)((val >> 32) & 0xFFFFFFFF));
+						bdi.writeWord(var.address,(int)(val + slotSize & 0xFFFFFFFF));
 					}
 					op.value = val;
 					if(!wasFreezeAsserted){
 						bdi.startTarget();
 					}
-				}catch(DownloaderException e){
+				}catch(TargetConnectionException e){
 					op.errorMsg = "target not initialized";
 				}
 			}else{
@@ -1190,7 +1189,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private void setToRegister(OperationObject op){
 
 		boolean wasFreezeAsserted;
-		Downloader bdi = UsbMpc555Loader.getInstance();
+		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
 			op.errorMsg = "target not connected";
 			return;
@@ -1199,25 +1198,25 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if(!bdi.isConnected()){
 				bdi.openConnection();
 			}
-			wasFreezeAsserted = bdi.isFreezeAsserted();
+			wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted) {
 				bdi.stopTarget();
 			}
 			switch (op.registerType) {
 			case Parser.sCR:
-				bdi.setCR((int)op.value);
+				bdi.setRegisterValue("CR", (int)op.value);
 				break;
 			case Parser.sGPR:
-				bdi.setGPR(op.addr, (int)op.value);
+				bdi.setGprValue(op.addr, (int)op.value);
 				break;
 			case Parser.sFPR:
-				bdi.setFPR(op.addr,op.value);
+				bdi.setFprValue(op.addr,op.value);
 				break;
 			case Parser.sSPR:
-				bdi.setSPR(op.addr, (int)op.value);
+				bdi.setSprValue(op.addr, (int)op.value);
 				break;
 			case Parser.sIOR:
-				bdi.setMem(op.addr, (int)op.value, op.registerSize);
+				bdi.writeWord(op.addr, (int)op.value);
 				break;
 			default:
 			}
@@ -1225,7 +1224,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if (!wasFreezeAsserted) {
 				bdi.startTarget();
 			}
-		} catch (DownloaderException e) {
+		} catch (TargetConnectionException e) {
 			op.errorMsg = "target not initialized";
 		}
 

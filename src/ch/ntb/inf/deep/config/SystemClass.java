@@ -23,22 +23,20 @@ package ch.ntb.inf.deep.config;
 import java.io.PrintStream;
 
 import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.strings.HString;
 
-public class SystemClass {
-	public SystemClass next;
-	public String name;
+public class SystemClass extends ConfigElement {
 	public SystemMethod methods;
 	public int attributes;
-
-	public SystemClass(String name) {
-		this.name = name;
+	
+	public SystemClass(String jname) {
+		this.name = HString.getRegisteredHString(jname);
 	}
 	
 	public void addAttributes(int attributes){
 		this.attributes |= attributes;
 	}
 	
-
 	public void addMethod(SystemMethod method) {
 		method.next = methods;
 		methods = method;

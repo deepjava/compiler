@@ -23,72 +23,39 @@ package ch.ntb.inf.deep.config;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class TargetConfiguration {
-		
+public class TargetConfiguration extends ConfigElement {
+	Board board;
 	Module modules;
 	Module system;
-	HString name;
-	RegisterInit regInit;
-	TargetConfiguration next;
+	RegisterInitList reginits;
 	
-	public TargetConfiguration(HString name){
-		this.name = name;
+	public TargetConfiguration(String jname, Board board) {
+		this.name = HString.getRegisteredHString(jname);
+		this.board = board;
+		this.reginits = new RegisterInitList(board.cpu);
 	}
 	
-	public void setModule(Module mod) {
+	public void addModule(Module newModule) {
+		if(Configuration.dbg) StdStreams.vrb.println("[CONF] TargetConfiguration: Adding new module: " + newModule.getName());
 		if (modules == null) {
-			modules = mod;
+			if(Configuration.dbg) StdStreams.vrb.println("  Adding first module");
+			modules = newModule;
 		}
-		int modHash = mod.name.hashCode();
-		Module current = modules;
-		Module prev = null;
-		while (current != null) {
-			if (current.name.hashCode() == modHash) {
-				if (current.name.equals(mod.name)) {
-					//TODO warn the User
-					mod.next = current.next;
-					if(prev != null){
-						prev.next = mod;
-					}else{
-						modules = mod;
-					}
-					return;
-				}
-			}
-			prev = current;
-			current = current.next;
-		}
-		//if no match prev shows the tail of the list
-		prev.next = mod;
-	}
-	
-	public void setRegInit(HString name, int initValue) {
-		Register reg = RegisterMap.getInstance().getRegister(name);
-		if(regInit == null){
-			regInit = new RegisterInit(reg, initValue);
-			return;
-		}
-		//check if register initialization already exist
-		RegisterInit current = regInit;
-		RegisterInit prev = null;
-		while(current != null){
-			if(reg == current.register){
-				current.initValue = initValue;
+		else {
+			if(Configuration.dbg) StdStreams.vrb.print("  Looking for module with the same name");
+			ConfigElement m = modules.getElementByName(newModule.name);
+			if(m == null) {
+				if(Configuration.dbg) StdStreams.vrb.println(" -> not found -> adding new module");
+				modules.append(newModule);
 				return;
 			}
-			prev = current;
-			current = current.next;
+			else {
+				if(Configuration.dbg) StdStreams.vrb.println(" -> found -> nothing to do");
+			}
 		}
-		//if no initialization exist, so append new one
-		// if no match prev shows the tail of the list
-		prev.next = new RegisterInit(reg, initValue);
 	}
-	
-	public RegisterInit getRegInit(){
-		return regInit;
-	}
-	
-	public void addSystemModule(Module mod){
+			
+	public void addSystemModule(Module mod){ // TODO improve this!
 		if(system == null){
 			system = mod;
 		}else{
@@ -97,87 +64,81 @@ public class TargetConfiguration {
 		}		
 	}
 
-	public Module getModules(){
+	public Module getModules() {
 		return modules;
 	}
 	
-	public Module getSystemModules(){
-		return system;
+	public Module getSystemModules() {
+		return (Module)system.getHead();
 	}
 	
+	public Module getModuleByName(String moduleName){
+		return (Module)modules.getElementByName(moduleName);
+	}
+
 	public Module getModuleByName(HString moduleName){
-		Module current = modules;
-		while (current != null) {
-			if (current.name.charAt(current.name.length() - 1) == '*') {
-				if (current.name.length() <= moduleName.length()) {
-					HString temp = current.name.substring(0, current.name.length() - 2);
-					if (temp.equals(moduleName.substring(0, temp.length()))) {
-						return current;
-					}
-				}
-			} else if (current.name.equals(moduleName)) {
-				return current;
-			}
-			current = current.next;
-		}
-		return null;
+		return (Module)modules.getElementByName(moduleName);
 	}
 	
-	public void print(int indentLevel){
-		for(int i = indentLevel; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("targetconfiguration " + name.toString() + " {");
-		
-		if (regInit != null) {
-			StdStreams.vrb.println("  reginit{");
-			RegisterInit initReg = regInit;
-			while (initReg != null) {
-				for(int i = indentLevel+1; i > 0; i--){
-					StdStreams.vrb.print("  ");
-				}
-				StdStreams.vrb.println(initReg.register.getName().toString() + String.format(" = 0x%X", initReg.initValue));
-				initReg = initReg.next;
-			}
-			StdStreams.vrb.println("  }");
-		}
-		
-		
-		for(int i = indentLevel+1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("system {");
-		
-		Module current = system;
-		while(current != null){
-			current.println(indentLevel + 2);
-			current = current.next;
-		}
-		
-		for(int i = indentLevel+1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
-		
-		for(int i = indentLevel+1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("modules {");
-				
-		current = modules;
-		while(current != null){
-			current.println(indentLevel + 2);
-			current = current.next;
-		}
-		
-		for(int i = indentLevel+1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
-		
-		for(int i = indentLevel; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
+	public RegisterInitList getRegisterInits() {
+		return reginits;
 	}
+	
+//	public void print(int indentLevel){
+//		for(int i = indentLevel; i > 0; i--){
+//			StdStreams.vrb.print("  ");
+//		}
+//		StdStreams.vrb.println("targetconfiguration " + name.toString() + " {");
+//		
+//		if (reginits != null) {
+//			StdStreams.vrb.println("  reginit{");
+//			RegisterInit initReg = reginits;
+//			while (initReg != null) {
+//				for(int i = indentLevel+1; i > 0; i--){
+//					StdStreams.vrb.print("  ");
+//				}
+//				StdStreams.vrb.println(initReg.register.getName().toString() + String.format(" = 0x%X", initReg.initValue));
+//				initReg = (RegisterInit)initReg.next;
+//			}
+//			StdStreams.vrb.println("  }");
+//		}
+//		
+//		
+//		for(int i = indentLevel+1; i > 0; i--){
+//			StdStreams.vrb.print("  ");
+//		}
+//		StdStreams.vrb.println("system {");
+//		
+//		Module current = system;
+//		while(current != null){
+//			current.println(indentLevel + 2);
+//			current = (Module)current.next;
+//		}
+//		
+//		for(int i = indentLevel+1; i > 0; i--){
+//			StdStreams.vrb.print("  ");
+//		}
+//		StdStreams.vrb.println("}");
+//		
+//		for(int i = indentLevel+1; i > 0; i--){
+//			StdStreams.vrb.print("  ");
+//		}
+//		StdStreams.vrb.println("modules {");
+//				
+//		current = modules;
+//		while(current != null){
+//			current.println(indentLevel + 2);
+//			current = (Module)current.next;
+//		}
+//		
+//		for(int i = indentLevel+1; i > 0; i--){
+//			StdStreams.vrb.print("  ");
+//		}
+//		StdStreams.vrb.println("}");
+//		
+//		for(int i = indentLevel; i > 0; i--){
+//			StdStreams.vrb.print("  ");
+//		}
+//		StdStreams.vrb.println("}");
+//	}
 }

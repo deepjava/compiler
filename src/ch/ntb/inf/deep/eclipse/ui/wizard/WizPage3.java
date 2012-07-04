@@ -18,37 +18,20 @@
  * 
  */
 
-package ch.ntb.inf.deep.loader;
+package ch.ntb.inf.deep.eclipse.ui.wizard;
 
-/**
- * Download Exception
- */
-public class DownloaderException extends Exception {
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.dialogs.WizardNewProjectCreationPage;
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -7783915136427481365L;
 
-	/**
-	 * Constructor
-	 * 
-	 * @param msg
-	 *            Message
-	 */
-	public DownloaderException(String msg) {
-		super(msg);
+public class WizPage3 extends WizardNewProjectCreationPage {
+
+	protected WizPage3(String pageName) {
+		super(pageName);
+	}
+	
+	public void createControl(Composite parent){
+		super.createControl(parent);
 	}
 
-	/**
-	 * Constructor
-	 * 
-	 * @param msg
-	 *            Message
-	 * @param e
-	 *            Other exception
-	 */
-	public DownloaderException(String msg, Exception e) {
-		super(msg, e);
-	}
 }

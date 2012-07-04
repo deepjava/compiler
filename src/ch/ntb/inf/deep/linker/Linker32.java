@@ -438,10 +438,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void calculateCodeSizeAndOffsets(Class clazz) {
-		if(dbg) vrb.println("[LINKER] START: Calculating code size for class \"" + clazz.name +"\":\n");
+		if(dbg) vrb.println("[LINKER] START: Calculating code size and offsets for class \"" + clazz.name +"\":\n");
 		
 		// machine code size
-		if(dbg) vrb.print("  1) Code:");
+		if(dbg) vrb.println("  1) Code:");
 		Method m = (Method)clazz.methods;
 		int codeSize = 0; // machine code size for the hole class
 		while(m != null) {
@@ -493,7 +493,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		// Find the kernel
 		HString kernelClassName = Configuration.getKernelClassname();
 		if(kernelClassName == null) {
-			kernelClassName = HString.getHString("<undefined>");
+			kernelClassName = HString.getRegisteredHString("<undefined>");
 			reporter.error(740, "kernel class not set");
 		}
 		Item kernelClass = Type.classList.getItemByName(kernelClassName.toString());
@@ -559,16 +559,16 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static void freezeMemoryMap() {
 		if(dbg) vrb.println("[LINKER] START: Freeze memory map:\n");
 		
-		// 1) Set a segment for the code, the static fields and the constant block for each class
+		if(dbg) vrb.println("1) Set a segment for the code, the static fields and the constant block for each class");
 		Item item = Type.classList;
 		Segment s;
 		while(item != null) {
-			// Code
 			if(item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
 				Class c = (Class)item;
-				s = Configuration.getCodeSegmentOf(c.name);
 				if(dbg) vrb.println("  Proceeding Class " + c.name);
 				
+				// Code
+				s = Configuration.getCodeSegmentOf(c.name);
 				if(s == null) reporter.error(710, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
 					int codeSize = ((FixedValueItem)c.codeBase.next).getValue();
@@ -577,7 +577,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					if(codeSize > 0) s.addToUsedSize(roundUpToNextWord(codeSize));
 					c.codeSegment = s;
 					if(dbg) {
-						vrb.println("    Code-Segment: " + c.codeSegment.getName());
+						vrb.println("    Code-Segment: " + c.codeSegment.getFullName());
 						vrb.println("    Code-Offset: " + Integer.toHexString(c.codeOffset));
 					}
 				}
@@ -590,7 +590,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					c.varOffset = s.getUsedSize();
 					if(c.classFieldsSize > 0) s.addToUsedSize(roundUpToNextWord(c.classFieldsSize));
 					c.varSegment = s;
-					if(dbg) vrb.println("    Var-Segment: " + c.varSegment.getName());
+					if(dbg) vrb.println("    Var-Segment: " + c.varSegment.getFullName());
 				}
 				
 				// Const
@@ -602,7 +602,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					c.constOffset = s.getUsedSize();
 					if(constBlockSize > 0) s.addToUsedSize(roundUpToNextWord(constBlockSize));
 					c.constSegment = s;
-					if(dbg) vrb.println("    Const-Segment: " + c.constSegment.getName());
+					if(dbg) vrb.println("    Const-Segment: " + c.constSegment.getFullName());
 				}		
 			}
 			else if(item instanceof Array) {
@@ -656,22 +656,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(dbg) vrb.println("    Segment for compiler specific methods: " + compilerSpecSubroutinesSegment.getName());
 		}
 		
-		// 2) Check and set the size for each used segment
-		Device d = Configuration.getFirstDevice();
-		while(d != null) {
-			if(d.lastSegment != null) setSegmentSize(d.lastSegment);
-			d = d.next;
+		if(dbg) vrb.println("2) Check and set the size for each used segment");
+		Device[] d = Configuration.getBoard().getAllDevices();
+		for(int i = 0; i < d.length; i++) {
+			if(dbg) vrb.println("  Proceeding device " + d[i].getName());
+			if(d[i].segments != null && d[i].segments.getTail() != null) setSegmentSize((Segment)d[i].segments.getTail());
 		}
 		
-		// 3) Set base addresses for each used segment
-		d = Configuration.getFirstDevice();
-		//usedSegments = new Segment[nOfUsedSegments];
-		while(d != null) {
-			if(dbg) vrb.println("Start setting base addresses for segments in device \"" + d.getName() +"\":");
-			//StdStreams.vrb.println("Device: " + d.getName() + "\n");
-			if(d.segments != null) setBaseAddress(d.segments, d.getbaseAddress());
-			if(dbg) vrb.println("End setting base addresses for segments in device \"" + d.getName() +"\":\n");		
-			d = d.next;
+		if(dbg) vrb.println("3) Set base addresses for each used segment");
+		for(int i = 0; i < d.length; i++) {
+			if(dbg) vrb.println("  Proceeding device " + d[i].getName());
+			if(d[i].segments != null) setBaseAddress(d[i].segments, d[i].getbaseAddress());
 		}
 		
 		if(dbg) vrb.println("[LINKER] END: Freeze memory map.");
@@ -863,7 +858,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
-	public static void writeTargetImageToFile(String fileName) throws IOException {
+	public static void writeTargetImageToDtimFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
 		FileOutputStream timFile = new FileOutputStream(fileName); // TODO @Martin: use DataOutputStream!
@@ -884,6 +879,38 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		
 		timFile.close();
+		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+	}
+	
+	public static void writeTargetImageToBinFile(String fileName) throws IOException {
+		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
+		
+		String fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+		String pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+		FileOutputStream binFile = null; // TODO @Martin: use DataOutputStream!
+		
+		TargetMemorySegment tms = targetImage;
+		Device dev = tms.segment.owner;
+		binFile = new FileOutputStream(pathAndFileName + "." +dev.getName() + fileExtension);
+		int count = 0;
+		while(tms != null) {
+			if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4));
+			for(int j = 0; j < tms.data.length; j++) {
+				binFile.write(getBytes(tms.data[j]));
+				count += 4;
+			}
+			while(tms.next != null && tms.startAddress + count < tms.next.startAddress) {
+				binFile.write(0);
+				count++;
+			}
+			if(tms.next != null && tms.next.segment.owner != dev) {
+				binFile.close();
+				dev = tms.next.segment.owner;
+				binFile = new FileOutputStream(pathAndFileName + "." +dev.getName() + fileExtension);
+			}
+			tms = tms.next;
+		}
+		binFile.close();
 		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
 	}
 	
@@ -979,11 +1006,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		//set baseaddress
 		if((s.getSize() > 0 && s.getUsedSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
 			if(s.getBaseAddress() == -1) s.setBaseAddress(baseAddress);
-//			s.tms = new TargetMemorySegment(s.getBaseAddress(), s.getSize());
-			if(dbg) vrb.println("\t Segment "+s.getName() +" address = "+ Integer.toHexString(baseAddress) + ", size = " + s.getSize());
+			if(dbg) vrb.println("    setting base address of segment " + s.getName() +" to "+ Integer.toHexString(baseAddress) + " with the size of " + s.getSize() + " bytes");
 		}
 		// traverse from left to right
-		if(s.next != null) setBaseAddress(s.next, s.getSize()+ baseAddress);
+		if(s.next != null) setBaseAddress((Segment)s.next, s.getSize()+ baseAddress);
 	}
 
 	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute, int requiredSize) {
@@ -993,24 +1019,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				if(t.subSegments != null) t = getFirstFittingSegment(t.subSegments, contentAttribute, requiredSize);
 				if(t.getSize() <= 0 || t.getSize() - t.getUsedSize() > requiredSize) return t;
 			}
-			t = t.next;
+			t = (Segment)t.next;
 		}
 		return null;
 	}
 
 	private static void setSegmentSize(Segment s) {
-		if(s.lastSubSegment != null) {
-			setSegmentSize(s.lastSubSegment);
+		if(s.subSegments != null && s.subSegments.getTail() != null) {
+			setSegmentSize((Segment)s.subSegments.getTail());
 		}
 		if(s.getSize() <= 0) {
+			if(dbg) vrb.println("    setting used size for segment " + s.getName());
 			s.setSize(roundUpToNextWord(s.getUsedSize()));
 		}
 		else if(s.getSize() < s.getUsedSize()) { 
 			reporter.error(711, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getUsedSize() + " byte!\n");
 		}
-//		StdStreams.vrb.println("  Segment " + s.getName() + ": size = " + s.getSize() + "byte!\n");
 		if(s.prev != null) {
-			setSegmentSize(s.prev);
+			setSegmentSize((Segment)s.prev);
 		}
 	}
 		
@@ -1020,7 +1046,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 	private static void addTargetMemorySegment(TargetMemorySegment tms) {
 		if(targetImage == null) {
-			if(dbg) vrb.println("      >>>> Adding target memory segment #" + tms.id);
+			if(dbg) vrb.println("      >>>> Adding first target memory segment (#" + tms.id + ")");
 			targetImage = tms;
 		}
 		else {
@@ -1029,10 +1055,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				while(current.next != null && tms.startAddress > current.next.startAddress) {
 					current = current.next;
 				}
+				if(dbg) vrb.println("      >>>> Inserting target memory segment #" + tms.id + " after target memory segment #" + current.id);
 				tms.next = current.next;
 				current.next = tms;
 			}
 			else {
+				if(dbg) vrb.println("      >>>> Inserting target memory segment #" + tms.id + " before first target memory segment segment");
 				tms.next = current;
 				targetImage = tms;
 			}
@@ -1043,37 +1071,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		// TODO @Martin: Make this configurable...
 		return item instanceof StdConstant && ((item.type == Type.wellKnownTypes[txFloat] || item.type == Type.wellKnownTypes[txDouble]));
 	}
-	
-	private static int getNofInterfacesWithMethods(Class c) {
-		int counter = 0;
-		Class baseClass = (Class)c.type;
-		while(baseClass != null) {
-			counter += getNofInterfacesWithMethods(baseClass);
-			baseClass = (Class)baseClass.type;
-		}
-		if(c.nofInterfaces > 0) {
-			for(int i = 0; i < c.interfaces.length; i++) {
-				if(c.interfaces[i].nofMethods > 0) counter++;
-			}
-		}
-		return counter;
-	}
-	
-//	private static void extendInterfaceTable(Class c, BlockItem it) {
-//		Class baseClass = (Class)c.type;
-//		while(baseClass != null) {
-//			extendInterfaceTable(baseClass, it);
-//			baseClass = (Class)baseClass.type;
-//		}
-//				
-//		if(c.interfaces != null && c.interfaces.length > 0) {			
-//			if(dbg) vrb.println("    - Inserting interfaces:");
-//			for(int i = 0; i < c.interfaces.length; i++) {
-//				if(dbg) vrb.println("      > " + c.interfaces[i].name);
-//				it.getHead().insertBefore(new InterfaceItem(c.interfaces[i].name, c.interfaces[i], -1)); 
-//			}
-//		}
-//	}
 	
 	/* ---------- debug primitives ---------- */
 	

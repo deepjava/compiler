@@ -32,8 +32,8 @@ public class SegmentAssignment {
 		this.contentAttribute = contentAttribute;
 	}
 	
-	public void setSegmentDesignator(HString designator){
-		segmentDesignator = designator;
+	public void setSegmentDesignator(String designator){
+		segmentDesignator = HString.getRegisteredHString(designator);
 	}
 	
 	public void print(int indentLevel){

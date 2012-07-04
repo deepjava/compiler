@@ -44,9 +44,9 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.eclipse.ui.model.MemorySegment;
-import ch.ntb.inf.deep.loader.Downloader;
-import ch.ntb.inf.deep.loader.DownloaderException;
-import ch.ntb.inf.deep.loader.UsbMpc555Loader;
+import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class MemoryView extends ViewPart implements Listener {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.MemoryView";
@@ -238,7 +238,7 @@ public class MemoryView extends ViewPart implements Listener {
 			}else{
 				size = Integer.decode(count.getText());
 			}
-			Downloader bdi = UsbMpc555Loader.getInstance();
+			TargetConnection bdi = Launcher.getTargetConnection();
 			if (bdi == null) {
 				viewer.setInput(new String[]{"target not connected"});
 				viewer.refresh();
@@ -247,7 +247,7 @@ public class MemoryView extends ViewPart implements Listener {
 			if(!bdi.isConnected()){//reopen
 				try {
 					bdi.openConnection();
-				} catch (DownloaderException e) {
+				} catch (TargetConnectionException e) {
 					viewer.setInput(new String[]{"target not initialized"});
 					viewer.refresh();
 					return;
@@ -256,18 +256,17 @@ public class MemoryView extends ViewPart implements Listener {
 			if (size > 0) {
 				MemorySegment[] segs = new MemorySegment[size];
 				try {
-					boolean wasFreezeAsserted = bdi.isFreezeAsserted();
+					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if (!wasFreezeAsserted) {
 						bdi.stopTarget();
 					}
 					for (int i = 0; i < size; i++) {
-						segs[i] = new MemorySegment(startAddr + i * 4, bdi
-								.getMem(startAddr + i * 4, 4));
+						segs[i] = new MemorySegment(startAddr + i * 4, bdi.readWord(startAddr + i * 4));
 					}
 					if (!wasFreezeAsserted) {
 						bdi.startTarget();
 					}
-				} catch (DownloaderException e1) {
+				} catch (TargetConnectionException e1) {
 					viewer.setInput(new String[]{"target not initialized"});
 					viewer.refresh();
 					return;
@@ -343,23 +342,23 @@ public class MemoryView extends ViewPart implements Listener {
 			if ("Value".equals(property)){
 				try{
 					p.value =Integer.decode((String) value);
-					Downloader bdi = UsbMpc555Loader.getInstance();
+					TargetConnection bdi = Launcher.getTargetConnection();
 					if(bdi == null){
 						viewer.setInput(new String[]{"target not connected"});
 						viewer.refresh();
 						return;
 					}
 					
-					boolean wasFreezeAsserted = bdi.isFreezeAsserted();
+					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
 					}
-					bdi.setMem(p.addr, p.value, slotSize);
+					bdi.writeWord(p.addr, p.value);
 					if(!wasFreezeAsserted){
 						bdi.startTarget();
 					}
 				}catch (NumberFormatException e) {
-				}catch (DownloaderException e1){
+				}catch (TargetConnectionException e1){
 					viewer.setInput(new String[]{"target not initialized"});
 					viewer.refresh();
 					return;
