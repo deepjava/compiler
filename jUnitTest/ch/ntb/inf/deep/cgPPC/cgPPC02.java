@@ -1,30 +1,23 @@
 package ch.ntb.inf.deep.cgPPC;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
-
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
-
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.strings.HString;
 
 public class cgPPC02 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir")+ "/bin";
-		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T02Branches" };
-		Configuration.parseAndCreateConfig(config[0], config[1]);
+		Configuration.setActiveProject(project);
+		project.setActiveTargetConfiguration("BootFromRam");
+		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/testClasses/T02Branches") };
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},Configuration.getSystemPrimitives(), (1 << atxCode)
-					| (1 << atxLocalVariableTable)
-					| (1 << atxLineNumberTable)
-					| (1 << atxExceptions));
+			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

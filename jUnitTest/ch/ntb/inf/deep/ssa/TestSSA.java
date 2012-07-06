@@ -4,10 +4,14 @@ import static org.junit.Assert.assertEquals;
 import ch.ntb.inf.deep.cfg.TestCFG;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.strings.HString;
 
 public class TestSSA implements ICclassFileConsts{
-	static String[] config = new String[] {System.getProperty("user.dir") + "/junitTest.deep","BootFromRam"};
+	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
+	static String workspace = System.getProperty("user.dir");
+	static Project project = Configuration.addProject(workspace + "/junitTest.deep");
 
 	static public SSA[] ssa;
 

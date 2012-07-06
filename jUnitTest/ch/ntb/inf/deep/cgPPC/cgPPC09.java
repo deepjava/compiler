@@ -11,19 +11,17 @@ import org.junit.Test;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.strings.HString;
 
 public class cgPPC09 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
-		String workspace =System.getProperty("user.dir")+ "/bin";
-		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T09Types" };
-		Configuration.parseAndCreateConfig(config[0], config[1]);
+		Configuration.setActiveProject(project);
+		project.setActiveTargetConfiguration("BootFromRam");
+		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/testClasses/T09Types") };
 		try {
-			Class.buildSystem(rootClassNames,new String[]{workspace, "../bsp/bin"},Configuration.getSystemPrimitives(), (1 << atxCode)
-					| (1 << atxLocalVariableTable)
-					| (1 << atxLineNumberTable)
-					| (1 << atxExceptions));
+			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -33,7 +31,6 @@ public class cgPPC09 extends TestCgPPC {
 		}
 	}
 
-//	@Ignore
 	@Test
 	public void m1() {
 		CodeGen code = getCode("m1");
@@ -42,7 +39,6 @@ public class cgPPC09 extends TestCgPPC {
 			assertNull("wrong join", getJoin(i));
 	}
 	
-//	@Ignore
 	@Test
 	public void m2() {
 		CodeGen code = getCode("m2");
@@ -50,7 +46,6 @@ public class cgPPC09 extends TestCgPPC {
 			assertNull("wrong join", getJoin(i));
 	}
 	
-//	@Ignore
 	@Test
 	public void callm2() {
 		CodeGen code = getCode("callm2");
@@ -58,7 +53,6 @@ public class cgPPC09 extends TestCgPPC {
 			assertNull("wrong join", getJoin(i));
 	}
 	
-//	@Ignore
 	@Test
 	public void m3() {
 		CodeGen code = getCode("m3");

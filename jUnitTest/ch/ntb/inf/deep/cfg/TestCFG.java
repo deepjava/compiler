@@ -3,22 +3,17 @@ package ch.ntb.inf.deep.cfg;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Vector;
-
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
-import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.strings.HString;
 
-public class TestCFG {
-	static String[] config = new String[] {System.getProperty("user.dir") + "/junitTest.deep","BootFromRam"};
-
-	/**
-	 * Class file reader
-	 */
-	//static public IClassFileReader cfr;
+public class TestCFG implements ICclassFileConsts {
+	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
+	static String workspace = System.getProperty("user.dir");
+	static Project project = Configuration.addProject(workspace + "/junitTest.deep");
 
     /**
 	 * Array of CFGs of all methods
@@ -33,8 +28,6 @@ public class TestCFG {
 	 *            Java class object
 	 */
 	static public void createCFG(Class clazz) {
-		//cfr = ToolFactory.createDefaultClassFileReader(Helpers.getFilenameFromClass(clazz), IClassFileReader.ALL);		
-		//IMethodInfo[] mi = cfr.getMethodInfos();
 		
 		// create CFG
 		Method m1,m2;

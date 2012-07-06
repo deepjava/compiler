@@ -5,6 +5,7 @@ import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.SSA;
@@ -20,7 +21,9 @@ public class TestCgPPC implements ICclassFileConsts {
 	
 	static SSA[] ssa;
 	static CodeGen[] code;
-	static String[] config = new String[] {System.getProperty("user.dir") + "/junitTest.deep","BootFromRam"};
+	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
+	static String workspace = System.getProperty("user.dir");
+	static Project project = Configuration.addProject(workspace + "/junitTest.deep");
 
 	public static void createCgPPC(Class clazz) {
 		TestCFG.createCFG(clazz);

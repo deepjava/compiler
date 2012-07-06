@@ -1,25 +1,26 @@
 package ch.ntb.inf.deep.ssa;
 
 import java.io.IOException;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.strings.HString;
 
 public class SSA04 extends TestSSA {
 
 	@BeforeClass
 	public static void setUp() {
-		String[] rootClassNames = new String[] { "ch/ntb/inf/deep/testClasses/T04Loops" };
-		Configuration.parseAndCreateConfig(config[0], config[1]);
+		Configuration.setActiveProject(project);
+		project.setActiveTargetConfiguration("BootFromRam");
+		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/testClasses/T04Loops") };
 		try {
-			Class.buildSystem(rootClassNames,Configuration.getSearchPaths(),Configuration.getSystemPrimitives(), (1<<atxCode)|(1<<atxLocalVariableTable)|(1<<atxLineNumberTable)|(1<<atxExceptions));} catch (IOException e) {
+			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
+ 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if (Class.nofRootClasses > 0) {
+		if(Class.nofRootClasses > 0){
 			createSSA(Class.rootClasses[0]);
 		}
 	}
@@ -110,7 +111,7 @@ public class SSA04 extends TestSSA {
 	
 	@Test
 	public void testForIfWhile(){
-		SSANode[] nodes =getAndTestSSA("forIfWhile", 8, 2);
+		SSANode[] nodes = getAndTestSSA("forIfWhile", 8, 2);
 		testNode(nodes[0], 3, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 1, 0, 4);
@@ -123,7 +124,7 @@ public class SSA04 extends TestSSA {
 	
 	@Test
 	public void whileTrue2() {
-		SSANode[] nodes =getAndTestSSA("whileTrue2", 4, 2);
+		SSANode[] nodes = getAndTestSSA("whileTrue2", 4, 2);
 		testNode(nodes[0], 5, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 2, 1, 4);
@@ -133,7 +134,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void forIfFor() {
-		SSANode[] nodes =getAndTestSSA("forIfFor", 16, 4);
+		SSANode[] nodes = getAndTestSSA("forIfFor", 16, 4);
 		testNode(nodes[0], 4, 0, 7);
 		testNode(nodes[1], 4, 0, 7);
 		testNode(nodes[2], 4, 0, 7);
@@ -155,7 +156,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest1() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest1", 2, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest1", 2, 1);
 		testNode(nodes[0], 4, 0, 4);
 		testNode(nodes[1], 1, 0, 4);
 	}
@@ -163,7 +164,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest2() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest2", 3, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest2", 3, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 4, 0, 4);
 		testNode(nodes[2], 1, 0, 4);
@@ -172,7 +173,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest3() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest3", 3, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest3", 3, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 5, 1, 4);
 		testNode(nodes[2], 1, 0, 4);
@@ -181,7 +182,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest4() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest4", 3, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest4", 3, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 3, 0, 4);
 		testNode(nodes[2], 1, 0, 4);
@@ -190,7 +191,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest5() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest5", 3, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest5", 3, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 4, 1, 4);
 		testNode(nodes[2], 1, 0, 4);
@@ -199,7 +200,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest6() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest6", 7, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest6", 7, 2);
 		testNode(nodes[0], 2, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 2, 1, 4);
@@ -212,7 +213,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest7() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest7", 7, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest7", 7, 2);
 		testNode(nodes[0], 3, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 2, 1, 4);
@@ -225,7 +226,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest8() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest8", 7, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest8", 7, 2);
 		testNode(nodes[0], 3, 0, 5);
 		testNode(nodes[1], 2, 0, 5);
 		testNode(nodes[2], 2, 1, 5);
@@ -238,7 +239,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest9() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest9", 7, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest9", 7, 2);
 		testNode(nodes[0], 3, 0, 6);
 		testNode(nodes[1], 2, 0, 6);
 		testNode(nodes[2], 3, 1, 6);
@@ -252,7 +253,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest10() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest10", 7, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest10", 7, 2);
 		testNode(nodes[0], 3, 0, 5);
 		testNode(nodes[1], 2, 0, 5);
 		testNode(nodes[2], 2, 1, 5);
@@ -265,7 +266,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest11() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest11", 2, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest11", 2, 1);
 		testNode(nodes[0], 6, 0, 4);
 		testNode(nodes[1], 1, 0, 4);
 	}
@@ -273,7 +274,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest12() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest12", 3, 1);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest12", 3, 1);
 		testNode(nodes[0], 2, 0, 4);
 		testNode(nodes[1], 2, 1, 4);
 		testNode(nodes[2], 1, 0, 4);
@@ -282,7 +283,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest13() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest13", 10, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest13", 10, 2);
 		testNode(nodes[0], 2, 0, 4);
 		testNode(nodes[1], 2, 0, 4);
 		testNode(nodes[2], 2, 0, 4);
@@ -298,7 +299,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest14() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest14", 8, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest14", 8, 2);
 		testNode(nodes[0], 3, 0, 8);
 		testNode(nodes[1], 4, 1, 8);
 		testNode(nodes[2], 3, 0, 8);
@@ -312,7 +313,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest15() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest15", 6, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest15", 6, 2);
 		testNode(nodes[0], 2, 0, 8);
 		testNode(nodes[1], 4, 1, 8);
 		testNode(nodes[2], 2, 0, 8);
@@ -324,7 +325,7 @@ public class SSA04 extends TestSSA {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest16() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest16", 9, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest16", 9, 2);
 		testNode(nodes[0], 3, 0, 6);
 		testNode(nodes[1], 2, 0, 6);
 		testNode(nodes[2], 2, 1, 6);
@@ -338,11 +339,11 @@ public class SSA04 extends TestSSA {
 	
 	@Test 
 	public void phiFunctionTest17() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest17", 13, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest17", 13, 2);
 	}
 	
 	@Test 
 	public void phiFunctionTest18() {
-		SSANode[] nodes =getAndTestSSA("phiFunctionTest18", 11, 2);
+		SSANode[] nodes = getAndTestSSA("phiFunctionTest18", 11, 2);
 	}
 }
