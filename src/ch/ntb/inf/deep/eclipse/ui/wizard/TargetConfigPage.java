@@ -24,9 +24,7 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -36,19 +34,22 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 import ch.ntb.inf.deep.config.Board;
-import ch.ntb.inf.deep.config.Library;
+import ch.ntb.inf.deep.config.OperatingSystem;
+import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 
-class WizPage2 extends WizardPage {
-	
-	private Combo boardCombo, rtsCombo;
+class TargetConfigPage extends WizardPage {
+		
+	private Composite composite;
+	private Combo boardCombo, rtsCombo, programmerCombo;
 	private Button check;
 	private Text path;
 	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
 	private String lastChoise = "";
-	private Library lib;
 	private Board[] boards;
+	private OperatingSystem[] operatingsystems;
+	private Programmer[] programmers;
 	
 	private SelectionAdapter selectionListener = new SelectionAdapter() {
 		public void widgetSelected(SelectionEvent e){
@@ -65,59 +66,73 @@ class WizPage2 extends WizardPage {
 		}
 	};
 
-	protected WizPage2(String pageName, Library lib) {
+	protected TargetConfigPage(String pageName) {
 		super(pageName);
-		this.lib = lib;
 		setPageComplete(true);
 	}
 
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-	 */
 	@Override
 	public void createControl(Composite parent) {		
-		Composite composite = new Composite(parent, SWT.NONE);
-		GridLayout gridLayout = new GridLayout(2, true);
-		composite.setLayout(gridLayout);
-
+		composite = new Composite(parent, SWT.NONE);
+		FillLayout layout = new FillLayout(SWT.VERTICAL);
+		composite.setLayout(layout);
 		Group groupBoard = new Group(composite, SWT.NONE);
 		groupBoard.setText("Board configuration");
-		RowLayout rowLayout3 = new RowLayout(SWT.VERTICAL);
-		groupBoard.setLayout(rowLayout3);
-		Label label1 = new Label(groupBoard, SWT.NONE);
-		label1.setText("Select a board");
-		boardCombo = new Combo(groupBoard, SWT.BORDER);
-//		board.setItems(new String[]{"NTB MPC555 Headerboard", "Phytec phyCORE-MPC555", "Phytec phyCORE-MPC5200/tiny", "Phytec phyCORE-MPC5200/IO"});
-//		board.setItems(boardDescs);
-//		board.select(0);
+		FillLayout groupLayout1 = new FillLayout(SWT.VERTICAL);
+		groupBoard.setLayout(groupLayout1);
+		Label boardLabel = new Label(groupBoard, SWT.NONE);
+		boardLabel.setText("Select a board");
+		boardCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		boardCombo.addSelectionListener(selectionListener);
+		Label labelProgrammer = new Label(groupBoard, SWT.NONE);
+		labelProgrammer.setText("Select a programmer");
+		programmerCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+		programmerCombo.addSelectionListener(selectionListener);		
 		Group groupOS = new Group(composite, SWT.NONE);
 		groupOS.setText("Runtime system");
-		GridLayout gridLayout2 = new GridLayout(2, false);
-		groupOS.setLayout(gridLayout2);
-		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
-		gridData.horizontalSpan = 2;
-		groupOS.setLayoutData(gridData);
-		Label label2 = new Label(groupOS,SWT.NONE);
-		label2.setText("Select a operating system");
-		label2.setLayoutData(gridData);
-		rtsCombo = new Combo(groupOS, SWT.BORDER);
-		rtsCombo.setItems(new String[]{"NTB Simple tasking system", "Java uCos"});
-		rtsCombo.select(0);
+		FillLayout groupLayout2 = new FillLayout(SWT.VERTICAL);
+		groupOS.setLayout(groupLayout2);
+		Label osLabel = new Label(groupOS,SWT.NONE);
+		osLabel.setText("Select a operating system");
+		rtsCombo = new Combo(groupOS, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		rtsCombo.addSelectionListener(selectionListener);
-		rtsCombo.setLayoutData(gridData);
 		setControl(composite);
 	}
-	
-	public void insertBoards() {
-		this.boards = lib.getBoards();
-		String[] boardDescs = new String[boards.length];
-		for(int i = 0; i < boardDescs.length; i++) {
-			boardDescs[i] = boards[i].getDescription().toString();
+		
+	private void insertBoards() {
+		if(((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
+			this.boards = ((DeepProjectWizard)getWizard()).model.getLibrary().getBoards();
+			String[] boardDescs = new String[boards.length];
+			for(int i = 0; i < boardDescs.length; i++) {
+				boardDescs[i] = boards[i].getDescription().toString();
+			}
+			boardCombo.setItems(boardDescs);
+			boardCombo.select(0);
 		}
-		boardCombo.setItems(boardDescs);
-		boardCombo.select(0);
+	}
+	
+	private void insertOperatingSystems() {
+		if(((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
+			this.operatingsystems = ((DeepProjectWizard)getWizard()).model.getLibrary().getOperatingSystems();
+			String[] osDescs = new String[operatingsystems.length];
+			for(int i = 0; i < osDescs.length; i++) {
+				osDescs[i] = operatingsystems[i].getDescription().toString();
+			}
+			rtsCombo.setItems(osDescs);
+			rtsCombo.select(0);
+		}
+	}
+	
+	private void insertProgrammers() {
+		if(((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
+			this.programmers = ((DeepProjectWizard)getWizard()).model.getLibrary().getProgrammers();
+			String[] progDescs = new String[programmers.length];
+			for(int i = 0; i < progDescs.length; i++) {
+				progDescs[i] = programmers[i].getDescription().toString();
+			}
+			programmerCombo.setItems(progDescs);
+			programmerCombo.select(0);
+		}
 	}
 	
 	public String getBoardValue(){
@@ -156,10 +171,22 @@ class WizPage2 extends WizardPage {
 	}
 	
 	private boolean ValidatePage() {
-		if(boardCombo.getSelectionIndex() == -1 || rtsCombo.getSelectionIndex() == -1){
+		if(boardCombo.getSelectionIndex() == -1 || rtsCombo.getSelectionIndex() == -1 || programmerCombo.getSelectionIndex() == -1){
 			return false;
 		}
+		((DeepProjectWizard)getWizard()).model.setBoard(boards[boardCombo.getSelectionIndex()]);
+		((DeepProjectWizard)getWizard()).model.setOs(operatingsystems[rtsCombo.getSelectionIndex()]);
+		((DeepProjectWizard)getWizard()).model.setProgrammer(programmers[programmerCombo.getSelectionIndex()]);
 		return true;
 	}
-
+	
+	@Override
+	public void setVisible(boolean visible) {
+		if(visible) {
+			insertBoards();
+			insertOperatingSystems();
+			insertProgrammers();
+		}
+        getControl().setVisible(visible);
+    }
 }

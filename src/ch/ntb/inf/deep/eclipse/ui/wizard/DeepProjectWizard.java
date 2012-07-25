@@ -53,24 +53,17 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.osgi.service.prefs.BackingStoreException;
 
-import ch.ntb.inf.deep.config.Library;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
 
-public class StartWizard extends Wizard implements INewWizard{
-	private WizPage1 wizPage1;
-	private WizPage2 wizPage2;
-	private WizPage3 wizPage3;
+public class DeepProjectWizard extends Wizard implements INewWizard{
+	private LibPathPage libPathPage;
+	private TargetConfigPage targetConfigPage;
+	private ProjectConfigPage projectConfigPage;
 
 	private IProject project;
-	
-	private Library lib = null;
+	protected DeepProjectModel model = new DeepProjectModel();
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
-	 */
 	@Override
 	public boolean performFinish() {
 		try {
@@ -92,33 +85,27 @@ public class StartWizard extends Wizard implements INewWizard{
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
-	 * org.eclipse.jface.viewers.IStructuredSelection)
-	 */
 	@Override
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		setWindowTitle("NTB Project Wizard");
 		setDefaultPageImageDescriptor(getImageDescriptor("deep.gif"));
 		setNeedsProgressMonitor(true);
-
 	}
 
+	@Override
 	public void addPages() {
-		wizPage1 = new WizPage1("First Page", lib, wizPage2);
-		wizPage1.setTitle("Target Library");
-		wizPage1.setDescription("Please choose the target library to use for this project");
-		addPage(wizPage1);
-		wizPage2 = new WizPage2("Second Page", lib);
-		wizPage2.setTitle("Target configuration");
-		wizPage2.setDescription("Please choose the board and operating system for this project");
-		addPage(wizPage2);
-		wizPage3 = new WizPage3("Third Page");
-		wizPage3.setTitle("Projectname");
-		wizPage3.setDescription("Please define your projectname");
-		addPage(wizPage3);
+		libPathPage = new LibPathPage("First Page");
+		libPathPage.setTitle("Target Library");
+		libPathPage.setDescription("Please choose the target library to use for this project");
+		addPage(libPathPage);
+		targetConfigPage = new TargetConfigPage("Second Page");
+		targetConfigPage.setTitle("Target configuration");
+		targetConfigPage.setDescription("Please choose the board and operating system for this project");
+		addPage(targetConfigPage);
+		projectConfigPage = new ProjectConfigPage("Third Page");
+		projectConfigPage.setTitle("Projectname");
+		projectConfigPage.setDescription("Please define your projectname");
+		addPage(projectConfigPage);
 	}
 
 	private ImageDescriptor getImageDescriptor(String relativePath) {
@@ -136,22 +123,17 @@ public class StartWizard extends Wizard implements INewWizard{
 		}
 	}
 
-	private InputStream getFileContent() {
-		String libpath;
-		if(wizPage1.useDefaultLibPath()){
-			libpath = wizPage1.getDefaultLibPath();		
-		}else{
-			libpath = wizPage1.getChosenLibPath();
-		}
-		
+	private InputStream getClassPathFileContent() {
+		String libpath = model.getLibrary().getPathAsString();
 		StringBuffer sb = new StringBuffer();
 		File srcFolder = new File(libpath + "/src");
 		sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
 		sb.append("<classpath>\n");
 		sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
-		if(srcFolder.exists()){			
+		if(srcFolder.exists()) {			
 			sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\" sourcepath=\"" + libpath + "/src\"/>\n");
-		}else{			
+		}
+		else {			
 			sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
 		}
 		sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
@@ -163,7 +145,7 @@ public class StartWizard extends Wizard implements INewWizard{
 	private void createClassPath(IProject project) {
 		IFile file = project.getFile(".classpath");
 		try {
-			file.create(getFileContent(), true, null);
+			file.create(getClassPathFileContent(), true, null);
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
@@ -184,17 +166,17 @@ public class StartWizard extends Wizard implements INewWizard{
 		sb.append("#deep-1\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
 		sb.append("\tdescription = \"deep project file for " + project.getName() + "\";\n");
 		sb.append("}\n\n");
-		
 		sb.append("project " + project.getName() + "{\n\tlibpath = ");
-		if(wizPage1.useDefaultLibPath()){
-			sb.append("\"" + wizPage1.getDefaultLibPath() + "\";\n");		
-		}else{
-			sb.append("\"" + wizPage1.getChosenLibPath() + "\";\n");
-		}
-		
-		sb.append("\tboardtype = \"\";\n");
-		sb.append("\tostype = \"\";\n");
-		sb.append("\tprogrammertype = \"\";\n");
+		sb.append("\"" + model.getLibrary().getPathAsString() + "\";\n");
+		sb.append("\tboardtype = ");
+		if(model != null && model.getBoard() != null) sb.append(model.getBoard().getName().toString());
+		sb.append(";\n");
+		sb.append("\tostype = ");
+		if(model != null && model.getOs() != null) sb.append(model.getOs().getName().toString());
+		sb.append(";\n");
+		sb.append("\tprogrammertype = ");
+		if(model != null && model.getProgrammer() != null) sb.append(model.getProgrammer().getName().toString());
+		sb.append(";\n");
 		sb.append("\trootclasses = \"\";\n}\n");
 		
 		return new ByteArrayInputStream(sb.toString().getBytes());
@@ -214,12 +196,13 @@ public class StartWizard extends Wizard implements INewWizard{
 	private void createProject(IProgressMonitor monitor) {
 		monitor.beginTask("Creating project", 20);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		project = wizPage3.getProjectHandle();
+		project = projectConfigPage.getProjectHandle();
 		IProjectDescription description = workspace.newProjectDescription(project.getName());
 		
-		if (!Platform.getLocation().equals(wizPage3.getLocationPath())) {
-			description.setLocation(wizPage3.getLocationPath());
+		if (!Platform.getLocation().equals(projectConfigPage.getLocationPath())) {
+			description.setLocation(projectConfigPage.getLocationPath());
 		}					
+		
 		
 		try {
 			project.create(description, monitor);
@@ -247,28 +230,16 @@ public class StartWizard extends Wizard implements INewWizard{
 	private void save(){
 		ProjectScope scope = new ProjectScope(project);
 		IEclipsePreferences pref = scope.getNode("deepStart");//TODO implement check if this node exists...
-//		pref.put("board", wizPage2.getBoardValue());
-//		pref.put("rts", wizPage2.getRunTimeSystemValue());
-		if(wizPage1.useDefaultLibPath()){
-			pref.putBoolean("useDefault", true);
-			pref.put("libPath", wizPage1.getDefaultLibPath());
-		}else{
-			pref.putBoolean("useDefault", false);
-			pref.put("libPath", wizPage1.getChosenLibPath());			
-		}
+		pref.put("board", model.getBoard().getName().toString());
+		pref.put("rts", model.getOs().getName().toString());
+		pref.put("libPath", model.getLibrary().getPathAsString());
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
-		
 	}
-	/**
-	 * Displays an error that occured during the project creation.
-	 * 
-	 * @param x
-	 *            details on the error
-	 */
+	
 	private void reportError(Exception x) {
 		ErrorDialog.openError(getShell(), "Error", "Project creation error", makeStatus(x));
 	}
@@ -281,5 +252,4 @@ public class StartWizard extends Wizard implements INewWizard{
 			return new Status(IStatus.ERROR, "ch.ntb.inf.deep", IStatus.ERROR, x.getMessage() != null ? x.getMessage() : x.toString(), x);
 		}
 	}
-	
 }

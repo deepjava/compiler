@@ -23,10 +23,9 @@ package ch.ntb.inf.deep.eclipse.ui.wizard;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.dialogs.WizardNewProjectCreationPage;
 
+public class ProjectConfigPage extends WizardNewProjectCreationPage {
 
-public class WizPage3 extends WizardNewProjectCreationPage {
-
-	protected WizPage3(String pageName) {
+	protected ProjectConfigPage(String pageName) {
 		super(pageName);
 	}
 	

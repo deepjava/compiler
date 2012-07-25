@@ -20,6 +20,7 @@
 
 package ch.ntb.inf.deep.eclipse.ui.wizard;
 
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -35,37 +36,34 @@ import org.eclipse.swt.widgets.Text;
 
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Library;
-import ch.ntb.inf.deep.eclipse.DeepPlugin;
-import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 
-class WizPage1 extends WizardPage {
-	
+class LibPathPage extends WizardPage {
+		
 	private Button check, browse;
+	private Label libState;
 	private Text path;
-	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-	private String lastChoise = "";
-	private Library lib;
-	private WizPage2 wp2;
+	//private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
+	private final String defaultPath = "D:\\work\\Project_deep\\trunk\\RuntimeSystem";
+	private String lastChoise = defaultPath;
 	
 	private SelectionAdapter selectionListener = new SelectionAdapter() {
-		public void widgetSelected(SelectionEvent e){
-			if (e.widget.equals(check)){
-				if(check.getSelection()){
+		public void widgetSelected(SelectionEvent e) {
+			if(e.widget.equals(check)) {
+				if(check.getSelection()) {
 					path.setEnabled(false);
 					path.setText(defaultPath);
-				}else{
+				}
+				else {
 					path.setEnabled(true);
 					path.setText(lastChoise);
 				}
 			}
-			setPageComplete((ValidatePage()));
+			setPageComplete(validatePage());
 		}
 	};
 
-	protected WizPage1(String pageName, Library lib, WizPage2 wp2) {
+	protected LibPathPage(String pageName) {
 		super(pageName);
-		this.lib = lib;
-		setPageComplete(true);
 	}
 
 	/* (non-Javadoc)
@@ -76,7 +74,6 @@ class WizPage1 extends WizardPage {
 		Composite composite = new Composite(parent, SWT.NONE);
 		GridLayout gridLayout = new GridLayout(2, false);
 		composite.setLayout(gridLayout);	
-		
 		Group group = new Group(composite, SWT.NONE);
 		group.setText("Target Library");
 		GridLayout gridLayout2 = new GridLayout(2, false);
@@ -105,24 +102,18 @@ class WizPage1 extends WizardPage {
 		browse.setText("Browse...");
 		browse.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e){
-			if(!check.getSelection()){	
-				openDirectoryDialog();
+				if(!check.getSelection()){	
+					openDirectoryDialog();
+				}
 			}
-		}});
-	
+		});
+		libState = new Label(group,SWT.NONE);
+		libState.setLayoutData(gridData);
 		setControl(composite);
-
+		setPageComplete(validatePage());
 	}
-	
-	public boolean useDefaultLibPath(){
-		return check.getSelection();
-	}
-	
-	public String getDefaultLibPath(){
-		return defaultPath;
-	}
-	
-	public String getChosenLibPath(){
+		
+	private String getChosenLibPath(){
 		return path.getText();
 	}
 	
@@ -150,17 +141,30 @@ class WizPage1 extends WizardPage {
           // Set the text box to the new selection
         	path.setText(dir);
         	lastChoise = dir;
+        	setPageComplete(validatePage());
         }
-
 	}
 	
-	private boolean ValidatePage() {
-		this.lib = Configuration.addLibrary(getChosenLibPath()); 
-		if(this.lib != null){
-			wp2.insertBoards();
+	private boolean validatePage() {
+		Library lib = Configuration.addLibrary(getChosenLibPath());
+		if(lib != null && lib.getNofBoards() > 0 && lib.getNofOperatingSystems() > 0){
+			((DeepProjectWizard)getWizard()).model.setLibrary(lib);
+			libState.setText("Given library path is valid.");
 			return true;
+		}
+		else {
+			libState.setText("Given library path is NOT valid target library.");
 		}
 		return false;
 	}
 
+	public IWizardPage getNextPage() {
+        if(getWizard() == null) {
+			return null;
+		}
+        TargetConfigPage nextPage = (TargetConfigPage)getWizard().getNextPage(this);
+        //nextPage.onEnterPage();
+        return nextPage;
+    }
+	
 }
