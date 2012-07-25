@@ -89,9 +89,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
 			Launcher.openTargetConnection();
 			Launcher.downloadTargetImage();
-			//Launcher.startTarget();
-			Linker32.printSystemTable(); // TODO remove this!
-			Linker32.printTargetImage();
+			Launcher.startTarget();
 		}
 		monitor.worked(100);
 		monitor.done();

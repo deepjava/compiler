@@ -36,14 +36,15 @@ import org.eclipse.swt.widgets.Text;
 
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Library;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 
 class LibPathPage extends WizardPage {
 		
 	private Button check, browse;
 	private Label libState;
 	private Text path;
-	//private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-	private final String defaultPath = "D:\\work\\Project_deep\\trunk\\RuntimeSystem";
+	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
 	private String lastChoise = defaultPath;
 	
 	private SelectionAdapter selectionListener = new SelectionAdapter() {

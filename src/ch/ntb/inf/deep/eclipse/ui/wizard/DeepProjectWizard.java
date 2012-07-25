@@ -166,7 +166,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 		sb.append("#deep-1\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
 		sb.append("\tdescription = \"deep project file for " + project.getName() + "\";\n");
 		sb.append("}\n\n");
-		sb.append("project " + project.getName() + "{\n\tlibpath = ");
+		sb.append("project " + project.getName() + " {\n\tlibpath = ");
 		sb.append("\"" + model.getLibrary().getPathAsString() + "\";\n");
 		sb.append("\tboardtype = ");
 		if(model != null && model.getBoard() != null) sb.append(model.getBoard().getName().toString());

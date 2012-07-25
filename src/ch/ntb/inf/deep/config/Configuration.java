@@ -83,8 +83,12 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 				readConfigFiles = true;
 			}
 			else {
-				if(dbg) vrb.println(" -> found -> updating");
-				lib = new Library(path); // TODO improve this!
+				if(dbg) vrb.println(" -> found -> updating"); // TODO improve this!
+				ConfigElement prev = lib.prev;
+				ConfigElement next = lib.prev;
+				lib = new Library(path);
+				lib.prev = prev;
+				lib.next = next;
 				readConfigFiles = true;
 			}
 		}
@@ -362,31 +366,33 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 
 	public static HString getKernelClassname() {
-		return activeProject.getOperatingSystem().getKernel().name;
+		if(activeProject != null) return activeProject.getOperatingSystem().getKernel().name;
+		return null;
 	}
 
 	public static Board getBoard() {
-		return activeProject.getBoard();
+		if(activeProject != null) return activeProject.getBoard();
+		return null;
 	}
 	
 	public static CPU getCpu() {
-		return activeProject.getBoard().getCPU();
+		if(activeProject != null) return activeProject.getBoard().getCPU();
+		return null;
 	}
 	
 	public static Programmer getProgrammer() {
-		return activeProject.getProgrammer();
+		if(activeProject != null) return activeProject.getProgrammer();
+		return null;
 	}
 	
 	public static HString getExceptionClassname() {
-		return activeProject.getOperatingSystem().getExceptionBaseClass().name;
-	}
-
-	public static void setOperatingSystem(OperatingSystem os) {
-		activeProject.setOperatingSystem(os);
+		if(activeProject != null) return activeProject.getOperatingSystem().getExceptionBaseClass().name;
+		return null;
 	}
 
 	public static OperatingSystem getOperatingSystem() {
-		return activeProject.getOperatingSystem();
+		if(activeProject != null) return activeProject.getOperatingSystem();
+		return null;
 	}
 
 	public static TargetConfiguration getActiveTargetConfiguration() {
@@ -402,11 +408,13 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 	
 	public static Segment[] getHeapSegments() {
-		return activeProject.getHeapSegments();
+		if(activeProject != null) return activeProject.getHeapSegments();
+		return null;
 	}
 
 	public static Segment[] getStackSegments() {
-		return activeProject.getStackSegments();
+		if(activeProject != null) return activeProject.getStackSegments();
+		return null;
 	}
 
 	public static Segment[] getSysTabSegments() {

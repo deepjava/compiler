@@ -203,8 +203,44 @@ public class Library extends ConfigElement implements ErrorCodes {
 		int count = 0;
 		while(b != null && count < boards.length) {
 			boards[count] = b;
+			b = (Board)b.next;
+			count++;
 		}
 		return boards;
+	}
+	
+	public OperatingSystem[] getOperatingSystems() {
+		OperatingSystem[] operatingsystems = new OperatingSystem[this.operatingsystems.getNofElements()];
+		OperatingSystem os = (OperatingSystem)this.operatingsystems.getHead();
+		int count = 0;
+		while(os != null && count < operatingsystems.length) {
+			operatingsystems[count] = os;
+			os = (OperatingSystem)os.next;
+			count++;
+		}
+		return operatingsystems;
+	}
+	
+	public Programmer[] getProgrammers() {
+		Programmer[] programmers = new Programmer[this.programmers.getNofElements()];
+		Programmer p = (Programmer)this.programmers.getHead();
+		int count = 0;
+		while(p != null && count < programmers.length) {
+			programmers[count] = p;
+			p = (Programmer)p.next;
+			count++;
+		}
+		return programmers;
+	}
+	
+	public int getNofBoards() {
+		if(this.boards != null) return this.boards.getNofElements();
+		return 0;
+	}
+	
+	public int getNofOperatingSystems() {
+		if(this.operatingsystems != null) return this.operatingsystems.getNofElements();
+		return 0;
 	}
 	
 	public CPU getCpuByName(String jname) {

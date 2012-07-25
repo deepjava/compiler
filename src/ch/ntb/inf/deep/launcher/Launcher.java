@@ -362,18 +362,20 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void reopenTargetConnection() {
-		try {
-			tc.closeConnection();
-			tc.openConnection();
-		} catch (TargetConnectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(tc != null) {
+			try {
+				tc.closeConnection();
+				tc.openConnection();
+			} catch (TargetConnectionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public static void closeTargetConnection() {
 		if(dbg) vrb.println("[Launcher] Closing target connection");
-		tc.closeConnection();
+		if(tc != null) tc.closeConnection();
 	}
 
 	public static void saveTargetImageToFile(String fileName, int format) {
@@ -439,10 +441,13 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void createInterfaceFile(String fileToCreate) {
+		createInterfaceFile(fileToCreate, Configuration.getBoard());
+	}
+	
+	public static void createInterfaceFile(String fileToCreate, Board b) {
 		int indexOf;
 		String pack;
 		String className;
-		Board b = Configuration.getBoard();
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
 		try {
@@ -517,5 +522,5 @@ public class Launcher implements ICclassFileConsts {
 			e.printStackTrace();
 		}
 	}
-		
+	
 }
