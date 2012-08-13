@@ -432,21 +432,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
 			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
-			int nofAuxRegFPR = 0;
-			if (nofAuxRegGPR == 4 && res.type == tLong) nofAuxRegGPR = 2;
-			else if ((nofAuxRegGPR == 5 && res.type == tLong)
-					|| ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble)))) nofAuxRegGPR = 1;
-			else if (nofAuxRegGPR == 7) {
-				if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
-				else nofAuxRegGPR = 0;
-			} else if (nofAuxRegGPR == 8) {
-				if (res.type == tFloat || res.type == tDouble) {nofAuxRegGPR = 1; nofAuxRegFPR = 1;}
-				else nofAuxRegGPR = 0;
-			} else if (nofAuxRegGPR == 9) {	// scDiv
-				if (res.type == tLong) {nofAuxRegGPR = 3; nofAuxRegFPR = 3;}
-				else nofAuxRegGPR = 1;
-			} else if (nofAuxRegGPR == 0xa) {	// scRem
-				if (res.type == tLong) {nofAuxRegGPR = 4; nofAuxRegFPR = 3;}
+			if (nofAuxRegGPR == 4 && res.type == tLong) nofAuxRegGPR = 2; // long multiplication 
+			else if ((nofAuxRegGPR == 5 && res.type == tLong)	// long shift
+					|| ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble)))) // float loading, int -> float conversion
+				nofAuxRegGPR = 1;
+			else if (nofAuxRegGPR == 7 && res.type == tLong)	// long division
+				nofAuxRegGPR = 2;
+			else if (nofAuxRegGPR == 8) {	// modulo division
+				if (res.type == tLong) {nofAuxRegGPR = 2;}
 				else if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
 			}
 			
@@ -454,21 +447,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			else if (nofAuxRegGPR == 2) {
 				res.regGPR1 = reserveReg(gpr, false);
 				res.regGPR2 = reserveReg(gpr, false);
-			} else if (nofAuxRegGPR == 3) {
-				res.regGPR1 = reserveReg(gpr, false);
-				res.regGPR2 = reserveReg(gpr, false);
-				res.regGPR3 = reserveReg(gpr, false);
-			} else if (nofAuxRegGPR == 4) {
-				res.regGPR1 = reserveReg(gpr, false);
-				res.regGPR2 = reserveReg(gpr, false);
-				res.regGPR3 = reserveReg(gpr, false);
-				res.regGPR4 = reserveReg(gpr, false);
-			}
-			if (nofAuxRegFPR == 1) res.regFPR1 = reserveReg(fpr, false);
-			else if (nofAuxRegFPR == 3) {
-				res.regFPR1 = reserveReg(fpr, false);
-				res.regFPR2 = reserveReg(fpr, false);
-				res.regFPR3 = reserveReg(fpr, false);
 			}
 			if (dbg) {
 				if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
@@ -618,21 +596,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			}
 			if (res.regGPR2 != -1) {
 				freeReg(gpr, res.regGPR2);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg2");
-			}
-			if (res.regGPR3 != -1) {
-				freeReg(gpr, res.regGPR3);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg3");
-			}
-			if (res.regGPR4 != -1) {
-				freeReg(gpr, res.regGPR4);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg4");
-			}
-			if (res.regFPR1 != -1) {
-				freeReg(fpr, res.regFPR1);	if (dbg) StdStreams.vrb.println("\tfreeing aux FPR reg1");
-			}
-			if (res.regFPR2 != -1) {
-				freeReg(fpr, res.regFPR2);	if (dbg) StdStreams.vrb.println("\tfreeing aux FPR reg2");
-			}
-			if (res.regFPR3 != -1) {
-				freeReg(fpr, res.regFPR3);	if (dbg) StdStreams.vrb.println("\tfreeing aux FPR reg3");
 			}
 
 			// free registers of operands if end of live range reached 

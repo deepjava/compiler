@@ -1630,6 +1630,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
+				Method.createCompSpecSubroutine("divLong"); 
 				break;
 			case bCfdiv:
 				value2 = popFromStack();
@@ -1678,8 +1679,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
-//				Method.createCompSpecSubroutine("remLongSmall"); 
-//				Method.createCompSpecSubroutine("remLong"); 
+				Method.createCompSpecSubroutine("remLong"); 
 				break;
 			case bCfrem:
 				value2 = popFromStack();
@@ -1995,6 +1995,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
+				Method.createCompSpecSubroutine("longToDouble"); 
 				break;
 			case bCl2d:
 				value1 = popFromStack();
@@ -2006,6 +2007,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
+				Method.createCompSpecSubroutine("longToDouble"); 
 				break;
 			case bCf2i:
 				value1 = popFromStack();
@@ -2028,6 +2030,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
+				Method.createCompSpecSubroutine("doubleToLong"); 
 				break;
 			case bCf2d:
 				value1 = popFromStack();
@@ -2061,6 +2064,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
 				pushToStack(result);
+				Method.createCompSpecSubroutine("doubleToLong"); 
 				break;
 			case bCd2f:
 				value1 = popFromStack();

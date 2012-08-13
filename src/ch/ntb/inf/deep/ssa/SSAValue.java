@@ -37,11 +37,6 @@ public class SSAValue implements SSAValueType {
 	public int regLong = -1;	// 2nd register or memory slot number for longs, contains upper 4 bytes
 	public int regGPR1 = -1;	// auxiliary general purpose register 1, used for translating complex SSA instructions
 	public int regGPR2 = -1;	// auxiliary general purpose register 2, used for translating complex SSA instructions 
-	public int regGPR3 = -1;	// auxiliary general purpose register 3, used for translating complex SSA instructions
-	public int regGPR4 = -1;	// auxiliary general purpose register 4, used for translating complex SSA instructions 
-	public int regFPR1 = -1;	// auxiliary floating point purpose register 3, used for translating complex SSA instructions
-	public int regFPR2 = -1;	// auxiliary floating point register 4, used for translating complex SSA instructions 
-	public int regFPR3 = -1;	// auxiliary floating point register 5, used for translating complex SSA instructions 
 	public int volRegs;	// stores information about volatiles which are used to produce this value
 	public int memorySlot = -1;
 	public SSAValue join;	// for resolving phi functions

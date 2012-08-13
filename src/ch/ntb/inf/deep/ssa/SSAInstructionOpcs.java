@@ -45,7 +45,7 @@ public interface SSAInstructionOpcs {
 					aa	attributes
 					cc	operation code (opc)
 			*/
-			0x00070000 + sCloadConst,	//load 
+			0x00060000 + sCloadConst,	//load 
 			0x00000000 | (1<<ssaApLoadLocal) + sCloadLocal,
 			0x00010000 + sCloadFromField,
 			0x00020000 + sCloadFromArray,
@@ -56,11 +56,11 @@ public interface SSAInstructionOpcs {
 			0x00000000 | (1<<ssaApImmOpd) + sCadd, 		//arithmetic 
 			0x00000000 | (1<<ssaApImmOpd) + sCsub,
 			0x00040000 | (1<<ssaApImmOpd) + sCmul,
-			0x00090000 | (1<<ssaApImmOpd) + sCdiv,
-			0x000a0000 | (1<<ssaApImmOpd) + sCrem,
+			0x00070000 | (1<<ssaApImmOpd) + sCdiv,
+			0x00080000 | (1<<ssaApImmOpd) + sCrem,
 			0x00000000 + sCneg,		 	
 			
-			0x00050000 | (1<<ssaApImmOpd) + sCshl,		 	//shift and logical 
+			0x00050000 | (1<<ssaApImmOpd) + sCshl,		//shift and logical 
 			0x00050000 | (1<<ssaApImmOpd) + sCshr,
 			0x00050000 | (1<<ssaApImmOpd) + sCushr,
 			0x00000000 | (1<<ssaApImmOpd) + sCand,
@@ -68,9 +68,9 @@ public interface SSAInstructionOpcs {
 			0x00000000 | (1<<ssaApImmOpd) + sCxor,
 			
 			0x00060000 | (1<<ssaApTempStore) + sCconvInt, 	//convert from
-			0x00080000 | (1<<ssaApTempStore) + sCconvLong,
-			0x00040000 | (1<<ssaApTempStore) + sCconvFloat,
-			0x00040000 | (1<<ssaApTempStore) + sCconvDouble,
+			0x00000000 | (1<<ssaApTempStore) + sCconvLong,
+			0x00000000 | (1<<ssaApTempStore) + sCconvFloat,
+			0x00000000 | (1<<ssaApTempStore) + sCconvDouble,
 			
 			0x00000000 + sCcmpl, 		//compare
 			0x00000000 + sCcmpg,
@@ -88,7 +88,7 @@ public interface SSAInstructionOpcs {
 			0x00000000 + sCregMove, 		
 			
 			0x00000000 | (1<<ssaApPhi) + sCPhiFunc		
-			};
+		};
 			
 
 }

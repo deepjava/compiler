@@ -39,19 +39,19 @@ interface Registers {
 	final int returnGPR1 = 2;	// GPR with return value
 	final int returnGPR2 = 3;	// GPR with return value used for longs
 	final int returnFPR = 1;	// FPR with return value
+	
+	final int faux1 = 20;	// FPR which is never assigned and can be freely used 
+	final int faux2 = 21;	// FPR which is never assigned and can be freely used 
+	final int faux3 = 22;	// FPR which is never assigned and can be freely used 
 
 	final int stackPtr = 1;	// register for stack pointer
 
-	final int regsGPRinitial = 0xfffffffc;	// initial mask for GPR's, '1' means register is free
-	final int regsFPRinitial = 0xfffffffe;	// initial mask for FPR's, '1' means register is free
+	// initial mask for GPR's, '1' means register is free
+	final int regsGPRinitial = 0xfffffffc;	
+	// initial mask for FPR's, '1' means register is free
+	final int regsFPRinitial = 0xfffffffe & ~(1<<faux1 | 1<<faux2 | 1<<faux3);	
 
 	final boolean gpr = true;
 	final boolean fpr = false;
 	
-	// register definitions for compiler specific subroutines
-	final int subResRegLong	= 26;
-	final int subResReg = 27;
-	final int subAux1Reg = 25;
-	final int subAux2Reg = 24;
-
 }
