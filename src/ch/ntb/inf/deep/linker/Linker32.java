@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	public static final boolean dbg = false; // enable/disable debugging outputs for the linker
+	public static final boolean dbg = true; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -887,11 +887,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		String fileExtension = fileName.substring(fileName.lastIndexOf('.'));
 		String pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+		String currentFileName;
 		FileOutputStream binFile = null; // TODO @Martin: use DataOutputStream!
 		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
-		binFile = new FileOutputStream(pathAndFileName + "." +dev.getName() + fileExtension);
+		currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
+		binFile = new FileOutputStream(currentFileName);
+		if(dbg) vrb.println("  Writing to file: " + currentFileName);
 		int count = 0;
 		while(tms != null) {
 			if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4));
@@ -906,7 +909,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(tms.next != null && tms.next.segment.owner != dev) {
 				binFile.close();
 				dev = tms.next.segment.owner;
-				binFile = new FileOutputStream(pathAndFileName + "." +dev.getName() + fileExtension);
+				currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
+				binFile = new FileOutputStream(currentFileName);
+				if(dbg) vrb.println("  Writing to file: " + currentFileName);
 			}
 			tms = tms.next;
 		}

@@ -203,17 +203,21 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		SegmentAssignment segAss = null;
 
 		// first check if clazz is a system class
+		Module module;
 		if(activeProject.getOperatingSystem().getKernel().name.equals(clazz)) {
 			if(dbg) vrb.print("  -> KERNEL");
-			segAss = activeProject.activeTargetConf.getModuleByName(KERNEL).getSegmentAssignments();
+			module = activeProject.activeTargetConf.getModuleByName(KERNEL);
+			if(module != null) segAss = module.getSegmentAssignments();
 		}
 		else if (activeProject.getOperatingSystem().getHeap().name.equals(clazz)) {
 			if(dbg) vrb.print("  -> HEAP");
-			segAss = activeProject.activeTargetConf.getModuleByName(HEAP).getSegmentAssignments();
+			module = activeProject.activeTargetConf.getModuleByName(HEAP);
+			if(module != null) segAss = module.getSegmentAssignments();
 		}
 		else if (activeProject.getOperatingSystem().getExceptionBaseClass().name.equals(clazz)) {
 			if(dbg) vrb.print("  -> EXCEPTION BASE");
-			segAss = activeProject.activeTargetConf.getModuleByName(EXCEPTION).getSegmentAssignments();
+			module = activeProject.activeTargetConf.getModuleByName(EXCEPTION);
+			if(module != null) segAss = module.getSegmentAssignments();
 		}
 		else {
 			if(dbg) vrb.print("  -> Looking for exception: ");

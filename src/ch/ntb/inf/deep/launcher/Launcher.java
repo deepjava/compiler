@@ -236,7 +236,7 @@ public class Launcher implements ICclassFileConsts {
 			}
 			Method m = Method.compSpecSubroutines;	// Code generator: fix up
 			while(m != null) {
-				if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+				if(dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
 				if(dbg) vrb.println("      doing fixups");
 				m.machineCode.doFixups();
 				m = (Method)m.next;
@@ -275,7 +275,16 @@ public class Launcher implements ICclassFileConsts {
 			TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
 			TargetMemorySegment tms = Linker32.targetImage;
 			if(b != null) {
-				if(tc == null) openTargetConnection();
+				int c = 0;
+				while(tc == null) {
+					if(dbg) vrb.println("[Launcher] Opening target connection");
+					openTargetConnection();
+					c++;
+					if(c > 4) {
+						reporter.error(800, "Can't open target connection: tried 5 times");
+						return;
+					}
+				}
 				try {
 					if(dbg) vrb.println("[Launcher] Initializing registers");
 					tc.initRegisters(b.getCpuRegisterInits());
@@ -357,7 +366,7 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 		else {
-			System.out.println("ERROR"); // TODO improve this
+			System.out.println("[ERROR] Can't get a connection to the target"); // TODO improve this
 		}
 	}
 	
