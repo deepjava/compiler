@@ -1,6 +1,8 @@
 package ch.ntb.inf.deep.launcher;
 
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.linker.Linker32;
 
 /**
  * Launcher for tests only! Adept this file to your configuration, but don't commit
@@ -10,7 +12,9 @@ import ch.ntb.inf.deep.host.ErrorReporter;
  */
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("D:/work/Project_deep/trunk/deep/ExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("M:/EUser/JCC/deep/ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("M:/EUser/JCC/deep/junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("M:/EUser/JCC/deep/5200Project.deep", "DefaultBoot");
 		
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Launcher.openTargetConnection();
@@ -18,9 +22,13 @@ public class TestLauncher {
 			Launcher.startTarget();
 			Launcher.closeTargetConnection();
 		}
-				
+
+//		Launcher.saveTargetImageToFile("W:/phycorempc5200b/test.bin", Configuration.BIN); System.out.println("image file created");
+//
+//		Launcher.createInterfaceFile("M:/EUser/JCC/bsp/src/ch/ntb/inf/deep/runtime/mpc5200/phyCoreMpc5200tiny.java");
+
 		/* DEBUG OUTPRINTS */
-//		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);
+//		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(true, false, false, true);
 //		System.out.println("%%%%%%%%%%%%%%% System Table %%%%%%%%%%%%%%%"); Linker32.printSystemTable();
 //		System.out.println("%%%%%%%%%%%%%%% Global Constants %%%%%%%%%%%%%%%"); Linker32.printGlobalConstantTable();		
 //		System.out.println("%%%%%%%%%%%%%%% Target Image (Full image) %%%%%%%%%%%%%%%"); Linker32.printTargetImage();

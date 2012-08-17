@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
 	}
 
-	public static final boolean dbg = true; // enable/disable debugging outputs for the linker
+	public static final boolean dbg = false; // enable/disable debugging outputs for the linker
 	
 	// Constant block:
 	public static final int cblkConstBlockSizeOffset = 0;
@@ -895,22 +895,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
 		binFile = new FileOutputStream(currentFileName);
 		if(dbg) vrb.println("  Writing to file: " + currentFileName);
-		int count = 0;
+		int currentAddress = dev.getbaseAddress();
 		while(tms != null) {
-			if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4));
+			while(currentAddress < tms.startAddress) {
+				binFile.write(0);
+				currentAddress++;
+			}
+			if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = " + Integer.toHexString(currentAddress));
 			for(int j = 0; j < tms.data.length; j++) {
 				binFile.write(getBytes(tms.data[j]));
-				count += 4;
+				currentAddress += 4;
 			}
-			while(tms.next != null && tms.startAddress + count < tms.next.startAddress) {
-				binFile.write(0);
-				count++;
-			}
+			
 			if(tms.next != null && tms.next.segment.owner != dev) {
 				binFile.close();
 				dev = tms.next.segment.owner;
 				currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
 				binFile = new FileOutputStream(currentFileName);
+				currentAddress = dev.getbaseAddress();
 				if(dbg) vrb.println("  Writing to file: " + currentFileName);
 			}
 			tms = tms.next;

@@ -1933,7 +1933,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return null;
 		}
 		next();
-		if (!(sym == sDesignator || sym == sCR || sym == sMSR || sym == sFPSCR)) {
+		if (!(sym == sDesignator || sym == sCR || sym == sMSR || sym == sFPSCR)) { // TODO check this
 			nOfErrors++;
 			reporter.error(errUnexpectetSymExp, "in " + currentFileName
 					+ " at Line " + lineNumber
@@ -1969,7 +1969,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				reg.setRepresentation(registerRepresentationAssignment());
 			}
 		}
-		if (reg.addr < 0 || reg.type < 0 || reg.size < 0) {
+		if (reg.type < 0 || reg.size < 0) {
 			reporter.error(errInconsistentattributes, "in " + currentFileName
 					+ " Missing attribute in creation of Register: "
 					+ reg.getName().toString());
@@ -3088,7 +3088,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		}
 		next();
 		res = expression();
-
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFileName
