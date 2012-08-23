@@ -5,16 +5,17 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.linker.Linker32;
 
 /**
- * Launcher for tests only! Adept this file to your configuration, but don't commit
+ * Launcher for tests only! Adapt this file to your configuration, but don't commit
  * those changes to the SVN! Please store your project file in the top folder of
  * the deep-Project. You can find an example project "ExampleProject.deep" in
  * this folder which you may use as base for your own test project.
  */
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("M:/EUser/JCC/deep/ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("M:/EUser/JCC/deep/junitTarget.deep", "BootFromRam");
+		Launcher.buildAll("M:/EUser/JCC/deep/555ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("M:/EUser/JCC/deep/555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/deep/5200Project.deep", "DefaultBoot");
+//		Launcher.buildAll("M:/EUser/JCC/deep/5200ExampleProject.deep", "RamOnlyBoot");
 		
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Launcher.openTargetConnection();

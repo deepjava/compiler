@@ -1,0 +1,25 @@
+#deep-1
+
+meta {
+	version = "2012-07-04";
+	description = "Example project file";
+}
+
+project ExampleProjectMpc5200B {
+	libpath = "../bsp";
+	
+	boardtype = phyCoreMpc5200tiny;
+	ostype = ntbMpc5200STS;
+	
+	programmertype = bdi2000;
+	
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
+
+#	imgfile = "out/exampleProject.bin"
+#	imgformat = bin;
+
+#	tctfile = "tct/targetCommands.dtct";
+
+}
