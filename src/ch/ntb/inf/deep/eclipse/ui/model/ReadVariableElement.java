@@ -58,7 +58,7 @@ public class ReadVariableElement {
 		this.fullQualifiedName = fullQualifiedName;
 	}
 	
-	public void setIsReaded(){
+	public void setIsRead(){
 		isReaded = true;
 	}
 	

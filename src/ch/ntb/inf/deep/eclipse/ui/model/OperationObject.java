@@ -27,11 +27,11 @@ public class OperationObject {
 	 */
 	public int valueType;
 	/**
-	 * Name of the variable or the Register, or the full qualified Name of a TargetCMD
+	 * Name of the variable or the register, or the full qualified name of a TargetCMD
 	 */
 	public String description;
 	/** 
-	 * Kind of Representations:	Binary = 0, Hexadecimal = 1, Decimal = 2,Double = 3
+	 * Kind of Representations:	Binary = 0, Hexadecimal = 1, Decimal = 2, Double = 3
 	 */
 	public int representation;
 	/**
@@ -56,15 +56,15 @@ public class OperationObject {
 	public int operation;
 	
 	/**
-	 * is to determine if when an readVariable operation is chosen, thats display the value only if it is true 
+	 * indicates when a readVariable operation is chosen. If true, displays the value  
 	 */
-	public boolean isReaded;
+	public boolean isRead;
 	/**
-	 * is to determine if when an TargetCMD operation was executed, thats display the address of the method only if it is true 
+	 * indicates when an TargetCMD operation was executed. If true, displays the address of the method  
 	 */
 	public boolean cmdSend;
 	/**
-	 * Message if an error occours
+	 * Error message
 	 */
 	public String errorMsg;
 	

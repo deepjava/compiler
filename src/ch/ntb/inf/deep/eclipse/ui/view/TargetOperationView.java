@@ -106,7 +106,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}else if(index == 1){
 					return op.description;
 				}else if(index == 2){
-					if(op.isReaded && !choice[op.operation].equals("")){
+					if(op.isRead && !choice[op.operation].equals("")){
 						switch(op.operation){
 							case 1:
 								switch(op.registerType){
@@ -201,13 +201,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				}else if(index == 3){
 					switch(op.operation){
 					case 1:
-						if(op.isReaded && op.registerType == Parser.sIOR){
+						if(op.isRead && op.registerType == Parser.sIOR){
 							return String.format("0x%08X", op.addr);
 						}else{
 							return "";
 						}
 					case 2:
-						if(op.isReaded){
+						if(op.isRead){
 							return String.format("0x%08X", op.addr);
 						}else{
 							return "";
@@ -673,7 +673,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					op.addr = 0;
 					op.cmdSend = false;
 					op.description = "";
-					op.isReaded = false;
+					op.isRead = false;
 					op.registerSize = 0;
 					op.registerType = 0;
 					op.representation = 0;
@@ -855,7 +855,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 			
 			op.value = bdi.readWord(op.addr);
-			op.isReaded = true;
+			op.isRead = true;
 			
 			if (!wasFreezeAsserted) {
 				bdi.startTarget();
@@ -951,7 +951,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(!wasFreezeAsserted){
 						bdi.startTarget();
 					}
-					op.isReaded = true;
+					op.isRead = true;
 					op.description = fullQualName;
 				}catch(TargetConnectionException e){
 					op.errorMsg = "target not initialized";
@@ -1081,7 +1081,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					break;
 				default:
 				}
-				op.isReaded = true;
+				op.isRead = true;
 				if (!wasFreezeAsserted) {
 					bdi.startTarget();
 				}
@@ -1170,7 +1170,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.writeWord(var.address,(int)(val & 0xFFFFFFFF));
 					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
 						bdi.writeWord(var.address,(int)((val >> 32) & 0xFFFFFFFF));
-						bdi.writeWord(var.address,(int)(val + slotSize & 0xFFFFFFFF));
+						bdi.writeWord(var.address + slotSize,(int)(val & 0xFFFFFFFF));
 					}
 					op.value = val;
 					if(!wasFreezeAsserted){
