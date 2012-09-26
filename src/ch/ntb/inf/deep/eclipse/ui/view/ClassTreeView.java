@@ -71,7 +71,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	private TreeViewer deviceTreeViewer;
 	private TextViewer textViewer;
 	private Action refresh;
-
+	
 	class ClassTreeLabelProvider extends LabelProvider {
 		public Image getImage(Object element) {
 			return null;
@@ -123,15 +123,15 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				int index = 0;
 				//add constFields if they exists
 				if(clazz.nofConstFields > 0){
-					item[index++] = new ClassChild(HString.getHString("ConstFields"), clazz, clazz.constFields);
+					item[index++] = new ClassChild(HString.getRegisteredHString("ConstFields"), clazz, clazz.constFields);
 				}
 				//add classFields if they exists
 				if(clazz.nofClassFields > 0){
-					item[index++] = new ClassChild(HString.getHString("ClassFields"), clazz, clazz.classFields);
+					item[index++] = new ClassChild(HString.getRegisteredHString("ClassFields"), clazz, clazz.classFields);
 				}
 				//add methods if they exists
 				if(clazz.nofMethods > 0){					
-					item[index++] = new ClassChild(HString.getHString("Methods"), clazz, clazz.methods);				
+					item[index++] = new ClassChild(HString.getRegisteredHString("Methods"), clazz, clazz.methods);				
 				}
 				return item;
 			}
@@ -186,11 +186,9 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				int count = 0;
 				Item classmember = ((RootElement)parent).children;
 				while(classmember != null && count < classes.length){
-					if(classmember instanceof Class){
 						classes[count++] = classmember;
-					}
 					classmember = classmember.next;
-				}			
+				}
 				return classes;
 			}
 			return item;
@@ -349,7 +347,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	public void createPartControl(Composite parent) {
 		GridLayout layout = new GridLayout(5, true);
 		parent.setLayout(layout);
-
+		
 		classTreeViewer = new TreeViewer(parent, SWT.SINGLE);
 		GridData classTreeViewerData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		classTreeViewerData.horizontalSpan = 2;
@@ -357,10 +355,9 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		classTreeViewer.setLabelProvider(new ClassTreeLabelProvider());
 		classTreeViewer.setContentProvider(new ClassTreeContentProvider());
 		classTreeViewer.setAutoExpandLevel(2);
-		classTreeViewer.setInput(new TreeInput(new RootElement(HString.getRegisteredHString("ClassList"), Type.classList)));
+		//classTreeViewer.setInput(new TreeInput(new RootElement(HString.getRegisteredHString("Loaded Classes"), Type.classList)));
 		classTreeViewer.addSelectionChangedListener(this);
-		
-		
+
 		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
 		GridData textViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
 		textViewerData.horizontalSpan = 3;
@@ -376,7 +373,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		deviceTreeViewer.setLabelProvider(new DeviceTreeLabelProvider());
 		deviceTreeViewer.setContentProvider(new DeviceTreeContentProvider());
 		deviceTreeViewer.setAutoExpandLevel(2);
-		deviceTreeViewer.setInput(Configuration.getBoard().getMemoryMap()); // TODO add CPU memory map here
+		//if(Configuration.getBoard() != null) deviceTreeViewer.setInput(Configuration.getBoard().getMemoryMap()); // TODO add CPU memory map here
 		deviceTreeViewer.addSelectionChangedListener(this);
 		
 		
@@ -401,7 +398,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	private void createActions() {
 		refresh = new Action(){
 			public void run(){
-				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("ClassList"), Type.classList)));
+				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("Classes, Interfaces and Arrays:"), Type.classList)));
 				classTreeViewer.getControl().setEnabled(true);
 				classTreeViewer.refresh();
 				deviceTreeViewer.setInput(new TreeInput(Configuration.getBoard().getMemoryMap())); // TODO add CPU memory map here
@@ -428,19 +425,20 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	}
 	
 	class ClassChild extends RootElement{
+
 		Item owner;
 		
-		ClassChild(HString name,Item owner, Item children){
+		ClassChild(HString name, Item owner, Item children){
 			super(name, children);
 			this.owner = owner;
 			
 		}
 	}
 
-	class RootElement{
+	class RootElement {
 		HString name;
 		Item children;
-		
+				
 		RootElement(HString name, Item children){
 			this.name = name;
 			this.children = children;
@@ -449,8 +447,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	
 	class TreeInput{
 		public Object obj;
-		
-		TreeInput(Object obj){
+				
+		TreeInput(Object obj) {
 			this.obj = obj;
 		}
 	}
