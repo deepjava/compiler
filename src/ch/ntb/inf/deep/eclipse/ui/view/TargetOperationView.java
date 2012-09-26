@@ -1171,7 +1171,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.setMem(var.address,(int)(val & 0xFFFFFFFF), slotSize);
 					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
 						bdi.setMem(var.address,(int)((val >> 32) & 0xFFFFFFFF), slotSize);
-						bdi.setMem(var.address,(int)(val + slotSize & 0xFFFFFFFF), slotSize);
+						bdi.setMem(var.address + slotSize,(int)(val & 0xFFFFFFFF), slotSize);
 					}
 					op.value = val;
 					if(!wasFreezeAsserted){
