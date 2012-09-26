@@ -122,15 +122,15 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				int index = 0;
 				//add constFields if they exists
 				if(clazz.nofConstFields > 0){
-					item[index++] = new ClassChild(HString.getHString("ConstFields"), clazz, clazz.constFields);
+					item[index++] = new ClassChild(HString.getRegisteredHString("ConstFields"), clazz, clazz.constFields);
 				}
 				//add classFields if they exists
 				if(clazz.nofClassFields > 0){
-					item[index++] = new ClassChild(HString.getHString("ClassFields"), clazz, clazz.classFields);
+					item[index++] = new ClassChild(HString.getRegisteredHString("ClassFields"), clazz, clazz.classFields);
 				}
 				//add methods if they exists
 				if(clazz.nofMethods > 0){					
-					item[index++] = new ClassChild(HString.getHString("Methods"), clazz, clazz.methods);				
+					item[index++] = new ClassChild(HString.getRegisteredHString("Methods"), clazz, clazz.methods);				
 				}
 				return item;
 			}
@@ -185,9 +185,9 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				int count = 0;
 				Item classmember = ((RootElement)parent).children;
 				while(classmember != null && count < classes.length){
-					if(classmember instanceof Class){
+					//if(classmember instanceof Class){
 						classes[count++] = classmember;
-					}
+					//}
 					classmember = classmember.next;
 				}			
 				return classes;
