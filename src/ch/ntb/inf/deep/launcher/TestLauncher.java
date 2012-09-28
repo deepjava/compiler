@@ -14,8 +14,7 @@ public class TestLauncher {
 	public static void main(String[] args) {
 		Launcher.buildAll("M:/EUser/JCC/deep/555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/deep/555junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("M:/EUser/JCC/deep/5200Project.deep", "DefaultBoot");
-//		Launcher.buildAll("M:/EUser/JCC/deep/5200ExampleProject.deep", "RamOnlyBoot");
+//		Launcher.buildAll("M:/EUser/JCC/deep/5200ExampleProject.deep", "BootFromRam");
 		
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Launcher.openTargetConnection();
@@ -25,8 +24,8 @@ public class TestLauncher {
 		}
 
 //		Launcher.saveTargetImageToFile("W:/phycorempc5200b/test.bin", Configuration.BIN); System.out.println("image file created");
-//
-//		Launcher.createInterfaceFile("M:/EUser/JCC/bsp/src/ch/ntb/inf/deep/runtime/mpc5200/phyCoreMpc5200tiny.java");
+
+//		Launcher.createInterfaceFile("M:/EUser\\JCC\\bsp\\src\\ch\\ntb\\inf\\deep\\runtime\\mpc5200\\phyCoreMpc5200tiny.java");
 
 		/* DEBUG OUTPRINTS */
 //		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(true, false, false, true);
