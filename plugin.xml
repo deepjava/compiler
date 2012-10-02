@@ -65,12 +65,13 @@
       <wizard
             canFinishEarly="false"
             category="ch.ntb.inf.deep.ui.wizard.category"
-            class="ch.ntb.inf.deep.eclipse.ui.wizard.StartWizard"
-            finalPerspective="org.eclipse.jdt.ui.JavaPerspective"
+            class="ch.ntb.inf.deep.eclipse.ui.wizard.DeepProjectWizard"
+            finalPerspective="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
             hasPages="true"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.wizard.StartWizard"
+            id="ch.ntb.inf.deep.ui.wizard.DeepProjectWizard"
             name="Deep Project"
+            preferredPerspectives="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
             project="true">
          <description>
             Generate a deep project
