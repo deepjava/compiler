@@ -506,13 +506,128 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	}
 
 	@Override
-	public synchronized void setBreakPoint(int address) {
-		// TODO Auto-generated method stub
+	public synchronized void setBreakPoint(int address) throws TargetConnectionException {
+		//1. Disable Instruction breakpoint interrupt
+		Register der = Configuration.getRegiststerByName("DER");
+		if(der == null)return;
+		int derValue = getSprValue(der.getAddress()) & ~0x4;
+		setSprValue(der.getAddress(), derValue);
+		
+		// 2. read ICTRL
+		Register ictrl = Configuration.getRegiststerByName("ICTRL");
+		if(ictrl == null)return;
+		int ictrlValue = getSprValue(ictrl.getAddress());
+	
+		//3. decide which CMP is free an set it appropriate
+		if((ictrlValue & 0x80000) == 0){//CMPA is free
+			Register cmpa = Configuration.getRegiststerByName("CMPA");
+			if(cmpa == null)return;
+			setSprValue(cmpa.getAddress(), address);
+			setSprValue(ictrl.getAddress(), ictrlValue | 0x80080800);//CTA = equals, IWP0 = match from CMPA, SIWP0EN = trap enabled
+		}else if((ictrlValue & 0x20000) == 0){//CMPB is free
+			Register cmpb = Configuration.getRegiststerByName("CMPB");
+			if(cmpb == null)return;
+			setSprValue(cmpb.getAddress(), address);
+			setSprValue(ictrl.getAddress(), ictrlValue | 0x10020400);//CTB = equals, IWP1 = match from CMPB, SIWP1EN = trap enabled			
+		}else if((ictrlValue & 0x8000) == 0){//CMPC is free
+			Register cmpc = Configuration.getRegiststerByName("CMPC");
+			if(cmpc == null)return;
+			setSprValue(cmpc.getAddress(), address);
+			setSprValue(ictrl.getAddress(), ictrlValue | 0x2008200);//CTC = equals, IWP2 = match from CMPC, SIWP2EN = trap enabled
+		}else if((ictrlValue & 0x2000) == 0){//CMPD is free
+			Register cmpd = Configuration.getRegiststerByName("CMPD");
+			if(cmpd == null)return;
+			setSprValue(cmpd.getAddress(), address);
+			setSprValue(ictrl.getAddress(), ictrlValue | 0x402100);//CTD = equals, IWP3 = match from CMPD, SIWP3EN = trap enabled
+		}
+		
+		//4. Enable instruction breakpoint interrupt
+		setSprValue(der.getAddress(), derValue | 0x4);	
 	}
 
 	@Override
-	public synchronized void removeBreakPoint(int address) {
-		// TODO Auto-generated method stub
+	public synchronized void removeBreakPoint(int address) throws TargetConnectionException {
+		//1. Disable Instruction breakpoint interrupt
+		Register der = Configuration.getRegiststerByName("DER");
+		if(der == null)return;
+		int derValue = getSprValue(der.getAddress()) & ~0x4;
+		setSprValue(der.getAddress(), derValue);
+		
+		// 2. read ICTRL
+		Register ictrl = Configuration.getRegiststerByName("ICTRL");
+		if(ictrl == null)return;
+		int ictrlValue = getSprValue(ictrl.getAddress());
+		
+		//3. find correct CMP
+		if((ictrlValue & 0x80000) != 0){//CMPA is used
+			Register cmpa = Configuration.getRegiststerByName("CMPA");
+			if(cmpa == null)return;
+			int cmpaValue = getSprValue(cmpa.getAddress());
+			if(cmpaValue == address){
+				setSprValue(ictrl.getAddress(), ictrlValue & ~0xE00C0800);
+				//4. Enable instruction breakpoint interrupt
+				setSprValue(der.getAddress(), derValue | 0x4);
+				return;
+			}
+		}
+		if((ictrlValue & 0x20000) != 0){//CMPB is used
+			Register cmpb = Configuration.getRegiststerByName("CMPB");
+			if(cmpb == null)return;
+			int cmpbValue = getSprValue(cmpb.getAddress());
+			if(cmpbValue == address){
+				setSprValue(ictrl.getAddress(), ictrlValue & ~0x1C030400);
+				//4. Enable instruction breakpoint interrupt
+				setSprValue(der.getAddress(), derValue | 0x4);
+				return;
+			}
+			
+		}
+		if((ictrlValue & 0x8000) != 0){//CMPC is used
+			Register cmpc = Configuration.getRegiststerByName("CMPC");
+			if(cmpc == null)return;
+			int cmpcValue = getSprValue(cmpc.getAddress());
+			if(cmpcValue == address){
+				setSprValue(ictrl.getAddress(), ictrlValue & ~0x38C200);
+				//4. Enable instruction breakpoint interrupt
+				setSprValue(der.getAddress(), derValue | 0x4);
+				return;
+			}
+			
+		}
+		if((ictrlValue & 0x2000) != 0){//CMPD is used
+			Register cmpd = Configuration.getRegiststerByName("CMPD");
+			if(cmpd == null)return;
+			int cmpdValue = getSprValue(cmpd.getAddress());
+			if(cmpdValue == address){
+				setSprValue(ictrl.getAddress(), ictrlValue & ~0x73100);
+				//4. Enable instruction breakpoint interrupt
+				setSprValue(der.getAddress(), derValue | 0x4);
+				return;
+			}
+		}
+		
+		//4. Enable instruction breakpoint interrupt
+		setSprValue(der.getAddress(), derValue | 0x4);	
+	}
+
+	@Override
+	public synchronized void confirmBreakPoint(int address) throws TargetConnectionException {
+		//1. Disable Instruction breakpoint interrupt
+		Register der = Configuration.getRegiststerByName("DER");
+		if(der == null)return;
+		int derValue = getSprValue(der.getAddress()) & ~0x4;
+		setSprValue(der.getAddress(), derValue);
+		
+		// 2. read ICTRL
+		Register ictrl = Configuration.getRegiststerByName("ICTRL");
+		if(ictrl == null)return;
+		int ictrlValue = getSprValue(ictrl.getAddress());
+		
+		// 3. set ignore first match on i-bus
+		setSprValue(ictrl.getAddress(), ictrlValue | 0x8);		
+		
+		//4. Enable instruction breakpoint interrupt
+		setSprValue(der.getAddress(), derValue | 0x4);	
 	}
 
 	

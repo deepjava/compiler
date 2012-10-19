@@ -94,6 +94,8 @@ public abstract class TargetConnection {
 	
 	public abstract void removeBreakPoint(int address) throws TargetConnectionException;
 	
+	public abstract void confirmBreakPoint(int address) throws TargetConnectionException;
+	
 	public abstract int getNofGpr();
 
 }
