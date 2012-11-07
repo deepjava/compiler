@@ -394,6 +394,13 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return null;
 	}
 
+	public static int getResetOffset() { // TODO improve this!
+		SystemMethod resetMethod = null;
+		if(activeProject != null) resetMethod = activeProject.getOperatingSystem().getExceptionMethodByName("reset");
+		if(resetMethod != null) return resetMethod.offset;
+		return -1;
+	}
+	
 	public static OperatingSystem getOperatingSystem() {
 		if(activeProject != null) return activeProject.getOperatingSystem();
 		return null;

@@ -104,6 +104,10 @@ public class Method extends ClassMember {
 		return maxStackSlots;
 	}
 
+	public int getCodeSizeInBytes() {
+		return machineCode.iCount * 4;
+	}
+	
 	public static Method createCompSpecSubroutine(String jname) {
 		HString name = HString.getRegisteredHString(jname);
 		Method m = null;

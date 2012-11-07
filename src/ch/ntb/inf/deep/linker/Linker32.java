@@ -47,7 +47,8 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
-
+	
+	// Slot size:
 	public static final byte slotSize = 4; // 4 bytes
 	static{
 		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
@@ -79,7 +80,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int stStackOffset = stClassConstOffset + 4;
 	public static final int stHeepOffset = stStackOffset + 4;
 	public static final int stKernelClinitAddr = stHeepOffset + 4;
-	public static final int stConstantSize = 8 * 4;
+	public static final int stMinSize = 10 * 4;
 	
 	// String pool:
 	public static final int stringHeaderConstSize = 3 * 4;
@@ -96,9 +97,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static TargetMemorySegment targetImage;
 
 	// System table
-	private static int systemTableSize;
+	private static int systemTableSize; // TODO remove this, use systemTable.getBlockSize() instead
 	private static BlockItem systemTable;
 	private static Segment[] sysTabSegments;
+	private static FixedValueItem stSizeToCopy;
+	private static int firstUsedAddress = Integer.MAX_VALUE;
+	private static int lastUsedAddress = 0;
 	
 	// Global constants
 	private static BlockItem globalConstantTable;
@@ -109,7 +113,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static int compilerSpecificMethodsCodeSize = 0;
 	private static int compilerSpecificMethodsOffset = -1;
 	private static Segment compilerSpecSubroutinesSegment;
-	//public static int imDelegOffset = -1;
 	
 	
 	public static void init() {
@@ -514,12 +517,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Kernel class:      " + kernelClass.name);
 		if(dbg) vrb.println("  -> Clinit Addr.:   " + kernelClinitAddr);
-		
+				
 		// Create the system table
-		systemTable = new FixedValueItem("classConstOffset", (7 + 2 * nofStacks + 2 * nofHeaps) * 4);
-		systemTable.append(new FixedValueItem("stackOffset", 5 * 4));
-		systemTable.append(new FixedValueItem("heapOffset", (5 + 2 * nofStacks + 1) * 4));
+		systemTable = new FixedValueItem("classConstOffset", (9 + 2 * nofStacks + 2 * nofHeaps) * 4);
+		systemTable.append(new FixedValueItem("stackOffset", 7 * 4));
+		systemTable.append(new FixedValueItem("heapOffset", (7 + 2 * nofStacks + 1) * 4));
 		systemTable.append(new AddressItem("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
+		systemTable.append(new FixedValueItem("resetOffset", Configuration.getResetOffset()));
+		stSizeToCopy = new FixedValueItem("sizeToCopy", -1);
+		systemTable.append(stSizeToCopy);
 		systemTable.append(new FixedValueItem("nofStacks", nofStacks));
 		for(int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
 			systemTable.append(new AddressItem("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
@@ -722,11 +728,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(dbg) vrb.println("  Methods:");
 			while(method != null) {
 				if((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) { // TODO @Martin: fix this hack!!!
-					if(method.offset != -1) method.address = clazz.codeSegment.getBaseAddress() + method.offset;
+					if(method.offset != -1) {
+						method.address = clazz.codeSegment.getBaseAddress() + method.offset;
+					}
 				//	else reporter.error(9999, "Error while calculating absolute address of fix set method " + method.name + ". Offset: " + method.offset + ", Segment: " + clazz.codeSegment.getName() + ", Base address of Segment: " + clazz.codeSegment.getBaseAddress());
 				}
 				else {
-					if(codeBase != -1 && method.offset != -1) method.address = codeBase + method.offset;
+					if(codeBase != -1 && method.offset != -1) {
+						method.address = codeBase + method.offset;
+					}
 				//	else reporter.error(9999, "Error while calculating absolute address of method " + method.name + ". Offset: " + method.offset + ", Codebase of Class " + clazz.name + ": " + codeBase);
 				}
 				if(dbg) vrb.print("    > " + method.name + ": Offset = 0x" + Integer.toHexString(method.offset) + ", Index = 0x" + Integer.toHexString(method.index) + ", Address = 0x" + Integer.toHexString(method.address) + "\n");
@@ -741,11 +751,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			for(int i = 0; i < clazz.constPool.length; i++) {
 				cpe = clazz.constPool[i];
 				if(cpe instanceof StdConstant && (cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble])) { // constant float or double value -> constant pool
-					if(cpe.offset != -1) cpe.address = constPoolBase + cpe.offset;
+					if(cpe.offset != -1) {
+						cpe.address = constPoolBase + cpe.offset;
+					}
 					else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
 				}
 				else if(cpe instanceof StringLiteral) { // string literal -> string pool
-					if(cpe.offset != -1) cpe.address = stringPoolBase + cpe.offset + 8;
+					if(cpe.offset != -1) {
+						cpe.address = stringPoolBase + cpe.offset + 8;
+					}
 					else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
 				}
 				if(dbg) {
@@ -797,6 +811,40 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println(String.format("CRC32: 0x%08X", fcs));
 		
 		if(dbg) vrb.println("\n[LINKER] END: Updating constant block for class \"" + clazz.name +"\"\n");
+	}
+	
+	public static void updateSystemTable() {
+		if(dbg) vrb.println("[LINKER] START: Updating system table\n");
+		
+		Item item = Type.classList;
+		while(item != null) {
+			if(item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
+				Class clazz = (Class)item;
+				// Code
+				monitorUsedSpace(((FixedValueItem)clazz.codeBase).getValue(), ((FixedValueItem)clazz.codeBase.next).getValue());
+				// Constant block
+				monitorUsedSpace(clazz.constSegment.getBaseAddress() + clazz.constOffset, ((FixedValueItem)clazz.constantBlock).getValue());
+			}
+			else if(item instanceof Array) {
+				Array array = (Array)item;
+				monitorUsedSpace(array.address - slotSize ,array.typeDescriptor.getBlockSize());
+			}
+			item = item.next;
+		}
+		
+		if(sysTabSegments != null && sysTabSegments.length > 0) {
+			for(int i = 0; i < sysTabSegments.length; i++) {
+				monitorUsedSpace(sysTabSegments[i].getBaseAddress(), systemTable.getBlockSize()); 
+			}
+		}
+		
+		int sizeToCopy = lastUsedAddress - firstUsedAddress;
+		
+		if(dbg) vrb.println("  Setting \"sizeToCopy\" to " + sizeToCopy + " bytes");
+		
+		stSizeToCopy.setValue(sizeToCopy);
+		
+		if(dbg) vrb.println("\n[LINKER] END: Updating system table\n");
 	}
 	
 	public static void generateTargetImage() {
@@ -1077,6 +1125,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static boolean checkConstantPoolType(Item item) {
 		// TODO @Martin: Make this configurable...
 		return item instanceof StdConstant && ((item.type == Type.wellKnownTypes[txFloat] || item.type == Type.wellKnownTypes[txDouble]));
+	}
+	
+	private static void monitorUsedSpace(int startAddress, int size) {
+		if(startAddress < firstUsedAddress) firstUsedAddress = startAddress;
+		if(startAddress + size > lastUsedAddress) lastUsedAddress = startAddress + size;
 	}
 	
 	/* ---------- debug primitives ---------- */

@@ -104,6 +104,25 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts 
 		return exceptions;
 	}
 
+	public SystemMethod getExceptionMethodByName(String name) {
+		int hash = name.hashCode();
+		SystemClass sys = exceptions;
+		SystemMethod m;
+		while(sys != null) {
+			m = sys.methods;
+			while(m != null) {
+				if(hash == m.name.hashCode()){
+					if(name.equals(m.name)){
+						return m;
+					}
+				}
+				m = m.next;
+			}			
+			sys = (SystemClass)sys.next;
+		}
+		return null;
+	}
+	
 	public SystemClass getUs() {
 		return us;
 	}

@@ -242,6 +242,8 @@ public class Launcher implements ICclassFileConsts {
 				m = (Method)m.next;
 			}
 
+			// Linker: update system table
+			Linker32.updateSystemTable();
 			
 			// Linker: Create target image
 			if(reporter.nofErrors <= 0) {
