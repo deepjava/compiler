@@ -31,7 +31,7 @@ public interface ICjvmInstructionOpcsAndMnemonics extends ICjvmInstructionOpcs{
 		"Switch",
 		"Call",
 		"New",
-		"CpRef",// rferences const pool item
+		"CpRef",// references const pool item
 		"Undef"
 	};
 
