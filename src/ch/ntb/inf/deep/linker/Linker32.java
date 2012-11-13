@@ -80,6 +80,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int stStackOffset = stClassConstOffset + 4;
 	public static final int stHeepOffset = stStackOffset + 4;
 	public static final int stKernelClinitAddr = stHeepOffset + 4;
+	public static final int stResetOffset = stKernelClinitAddr + 4;
+	public static final int stSizeToCopy = stResetOffset + 4;
+	public static final int stNofStacks = stSizeToCopy + 4;
 	public static final int stMinSize = 10 * 4;
 	
 	// String pool:
@@ -100,7 +103,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	private static int systemTableSize; // TODO remove this, use systemTable.getBlockSize() instead
 	private static BlockItem systemTable;
 	private static Segment[] sysTabSegments;
-	private static FixedValueItem stSizeToCopy;
+	private static FixedValueItem sysTabSizeToCopy;
 	private static int firstUsedAddress = Integer.MAX_VALUE;
 	private static int lastUsedAddress = 0;
 	
@@ -519,13 +522,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  -> Clinit Addr.:   " + kernelClinitAddr);
 				
 		// Create the system table
-		systemTable = new FixedValueItem("classConstOffset", (9 + 2 * nofStacks + 2 * nofHeaps) * 4);
-		systemTable.append(new FixedValueItem("stackOffset", 7 * 4));
-		systemTable.append(new FixedValueItem("heapOffset", (7 + 2 * nofStacks + 1) * 4));
+		systemTable = new FixedValueItem("classConstOffset", stNofStacks + ( 2 * nofStacks + 2 * nofHeaps) * 4 + 12);
+		systemTable.append(new FixedValueItem("stackOffset", stNofStacks));
+		systemTable.append(new FixedValueItem("heapOffset", stNofStacks + 2 * nofStacks * 4 + 4));
 		systemTable.append(new AddressItem("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
 		systemTable.append(new FixedValueItem("resetOffset", Configuration.getResetOffset()));
-		stSizeToCopy = new FixedValueItem("sizeToCopy", -1);
-		systemTable.append(stSizeToCopy);
+		sysTabSizeToCopy = new FixedValueItem("sizeToCopy", -1);
+		systemTable.append(sysTabSizeToCopy);
 		systemTable.append(new FixedValueItem("nofStacks", nofStacks));
 		for(int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
 			systemTable.append(new AddressItem("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
@@ -842,7 +845,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Setting \"sizeToCopy\" to " + sizeToCopy + " bytes");
 		
-		stSizeToCopy.setValue(sizeToCopy);
+		sysTabSizeToCopy.setValue(sizeToCopy);
 		
 		if(dbg) vrb.println("\n[LINKER] END: Updating system table\n");
 	}

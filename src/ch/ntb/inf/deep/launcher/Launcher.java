@@ -56,7 +56,7 @@ public class Launcher implements ICclassFileConsts {
 	private static final boolean dbg = false;
 	
 	private static ErrorReporter reporter = ErrorReporter.reporter;
-	private static PrintStream out = StdStreams.out;
+	private static PrintStream log = StdStreams.vrb;
 	private static PrintStream vrb = StdStreams.vrb;
 	private static TargetConnection tc;
 
@@ -72,15 +72,22 @@ public class Launcher implements ICclassFileConsts {
 		
 		// Read configuration
 		if(dbg) vrb.println("[Launcher] Loading Configuration");
+		log.println("Loading project file \"" + projectConfigFile + "\"");
 		Project project = Configuration.addProject(projectConfigFile);
 		Configuration.setActiveProject(project);
 		project.setActiveTargetConfiguration(targetConfiguration);
+		
+		log.println("Root classes in project \"" + project.getName() + "\":");
+		HString[] rootClassNames = Configuration.getRootClassNames();
+		for(int i = 0; i < rootClassNames.length; i++) {
+			log.println("  " + rootClassNames[i]);
+		}
 		
 		try {
 			// Read required classes
 			if(reporter.nofErrors <= 0) {
 				if(dbg) vrb.println("[Launcher] Loading Classfiles");
-				Class.buildSystem(Configuration.getRootClassNames(), Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
+				Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 			}
 			
 			// Initialize compiler components
@@ -260,11 +267,11 @@ public class Launcher implements ICclassFileConsts {
 			}
 			
 			if(reporter.nofErrors > 0) {
-				out.println("Compilation failed with " + reporter.nofErrors + " error(s)");
-				out.println();
+				log.println("Compilation failed with " + reporter.nofErrors + " error(s)");
+				log.println();
 			} else {
-				out.println("Compilation and target image generation successfully finished");
-				out.println();
+				log.println("Compilation and target image generation successfully finished");
+				log.println();
 			}
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -272,6 +279,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void downloadTargetImage() {
+		log.println("Downloading image to target");
 		if(reporter.nofErrors <= 0) {
 			Board b = Configuration.getBoard();
 			TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();

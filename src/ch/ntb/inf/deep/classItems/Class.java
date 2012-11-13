@@ -744,7 +744,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(verbose) vrb.println(">loadClass:");
 		if( (accAndPropFlags & ((1<<dpfClassLoaded)|(1<<dpfSynthetic)) ) == 0 ){// if not yet loaded
 				InputStream inStrm = ClassFileAdmin.getClassFileInputStream(name); // new FileInputStream
-				log.println("Opening class file of class: " + name);
+				//log.println("Opening class file of class: " + name);
 
 				if(inStrm == null){
 					errRep.error(300, name.toString());
@@ -1379,8 +1379,8 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		}
 		
 		releaseLoadingResources();
-		log.printf("number of errors %1$d\n", errRep.nofErrors);
-		log.print("system building ");
+		//log.printf("number of errors %1$d\n", errRep.nofErrors);
+		log.print("System building ");
 		if(errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
