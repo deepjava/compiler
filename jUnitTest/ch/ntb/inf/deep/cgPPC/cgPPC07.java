@@ -19,7 +19,6 @@ public class cgPPC07 extends TestCgPPC {
 		try {
 			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (Class.nofRootClasses > 0) {
@@ -30,7 +29,7 @@ public class cgPPC07 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void emptyIntArray() {
-		CodeGen code = getCode("emptyIntArray");
+		getCode("emptyIntArray");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
@@ -38,7 +37,7 @@ public class cgPPC07 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void intArray() {
-		CodeGen code = getCode("intArray");
+		getCode("intArray");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -53,7 +52,7 @@ public class cgPPC07 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void clinit() {
-		CodeGen code = getCode("<clinit>");
+		getCode("<clinit>");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
@@ -61,7 +60,7 @@ public class cgPPC07 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void init() {
-		CodeGen code = getCode("<init>");
+		getCode("<init>");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}

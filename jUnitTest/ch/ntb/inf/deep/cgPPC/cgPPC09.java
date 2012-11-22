@@ -1,14 +1,10 @@
 package ch.ntb.inf.deep.cgPPC;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.strings.HString;
@@ -23,7 +19,6 @@ public class cgPPC09 extends TestCgPPC {
 		try {
 			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (Class.nofRootClasses > 0) {
@@ -33,7 +28,7 @@ public class cgPPC09 extends TestCgPPC {
 
 	@Test
 	public void m1() {
-		CodeGen code = getCode("m1");
+		getCode("m1");
 		assertTrue("wrong join", checkJoin(getJoin(0), 14, 18, vol, false));
 		for (int i = 1; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
@@ -41,21 +36,21 @@ public class cgPPC09 extends TestCgPPC {
 	
 	@Test
 	public void m2() {
-		CodeGen code = getCode("m2");
+		getCode("m2");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void callm2() {
-		CodeGen code = getCode("callm2");
+		getCode("callm2");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void m3() {
-		CodeGen code = getCode("m3");
+		getCode("m3");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));

@@ -18,7 +18,6 @@ public class cgPPC04 extends TestCgPPC {
 		try {
 			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (Class.nofRootClasses > 0) {
@@ -87,7 +86,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void whileTrueBreak() {
-		CodeGen code = getCode("whileTrueBreak");
+		getCode("whileTrueBreak");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
@@ -158,7 +157,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void whileTrue2() {
-		CodeGen code = getCode("whileTrue2");
+		getCode("whileTrue2");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -483,7 +482,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest17() {
-		CodeGen code = getCode("phiFunctionTest17");
+		getCode("phiFunctionTest17");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -508,7 +507,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest18() {
-		CodeGen code = getCode("phiFunctionTest18");
+		getCode("phiFunctionTest18");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));

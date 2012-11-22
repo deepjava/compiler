@@ -19,7 +19,6 @@ public class cgPPC08 extends TestCgPPC {
 		try {
 			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (Class.nofRootClasses > 0) {
@@ -29,7 +28,7 @@ public class cgPPC08 extends TestCgPPC {
 
 	@Test
 	public void classMethod() {
-		CodeGen code = getCode("classMethod");
+		getCode("classMethod");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 11, vol, false));

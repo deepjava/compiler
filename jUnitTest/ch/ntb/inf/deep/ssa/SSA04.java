@@ -17,7 +17,6 @@ public class SSA04 extends TestSSA {
 		try {
 			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
  		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if(Class.nofRootClasses > 0){
@@ -340,10 +339,12 @@ public class SSA04 extends TestSSA {
 	@Test 
 	public void phiFunctionTest17() {
 		SSANode[] nodes = getAndTestSSA("phiFunctionTest17", 13, 2);
+		testNode(nodes[0], 3, 0, 16);
 	}
 	
 	@Test 
 	public void phiFunctionTest18() {
 		SSANode[] nodes = getAndTestSSA("phiFunctionTest18", 11, 2);
+		testNode(nodes[0], 5, 0, 13);
 	}
 }

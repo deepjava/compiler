@@ -6,12 +6,9 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Project;
-import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.ssa.SSAValue;
-import ch.ntb.inf.deep.ssa.TestSSA;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.strings.HString;
 

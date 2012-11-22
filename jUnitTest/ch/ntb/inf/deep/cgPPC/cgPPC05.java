@@ -18,7 +18,6 @@ public class cgPPC05 extends TestCgPPC {
 		try {
 			Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (Class.nofRootClasses > 0) {
@@ -28,14 +27,14 @@ public class cgPPC05 extends TestCgPPC {
 
 	@Test
 	public void multipleReturns1() {
-		CodeGen code = getCode("multipleReturns1");
+		getCode("multipleReturns1");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void multipleReturns2() {
-		CodeGen code = getCode("multipleReturns2");
+		getCode("multipleReturns2");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
