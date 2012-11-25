@@ -55,17 +55,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 
 	public static final boolean dbg = false; // enable/disable debugging outputs for the linker
-	
-	// Constant block:
-	public static final int cblkConstBlockSizeOffset = 0;
-	public static final int cblkCodeBaseOffset = cblkConstBlockSizeOffset + 4;
-	public static final int cblkCodeSizeOffset = cblkCodeBaseOffset + 4;
-	public static final int cblkVarBaseOffset = cblkCodeSizeOffset + 4;
-	public static final int cblkVarSizeOffset = cblkVarBaseOffset + 4;
-	public static final int cblkClinitAddrOffset = cblkVarSizeOffset + 4;
-	public static final int cblkNofClassPtrsOffset = cblkClinitAddrOffset + 4;
-	public static final int cblkPtrAddr0Offset = cblkNofClassPtrsOffset + 4;
-	
+
 	// Class/type descriptor:
 	public static final int tdSizeOffset = 0;
 	public static final int tdExtensionLevelOffset = tdSizeOffset + 4;
@@ -74,16 +64,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int tdInstPtrOffsetOffset = tdClassNameAddrOffset + 4;
 	public static final int tdBaseClass0Offset = tdInstPtrOffsetOffset + 4;
 	public static int typeTableLength = -1;
-	
-	// System table:
-	public static final int stClassConstOffset = 0;
-	public static final int stStackOffset = stClassConstOffset + 4;
-	public static final int stHeepOffset = stStackOffset + 4;
-	public static final int stKernelClinitAddr = stHeepOffset + 4;
-	public static final int stResetOffset = stKernelClinitAddr + 4;
-	public static final int stSizeToCopy = stResetOffset + 4;
-	public static final int stNofStacks = stSizeToCopy + 4;
-	public static final int stMinSize = 10 * 4;
 	
 	// String pool:
 	public static final int stringHeaderConstSize = 3 * 4;
@@ -99,7 +79,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	// Target image
 	public static TargetMemorySegment targetImage;
 
+	// Constant block:
+	public static int cblkConstBlockSizeOffset;
+	public static int cblkCodeBaseOffset;
+	public static int cblkCodeSizeOffset;
+	public static int cblkVarBaseOffset;
+	public static int cblkVarSizeOffset;
+	public static int cblkClinitAddrOffset;
+	public static int cblkNofClassPtrsOffset;
+	public static int cblkPtrAddr0Offset;
+	
 	// System table
+	public static int stClassConstOffset;
+	public static int stStackOffset;
+	public static int stHeepOffset;
+	public static int stKernelClinitAddr;
+	public static int stResetOffset;
+	public static int stSizeToCopy;
+	public static int stNofStacks;
 	private static int systemTableSize; // TODO remove this, use systemTable.getBlockSize() instead
 	private static BlockItem systemTable;
 	private static Segment[] sysTabSegments;
@@ -137,7 +134,40 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		else {
 			reporter.error(702, "No segment(s) for the systemtable defined!");
 		}
-				
+		
+		if(dbg) vrb.println("  Looking up compiler constants: ");
+		cblkConstBlockSizeOffset = Configuration.getValOfCompConstByName("cblkConstBlockSizeOffset");
+		if(dbg) vrb.println("  - cblkConstBlockSizeOffset = " + cblkConstBlockSizeOffset);
+		cblkCodeBaseOffset = Configuration.getValOfCompConstByName("cblkCodeBaseOffset");
+		if(dbg) vrb.println("  - cblkCodeBaseOffset = " + cblkCodeBaseOffset);
+		cblkCodeSizeOffset = Configuration.getValOfCompConstByName("cblkCodeSizeOffset");
+		if(dbg) vrb.println("  - cblkCodeSizeOffset = " + cblkCodeSizeOffset);
+		cblkVarBaseOffset = Configuration.getValOfCompConstByName("cblkVarBaseOffset");
+		if(dbg) vrb.println("  - cblkVarBaseOffset = " + cblkVarBaseOffset);
+		cblkVarSizeOffset = Configuration.getValOfCompConstByName("cblkVarSizeOffset");
+		if(dbg) vrb.println("  - cblkVarSizeOffset = " + cblkVarSizeOffset);
+		cblkClinitAddrOffset = Configuration.getValOfCompConstByName("cblkClinitAddrOffset");
+		if(dbg) vrb.println("  - cblkClinitAddrOffset = " + cblkClinitAddrOffset);
+		cblkNofClassPtrsOffset = Configuration.getValOfCompConstByName("cblkNofClassPtrsOffset");
+		if(dbg) vrb.println("  - cblkNofClassPtrsOffset = " + cblkNofClassPtrsOffset);
+		cblkPtrAddr0Offset = Configuration.getValOfCompConstByName("cblkPtrAddr0Offset");
+		if(dbg) vrb.println("  - cblkPtrAddr0Offset = " + cblkPtrAddr0Offset);
+		
+		stClassConstOffset = Configuration.getValOfCompConstByName("stClassConstOffset");
+		if(dbg) vrb.println("  - stClassConstOffset = " + stClassConstOffset);
+		stStackOffset = Configuration.getValOfCompConstByName("stStackOffset");
+		if(dbg) vrb.println("  - stStackOffset = " + stStackOffset);
+		stHeepOffset = Configuration.getValOfCompConstByName("stHeepOffset");
+		if(dbg) vrb.println("  - stHeepOffset = " + stHeepOffset);
+		stKernelClinitAddr = Configuration.getValOfCompConstByName("stKernelClinitAddr");
+		if(dbg) vrb.println("  - stKernelClinitAddr = " + stKernelClinitAddr);
+		stResetOffset = Configuration.getValOfCompConstByName("stResetOffset");
+		if(dbg) vrb.println("  - stResetOffset = " + stResetOffset);
+		stSizeToCopy = Configuration.getValOfCompConstByName("stSizeToCopy");
+		if(dbg) vrb.println("  - stSizeToCopy = " + stSizeToCopy);
+		stNofStacks = Configuration.getValOfCompConstByName("stNofStacks");
+		if(dbg) vrb.println("  - stNofStacks = " + stNofStacks);
+		
 		if(dbg) vrb.println("  Deleting old target image... ");
 		targetImage = null;
 		

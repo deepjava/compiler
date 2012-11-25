@@ -167,10 +167,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			sMemorysectorArray = g10 + 17,
 			sSystem = g10 + 18,
 			sProgrammer = g10 + 19,
-			sProgrammerOpts = g10 + 20;
+			sProgrammerOpts = g10 + 20,
+			sCompiler = g10 + 21;
 	
 	// -------- Designator, IntNumber,
-	private static final short g11 = g10 + 21,
+	private static final short g11 = g10 + 22,
 			sDesignator = g11,
 			sNumber = g11 + 1;
 	
@@ -276,6 +277,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 //		while (sym != sEndOfFile && reporter.nofErrors <= 0) {
 		while (sym != sEndOfFile) {
 			switch (sym) {
+			case sCompiler:
+				compiler();
+				break;
+//			case sArch:
+//				arch();
+//				break;
 			case sBoard:
 				board();
 				break;
@@ -293,7 +300,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				break;
 			default:
 				nOfErrors++;
-				reporter.error(errUnexpectetSymExp,	"in " + currentFileName+ " at Line " + lineNumber + " expectet symbol: board | cpu | programmer | operating system, received symbol: " + symToString());
+				reporter.error(errUnexpectetSymExp,	"in " + currentFileName+ " at Line " + lineNumber + " expectet symbol: compiler | board | cpu | programmer | operating system, received symbol: " + symToString());
 				next();
 			}
 		}
@@ -393,6 +400,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			if (str.equals("code")) {
 				sym = sCode;
 				return true;
+			} else if (str.equals("compiler")) {
+					sym = sCompiler;
+					return true;
 			} else if (str.equals("const")) {
 				sym = sConst;
 				return true;
@@ -966,6 +976,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "ostype";
 		case sMeta:
 			return "meta";
+		case sCompiler:
+			return "compiler";
 		case sBoard:
 			return "board";
 		case sCpu:
@@ -1043,6 +1055,29 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		next();
 		versionAssignment();
 		fileDescAssignment();
+		if (sym != sRBrace) {
+			nOfErrors++;
+			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
+			return;
+		}
+		next();
+	}
+	
+	private void compiler() {
+		if (sym != sCompiler) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: compiler, received symbol: " + symToString());
+			return;
+		}
+		next();
+		if (sym != sLBrace) {
+			nOfErrors++;
+			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
+			return;
+		}
+		next();
+		currentConsts = Configuration.compilerConstants;
+		sysconst(currentConsts);
 		if (sym != sRBrace) {
 			nOfErrors++;
 			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);

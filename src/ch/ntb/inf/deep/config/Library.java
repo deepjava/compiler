@@ -52,12 +52,13 @@ public class Library extends ConfigElement implements ErrorCodes {
 	
 	public void readConfig() {
 		if(!isJarFile) { // config files inside of jar files are not allowed
-			File[] configDir = new File[5];
-			configDir[0] = new File(path.getPath() + "/config/base");
-			configDir[1] = new File(path.getPath() + "/config/cpus");
-			configDir[2] = new File(path.getPath() + "/config/boards");
-			configDir[3] = new File(path.getPath() + "/config/operatingsystems");
-			configDir[4] = new File(path.getPath() + "/config/programmers");
+			File[] configDir = {
+				new File(path.getPath() + "/config/base"),
+				new File(path.getPath() + "/config/arch"),
+				new File(path.getPath() + "/config/cpus"),
+				new File(path.getPath() + "/config/boards"),
+				new File(path.getPath() + "/config/operatingsystems"),
+				new File(path.getPath() + "/config/programmers")};
 			String[] configFileNames;
 			File cfgFile = null;
 			Parser cfgFileParser = null;
