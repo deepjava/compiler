@@ -62,9 +62,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	public static Library libs; // list of all available libraries
 	public static Project projects; // list of all open projects
 	private static Project activeProject; // the currently active project
-	
-	protected static Constants compilerConstants = new Constants("compiler constants", true);
-	
+		
 	public static Library addLibrary(HString path) {
 		if(dbg) vrb.println("[CONF] Configuration: adding Library " + path);
 		Library lib;
@@ -528,7 +526,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	
 	public static Register getRegiststerByName(String regName) {
 		if(activeProject.getBoard() != null) {
-			return activeProject.getBoard().getCPU().getRegisterMap().getRegister(regName);
+			return activeProject.getBoard().getCPU().getRegisterByName(regName);
 		}
 		return null;
 	}
@@ -541,7 +539,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 	
 	public static int getValOfCompConstByName(String jname) {
-		return compilerConstants.getValueOfConstant(jname);
+		return activeProject.getValOfCompConstByName(jname);
 	}
 	
 	protected static boolean setActiveTargetConfig(HString targetConfigName) {

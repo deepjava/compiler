@@ -238,6 +238,17 @@ public class Project extends ConfigElement {
 		return this.projectFile.getParentFile();
 	}
 	
+	public int getValOfCompConstByName(String jname) {
+		HString name = HString.getRegisteredHString(jname);
+		int i = 0;
+		ValueAssignment val = null;
+		while(val == null && i < lib.length) {
+			val = lib[i].getCompConstByName(name);
+			i++;
+		}		
+		return val.getValue(); 
+	}
+	
 	/* debug primitives */
 	public void println(int indentLevel) {
 		indent(indentLevel);

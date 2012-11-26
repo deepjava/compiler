@@ -23,11 +23,11 @@ public class RegisterInitList implements ErrorCodes {
 			System.out.println("ERROR, Can not add register init for register " + registerName + " because cpu is not set!"); // TODO improve this
 			return;
 		}
-		if(cpu.registermap == null) {
-			System.out.println("ERROR, Can not add register init for register " + registerName + " because register map of cpu " + cpu.getName() + " is not set!"); // TODO improve this
-			return;
-		}		
-		Register reg = cpu.registermap.getRegister(registerName);
+//		if(cpu.registermap == null) {
+//			System.out.println("ERROR, Can not add register init for register " + registerName + " because register map of cpu " + cpu.getName() + " is not set!"); // TODO improve this
+//			return;
+//		}		
+		Register reg = cpu.getRegisterByName(registerName);
 		if(reg == null) {
 			ErrorReporter.reporter.error(errNoSuchRegister, registerName);
 			return;
@@ -39,7 +39,7 @@ public class RegisterInitList implements ErrorCodes {
 			RegisterInit regInit = regInits.getRegisterInitByRegister(reg);
 			if(regInit != null) {
 				regInit.setInitValue(value);
-				//TODO add warning here!!!
+				System.out.println("[WARNING] Overriding initial value for rgister " + reg.getName() + "!"); // TODO improve this
 			}
 			else {
 				regInits.append(new RegisterInit(reg, value));

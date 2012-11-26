@@ -127,7 +127,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			sRepr = g9 + 16,
 			sLibPath = g9 + 17,
 			sBoardType = g9 + 18,
-			sArch = g9 +19,
+			sCpuArch = g9 +19,
 			sLowlevel = g9 + 20,
 			sClass = g9 + 21,
 			sId = g9 + 22,
@@ -168,10 +168,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			sSystem = g10 + 18,
 			sProgrammer = g10 + 19,
 			sProgrammerOpts = g10 + 20,
-			sCompiler = g10 + 21;
+			sCompiler = g10 + 21,
+			sArch = g10 + 22;
 	
 	// -------- Designator, IntNumber,
-	private static final short g11 = g10 + 22,
+	private static final short g11 = g10 + 23,
 			sDesignator = g11,
 			sNumber = g11 + 1;
 	
@@ -280,9 +281,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			case sCompiler:
 				compiler();
 				break;
-//			case sArch:
-//				arch();
-//				break;
+			case sArch:
+				arch();
+				break;
 			case sBoard:
 				board();
 				break;
@@ -408,6 +409,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				return true;
 			} else if (str.equals("cpu")) {
 				sym = sCpu;
+				return true;
+			} else if (str.equals("cpuarch")) {
+				sym = sCpuArch;
 				return true;
 			} else if (str.equals("cputype")) {
 				sym = sCpuType;
@@ -946,8 +950,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "libpath";
 		case sBoardType:
 			return "boardtype";
-		case sArch:
-			return "arch";
+		case sCpuArch:
+			return "cpuarch";
 		case sLowlevel:
 			return "lowlevel";
 		case sClass:
@@ -978,6 +982,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "meta";
 		case sCompiler:
 			return "compiler";
+		case sArch:
+			return "arch";
 		case sBoard:
 			return "board";
 		case sCpu:
@@ -1076,7 +1082,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return;
 		}
 		next();
-		currentConsts = Configuration.compilerConstants;
+		currentConsts = currentLib.getCompilerConstants();
 		sysconst(currentConsts);
 		if (sym != sRBrace) {
 			nOfErrors++;
@@ -1086,6 +1092,41 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		next();
 	}
 
+	private void arch() {
+		if (sym != sArch) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: arch, received symbol: " + symToString());
+			return;
+		}
+		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering arch section");
+		next();
+		if(sym != sDesignator) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
+			return;
+		}
+		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting arch name to: " + strBuffer);
+		Arch a = currentLib.addArch(strBuffer); 
+		next();
+		if (sym != sLBrace) {
+			nOfErrors++;
+			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
+			return;
+		}
+		next();
+		while(sym == sRegistermap) {
+			if(sym == sRegistermap) {
+				registermap(a);
+			}
+		}
+		if (sym != sRBrace) {
+			nOfErrors++;
+			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
+			return;
+		}
+		next();
+	}
+	
 	private void board() {
 		if(sym != sBoard) {
 			nOfErrors++;
@@ -1169,16 +1210,20 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return;
 		}
 		next();
-		while(sym == sDescription || sym == sArch || sym == sSysConst || sym == sMemorymap || sym == sRegistermap || sym == sReginit) {
+		while(sym == sDescription || sym == sCpuArch || sym == sSysConst || sym == sMemorymap || sym == sRegistermap || sym == sReginit) {
 			if(sym == sDescription) {
 				String description = descriptionAssignment();
 				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
 				cpu.setDescription(description);
 			}
-			else if(sym == sArch) {
-				String arch = archAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting arch to " + arch);
-				cpu.setArch(arch);
+			else if(sym == sCpuArch) {
+				String archName = archAssignment();
+				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting cpuarch to " + archName);
+				Arch cpuArch = currentLib.getArchByName(archName);
+				if(cpuArch == null) {
+					cpuArch = currentLib.addArch(archName);
+				}
+				cpu.setArch(cpuArch);
 			}
 			else if(sym == sSysConst) {
 				sysconst(cpu.sysConstants);
@@ -2044,6 +2089,32 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		next();
 	}
 	
+	private void registermap(Arch arch) {
+		if (sym != sRegistermap) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: registermap, received symbol: " + symToString());
+			return;
+		}
+		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering registermap section");
+		next();
+		if (sym != sLBrace) {
+			nOfErrors++;
+			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
+			return;
+		}
+		arch.registermap = new RegisterMap();
+		next();
+		while (sym == sRegister) {
+			arch.registermap.addRegister(register());
+		}
+		if (sym != sRBrace) {
+			nOfErrors++;
+			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
+			return;
+		}
+		next();
+	}
+	
 	private void targetconfiguration(Board b) {
 		if (sym != sTargetConf) {
 			nOfErrors++;
@@ -2662,9 +2733,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 
 	private String archAssignment() {
 		String s;
-		if (sym != sArch) {
+		if (sym != sCpuArch) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: arch, received symbol: " + symToString());
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: cpuarch, received symbol: " + symToString());
 			return "";
 		}
 		next();

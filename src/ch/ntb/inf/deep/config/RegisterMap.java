@@ -21,10 +21,10 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.host.ErrorReporter;
-import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class RegisterMap implements ErrorCodes {
+	
 	int nofGprs = 0;
 	Register gpr;
 	int nofFprs = 0;
@@ -38,36 +38,50 @@ public class RegisterMap implements ErrorCodes {
 	Register fpscr;
 
 	
-	public Register getRegister(HString registername){
+	protected Register getRegisterByName(HString registername){
 		Register r;
 		
-		r = (Register)spr.getElementByName(registername);
-		if(r != null) return r;
+		if(spr != null) {
+			r = (Register)spr.getElementByName(registername);
+			if(r != null) return r;
+		}
 		
-		r = (Register)ior.getElementByName(registername);
-		if(r != null) return r;
+		if(ior != null) {
+			r = (Register)ior.getElementByName(registername);
+			if(r != null) return r;
+		}
 		
-		r = (Register)fpscr.getElementByName(registername);
-		if(r != null) return r;
+		if(fpscr != null) {
+			r = (Register)fpscr.getElementByName(registername);
+			if(r != null) return r;
+		}
 		
-		r = (Register)cr.getElementByName(registername);
-		if(r != null) return r;
+		if(cr != null) {
+			r = (Register)cr.getElementByName(registername);
+			if(r != null) return r;
+		}
 		
-		r = (Register)msr.getElementByName(registername);
-		if(r != null) return r;
+		if(msr != null) {
+			r = (Register)msr.getElementByName(registername);
+			if(r != null) return r;
+		}
 		
-		r = (Register)gpr.getElementByName(registername);
-		if(r != null) return r;
+		if(gpr != null) {
+			r = (Register)gpr.getElementByName(registername);
+			if(r != null) return r;
+		}
 
-		r = (Register)fpr.getElementByName(registername);
-		if(r != null) return r;
+		if(fpr != null) {
+			r = (Register)fpr.getElementByName(registername);
+			if(r != null) return r;
+		}
 		
 		//register not found
 		return null;
 	}
 	
-	public Register getRegister(String jname) {
-		return getRegister(HString.getRegisteredHString(jname));
+	protected Register getRegisterByName(String jname) {
+		return getRegisterByName(HString.getRegisteredHString(jname));
 	}
 
 	private boolean addGprRegister(Register reg) {
@@ -134,7 +148,7 @@ public class RegisterMap implements ErrorCodes {
 		fpscr = reg;
 	}
 
-	public boolean addRegister(Register reg) {
+	protected boolean addRegister(Register reg) {
 		// TODO if a register init is set before all register was set we have to
 		// check and merge
 		if (reg.type == Parser.sGPR) {
@@ -168,84 +182,47 @@ public class RegisterMap implements ErrorCodes {
 		}
 	}
 
-	public Register getGprRegisters() {
+	protected Register getGprRegisters() {
 		return gpr;
 	}
 
-	public Register getFprRegisters() {
+	protected Register getFprRegisters() {
 		return fpr;
 	}
 
-	public Register getSprRegisters() {
+	protected Register getSprRegisters() {
 		return spr;
 	}
 	
-	public Register getIorRegisters() {
+	protected Register getIorRegisters() {
 		return ior;
 	}
 	
-	public Register getMSR() {
+	protected Register getMSR() {
 		return msr;
 	}
 	
-	public Register getCR() {
+	protected Register getCR() {
 		return cr;
 	}
 	
-	public Register getFpscr() {
+	protected Register getFpscr() {
 		return fpscr;
 	}
 	
-	public int getNofGprs() {
+	protected int getNofGprs() {
 		return nofGprs;
 	}
 
-	public int getNofFprs() {
+	protected int getNofFprs() {
 		return nofFprs;
 	}
 	
-	public int getNofSprs() {
+	protected int getNofSprs() {
 		return nofSprs;
 	}
 	
-	public int getNofIors() {
+	protected int getNofIors() {
 		return nofIors;
-	}
-	public void println(int indentLevel) {
-		for (int i = indentLevel; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("registermap {");
-
-		msr.println(indentLevel + 1);
-
-		cr.println(indentLevel + 1);
-
-		Register current = gpr;
-		while (current != null) {
-			current.println(indentLevel + 1);
-			current = (Register)current.next;
-		}
-		fpscr.println(indentLevel + 1);
-		current = fpr;
-		while (current != null) {
-			current.println(indentLevel + 1);
-			current = (Register)current.next;
-		}
-		current = spr;
-		while (current != null) {
-			current.println(indentLevel + 1);
-			current = (Register)current.next;
-		}
-		current = ior;
-		while (current != null) {
-			current.println(indentLevel + 1);
-			current = (Register)current.next;
-		}
-
-		for (int i = indentLevel; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
 	}
 }

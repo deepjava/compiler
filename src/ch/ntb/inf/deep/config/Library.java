@@ -28,10 +28,12 @@ import ch.ntb.inf.deep.strings.HString;
 public class Library extends ConfigElement implements ErrorCodes {
 	
 	private File path;
+	private Arch archs; // list with all CPU architectures in the library
+	private CPU cpus; // list with all CPUs defined in this library
 	private Board boards; // list with all boards defined in this library
-	private CPU cpus; // list with all cpus defined in this library
 	private OperatingSystem operatingsystems; // list with all operating systems defined in this library
 	private Programmer programmers; // list with all programmers defined in this library
+	private Constants compilerConstants = new Constants("compiler constants", true);
 	private boolean isJarFile;
 	
 	public Library(HString path) {
@@ -120,6 +122,29 @@ public class Library extends ConfigElement implements ErrorCodes {
 			}
 		}
 		return c;
+	}
+	
+	public Arch addArch(String jname) {
+		if(Configuration.dbg) StdStreams.vrb.println("[CONF] Library: adding archtecture " + jname);
+		Arch a;
+		if(archs == null) {
+			if(Configuration.dbg) StdStreams.vrb.println("  Adding first architecture");
+			archs = new Arch(jname);
+			a = archs;
+		}
+		else {
+			if(Configuration.dbg) StdStreams.vrb.print("  Looking for architecture with name " + jname);
+			a = (Arch)archs.getElementByName(jname);
+			if(a == null) {
+				if(Configuration.dbg) StdStreams.vrb.println(" -> not found -> adding new architecture");
+				a = new Arch(jname);
+				archs.append(a);
+			}
+			else {
+				if(Configuration.dbg) StdStreams.vrb.println(" -> found -> nothing to do");
+			}
+		}
+		return a;
 	}
 	
 	public Programmer addProgrammer(String jname) {
@@ -251,6 +276,14 @@ public class Library extends ConfigElement implements ErrorCodes {
 	public CPU getCpuByName(HString name) {
 		return (CPU)cpus.getElementByName(name);
 	}
+	
+	public Arch getArchByName(String jname) {
+		return (Arch)archs.getElementByName(jname);
+	}
+	
+	public Arch getArchByName(HString name) {
+		return (Arch)archs.getElementByName(name);
+	}
 		
 	public String getPathAsString() {
 		return path.getPath();
@@ -259,5 +292,12 @@ public class Library extends ConfigElement implements ErrorCodes {
 	public File getPath() {
 		return path;
 	}
+	
+	public ValueAssignment getCompConstByName(HString name) {
+		return compilerConstants.getConstantByName(name);
+	}
 
+	protected Constants getCompilerConstants() {
+		return compilerConstants;
+	}
 }

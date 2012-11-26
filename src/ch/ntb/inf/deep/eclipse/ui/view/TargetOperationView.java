@@ -60,6 +60,7 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.NamedConst;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
@@ -452,7 +453,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			op.errorMsg = "";
 			String param = String.valueOf(value);
 			if(choice[op.operation].equals("Register")){
-				HString register = HString.getHString(param.toUpperCase());
+				HString register = HString.getRegisteredHString(param.toUpperCase());
 				readFromRegister(op, register);				
 			}else if(choice[op.operation].equals("Variable")){
 				if(!param.equals("")){
@@ -711,7 +712,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			op.errorMsg = "";
 			if(choice[op.operation].equals("Register")){
 				if(((OperationObject)element).registerType != -1){
-					readFromRegister(op, HString.getHString(op.description));						
+					readFromRegister(op, HString.getRegisteredHString(op.description));						
 				}
 			}else if(choice[op.operation].equals("Variable")){
 				readVariable(op,op.description);
@@ -964,84 +965,19 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 	
-	private void readFromRegister(OperationObject op, HString register){		
-		RegisterMap regMap = Configuration.getActiveProject().getBoard().getCPU().getRegisterMap();
+	private void readFromRegister(OperationObject op, HString registerName) {
 		boolean found = false;
-		
-		Register current = regMap.getCR();
-		if(current != null && current.getName().equals(register)){
-			op.registerSize = current.getSize();
-			op.registerType = current.getType();
-			op.addr = current.getAddress();
-			op.description = register.toString();
+		CPU cpu = Configuration.getActiveProject().getBoard().getCPU();
+		Register reg = null;
+		if(cpu != null) reg = cpu.getRegisterByName(registerName); 
+		if(reg != null) {
+			op.registerSize = reg.getSize();
+			op.registerType = reg.getType();
+			op.addr = reg.getAddress();
+			op.description = registerName.toString();
 			found = true;
 		}
 		
-		current = regMap.getFpscr();
-		if(!found && current != null && current.getName().equals(register)){
-			op.registerSize = current.getSize();
-			op.registerType = current.getType();
-			op.addr = current.getAddress();
-			op.description = register.toString();		
-			found = true;
-		}
-		
-		current = regMap.getMSR();
-		if(!found && current != null && current.getName().equals(register)){
-			op.registerSize = current.getSize();
-			op.registerType = current.getType();
-			op.addr = current.getAddress();
-			op.description = register.toString();		
-			found = true;
-		}
-		
-		current = regMap.getGprRegisters();
-		while(!found && current != null){
-			if(current.getName().equals(register)){
-				op.registerSize = current.getSize();
-				op.registerType = current.getType();
-				op.addr = current.getAddress();
-				op.description = register.toString();		
-				found = true;
-			}
-			current = (Register)current.next;
-		}
-		
-		current = regMap.getFprRegisters();
-		while(!found && current != null){
-			if(current.getName().equals(register)){
-				op.registerSize = current.getSize();
-				op.registerType = current.getType();
-				op.addr = current.getAddress();
-				op.description = register.toString();		
-				found = true;
-			}
-			current = (Register)current.next;
-		}
-		
-		current = regMap.getSprRegisters();
-		while(!found && current != null){
-			if(current.getName().equals(register)){
-				op.registerSize = current.getSize();
-				op.registerType = current.getType();
-				op.addr = current.getAddress();
-				op.description = register.toString();		
-				found = true;
-			}
-			current = (Register)current.next;
-		}
-		
-		current = regMap.getIorRegisters();
-		while(!found && current != null){
-			if(current.getName().equals(register)){
-				op.registerSize = current.getSize();
-				op.registerType = current.getType();
-				op.addr = current.getAddress();
-				op.description = register.toString();		
-				found = true;
-			}
-			current = (Register)current.next;
-		}
 		if(found){
 			boolean wasFreezeAsserted;
 			TargetConnection bdi = Launcher.getTargetConnection();

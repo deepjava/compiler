@@ -279,7 +279,6 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void downloadTargetImage() {
-		log.println("Downloading image to target");
 		if(reporter.nofErrors <= 0) {
 			Board b = Configuration.getBoard();
 			TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
@@ -300,7 +299,7 @@ public class Launcher implements ICclassFileConsts {
 					tc.initRegisters(b.getCpuRegisterInits());
 					tc.initRegisters(b.getBoardRegisterInits());
 					tc.initRegisters(targetConfig.getRegisterInits());
-					for(int i = 0; i < b.getCPU().getRegisterMap().getNofGprs(); i++) {
+					for(int i = 0; i < b.getCPU().getNofGPRs(); i++) {
 						tc.setGprValue(i, 0);
 					}
 					vrb.println("Downloading target image:");
@@ -505,33 +504,26 @@ public class Launcher implements ICclassFileConsts {
 				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
 				current = (ValueAssignment)current.next;
 			}
+			Register[] reg;
 			fw.write("\n\t// Registermap GPR\n");
-			Register reg = b.getCPU().getRegisterMap().getGprRegisters();
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.getAddress()) + ";\n");
-				reg = (Register)reg.next;
+			reg = b.getCPU().getAllGPRs();
+			for(int i = 0; i < reg.length; i++) {
+				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x" + Integer.toHexString(reg[i].getAddress()) + ";\n");
 			}
 			fw.write("\n\t// Registermap FPR\n");
-			reg = b.getCPU().getRegisterMap().getFprRegisters();
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.getAddress()) + ";\n");
-				reg = (Register)reg.next;
+			reg = b.getCPU().getAllFPRs();
+			for(int i = 0; i < reg.length; i++) {
+				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x"	+ Integer.toHexString(reg[i].getAddress()) + ";\n");
 			}
 			fw.write("\n\t// Registermap SPR\n");
-			reg = b.getCPU().getRegisterMap().getSprRegisters();
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.getAddress()) + ";\n");
-				reg = (Register)reg.next;
+			reg = b.getCPU().getAllSPRs();
+			for(int i = 0; i < reg.length; i++) {
+				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x"	+ Integer.toHexString(reg[i].getAddress()) + ";\n");
 			}
 			fw.write("\n\t// Registermap IOR\n");
-			reg = b.getCPU().getRegisterMap().getIorRegisters();
-			while (reg != null) {
-				fw.write("\tpublic static final int " + reg.getName() + " = 0x"
-						+ Integer.toHexString(reg.getAddress()) + ";\n");
-				reg = (Register)reg.next;
+			reg = b.getCPU().getAllIORs();
+			for(int i = 0; i < reg.length; i++) {
+				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x"	+ Integer.toHexString(reg[i].getAddress()) + ";\n");
 			}
 			fw.write("}");
 			fw.flush();

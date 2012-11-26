@@ -75,6 +75,10 @@ public class Constants implements ErrorCodes {
 		return consts;
 	}
 	
+	public ValueAssignment getConstantByName(HString name) {
+		return (ValueAssignment)consts.getElementByName(name);
+	}
+	
 	public int getValueOfConstant(HString name) {
 		if(consts != null) {
 			ValueAssignment c = (ValueAssignment)consts.getElementByName(name);
