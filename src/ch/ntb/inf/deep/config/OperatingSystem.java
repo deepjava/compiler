@@ -212,7 +212,7 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts 
 		for (int i = indentLevel; i > 0; i--) {
 			StdStreams.vrb.print("  ");
 		}
-		StdStreams.out.println("}");
+		StdStreams.vrb.println("}");
 	}
 
 	private void addClass(SystemClass clazz) {

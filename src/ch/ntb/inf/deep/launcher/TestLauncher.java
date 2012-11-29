@@ -12,7 +12,7 @@ import ch.ntb.inf.deep.linker.Linker32;
  */
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("M:/EUser/JCC/deep/555ExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("C:/Users/Urs/Checkout/JCC/deep/555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/deep/555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/deep/5200ExampleProject.deep", "BootFromRam");
 		

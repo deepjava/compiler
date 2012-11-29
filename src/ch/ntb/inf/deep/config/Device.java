@@ -167,7 +167,7 @@ public class Device extends ConfigElement implements ErrorCodes{
 		for (int i = indentLevel; i > 0; i--) {
 			StdStreams.vrb.print("  ");
 		}
-		StdStreams.out.println("}");
+		StdStreams.vrb.println("}");
 	}
 	
 	public String toString(){

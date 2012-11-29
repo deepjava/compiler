@@ -54,23 +54,6 @@ public class Branch extends SSAInstruction {
 	}
 
 	@Override
-	public void print(int level) {
-		for (int i = 0; i < level*3; i++) StdStreams.out.print(" ");
-		StdStreams.vrb.print(result.n + ": ");
-		if (operands == null)
-			StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] ");
-		else {
-			if (operands.length == 2)
-				StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + "}");
-			else
-				StdStreams.vrb.print("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
-		}
-		StdStreams.vrb.print(" (" + result.typeName() + ")");
-		StdStreams.vrb.println();
-
-	}
-	
-	@Override
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append(result.n + ": ");

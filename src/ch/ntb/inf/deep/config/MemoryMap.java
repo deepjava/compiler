@@ -148,7 +148,7 @@ public class MemoryMap extends ConfigElement implements IAttributes, ErrorCodes 
 		for (int i = indentLevel; i > 0; i--) {
 			StdStreams.vrb.print("  ");
 		}
-		StdStreams.out.println("}");
+		StdStreams.vrb.println("}");
 
 	}
 

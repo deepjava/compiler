@@ -41,11 +41,6 @@ public class NoOpnd extends SSAInstruction {
 	public void setOperands(SSAValue[] operands) {
 		//return immediately
 	}
-	@Override
-	public void print(int level) {
-		for (int i = 0; i < level*3; i++) StdStreams.vrb.print(" ");
-		StdStreams.vrb.println(toString());
-	}
 
 	@Override
 	public String toString() {

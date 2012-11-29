@@ -282,7 +282,7 @@ public class Project extends ConfigElement {
 		StdStreams.vrb.println(";");
 		
 		indent(indentLevel);
-		StdStreams.out.println("}");
+		StdStreams.vrb.println("}");
 	}
 	
 	private void indent(int indentLevel) {

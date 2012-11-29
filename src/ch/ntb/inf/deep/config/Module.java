@@ -88,6 +88,6 @@ public class Module extends ConfigElement {
 			}
 			current = current.next;
 		}
-		StdStreams.out.println(";");		
+		StdStreams.vrb.println(";");		
 	}
 }

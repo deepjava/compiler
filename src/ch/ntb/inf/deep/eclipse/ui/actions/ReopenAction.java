@@ -54,7 +54,7 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 		try {
 			Thread.sleep(500);//Give OS time 
 			tc.openConnection();
-			StdStreams.out.println("Device succesfully reopened");
+			StdStreams.log.println("Device succesfully reopened");
 		} catch (TargetConnectionException e) {
 			tc.closeConnection();
 			ErrorReporter.reporter.error(TargetConnection.errReopenFailed);

@@ -20,6 +20,7 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
+import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
@@ -34,6 +35,10 @@ public abstract class SSAInstruction implements SSAInstructionMnemonics {
 	
 	public abstract void setOperands(SSAValue[] operands);
 	public abstract SSAValue[] getOperands();
-	public abstract void print(int level);
-	
+
+	public void print(int level) {
+		StdStreams.vrbPrintIndent(level);
+		StdStreams.vrb.println(toString());
+	}
+
 }

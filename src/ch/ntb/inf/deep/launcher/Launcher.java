@@ -56,7 +56,7 @@ public class Launcher implements ICclassFileConsts {
 	private static final boolean dbg = false;
 	
 	private static ErrorReporter reporter = ErrorReporter.reporter;
-	private static PrintStream log = StdStreams.vrb;
+	private static PrintStream log = StdStreams.log;
 	private static PrintStream vrb = StdStreams.vrb;
 	private static TargetConnection tc;
 

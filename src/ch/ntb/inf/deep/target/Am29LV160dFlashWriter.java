@@ -46,7 +46,7 @@ public class Am29LV160dFlashWriter {
 				bdi.writeWord(seg.startAddress, 0x05000500);
 				bdi.writeWord(seg.startAddress + i * 4, seg.data[i]);	
 				if(i % 200 == 0){
-					StdStreams.out.print(".");
+					StdStreams.log.print(".");
 				}
 			} catch (TargetConnectionException e) {
 				ErrorReporter.reporter.error(TargetConnection.errProgrammFailed);
@@ -57,7 +57,7 @@ public class Am29LV160dFlashWriter {
 	}
 
 	public void eraseDevice(Device dev) {
-		StdStreams.out.println("erasing device " + dev.getName().toString());
+		StdStreams.log.println("erasing device " + dev.getName().toString());
 		try {
 			bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
 			bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
@@ -76,7 +76,7 @@ public class Am29LV160dFlashWriter {
 		Memorysector current = dev.sector;
 		while (current != null){
 			if(current.used){
-				StdStreams.out.println("erasing " + dev.getName().toString() + " sector " + current.getName().toString());
+				StdStreams.log.println("erasing " + dev.getName().toString() + " sector " + current.getName().toString());
 				try {
 					bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
 					bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
@@ -104,11 +104,11 @@ public class Am29LV160dFlashWriter {
 			count++;
 			if(count > 150){
 				count = 0;
-				StdStreams.out.print(".");
+				StdStreams.log.print(".");
 			}
 			currentTime = System.currentTimeMillis();
 		} while(data != expData && endTime > currentTime); 
-		StdStreams.out.println();
+		StdStreams.log.println();
 	}
 	
 	public void unlockBypass(Device dev, boolean unlock){
