@@ -20,7 +20,7 @@
 
 package ch.ntb.inf.deep.classItems;
 
-import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class StdConstant extends Constant {

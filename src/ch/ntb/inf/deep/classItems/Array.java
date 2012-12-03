@@ -21,7 +21,7 @@
 package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.config.Segment;
-import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.linker.BlockItem;
 import ch.ntb.inf.deep.strings.HString;
 

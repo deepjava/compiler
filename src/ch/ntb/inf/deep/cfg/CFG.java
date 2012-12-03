@@ -21,8 +21,8 @@
 package ch.ntb.inf.deep.cfg;
 
 import ch.ntb.inf.deep.classItems.*;
-import ch.ntb.inf.deep.debug.ICjvmInstructionOpcsAndMnemonics;
 import ch.ntb.inf.deep.host.ErrorReporter;
+import ch.ntb.inf.deep.host.ICjvmInstructionMnemonics;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSANode;
 
@@ -35,7 +35,7 @@ import ch.ntb.inf.deep.ssa.SSANode;
  * @author buesser 23.2.2010
  * Urs Graf 27.2.2011, wide corrected
  */
-public class CFG implements ICjvmInstructionOpcsAndMnemonics {
+public class CFG implements ICjvmInstructionMnemonics {
 	private static final boolean dbg = false;
 
 	/**

@@ -18,7 +18,7 @@
  * 
  */
 
-package ch.ntb.inf.deep.debug;
+package ch.ntb.inf.deep.host;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 
@@ -64,7 +64,6 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 			"|Cmark|Fconst", // 20 constant field, marked class
 			"|Cextended|FreadAccess", // 21 class has extensions | one or more read accesses to this field
 			"writeAccess", // 22 one or more write accesses to this item
-			//"Synthetic", //31 synthetic field or method (items not in source text
 
 			//--- method flags:
 			"command", //23 method is a command, i.e. this method is invoked by an outside client

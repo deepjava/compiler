@@ -22,7 +22,7 @@ package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.CodeGen;
-import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 

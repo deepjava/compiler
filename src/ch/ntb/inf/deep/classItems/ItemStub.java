@@ -20,14 +20,10 @@
 
 package ch.ntb.inf.deep.classItems;
 
-import ch.ntb.inf.deep.debug.Dbg;
+import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class ItemStub extends Item {
-//	public Item next;
-//	public HString name; // name of the field or method 
-//	public Item type; // type of the field, null for method
-//	public int accAndPropFlags; // 0
 	public Class owner; // provisional owner of the field or method
 	public HString descriptor; // descriptor of the method, null for fields
 

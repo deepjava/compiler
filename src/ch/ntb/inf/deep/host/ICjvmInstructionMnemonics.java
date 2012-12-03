@@ -18,11 +18,11 @@
  * 
  */
 
-package ch.ntb.inf.deep.debug;
+package ch.ntb.inf.deep.host;
 
 import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 
-public interface ICjvmInstructionOpcsAndMnemonics extends ICjvmInstructionOpcs{
+public interface ICjvmInstructionMnemonics extends ICjvmInstructionOpcs{
 	String[] bcAttributes = { // index = bcapX - bcapBase
 		"Branch",
 		"CondBranch",

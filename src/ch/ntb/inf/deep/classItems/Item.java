@@ -44,7 +44,7 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 	public HString name; // the key string for any item
 
 	public Item type; // base type for objects of "Class" or "Type" or null
-	public int accAndPropFlags; // access and property flags (see ClassFileConsts)
+	public int accAndPropFlags; // access and property flags (see ICclassFileConsts)
 	
 	public int offset = -1;
 	public int address = -1; // the absolute address of this item on the target

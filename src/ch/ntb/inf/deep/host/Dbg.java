@@ -18,19 +18,18 @@
  * 
  */
 
-package ch.ntb.inf.deep.debug;
+package ch.ntb.inf.deep.host;
 
 import java.io.PrintStream;
 
-import ch.ntb.inf.deep.host.StdStreams;
 
 
-public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConstsAndMnemonics {
+public class Dbg implements  ICjvmInstructionMnemonics, ICclassFileConstsAndMnemonics {
 	public static PrintStream vrb = StdStreams.vrb;
 	public static final boolean verbose = false;
 
 	public static final  char newLineChar = '\n';	
-	public static final  char categroySeparator = '|';
+	public static final  char categorySeparator = '|';
 
 	public void SetPrintStream(PrintStream verboseStream){
 		vrb = verboseStream;
@@ -58,13 +57,13 @@ public class Dbg implements  ICjvmInstructionOpcsAndMnemonics, ICclassFileConsts
 	}
 
 	private static String getElementName( String elemName, char category){
-		if( elemName.charAt(0) == categroySeparator ){
+		if( elemName.charAt(0) == categorySeparator ){
 			int pos = 0, endPos = 0;
 			char cat = 0;
 			do{
 				pos = endPos + 1;
 				cat = elemName.charAt(pos);
-				endPos = elemName.indexOf(categroySeparator, pos);
+				endPos = elemName.indexOf(categorySeparator, pos);
 			}while(cat != category && pos > 0);
 			if( endPos < 0 ) endPos = elemName.length();
 			if(cat == category) elemName = elemName.substring(pos+1, endPos);
