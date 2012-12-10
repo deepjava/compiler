@@ -741,10 +741,9 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	}
 
 	private void loadClass(int userReqAttributes) throws IOException{
-		if(verbose) vrb.println(">loadClass:");
+		if(verbose) vrb.println(">loadClass:" + name);
 		if( (accAndPropFlags & ((1<<dpfClassLoaded)|(1<<dpfSynthetic)) ) == 0 ){// if not yet loaded
 				InputStream inStrm = ClassFileAdmin.getClassFileInputStream(name); // new FileInputStream
-				//log.println("Opening class file of class: " + name);
 
 				if(inStrm == null){
 					errRep.error(300, name.toString());
@@ -1403,6 +1402,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 	public static void printStdClasses(){
 		vrb.printf("\n--- standard classes: (#=%1$d)\n", nofStdClasses);
 		for( int exl = 0; exl <= maxExtensionLevelStdClasses; exl++){
+			if (elOrdredClasses == null) break;
 			Class cls = elOrdredClasses[exl];
 			while( cls != null ){
 				cls.print( 1 );
