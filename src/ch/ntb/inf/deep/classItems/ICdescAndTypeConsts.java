@@ -43,7 +43,7 @@ public interface ICdescAndTypeConsts {
 	// must be equal to the coding of these types in byte code  instruction newarray.
 		txNull = 0, //?
 		txString = 1,  // java/lang/String
-		txObject = 2,
+		txObject = 2,	// java/lang/Object
 
 		txVoid = 3, // void, 
 		txBoolean = 4,	 // boolean
