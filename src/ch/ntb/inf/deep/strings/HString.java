@@ -154,7 +154,7 @@ public abstract class HString implements IhStringConsts {
 		int utfLength = classFileInput.readUnsignedShort();
 		if (utfLength > byteBuffer.length) {
 			byteBuffer = new byte[utfLength];
-			charBuffer = new char[utfLength];
+			charBuffer = new char[utfLength+1];
 		}
 		classFileInput.readFully(byteBuffer, 0, utfLength);
 
