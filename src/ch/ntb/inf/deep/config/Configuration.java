@@ -53,6 +53,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	public static final HString HEAP = HString.getRegisteredHString("heap");
 	public static final HString STACK = HString.getRegisteredHString("stack");
 	public static final HString EXCEPTION = HString.getRegisteredHString("exception");
+	public static final HString RESET = HString.getRegisteredHString("reset");
 	public static final HString SYSTEMTABLE = HString.getRegisteredHString("systemtable");
 	public static final HString AM29LV160D = HString.getRegisteredHString("Am29LV160d");
 
@@ -204,17 +205,17 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 		// first check if clazz is a system class
 		Module module;
-		if(activeProject.getOperatingSystem().getKernel().name.equals(clazz)) {
+		if(activeProject.getOperatingSystem().getKernel(getCpu()).name.equals(clazz)) {
 			if(dbg) vrb.print("  -> KERNEL");
 			module = activeProject.activeTargetConf.getModuleByName(KERNEL);
 			if(module != null) segAss = module.getSegmentAssignments();
 		}
-		else if (activeProject.getOperatingSystem().getHeap().name.equals(clazz)) {
+		else if (activeProject.getOperatingSystem().getHeap(getCpu()).name.equals(clazz)) {
 			if(dbg) vrb.print("  -> HEAP");
 			module = activeProject.activeTargetConf.getModuleByName(HEAP);
 			if(module != null) segAss = module.getSegmentAssignments();
 		}
-		else if (activeProject.getOperatingSystem().getExceptionBaseClass().name.equals(clazz)) {
+		else if (activeProject.getOperatingSystem().getExceptionBaseClass(getCpu()).name.equals(clazz)) {
 			if(dbg) vrb.print("  -> EXCEPTION BASE");
 			module = activeProject.activeTargetConf.getModuleByName(EXCEPTION);
 			if(module != null) segAss = module.getSegmentAssignments();
@@ -222,7 +223,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		else {
 			if(dbg) vrb.print("  -> Looking for exception: ");
 			SystemClass tempCls = activeProject.getOperatingSystem().getExceptions();
-			while (tempCls != null && (tempCls.attributes & (1 << dpfExcHnd)) != 0  && (tempCls != activeProject.getOperatingSystem().getExceptionBaseClass())) {
+			while (tempCls != null && (tempCls.attributes & (1 << dpfExcHnd)) != 0  && (tempCls != activeProject.getOperatingSystem().getExceptionBaseClass(getCpu()))) {
 				if(dbg) vrb.print(tempCls.getName());
 				if(tempCls.name.equals(clazz)) {
 					if(dbg) vrb.println(" -> found");
@@ -358,8 +359,8 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 
 	public static HString getHeapClassname() {
 		if(activeProject.getOperatingSystem() != null) {
-			if(activeProject.getOperatingSystem().getHeap() != null) {				
-				return activeProject.getOperatingSystem().getHeap().getName();
+			if(activeProject.getOperatingSystem().getHeap(getCpu()) != null) {				
+				return activeProject.getOperatingSystem().getHeap(getCpu()).getName();
 			}
 			else {
 				reporter.error(999, "Heap not set for os " + activeProject.getOperatingSystem().getName());
@@ -370,7 +371,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 
 	public static HString getKernelClassname() {
-		if(activeProject != null) return activeProject.getOperatingSystem().getKernel().name;
+		if(activeProject != null) return activeProject.getOperatingSystem().getKernel(getCpu()).name;
 		return null;
 	}
 
@@ -390,13 +391,13 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 	
 	public static HString getExceptionClassname() {
-		if(activeProject != null) return activeProject.getOperatingSystem().getExceptionBaseClass().name;
+		if(activeProject != null) return activeProject.getOperatingSystem().getExceptionBaseClass(getCpu()).name;
 		return null;
 	}
 
 	public static int getResetOffset() { // TODO improve this!
 		SystemMethod resetMethod = null;
-		if(activeProject != null) resetMethod = activeProject.getOperatingSystem().getExceptionMethodByName("reset");
+		if(activeProject != null) resetMethod = activeProject.getOperatingSystem().getExceptionMethodByName(RESET, getCpu());
 		if(resetMethod != null) return resetMethod.offset;
 		return -1;
 	}
@@ -466,41 +467,30 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return availableSysTabSegments;
 	}
 	
-	public static int getSystemMethodIdOf(String name){ // TODO improve this
-		int hash = name.hashCode();
-		SystemClass clazz = activeProject.getOperatingSystem().getClassList();
-		while(clazz != null){
-			SystemMethod meth = clazz.methods;
-			while(meth != null){
-				if(hash == meth.name.hashCode()){
-					if(name.equals(meth.name)){
-						return 0xFFF & meth.attributes;
-					}
-				}
-				meth = meth.next;
-			}
-			clazz = (SystemClass)clazz.next;			
-		}		
-		return 0;
+	
+	@Deprecated
+	public static int getSystemMethodIdOf(String name){
+		return getSystemMethodIdByMethodName(HString.getRegisteredHString(name));
 	}
 	
-	public static String getSystemMethodForID(int id){ // TODO improve this
-		if((id & 0xFFFFF000) != 0){
-			ErrorReporter.reporter.error(errInvalideParameter,
-					"getSystemMethodForID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
-		}
-		SystemClass clazz = activeProject.getOperatingSystem().getClassList();
-		while(clazz != null){
-			SystemMethod meth = clazz.methods;
-			while(meth != null){
-				if((meth.attributes & 0xFFF) == id){
-					return meth.name;
-				}
-				meth = meth.next;
-			}
-			clazz = (SystemClass)clazz.next;
-		}
+	public static int getSystemMethodIdByMethodName(HString registeredName) {
+		SystemMethod sysMeth = activeProject.getOperatingSystem().getSystemMethodByName(registeredName, activeProject.getBoard().getCPU());
+		if(sysMeth != null) return sysMeth.getId();
+		return -1;
+	}
+	
+	@Deprecated
+	public static String getSystemMethodForID(int id){
+		SystemMethod sysMeth= getSystemMethodById(id);
+		if(sysMeth != null) return sysMeth.name.toString();
 		return null;
+	}
+	
+	public static SystemMethod getSystemMethodById(int id) {
+		if((id & 0xFFFFF000) != 0){
+			ErrorReporter.reporter.error(errInvalideParameter, "getSystemMethodForID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
+		}
+		return activeProject.getOperatingSystem().getSystemMethodById(id, activeProject.getBoard().getCPU());
 	}
 
 	public static HString[] getRootClassNames() {
@@ -513,7 +503,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 	
 	public static SystemClass getSystemPrimitives() {
-		return activeProject.getOperatingSystem().getClassList();
+		return activeProject.getOperatingSystem().getAllSystemClasses();
 	}
 
 	public static int getMemoryBaseAddress() {

@@ -21,33 +21,70 @@
 package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class OperatingSystem extends ConfigElement implements ICclassFileConsts {
+public class OperatingSystem extends ConfigElement implements ICclassFileConsts, ErrorCodes {
+	private static final int maxNofImplementations = 4;
+	
 	private HString description;
-	private SystemClass kernel;
-	private SystemClass heap;
-	private SystemClass exceptionBaseClass;
+	private SystemClass[] us = new SystemClass[maxNofImplementations];
+	private int nOfUsImplementations = 0;
+	private SystemClass[] lowlevel = new SystemClass[maxNofImplementations];
+	private int nOfLowlevelImplementations = 0;
+	private SystemClass[] kernel = new SystemClass[maxNofImplementations];
+	private int nOfKernelImplementations = 0;
+	private SystemClass[] heap = new SystemClass[maxNofImplementations];
+	private int nOfHeapImplementations = 0;
+	private SystemClass[] exceptionBaseClass = new SystemClass[maxNofImplementations];
+	private int nOfExceptionBaseClassImplementations = 0;
 	private SystemClass exceptions;
-	private SystemClass us;
-	private SystemClass lowlevel;
 	private SystemClass list;
 
 	public OperatingSystem(String jname) {
 		this.name = HString.getRegisteredHString(jname);
 	}
-
-	public void setKernel(SystemClass kernel) {
-		this.kernel = kernel;
-		this.addClass(kernel);
+	
+	public void setDescription(String desc) {
+		this.description = HString.getRegisteredHString(desc);
 	}
-
-	public void setHeap(SystemClass heap) {
-		this.heap = heap;
-		this.addClass(heap);
+	
+	public void addUS(SystemClass us) {
+		if(nOfUsImplementations < maxNofImplementations) {
+			this.us[nOfUsImplementations++] = us;
+			this.addClass(us);
+		}
 	}
-
+	
+	public void addLowlevel(SystemClass ll) {
+		if(nOfLowlevelImplementations < maxNofImplementations) {
+			this.lowlevel[nOfLowlevelImplementations++] = ll;
+			this.addClass(ll);
+		}
+	}
+	
+	public void addKernel(SystemClass kernel) {
+		if(nOfKernelImplementations < maxNofImplementations) {
+			this.kernel[nOfKernelImplementations++] = kernel;
+			this.addClass(kernel);
+		}
+	}
+		
+	public void addHeap(SystemClass heap) {
+		if(nOfHeapImplementations < maxNofImplementations) {
+			this.heap[nOfHeapImplementations++] = heap;
+			this.addClass(heap);
+		}
+	}
+	
+	public void addExceptionBaseClass(SystemClass ebc) {
+		if(nOfExceptionBaseClassImplementations < maxNofImplementations) {
+			this.exceptionBaseClass[nOfExceptionBaseClassImplementations++] = ebc;
+			this.addClass(ebc);
+		}
+	}
+	
 	public void addException(SystemClass exception) {
 		if(Configuration.dbg) StdStreams.vrb.println("[CONF] OperatingSystem: adding exception " + exception.getName());
 		if(exceptions != null) {
@@ -69,152 +106,136 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts 
 		}
 	}
 
-	public void setExceptionBaseClass(SystemClass exceptionBaseClass) {
-		this.exceptionBaseClass = exceptionBaseClass;
-		this.addClass(exceptionBaseClass);
-	}
-
-	public void setUs(SystemClass us) {
-		this.us = us;
-		this.addClass(us);
-	}
-
-	public void setLowLevel(SystemClass lowlevel) {
-		this.lowlevel = lowlevel;
-		this.addClass(lowlevel);
-	}
-
-	public void setDescription(String desc) {
-		this.description = HString.getRegisteredHString(desc);
-	}
-	
-	public SystemClass getKernel() {
-		return kernel;
-	}
-
-	public SystemClass getHeap() {
-		return heap;
-	}
-
-	public SystemClass getExceptionBaseClass() {
-		return exceptionBaseClass;
-	}
-
-	public SystemClass getExceptions() {
-		return exceptions;
-	}
-
-	public SystemMethod getExceptionMethodByName(String name) {
-		int hash = name.hashCode();
-		SystemClass sys = exceptions;
-		SystemMethod m;
-		while(sys != null) {
-			m = sys.methods;
-			while(m != null) {
-				if(hash == m.name.hashCode()){
-					if(name.equals(m.name)){
-						return m;
-					}
-				}
-				m = m.next;
-			}			
-			sys = (SystemClass)sys.next;
-		}
-		return null;
-	}
-	
-	public SystemClass getUs() {
-		return us;
-	}
-
-	public SystemClass getLowLevel() {
-		return lowlevel;
-	}
-
-	public SystemClass getClassList() {
-		return list;
-	}
-
 	public HString getDescription() {
 		return description;
 	}
 	
-	public void println(int indentLevel) {
-		for (int i = indentLevel; i > 0; i--) {
-			StdStreams.vrb.print("  ");
+	public SystemClass getUS(CPU cpu) {
+		int i = 0;
+		while(i < nOfUsImplementations) {
+			if(us[i].checkCondition(cpu)) return us[i];
 		}
-		StdStreams.vrb.println("operatingsystem {");
-
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
+		return null;
+	}
+	
+	public int getNofUsImplementations() {
+		return nOfUsImplementations;
+	}
+	
+	public SystemClass getLowlevel(CPU cpu) {
+		int i = 0;
+		while(i < nOfUsImplementations) {
+			if(lowlevel[i].checkCondition(cpu)) return lowlevel[i];
 		}
-		StdStreams.vrb.println("kernel {");
-		kernel.print(indentLevel + 2);
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
+		return null;
+	}
+	
+	public int getNofLowlevelImplementations() {
+		return nOfLowlevelImplementations;
+	}
+	
+	public SystemClass getKernel(CPU cpu) {
+		int i = 0;
+		while(i < nOfKernelImplementations) {
+			if(kernel[i].checkCondition(cpu)) return kernel[i];
 		}
-		StdStreams.vrb.println("}");
-
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
+		return null;
+	}
+	
+	public int getNofKernelImplementations() {
+		return nOfKernelImplementations;
+	}
+	
+	public SystemClass getHeap(CPU cpu) {
+		int i = 0;
+		while(i < nOfHeapImplementations) {
+			if(heap[i].checkCondition(cpu)) return heap[i];
 		}
-		StdStreams.vrb.println("exceptionbaseclass {");
-		exceptionBaseClass.print(indentLevel + 2);
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
+		return null;
+	}
+	
+	public int getNofHeapImplementations() {
+		return nOfHeapImplementations;
+	}
+	
+	public SystemClass getExceptionBaseClass(CPU cpu) {
+		int i = 0;
+		while(i < nOfExceptionBaseClassImplementations) {
+			if(exceptionBaseClass[i].checkCondition(cpu)) return exceptionBaseClass[i];
 		}
-		StdStreams.vrb.println("}");
-
-		SystemClass current = exceptions;
-		while (current != null && (current.attributes & (1 << dpfExcHnd)) != 0 && (current != exceptionBaseClass)) {
-			for (int i = indentLevel + 1; i > 0; i--) {
-				StdStreams.vrb.print("  ");
-			}
-			StdStreams.vrb.println("exception {");
-			current.print(indentLevel + 2);
-			for (int i = indentLevel + 1; i > 0; i--) {
-				StdStreams.vrb.print("  ");
-			}
-			StdStreams.vrb.println("}");
-			current = (SystemClass)current.next;
-		}
-
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("heap {");
-		heap.print(indentLevel + 2);
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
-
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("us {");
-		us.print(indentLevel + 2);
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
-
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("lowlevel {");
-		lowlevel.print(indentLevel + 2);
-		for (int i = indentLevel + 1; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
-
-		for (int i = indentLevel; i > 0; i--) {
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
+		return null;
+	}
+	
+	public int getNofExceptionBaseClassImplementations() {
+		return nOfExceptionBaseClassImplementations;
+	}
+	
+	public SystemClass getExceptions() {
+		return exceptions;
 	}
 
+	public SystemMethod getSystemMethodById(int id, CPU cpu) {
+		if((id & 0xFFFFF000) != 0){
+			ErrorReporter.reporter.error(errInvalideParameter, "getSystemMethodByID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
+		}
+		SystemMethod meth;
+		SystemClass[] sysClass = {
+			getUS(cpu),
+			getLowlevel(cpu),
+			getHeap(cpu),
+			getKernel(cpu)
+		};
+		
+		for(int i = 0; i < sysClass.length; i++) {
+			meth = sysClass[i].methods;	
+			while(meth != null){
+				if((meth.attributes & 0xFFF) == id){
+					return meth;
+				}
+				meth = (SystemMethod)meth.next;
+			}
+		}
+		return null; 
+	}
+	
+	public SystemMethod getSystemMethodByName(HString registeredName, CPU cpu) {
+		SystemMethod meth;
+		SystemClass[] sysClass = {
+			getUS(cpu),
+			getLowlevel(cpu),
+			getHeap(cpu),
+			getKernel(cpu)
+		};
+		
+		for(int i = 0; i < sysClass.length; i++) {
+			meth = sysClass[i].methods;	
+			while(meth != null){
+				if(meth.name == registeredName){
+					return meth;
+				}
+				meth = (SystemMethod)meth.next;
+			}
+		}
+		return null;
+	}
+	
+	public SystemMethod getExceptionMethodByName(HString name, CPU cpu) {
+		SystemClass sysClass = exceptions;
+		SystemMethod m;
+		while(sysClass != null) {
+			if(sysClass.checkCondition(cpu)){ 
+				m = (SystemMethod)sysClass.methods.getElementByName(name);
+				if(m != null) return m;
+			}
+			sysClass = (SystemClass)sysClass.next;
+		}
+		return null;
+	}
+	
+	public SystemClass getAllSystemClasses() {
+		return list;
+	}
+	
 	private void addClass(SystemClass clazz) {
 		if(list == null) {
 			list = clazz;

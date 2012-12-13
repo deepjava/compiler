@@ -28,6 +28,8 @@ import ch.ntb.inf.deep.strings.HString;
 public class SystemClass extends ConfigElement {
 	public SystemMethod methods;
 	public int attributes;
+	private Arch archCondition = null;
+	private CPU cpuCondition = null;
 	
 	public SystemClass(String jname) {
 		this.name = HString.getRegisteredHString(jname);
@@ -42,6 +44,20 @@ public class SystemClass extends ConfigElement {
 		methods = method;
 	}
 	
+	public void addCondition(Arch archCond) {
+		archCondition = archCond;
+	}
+	
+	public void addCondition(CPU cpuCond) {
+		cpuCondition = cpuCond;
+		archCondition = cpuCond.arch;
+	}
+	
+	public boolean checkCondition(CPU cpu) {
+		if(cpuCondition == cpu || (archCondition == cpu.arch && cpuCondition == null) || (cpuCondition == null && archCondition == null)) return true;
+		return false;
+	}
+	
 	//--- debug primitives
 	public void print(int indentLevel){
 		PrintStream vrb = StdStreams.vrb;
@@ -50,7 +66,7 @@ public class SystemClass extends ConfigElement {
 		SystemMethod current = methods;
 		while(current != null){
 			current.print(indentLevel);
-			current = current.next;
+			current = (SystemMethod)current.next;
 		}
 	}
 }

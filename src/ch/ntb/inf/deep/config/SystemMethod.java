@@ -24,20 +24,23 @@ import java.io.PrintStream;
 
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.strings.HString;
 
-public class SystemMethod implements ICclassFileConsts{
-	public SystemMethod next;
-	public String name;
+public class SystemMethod extends ConfigElement implements ICclassFileConsts{
 	public int attributes; // e.g. (1<<dpfNew) 
 	public int offset = -1;
 
-	public SystemMethod(String name) {
+	public SystemMethod(HString name) {
 		this.name = name;
 	}
-
-	public SystemMethod(String name, int attributes) {
+	
+	public SystemMethod(HString name, int attributes) {
 		this.name = name;
 		this.attributes = attributes & (dpfSetSysMethProperties | sysMethCodeMask);
+	}
+	
+	public int getId() {
+		return 0xFFF & attributes;
 	}
 	
 	//--- debug primitives

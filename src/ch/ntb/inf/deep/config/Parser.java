@@ -143,7 +143,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			sProgrammerType = g9 + 32,
 			sOsType = g9 + 33,
 			sImgFile = g9 + 34,
-			sImgFormat = g9 + 35;
+			sImgFormat = g9 + 35,
+			sCondition = g9 + 36;
 	
 	// -------- Block keywords: 
 	private static final short g10 = g9 + 37,
@@ -404,6 +405,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			} else if (str.equals("compiler")) {
 					sym = sCompiler;
 					return true;
+			} else if (str.equals("condition")) {
+				sym = sCondition;
+				return true;
 			} else if (str.equals("const")) {
 				sym = sConst;
 				return true;
@@ -956,6 +960,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "lowlevel";
 		case sClass:
 			return "class";
+		case sCondition:
+			return "condition";
 		case sId:
 			return "id";
 		case sException:
@@ -2289,6 +2295,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		}
 		next();
 		OperatingSystem os = currentLib.addOperatingSystem(osName);
+		SystemClass sysClass;
 		while (sym == sDescription || sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException) {
 			if(sym == sDescription) {
 				String description = descriptionAssignment();
@@ -2299,19 +2306,19 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				os.addException(systemClass(true));
 			}
 			else if (sym == sKernel) {
-				os.setKernel(systemClass(false));
+				os.addKernel(systemClass(false));
 			}
 			else if (sym == sHeap) {
-				os.setHeap(systemClass(false));
+				os.addHeap(systemClass(false));
 			}
 			else if (sym == sExceptionBaseClass) {
-				os.setExceptionBaseClass(systemClass(false));
+				os.addExceptionBaseClass(systemClass(false));
 			}
 			else if (sym == sUs) {
-				os.setUs(systemClass(false));
+				os.addUS(systemClass(false));
 			}
 			else if (sym == sLowlevel) {
-				os.setLowLevel(systemClass(false));
+				os.addLowlevel(systemClass(false));
 			}
 		}
 		if (sym != sRBrace) {
@@ -2319,7 +2326,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
 			return;
 		}
-		if (os.getExceptionBaseClass() == null || os.getHeap() == null || os.getKernel() == null || os.getUs() == null || os.getLowLevel() == null) {
+		if (os.getNofExceptionBaseClassImplementations() <= 0 || os.getNofHeapImplementations() <= 0 || os.getNofKernelImplementations() <= 0 || os.getNofUsImplementations() <= 0 || os.getNofLowlevelImplementations() <= 0) {
 			nOfErrors++;
 			reporter.error(	errMissingTag,"in "	+ currentFileName + " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined");
 			return;
@@ -2330,12 +2337,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 
 	private SystemClass systemClass(boolean isExceptionClass) {
 		boolean isExceptionBase = false;
-		if (!(sym == sKernel || sym == sHeap || sym == sExceptionBaseClass
-				|| sym == sUs || sym == sLowlevel || sym == sException)) {
+		if (!(sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException)) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber + "received symbol: "
-					+ symToString());
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + "received symbol: " + symToString());
 			return null;
 		}
 		if(sym == sExceptionBaseClass){
@@ -2350,21 +2354,23 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		next();
 		if (sym != sClass) {
 			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ "expected Symbol: class, received symbol: "
-					+ symToString());
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + "expected Symbol: class, received symbol: " + symToString());
 			return null;
 		}
-		SystemClass clazz = new SystemClass(classAssignment());
+		SystemClass clazz = new SystemClass(classAssignment());		
 		SystemMethod meth;
-		while (sym == sMethod) {
-			meth = method();
-			clazz.addMethod(meth);
-			clazz.addAttributes(meth.attributes);
-			if(!isExceptionClass && meth.offset != -1){
-				reporter.error(errFixMethAddrNotSupported);
-				return null;
+		while (sym == sMethod || sym == sCondition) {
+			if(sym == sCondition) {
+				conditionAssignment(clazz);
+			}
+			else if(sym == sMethod) {
+				meth = method();
+				clazz.addMethod(meth);
+				clazz.addAttributes(meth.attributes);
+				if(!isExceptionClass && meth.offset != -1){
+					reporter.error(errFixMethAddrNotSupported);
+					return null;
+				}
 			}
 		}
 
@@ -2378,7 +2384,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			clazz.addAttributes(1 << dpfExcHnd);
 		}
 		return clazz;
-
 	}
 
 	private SystemMethod method() {
@@ -2399,7 +2404,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 					+ symToString());
 			return null;
 		}
-		SystemMethod method = new SystemMethod(strBuffer);
+		SystemMethod method = new SystemMethod(HString.getRegisteredHString(strBuffer));
 		next();
 		if (sym != sLBrace) {
 			nOfErrors++;
@@ -3292,6 +3297,72 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		}
 		next();
 		return str;
+	}
+	
+	private void conditionAssignment(SystemClass sysClass) {
+		int conditionType = -1;
+		String s;
+		if(sym != sCondition) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected: condition, received symbol: " + symToString());
+			return;
+		}
+		next();
+		if(sym != sEqualsSign) {
+			nOfErrors++;
+			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
+			return;
+		}
+		next();
+		if(sym == sCpuArch) {
+			conditionType = sCpuArch;
+		}
+		else if(sym == sCpuType) {
+			conditionType = sCpuType;
+		}
+		else {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected: cpuarch | cputype, received symbol: " + symToString());
+			return;
+		}
+		next();
+		if(sym != sColon) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected: colon (:), received symbol: " + symToString());
+			return;
+		}
+		next();
+		if(sym != sDesignator) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
+			return;
+		}
+		s = strBuffer;
+		if(conditionType == sCpuArch) {
+			Arch a = currentLib.getArchByName(s);
+			if(a == null) {
+				nOfErrors++;
+				reporter.error(9999, "Arch not found: " + s); // TODO add correct error number here!
+				return;
+			}
+			sysClass.addCondition(a);
+		}
+		else { // conditionType == sCpuType
+			CPU c = currentLib.getCpuByName(s);
+			if(c == null) {
+				nOfErrors++;
+				reporter.error(9999, "CPU not found: " + s); // TODO add correct error number here!
+				return;
+			}
+			sysClass.addCondition(c);
+		}
+		next();
+		if (sym != sSemicolon) {
+			nOfErrors++;
+			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
+			return;
+		}
+		next();
 	}
 
 	private String segmentDesignator() {

@@ -132,7 +132,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 		}
 		else {
-			reporter.error(702, "No segment(s) for the systemtable defined!");
+			reporter.error(710, "No segment(s) for the systemtable defined!");
 		}
 		
 		if(dbg) vrb.println("  Looking up compiler constants: ");

@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import ch.ntb.inf.deep.config.CPU;
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.config.SystemClass;
 import ch.ntb.inf.deep.config.SystemMethod;
@@ -887,7 +889,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if(systemMeth != null)  unitedFlags =  1<<dpfSysPrimitive;
 		while(systemMeth != null){
 			unitedFlags |= (systemMeth.attributes & dpfSetSysMethProperties);
-			systemMeth = systemMeth.next;
+			systemMeth = (SystemMethod)systemMeth.next;
 		}
 		return unitedFlags;
 	}
@@ -914,14 +916,14 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		if( (systemClassAttributes & (1<<dpfNew)) != 0 ){// set up new memory method table
 			SystemMethod systemMeth = systemClass.methods;
 			while(systemMeth != null){
-				Item method = cls.methods.getItemByName(systemMeth.name);
+				Item method = cls.methods.getItemByName(systemMeth.getName());
 				if(method == null){
-					errRep.error(301, systemMeth.name +" in system class " + systemClass.getName());
+					errRep.error(301, systemMeth.getName() +" in system class " + systemClass.getName());
 				}else{
 					if(verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
 					int methIndex  = (systemMeth.attributes-1)&0xFF;
 					if( methIndex >= nofNewMethods ){
-						errRep.error(302, systemMeth.name +" in system class " + systemClass.getName());
+						errRep.error(302, systemMeth.getName() +" in system class " + systemClass.getName());
 					}else{
 						if(verbose) vrb.println(" ldSysCls: newMethInx="+methIndex);
 						systemClassAttributes |= method.accAndPropFlags & dpfSetSysMethProperties;
@@ -929,7 +931,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 						if(verbose)vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
 					}
 				}
-				systemMeth = systemMeth.next;
+				systemMeth = (SystemMethod)systemMeth.next;
 			}
 		}
 
@@ -937,22 +939,25 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		SystemMethod systemMeth = systemClass.methods;
 		Item method = null;
 		while(systemMeth != null){
-			method = cls.methods.getItemByName(systemMeth.name);
+			method = cls.methods.getItemByName(systemMeth.getName());
 			if(method != null){
 				method.offset = systemMeth.offset;
 				int sysMethAttr = systemMeth.attributes & (dpfSetSysMethProperties | sysMethCodeMask);
 				method.accAndPropFlags =  (method.accAndPropFlags & ~(dpfSetSysMethProperties | sysMethCodeMask) ) |(1<<dpfSysPrimitive) | sysMethAttr;
 				if( (sysMethAttr & (1<<dpfSynthetic)) != 0) ((Method)method).clearCodeAndAssociatedFields();
 			}
-			systemMeth = systemMeth.next;
+			systemMeth = (SystemMethod) systemMeth.next;
 		}
 
 		if(verbose) vrb.println("<loadSystemClass");
 	}
 
 	private static void loadSystemClasses(SystemClass sysClasses, int userReqAttributes) throws IOException{
+		CPU targetCpu = Configuration.getCpu();
 		while(sysClasses != null){
-			loadSystemClass(sysClasses, userReqAttributes); 
+			if(sysClasses.checkCondition(targetCpu)) {
+				loadSystemClass(sysClasses, userReqAttributes);
+			}
 			sysClasses = (SystemClass)sysClasses.next;
 		}
 	}
