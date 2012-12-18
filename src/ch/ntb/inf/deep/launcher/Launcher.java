@@ -34,6 +34,7 @@ import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Library;
@@ -464,33 +465,47 @@ public class Launcher implements ICclassFileConsts {
 		return tc;
 	}
 	
-	@Deprecated
-	public static void createInterfaceFile(String fileToCreate) {
-		createBoardInterfaceFile(fileToCreate, Configuration.getBoard());
+	public static void createInterfaceFiles(String libraryPath) {
+		Library lib = Configuration.addLibrary(libraryPath);
+		String basePath = lib.getPathAsString() + File.separatorChar + "src" + File.separatorChar +
+				"ch"  + File.separatorChar + "ntb"  + File.separatorChar + "inf"  + 
+				File.separatorChar + "deep"  + File.separatorChar + "runtime";
+		
+		createCompilerInterfaceFile(lib, basePath);
+		
+		Arch[] a = lib.getArchs();
+		for(int i = 0; i < a.length; i++) {
+			createArchInterfaceFile(a[i], basePath);
+		}
+		
+		Board[] b = lib.getBoards();
+		for(int i = 0; i < b.length; i++) {
+			createBoardInterfaceFile(b[i], basePath);
+		}
 	}
-	
-	public static void createCompilerInterfaceFile(String fileToCreate, Library lib) {
-		int indexOf;
-		String className;
+		
+	private static void createCompilerInterfaceFile(Library lib, String basePath) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
+		String fileName = "IdeepCompilerConstants.java";
 		try {
-			indexOf = fileToCreate.lastIndexOf(File.separatorChar);
-			if (indexOf != -1) {
-				className = fileToCreate.substring(indexOf + 1).toString();
-			} else {
-				className = fileToCreate.toString();
-			}
 			// check if path exists
-			File f = new File(fileToCreate.substring(0, indexOf).toString());
-			if (!f.exists()) {
-				f.mkdirs();
+			File dir = new File(basePath);
+			if(!dir.exists()) {
+				dir.mkdirs();
 			}
-			FileWriter fw = new FileWriter(fileToCreate.toString());
+			
+			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
+			FileWriter fw = new FileWriter(f);
+			
+			vrb.println("Creating " + f.getAbsolutePath());
+			
 			fw.write("package ch.ntb.inf.deep.runtime;\n\n");
+			
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			indexOf = className.indexOf(".");
-			fw.write("public interface " + className.substring(0, indexOf) + " {\n");
+			
+			fw.write("public interface IdeepCompilerConstants {\n");
+			
 			fw.write("\n\t// Compiler constants\n");
 			ValueAssignment current = lib.getFirstCompConst();
 			while(current != null) {
@@ -506,68 +521,88 @@ public class Launcher implements ICclassFileConsts {
 		}
 	}
 	
-	public static void createBoardInterfaceFile(String fileToCreate, Board b) {
-		int indexOf;
-		String pack;
-		String className;
+	private static void createArchInterfaceFile(Arch a, String basePath) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
+		String archName = a.getName().toString();
+		basePath = basePath + File.separatorChar + archName;
+		String fileName = "I" + archName + ".java";
 		try {
-			indexOf = fileToCreate.lastIndexOf(File.separatorChar);
-			if (indexOf != -1) {
-				className = fileToCreate.substring(indexOf + 1).toString();
-				pack = fileToCreate.substring(0, indexOf).toString();
-			} else {
-				className = fileToCreate.toString();
-				pack = "";
-			}
 			// check if path exists
-			File f = new File(fileToCreate.substring(0, indexOf).toString());
-			if (!f.exists()) {
-				f.mkdirs();
+			File dir = new File(basePath);
+			if(!dir.exists()) {
+				dir.mkdirs();
 			}
-			FileWriter fw = new FileWriter(fileToCreate.toString());
-			indexOf = pack.lastIndexOf(File.separatorChar);
-			if (indexOf != -1) {
-				pack = pack.substring(indexOf + 1) + ";";
-			}
-			pack = pack.replace(File.separatorChar, '.');
-			fw.write("package ch.ntb.inf.deep.runtime." + pack + "\n\n");
+			
+			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
+			FileWriter fw = new FileWriter(f);
+			
+			vrb.println("Creating " + f.getAbsolutePath());
+			
+			fw.write("package ch.ntb.inf.deep.runtime." + archName + ";\n\n");
+			
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			indexOf = className.indexOf(".");
-			fw.write("public interface " + className.substring(0, indexOf) + " {\n");
-			fw.write("\n\t// System constants of CPU " + b.getCPU().getName() + "\n");
+			
+			fw.write("public interface I" + archName + " {\n");
+			
+			Register[] reg;
+			fw.write("\n\t// Registermap for architecture \"" + archName + "\"\n");
+			reg = a.getAllRegisters();
+			for(int i = 0; i < reg.length; i++) {
+				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x" + Integer.toHexString(reg[i].getAddress()) + ";\n");
+			}
+			fw.write("}");
+			fw.flush();
+			fw.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void createBoardInterfaceFile(Board b, String basePath) {
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date date = new Date();
+		String boardName = b.getName().toString();
+		String cpuName = b.getCPU().getName().toString();
+		basePath = basePath + File.separatorChar + cpuName;
+		String fileName = "I" + boardName + ".java";
+		try {
+			// check if path exists
+			File dir = new File(basePath);
+			if(!dir.exists()) {
+				dir.mkdirs();
+			}
+			
+			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
+			FileWriter fw = new FileWriter(f);
+			
+			vrb.println("Creating " + f.getAbsolutePath());
+			
+			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+			
+			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
+			
+			fw.write("public interface I" + boardName + " {\n");
+			
+			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
 			ValueAssignment current = b.getCPU().getSysConstants().getFirstConstant();
 			while(current != null) {
 				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
 				current = (ValueAssignment)current.next;
 			}
-			fw.write("\n\t// System constants of board " + b.getName() + "\n");
+			
+			fw.write("\n\t// System constants of board " + boardName + "\n");
 			current = b.getSysConstants().getFirstConstant();
 			while(current != null) {
 				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
 				current = (ValueAssignment)current.next;
 			}
-			Register[] reg;
-			fw.write("\n\t// Registermap GPR\n");
-			reg = b.getCPU().getAllGPRs();
+			
+			fw.write("\n\t// Specific registers of CPU \" + cpuName + \"\n");
+			Register[] reg = b.getCPU().getCpuSpecificRegisters();
 			for(int i = 0; i < reg.length; i++) {
 				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x" + Integer.toHexString(reg[i].getAddress()) + ";\n");
-			}
-			fw.write("\n\t// Registermap FPR\n");
-			reg = b.getCPU().getAllFPRs();
-			for(int i = 0; i < reg.length; i++) {
-				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x"	+ Integer.toHexString(reg[i].getAddress()) + ";\n");
-			}
-			fw.write("\n\t// Registermap SPR\n");
-			reg = b.getCPU().getAllSPRs();
-			for(int i = 0; i < reg.length; i++) {
-				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x"	+ Integer.toHexString(reg[i].getAddress()) + ";\n");
-			}
-			fw.write("\n\t// Registermap IOR\n");
-			reg = b.getCPU().getAllIORs();
-			for(int i = 0; i < reg.length; i++) {
-				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x"	+ Integer.toHexString(reg[i].getAddress()) + ";\n");
 			}
 			fw.write("}");
 			fw.flush();

@@ -202,7 +202,7 @@ public class Library extends ConfigElement implements ErrorCodes {
 		if(boards != null) return (Board)boards.getElementByName(name);
 		return null;
 	}
-	
+		
 	public OperatingSystem getOperatingSystemByName(String jname) {
 		if(operatingsystems != null) return (OperatingSystem)operatingsystems.getElementByName(jname);
 		return null;
@@ -233,6 +233,18 @@ public class Library extends ConfigElement implements ErrorCodes {
 			count++;
 		}
 		return boards;
+	}
+
+	public Arch[] getArchs() {
+		Arch[] archs = new Arch[this.archs.getNofElements()];
+		Arch a = (Arch)this.archs.getHead();
+		int count = 0;
+		while(a != null && count < archs.length) {
+			archs[count] = a;
+			a = (Arch)a.next;
+			count++;
+		}
+		return archs;
 	}
 	
 	public OperatingSystem[] getOperatingSystems() {

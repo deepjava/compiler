@@ -25,6 +25,8 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class RegisterMap implements ErrorCodes {
 	
+	private static final int nofOtherRegisters = 3;
+	
 	int nofGprs = 0;
 	Register gpr;
 	int nofFprs = 0;
@@ -33,6 +35,7 @@ public class RegisterMap implements ErrorCodes {
 	Register spr;
 	int nofIors = 0;
 	Register ior;
+	
 	Register msr;
 	Register cr;
 	Register fpscr;
@@ -182,6 +185,14 @@ public class RegisterMap implements ErrorCodes {
 		}
 	}
 
+	public int getNofRegisters() {
+		int counter = nofGprs + nofFprs + nofSprs + nofIors;
+		if(msr != null) counter++;
+		if(cr != null) counter++;
+		if(fpscr != null) counter++;
+		return  counter;
+	}
+	
 	protected Register getGprRegisters() {
 		return gpr;
 	}
@@ -224,5 +235,41 @@ public class RegisterMap implements ErrorCodes {
 	
 	protected int getNofIors() {
 		return nofIors;
+	}
+	
+	public Register[] getAllRegisters() {
+		Register[] reg = new Register[getNofRegisters()];
+		int counter = 0;
+		Register r;
+		
+		r = gpr;
+		while(r != null && counter < reg.length) {
+			reg[counter++] = r;
+			r = (Register)r.next;
+		}
+		
+		r = fpr;
+		while(r != null && counter < reg.length) {
+			reg[counter++] = r;
+			r = (Register)r.next;
+		}
+		
+		r = spr;
+		while(r != null && counter < reg.length) {
+			reg[counter++] = r;
+			r = (Register)r.next;
+		}
+		
+		r = ior;
+		while(r != null && counter < reg.length) {
+			reg[counter++] = r;
+			r = (Register)r.next;
+		}
+		
+		if(msr != null) reg[counter++] = msr;
+		if(cr != null) reg[counter++] = cr;
+		if(fpscr != null) reg[counter++] = fpscr;
+		
+		return reg;
 	}
 }

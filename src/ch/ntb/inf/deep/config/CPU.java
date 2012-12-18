@@ -71,6 +71,10 @@ public class CPU extends ConfigElement {
 		return regs;
 	}
 	
+	public Register[] getCpuSpecificRegisters() {
+		return registermap.getAllRegisters();
+	}
+	
 	public Register[] getAllFPRs() {
 		Register[] regs = new Register[getNofFPRs()];
 		Register r;

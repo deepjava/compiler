@@ -14,4 +14,8 @@ public class Arch extends ConfigElement {
 		return this.registermap;
 	}
 	
+	public Register[] getAllRegisters() {
+		return registermap.getAllRegisters();
+	}
+	
 }
