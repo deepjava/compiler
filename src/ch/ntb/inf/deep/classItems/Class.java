@@ -1384,7 +1384,7 @@ public class Class extends Type implements ICclassFileConsts, ICdescAndTypeConst
 		
 		releaseLoadingResources();
 		//log.printf("number of errors %1$d\n", errRep.nofErrors);
-		log.print("System building ");
+		log.print("Loading class files ");
 		if(errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
