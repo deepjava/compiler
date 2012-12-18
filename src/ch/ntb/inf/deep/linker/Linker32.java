@@ -86,13 +86,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static int cblkVarBaseOffset;
 	public static int cblkVarSizeOffset;
 	public static int cblkClinitAddrOffset;
-	public static int cblkNofClassPtrsOffset;
+	public static int cblkNofPtrsOffset;
 	public static int cblkPtrAddr0Offset;
 	
 	// System table
 	public static int stClassConstOffset;
 	public static int stStackOffset;
-	public static int stHeepOffset;
+	public static int stHeapOffset;
 	public static int stKernelClinitAddr;
 	public static int stResetOffset;
 	public static int stSizeToCopy;
@@ -148,8 +148,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  - cblkVarSizeOffset = " + cblkVarSizeOffset);
 		cblkClinitAddrOffset = Configuration.getValOfCompConstByName("cblkClinitAddrOffset");
 		if(dbg) vrb.println("  - cblkClinitAddrOffset = " + cblkClinitAddrOffset);
-		cblkNofClassPtrsOffset = Configuration.getValOfCompConstByName("cblkNofClassPtrsOffset");
-		if(dbg) vrb.println("  - cblkNofClassPtrsOffset = " + cblkNofClassPtrsOffset);
+		cblkNofPtrsOffset = Configuration.getValOfCompConstByName("cblkNofPtrsOffset");
+		if(dbg) vrb.println("  - cblkNofPtrsOffset = " + cblkNofPtrsOffset);
 		cblkPtrAddr0Offset = Configuration.getValOfCompConstByName("cblkPtrAddr0Offset");
 		if(dbg) vrb.println("  - cblkPtrAddr0Offset = " + cblkPtrAddr0Offset);
 		
@@ -157,8 +157,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  - stClassConstOffset = " + stClassConstOffset);
 		stStackOffset = Configuration.getValOfCompConstByName("stStackOffset");
 		if(dbg) vrb.println("  - stStackOffset = " + stStackOffset);
-		stHeepOffset = Configuration.getValOfCompConstByName("stHeepOffset");
-		if(dbg) vrb.println("  - stHeepOffset = " + stHeepOffset);
+		stHeapOffset = Configuration.getValOfCompConstByName("stHeapOffset");
+		if(dbg) vrb.println("  - stHeapOffset = " + stHeapOffset);
 		stKernelClinitAddr = Configuration.getValOfCompConstByName("stKernelClinitAddr");
 		if(dbg) vrb.println("  - stKernelClinitAddr = " + stKernelClinitAddr);
 		stResetOffset = Configuration.getValOfCompConstByName("stResetOffset");
@@ -717,7 +717,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
 		int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
 		int constBlockBase =  clazz.constSegment.getBaseAddress() + clazz.constOffset;
-		int classDescriptorBase = constBlockBase + cblkNofClassPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
+		int classDescriptorBase = constBlockBase + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
 		int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
 		int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 		

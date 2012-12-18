@@ -2219,6 +2219,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				Board b = currentProject.setBoard(boardName);
 				if(b == null) {
 					reporter.error(errBoardNotFound, boardName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
+					nOfErrors++;
 					return;
 				}
 				if(dbg) if(b != null) StdStreams.vrb.println(b.getName());
@@ -2228,7 +2229,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				String osName = osTypeAssignment();
 				OperatingSystem os = currentProject.setOperatingSystem(osName);
 				if(os == null) {
-					reporter.error(errBoardNotFound, osName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
+					reporter.error(errOsNotFound, osName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
+					nOfErrors++;
 					return;
 				}
 				if(dbg) if(os != null) StdStreams.vrb.println(os.getName());
@@ -2238,7 +2240,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				String programmerName = programmerTypeAssignment();
 				Programmer programmer = currentProject.setProgrammer(programmerName);
 				if(programmer == null) {
-					reporter.error(errBoardNotFound, programmerName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
+					reporter.error(errProgrammerNotFound, programmerName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
+					nOfErrors++;
 					return;
 				}
 				if(dbg) if(programmer != null) StdStreams.vrb.println(programmer.getName());

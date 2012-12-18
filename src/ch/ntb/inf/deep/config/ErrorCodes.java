@@ -55,7 +55,8 @@ public interface ErrorCodes {
 			errModNotFound = 236,
 			errSysModNotFound = 237,
 			errBoardNotFound = 238,
-			errOsNotFound = 239;
+			errOsNotFound = 239,
+			errProgrammerNotFound = 240;
 	
 	
 }

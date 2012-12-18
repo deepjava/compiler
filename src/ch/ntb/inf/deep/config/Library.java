@@ -296,6 +296,10 @@ public class Library extends ConfigElement implements ErrorCodes {
 	public ValueAssignment getCompConstByName(HString name) {
 		return compilerConstants.getConstantByName(name);
 	}
+	
+	public ValueAssignment getFirstCompConst() {
+		return compilerConstants.getFirstConstant();
+	}
 
 	protected Constants getCompilerConstants() {
 		return compilerConstants;

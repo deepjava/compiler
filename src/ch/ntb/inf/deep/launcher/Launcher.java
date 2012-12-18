@@ -36,6 +36,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Library;
 import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
@@ -77,10 +78,13 @@ public class Launcher implements ICclassFileConsts {
 		Configuration.setActiveProject(project);
 		project.setActiveTargetConfiguration(targetConfiguration);
 		
-		log.println("Root classes in project \"" + project.getName() + "\":");
+		
 		HString[] rootClassNames = Configuration.getRootClassNames();
-		for(int i = 0; i < rootClassNames.length; i++) {
-			log.println("  " + rootClassNames[i]);
+		if(rootClassNames != null && reporter.nofErrors <= 0) {
+			log.println("Root classes in project \"" + project.getName() + "\":");
+			for(int i = 0; i < rootClassNames.length; i++) {
+				log.println("  " + rootClassNames[i]);
+			}
 		}
 		
 		try {
@@ -250,7 +254,9 @@ public class Launcher implements ICclassFileConsts {
 			}
 
 			// Linker: update system table
-			Linker32.updateSystemTable();
+			if(reporter.nofErrors <= 0) {
+				Linker32.updateSystemTable();
+			}
 			
 			// Linker: Create target image
 			if(reporter.nofErrors <= 0) {
@@ -458,11 +464,49 @@ public class Launcher implements ICclassFileConsts {
 		return tc;
 	}
 	
+	@Deprecated
 	public static void createInterfaceFile(String fileToCreate) {
-		createInterfaceFile(fileToCreate, Configuration.getBoard());
+		createBoardInterfaceFile(fileToCreate, Configuration.getBoard());
 	}
 	
-	public static void createInterfaceFile(String fileToCreate, Board b) {
+	public static void createCompilerInterfaceFile(String fileToCreate, Library lib) {
+		int indexOf;
+		String className;
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date date = new Date();
+		try {
+			indexOf = fileToCreate.lastIndexOf(File.separatorChar);
+			if (indexOf != -1) {
+				className = fileToCreate.substring(indexOf + 1).toString();
+			} else {
+				className = fileToCreate.toString();
+			}
+			// check if path exists
+			File f = new File(fileToCreate.substring(0, indexOf).toString());
+			if (!f.exists()) {
+				f.mkdirs();
+			}
+			FileWriter fw = new FileWriter(fileToCreate.toString());
+			fw.write("package ch.ntb.inf.deep.runtime;\n\n");
+			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
+			indexOf = className.indexOf(".");
+			fw.write("public interface " + className.substring(0, indexOf) + " {\n");
+			fw.write("\n\t// Compiler constants\n");
+			ValueAssignment current = lib.getFirstCompConst();
+			while(current != null) {
+				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
+				current = (ValueAssignment)current.next;
+			}
+			fw.write("}");
+			fw.flush();
+			fw.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void createBoardInterfaceFile(String fileToCreate, Board b) {
 		int indexOf;
 		String pack;
 		String className;
