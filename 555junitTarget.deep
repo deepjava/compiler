@@ -7,8 +7,9 @@ meta {
 
 project junitTargetTestProject {
 	libpath = "../bsp", "../junitTarget";
+	
 	boardtype = ntbMpc555HB;
-	ostype = ntbMpc555STS;
+	ostype = ntbSTS;
 	programmertype = ntbMpc555UsbBdi;
 
 #	Tests for compiler test classes 

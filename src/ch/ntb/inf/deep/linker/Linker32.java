@@ -75,6 +75,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	// Error reporter and stdout:
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 	private static PrintStream vrb = StdStreams.vrb;
+	private static PrintStream log = StdStreams.log;
 
 	// Target image
 	public static TargetMemorySegment targetImage;
@@ -1000,6 +1001,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		}
 		binFile.close();
 		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+		log.println("Image file generated");
 	}
 	
 	public static void writeCommandTableToFile(String fileName) throws IOException {

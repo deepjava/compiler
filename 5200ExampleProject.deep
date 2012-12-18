@@ -9,13 +9,16 @@ project ExampleProjectMpc5200B {
 	libpath = "../bsp";
 	
 	boardtype = phyCoreMpc5200tiny;
-	ostype = ntbMpc5200STS;
-	
+	ostype = ntbSTS;
 	programmertype = bdi2000;
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/DecrementerDemo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/EPOStest1";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SPIDemo";
 
 #	imgfile = "out/exampleProject.bin"
 #	imgformat = bin;

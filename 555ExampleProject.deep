@@ -6,14 +6,16 @@ meta {
 }
 
 project ExampleProjectMpc555 {
-	libpath = "../RuntimeSystem";
+	libpath = "../bsp";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../bsp";
 	
 	boardtype = ntbMpc555HB;
-	ostype = ntbMpc555STS;
-	
+	ostype = ntbSTS;
 	programmertype = ntbMpc555UsbBdi;
 	
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication";
+#	rootclasses = "test/ClassA";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest5";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/EPOStest1";
 
 #	imgfile = "out/exampleProject.bin"
 #	imgformat = bin;

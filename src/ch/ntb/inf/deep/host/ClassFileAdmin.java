@@ -32,6 +32,9 @@ import java.util.zip.ZipEntry;
 import ch.ntb.inf.deep.strings.HString;
 
 public class ClassFileAdmin {
+	private static final boolean dbg = false;
+	private static PrintStream vrb = StdStreams.vrb;
+	
 	public static final String classFileType =  ".class";
 	public static int errChangingParentDir = 303, errMsgIllegalParentDir = 304;
 
@@ -48,7 +51,7 @@ public class ClassFileAdmin {
 	 * @param parentDirectories   parent directories
 	 */
 	public static void registerParentDirs(File[] parentDirectories){
-//		StdStreams.log.println("Registering parent dirs of class files:");
+		if(dbg) vrb.println("Registering parent dirs of class files:");
 		if(ClassFileAdmin.parentDirs != null)
 			ErrorReporter.reporter.error(errChangingParentDir);
 		else{
@@ -57,14 +60,14 @@ public class ClassFileAdmin {
 			boolean error = false;
 			for(int path = 0; path < nofPaths; path++){
 				//String parentPath = parentDirectories[path];
-//				StdStreams.log.print("  Registering: "+ parentDirectories[path].getAbsolutePath() + '\t');
+				if(dbg) vrb.print("  Registering: "+ parentDirectories[path].getAbsolutePath() + '\t');
 				//File parentDir = new File( parentPath );
 				if(!parentDirectories[path].exists() || (!parentDirectories[path].isDirectory() && !parentDirectories[path].getName().endsWith(".jar"))){
 					ErrorReporter.reporter.error(errMsgIllegalParentDir);
 					error = true;
 				}
 				ClassFileAdmin.parentDirs[path] = parentDirectories[path];
-//				StdStreams.log.println();
+				if(dbg) vrb.println();
 			}
 			if(error) clear();
 		}

@@ -114,6 +114,7 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		int i = 0;
 		while(i < nOfUsImplementations) {
 			if(us[i].checkCondition(cpu)) return us[i];
+			i++;
 		}
 		return null;
 	}
@@ -126,6 +127,7 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		int i = 0;
 		while(i < nOfUsImplementations) {
 			if(lowlevel[i].checkCondition(cpu)) return lowlevel[i];
+			i++;
 		}
 		return null;
 	}
@@ -138,6 +140,7 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		int i = 0;
 		while(i < nOfKernelImplementations) {
 			if(kernel[i].checkCondition(cpu)) return kernel[i];
+			i++;
 		}
 		return null;
 	}
@@ -150,6 +153,7 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		int i = 0;
 		while(i < nOfHeapImplementations) {
 			if(heap[i].checkCondition(cpu)) return heap[i];
+			i++;
 		}
 		return null;
 	}
@@ -162,6 +166,7 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		int i = 0;
 		while(i < nOfExceptionBaseClassImplementations) {
 			if(exceptionBaseClass[i].checkCondition(cpu)) return exceptionBaseClass[i];
+			i++;
 		}
 		return null;
 	}
