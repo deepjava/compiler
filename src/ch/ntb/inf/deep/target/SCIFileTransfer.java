@@ -27,19 +27,23 @@ import javax.swing.*;
 import ch.ntb.inf.deep.host.StdStreams;
 
 import java.io.*;
+import java.util.TooManyListenersException;
 
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
+import gnu.io.SerialPortEvent;
+import gnu.io.SerialPortEventListener;
+import gnu.io.UnsupportedCommOperationException;
 
 /** files can be manually downloaded over SCI, resides on host */
 
-public class SCIFileTransfer extends JFrame implements ActionListener, Runnable {
+public class SCIFileTransfer extends JFrame implements ActionListener, SerialPortEventListener {
 	PrintStream log = StdStreams.log;
 
 	private static final long serialVersionUID = 1L;
-	private static final String comPort = "COM21";
+	private static final String comPort = "COM5";
 	
 	JButton startButton = new JButton();
 	JButton stopButton = new JButton();
@@ -88,19 +92,24 @@ public class SCIFileTransfer extends JFrame implements ActionListener, Runnable 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource().equals(startButton)) {
-			log.println("start");
+			log.println("start " + comPort);
 			try {
 				CommPortIdentifier portId = CommPortIdentifier.getPortIdentifier(comPort);
-				serialPort = (SerialPort)portId.open("CommPort", 2000);
+				serialPort = (SerialPort)portId.open(this.getClass().getName(), 2000);
 				serialPort.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
 				serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
+				serialPort.addEventListener(this);
+				serialPort.notifyOnDataAvailable(true);
 			} catch (NoSuchPortException e1) {
 				log.println("port not found: " + comPort);
 			} catch (PortInUseException e2) {
 				log.println("port in use: " + comPort);
-			} catch (Exception e3) {
-				e3.printStackTrace();
+			} catch (UnsupportedCommOperationException e3) {
+				log.println("unsupported comm operation: " + comPort);
+			} catch (TooManyListenersException e4) {
+				log.println("too many event listeners: " + comPort);
 			}
+	
 			try {
 				inStream = serialPort.getInputStream();
 				if(inStream == null) log.println("Couldn't open input stream");
@@ -111,7 +120,7 @@ public class SCIFileTransfer extends JFrame implements ActionListener, Runnable 
 			}
 		}
 		if (e.getSource().equals(stopButton)) {
-			log.println("stop");
+			log.println("stop " + comPort);
 			inStream = null;
 			serialPort.close();
 		}
@@ -134,6 +143,7 @@ public class SCIFileTransfer extends JFrame implements ActionListener, Runnable 
 			}
 		}
 		if (e.getSource().equals(sendFileButton)) {
+			// send byte 'p' to target, followed by file name + 0 + file length in bytes + ' ' + file content 
 			log.print("send file to target: ");
 			int returnVal = chooser.showOpenDialog(this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -146,23 +156,17 @@ public class SCIFileTransfer extends JFrame implements ActionListener, Runnable 
 					e2.printStackTrace();
 				}
 				BufferedInputStream bufIn = new BufferedInputStream(in);
-//				try {
-//					log.println(bufIn.read());
-//					log.println("askjdls");
-//				} catch (IOException e2) {
-//					e2.printStackTrace();
-//				}
 				try {
 					outStream.write('p');
-					for (int i = 0; i < file.getName().length(); i++) outStream.write(file.getName().charAt(i));
 					outStream.write(0);
-					int len = (int)file.length();
-					String lenStr = String.format("%010d", len);
-					for (int i = 0; i < 10; i++) outStream.write(lenStr.charAt(i));
+					outStream.write(0);
+					outStream.write(file.getName().getBytes());
+					outStream.write(0);
+					outStream.write(Long.toString(file.length()).getBytes());					
 					outStream.write(' ');
 					outStream.flush();
 					int data = bufIn.read();
-					while (data >= 0) {outStream.write((char)data); data = bufIn.read();}
+					while (data >= 0) {outStream.write(data); data = bufIn.read();}
 					outStream.flush();
 				} catch (Exception e1) {
 					e1.printStackTrace();
@@ -170,42 +174,64 @@ public class SCIFileTransfer extends JFrame implements ActionListener, Runnable 
 			}			
 		}
 		if (e.getSource().equals(receiveFileButton)) {
+			// send byte 's' to target, followed by file name + 0 
+			// target answers by sending file name + 0 + file length in bytes + ' ' + content
 			log.print("read file from target: ");
 			String fileName = JOptionPane.showInputDialog(null,"enter target file name","",JOptionPane.PLAIN_MESSAGE);
 			try {
 				outStream.write('s');
-				for (int i = 0; i < fileName.length(); i++) outStream.write(fileName.charAt(i));
+				outStream.write(fileName.getBytes());
 				outStream.write(0);
 				outStream.flush();
 				inStream = null;	// stop the output to the log
 				InputStream iStream = serialPort.getInputStream();
 				if(iStream == null) log.println("Couldn't open input stream");
-				int b = 0;
+				int i = 0; byte b = -1; byte[] ch = new byte[64];
 				do { 
 					try {
 						if (iStream != null && iStream.available() > 0) {
-							b = iStream.read();
-							if (b != 20) log.print((char)b);
+							b = (byte)(iStream.read());
+//							log.println((char)b);
+							if (b != 0) ch[i++] = b;
 						}
 					} catch (IOException e1) {e1.printStackTrace();}
-				} while (b != 20);
-				int returnVal = chooser.showOpenDialog(this);
-				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					File recFile = chooser.getSelectedFile();
+				} while (b != 0);
+				String retFileName = new String(ch, 0, i);
+				log.print(retFileName);
+				i = 0; b = 0;
+				do { 
+					try {
+						if (iStream != null && iStream.available() > 0) {
+							b = (byte)(iStream.read());
+							if (b != ' ') ch[i++] = b;
+						}
+					} catch (IOException e1) {e1.printStackTrace();}
+				} while (b != ' ');
+				int len = Integer.parseInt(new String(ch, 0, i));
+				if (len < 0) {log.print(": file does not exist");}
+				else {
+					log.print(", " + len + " Bytes");
+					int returnVal = chooser.showOpenDialog(this);
+					if (returnVal == JFileChooser.APPROVE_OPTION) {
+						File recFile = chooser.getSelectedFile();
 
-					FileWriter fileWriter = new FileWriter(recFile.getAbsolutePath());
-					PrintWriter out = new PrintWriter(fileWriter);
-					b = 0;
-					do { 
-						try {
-							if (iStream != null && iStream.available() > 0) {
-								b = iStream.read();
-								if (b != 20) out.write(b);
-							}
-						} catch (IOException e1) {e1.printStackTrace();}
-					} while (b != 20);
-					fileWriter.close();
-					out.close();
+						FileWriter fileWriter = new FileWriter(recFile.getAbsolutePath());
+						PrintWriter out = new PrintWriter(fileWriter);
+						i = 0;
+						do { 
+							try {
+								if (iStream != null && iStream.available() > 0) {
+									b = (byte)(iStream.read());
+									out.append((char)b);
+									i++;
+								}
+							} catch (IOException e1) {e1.printStackTrace();}
+						} while (i < len);
+						out.flush();
+						fileWriter.close();
+						out.close();
+						log.println(", written to disk file " + recFile.getAbsolutePath());
+					}
 				}
 				iStream = null;
 				inStream = serialPort.getInputStream();
@@ -217,21 +243,26 @@ public class SCIFileTransfer extends JFrame implements ActionListener, Runnable 
 		}
 	}
 	
-	public void run() {
-		while(!Thread.currentThread().isInterrupted()) {
+	public void serialEvent(SerialPortEvent event) {
+		switch (event.getEventType()) {
+		case  SerialPortEvent.DATA_AVAILABLE:
 			try {
-				if (inStream != null && inStream.available() > 0) {
-					int b = inStream.read();
-					log.print((char)b);
-				} else Thread.yield();
+				while (inStream != null && inStream.available() > 0) {
+					byte data = (byte) inStream.read();
+					log.print((char)data);
+				}
 			} catch (IOException e) {e.printStackTrace();}
+			break;
+		default:
+			break;
 		}
 	}
 
 	public static void main(String[] args) {
-		Runnable frame = new SCIFileTransfer();
-		((SCIFileTransfer)frame).t = new Thread(frame);
-		((SCIFileTransfer)frame).t.start();
+//		Runnable frame = new SCIFileTransfer();
+//		((SCIFileTransfer)frame).t = new Thread(frame);
+//		((SCIFileTransfer)frame).t.start();
+		new SCIFileTransfer();
 	}
 
 }
