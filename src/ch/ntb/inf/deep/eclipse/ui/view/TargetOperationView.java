@@ -993,7 +993,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				if (!wasFreezeAsserted) {
 					bdi.stopTarget();
 				}
-				switch(op.registerType){
+				switch (op.registerType) {
 				case Parser.sCR:
 					op.value = bdi.getRegisterValue("CR");
 					break;
@@ -1013,7 +1013,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					op.value = bdi.getSprValue(op.addr);
 					break;
 				case Parser.sIOR:
-					op.value = bdi.readWord(op.addr);
+					switch (op.registerSize) {
+					case 1:
+						op.value = bdi.readByte(op.addr);
+						break;
+					case 2:
+						op.value = bdi.readHalfWord(op.addr);
+						break;
+					default:
+						op.value = bdi.readWord(op.addr);
+						break;
+					}
 					break;
 				default:
 				}
@@ -1152,7 +1162,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				bdi.setSprValue(op.addr, (int)op.value);
 				break;
 			case Parser.sIOR:
-				bdi.writeWord(op.addr, (int)op.value);
+				switch (op.registerSize) {
+				case 1:
+					bdi.writeByte(op.addr, (byte)op.value);
+					break;
+				case 2:
+					bdi.writeHalfWord(op.addr, (short)op.value);
+					break;
+				default:
+					bdi.writeWord(op.addr, (int)op.value);
+					break;
+				}
 				break;
 			default:
 			}

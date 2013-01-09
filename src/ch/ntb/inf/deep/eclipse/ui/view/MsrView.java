@@ -58,16 +58,16 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 /**
  * The view is connected to the model using a content provider.
  * <p>
- * It displays the content of the Machinestateregister
+ * It displays the content of the machine state register
  * <p>
  */
 
-public class MaStRegView extends ViewPart implements ISelectionListener {
+public class MsrView extends ViewPart implements ISelectionListener {
 
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.ui.MaStRegView";
+	public static final String ID = "ch.ntb.inf.deep.ui.MsrView";
 
 	private TableViewer viewer;
 	private Action toHex;
@@ -203,7 +203,7 @@ public class MaStRegView extends ViewPart implements ISelectionListener {
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
-				MaStRegView.this.fillContextMenu(manager);
+				MsrView.this.fillContextMenu(manager);
 			}
 		});
 		Menu menu = menuMgr.createContextMenu(viewer.getControl());

@@ -347,7 +347,7 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	public synchronized short readHalfWord(int address) throws TargetConnectionException {
 		short value = defaultValue;
 		try {
-			value = (byte)bdi.readMem(address, 2);
+			value = (short)bdi.readMem(address, 2);
 		} catch (BDIException e) {
 			throw new TargetConnectionException(e.getMessage(), e);
 		}
