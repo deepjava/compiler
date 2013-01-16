@@ -35,6 +35,7 @@ public class Project extends ConfigElement {
 	TargetConfiguration activeTargetConf;
 	File projectFile;
 	HString projectFileName;
+	String imgFile;
 	
 	public Project(String fileName) {
 		this.projectFile = new File(fileName.toString());
@@ -114,6 +115,10 @@ public class Project extends ConfigElement {
 		return os;
 	}
 	
+	public void setImgFile(String file) {
+		this.imgFile = file;
+	}
+	
 	public void setActiveTargetConfiguration(TargetConfiguration tc) {
 		this.activeTargetConf = tc;
 	}
@@ -167,6 +172,10 @@ public class Project extends ConfigElement {
 	
 	public HString getTctFile() {
 		return tctFile;
+	}
+	
+	public String getImgFile() {
+		return this.imgFile;
 	}
 	
 	public Board getBoard() {

@@ -35,7 +35,6 @@ import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.launcher.Launcher;
-import ch.ntb.inf.deep.linker.Linker32;
 
 
 public class DeepLaunchDelegate extends JavaLaunchDelegate{
@@ -68,25 +67,32 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		if(cdm != null){
 			cdm.clear();
 		}
-		
 	
 		monitor.worked(10);
-		if (monitor.isCanceled()) {
+		if(monitor.isCanceled()) {
 			monitor.done();
 			return;
-		}		
+		}
+		
 		if(location.charAt(0) == IPath.SEPARATOR ){			
-			Launcher.buildAll(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + IPath.SEPARATOR + location + IPath.SEPARATOR +program, targetConfig);			
-		}else{
+			Launcher.buildAll(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + IPath.SEPARATOR + location + IPath.SEPARATOR + program, targetConfig);			
+		}
+		else {
 			Launcher.buildAll(location + IPath.SEPARATOR + program, targetConfig);
 		}
 		
-		monitor.worked(60);
-		if (monitor.isCanceled()) {
+		monitor.worked(50);
+		if(monitor.isCanceled()) {
 			monitor.done();
 			return;
 		}
+		
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
+			Launcher.saveTargetImageToFile();
+			Launcher.saveCommandTableToFile();
+		}
+		if(ErrorReporter.reporter.nofErrors == 0 ) {
+			monitor.worked(60);
 			Launcher.openTargetConnection();
 			Launcher.downloadTargetImage();
 			Launcher.startTarget();

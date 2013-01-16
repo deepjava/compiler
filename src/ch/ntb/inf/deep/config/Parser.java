@@ -489,10 +489,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			} else if (temp.equals("ior")) {
 				sym = sIOR;
 				return true;
-			}else if (str.equals("id")) {
+			} else if (str.equals("id")) {
 				sym = sId;
 				return true;
-			} 
+			} else if (str.equals("imgfile")) {
+				sym = sImgFile;
+				return true;
+			}
 			break;
 		case 'k':
 			if (str.equals("kernel")) {
@@ -1042,6 +1045,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "flash";
 		case sTctFile:
 			return "tctfile";
+		case sImgFile:
+			return "imgfile";
 		case sNone:
 			return "none";
 		default:
@@ -2251,8 +2256,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				next();
 			}
 			else if(sym == sImgFile) {
-				// TODO
-				next();
+				String imgFile = imgFileAssignment();
+				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + imgFile);
+				currentProject.setImgFile(imgFile);
 			}
 			else if(sym == sImgFormat) {
 				// TODO
@@ -2700,6 +2706,30 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		}
 		s = strBuffer;
 		next();
+		if (sym != sSemicolon) {
+			nOfErrors++;
+			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
+			return s;
+		}
+		next();
+		return s;
+	}
+	
+	private String imgFileAssignment() {
+		String s;
+		if (sym != sImgFile) {
+			nOfErrors++;
+			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString());
+			return "";
+		}
+		next();
+		if (sym != sEqualsSign) {
+			nOfErrors++;
+			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
+			return "";
+		}
+		next();
+		s = readString();
 		if (sym != sSemicolon) {
 			nOfErrors++;
 			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);

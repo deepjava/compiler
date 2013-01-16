@@ -42,15 +42,17 @@ public class Am29LV160dFlashWriter {
 		}
 		int i;
 		for( i = 0; i < seg.data.length; i++){
-			try {
-				bdi.writeWord(seg.startAddress, 0x05000500);
-				bdi.writeWord(seg.startAddress + i * 4, seg.data[i]);	
-				if(i % 200 == 0){
-					StdStreams.log.print(".");
+			if(ErrorReporter.reporter.nofErrors <= 0) {
+				try {
+					bdi.writeWord(seg.startAddress, 0x05000500);
+					bdi.writeWord(seg.startAddress + i * 4, seg.data[i]);	
+					if(i % 200 == 0){
+						StdStreams.log.print(".");
+					}
+				} catch (TargetConnectionException e) {
+					ErrorReporter.reporter.error(TargetConnection.errProgrammFailed);
+					return i;
 				}
-			} catch (TargetConnectionException e) {
-				ErrorReporter.reporter.error(TargetConnection.errProgrammFailed);
-				return i;
 			}
 		}
 		return i;
