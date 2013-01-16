@@ -79,7 +79,6 @@ public class Launcher implements ICclassFileConsts {
 		Configuration.setActiveProject(project);
 		project.setActiveTargetConfiguration(targetConfiguration);
 		
-		
 		HString[] rootClassNames = Configuration.getRootClassNames();
 		if(rootClassNames != null && reporter.nofErrors <= 0) {
 			log.println("Root classes in project \"" + project.getName() + "\":");
@@ -286,69 +285,63 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void downloadTargetImage() {
-		if(reporter.nofErrors <= 0) {
-			Board b = Configuration.getBoard();
-			TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
-			TargetMemorySegment tms = Linker32.targetImage;
-			if(b != null) {
-				int c = 0;
-				while(tc == null) {
-					if(dbg) vrb.println("[Launcher] Opening target connection");
-					openTargetConnection();
-					c++;
-					if(c > 4) {
-						reporter.error(800, "Can't open target connection: tried 5 times");
-						return;
-					}
-				}
-				try {
-					if(dbg) vrb.println("[Launcher] Initializing registers");
-					tc.initRegisters(b.getCpuRegisterInits());
-					tc.initRegisters(b.getBoardRegisterInits());
-					tc.initRegisters(targetConfig.getRegisterInits());
-					for(int i = 0; i < b.getCPU().getNofGPRs(); i++) {
-						tc.setGprValue(i, 0);
-					}
-					vrb.println("Downloading target image:");
-					while(tms != null) {
-						if(dbg) vrb.print("  Proceeding TMS #" + tms.id);
-						if(tms.segment == null ){ // this should never happen
-							// TODO add error message here
-							if(dbg) vrb.println(" -> skipping (segment not defined)");
+		if(Configuration.getActiveProject().getProgrammer()!= null) {
+			if(reporter.nofErrors <= 0) {
+				Board b = Configuration.getBoard();
+				TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
+				TargetMemorySegment tms = Linker32.targetImage;
+				if(b != null) {
+					int c = 0;
+					while(tc == null) {
+						if(dbg) vrb.println("[Launcher] Opening target connection");
+						openTargetConnection();
+						c++;
+						if(c > 4) {
+							reporter.error(800, "Can't open target connection: tried 5 times");
+							return;
 						}
-						else {
-							if(dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.getName());
-							if(dbg) {
-//								vrb.print(" [");
-//								for(int i = 0; i < tms.data.length; i++) {
-//									vrb.print(String.format("0x%08X", tms.data[i]));
-//									vrb.print(' ');
-//								}
-//								vrb.println(" ]");
+					}
+					try {
+						if(dbg) vrb.println("[Launcher] Initializing registers");
+						tc.initRegisters(b.getCpuRegisterInits());
+						tc.initRegisters(b.getBoardRegisterInits());
+						tc.initRegisters(targetConfig.getRegisterInits());
+						for(int i = 0; i < b.getCPU().getNofGPRs(); i++) {
+							tc.setGprValue(i, 0);
+						}
+						vrb.println("Downloading target image:");
+						while(tms != null && reporter.nofErrors <= 0) {
+							if(dbg) vrb.print("  Proceeding TMS #" + tms.id);
+							if(tms.segment == null ){ // this should never happen
+								// TODO add error message here
+								if(dbg) vrb.println(" -> skipping (segment not defined)");
 							}
-							tc.writeTMS(tms);
+							else {
+								if(dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.getName());
+								tc.writeTMS(tms);
+							}
+							tms = tms.next;
 						}
-						tms = tms.next;
+					} catch(TargetConnectionException e) {
+						reporter.error(TargetConnection.errDownloadFailed);
+						reporter.nofErrors++;
 					}
-				} catch(TargetConnectionException e) {
-					reporter.error(TargetConnection.errDownloadFailed);
-					reporter.nofErrors++;
+				}
+				else { // Configuration Error: Board not set!
+					// TODO add error message here
 				}
 			}
-			else {
-				// TODO add error message here
+			else { // reporter.nofErrors > 0
+				reporter.error(TargetConnection.errNoTargetImage);
+				reporter.nofErrors++;
 			}
-		}
-		else {
-			reporter.error(TargetConnection.errNoTargetImage);
-			reporter.nofErrors++;
 		}
 	}
 	
 	public static void startTarget() {
-		vrb.println("Starting target");
 		if (reporter.nofErrors <= 0) {
 			if(tc != null) {
+				vrb.println("Starting target");
 				try {
 					tc.startTarget();
 				} catch (TargetConnectionException e) {
@@ -361,7 +354,7 @@ public class Launcher implements ICclassFileConsts {
 	
 	public static void stopTarget() {
 		try {
-			tc.stopTarget();
+			if(tc != null) tc.stopTarget();
 		} catch (TargetConnectionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -370,19 +363,24 @@ public class Launcher implements ICclassFileConsts {
 	
 	public static void openTargetConnection() {
 		if(dbg) vrb.println("[Launcher] Opening target connection");
-		tc = getTargetConnection();
-		if(tc != null) {
-			if(dbg) vrb.println(" -> ok");
-			try {
-				if(dbg) vrb.println("  Initializing target connection");
-				tc.init();
-			} catch (TargetConnectionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		if(Configuration.getActiveProject().getProgrammer()!= null) {
+			tc = getTargetConnection();
+			if(tc != null) {
+				if(dbg) vrb.println(" -> ok");
+				try {
+					if(dbg) vrb.println("  Initializing target connection");
+					tc.init();
+				} catch (TargetConnectionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			else {
+				System.out.println("[ERROR] Can't get a connection to the target"); // TODO improve this
 			}
 		}
 		else {
-			System.out.println("[ERROR] Can't get a connection to the target"); // TODO improve this
+			if(dbg) vrb.println("  -> no programmer defined in current project");
 		}
 	}
 	
@@ -403,37 +401,38 @@ public class Launcher implements ICclassFileConsts {
 		if(tc != null) tc.closeConnection();
 	}
 
-	public static void saveTargetImageToFile(String fileName, int format) {
-		if(reporter.nofErrors <= 0){
-			try {
-				switch(format) {
-				case Configuration.BIN:
-					Linker32.writeTargetImageToBinFile(fileName);
-					break;
-				case Configuration.HEX:
-					break;
-				case Configuration.SREC: 
-					break;
-				case Configuration.DTIM:
-					Linker32.writeTargetImageToDtimFile(fileName);
-					break;
-				}
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
 	public static void saveTargetImageToFile() {
-		String timDirName = "tim";
-		File timDir = new File(timDirName);
-		if(!timDir.isDirectory()) {
-			timDir.mkdir();
+		Project currentProject = Configuration.getActiveProject();
+		if(reporter.nofErrors <= 0 && currentProject!= null && currentProject.getImgFile() != null && !currentProject.getImgFile().equals("")) {
+			saveTargetImageToFile(Configuration.getActiveProject().getImgFile(), Configuration.BIN);
 		}
-		saveTargetImageToFile(timDirName + "/targetimage.dtim", Configuration.DTIM);
 	}
 	
-	public static void saveCommandTableToFile(String fileName) {
+	protected static void saveTargetImageToFile(String fileName, int format) {
+		try {
+			switch(format) {
+			case Configuration.BIN:
+				log.println("Writing target image in binary format to: " + fileName);
+				Linker32.writeTargetImageToBinFile(fileName);
+				break;
+			case Configuration.HEX:
+				break;
+			case Configuration.SREC: 
+				break;
+			case Configuration.DTIM:
+				Linker32.writeTargetImageToDtimFile(fileName);
+				break;
+			}
+		} catch(IOException e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	public static void saveCommandTableToFile() {
+		
+	}
+	
+	protected static void saveCommandTableToFile(String fileName) {
 		if(reporter.nofErrors <= 0){
 			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));
 			path.mkdirs(); // create directories if not existing
@@ -465,7 +464,7 @@ public class Launcher implements ICclassFileConsts {
 		return tc;
 	}
 	
-	public static void createInterfaceFiles(String libraryPath) {
+	protected static void createInterfaceFiles(String libraryPath) {
 		Library lib = Configuration.addLibrary(libraryPath);
 		String basePath = lib.getPathAsString() + File.separatorChar + "src" + File.separatorChar +
 				"ch"  + File.separatorChar + "ntb"  + File.separatorChar + "inf"  + 
