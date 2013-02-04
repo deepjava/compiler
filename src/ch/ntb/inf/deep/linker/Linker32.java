@@ -119,6 +119,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static void init() {
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
 		
+		if(dbg) vrb.println("  Reseting static variables");
+		firstUsedAddress = Integer.MAX_VALUE;
+		lastUsedAddress = 0;
+		
 		if(dbg) vrb.print("  Setting size of string header: ");
 		stringHeaderSize = stringHeaderConstSize + Type.wktObject.getObjectSize();
 		if(dbg) vrb.println(stringHeaderSize + " byte");
@@ -871,12 +875,23 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				monitorUsedSpace(sysTabSegments[i].getBaseAddress(), systemTable.getBlockSize()); 
 			}
 		}
+				
+		if(compilerSpecificMethodsCodeSize > 0) {
+			monitorUsedSpace(compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset, compilerSpecificMethodsCodeSize);
+		}
+		
+		if(globalConstantTable != null) {
+			monitorUsedSpace(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable.getBlockSize());
+		}
 		
 		int sizeToCopy = lastUsedAddress - firstUsedAddress;
 		
-		if(dbg) vrb.println("  Setting \"sizeToCopy\" to " + sizeToCopy + " bytes");
+		if(dbg) vrb.println("  First used address: 0x" + Integer.toHexString(firstUsedAddress));
+		if(dbg) vrb.println("  Last used address: 0x" + Integer.toHexString(lastUsedAddress));
+		if(dbg) vrb.println("  -> Setting \"sizeToCopy\" to " + sizeToCopy + " bytes");
 		
 		sysTabSizeToCopy.setValue(sizeToCopy);
+//		sysTabSizeToCopy.setValue(100000);
 		
 		if(dbg) vrb.println("\n[LINKER] END: Updating system table\n");
 	}
@@ -975,7 +990,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
 		currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
-		binFile = new FileOutputStream(currentFileName);
+		binFile = new FileOutputStream(currentFileName); // TODO check if file could be opened
 		if(dbg) vrb.println("  Writing to file: " + currentFileName);
 		int currentAddress = dev.getbaseAddress();
 		while(tms != null) {
