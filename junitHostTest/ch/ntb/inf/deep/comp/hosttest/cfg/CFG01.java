@@ -20,7 +20,7 @@ public class CFG01 extends TestCFG implements ICclassFileConsts {
 	public static void setUp() {
 		Configuration.setActiveProject(project);
 		project.setActiveTargetConfiguration("BootFromRam");
-		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/testClasses/T01SimpleMethods") };
+		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T01SimpleMethods") };
 		try {
 			CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		} catch (IOException e) {

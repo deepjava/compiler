@@ -17,7 +17,7 @@ public class cgPPC00 extends TestCgPPC {
 	public static void setUp() {
 		Configuration.setActiveProject(project);
 		project.setActiveTargetConfiguration("BootFromRam");
-		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/testClasses/T00EmptyClass") };
+		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T00EmptyClass") };
 		try {
 			CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		} catch (IOException e) {

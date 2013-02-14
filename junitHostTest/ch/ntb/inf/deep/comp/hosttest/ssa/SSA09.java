@@ -16,7 +16,7 @@ public class SSA09 extends TestSSA {
 	public static void setUp() {
 		Configuration.setActiveProject(project);
 		project.setActiveTargetConfiguration("BootFromRam");
-		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/testClasses/T09Types") };
+		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T09Types") };
 		try {
 			CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		} catch (IOException e) {

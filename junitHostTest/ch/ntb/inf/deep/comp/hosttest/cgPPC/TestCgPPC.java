@@ -21,7 +21,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	static CodeGen[] code;
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 	static String workspace = System.getProperty("user.dir");
-	static Project project = Configuration.addProject(workspace + "/junitTest.deep");
+	static Project project = Configuration.addProject(workspace + "/junitHostTest.deep");
 
 	public static void createCgPPC(Class clazz) {
 		TestCFG.createCFG(clazz);
