@@ -483,10 +483,10 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 						else flashWriter.eraseMarkedSectors(devs[i]);
 					}
 					flashErased = true;
+					StdStreams.log.println("Programming flash");
 				}
 				// Programming flash
 				if(!flashWriter.unlocked){
-					StdStreams.log.println("Programming flash");
 					flashWriter.unlockBypass(tms.segment.owner, true);
 				}
 				flashWriter.writeSequence(tms);

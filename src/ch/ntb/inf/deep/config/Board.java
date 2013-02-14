@@ -13,7 +13,7 @@ public class Board extends ConfigElement {
 	
 	public Board(String jname) {
 		this.name = HString.getRegisteredHString(jname);
-		sysConstants = new Constants(this.name + " sysConstants", true);
+		sysConstants = new Constants(this.name + " sysConstants", true, this);
 		reginit = new RegisterInitList();
 	}
 	

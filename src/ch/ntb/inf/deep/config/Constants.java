@@ -25,10 +25,13 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Constants implements ErrorCodes {
+	private static ErrorReporter reporter = ErrorReporter.reporter;
 	private ValueAssignment consts;
+	private ConfigElement owner;
 	private boolean overwriteProtected;
 
-	public Constants(String jname, boolean overwriteProtected) {
+	public Constants(String jname, boolean overwriteProtected, ConfigElement owner) {
+		this.owner = owner;
 		this.overwriteProtected = overwriteProtected;
 	}
 	
@@ -82,8 +85,14 @@ public class Constants implements ErrorCodes {
 	public int getValueOfConstant(HString name) {
 		if(consts != null) {
 			ValueAssignment c = (ValueAssignment)consts.getElementByName(name);
-			if(c != null) return c.getValue();
+			if (c != null) return c.getValue();
+			else if (owner instanceof Board) {
+				Constants curr = ((Board)owner).getCPU().getSysConstants();
+				c = (ValueAssignment)curr.consts.getElementByName(name);
+				if (c != null) return c.getValue();
+			}
 		}
+		reporter.error(241);
 		return Integer.MIN_VALUE;
 	}
 	

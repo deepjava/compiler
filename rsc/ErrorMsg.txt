@@ -30,6 +30,7 @@ ErrorNr;Description;Solution
 237;System module not found;
 238;Board not found;
 239;Operating system not found;
+241;System constant not found;
 
 300;class file not found;
 301;systemmethod not found;
