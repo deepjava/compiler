@@ -2,9 +2,13 @@
 <classpath>
 	<classpathentry kind="lib" path="tempLibs/ch.ntb.inf.mcdp.ide.jar"/>
 	<classpathentry kind="lib" path="tempLibs/ch.ntb.inf.libusbJava.jar"/>
+	<classpathentry kind="lib" path="tempLibs/math.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="junitTargetTest"/>
 	<classpathentry kind="src" path="junitHostTest"/>
+	<classpathentry kind="lib" path="/ch.ntb.inf.junitTarget/bin" sourcepath="/ch.ntb.inf.junitTarget/src"/>
+	<classpathentry kind="lib" path="/ch.ntb.inf.deep.trglib/bin" sourcepath="/ch.ntb.inf.deep.trglib/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
