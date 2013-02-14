@@ -1772,7 +1772,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		} else if (!isSubSegment) {
 			dev.addSegment(root);
 		} else {
-			reporter.error(errInvalideParameter, "in " + currentFileName + " at Line " + lineNumber + " Parent Segment must be given for Subsegmentarrays");
+			reporter.error(errInvalidParameter, "in " + currentFileName + " at Line " + lineNumber + " Parent Segment must be given for Subsegmentarrays");
 		}
 	}
 	
@@ -2351,7 +2351,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + "received symbol: " + symToString());
 			return null;
 		}
-		if(sym == sExceptionBaseClass){
+		if (sym == sExceptionBaseClass){
 			isExceptionBase = true;
 		}
 		next();
@@ -2369,10 +2369,10 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		SystemClass clazz = new SystemClass(classAssignment());		
 		SystemMethod meth;
 		while (sym == sMethod || sym == sCondition) {
-			if(sym == sCondition) {
+			if (sym == sCondition) {
 				conditionAssignment(clazz);
 			}
-			else if(sym == sMethod) {
+			else if (sym == sMethod) {
 				meth = method();
 				clazz.addMethod(meth);
 				clazz.addAttributes(meth.attributes);
@@ -2433,12 +2433,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				}
 				next();
 				int id = expression();
-				if((id & 0xFFFFF000) > 0){
-					nOfErrors++;
-					reporter.error(errInvalideParameter, "id for method" + method.name + "to great, max 12 bit number");
-					return null;
-				}
-				method.attributes |= id;
+				method.id = id;
 
 				if (sym != sSemicolon) {
 					nOfErrors++;

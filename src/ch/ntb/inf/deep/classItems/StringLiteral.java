@@ -26,14 +26,14 @@ import ch.ntb.inf.deep.strings.HString;
 public class StringLiteral extends Constant {
 	public HString string;
 	
-	StringLiteral(HString name, HString string){
+	StringLiteral(HString name, HString string) {
 		super(name, Type.wellKnownTypes[txString]);
 		this.string = string;
 		this.accAndPropFlags |= (1<<apfFinal);
 	}
 
 	//--- debug primitives
-	public void printShort(int indentLevel){
+	public void printShort(int indentLevel) {
 		vrb.printf("string \"%1$s\", flags=", string);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'F');
 	}
 
@@ -42,8 +42,8 @@ public class StringLiteral extends Constant {
 		vrb.print(" value = \"" + string + '\"'); 
 	}
 
-	public void println(int indentLevel){
-		print(indentLevel);  vrb.println();
+	public void println(int indentLevel) {
+		print(indentLevel); vrb.println();
 	}
 	
 	public String toString() {

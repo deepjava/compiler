@@ -24,21 +24,19 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import ch.ntb.inf.deep.host.StdStreams;
+
 
 public abstract class HString implements IhStringConsts {
 	static final boolean dbg = false, testAssertion = true, checkPre = true, checkPost = true;
-	static PrintStream vrb = System.out;
+	static PrintStream vrb = StdStreams.vrb;
 
 	private static StringTable stab;
 
 	// --- static fields
 	private static byte[] byteBuffer;
 	private static char[] charBuffer;
-	static {
-		byteBuffer = new byte[100];
-		charBuffer = new char[100];
-	}
-
+	
 	// --- instance fields
 	public HString next;
 	char[] chars;
@@ -47,6 +45,18 @@ public abstract class HString implements IhStringConsts {
 	char arrayLen; // int-array length (number of int values)
 	int flags; // set {sattrIs7bitChars, sattrIs8bitChars, sattrIs16bitChars}
 
+	static {
+		byteBuffer = new byte[100];
+		charBuffer = new char[100];
+	
+		if (StringTable.getInstance() != null) StringTable.resetTable();
+		else {
+			StringTable.createSingleton(1000, "??");
+			stab = StringTable.getInstance();
+//			HString.setStringTable(stab);
+		}
+	}
+
 	public static void releaseBuffers(){
 		if(byteBuffer.length > 100){
 			byteBuffer = new byte[100];
@@ -54,9 +64,9 @@ public abstract class HString implements IhStringConsts {
 		}
 	}
 	
-	private static void setStringTable(StringTable stringTable){
-		stab = stringTable;
-	}
+//	private static void setStringTable(StringTable stringTable){
+//		stab = stringTable;
+//	}
 
 	public static int getBitSetUnion(char[] chars, int length) {
 	   	if(checkPre && (length < 0 || length > chars.length) ) throw new StringIndexOutOfBoundsException(length);
@@ -136,12 +146,12 @@ public abstract class HString implements IhStringConsts {
 	}
 
 	public static HString getRegisteredHString(String string) {
-		if(string == null) return null;
+		if (string == null) return null;
 		int length = string.length();
-		if(length > charBuffer.length) charBuffer = new char[length];
+		if (length > charBuffer.length) charBuffer = new char[length];
 		string.getChars(0, length, charBuffer, 0);
 		HString hstring;
-		if(isH8CharArray(charBuffer, length)) {
+		if (isH8CharArray(charBuffer, length)) {
 			hstring = new H8String(charBuffer, length);
 		}
 		else {
@@ -150,7 +160,7 @@ public abstract class HString implements IhStringConsts {
 		return stab.insertCondAndGetEntry(hstring);
 	}
 	
-	public static int readUTF(DataInput classFileInput) throws IOException {// DataInputStream
+	public static int readUTF(DataInput classFileInput) throws IOException {	// DataInputStream
 		int utfLength = classFileInput.readUnsignedShort();
 		if (utfLength > byteBuffer.length) {
 			byteBuffer = new byte[utfLength];
@@ -239,7 +249,6 @@ public abstract class HString implements IhStringConsts {
 
 	public abstract String toString();
 
-
 	public abstract int sizeInByte();
 	
 	
@@ -255,12 +264,4 @@ public abstract class HString implements IhStringConsts {
 		for(int n = 0; n < len; n++)  vrb.printf("[%1$d]=0x%2$4x\n", n, (int)chars[n]);
 	}
 	
-	static { // TODO move this to launcher
-		if(StringTable.getInstance() != null) StringTable.resetTable();
-		else{
-			StringTable.createSingleton(1000, "??");
-			stab = StringTable.getInstance();
-			HString.setStringTable(stab);
-		}
-	}
 }

@@ -51,8 +51,9 @@ import org.eclipse.ui.part.ViewPart;
 import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.ReadVariableElement;
@@ -280,9 +281,9 @@ public class ReadVariableView extends ViewPart implements ICdescAndTypeConsts {
 					String clazzName = ((ReadVariableElement)obj).fullQualifiedName.substring(0, lastDot);
 					clazzName = clazzName.replace('.', '/');
 					String varName = ((ReadVariableElement)obj).fullQualifiedName.substring(lastDot + 1);
-					Class clazz = (Class)Type.classList.getItemByName(clazzName);
+					Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
 					if(clazz != null){
-						DataItem var = (DataItem)clazz.classFields.getItemByName(varName);
+						Field var = (Field)clazz.classFields.getItemByName(varName);
 						if(var != null){
 							if(bdi == null){
 								bdi = Launcher.getTargetConnection();

@@ -23,18 +23,11 @@ package ch.ntb.inf.deep.classItems;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
-public class DataItem extends ClassMember {
+public class Field extends ClassMember {
 
-	//--- constructors
-	DataItem(){
-	}
-
-	DataItem(HString name, Type type){
+	Field(HString name, Type type){
 		super(name, type);
 	}
-
-	//--- instance methods
-
 	
 	//--- debug primitives
 	public void printShort(int indentLevel){

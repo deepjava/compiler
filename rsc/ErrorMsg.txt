@@ -30,16 +30,17 @@ ErrorNr;Description;Solution
 237;System module not found;
 238;Board not found;
 239;Operating system not found;
+241;System constant not found;
 
 300;class file not found;
-301;systemmethod not found;
-302;id for Systemmethod out of range;
+301;system method not found;
+302;id for system method out of range;
 303;changing parent dirs of class files;
 304;illegal parent dir of class files;
 
 400;cfgNode not found;
 
-500;Generation of linenumber table failed;
+500;Generation of line number table failed;
 
 600;no code generated;
 601;method has too many parameters;
@@ -53,6 +54,10 @@ ErrorNr;Description;Solution
 621;SSA branch instruction not implemented;
 623;sCcompl or sCcompg is not followed by branch instruction;
 625;SSA instruction not implemented;
+630;initialization failed, unsafe class not found;
+631;initialization failed, method in unsafe class not found;
+632;initialization failed, low level class not found;
+633;initialization failed, method in low level class not found;
 
 701;Class not loaded;
 702;Class not found;

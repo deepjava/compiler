@@ -24,43 +24,43 @@ import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class ItemStub extends Item {
-	public Class owner; // provisional owner of the field or method
+	public RefType owner; // provisional owner of the field or method
 	public HString descriptor; // descriptor of the method, null for fields
 
-	ItemStub(Class owner, HString fieldName, Type fieldType){
+	ItemStub(RefType owner, HString fieldName, Type fieldType) {
 		super(fieldName, fieldType);
 		this.owner = owner;
 	}
 
-	ItemStub(Class owner, HString methName, HString methDescriptor){
+	ItemStub(RefType owner, HString methName, HString methDescriptor) {
 		super(methName, null);
 		this.owner = owner;
 		this.descriptor = methDescriptor;
 	}
 	
 
-	Item getReplacedStub(){
+	Item getReplacedStub() {
 		Item item;
-		if( type == null) item = owner.getMethod(name, descriptor);
-		else  item = owner.getField(name);
-		if(enAssertion) assert item != null;
+		if (type == null) item = owner.getMethod(name, descriptor);
+		else item = ((Class)owner).getField(name);
+		if (enAssertion) assert item != null;
 		item.accAndPropFlags |= this.accAndPropFlags;
 		return item;
 	}
 
 	//--- debug primitives
-	public void print(int indentLevel){
+	public void print(int indentLevel) {
 		indent(indentLevel);
 		vrb.print("stub of ");
 		if( type == null) vrb.printf("method: (%1$s).%2$s, d=%3$s", owner.name, name, descriptor);
 		else vrb.printf("field: name=%1$s, t=%2$s", name, type.name);
-		vrb.print(", dFlags:");  Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags);
+		vrb.print(", dFlags:"); Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags);
 		if( owner != null ){
-			vrb.print(", owner.Flags:");  Dbg.printDeepAccAndPropertyFlags(owner.accAndPropFlags);			
+			vrb.print(", owner.Flags:"); Dbg.printDeepAccAndPropertyFlags(owner.accAndPropFlags);			
 		}
 	}
 
-	public void printShort(int indentLevel){
+	public void printShort(int indentLevel) {
 		print(indentLevel);
 	}
 }

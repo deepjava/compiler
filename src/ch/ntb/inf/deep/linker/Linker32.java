@@ -30,11 +30,12 @@ import java.util.Date;
 
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
@@ -42,6 +43,7 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.IAttributes;
 import ch.ntb.inf.deep.config.Segment;
+import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
@@ -120,7 +122,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("[LINKER] START: Initializing:");
 		
 		if(dbg) vrb.print("  Setting size of string header: ");
-		stringHeaderSize = stringHeaderConstSize + Type.wktObject.getObjectSize();
+		stringHeaderSize = stringHeaderConstSize + Type.wktObject.objectSize;
 		if(dbg) vrb.println(stringHeaderSize + " byte");
 		
 		if(dbg) vrb.println("  Looking for segments for the system table: ");
@@ -208,10 +210,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("   Creating pointer list (class fields)");
 		clazz.classPtrList = new FixedValueItem("nofClassPtrs");
 		int ptrCounter = 0;
-		if(clazz.nofClassRefs > 0) {
+		if (clazz.nofClassRefs > 0) {
 			Item field = clazz.firstClassReference;
-			while(field != clazz.constFields) {
-				if((field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) != 0 && (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
+			while (field != clazz.constFields) {
+				if (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray) {
+					assert (field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) != 0;
 					clazz.classPtrList.append(new AddressItem(field));
 					ptrCounter++;
 				}
@@ -263,7 +266,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		typeTableLength = typeTable.getBlockSize();
 		clazz.typeDescriptor.append(typeTable.getHead());
 		
-		// Type descriptor: add interface table
+		// Type descriptor: add interface table for interface methods
 		if(clazz.extMethTable.length > clazz.methTabLength) {
 			if(dbg) vrb.println("    - Inserting interface table");
 			int counter = clazz.methTabLength;
@@ -272,8 +275,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			int id, bmo;
 			//vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
 			
-			if (counter < clazz.extMethTable.length)
-			{
+			if (counter < clazz.extMethTable.length) {
 				do {
 					id = clazz.extMethTable[counter].index >>> 16;
 					bmo = clazz.extMethTable[counter].index & 0xFFFF;
@@ -287,7 +289,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					interfaceTable.append(new InterfaceItem(clazz.extMethTable[counter].owner.name, (short)id, (short)bmo));
 				} while ((clazz.extMethTable[counter++].index >>> 16) > 0);
 
-				while(counter < clazz.extMethTable.length) {
+				while (counter < clazz.extMethTable.length) {
 					if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: Method = " + clazz.extMethTable[counter].name);
 					interfaceTable.append(new AddressItem(clazz.extMethTable[counter++]));
 				}
@@ -302,8 +304,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		ptrCounter = 0;
 		if(clazz.nofInstRefs > 0) {
 			Item field = clazz.firstInstReference;
-			while(field != clazz.classFields) {
-				if((field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) == 0 && (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray )) {
+			while (field != clazz.classFields) {
+				if (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray ) {
+					assert (field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) == 0;
 					clazz.instPtrList.append(new OffsetItem("instPtrOffset[" + ptrCounter + "]: ", field));
 					ptrCounter++;
 				}
@@ -321,18 +324,18 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		clazz.constantBlock.append(clazz.typeDescriptor.getHead());
 		
 		// create string pool
-		if(dbg) vrb.println("  Creating string pool");
-		if(clazz.constPool != null) {
+		if (dbg) vrb.println("  Creating string pool");
+		if (clazz.constPool != null) {
 			Item cpe;
-			for(int i = 0; i < clazz.constPool.length; i++) {
+			for (int i = 0; i < clazz.constPool.length; i++) {
 				cpe = clazz.constPool[i];
-				if(cpe.type == Type.wellKnownTypes[txString] && (cpe.accAndPropFlags & (1 << dpfConst)) != 0) { // TODO @Martin is checking the const flag necessary?
-					if(clazz.stringPool == null) clazz.stringPool = new StringItem(cpe);
+				if (cpe.type == Type.wellKnownTypes[txString] && (cpe.accAndPropFlags & (1<<dpfConst)) != 0) { // strings which are not marked as const must not be linked
+					if (clazz.stringPool == null) clazz.stringPool = new StringItem(cpe);
 					else clazz.stringPool.append(new StringItem(cpe));
 				}
 			}
 		}
-		if(clazz.stringPool != null) {
+		if (clazz.stringPool != null) {
 			clazz.stringPoolSize = clazz.stringPool.getBlockSize();
 			clazz.constantBlock.append(clazz.stringPool);
 		}
@@ -422,38 +425,30 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  Element size: " + array.componentType.sizeInBits / 8 + " byte (" + array.componentType.sizeInBits + " bit)");
 		if(dbg) vrb.println("  Dimension:    " + array.dimension);
 				
-		// Extentsion level
+		// Extension level
 		array.typeDescriptor = new FixedValueItem("extensionLevel", 1); // the base type of an array is always object!
 		
 		// Array dimension, component size and array type flag
 		byte arrayOfPrimitives = 0;
-		if(array.componentType.category == tcPrimitive) arrayOfPrimitives = 1;
+		if (array.componentType.category == tcPrimitive) arrayOfPrimitives = 1;
 		array.typeDescriptor.append(new FixedValueItem("dimension/size", ((arrayOfPrimitives << 31) | array.dimension << 16) | (array.componentType.sizeInBits / 8)));
 		
 		// Array name address
 		array.typeDescriptor.append(new FixedValueItem("arrayNameAddr", 0x12345678));
 				
-		// List of type descriptors of arrays with the same component type
-		String arrayName; Item lowDimArray;
-		for(int i = array.dimension; i > 0; i--) {
-			arrayName = array.name.substring(array.dimension - i).toString();
-			lowDimArray = Type.classList.getItemByName(arrayName);
-			if(lowDimArray != null) {
-				array.typeDescriptor.append(new AddressItem("arrayTD[" + i + "]: ", lowDimArray));
-			}
-			else {
-				array.typeDescriptor.append(new FixedValueItem("arrayTD[" + i + "]: <not available> (" + arrayName + ")", -1));
-				// TODO @Martin: insert warning or error!
-			}
+		// List of type descriptors of arrays with the same component type but lower dimension
+		Array a = array;
+		for (int i = array.dimension; i > 0; i--) {
+			assert a != null;			
+			array.typeDescriptor.append(new AddressItem("arrayTD[" + i + "]: ", a));
+			a = a.nextLowerDim;
 		}
 		
 		// Component type
-		if(array.componentType.category == tcPrimitive) {
+		if (array.componentType.category == tcPrimitive) // append value 0
 			array.typeDescriptor.append(new FixedValueItem("arrayComponentTD: <primitive> (" + array.componentType.name + ")", 0));
-		}
-		else {
+		else 
 			array.typeDescriptor.append(new AddressItem("arrayComponentTD: ", array.componentType));
-		}
 		
 		if(dbg) vrb.println("[LINKER] END: Creating type descriptor for array \"" + array.name +"\"\n");
 	}
@@ -525,7 +520,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		int nofHeaps = Configuration.getNumberOfHeaps();
 		if(dbg) vrb.println("  Number of stacks:  " + nofStacks);
 		if(dbg) vrb.println("  Number of heaps:   " + nofHeaps);
-		if(dbg) vrb.println("  Number of classes: " + Type.nofClasses);
+		if(dbg) vrb.println("  Number of classes: " + RefType.nofRefTypes);
 		
 		// Find the kernel
 		HString kernelClassName = Configuration.getKernelClassname();
@@ -533,7 +528,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			kernelClassName = HString.getRegisteredHString("<undefined>");
 			reporter.error(740, "kernel class not set");
 		}
-		Item kernelClass = Type.classList.getItemByName(kernelClassName.toString());
+		Item kernelClass = RefType.refTypeList.getItemByName(kernelClassName.toString());
 		Item kernelClinit = null;
 		int kernelClinitAddr = -1;
 		if(kernelClass != null) {
@@ -600,7 +595,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("[LINKER] START: Freeze memory map:\n");
 		
 		if(dbg) vrb.println("1) Set a segment for the code, the static fields and the constant block for each class");
-		Item item = Type.classList;
+		Item item = RefType.refTypeList;
 		Segment s;
 		while(item != null) {
 			if(item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
@@ -736,21 +731,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		// Class/static fields
 		if(clazz.nofClassFields > 0) {
-			Item field = clazz.classFields; // class fields and constant fields
-			if(dbg) vrb.println("  Static fields:");
-			while(field != null) {
-				if((field.accAndPropFlags & (1 << dpfConst)) != 0) { // constant field // TODO @Martin If-Teil sollte eigentlich ueberhaupt nicht notwendig sein, da konstante Referenzen das Const-Flag gar nicht gesetzt haben -> If-Teil entfernen?
-					if(((Type)field.type).category == tcRef) { // reference but not literal string
-						if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
-					}
+			Item field = clazz.classFields; // class fields 
+			if(dbg) vrb.println("  Static fields:"); 
+			while(field != null && field != clazz.constFields) { // go through all class fields, stop at const fields	
+				if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
+				else {
+					if(varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
+					if(field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
 				}
-				else { // non constant field -> var section
-					if(varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
-					else {
-						if(varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
-						if(field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
-					}
-				}
+
 				if(dbg) vrb.print("    > " + field.name + ": Offset = 0x" + Integer.toHexString(field.offset) + ", Index = 0x" + Integer.toHexString(field.index) + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
 				field = field.next;
 			}
@@ -850,7 +839,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static void updateSystemTable() {
 		if(dbg) vrb.println("[LINKER] START: Updating system table\n");
 		
-		Item item = Type.classList;
+		Item item = RefType.refTypeList;
 		while(item != null) {
 			if(item instanceof Class  && ((item.accAndPropFlags & (1 << apfInterface)) == 0)){
 				Class clazz = (Class)item;
@@ -885,7 +874,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("[LINKER] START: Generating target image:\n");
 		
-		Item item = Type.classList;
+		Item item = RefType.refTypeList;
 		Method m;
 		while(item != null) {
 			if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
@@ -1015,12 +1004,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         tctFile.write("#File created: " + f.format(buildTime));
         tctFile.write("\n\n");
         
-        DataItem cmdAddrField;
+        Field cmdAddrField;
         int cmdAddr = -1;
-        Class kernel = (Class)Type.classList.getItemByName(Configuration.getKernelClassname().toString());
+        Class kernel = (Class)RefType.refTypeList.getItemByName(Configuration.getKernelClassname().toString());
         if(kernel != null) {
         	if(dbg) vrb.println("  Kernel: " + kernel.name);
-        	cmdAddrField = (DataItem)kernel.classFields.getItemByName("cmdAddr");
+        	cmdAddrField = (Field)kernel.classFields.getItemByName("cmdAddr");
         	if(cmdAddrField != null) {
         		if(dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
         		cmdAddr = cmdAddrField.address;
@@ -1033,7 +1022,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         tctFile.write(String.valueOf(cmdAddr));
         tctFile.write("\n\n");
         
-        Item clazz = Type.classList;
+        Item clazz = RefType.refTypeList;
         Method method;
         
         while(clazz != null) {
@@ -1199,7 +1188,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Method m;
 		Item f;
 		int cc = 0, mc = 0, fc = 0;
-		Item item = Type.classList;
+		Item item = RefType.refTypeList;
 		while(item != null) {
 			if (item instanceof Class && ((item.accAndPropFlags & (1 << apfInterface)) == 0)) {
 				Class c = (Class)item;
@@ -1296,6 +1285,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				vrb.println("ARRAY: " + a.name);
 				vrb.println("Component type: " + a.componentType.name);
+				vrb.println("Address:  0x" + Integer.toHexString(a.address));
 				//vrb.println("Check type: " + a.checkType.name);
 				vrb.println("Type descriptor:");
 				a.typeDescriptor.printList();

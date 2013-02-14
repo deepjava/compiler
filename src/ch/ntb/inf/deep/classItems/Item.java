@@ -27,30 +27,28 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
-public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndTypeConsts {
+public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTypeConsts {
 	static final boolean verbose = false, enAssertion = true;
 	static PrintStream vrb = StdStreams.vrb;
 	static PrintStream log = StdStreams.log;
 	static ErrorReporter errRep = ErrorReporter.reporter;
 
-	static StringTable stab;
+	public static StringTable stab;
 
+	public Item next;
+	public HString name; // the key string for any item
+
+	public Item type; // base type for objects of "RefType" or else type for other objects, e.g. fields or constants 
+	public int accAndPropFlags; // access and property flags (see ICclassFileConsts)
+	
+	public int offset = -1;	// offset in bytes
+	public int address = -1; // the absolute address of this item on the target
+	public int index = -1; // index in table
+	
 	public static void indent(int indentLevel){
 		StdStreams.vrbPrintIndent(indentLevel);
 	}
 
-	//--- instance fields
-	public Item next;
-	public HString name; // the key string for any item
-
-	public Item type; // base type for objects of "Class" or "Type" or null
-	public int accAndPropFlags; // access and property flags (see ICclassFileConsts)
-	
-	public int offset = -1;
-	public int address = -1; // the absolute address of this item on the target
-	public int index = -1;
-	
-	//--- constructors
 	Item(){
 	}
 
@@ -63,11 +61,6 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		this.type = type;
 	}
 
-	//--- instance methods
-	public int getObjectSize(){
-		return -1;
-	}
-
 	/**
 	 * get size in Byte - always a power of 2 or -1 if undefined
 	 * @return  {-1,  1, 2, 4, 8}
@@ -76,42 +69,42 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return -1;
 	}
 
-	protected Item getMethod(HString name, HString descriptor){
+	protected Item getMethod(HString name, HString descriptor) {
 		assert false : "override this method at class: "+ getClass().getName();
 		return null;
 	}
 
-	protected int createInterfaceIdsToRoot(){
+	protected int createInterfaceIdsToRoot() {
 		return 0;
 	}
 
-	Item getReplacedStub(){
+	Item getReplacedStub() {
 		return this;
 	}
 
-	public static Item getTailItem(Item item){
+	public static Item getTailItem(Item item) {
 		if( item == null ) return null;
 		while(item.next != null)  item = item.next;
 		return item;
 	}
 
-	public static Item appendItem(Item head1, Item tail1, Item head2){
-		if(tail1 == null)  head1 = head2;  else  tail1.next = head2;
+	public static Item appendItem(Item head1, Item tail1, Item head2) {
+		if (tail1 == null) head1 = head2; else tail1.next = head2;
 		return head1;
 	}
 
-	public Item getItemByName(HString name){
+	public Item getItemByName(HString name) {
 		Item item = this;
 		while(item != null && name != item.name)  item = item.next;
 		return item;
 	}
 
-	public Item getItemByName(String jname){
+	public Item getItemByName(String jname) {
 		HString name = stab.insertCondAndGetEntry(jname);
 		return getItemByName(name);
 	}
 
-	protected Item clone(){
+	protected Item clone() {
 		Item cln = null;
 		try{
 			cln = (Item)super.clone();
@@ -121,23 +114,22 @@ public abstract class Item   implements Cloneable, ICclassFileConsts, ICdescAndT
 		return cln;
 	}
 
-	protected void selectAndMoveInitClasses(){
-		assert false : "override this method at class: "+ getClass().getName();
+	protected void fixupLoadedClasses() {
+		assert false : "override this method at class: " + getClass().getName();
 	}
 
 
 	//--- debug primitives
-	public void printFields(int indentLevel){ vrb.println("no meth printFields for class "+ getClass().getName());	}
-	public void printMethods(int indentLevel){ vrb.println("no meth printMethods for class "+ getClass().getName());	}
+	public void printFields(int indentLevel){ vrb.println("no meth printFields for class "+ getClass().getName());}
+	public void printMethods(int indentLevel){ vrb.println("no meth printMethods for class "+ getClass().getName());}
 
-
-	public void printShort(int indentLevel){
+	public void printShort(int indentLevel) {
 		indent(indentLevel);
 		if(type != null) vrb.print(type.name);
 		vrb.printf(" %1$s ", name);
 	}
 
-	public void printTypeCategory(){
+	public void printTypeCategory() {
 		if(type != null) type.printTypeCategory(); else  vrb.print("(-)");
 	}
 	

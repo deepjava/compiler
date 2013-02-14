@@ -34,13 +34,10 @@ public class TestCgPPC implements ICclassFileConsts {
 
 
 	public static CodeGen getCode(String name) {
+		CodeGen.init();
 		int i = 0;
 		while (i < TestCFG.cfg.length && !TestCFG.cfg[i].method.name.equals(HString.getHString(name))) i++;
 		code[i] = new CodeGen(ssa[i]);
-//		ssa[i].cfg.printToLog();
-//		code[i].ssa.print(0);
-//		System.out.print(code[i].toString());
-//		System.out.println();
 		return code[i];
 	}
 

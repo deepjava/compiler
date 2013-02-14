@@ -51,9 +51,10 @@ import org.eclipse.ui.part.ViewPart;
 import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.launcher.Launcher;
@@ -177,10 +178,10 @@ public class TargetCMDView extends ViewPart implements ICdescAndTypeConsts {
 					String clazzName = ((MethodCall)obj).fullQualifiedName.substring(0, lastDot);
 					clazzName = clazzName.replace('.', '/');
 					String methName = ((MethodCall)obj).fullQualifiedName.substring(lastDot + 1);
-					Class clazz = (Class)Type.classList.getItemByName(clazzName);
-					Class kernel = (Class)Type.classList.getItemByName(KERNEL);
+					Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
+					Class kernel = (Class)RefType.refTypeList.getItemByName(KERNEL);
 					if(clazz != null && kernel != null){
-						int cmdAddr = ((DataItem)kernel.classFields.getItemByName(cmdAddrName)).address;
+						int cmdAddr = ((Field)kernel.classFields.getItemByName(cmdAddrName)).address;
 						Method meth = (Method)clazz.methods.getItemByName(methName);
 						if(meth != null){
 							if(bdi == null){

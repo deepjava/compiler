@@ -41,7 +41,7 @@ public interface ErrorCodes {
 			errSyntax = 222,
 			errInconsistentattributes = 223,
 			errInvalidType = 224,
-			errInvalideParameter = 225,
+			errInvalidParameter = 225,
 			errOverwriteProtectedConst = 226,
 			errUndefinedConst = 227,
 			errMaxNofReached = 228,

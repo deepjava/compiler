@@ -87,30 +87,31 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		determineStateArray();
 		sortLineNumTable();
 		
-		//if the method have multiple return statements, so check if in the last node all required params are loaded
-		if(returnCount > 1){
+		//if the method have multiple return statements, so check if in the last node all required parameters are loaded
+		if (returnCount > 1){
 			int nofParams = cfg.method.nofParams;
 			if(((cfg.method.accAndPropFlags & (1 << apfStatic)) == 0) && ((cfg.method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0)){//method isn't static
-				nofParams++;//implizit this parameter
+//			if ((cfg.method.accAndPropFlags & (1<<apfStatic)) == 0) {	// instance method
+				nofParams++;	// add parameter "this"
 			}
 			if(nofParams > 0){
 				//search last node
 				SSANode last = null;
-				for(int i = 0;  i < returnCount; i++){
-					if(last == null){
+				for (int i = 0;  i < returnCount; i++) {
+					if (last == null) {
 						last = returnNodes[i];
-					}else if(last.firstBCA < returnNodes[i].firstBCA){
+					} else if (last.firstBCA < returnNodes[i].firstBCA) {
 						last = returnNodes[i];
 					}					
 				}
-				for(int x = 0; x < nofParams; x++){
+				for (int x = 0; x < nofParams; x++) {
 					boolean isNeeded = false;
-					for(int i = 0; i < returnCount && !isNeeded; i++){
-						if(returnNodes[i].exitSet[cfg.method.maxStackSlots + x] != null){
+					for (int i = 0; i < returnCount && !isNeeded; i++) {
+						if (returnNodes[i].exitSet[cfg.method.maxStackSlots + x] != null) {
 							isNeeded = true;
 						}
 					}
-					if(isNeeded){	
+					if (isNeeded){	
 						last.loadLocal(cfg.method.maxStackSlots + x, paramType[cfg.method.maxStackSlots + x]);
 					}
 								
@@ -219,16 +220,17 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	private void determineParam(){
 		int flags = cfg.method.accAndPropFlags;
 		String descriptor = cfg.method.methDescriptor.toString();
-		int index = cfg.method.getMaxStckSlots();
-		isParam = new boolean[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
-		paramType = new int[cfg.method.getMaxStckSlots() + cfg.method.getMaxLocals()];
+		int index = cfg.method.maxStackSlots;
+		isParam = new boolean[cfg.method.maxStackSlots + cfg.method.maxLocals];
+		paramType = new int[cfg.method.maxStackSlots + cfg.method.maxLocals];
 		if(((flags & (1 << apfStatic)) == 0) && ((flags & (1 << dpfSysPrimitive)) == 0)){//method isn't static
+//		if ((flags & (1<<apfStatic)) == 0){	// instance method, add parameter "this"
 			isParam[index] = true;
 			paramType[index++] = SSAValue.tRef;
 		}
 		
 		char ch = descriptor.charAt(1);
-		for(int i = 1;ch != ')'; i++){//travers only between (....);
+		for (int i = 1;ch != ')'; i++){//traverse only between (....);
 			isParam[index] = true;
 			if(ch == '['){
 				while(ch == '['){

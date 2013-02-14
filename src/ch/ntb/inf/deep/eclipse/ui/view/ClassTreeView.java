@@ -50,11 +50,12 @@ import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ClassMember;
-import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
-import ch.ntb.inf.deep.classItems.NamedConst;
+import ch.ntb.inf.deep.classItems.ConstField;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
@@ -181,8 +182,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				}
 			}
 			if(parent instanceof RootElement){
-				if(Type.nofClasses < 1)return new Object[]{"No Classses loaded"};
-				Item[] classes = new Item[Type.nofClasses];
+				if(RefType.nofRefTypes < 1)return new Object[]{"No Classses loaded"};
+				Item[] classes = new Item[RefType.nofRefTypes];
 				int count = 0;
 				Item classmember = ((RootElement)parent).children;
 				while(classmember != null && count < classes.length){
@@ -196,7 +197,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 		public Object getParent(Object element) {
 			if(element instanceof ClassMember){
-				return ((ClassMember)element).getOwner();
+				return ((ClassMember)element).owner;
 			}
 			return null;
 		}
@@ -398,7 +399,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	private void createActions() {
 		refresh = new Action(){
 			public void run(){
-				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("Classes, Interfaces and Arrays:"), Type.classList)));
+				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("Classes, Interfaces and Arrays:"), RefType.refTypeList)));
 				classTreeViewer.getControl().setEnabled(true);
 				classTreeViewer.refresh();
 				deviceTreeViewer.setInput(new TreeInput(Configuration.getBoard().getMemoryMap())); // TODO add CPU memory map here
@@ -529,8 +530,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			textViewer.refresh();
 			return;
 		}
-		if(obj instanceof DataItem){
-			DataItem field = (DataItem)obj;
+		if(obj instanceof Field){
+			Field field = (Field)obj;
 			sb.append("Name:            " + field.name.toString() + "\n");
 			sb.append("Type:            " + decodeFieldType(field.type.name) + "\n");
 			sb.append("Accessibility:   ");
@@ -548,7 +549,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("Constant:        ");
 			if((field.accAndPropFlags & (1 << dpfConst)) != 0){
 				sb.append("yes\n");
-				sb.append("Value:           " + ((NamedConst)field).getConstantItem().toString() + "\n");
+				sb.append("Value:           " + ((ConstField)field).getConstantItem().toString() + "\n");
 			}else{
 				sb.append("no\n");
 			}

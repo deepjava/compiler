@@ -23,14 +23,18 @@ package ch.ntb.inf.deep.classItems;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
-public class NamedConst extends DataItem {
+public class ConstField extends Field {
 	Constant constant;
 
-	NamedConst(HString name, Type type, Item constant){
+	ConstField(HString name, Type type, Item constant){
 		super(name, type);
 		this.constant = (Constant)constant;
 	}
 
+	public Constant getConstantItem() {
+		return constant;
+	}
+	
 	//--- debug primitives
 	public void print(int indentLevel){
 		super.print(indentLevel);
@@ -43,7 +47,4 @@ public class NamedConst extends DataItem {
 		vrb.print(", ");  constant.printShort(0);
 	}
 	
-	public Constant getConstantItem() {
-		return constant;
-	}
 }

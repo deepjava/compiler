@@ -27,20 +27,12 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
 public class SystemMethod extends ConfigElement implements ICclassFileConsts{
-	public int attributes; // e.g. (1<<dpfNew) 
+	public int attributes; 	// e.g. (1<<dpfNew) 
+	public int id;	// unique id for system methods		
 	public int offset = -1;
 
 	public SystemMethod(HString name) {
 		this.name = name;
-	}
-	
-	public SystemMethod(HString name, int attributes) {
-		this.name = name;
-		this.attributes = attributes & (dpfSetSysMethProperties | sysMethCodeMask);
-	}
-	
-	public int getId() {
-		return 0xFFF & attributes;
 	}
 	
 	//--- debug primitives
@@ -50,6 +42,8 @@ public class SystemMethod extends ConfigElement implements ICclassFileConsts{
 		vrb.println("method "+name+" {");
 		StdStreams.vrbPrintIndent(indentLevel+1);
 		vrb.printf("attributes: 0x%1$x\n", attributes);
+		StdStreams.vrbPrintIndent(indentLevel);
+		vrb.printf("id: 0x%1$x\n", id);
 		StdStreams.vrbPrintIndent(indentLevel);
 		vrb.println("}");
 	}

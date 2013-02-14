@@ -180,9 +180,6 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 	}
 
 	public SystemMethod getSystemMethodById(int id, CPU cpu) {
-		if((id & 0xFFFFF000) != 0){
-			ErrorReporter.reporter.error(errInvalideParameter, "getSystemMethodByID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
-		}
 		SystemMethod meth;
 		SystemClass[] sysClass = {
 			getUS(cpu),
@@ -191,10 +188,10 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 			getKernel(cpu)
 		};
 		
-		for(int i = 0; i < sysClass.length; i++) {
+		for (int i = 0; i < sysClass.length; i++) {
 			meth = sysClass[i].methods;	
-			while(meth != null){
-				if((meth.attributes & 0xFFF) == id){
+			while (meth != null){
+				if ((meth.id) == id){
 					return meth;
 				}
 				meth = (SystemMethod)meth.next;

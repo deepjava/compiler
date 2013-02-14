@@ -33,7 +33,7 @@ public class Method extends ClassMember {
 	//--- instance fields
 	public HString methDescriptor;
 
-//	public Class owner;
+	public int id;
 	public byte[] code; // java byte code of this method
 	boolean fixed;
 	
@@ -45,7 +45,7 @@ public class Method extends ClassMember {
 	LocalVar[] localVars;
 	public int[] lineNrTab; // entry: (startPc<<16) | lineNr
 
-	public byte nofParams;
+	public int nofParams;
 	public int maxStackSlots, maxLocals;
 
 	//--- constructors
@@ -56,7 +56,7 @@ public class Method extends ClassMember {
 	public Method(HString name, Type returnType, HString methDescriptor){
 		super(name, returnType);
 		this.methDescriptor = methDescriptor;
-		nofParams = (byte)Type.nofParameters(methDescriptor);
+		nofParams = nofParameters(methDescriptor);
 	}
 
 	//--- instance methods
@@ -76,38 +76,56 @@ public class Method extends ClassMember {
 	void insertLocalVar(LocalVar locVar){
 		int key = locVar.index;
 		Item lv = localVars[locVar.index], pred = null;
-		while(lv != null && key >= locVar.index){
+		while (lv != null && key >= locVar.index) {
 			pred = lv;
 			lv = lv.next;
 		}
 		locVar.next = lv;
-		if(pred == null) localVars[locVar.index] = locVar;  else  pred.next = locVar;
+		if (pred == null) localVars[locVar.index] = locVar; else pred.next = locVar;
 	}
 
-	void preProcessCode(){
-		// TODO
-	}
-	
 	public byte[] getCode(){
 		return code;
-	}
-
-//	public Class getOwner(){
-//		return owner;
-//	}
-	
-	public int getMaxLocals(){
-		return maxLocals;
-	}
-	
-	public int getMaxStckSlots(){
-		return maxStackSlots;
 	}
 
 	public int getCodeSizeInBytes() {
 		return machineCode.iCount * 4;
 	}
 	
+	private static int nofParameters(HString methDescriptor){
+		int pos = methDescriptor.indexOf('(') + 1;
+		int end = methDescriptor.lastIndexOf(')');
+		assert pos == 1 && end >= 1;
+		int nofParams = 0;
+		while (pos < end) {
+			char category = methDescriptor.charAt(pos);
+			if (category == tcRef) {
+				pos = methDescriptor.indexOf(';', pos);
+				assert pos > 0;
+			} else if (category == tcArray) {
+				do {
+					pos++;
+					category = methDescriptor.charAt(pos);
+				} while (category == tcArray);
+				if (category == tcRef){
+					pos = methDescriptor.indexOf(';', pos);
+					assert pos > 0;
+				}
+			}
+			pos++;
+			nofParams++;
+		}
+		return nofParams;
+	}
+
+	protected static Type getReturnType(HString methodDescriptor) {// syntax in EBNF: methodDescriptor = "(" FormalParDesc ")" ReturnTypeDesc.
+		int rparIndex = methodDescriptor.lastIndexOf(')');
+		assert rparIndex > 0;
+		HString retDesc = methodDescriptor.substring(rparIndex+1);
+		Type returnType = Type.getTypeByDescriptor(retDesc);
+		return returnType;
+	}
+
 	public static Method createCompSpecSubroutine(String jname) {
 		HString name = HString.getRegisteredHString(jname);
 		Method m = null;

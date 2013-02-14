@@ -1,12 +1,12 @@
-#deep-0
+#deep-1
 
 meta {
-	version = "2012-07-04";
+	version = "2013-02-14";
 	description = "Project file for junit target tests";
 }
 
 project junitTargetTestProject {
-	libpath = "../bsp", "../junitTarget";
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
 	
 	boardtype = ntbMpc555HB;
 	ostype = ntbSTS;
@@ -15,54 +15,54 @@ project junitTargetTestProject {
 #	Tests for compiler test classes 
  
 #	Tests for all primitives
-#	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest",
-#				  "ch/ntb/junitTarget/comp/primitives/LongTest","ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/primitives/ByteTest","ch/ntb/inf/junitTarget/comp/primitives/ShortTest","ch/ntb/inf/junitTarget/comp/primitives/CharTest", "ch/ntb/inf/junitTarget/comp/primitives/IntTest",
+#				  "ch/ntb/inf/junitTarget/comp/primitives/LongTest","ch/ntb/inf/junitTarget/comp/primitives/FloatTest","ch/ntb/inf/junitTarget/comp/primitives/DoubleTest";
 				  
 #	Tests for all statements 
-#	rootclasses = "ch/ntb/junitTarget/comp/statements/DoWhileTest","ch/ntb/junitTarget/comp/statements/ForTest","ch/ntb/junitTarget/comp/statements/IfTest","ch/ntb/junitTarget/comp/statements/SwitchTest","ch/ntb/junitTarget/comp/statements/WhileTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/statements/DoWhileTest","ch/ntb/inf/junitTarget/comp/statements/ForTest","ch/ntb/inf/junitTarget/comp/statements/IfTest","ch/ntb/inf/junitTarget/comp/statements/SwitchTest","ch/ntb/inf/junitTarget/comp/statements/WhileTest";
 
 #	Tests for all conditions  
-#	rootclasses = "ch/ntb/junitTarget/comp/conditions/ConditionTest","ch/ntb/junitTarget/comp/conditions/LongCompTest","ch/ntb/junitTarget/comp/conditions/FloatDoubleCompTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/conditions/ConditionTest","ch/ntb/inf/junitTarget/comp/conditions/LongCompTest","ch/ntb/inf/junitTarget/comp/conditions/FloatDoubleCompTest";
 
 #	Tests for all arrays   
-#	rootclasses = "ch/ntb/junitTarget/comp/arrays/ArrayTest","ch/ntb/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/junitTarget/comp/arrays/StringTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/arrays/ArrayTest","ch/ntb/inf/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/inf/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/inf/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/inf/junitTarget/comp/arrays/StringTest";
 
 #	Tests for all unsafes  
-#	rootclasses = "ch/ntb/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/junitTarget/comp/unsafe/LowLevelTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/inf/junitTarget/comp/unsafe/LowLevelTest";
 
 #	Tests for all casts  
-#	rootclasses = "ch/ntb/junitTarget/comp/casts/ByteCastTest","ch/ntb/junitTarget/comp/casts/ShortCastTest","ch/ntb/junitTarget/comp/casts/CharCastTest","ch/ntb/junitTarget/comp/casts/IntCastTest","ch/ntb/junitTarget/comp/casts/LongCastTest","ch/ntb/junitTarget/comp/casts/FloatCastTest","ch/ntb/junitTarget/comp/casts/DoubleCastTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/casts/ByteCastTest","ch/ntb/inf/junitTarget/comp/casts/ShortCastTest","ch/ntb/inf/junitTarget/comp/casts/CharCastTest","ch/ntb/inf/junitTarget/comp/casts/IntCastTest","ch/ntb/inf/junitTarget/comp/casts/LongCastTest","ch/ntb/inf/junitTarget/comp/casts/FloatCastTest","ch/ntb/inf/junitTarget/comp/casts/DoubleCastTest";
 
 #	Tests for all objects  
-#	rootclasses = "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InheritanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest";
-#	rootclasses = "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest";
-#	rootclasses = "ch/ntb/junitTarget/comp/objects/InterfaceTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/objects/InstanceTest","ch/ntb/inf/junitTarget/comp/objects/InheritanceTest","ch/ntb/inf/junitTarget/comp/objects/InterfaceTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/objects/InstanceTest","ch/ntb/inf/junitTarget/comp/objects/InterfaceTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/objects/InterfaceTest";
 
 #	Tests for all various  
-#	rootclasses = "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
+#	rootclasses = "ch/ntb/inf/junitTarget/comp/various/VariousTest1","ch/ntb/inf/junitTarget/comp/various/VariousTest2","ch/ntb/inf/junitTarget/comp/various/VariousTest3";
 
 #	Tests for all compiler test classes  
-	rootclasses = "ch/ntb/junitTarget/comp/primitives/ByteTest","ch/ntb/junitTarget/comp/primitives/ShortTest","ch/ntb/junitTarget/comp/primitives/CharTest", "ch/ntb/junitTarget/comp/primitives/IntTest", "ch/ntb/junitTarget/comp/primitives/LongTest", "ch/ntb/junitTarget/comp/primitives/FloatTest","ch/ntb/junitTarget/comp/primitives/DoubleTest",
-				  "ch/ntb/junitTarget/comp/statements/DoWhileTest","ch/ntb/junitTarget/comp/statements/ForTest","ch/ntb/junitTarget/comp/statements/IfTest","ch/ntb/junitTarget/comp/statements/SwitchTest","ch/ntb/junitTarget/comp/statements/WhileTest",
-				  "ch/ntb/junitTarget/comp/conditions/ConditionTest","ch/ntb/junitTarget/comp/conditions/LongCompTest","ch/ntb/junitTarget/comp/conditions/FloatDoubleCompTest",
-				  "ch/ntb/junitTarget/comp/arrays/ArrayTest","ch/ntb/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/junitTarget/comp/arrays/StringTest",
-				  "ch/ntb/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/junitTarget/comp/unsafe/LowLevelTest",
-				  "ch/ntb/junitTarget/comp/casts/ByteCastTest","ch/ntb/junitTarget/comp/casts/ShortCastTest","ch/ntb/junitTarget/comp/casts/CharCastTest","ch/ntb/junitTarget/comp/casts/IntCastTest","ch/ntb/junitTarget/comp/casts/LongCastTest","ch/ntb/junitTarget/comp/casts/FloatCastTest","ch/ntb/junitTarget/comp/casts/DoubleCastTest",
-				  "ch/ntb/junitTarget/comp/objects/InstanceTest","ch/ntb/junitTarget/comp/objects/InheritanceTest","ch/ntb/junitTarget/comp/objects/InterfaceTest",
-				  "ch/ntb/junitTarget/comp/various/VariousTest1","ch/ntb/junitTarget/comp/various/VariousTest2","ch/ntb/junitTarget/comp/various/VariousTest3";
+	rootclasses = "ch/ntb/inf/junitTarget/comp/primitives/ByteTest","ch/ntb/inf/junitTarget/comp/primitives/ShortTest","ch/ntb/inf/junitTarget/comp/primitives/CharTest", "ch/ntb/inf/junitTarget/comp/primitives/IntTest", "ch/ntb/inf/junitTarget/comp/primitives/LongTest", "ch/ntb/inf/junitTarget/comp/primitives/FloatTest","ch/ntb/inf/junitTarget/comp/primitives/DoubleTest",
+				  "ch/ntb/inf/junitTarget/comp/statements/DoWhileTest","ch/ntb/inf/junitTarget/comp/statements/ForTest","ch/ntb/inf/junitTarget/comp/statements/IfTest","ch/ntb/inf/junitTarget/comp/statements/SwitchTest","ch/ntb/inf/junitTarget/comp/statements/WhileTest",
+				  "ch/ntb/inf/junitTarget/comp/conditions/ConditionTest","ch/ntb/inf/junitTarget/comp/conditions/LongCompTest","ch/ntb/inf/junitTarget/comp/conditions/FloatDoubleCompTest",
+				  "ch/ntb/inf/junitTarget/comp/arrays/ArrayTest","ch/ntb/inf/junitTarget/comp/arrays/ArrayTwoDimTest","ch/ntb/inf/junitTarget/comp/arrays/ArrayThreeDimTest","ch/ntb/inf/junitTarget/comp/arrays/ArrayInstanceTest","ch/ntb/inf/junitTarget/comp/arrays/StringTest",
+				  "ch/ntb/inf/junitTarget/comp/unsafe/UnsafeTest","ch/ntb/inf/junitTarget/comp/unsafe/LowLevelTest",
+				  "ch/ntb/inf/junitTarget/comp/casts/ByteCastTest","ch/ntb/inf/junitTarget/comp/casts/ShortCastTest","ch/ntb/inf/junitTarget/comp/casts/CharCastTest","ch/ntb/inf/junitTarget/comp/casts/IntCastTest","ch/ntb/inf/junitTarget/comp/casts/LongCastTest","ch/ntb/inf/junitTarget/comp/casts/FloatCastTest","ch/ntb/inf/junitTarget/comp/casts/DoubleCastTest",
+				  "ch/ntb/inf/junitTarget/comp/objects/InstanceTest","ch/ntb/inf/junitTarget/comp/objects/InheritanceTest","ch/ntb/inf/junitTarget/comp/objects/InterfaceTest",
+				  "ch/ntb/inf/junitTarget/comp/various/VariousTest1","ch/ntb/inf/junitTarget/comp/various/VariousTest2","ch/ntb/inf/junitTarget/comp/various/VariousTest3";
 
 
 #	Tests for bsp tests  
-#	rootclasses = "ch/ntb/junitTarget/lib/MathTest";
-#	rootclasses = "ch/ntb/junitTarget/lib/GenericsTest";
-#	rootclasses = "ch/ntb/junitTarget/lib/TaskTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/lib/MathTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/lib/GenericsTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/lib/TaskTest";
 
 #	Tests for all bsp tests
-#	rootclasses = "ch/ntb/junitTarget/lib/MathTest",
-#				  "ch/ntb/junitTarget/lib/GenericsTest",
-#				  "ch/ntb/junitTarget/lib/TaskTest";
+#	rootclasses = "ch/ntb/inf/junitTarget/lib/MathTest",
+#				  "ch/ntb/inf/junitTarget/lib/GenericsTest",
+#				  "ch/ntb/inf/junitTarget/lib/TaskTest";
 
 # Target command table file
-	tctfile = "../junitTarget/tct/commandTable.dtct";
+	tctfile = "../ch.ntb.inf.junitTarget/tct/commandTable.dtct";
 
 }

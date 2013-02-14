@@ -475,7 +475,7 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	
 	public static int getSystemMethodIdByMethodName(HString registeredName) {
 		SystemMethod sysMeth = activeProject.getOperatingSystem().getSystemMethodByName(registeredName, activeProject.getBoard().getCPU());
-		if(sysMeth != null) return sysMeth.getId();
+		if (sysMeth != null) return sysMeth.id;
 		return -1;
 	}
 	
@@ -487,9 +487,6 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 	}
 	
 	public static SystemMethod getSystemMethodById(int id) {
-		if((id & 0xFFFFF000) != 0){
-			ErrorReporter.reporter.error(errInvalideParameter, "getSystemMethodForID parameter 0x" + Integer.toHexString(id) + " to large, only 12-bit numbers are allowed");
-		}
 		return activeProject.getOperatingSystem().getSystemMethodById(id, activeProject.getBoard().getCPU());
 	}
 
@@ -502,8 +499,24 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return null;
 	}
 	
-	public static SystemClass getSystemPrimitives() {
-		return activeProject.getOperatingSystem().getAllSystemClasses();
+	public static SystemClass[] getSystemClasses() {
+		CPU targetCpu = Configuration.getCpu();
+		SystemClass head = activeProject.getOperatingSystem().getAllSystemClasses();
+		SystemClass cls = head;
+		int nof = 0;
+		while (cls != null) {
+			if (cls.checkCondition(targetCpu)) nof++;
+			cls = (SystemClass)cls.next;
+		}
+		SystemClass[] sysClasses = new SystemClass[nof];
+		nof = 0;
+		cls = head;
+		while (cls != null) {
+			if (cls.checkCondition(targetCpu)) sysClasses[nof++] = cls;
+			cls = (SystemClass)cls.next;
+		}
+		
+		return sysClasses;
 	}
 
 	public static int getMemoryBaseAddress() {

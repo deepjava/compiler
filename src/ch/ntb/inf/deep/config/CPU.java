@@ -13,7 +13,7 @@ public class CPU extends ConfigElement {
 	
 	public CPU(String jname) {
 		this.name = HString.getRegisteredHString(jname);
-		sysConstants = new Constants(this.name + " sysConstants", true);
+		sysConstants = new Constants(this.name + " sysConstants", true, this);
 		reginit = new RegisterInitList(this);
 	}
 	

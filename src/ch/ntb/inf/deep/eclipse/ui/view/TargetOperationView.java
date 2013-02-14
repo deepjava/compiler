@@ -54,11 +54,12 @@ import org.eclipse.ui.part.ViewPart;
 import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
-import ch.ntb.inf.deep.classItems.NamedConst;
+import ch.ntb.inf.deep.classItems.ConstField;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
@@ -794,7 +795,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		String clazzName = fullQualName.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String methName = fullQualName.substring(lastDot + 1);
-		Class classList = (Class)Type.classList;
+		Class classList = (Class)RefType.refTypeList;
 		if(classList == null){
 			op.errorMsg = "system not builded";
 			return;
@@ -802,7 +803,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		Class clazz = (Class)classList.getItemByName(clazzName);
 		Class kernel = (Class) classList.getItemByName(KERNEL);
 		if (clazz != null && kernel != null) {
-			int cmdAddr = ((DataItem) kernel.classFields.getItemByName(cmdAddrName)).address;
+			int cmdAddr = ((Field) kernel.classFields.getItemByName(cmdAddrName)).address;
 			Method meth = (Method) clazz.methods.getItemByName(methName);
 			if (meth != null) {
 				//Save address for display
@@ -876,13 +877,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		String clazzName = fullQualName.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String varName = fullQualName.substring(lastDot + 1);
-		if(Type.classList == null){
+		if(RefType.refTypeList == null){
 			op.errorMsg = "system not builded";
 			return;
 		}
-		Class clazz = (Class)Type.classList.getItemByName(clazzName);
+		Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
 		if(clazz != null){
-			if((DataItem)clazz.classFields == null){
+			if((Field)clazz.classFields == null){
 				op.errorMsg = "no fields";
 				return;
 			}
@@ -891,8 +892,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				//save address for display
 				op.addr = var.address;
 				
-				if(var instanceof NamedConst) {
-					var = ((NamedConst)var).getConstantItem();
+				if(var instanceof ConstField) {
+					var = ((ConstField)var).getConstantItem();
 					if(var.type == Type.wellKnownTypes[txFloat] || var.type == Type.wellKnownTypes[txDouble]) { // constant is in constant pool // TODO: Replace by Linker32.checkConstantPoolType()
 						op.errorMsg = "Warning: field is a constant!";
 						op.addr = var.address;
@@ -1077,10 +1078,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		String clazzName = op.description.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String varName = op.description.substring(lastDot + 1);
-		if(Type.classList == null){
-			op.errorMsg = "system not builded";
+		if(RefType.refTypeList == null){
+			op.errorMsg = "system not built";
 		}
-		Class clazz = (Class)Type.classList.getItemByName(clazzName);
+		Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
 		if(clazz != null){
 			if(clazz.classFields == null){
 				op.errorMsg = "no fields";
@@ -1089,7 +1090,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			Item var = clazz.classFields.getItemByName(varName);
 			if(var != null){
 				
-				if(var instanceof NamedConst) {
+				if(var instanceof ConstField) {
 					op.errorMsg = "Constant field, value can't be changed!";
 					return;
 				}

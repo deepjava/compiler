@@ -45,9 +45,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static StdConstant int2floatConst2 = null;	// 2^32, for long -> float conversions
 	private static StdConstant int2floatConst3 = null;	// 2^52, for long -> float conversions
 	
-	private static int idGET1, idGET2, idGET4, idGET8;
-	private static int idPUT1, idPUT2, idPUT4, idPUT8;
-	private static int idBIT, idASM, idHALT, idADR_OF_METHOD;
+	static int idGET1, idGET2, idGET4, idGET8;
+	static int idPUT1, idPUT2, idPUT4, idPUT8;
+	static int idBIT, idASM, idHALT, idADR_OF_METHOD;
 	static int idENABLE_FLOATS;
 	static int idGETGPR, idGETFPR, idGETSPR;
 	static int idPUTGPR, idPUTFPR, idPUTSPR;
@@ -176,6 +176,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		if(dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocator.assignRegisters(this);
+//		ssa.print(0);
 		if (dbg) {
 			StdStreams.vrb.println("phi functions resolved");
 			RegAllocator.printJoins();
@@ -1697,10 +1698,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createICRFrArB(ppcCmpl, CRF0, 0, res.regGPR1);
 						createIrD(ppcMfcr, res.reg);
 						createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
-
 					} else {	// array of regular class
 						int nofDim = ((Array)t).dimension;
-						Item compType = Class.classList.getItemByName(((Array)t).componentType.name.toString());
+						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
 						offset = ((Class)(((Array)t).componentType)).extensionLevel;
 						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
 							// test if not null
@@ -1767,52 +1767,53 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			case sCcall:
 				opds = instr.getOperands();
 				Call call = (Call)instr;
-				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
-					if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET1) {	//GET1
+				Method m = (Method)call.item;
+				if ((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+					if (m.id == idGET1) {	//GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 						createIrArS(ppcExtsb, res.reg, res.reg);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET2) { // GET2
+					} else if (m.id == idGET2) { // GET2
 						createIrDrAd(ppcLha, res.reg, opds[0].reg, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET4) { // GET4
+					} else if (m.id == idGET4) { // GET4
 						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGET8) { // GET8
+					} else if (m.id == idGET8) { // GET8
 						createIrDrAd(ppcLwz, res.regLong, opds[0].reg, 0);
 						createIrDrAd(ppcLwz, res.reg, opds[0].reg, 4);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT1) { // PUT1
+					} else if (m.id == idPUT1) { // PUT1
 						createIrSrAd(ppcStb, opds[1].reg, opds[0].reg, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT2) { // PUT2
+					} else if (m.id == idPUT2) { // PUT2
 						createIrSrAd(ppcSth, opds[1].reg, opds[0].reg, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT4) { // PUT4
+					} else if (m.id == idPUT4) { // PUT4
 						createIrSrAd(ppcStw, opds[1].reg, opds[0].reg, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUT8) { // PUT8
+					} else if (m.id == idPUT8) { // PUT8
 						createIrSrAd(ppcStw, opds[1].regLong, opds[0].reg, 0);
 						createIrSrAd(ppcStw, opds[1].reg, opds[0].reg, 4);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idBIT) { // BIT
+					} else if (m.id == idBIT) { // BIT
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 						createIrDrAsimm(ppcSubfic, 0, opds[1].reg, 32);
 						createIrArSrBMBME(ppcRlwnm, res.reg, res.reg, 0, 31, 31);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETGPR) { // GETGPR
+					} else if (m.id == idGETGPR) { // GETGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
 						createIrArSrB(ppcOr, res.reg, gpr, gpr);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETFPR) { // GETFPR
+					} else if (m.id == idGETFPR) { // GETFPR
 						int fpr = ((StdConstant)opds[0].constant).valueH;
 						createIrDrB(ppcFmr, res.reg, fpr);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idGETSPR) { // GETSPR
+					} else if (m.id == idGETSPR) { // GETSPR
 						int spr = ((StdConstant)opds[0].constant).valueH;
 						createIrSspr(ppcMfspr, spr, res.reg);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUTGPR) { // PUTGPR
+					} else if (m.id == idPUTGPR) { // PUTGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
 						createIrArSrB(ppcOr, gpr, opds[1].reg, opds[1].reg);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUTFPR) { // PUTFPR
+					} else if (m.id == idPUTFPR) { // PUTFPR
 						int fpr = ((StdConstant)opds[0].constant).valueH;
 						createIrDrB(ppcFmr, fpr, opds[1].reg);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idPUTSPR) { // PUTSPR
+					} else if (m.id == idPUTSPR) { // PUTSPR
 						createIrArSrB(ppcOr, 0, opds[1].reg, opds[1].reg);
 						int spr = ((StdConstant)opds[0].constant).valueH;
 						createIrSspr(ppcMtspr, spr, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idHALT) { // HALT
+					} else if (m.id == idHALT) { // HALT
 						createItrap(ppcTw, TOalways, 0, 0);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idASM) { // ASM
+					} else if (m.id == idASM) { // ASM
 						instructions[iCount] = InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString());
 						iCount++;
 						int len = instructions.length;
@@ -1822,37 +1823,37 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 								newInstructions[k] = instructions[k];
 							instructions = newInstructions;
 						}
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idADR_OF_METHOD) { // ADR_OF_METHOD
+					} else if (m.id == idADR_OF_METHOD) { // ADR_OF_METHOD
 						HString name = ((StringLiteral)opds[0].constant).string;
 						int last = name.lastIndexOf('/');
 						HString className = name.substring(0, last);
 						HString methName = name.substring(last + 1);
-						Class clazz = (Class)(Type.classList.getItemByName(className.toString()));
+						Class clazz = (Class)(RefType.refTypeList.getItemByName(className.toString()));
 						Item method = clazz.methods.getItemByName(methName.toString());
 						loadConstantAndFixup(res.reg, method);	// addr of method
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idDoubleToBits) { // DoubleToBits
+					} else if (m.id == idDoubleToBits) { // DoubleToBits
 						createIrSrAd(ppcStfd, opds[0].reg, stackPtr, tempStorageOffset);
 						createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset);
 						createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset + 4);
-					} else if ((call.item.accAndPropFlags & sysMethCodeMask) == idBitsToDouble) { // BitsToDouble
+					} else if (m.id == idBitsToDouble) { // BitsToDouble
 						createIrSrAd(ppcStw, opds[0].regLong, stackPtr, tempStorageOffset);
 						createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset+4);
 						createIrDrAd(ppcLfd, res.reg, stackPtr, tempStorageOffset);
 					}
-				} else {	// no synthetic method
-					if ((call.item.accAndPropFlags & (1<<apfStatic)) != 0 ||
-							call.item.name.equals(HString.getHString("newPrimTypeArray")) ||
-							call.item.name.equals(HString.getHString("newRefArray"))
+				} else {	// real method (not synthetic)
+					if ((m.accAndPropFlags & (1<<apfStatic)) != 0 ||
+							m.name.equals(HString.getHString("newPrimTypeArray")) ||
+							m.name.equals(HString.getHString("newRefArray"))
 							) {	// invokestatic
-						if (call.item == stringNewstringMethod) {	// replace newstring stub with Heap.newstring
-							call.item = heapNewstringMethod;
-							loadConstantAndFixup(res.regGPR1, call.item);	
+						if (m == stringNewstringMethod) {	// replace newstring stub with Heap.newstring
+							m = heapNewstringMethod;
+							loadConstantAndFixup(res.regGPR1, m);	
 							createIrSspr(ppcMtspr, LR, res.regGPR1); 
 						} else {
-							loadConstantAndFixup(res.regGPR1, call.item);	// addr of method
+							loadConstantAndFixup(res.regGPR1, m);	// addr of method
 							createIrSspr(ppcMtspr, LR, res.regGPR1);
 						}
-					} else if ((call.item.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
+					} else if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						refReg = opds[0].reg;
 						offset = (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
@@ -1861,21 +1862,21 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrSspr(ppcMtspr, LR, res.regGPR1);
 					} else if (call.invokespecial) {	// invokespecial
 						if (newString) {	// special treatment for strings
-							if (call.item == strInitC) call.item = strAllocC;
-							else if (call.item == strInitCII) call.item = strAllocCII;	// addr of corresponding allocate method
-							else if (call.item == strInitCII) call.item = strAllocCII;
-							loadConstantAndFixup(res.regGPR1, call.item);	
+							if (m == strInitC) m = strAllocC;
+							else if (m == strInitCII) m = strAllocCII;	// addr of corresponding allocate method
+							else if (m == strInitCII) m = strAllocCII;
+							loadConstantAndFixup(res.regGPR1, m);	
 							createIrSspr(ppcMtspr, LR, res.regGPR1);
 						} else {
 							refReg = opds[0].reg;
 							createItrap(ppcTwi, TOifequal, refReg, 0);
-							loadConstantAndFixup(res.regGPR1, call.item);	// addr of init method
+							loadConstantAndFixup(res.regGPR1, m);	// addr of init method
 							createIrSspr(ppcMtspr, LR, res.regGPR1);
 						}
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 						offset = Linker32.tdMethTabOffset;
-						offset += call.item.index * Linker32.slotSize; 
+						offset += m.index * Linker32.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regGPR1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, -offset);
@@ -1883,16 +1884,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					}
 					
 					// copy parameters into registers and to stack if not enough registers
-					if (dbg) StdStreams.vrb.println("call to " + call.item.name + ": copy parameters");
+					if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
 					copyParameters(opds);
 					
-					if ((call.item.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
+					if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						// interface info goes into last parameter register
-						loadConstant(paramEndGPR, ((Method)call.item).owner.index << 16 | (((Method)call.item).index * 4));	// interface id and method offset						// check if param = maxParam in reg -2
+						loadConstant(paramEndGPR, m.owner.index << 16 | m.index * 4);	// interface id and method offset						// check if param = maxParam in reg -2
 					}
 					
 					if (newString) {
-						int sizeOfObject = Type.wktObject.getObjectSize();
+						int sizeOfObject = Type.wktObject.objectSize;
 						createIrDrAsimm(ppcAddi, paramStartGPR+opds.length, 0, sizeOfObject); // reg after last parameter
 					}
 					createIBOBILK(ppcBclr, BOalways, 0, true);
@@ -1935,7 +1936,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						strReg = res.reg;
 						loadConstantAndFixup(res.reg, item);	// ref to string
 					} else {
-						method = Class.getNewMemoryMethod(bCnew);
+						method = CFR.getNewMemoryMethod(bCnew);
 						loadConstantAndFixup(paramStartGPR, method);	// addr of new
 						createIrSspr(ppcMtspr, LR, paramStartGPR);
 						loadConstantAndFixup(paramStartGPR, item);	// ref
@@ -1946,7 +1947,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					switch (res.type  & ~(1<<ssaTaFitIntoInt)) {
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
 					case tAbyte: case tAshort: case tAinteger: case tAlong:	// bCnewarray
-						method = Class.getNewMemoryMethod(bCnewarray);
+						method = CFR.getNewMemoryMethod(bCnewarray);
 						loadConstantAndFixup(res.regGPR1, method);	// addr of newarray
 						createIrSspr(ppcMtspr, LR, res.regGPR1);
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
@@ -1957,7 +1958,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
 						break;
 					case tAref:	// bCanewarray
-						method = Class.getNewMemoryMethod(bCanewarray);
+						method = CFR.getNewMemoryMethod(bCanewarray);
 						loadConstantAndFixup(res.regGPR1, method);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, res.regGPR1);
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
@@ -1972,7 +1973,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						return;
 					}
 				} else { // bCmultianewarray:
-					method = Class.getNewMemoryMethod(bCmultianewarray);
+					method = CFR.getNewMemoryMethod(bCmultianewarray);
 					loadConstantAndFixup(res.regGPR1, method);	// addr of multianewarray
 					createIrSspr(ppcMtspr, LR, res.regGPR1);
 					// copy dimensions
@@ -2110,7 +2111,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createItrap(ppcTw, TOifnequal, res.regGPR1, 0);
 					} else {	// array of regular class
 						int nofDim = ((Array)t).dimension;
-						Item compType = Class.classList.getItemByName(((Array)t).componentType.name.toString());
+						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
 						offset = ((Class)(((Array)t).componentType)).extensionLevel;
 						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
 							createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
@@ -2300,7 +2301,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			case sCregMove:
 				opds = instr.getOperands();
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
-				case tInteger: case tRef: case tAref: case tAboolean:
+				case tInteger: case tChar: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
 					createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
@@ -2313,7 +2314,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					createIrDrB(ppcFmr, res.reg, opds[0].reg);
 					break;
 				default:
-					if (dbg) StdStreams.vrb.println("type = " + (res.type& 0x7fffffff));
+					if (dbg) StdStreams.vrb.println("type = " + (res.type & 0x7fffffff));
 					ErrorReporter.reporter.error(610);
 					assert false : "result of SSA instruction has wrong type";
 					return;
@@ -2355,6 +2356,18 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		// count register usage
 		int i = paramStartGPR;
+//		System.out.println("i = " + i);
+//		System.out.println("srcGPR[i] = " + srcGPR[i]);
+
+		if (dbg) {
+			StdStreams.vrb.print("srcGPR = ");
+			for (int k = paramStartGPR; srcGPR[k] != 0; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
+			StdStreams.vrb.println();
+			StdStreams.vrb.print("srcGPRcount = ");
+			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPRcount[i] + ","); 
+		StdStreams.vrb.println();
+	}
+
 		while (srcGPR[i] != 0) srcGPRcount[srcGPR[i++]]++;
 		i = paramStartFPR;
 		while (srcFPR[i] != 0) srcFPRcount[srcFPR[i++]]++;
@@ -3438,41 +3451,67 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	public static void init() { 
-		idPUT1 = 0x001;	// same as in rsc/ntbMpc555STS.deep
-		idPUT2 = 0x002;
-		idPUT4 = 0x003;
-		idPUT8 = 0x004;
-		idGET1 = 0x005;	
-		idGET2 = 0x006;
-		idGET4 = 0x007;
-		idGET8 = 0x008;
-		idBIT = 0x009;
-		idASM = 0x00a;
-		idGETGPR = 0x00b;
-		idGETFPR = 0x00c;
-		idGETSPR = 0x00d;
-		idPUTGPR = 0x00e;
-		idPUTFPR = 0x00f;
-		idPUTSPR = 0x010;
-		idADR_OF_METHOD = 0x011;
-		idHALT = 0x012;
-		idENABLE_FLOATS = 0x013;
-		idDoubleToBits = 0x106;
-		idBitsToDouble = 0x107;
+		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
+		if (cls == null) {ErrorReporter.reporter.error(630); return;}
+		Method m = (Method)cls.methods.getItemByName("PUT1"); 
+		if(m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("PUT2"); 
+		if(m != null) idPUT2 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("PUT4"); 
+		if(m != null) idPUT4 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("PUT8"); 
+		if(m != null) idPUT8 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GET1"); 
+		if(m != null) idGET1 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GET2"); 
+		if(m != null) idGET2 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GET4"); 
+		if(m != null) idGET4 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GET8"); 
+		if(m != null) idGET8 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("BIT"); 
+		if(m != null) idBIT = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("ASM"); 
+		if(m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GETGPR"); 
+		if(m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GETFPR"); 
+		if(m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("GETSPR"); 
+		if(m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("PUTGPR"); 
+		if(m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("PUTFPR"); 
+		if(m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("PUTSPR"); 
+		if(m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("ADR_OF_METHOD"); 
+		if(m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("HALT"); 
+		if(m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("ENABLE_FLOATS"); 
+		if(m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
 		
-		objectSize = Type.wktObject.getObjectSize();
-		stringSize = Type.wktString.getObjectSize();
+		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/lowLevel/LL");
+		if (cls == null) {ErrorReporter.reporter.error(632); return;}
+		m = (Method)cls.methods.getItemByName("doubleToBits"); 
+		if(m != null) idDoubleToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
+		m = (Method)cls.methods.getItemByName("bitsToDouble"); 
+		if(m != null) idBitsToDouble = m.id; else {ErrorReporter.reporter.error(633); return;}
+		
+		objectSize = Type.wktObject.objectSize;
+		stringSize = Type.wktString.objectSize;
 		
 		int2floatConst1 = new StdConstant(HString.getRegisteredHString("int2floatConst1"), (double)(0x10000000000000L + 0x80000000L));
-		int2floatConst2 =  new StdConstant(HString.getRegisteredHString("int2floatConst2"), (double)0x100000000L);
-		int2floatConst3 =  new StdConstant(HString.getRegisteredHString("int2floatConst3"), (double)0x10000000000000L);
+		int2floatConst2 = new StdConstant(HString.getRegisteredHString("int2floatConst2"), (double)0x100000000L);
+		int2floatConst3 = new StdConstant(HString.getRegisteredHString("int2floatConst3"), (double)0x10000000000000L);
 		Linker32.addGlobalConstant(int2floatConst1);
 		Linker32.addGlobalConstant(int2floatConst2);
 		Linker32.addGlobalConstant(int2floatConst3);
 		
 		final Class stringClass = (Class)Type.wktString;
-		final Class heapClass = (Class)Type.classList.getItemByName(Configuration.getHeapClassname().toString());
-		if (stringClass != null) {
+		final Class heapClass = (Class)RefType.refTypeList.getItemByName(Configuration.getHeapClassname().toString());
+		if ((stringClass != null) && (stringClass.methods != null)) {	// check if string class is loaded at all
 			stringNewstringMethod = (Method)stringClass.methods.getItemByName("newstring"); 
 			if(heapClass != null) {
 				heapNewstringMethod = (Method)heapClass.methods.getItemByName("newstring"); 
@@ -3482,7 +3521,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				if (heapNewstringMethod != null) StdStreams.vrb.println("heapNewstringMethod = " + heapNewstringMethod.name + heapNewstringMethod.methDescriptor); else StdStreams.vrb.println("heapNewstringMethod: not found");
 			}
 			
-			Method m = (Method)stringClass.methods;		
+			m = (Method)stringClass.methods;		
 			while (m != null) {
 				if (m.name.equals(HString.getRegisteredHString("<init>"))) {
 					if (m.methDescriptor.equals(HString.getRegisteredHString("([C)V"))) strInitC = m; 

@@ -96,8 +96,7 @@ public interface ICjvmInstructionOpcs {
 		bcapUndef = bcapBase+8;
 
 	int[] bcAttrTab = {
-		/* old format A:	0xsFFo'mLcc,
-		 * format B:	0xsFFF'owLcc, binary: ssss ' ffff | ffff'ffff | oo ww ' LLLL 	| cccc'cccc
+		/* format:	0xsFFF'owLcc, binary: ssss ' ffff | ffff'ffff | oo ww ' LLLL 	| cccc'cccc
 				s	bit[31..28] (-8 <= o <= 7) 4 bit, change of operand stack pointer (in slots):		slotPointer := slotPointer + SignExtend(s)
 					   S=-8: stack change depends on operand type
 				F	bit[27..16] (0 <= o <= 0xFFF) 12 bit, Flags: {Branch, CondBranch, UncondBranch, Return, Switch, Call, New, } (see const declarations)
@@ -138,6 +137,7 @@ public interface ICjvmInstructionOpcs {
 
 			0x10000200 | (1<<bcapCpRef) | bCldc, // push int or float from RCP (1 byte index)
 			0x10000300 | (1<<bcapCpRef) | bCldc_w, // push int or float from RCP (2 bytes index)
+			// ldc and ldc_w can also push a reference to a string literal or a class, method type or method handle, java 1.6 and up
 			0x20000300 | (1<<bcapCpRef) | bCldc2_w, // push long or double from RCP (2 bytes index)
 
 			0x10001200 | bCiload, //{wide} push int from local var[imm]

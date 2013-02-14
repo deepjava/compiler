@@ -227,13 +227,13 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 	 * 		<li>0, if relocation fails or if <code>intfMethods.length <= 1</code>
 	 * 		</ul>
 	 */
-	void arrangeInterfaceMethodsForThisClassStack( Class cls ){
+	void arrangeInterfaceMethodsForThisClassStack( Class cls ) {
 //if(eTrace) vrb.printf(">arrangeInterfaceMFTCS: cls.name=%1$s, methTabLength=%2$d\n", cls.name, cls.methTabLength );
 
-		if ( (cls.accAndPropFlags&(1<<dpfInstances)) != 0 ){
+		if ((cls.accAndPropFlags&(1<<dpfInstances)) != 0 ) {
 			nofInstMethods = cls.methTabLength;
 			clearInstMethodArray( nofInstMethods );
-			cls.getMethodTable( instMethods, levelIndices );
+			cls.getMethodTable(instMethods, levelIndices);
 			topClassExtLevel = cls.extensionLevel;
 
 			interfList.clear();

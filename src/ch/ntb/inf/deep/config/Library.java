@@ -33,7 +33,7 @@ public class Library extends ConfigElement implements ErrorCodes {
 	private Board boards; // list with all boards defined in this library
 	private OperatingSystem operatingsystems; // list with all operating systems defined in this library
 	private Programmer programmers; // list with all programmers defined in this library
-	private Constants compilerConstants = new Constants("compiler constants", true);
+	private Constants compilerConstants = new Constants("compiler constants", true, this);
 	private boolean isJarFile;
 	
 	public Library(HString path) {

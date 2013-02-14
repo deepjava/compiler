@@ -26,7 +26,7 @@ import ch.ntb.inf.deep.strings.HString;
 public class Constant extends Item {
 
 	Constant(HString name, Type type){
-		super(name,  type);
+		super(name, type);
 		accAndPropFlags |= 1<<dpfConst;
 	}
 
@@ -37,6 +37,10 @@ public class Constant extends Item {
 		super.printShort(0);
 	}
 
+	public void printTypeCategory(){
+		if(type != null) type.printTypeCategory(); else  vrb.print("(-)");
+	}
+	
 	public void print(int indentLevel){
 		indent(indentLevel);
 		Dbg.printJavaAccAndPropertyFlags(this.accAndPropFlags);

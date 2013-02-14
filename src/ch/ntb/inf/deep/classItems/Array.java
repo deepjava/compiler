@@ -25,58 +25,44 @@ import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.linker.BlockItem;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Array extends Type {
-	public Array nextArray;
+public class Array extends RefType {
+	public Array nextArray;	// all arrays are linked 
+	public Array nextHigherDim;	// link to array with same type but next higher dimension
+	public Array nextLowerDim;	// link to array with same type but next lower dimension
 
-	public Type componentType;
-	public byte dimension; // array dimension
+	public Type componentType;	// component type
+	public byte dimension;	// array dimension
 
 	public Segment segment;
 	public BlockItem typeDescriptor;
 	
-	Array(HString regName){
+	Array(HString regName, Type compType, int dimension) {
 		super(regName, wktObject); // base type is java/lang/Object
-		//System.out.println(">>> creating ARRAY: " + regName);
 		category = tcArray;
-		sizeInBits = 32;
-
-		dimension = 1;
-		while(regName.charAt(dimension) == tcArray) dimension++;
-		HString sname = regName.substring(dimension);
-		sname = stab.insertCondAndGetEntry(sname);
-		componentType = getTypeByDescriptor(sname);
-		
-		if( regName.length() == 2 ){
-			assert dimension == 1;
-			int typeIndex = getPrimitiveTypeIndex(sname.charAt(0));
-			if( typeIndex >= txBoolean){// if (one dimensional array of primitve type) register it in primTypeArrays
-				primTypeArrays[typeIndex] = this;
-			}
-		}
-	}
-
-	protected void selectAndMoveInitClasses(){
+		sizeInBits = 32;	// array is of type reference type
+		this.componentType = compType;
+		this.dimension = (byte)dimension;
 	}
 
 	//--- debug primitives
 	
-	public void printShort(int indentLevel){
+	public void printShort(int indentLevel) {
 		indent(indentLevel);
 		vrb.printf("array %1$s, flags=", name);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'C');
 	}
 	
-	public void printFields(int indentLevel){
+	public void printFields(int indentLevel) {
 		indent(indentLevel);
-		vrb.printf("array: (dim=%1$d, compType=%2$s, baseType=%3$s)\n", dimension, componentType.name, type.name);
+		vrb.printf("array: (dim=%1$d, compType=%2$s, baseType=%3$s, nextHigherDim=%4$s, nextLowerDim=%5$s)\n", dimension, componentType.name, type.name, nextHigherDim!=null?nextHigherDim.name:"null", nextLowerDim!=null?nextLowerDim.name:"null");
 	}
 
-	public void printMethods(int indentLevel){
+	public void printMethods(int indentLevel) {
 		indent(indentLevel);
 		vrb.println("methods: none");
 	}
 
-	public void print(int indentLevel){
-		printShort( indentLevel ); vrb.println();
-		printFields( indentLevel+1 );
+	public void print(int indentLevel) {
+		printShort(indentLevel ); vrb.println();
+		printFields(indentLevel+1 );
 	}
 }

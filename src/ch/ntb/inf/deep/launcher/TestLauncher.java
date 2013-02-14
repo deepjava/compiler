@@ -3,6 +3,7 @@ package ch.ntb.inf.deep.launcher;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.linker.Linker32;
+import ch.ntb.inf.deep.classItems.Class;
 
 /**
  * Launcher for tests only! Adapt this file to your configuration, but don't commit
@@ -12,8 +13,8 @@ import ch.ntb.inf.deep.linker.Linker32;
  */
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("C:/Users/Urs/Checkout/JCC/deep/555ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("M:/EUser/JCC/deep/555junitTarget.deep", "BootFromRam");
+		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/deep/5200ExampleProject.deep", "BootFromRam");
 		
 		if (ErrorReporter.reporter.nofErrors == 0) {
@@ -22,10 +23,12 @@ public class TestLauncher {
 			Launcher.startTarget();
 			Launcher.closeTargetConnection();
 		}
+		
+//		Class.printArrays();
 
-//		Launcher.saveTargetImageToFile("W:/phycorempc5200b/test.bin", Configuration.BIN); System.out.println("image file created");
+//		Launcher.saveTargetImageToFile("W:/phycorempc5200b/test.bin", Configuration.BIN);
 
-//		Launcher.createInterfaceFile("M:/EUser\\JCC\\bsp\\src\\ch\\ntb\\inf\\deep\\runtime\\mpc5200\\phyCoreMpc5200tiny.java");
+//		Launcher.createInterfaceFiles("M:/EUser\\JCC\\bsp");
 
 		/* DEBUG OUTPRINTS */
 //		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(true, false, false, true);

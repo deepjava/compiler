@@ -21,12 +21,14 @@
 package ch.ntb.inf.deep.ssa;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.DataItem;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
@@ -89,8 +91,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 	public void mergeAndDetermineStateArray(SSA ssa) {
 		
 		owner = ssa;
-		maxLocals = ssa.cfg.method.getMaxLocals();
-		maxStack = ssa.cfg.method.getMaxStckSlots();
+		maxLocals = ssa.cfg.method.maxLocals;
+		maxStack = ssa.cfg.method.maxStackSlots;
 
 		// check if all predecessors have their state array set
 		if (!isLoopHeader()) {
@@ -463,7 +465,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 		SSAValue value1, value2, value3, value4, result;
 		SSAValue[] operands;
 		int val, val1;
-		DataItem field;
+		Field field;
 		SSAInstruction instr;
 		boolean wide = false;
 		exitSet = entrySet.clone();// Don't change the entry set
@@ -744,31 +746,27 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = ((owner.cfg.code[bca++] & 0xFF) << 8) | (owner.cfg.code[bca] & 0xFF);
 				result = new SSAValue();
-				if (owner.cfg.method.owner.constPool[val] instanceof StdConstant) {
-					StdConstant constant = (StdConstant) owner.cfg.method.owner.constPool[val];
-					if (constant.type == Type.wellKnownTypes[txInt]) {// is a int
+				Item refItem = owner.cfg.method.owner.constPool[val];
+				if (refItem instanceof StdConstant) {
+					StdConstant constant = (StdConstant)refItem;
+					if (constant.type == Type.wellKnownTypes[txInt]) {// is an int
 						result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 						result.constant = constant;
 					} else {
 						if (constant.type == Type.wellKnownTypes[txFloat]) { // is a float
 							result.type = SSAValue.tFloat;
 							result.constant = constant;
-							// result.constant =
-							// Float.intBitsToFloat(constant.valueH);
 						} else {
-							assert false : "Wrong Constant type";
+							assert false : "Wrong cnstant type";
 						}
 					}
 				} else {
-					if (owner.cfg.method.owner.constPool[val] instanceof StringLiteral) {// is
-						// a
-						// String
-						StringLiteral literal = (StringLiteral) owner.cfg.method.owner.constPool[val];
+					if (refItem instanceof StringLiteral) {	// is a string
+						StringLiteral literal = (StringLiteral)refItem;
 						result.type = SSAValue.tRef;
 						result.constant = literal;
-						// result.constant = literal.string;
 					} else {
-						assert false : "Wrong DataItem type";
+						assert false : "Wrong type";
 						break;
 					}
 				}
@@ -783,21 +781,22 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				bca++;
 				val = ((owner.cfg.code[bca++] & 0xFF) << 8) | (owner.cfg.code[bca] & 0xFF);
 				result = new SSAValue();
-				if (owner.cfg.method.owner.constPool[val] instanceof StdConstant) {
-					StdConstant constant = (StdConstant) owner.cfg.method.owner.constPool[val];
-					if (constant.type == Type.wellKnownTypes[txDouble]) {// is a Double
+				refItem = owner.cfg.method.owner.constPool[val];
+				if (refItem instanceof StdConstant) {
+					StdConstant constant = (StdConstant)refItem;
+					if (constant.type == Type.wellKnownTypes[txDouble]) {	// is a double
 						result.type = SSAValue.tDouble;
 						result.constant = constant;
 					} else {
-						if (constant.type == Type.wellKnownTypes[txLong]) { // is a Long
+						if (constant.type == Type.wellKnownTypes[txLong]) { // is a long
 							result.type = SSAValue.tLong;
 							result.constant = constant;
 						} else {
-							assert false : "Wrong Constant type";
+							assert false : "Wrong constant type";
 						}
 					}
 				} else {
-					assert false : "Wrong DataItem type";
+					assert false : "Wrong type";
 					break;
 				}
 				instr = new NoOpnd(sCloadConst);
@@ -2356,10 +2355,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = ((owner.cfg.code[bca++] & 0xFF) << 8) | owner.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				// determine the type of the field
-				if (!(owner.cfg.method.owner.constPool[val] instanceof DataItem)) {
+				if (!(owner.cfg.method.owner.constPool[val] instanceof Field)) {
 					assert false : "Constantpool entry isn't a DataItem. Used in getstatic";
 				}
-				field = (DataItem) owner.cfg.method.owner.constPool[val];
+				field = (Field) owner.cfg.method.owner.constPool[val];
 				if (((Type)field.type).category == tcArray) {
 					switch (field.type.name.charAt(1)) {
 					case 'B':
@@ -2440,9 +2439,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result = new SSAValue();
 				result.type = SSAValue.tVoid;
 				value1 = popFromStack();
-				if (owner.cfg.method.owner.constPool[val] instanceof DataItem) {
+				if (owner.cfg.method.owner.constPool[val] instanceof Field) {
 					instr = new MonadicRef(sCstoreToField,
-							(DataItem) owner.cfg.method.owner.constPool[val],
+							(Field) owner.cfg.method.owner.constPool[val],
 							value1);
 				} else {
 					instr = null;
@@ -2458,7 +2457,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				val = ((owner.cfg.code[bca++] & 0xFF) << 8) | owner.cfg.code[bca] & 0xFF;
 				result = new SSAValue();
 				// determine the type of the field
-				field = (DataItem) owner.cfg.method.owner.constPool[val];
+				field = (Field) owner.cfg.method.owner.constPool[val];
 				if (((Type)field.type).category == tcArray) {
 					switch (field.type.name.charAt(1)) {
 					case 'B':
@@ -2527,9 +2526,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 					result.type = SSAValue.tRef;
 				}
 				value1 = popFromStack();
-				if (owner.cfg.method.owner.constPool[val] instanceof DataItem) {
+				if (owner.cfg.method.owner.constPool[val] instanceof Field) {
 					instr = new MonadicRef(sCloadFromField,
-							(DataItem) owner.cfg.method.owner.constPool[val],
+							(Field) owner.cfg.method.owner.constPool[val],
 							value1);
 				} else {
 					instr = null;
@@ -2548,9 +2547,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tVoid;
 				value2 = popFromStack();
 				value1 = popFromStack();
-				if (owner.cfg.method.owner.constPool[val] instanceof DataItem) {
+				if (owner.cfg.method.owner.constPool[val] instanceof Field) {
 					instr = new DyadicRef(sCstoreToField,
-							(DataItem) owner.cfg.method.owner.constPool[val],
+							(Field) owner.cfg.method.owner.constPool[val],
 							value1, value2);
 				} else {
 					instr = null;
@@ -2641,9 +2640,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				}
 				result = new SSAValue();
 				result.type = decodeReturnDesc(((Method) owner.cfg.method.owner.constPool[val]).methDescriptor);
-				instr = new Call(sCcall,
-						((Method) owner.cfg.method.owner.constPool[val]),
-						operands);
+				instr = new Call(sCcall, ((Method) owner.cfg.method.owner.constPool[val]), operands);
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
@@ -2675,14 +2672,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				break;
 			case bCnewarray:
 				bca++;
-				val = owner.cfg.code[bca] & 0xff; // atype (Array type)
-				value1 = popFromStack();
-				Item atype = Type.primTypeArrays[val];  
-				assert atype != null : "[BCA " + bca + "] can't find a array item for the given atype (\"" + Character.toString(tcArray) + Type.wellKnownTypes[val].name +"\")!";
+				val = owner.cfg.code[bca] & 0xff; // array type
+				value1 = popFromStack();	// array length
+				HString refTypeName = HString.getRegisteredHString(Character.toString(tcArray) + Type.wellKnownTypes[val].name);
+				Item refType = RefType.getRefTypeByName(refTypeName);   
+				assert refType != null : "[BCA " + bca + "] can't find a array item for the given atype (\"" + Character.toString(tcArray) + Type.wellKnownTypes[val].name +"\")!";
 				result = new SSAValue();
 				result.type = val + 10;
 				SSAValue[] operand = { value1 };
-				instr = new Call(sCnew, atype, operand);
+				instr = new Call(sCnew, refType, operand);
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);
@@ -2697,7 +2695,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				SSAValue[] opnd = { value1 };
 				if (owner.cfg.method.owner.constPool[val] instanceof Type) { // TODO @Martin: improve the lookup of the array reference
-					Item arrayRef = Type.classList.getItemByName("[L" + owner.cfg.method.owner.constPool[val].name.toString() + ";");
+					Item arrayRef = RefType.refTypeList.getItemByName("[L" + owner.cfg.method.owner.constPool[val].name.toString() + ";");
 					instr = new Call(sCnew,	(Type)arrayRef, opnd);
 //					if(arrayRef != null) instr = new Call(sCnew,	(Type)arrayRef, opnd);
 //					else instr = new Call(sCnew, ((Type)owner.cfg.method.owner.constPool[val]), opnd);
@@ -2761,10 +2759,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
-				if (owner.cfg.method.owner.constPool[val] instanceof Type) {
-					instr = new MonadicRef(sCinstanceof,
-							((Type) owner.cfg.method.owner.constPool[val]),
-							value1);
+				refItem = owner.cfg.method.owner.constPool[val];
+				if (refItem instanceof RefType) {
+					instr = new MonadicRef(sCinstanceof, (RefType)refItem, value1);
 				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in instanceof";
@@ -2797,10 +2794,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				for (int i = operands.length - 1; i >= 0; i--) {
 					operands[i] = popFromStack();
 				}
-				if (owner.cfg.method.owner.constPool[val] instanceof Type) {
-					instr = new Call(sCnew,
-							((Type) owner.cfg.method.owner.constPool[val]),
-							operands);
+				refItem = owner.cfg.method.owner.constPool[val];
+				if (refItem instanceof RefType) {
+					instr = new Call(sCnew, (RefType)refItem, operands);
 				} else {
 					instr = null;
 					assert false : "Constantpool entry isn't a class, array or interface type. Used in multianewarray";
@@ -2819,16 +2815,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				instr.result.owner = instr;
 				addInstruction(instr);
 				owner.createLineNrPair(bca, instr);
-				bca = bca + 2; // step over branchbyte1 and branchbyte2
+				bca = bca + 2; // step over branch byte1 and byte2
 				break;
 			case bCgoto_w:
 				owner.createLineNrPair(bca, null);
-				bca = bca + 4; // step over branchbyte1 and branchbyte2...
+				bca = bca + 4; // step over branch byte1 and byte2...
 				break;
 			case bCjsr_w:
 				owner.createLineNrPair(bca, null);
-				// I think it isn't necessary to push the adress onto the stack
-				bca = bca + 4; // step over branchbyte1 and branchbyte2...
+				bca = bca + 4; // step over branch byte1 and branchbyte2...
 				break;
 			case bCbreakpoint:
 				owner.createLineNrPair(bca, null);

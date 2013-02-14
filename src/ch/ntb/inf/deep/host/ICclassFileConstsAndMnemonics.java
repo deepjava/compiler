@@ -36,47 +36,40 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 
 	//--- debug strings for: access and property flags (apf) for class, field, method
 	String[] apfIdents = {
-			"public", // 0
-			"private", // 1
-			"protected", // 2
-			"static", // 3
-			"final", // 4
-			"|Csuper|Msynch", // 5, "super" for class objects, "synchronized" for methods
-			"volatile", // 6
-			"transient", // 7
-			"native", // 8
-			"interface", // 9
-			"abstract", // 10
-			"strict", // 11
-			"enumArray", // 12
-			"deprecated", // 13, dpfDeprecated
-			"enum", // 14
+			"public", 				// 0
+			"private", 				// 1
+			"protected", 			// 2
+			"static", 				// 3
+			"final", 				// 4
+			"|Csuper|Msynch", 		// 5
+			"|Mbridge|Fvolatile",	// 6
+			"|Mvarargs|Ftransient", // 7
+			"native", 				// 8
+			"interface", 			// 9
+			"abstract", 			// 10
+			"strict", 				// 11
+			"enumArray", 			// 12
+			"deprecated", 			// 13
+			"enum", 				// 14
 			
 			//---- deep properties
-			//-- class flags:
-			"classLoaded", // 15 class loaded
-			"rootClass", // 16 this class is a root class (loaded by loadRootClass(..) )
-			"declaration", // 17 class is used for declarations of static fields, instance fields, local variables
-			"instances", // 18 there might be objects of this class in the running system
-			"typeTest", // 19 there are type tests with this type (instructions: checkcast, instanceof)
-
-			//--- field flags:
-			"|Cmark|Fconst", // 20 constant field, marked class
-			"|Cextended|FreadAccess", // 21 class has extensions | one or more read accesses to this field
-			"writeAccess", // 22 one or more write accesses to this item
-
-			//--- method flags:
-			"command", //23 method is a command, i.e. this method is invoked by an outside client
-			"call",	//24 method gets called by the bc instructions invokestatic or invokevirtual
-			"excHndCall",	//25 method gets invoked directly or indirectly by an exception handler method
-			"excHnd", //26 method is an exception handler, i.e. this method is invoked by hardware
-
-			//--- class and method flags:
-			"interfCall",	//27 method gets invoked by the bc instruction invokeinterface
-			"new",	//28 method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
-			"unsave",	//29 method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
-			"SysPrimitive", //30 method is a system primitive
-			"Synthetic", //31 synthetic field or method (items not in source text, deep in-line methods: code not loaded)
+			"classLoaded", 			// 15 
+			"rootClass", 			// 16 
+			"declaration", 			// 17 
+			"instances", 			// 18 
+			"typeTest", 			// 19 
+			"|Cmarked|Fconst", 		// 20  
+			"|Cextended|FreadAccess", // 21 
+			"writeAccess", 			// 22
+			"command", 				//23 
+			"call",					//24 
+			"excHndCall",			//25 
+			"excHnd", 				//26 
+			"interfaceCall",		//27 
+			"new",					//28 
+			"unsafe",				//29 
+			"sysPrimitive", 		//30 
+			"synthetic", 			//31 
 	};
 
 	String[] attributes = {// class file attributes: 

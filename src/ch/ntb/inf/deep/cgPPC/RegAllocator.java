@@ -24,6 +24,7 @@ package ch.ntb.inf.deep.cgPPC;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.Constant;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -379,10 +380,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
 				Call call = (Call)instr;
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-					if ((call.item.accAndPropFlags & sysMethCodeMask) == CodeGen.idENABLE_FLOATS) {
+					if ((((Method)call.item).id) == CodeGen.idENABLE_FLOATS) {
 					CodeGen.enFloatsInExc = true;
 				}
-				int id = call.item.accAndPropFlags & sysMethCodeMask;
+				int id = ((Method)call.item).id;
 				if (id == CodeGen.idDoubleToBits || (id == CodeGen.idBitsToDouble))  // DoubleToBits or BitsToDouble
 					CodeGen.tempStorage = true;
 			}
@@ -560,16 +561,16 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| (instr1.ssaOpcode == sCshr) && (res == instr1.getOperands()[1])
 							|| (instr1.ssaOpcode == sCushr) && (res == instr1.getOperands()[1])
 							// shift operators only if immediate is shift distance (and not value to be shifted)
-							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETGPR")))
-							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETFPR")))
-							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("GETSPR")))
-							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTGPR")) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("PUTFPR")) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && ((((Call)instr1).item.accAndPropFlags & sysMethCodeMask) == CodeGen.idPUTSPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idGETGPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idGETFPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idGETSPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idPUTGPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idPUTFPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idPUTSPR) && (instr1.getOperands()[0] == res))
 							// calls to some unsafe methods
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
-							// branches but not switches (the second operand of a switch is already constant)
-						{
+						// branches but not switches (the second operand of a switch is already constant)
+					{
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
 							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
@@ -578,11 +579,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							int immVal = constant.valueH;
 							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						}
-					} else if (((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("ASM")))
-							|| ((instr1.ssaOpcode == sCcall) && ((Call)instr1).item.name.equals(HString.getHString("ADR_OF_METHOD")))) {
-						// asm instruction
+					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idASM))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idADR_OF_METHOD))) {
 					} else 	// opd cannot be used as immediate opd	
-						findReg(res);			
+						findReg(res);	
 				} else 	// opd has index != -1 or cannot be used as immediate opd	
 					findReg(res);			
 			} else {	// all other instructions

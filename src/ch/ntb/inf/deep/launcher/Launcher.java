@@ -31,6 +31,7 @@ import java.util.Date;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.classItems.Array;
+import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
@@ -63,6 +64,7 @@ public class Launcher implements ICclassFileConsts {
 	private static TargetConnection tc;
 
 	public static void buildAll(String projectConfigFile, String targetConfiguration) {
+		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 		
 		Class clazz;
@@ -91,7 +93,8 @@ public class Launcher implements ICclassFileConsts {
 			// Read required classes
 			if(reporter.nofErrors <= 0) {
 				if(dbg) vrb.println("[Launcher] Loading Classfiles");
-				Class.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemPrimitives(), attributes);
+				CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
+//				CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), null, attributes);
 			}
 			
 			// Initialize compiler components
@@ -107,9 +110,9 @@ public class Launcher implements ICclassFileConsts {
 			// Proceeding Arrays: Loop One
 			if(dbg) vrb.println("[Launcher] Proceeding arrays (loop one):");
 			array = Class.arrayClasses;
-			while(array != null) {
+			while (array != null) {
 				if(dbg) vrb.println("> Array: " + array.name);
-				if(dbg) vrb.println("  creating type descritpor");
+				if(dbg) vrb.println("  creating type descriptor");
 				Linker32.createTypeDescriptor(array);
 				array = array.nextArray;
 			}
@@ -119,7 +122,7 @@ public class Launcher implements ICclassFileConsts {
 			if(reporter.nofErrors <= 0) {
 				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 					if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
-					clazz = Class.elOrdredClasses[extLevel];
+					clazz = Class.extLevelOrdredClasses[extLevel];
 					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
 						if(dbg) vrb.println("  > Class: " + clazz.name);
 						
@@ -184,9 +187,9 @@ public class Launcher implements ICclassFileConsts {
 			// Proceeding Arrays: Loop Two
 			if(dbg) vrb.println("[Launcher] Proceeding arrays (loop two):");
 			array = Class.arrayClasses;
-			while(array != null && reporter.nofErrors <= 0) {
+			while (array != null && reporter.nofErrors <= 0) {
 				if(dbg) vrb.println("> Array: " + array.name);
-				if(dbg) vrb.println("  calculating absoute addresses");
+				if(dbg) vrb.println("  calculating absolute addresses");
 				Linker32.calculateAbsoluteAddresses(array);
 				array = array.nextArray;
 			}
@@ -195,8 +198,8 @@ public class Launcher implements ICclassFileConsts {
 			if(dbg) vrb.println("[Launcher] Proceeding classes (loop two):");
 			if(reporter.nofErrors <= 0) {
 				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
-					clazz = Class.elOrdredClasses[extLevel];
+					if(dbg) vrb.println("  Extension level " + extLevel + ":");
+					clazz = Class.extLevelOrdredClasses[extLevel];
 					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
 						if(dbg) vrb.println("  > Class: " + clazz.name);
 						
@@ -220,7 +223,7 @@ public class Launcher implements ICclassFileConsts {
 			if(reporter.nofErrors <= 0) {
 				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 					if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
-					clazz = Class.elOrdredClasses[extLevel];
+					clazz = Class.extLevelOrdredClasses[extLevel];
 					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
 						if(dbg) vrb.println("  > Class: " + clazz.name);
 		
