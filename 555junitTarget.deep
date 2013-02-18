@@ -42,25 +42,25 @@ project junitTargetTestProject {
 #	rootclasses = "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3";
 
 #	Tests for all compiler test classes  
-	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/ByteTest","ch/ntb/inf/deep/comp/targettest/primitives/ShortTest","ch/ntb/inf/deep/comp/targettest/primitives/CharTest", "ch/ntb/inf/deep/comp/targettest/primitives/IntTest", "ch/ntb/inf/deep/comp/targettest/primitives/LongTest", "ch/ntb/inf/deep/comp/targettest/primitives/FloatTest","ch/ntb/inf/deep/comp/targettest/primitives/DoubleTest",
-				  "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest",
-				  "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest",
-				  "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest",
-				  "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTest","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest",
-				  "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest",
-				  "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest",
-				  "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3";
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/ByteTest","ch/ntb/inf/deep/comp/targettest/primitives/ShortTest","ch/ntb/inf/deep/comp/targettest/primitives/CharTest", "ch/ntb/inf/deep/comp/targettest/primitives/IntTest", "ch/ntb/inf/deep/comp/targettest/primitives/LongTest", "ch/ntb/inf/deep/comp/targettest/primitives/FloatTest","ch/ntb/inf/deep/comp/targettest/primitives/DoubleTest",
+#				  "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest",
+#				  "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest",
+#				  "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest",
+#				  "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTest","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest",
+#				  "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest",
+#				  "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest",
+#				  "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3";
 
 
-#	Tests for bsp tests  
-#	rootclasses = "ch/ntb/inf/junitTarget/lib/MathTest";
-#	rootclasses = "ch/ntb/inf/junitTarget/lib/GenericsTest";
-#	rootclasses = "ch/ntb/inf/junitTarget/lib/TaskTest";
+#	Tests for trgtlib tests  
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/GenericsTest";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/TaskTest";
 
 #	Tests for all bsp tests
-#	rootclasses = "ch/ntb/inf/junitTarget/lib/MathTest",
-#				  "ch/ntb/inf/junitTarget/lib/GenericsTest",
-#				  "ch/ntb/inf/junitTarget/lib/TaskTest";
+	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest",
+				  "ch/ntb/inf/deep/trglib/targettest/GenericsTest",
+				  "ch/ntb/inf/deep/trglib/targettest/TaskTest";
 
 # Target command table file
 	tctfile = "../ch.ntb.inf.junitTarget/tct/commandTable.dtct";
