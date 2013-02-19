@@ -2830,6 +2830,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
+			createIrS(ppcMtmsr, 0);
+//			createIrfi(ppcEieio);
 		}
 		int offset = FPRoffset;
 		if (nofNonVolFPR > 0) {
@@ -2928,6 +2930,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
+			createIrS(ppcMtmsr, 0);
+//			createIrfi(ppcEieio);
 			int offset = FPRoffset;
 			if (nofNonVolFPR > 0) {
 				for (int i = 0; i < nofNonVolFPR; i++) {
@@ -2982,21 +2986,22 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
-		for (int i = 0; i < iCount; i++){
-			sb.append("\t" + String.format("%08X",instructions[i]));
+		for (int i = 0; i < iCount; i++) {
+			sb.append("\t" + String.format("%08X", instructions[i]));
 			sb.append("\t[0x");
-			sb.append(Integer.toHexString(i*4));
+			sb.append(Integer.toHexString(i * 4));
 			sb.append("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
-		if (opcode == 0x10) {
-			int BD = (short)(instructions[i] & 0xFFFC);
-			sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
-		} else if (opcode == 0x12) {
-			int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-			sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+			if (opcode == 0x10) {
+				int BD = (short) (instructions[i] & 0xFFFC);
+				sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+			} else if (opcode == 0x12) {
+				int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+				sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+			}
+			sb.append("\n");
 		}
-		sb.append("\n");
-		}
+		sb.append(Integer.toHexString(iCount));
 		return sb.toString();
 	}
 
