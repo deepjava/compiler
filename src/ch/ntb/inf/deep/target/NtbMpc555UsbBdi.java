@@ -473,6 +473,7 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 					TargetMemorySegment current = tms;
 					// first mark all used sectors
 					while(current != null && current.segment.owner.getMemoryType() == Configuration.AM29LV160D){
+						if(dbg) StdStreams.vrb.println("  Marking used Sector: " + current.segment.getName());
 						current.segment.owner.markUsedSectors(current);
 						current = current.next;
 					}
@@ -699,5 +700,11 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	@Override
 	public int getNofGpr() {
 		return nofGPRs;
+	}
+
+	@Override
+	public void resetEreasedFlag() throws TargetConnectionException {
+		this.flashErased = false;
+		
 	}
 }

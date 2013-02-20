@@ -97,5 +97,7 @@ public abstract class TargetConnection {
 	public abstract void confirmBreakPoint(int address) throws TargetConnectionException;
 	
 	public abstract int getNofGpr();
+	
+	public abstract void resetEreasedFlag() throws TargetConnectionException; 
 
 }

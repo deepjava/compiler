@@ -2817,6 +2817,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
+			createIrS(ppcMtmsr, 0); // TODO @Urs: fix this hack ;-)
 		}
 		int offset = FPRoffset;
 		if (nofNonVolFPR > 0) {
@@ -2915,6 +2916,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
+			createIrS(ppcMtmsr, 0); // TODO @Urs: fix this hack ;-)
 			int offset = FPRoffset;
 			if (nofNonVolFPR > 0) {
 				for (int i = 0; i < nofNonVolFPR; i++) {
