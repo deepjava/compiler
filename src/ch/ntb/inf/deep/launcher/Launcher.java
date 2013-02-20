@@ -312,7 +312,7 @@ public class Launcher implements ICclassFileConsts {
 						for(int i = 0; i < b.getCPU().getNofGPRs(); i++) {
 							tc.setGprValue(i, 0);
 						}
-						vrb.println("Downloading target image:");
+						log.println("Downloading target image:");
 						while(tms != null && reporter.nofErrors <= 0) {
 							if(dbg) vrb.print("  Proceeding TMS #" + tms.id);
 							if(tms.segment == null ){ // this should never happen
@@ -325,6 +325,7 @@ public class Launcher implements ICclassFileConsts {
 							}
 							tms = tms.next;
 						}
+						tc.resetEreasedFlag();
 					} catch(TargetConnectionException e) {
 						reporter.error(TargetConnection.errDownloadFailed);
 						reporter.nofErrors++;

@@ -700,4 +700,10 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	public int getNofGpr() {
 		return nofGPRs;
 	}
+	
+	@Override
+	public void resetEreasedFlag() throws TargetConnectionException {
+		this.flashErased = false;
+		
+	}
 }
