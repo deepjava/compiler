@@ -2830,8 +2830,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
-			createIrS(ppcMtmsr, 0);
-//			createIrfi(ppcEieio);
+			createIrS(ppcIsync, 0);	// must context synchronize after setting of FP bit
 		}
 		int offset = FPRoffset;
 		if (nofNonVolFPR > 0) {
@@ -2930,8 +2929,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			createIrD(ppcMfmsr, 0);
 			createIrArSuimm(ppcOri, 0, 0, 0x2000);
 			createIrS(ppcMtmsr, 0);
-			createIrS(ppcMtmsr, 0);
-//			createIrfi(ppcEieio);
+			createIrS(ppcIsync, 0);	// must context synchronize after setting of FP bit
 			int offset = FPRoffset;
 			if (nofNonVolFPR > 0) {
 				for (int i = 0; i < nofNonVolFPR; i++) {
@@ -3001,7 +2999,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			}
 			sb.append("\n");
 		}
-		sb.append(Integer.toHexString(iCount));
 		return sb.toString();
 	}
 

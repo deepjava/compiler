@@ -2506,6 +2506,8 @@ public class InstructionDecoder implements InstructionOpcs {
 					return "rfi";
 				case 0x81:
 					return "crandc  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
+				case 0x96:
+					return "isync";
 				case 0xC1:
 					return "crxor  " + getBIString(D) + ", " + getBIString(A) + ", " + getBIString(B);
 				case 0xE1:
