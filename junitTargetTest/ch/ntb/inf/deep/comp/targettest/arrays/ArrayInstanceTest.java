@@ -41,9 +41,6 @@ public class ArrayInstanceTest {
 		Assert.assertTrue("checkType19", a1 instanceof Object[]);
 		Assert.assertFalse("checkType20", a1 instanceof Object[][]);
 		
-		a1 = new IA[3];
-//
-		
 		a1 = new byte[4];
 		Assert.assertFalse("checkType31", a1 instanceof A[]);
 //		Assert.assertFalse("checkType32", a1 instanceof IA[]);

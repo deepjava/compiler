@@ -60,13 +60,13 @@ public class Dbg implements  ICjvmInstructionMnemonics, ICclassFileConstsAndMnem
 		if( elemName.charAt(0) == categorySeparator ){
 			int pos = 0, endPos = 0;
 			char cat = 0;
-			do{
+			do {
 				pos = endPos + 1;
 				cat = elemName.charAt(pos);
 				endPos = elemName.indexOf(categorySeparator, pos);
-			}while(cat != category && pos > 0);
-			if( endPos < 0 ) endPos = elemName.length();
-			if(cat == category) elemName = elemName.substring(pos+1, endPos);
+			} while (cat != category && pos > 0);
+			if (endPos < 0 ) endPos = elemName.length();
+			if (cat == category) elemName = elemName.substring(pos+1, endPos);
 		}
 		return elemName;
 	}
@@ -78,27 +78,27 @@ public class Dbg implements  ICjvmInstructionMnemonics, ICclassFileConstsAndMnem
 		sb.append('{');
 //		if(namesStartwithElemNr > 0) set = set >>> namesStartwithElemNr;
 		int elemNr = 31;
-		if( (set& -0x10000) == 0) {
+		if ((set& -0x10000) == 0) {
 			elemNr = 15;  set = set << 16;
 		}
-		//--- select firs element
-		while(set > 0) {
+		//--- select first element
+		while (set > 0) {
 			set = set << 1;
 			elemNr--;
 		}
-		if(set != 0){
-			if(elemNr >= elemNames.length){
+		if (set != 0) {
+			if (elemNr >= elemNames.length){
 				sb.append('?');
 				int diff = elemNr - elemNames.length + 1;
 				set = set << diff;
 				elemNr -= diff;
 			}
 
-			if(set < 0) sb.append( getElementName(elemNames[elemNr], itemCategory ) );
+			if (set < 0) sb.append(getElementName(elemNames[elemNr], itemCategory));
 			set = set << 1; elemNr--;
-			while(set != 0){
-				if(set < 0){
-					sb.append(',');  sb.append( getElementName(elemNames[elemNr], itemCategory ) );
+			while (set != 0) {
+				if (set < 0) {
+					sb.append(',');  sb.append( getElementName(elemNames[elemNr], itemCategory));
 				}
 				set = set << 1; elemNr--;
 			}

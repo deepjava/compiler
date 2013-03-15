@@ -24,7 +24,6 @@ import java.io.PrintStream;
 
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
-import ch.ntb.inf.deep.strings.StringTable;
 
 /**
  * Byte Code preprocessor:
@@ -34,7 +33,6 @@ import ch.ntb.inf.deep.strings.StringTable;
 public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs, ICdescAndTypeConsts {
 	private static final boolean verbose = false, assertions = true;
 	private static PrintStream vrb = Item.vrb;
-	private static final char[] any2chars = new char[2];
 
 	/*attribute table (classItems.ICjvmInstructionOpcs.bcAttrTab)
 	 * format B:	0xsFFF'owLcc, binary: ssss ' ffff | ffff'ffff | oo ww ' LLLL 	| cccc'cccc
@@ -199,11 +197,12 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 					}
 					break;
 				case bCinvokeinterface:
-					item = fix2ByteCpIndexAndSetAccFlags(addr, (1<<dpfInterfCall) );
-					if (item instanceof ItemStub) ((ItemStub)item).owner.accAndPropFlags |= (1<<dpfInterfCall);
+					item = fix2ByteCpIndexAndSetAccFlags(addr, (1<<dpfInterfCall));
+					if (item instanceof ItemStub) ((ItemStub)item).owner.accAndPropFlags |= (1<<dpfInterfCall);	// class of method not created yet
+					if (item instanceof Method) ((Method)item).owner.accAndPropFlags |= (1<<dpfInterfCall);	// set flag in class as well
 					if(assertions) {
 						assert item != null;
-//						assert item instanceof Method;
+						assert item instanceof Method || item instanceof ItemStub;
 					}
 					break;
 
@@ -220,6 +219,10 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 					if (assertions) {
 						assert item != null;
 						assert item instanceof Type;
+					}
+					if (item.name.charAt(0) != tcArray) { // anewarray can be called by e.g. [S
+						HString arrayName = HString.getRegisteredHString(Character.toString(tcArray) + Character.toString(tcRef) + item.name + ";");
+						RefType.getRefTypeByNameAndUpdate(tcArray, arrayName, null);	// create array of reference type if not existing
 					}
 					break;
 
@@ -241,8 +244,8 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 
 				default:
 					assert false;
-				}
-				if(verbose){
+				} 
+				if (verbose) {
 					vrb.print("\tbcpp: item: "); item.printName();
 					vrb.print(", item.type=");
 					if( item.type == null) vrb.print("null");  else item.type.printName();
@@ -250,6 +253,10 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 					vrb.print(";//dFlags");  Dbg.printDeepAccAndPropertyFlags(item.accAndPropFlags);
 					vrb.println();
 				}
+			} else if (opc == bCnewarray) {
+				int val = byteCode[instrAddr+1] & 0xff; // array type
+				HString arrayName = HString.getRegisteredHString(Character.toString(tcArray) + Type.wellKnownTypes[val].name);
+				RefType.getRefTypeByNameAndUpdate(tcArray, arrayName, null);	// create array of primitive type if not existing
 			}
 			instrAddr = instrAddr + instrLength;
 		}

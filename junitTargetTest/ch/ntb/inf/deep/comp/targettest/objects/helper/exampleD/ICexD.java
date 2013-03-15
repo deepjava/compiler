@@ -1,6 +1,6 @@
-package ch.ntb.inf.deep.comp.targettest.objects.helper;
+package ch.ntb.inf.deep.comp.targettest.objects.helper.exampleD;
 
-public interface Interface3 {
+public interface ICexD {
 	int var8 = 89;
 	double var9 = 7.775;
 	float var10 = 9.32f;
@@ -10,8 +10,8 @@ public interface Interface3 {
 	short var14 = 1023;
 	char var15 = 'L';
 	
-	int method11();
+	int ima11();
 	
-	short method32();
+	short imc11();
 
 }

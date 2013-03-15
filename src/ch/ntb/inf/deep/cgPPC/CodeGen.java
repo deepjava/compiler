@@ -1655,31 +1655,53 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 				MonadicRef ref = (MonadicRef)instr;
 				Type t = (Type)ref.item;
-				if (t.category == tcRef) {	// object is regular class
-					offset = ((Class)t).extensionLevel;
-					if (t.name.equals(HString.getHString("java/lang/Object"))) {
-						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
-						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
-						createIrDrAsimm(ppcAddi, res.reg, 0, 0);
-						createIBOBIBD(ppcBc, BOalways, 4*CRF0, 2);	// jump to end
-						// label 1
-						createIrDrAsimm(ppcAddi, res.reg, 0, 1);
-					} else {
+				if (t.category == tcRef) {	// object (to test for) is regular class or interface
+					if ((t.accAndPropFlags & (1<<apfInterface)) != 0) {	// object is interface
 						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
 						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 						// label 1
 						createIrDrAsimm(ppcAddi, res.reg, 0, 0);
-						createIBOBIBD(ppcBc, BOalways, 4*CRF0, 11);	// jump to end
+						createIBOBIBD(ppcBc, BOalways, 4*CRF0, 13);	// jump to end
 						// label 2
 						createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
 						createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is array?
 						createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, -4);	// jump to label 1
 						createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-						createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-						loadConstantAndFixup(res.regGPR1, t);	// addr of type
-						createICRFrArB(ppcCmpl, CRF0, 0, res.regGPR1);
+						createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
+						createIrDrArB(ppcAdd, res.regGPR1, res.regGPR1, 0);
+						// label 3
+						createIrDrAd(ppcLhzu, 0, res.regGPR1, 0);
+						createICRFrAsimm(ppcCmpi, CRF0, 0, ((Class)t).chkId);	// is interface chkId
+						createIrDrAsimm(ppcAddi, res.regGPR1, res.regGPR1, 2);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 3			
 						createIrD(ppcMfcr, res.reg);
 						createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+					} else {	// regular class
+						offset = ((Class)t).extensionLevel;
+						if (t.name.equals(HString.getHString("java/lang/Object"))) {
+							createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
+							createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+							createIBOBIBD(ppcBc, BOalways, 4*CRF0, 2);	// jump to end
+							// label 1
+							createIrDrAsimm(ppcAddi, res.reg, 0, 1);
+						} else { // regular class but not java/lang/Object
+							createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
+							// label 1
+							createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+							createIBOBIBD(ppcBc, BOalways, 4*CRF0, 11);	// jump to end
+							// label 2
+							createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+							createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is array?
+							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, -4);	// jump to label 1
+							createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+							createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
+							loadConstantAndFixup(res.regGPR1, t);	// addr of type
+							createICRFrArB(ppcCmpl, CRF0, 0, res.regGPR1);
+							createIrD(ppcMfcr, res.reg);
+							createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+						}
 					}
 				} else {	// object is an array
 					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
@@ -1698,7 +1720,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createICRFrArB(ppcCmpl, CRF0, 0, res.regGPR1);
 						createIrD(ppcMfcr, res.reg);
 						createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
-					} else {	// array of regular class
+					} else {	// array of regular classes or interfaces
 						int nofDim = ((Array)t).dimension;
 						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
 						offset = ((Class)(((Array)t).componentType)).extensionLevel;
@@ -1727,33 +1749,65 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 							createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, nofDim);
 							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, -15);	// jump to label 1	
 							createIrDrAsimm(ppcAddi, res.reg, 0, 1);
-						} else {
-							// test if not null
-							createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
-							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
-							// label 1
-							createIrDrAsimm(ppcAddi, res.reg, 0, 0);
-							createIBOBIBD(ppcBc, BOalways, 4*CRF0, 18);	// jump to end
-							// label 2
-							createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-							createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
-							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
+						} else {	// array of regular classes or interfaces but not java/lang/Object
+							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
+								createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
+								// label 1
+								createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+								createIBOBIBD(ppcBc, BOalways, 4*CRF0, 20);	// jump to end
+								// label 2
+								createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+								createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
 
-							createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-							createIrDrAd(ppcLwz, 0, res.regGPR1, 0);	
-							createIrArSSHMBME(ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
-							createICRFrAsimm(ppcCmpi, CRF0, 0, nofDim);
-							createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, -8);	// jump to label 1					
+								createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+								createIrDrAd(ppcLwz, 0, res.regGPR1, 0);			
+								createIrArSSHMBME(ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
+								createICRFrAsimm(ppcCmpi, CRF0, 0, nofDim);
+								createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, -9);	// jump to label 1					
 
-							createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
-							createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is 0?
-							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, -12);	// jump to label 1					
+								createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
+								createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is 0?
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, -12);	// jump to label 1					
 
-							createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-							loadConstantAndFixup(res.regGPR1, compType);	// addr of component type
-							createICRFrArB(ppcCmpl, CRF0, 0, res.regGPR1);
-							createIrD(ppcMfcr, res.reg);
-							createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+								createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
+								createIrDrArB(ppcAdd, res.regGPR1, res.regGPR1, 0);
+								// label 3
+								createIrDrAd(ppcLhzu, 0, res.regGPR1, 0);
+								createICRFrAsimm(ppcCmpi, CRF0, 0, ((Class)compType).chkId);	// is interface chkId
+								createIrDrAsimm(ppcAddi, res.regGPR1, res.regGPR1, 2);
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 3			
+								createIrD(ppcMfcr, res.reg);	
+								createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);			
+							} else {	// array of regular classes
+								// test if not null
+								createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
+								// label 1
+								createIrDrAsimm(ppcAddi, res.reg, 0, 0);
+								createIBOBIBD(ppcBc, BOalways, 4*CRF0, 18);	// jump to end
+								// label 2
+								createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+								createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
+
+								createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+								createIrDrAd(ppcLwz, 0, res.regGPR1, 0);	
+								createIrArSSHMBME(ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
+								createICRFrAsimm(ppcCmpi, CRF0, 0, nofDim);
+								createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, -9);	// jump to label 1					
+
+								createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
+								createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, 0);	// is 0?
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, -12);	// jump to label 1					
+
+								createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
+								loadConstantAndFixup(res.regGPR1, compType);	// addr of component type
+								createICRFrArB(ppcCmpl, CRF0, 0, res.regGPR1);
+								createIrD(ppcMfcr, res.reg);
+								createIrArSSHMBME(ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+							}
 						}
 					}
 				}
@@ -1876,10 +1930,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 					} else {	// invokevirtual 
 						refReg = opds[0].reg;
 						offset = Linker32.tdMethTabOffset;
-						offset += m.index * Linker32.slotSize; 
+						offset -= m.index * Linker32.slotSize; 
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regGPR1, refReg, -4);
-						createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, -offset);
+						createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, offset);
 						createIrSspr(ppcMtspr, LR, res.regGPR1);
 					}
 					

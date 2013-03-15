@@ -1,3 +1,23 @@
+/*
+ * Copyright (c) 2011 NTB Interstate University of Applied Sciences of Technology Buchs.
+ *
+ * http://www.ntb.ch/inf
+ * 
+ * All rights reserved. This program and the accompanying materials 
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Eclipse Public License for more details.
+ * 
+ * Contributors:
+ *     NTB - initial implementation
+ * 
+ */
+
 package ch.ntb.inf.deep.classItems;
 
 import java.io.PrintStream;
@@ -184,30 +204,30 @@ public class MethodArrangement implements ICclassFileConsts {// arrangement
 		return begin;
 	}
 
-	int  arrangeMethodsForThisInterface( Class cls, Class thisInterface ){
+	int arrangeMethodsForThisInterface(Class cls, Class thisInterface) {
 //if(eTrace) vrb.printf(">arrangeMethsFTI: cls.name=%1$s, methTabLength=%2$d, inf.name=%3$s, inf.methTabLength=%4$d\n", cls.name, cls.methTabLength, thisInterface.name, thisInterface.methTabLength );
 		setInterface( thisInterface );
 		
 //if(eTrace) {  vrb.print(" =arrangeMethsFTI 05: ");  printInterfaceMethods(); }
 
 		int startIndex = -1;
-		if( nofInterfMethods > 1 ){
-			int lowerLevel = getLevel( selectMethod( interfMethods[0].name ) );
+		if (nofInterfMethods > 1) {
+			int lowerLevel = getLevel(selectMethod(interfMethods[0].name));
 			int higherLevel = lowerLevel;
 			int m = 0;
-			do{
+			do {
 				Method meth = interfMethods[m];
 				HString methName = meth.name;
-				int index = selectMethod( methName );
+				int index = selectMethod(methName);
 				higherLevel = getLevel(index);
 				m++;
-			}while( m < nofInterfMethods &&  higherLevel == lowerLevel );
+			} while (m < nofInterfMethods &&  higherLevel == lowerLevel);
 //if(trace) vrb.printf(" =arrangeInterfaceM30: m=%1$d, lowerLevel=%2$d, higherLevel=%3$d\n",m, lowerLevel, higherLevel);
 	
 			swapLogReset( nofInterfMethods );
-			if( higherLevel == lowerLevel )  startIndex = relocateIntfMethsWithinItsLevel();
+			if (higherLevel == lowerLevel) startIndex = relocateIntfMethsWithinItsLevel();
 			else /* lowerLevel < higherLevel */ startIndex = relocateIntfMethsWithinNeighborLevels(m-1);
-			if( startIndex < 0 ) undoLoggedOperations();
+			if (startIndex < 0) undoLoggedOperations();
 		}
 //if(eTrace) {  vrb.print(" =rrangeMethsFTI 50: ");  printInstanceMethods(); }
 //if(eTrace) vrb.println("<rrangeMethsFTI\n");

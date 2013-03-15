@@ -1,6 +1,6 @@
-package ch.ntb.inf.deep.comp.targettest.objects.helper;
+package ch.ntb.inf.deep.comp.targettest.objects.helper.exampleD;
 
-public interface Interface2 extends Interface1 {
+public interface IBexD extends IAexD {
 	int var0 = 45;
 	double var1 = 3.1459;
 	float var2 = 3.33f;
@@ -10,8 +10,8 @@ public interface Interface2 extends Interface1 {
 	short var6 = -264;
 	char var7 = 'B';
 	
-	int method11();
+	int ima11();
 	
-	boolean method22(boolean b);
+	boolean imb21(boolean b);
 
 }

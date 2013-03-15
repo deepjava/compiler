@@ -20,7 +20,6 @@
 
 package ch.ntb.inf.deep.linker;
 
-import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
 public class InterfaceItem extends BlockItem {

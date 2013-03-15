@@ -107,8 +107,8 @@ public class Launcher implements ICclassFileConsts {
 				CodeGen.init();
 			}
 			
-			// Proceeding Arrays: Loop One
-			if(dbg) vrb.println("[Launcher] Proceeding arrays (loop one):");
+			// creating type descriptors for arrays
+			if(dbg) vrb.println("[Launcher] creating type descriptors for arrays:");
 			array = Class.arrayClasses;
 			while (array != null) {
 				if(dbg) vrb.println("> Array: " + array.name);
@@ -117,13 +117,23 @@ public class Launcher implements ICclassFileConsts {
 				array = array.nextArray;
 			}
 			
-			// Proceeding Classes: Loop One
-			if(dbg) vrb.println("[Launcher] Proceeding classes (loop one):");
-			if(reporter.nofErrors <= 0) {
-				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
-					clazz = Class.extLevelOrdredClasses[extLevel];
-					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
+			// proceeding interfaces, creating type descriptors 
+			if (dbg) vrb.println("[Launcher] creating type descriptors for interfaces:");
+			Class intf = Class.typeChkInterfaces;
+			while (intf != null) {
+				if(dbg) vrb.println("> Interface: " + intf.name);
+				if(dbg) vrb.println("  creating type descriptor");
+				Linker32.createConstantBlock(intf);
+				intf = intf.nextTypeChkInterface;
+			}
+			
+			// Loop One: proceeding std classes, creating constant block, translating code , calculating code size
+			if (dbg) vrb.println("[Launcher] (loop one) proceeding classes:");
+			if (reporter.nofErrors <= 0) {
+				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+					if (dbg) vrb.println("  Extension level " + extLevel + ":");
+					clazz = Class.extLevelOrdClasses[extLevel];
+					while (clazz != null && reporter.nofErrors <= 0) {
 						if(dbg) vrb.println("  > Class: " + clazz.name);
 						
 						// Create constant block
@@ -153,14 +163,14 @@ public class Launcher implements ICclassFileConsts {
 								// Create machine code
 								if(reporter.nofErrors <= 0) {
 									if(dbg) vrb.println("      creating machine code");
-									method.machineCode = new CodeGen(method.ssa); // TODO 
+									method.machineCode = new CodeGen(method.ssa); 
 								}
 	
 							}
 							method = (Method)method.next;
 						}
 	
-						// Linker: calculate required size
+						// calculate required code size
 						if(reporter.nofErrors <= 0) {
 							if(dbg) vrb.println("    calculating code size and offsets");
 							Linker32.calculateCodeSizeAndOffsets(clazz);
@@ -171,40 +181,50 @@ public class Launcher implements ICclassFileConsts {
 				}
 			}
 
+			// handle compiler specific methods
 			CodeGen.generateCompSpecSubroutines();
-			
-			// calculate code size and offsets for compiler specific methods
 			Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
 			
-			// Linker: create system table and freeze memory map
-			if(reporter.nofErrors <= 0) {
-				if(dbg) vrb.println("[Launcher] Creating system table");
+			if (reporter.nofErrors <= 0) {
+				// create system table
+				if (dbg) vrb.println("[Launcher] Creating system table");
 				Linker32.createSystemTable();
-				if(dbg) vrb.println("[Launcher] Freezing memory map");
+				// freeze memory map (arrange in memory segments) for std classes, arrays, interfaces, compiler specific methods, system table
+				if (dbg) vrb.println("[Launcher] Freezing memory map");
 				Linker32.freezeMemoryMap();
 			}
 			
-			// Proceeding Arrays: Loop Two
-			if(dbg) vrb.println("[Launcher] Proceeding arrays (loop two):");
+			// calculate absolute addresses for arrays
+			if (dbg) vrb.println("[Launcher] calculate absolute addresses for arrays:");
 			array = Class.arrayClasses;
 			while (array != null && reporter.nofErrors <= 0) {
-				if(dbg) vrb.println("> Array: " + array.name);
-				if(dbg) vrb.println("  calculating absolute addresses");
+				if (dbg) vrb.println("> Array: " + array.name);
+				if (dbg) vrb.println("  calculating absolute addresses");
 				Linker32.calculateAbsoluteAddresses(array);
 				array = array.nextArray;
 			}
 			
-			// Proceeding Classes: Loop Two
-			if(dbg) vrb.println("[Launcher] Proceeding classes (loop two):");
-			if(reporter.nofErrors <= 0) {
-				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if(dbg) vrb.println("  Extension level " + extLevel + ":");
-					clazz = Class.extLevelOrdredClasses[extLevel];
-					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
-						if(dbg) vrb.println("  > Class: " + clazz.name);
+			// calculate absolute addresses for interfaces
+			if(dbg) vrb.println("[Launcher] calculate absolute addresses for interfaces:");
+			intf = Class.typeChkInterfaces;
+			while (intf != null && reporter.nofErrors <= 0) {
+				if (dbg) vrb.println("> Interface: " + intf.name);
+				if (dbg) vrb.println("  calculating absolute addresses");
+				Linker32.calculateAbsoluteAddresses(intf);
+				intf = intf.nextTypeChkInterface;
+			}
+			
+			// Loop Two: proceeding std classes, calculate absolute addresses
+			if (dbg) vrb.println("[Launcher] (loop two) proceeding classes:");
+			if (reporter.nofErrors <= 0) {
+				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+					if (dbg) vrb.println("  Extension level " + extLevel + ":");
+					clazz = Class.extLevelOrdClasses[extLevel];
+					while (clazz != null && reporter.nofErrors <= 0) {
+						if (dbg) vrb.println("  > Class: " + clazz.name);
 						
 						// Linker: calculate absolute addresses
-						if(dbg) vrb.println("    calculating absolute addresses");
+						if (dbg) vrb.println("    calculating absolute addresses");
 						Linker32.calculateAbsoluteAddresses(clazz);
 						
 						clazz = clazz.nextExtLevelClass;
@@ -212,32 +232,33 @@ public class Launcher implements ICclassFileConsts {
 				}
 			}
 
+			// handle compiler specific methods
 			Linker32.calculateAbsoluteAddressesForCompSpecSubroutines();
 			
 			// Create global constant table
-			if(dbg) vrb.println("[Launcher] Creating global constant table");
+			if (dbg) vrb.println("[Launcher] Creating global constant table");
 			Linker32.createGlobalConstantTable();
 			
-			// Proceeding Classes: Loop Three
-			if(dbg) vrb.println("[Launcher] Proceeding classes (loop three):");
-			if(reporter.nofErrors <= 0) {
-				for(int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if(dbg) vrb.println("  Extentsion level " + extLevel + ":");
-					clazz = Class.extLevelOrdredClasses[extLevel];
-					while(clazz != null && reporter.nofErrors <= 0) { // TODO verkettung beachten
-						if(dbg) vrb.println("  > Class: " + clazz.name);
+			// Loop Three: proceeding std classes, 
+			if (dbg) vrb.println("[Launcher] (loop three) proceeding classes:");
+			if (reporter.nofErrors <= 0) {
+				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+					if (dbg) vrb.println("  Extentsion level " + extLevel + ":");
+					clazz = Class.extLevelOrdClasses[extLevel];
+					while (clazz != null && reporter.nofErrors <= 0) { 
+						if (dbg) vrb.println("  > Class: " + clazz.name);
 		
 						// Linker: update constant block
-						if(dbg) vrb.println("    updating constant block");
+						if (dbg) vrb.println("    updating constant block");
 						Linker32.updateConstantBlock(clazz);
 						
 						method = (Method)clazz.methods;
-						while(method != null && reporter.nofErrors <= 0) {
-							if((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
-								if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+						while (method != null && reporter.nofErrors <= 0) {
+							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 	
 								// Code generator: fix up
-								if(dbg) vrb.println("      doing fixups");
+								if (dbg) vrb.println("      doing fixups");
 								method.machineCode.doFixups();
 								//if(dbg) vrb.println(method.machineCode.toString());
 							}
@@ -248,31 +269,31 @@ public class Launcher implements ICclassFileConsts {
 					}
 				}
 			}
+
+			// handle compiler specific methods
 			Method m = Method.compSpecSubroutines;	// Code generator: fix up
-			while(m != null) {
-				if(dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
-				if(dbg) vrb.println("      doing fixups");
+			while (m != null) {
+				if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
+				if (dbg) vrb.println("      doing fixups");
 				m.machineCode.doFixups();
 				m = (Method)m.next;
 			}
 
 			// Linker: update system table
-			if(reporter.nofErrors <= 0) {
+			if (reporter.nofErrors <= 0) {
 				Linker32.updateSystemTable();
 			}
 			
 			// Linker: Create target image
-			if(reporter.nofErrors <= 0) {
-				if(dbg) vrb.println("[Launcher] Generating target image");
+			if (reporter.nofErrors <= 0) {
+				if (dbg) vrb.println("[Launcher] Generating target image");
 				Linker32.generateTargetImage();
 			}
 			
 			// Create target command table file if necessary
-			if(reporter.nofErrors <= 0) {
+			if (reporter.nofErrors <= 0) {
 				HString tctFileName = Configuration.getActiveProject().getTctFile();
-				if(tctFileName != null) {
-					saveCommandTableToFile(tctFileName.toString());
-				}
+				if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
 			}
 			
 			if(reporter.nofErrors > 0) {

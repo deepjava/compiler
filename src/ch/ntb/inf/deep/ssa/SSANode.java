@@ -2652,17 +2652,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 			case bCnew:	
 				bca++;
 				val = ((owner.cfg.code[bca++] & 0xFF) << 8) | owner.cfg.code[bca] & 0xFF;
-				// value1 = new SSAValue();
 				result = new SSAValue();
 				Item type = null;
-				if (owner.cfg.method.owner.constPool[val] instanceof Class) {
-					type = owner.cfg.method.owner.constPool[val];
-				} 
-				else {
-					assert false : "Unknown Parametertype for new";
-				}
+				assert owner.cfg.method.owner.constPool[val] instanceof Class : "Constantpool entry used in new isn't a class or interface type.";
+				type = owner.cfg.method.owner.constPool[val];
 				result.type = SSAValue.tRef;
-				// instr = new Call(sCnew, new SSAValue[] { value1 });
 				instr = new Call(sCnew, type);
 				instr.result = result;
 				instr.result.owner = instr;
@@ -2676,7 +2670,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				value1 = popFromStack();	// array length
 				HString refTypeName = HString.getRegisteredHString(Character.toString(tcArray) + Type.wellKnownTypes[val].name);
 				Item refType = RefType.getRefTypeByName(refTypeName);   
-				assert refType != null : "[BCA " + bca + "] can't find a array item for the given atype (\"" + Character.toString(tcArray) + Type.wellKnownTypes[val].name +"\")!";
+				assert refType != null : "newarray: can't find a array item for the given type " + refTypeName;
 				result = new SSAValue();
 				result.type = val + 10;
 				SSAValue[] operand = { value1 };
@@ -2694,15 +2688,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs,
 				result.type = SSAValue.tAref;
 				value1 = popFromStack();
 				SSAValue[] opnd = { value1 };
-				if (owner.cfg.method.owner.constPool[val] instanceof Type) { // TODO @Martin: improve the lookup of the array reference
-					Item arrayRef = RefType.refTypeList.getItemByName("[L" + owner.cfg.method.owner.constPool[val].name.toString() + ";");
-					instr = new Call(sCnew,	(Type)arrayRef, opnd);
-//					if(arrayRef != null) instr = new Call(sCnew,	(Type)arrayRef, opnd);
-//					else instr = new Call(sCnew, ((Type)owner.cfg.method.owner.constPool[val]), opnd);
+				assert owner.cfg.method.owner.constPool[val] instanceof RefType : "Constantpool entry used in anewarray isn't a class, array or interface type.";
+				if (owner.cfg.method.owner.constPool[val].name.charAt(0) != tcArray) { // anewarray can be called by e.g. [S
+					refTypeName = HString.getRegisteredHString(Character.toString(tcArray) + Character.toString(tcRef) + owner.cfg.method.owner.constPool[val].name.toString() + ";");
 				} else {
-					instr = null;
-					assert false : "Constantpool entry isn't a class, array or interface type. Used in anewarray";
+					refTypeName = owner.cfg.method.owner.constPool[val].name;					
 				}
+				Item arrayRef = RefType.getRefTypeByName(refTypeName);   
+				assert arrayRef != null : "anewarray: can't find a array item for the given type " + refTypeName;
+				instr = new Call(sCnew,	(RefType)arrayRef, opnd);
 				instr.result = result;
 				instr.result.owner = instr;
 				addInstruction(instr);

@@ -13,7 +13,7 @@ import ch.ntb.inf.deep.strings.StringTable;
 
 public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
 	static final boolean clsDbg = false;
-	static final boolean verbose = Item.verbose;
+	static final boolean dbg = Item.verbose;
 	static PrintStream vrb = Item.vrb;
 	static PrintStream log = Item.log;
 	static ErrorReporter errRep = Item.errRep;
@@ -25,7 +25,6 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 	static HString hsNumber, hsString;	// names for number and literal string objects (objects of type Constant, i.e. StdConstant, StringLiteral)
 	static HString hsClassConstrName;	// name of the class constructor method
 	static HString hsCommandDescriptor;	// descriptor of a command method
-
 
 	public static void buildSystem(HString[] rootClassNames, File[] parentDirsOfClassFiles, SystemClass[] sysClasses, int userReqAttributes) throws IOException {
 
@@ -44,19 +43,19 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 //		clsString.loadClass(userReqAttributes);
 //		clsString.completeLoadingOfRootClass();
 
-		for (SystemClass cls : sysClasses) loadSystemClass(cls, userReqAttributes);
+		if (sysClasses != null) for (SystemClass cls : sysClasses) loadSystemClass(cls, userReqAttributes);
 
-		if(verbose) Class.printClassList("state: sysClasses loaded, class list:");
+		if (dbg) Class.printClassList("state: sysClasses loaded, class list:");
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
 			String sname = rootClassNames[rc].toString();
-			if(verbose) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
+			if(dbg) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass(sname, userReqAttributes);
 			if(errRep.nofErrors > 0) return;
 		}
 
 		// iterates through all classes and replaces all stubs in the constant pool of that class  
-		if(verbose) vrb.println(">replace constant pool stubs:");
+		if (dbg) vrb.println(">replace constant pool stubs:");
 		Item type = RefType.refTypeList;
 		while (type != null) {
 			if (type instanceof Class) {
@@ -68,45 +67,46 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			}
 			type = type.next;
 		}
-		if(verbose) vrb.println("<replace constant pool stubs");
+		if (dbg) vrb.println("<replace constant pool stubs");
 
 		// iterates through all classes and fixup loaded classes  
-		if(verbose) vrb.println(">fixup loaded classes:");
+		if (dbg) vrb.println(">fixup loaded classes:");
 		type = RefType.refTypeList;
-		while (type != null) {
-			if (type instanceof Class) type.fixupLoadedClasses();
+		while (type != null) {	// handle stdClasses and interfaces (no arrays)
+			if (type instanceof Class) ((Class)type).fixupLoadedClasses();
 			type = type.next;
 		}
-		if(verbose) vrb.println("<fixup loaded classes");
+		if (dbg) vrb.println("<fixup loaded classes");
 
 		RefType.refTypeList = (RefType)RefType.refTypeList.next;	// delete front stub
-
-		// split class groups, count referenced interfaces, 
-		//vrb.println(">splitClassGroups..:");
-		Item refType = RefType.refTypeList;
-		Class.extLevelOrdredClasses = new Class[Class.maxExtensionLevelStdClasses+1];
-		Class.extLevelOrdredInterfaces = new Class[Class.maxExtensionLevelInterfaces+1];
-		Class.arrayClasses = null;
 		
-		//		int nofRefIntf = 0;
+		// split class groups into std classes, interfaces and arrays
+		if (dbg) vrb.println(">split class groups");
+		Item refType = RefType.refTypeList;
+		Class.extLevelOrdClasses = new Class[Class.maxExtensionLevelStdClasses+1];
+		Class.extLevelOrdInterfaces = new Class[Class.maxExtensionLevelInterfaces+1];
+		Class.arrayClasses = null;
+		Class.typeChkInterfaces = null;
+		
 		while (refType != null){
-			refType.accAndPropFlags &= ~(1<<dpfClassMark); // clear classMark
+			refType.accAndPropFlags &= ~(1<<dpfClassMark); // clear mark
 			int propFlags = refType.accAndPropFlags;
 			if (refType instanceof Class){
-				Class cls1 = (Class)refType;
-				int extLevel = cls1.extensionLevel;
-				if ((propFlags&(1<<apfInterface)) != 0 ){	// interface-Class
-					//					if( (propFlags&(1<<dpfInterfCall)) != 0 ) nofRefIntf++;
-					if( cls1.methTabLength > Class.maxInterfMethTabLen ) Class.maxInterfMethTabLen = cls1.methTabLength;
-					cls1.nextExtLevelClass = Class.extLevelOrdredInterfaces[extLevel];
-					Class.extLevelOrdredInterfaces[extLevel] = cls1;
+				Class cls = (Class)refType;
+				int extLevel = cls.extensionLevel;
+				if ((propFlags & (1<<apfInterface)) != 0 ){	// is interface
+					if (cls.methTabLength > Class.maxInterfMethTabLen ) Class.maxInterfMethTabLen = cls.methTabLength;
+					cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
+					Class.extLevelOrdInterfaces[extLevel] = cls;
 					Class.nofInterfaceClasses++;
-				} else {	// {(std-)Class, (enum-)Class, (enumArray-)Class}
-					if (cls1.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls1.methTabLength;
-					cls1.nextExtLevelClass = Class.extLevelOrdredClasses[extLevel];
-					Class.extLevelOrdredClasses[extLevel] = cls1;
+				} else {	// is std-class, enum, enumArray
+					if (cls.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls.methTabLength;
+					cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
+					Class.extLevelOrdClasses[extLevel] = cls;
 					Class.nofStdClasses++;
-					cls1.sortInterfaces();
+					// list with all interfaces this class implements is sorted according to the following criteria
+					// interface has methods which are called by invokeinterface, extension level, method table length
+					cls.sortInterfaces();
 				}
 				//				}else if( (propFlags & (1<<apfEnum) ) != 0 ){
 				//					cls.nextClass = enums;
@@ -115,54 +115,89 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 				//					cls.nextClass = enumArrays;
 				//					enumArrays = cls;
 				//				}
-			} else {	// assert classItem instanceof Array;
-				Array a = (Array)refType;
-				a.nextArray = Class.arrayClasses;
-				Class.arrayClasses = a;
+			} else {	
+				assert refType instanceof Array;
+				Array arr = (Array)refType;
+				arr.nextArray = Class.arrayClasses;
+				Class.arrayClasses = arr;
 				Class.nofArrays++;
+				if ((arr.accAndPropFlags & (1<<dpfTypeTest)) != 0) { // if array of interfaces whose type is tested for
+					if ((arr.componentType.accAndPropFlags & (1<<apfInterface)) != 0) { 	
+						Class compType = (Class)arr.componentType;
+						compType.accAndPropFlags |= (1<<dpfTypeTest);	// set flag in component type 
+						// add to list if not already present
+						Class intf = Class.typeChkInterfaces;
+						while (intf != null && intf != compType) intf = intf.nextTypeChkInterface;
+						if (intf == null) {
+							compType.nextTypeChkInterface = Class.typeChkInterfaces; 
+							Class.typeChkInterfaces = compType;
+						}
+					}
+				}
 			}
 			refType = refType.next;
 		}
+		if(dbg) vrb.println(">split class groups");
 		
-		//--- set interface identifiers (from max. extension level to 0)
-		for(int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--){
-			Class cls2 = Class.extLevelOrdredInterfaces[exl];
-			while(cls2 != null){
-				if( cls2.index <= 0 && (cls2.accAndPropFlags&(1<<dpfInterfCall)) != 0){
-					cls2.createInterfaceIdsToRoot();
-					cls2.cleanUpInterfaceMethsAndGetMethTabLength();
+		// set interface identifiers (from max. extension level to 0)
+		for (int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--) {
+			Class cls = Class.extLevelOrdInterfaces[exl];
+			while (cls != null) {
+				// set interface identifiers for groups of interfaces in order to arrange method tables
+				if (cls.index <= 0 && (cls.accAndPropFlags&(1<<dpfInterfCall)) != 0) {
+					cls.createInterfaceIdsToRoot();
+					cls.cleanUpInterfaceMethsAndGetMethTabLength();
 				}
-				cls2 = cls2.nextExtLevelClass;
+				// set interface identifiers for interfaces whose type is checked
+				if ((cls.accAndPropFlags & (1<<dpfTypeTest)) != 0) {
+					cls.chkId = Class.currInterfaceChkId++;
+				}
+				cls = cls.nextExtLevelClass;
 			}
 		}
 		
-		//--- arrange instance methods according to interfaces
+		// arrange instance methods according to interfaces
 		MethodArrangement methA= new MethodArrangement( Class.maxExtensionLevelStdClasses, Class.maxMethTabLen, Class.maxInterfMethTabLen);
 		for (int exl = Class.maxExtensionLevelStdClasses; exl > 0; exl--) {
-			Class cls4 = Class.extLevelOrdredClasses[exl];
-			while (cls4 != null) {
-				methA.arrangeInterfaceMethodsForThisClassStack(cls4);
-				cls4 = cls4.nextExtLevelClass;
+			Class cls = Class.extLevelOrdClasses[exl];
+			while (cls != null) {
+				methA.arrangeInterfaceMethodsForThisClassStack(cls);
+				cls = cls.nextExtLevelClass;
 			}
 		}
 		
-		//--- generate instance method tables
+		// generate instance method tables
 		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
-			Class cls3 = Class.extLevelOrdredClasses[exl];
-			while (cls3 != null){
-				cls3.fixInstanceMethodsOfThisClass();
-				methA.generateMethodTableForThisClass(cls3);
-				cls3 = cls3.nextExtLevelClass;
+			Class cls = Class.extLevelOrdClasses[exl];
+			while (cls != null){
+				cls.fixInstanceMethodsOfThisClass();
+				methA.generateMethodTableForThisClass(cls);
+				cls = cls.nextExtLevelClass;
 			}
 		}
 
+		// creates a list with all interfaces this class and its superclasses implement and whose type is checked for
+		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
+			Class cls = Class.extLevelOrdClasses[exl];
+			while (cls != null) {
+				cls.createIntfTypeChkList();
+				cls = cls.nextExtLevelClass;
+			}
+		}
+
+		if (dbg) vrb.println("max ext level std classes = " + Class.maxExtensionLevelStdClasses);
+		if (dbg) vrb.println("max ext level interfaces = " + Class.maxExtensionLevelInterfaces);
+		if (dbg) Class.printInterfaces();
+		if (dbg) Class.printArrays();
+		if (dbg) Class.printTypeChkInterfaces();
+		
 		Class.releaseLoadingResources();
 		log.print("Loading class files ");
 		if (errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
 	private static void initBuildSystem(int nofRootClasses) {
-		if(verbose) vrb.println(">init build system:");
+		if (dbg) vrb.println(">init build system:");
 
 		Class.nofRootClasses = 0;
 		Class.rootClasses = new Class[nofRootClasses];	// all root classes get registered separately
@@ -175,15 +210,17 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		RefType.nofRefTypes = 0;
 		Class.nofStdClasses = 0; Class.nofInterfaceClasses = 0; Class.nofInitClasses = 0; Class.nofNonInitClasses = 0; Class.nofArrays = 0;
 		Class.initClassesTail = null; Class.nonInitClassesTail = null;
+		Class.currInterfaceId = 0;
+		Class.currInterfaceChkId = 1;
 
 		Type.setUpBaseTypeTable();
 		Type.setAttributeTable(Item.stab);
 
-		if(verbose) vrb.println("<init build system");
+		if(dbg) vrb.println("<init build system");
 	}
 
 	private static void loadRootClass(String rootClassName, int userReqAttributes) throws IOException {
-		if(verbose) vrb.println(">loadRootClass: " + rootClassName);
+		if(dbg) vrb.println(">loadRootClass: " + rootClassName);
 
 		HString hRootClassName = Item.stab.insertCondAndGetEntry(rootClassName);
 		Class root = new Class(hRootClassName);
@@ -192,14 +229,14 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		assert root.next == null;
 		root.loadClass(userReqAttributes);
 
-		if(verbose) vrb.println("<loadRootClass");
+		if(dbg) vrb.println("<loadRootClass");
 	}
 
 	private static void loadSystemClass(SystemClass systemClass, int userReqAttributes) throws IOException {
 		String systemClassName = systemClass.getName().toString();
 		
-		if (verbose) vrb.println(">loadSystemClass: "+systemClassName);
-		if (verbose) {
+		if (dbg) vrb.println(">loadSystemClass: "+systemClassName);
+		if (dbg) {
 			vrb.printf("  sysClsAttributes1=0x%1$x", systemClass.attributes);
 			Dbg.printAccAndPropertyFlags(systemClass.attributes); Dbg.println();
 		}
@@ -214,7 +251,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			systemMeth = (SystemMethod)systemMeth.next;
 		}
 
-		if (verbose) {
+		if (dbg) {
 			vrb.printf("  unified sysClsAttributes1=0x%1$x", sysClsAttr);
 			Dbg.printAccAndPropertyFlags(sysClsAttr); Dbg.println();
 		}
@@ -237,14 +274,14 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 				if (method == null){
 					errRep.error(301, systemMeth.getName() + " in system class " + systemClass.getName());
 				} else {
-					if (verbose)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
+					if (dbg)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
 					int methIndex  = (systemMeth.id-1)&0xFF;
 					if (methIndex >= nofNewMethods){
 						errRep.error(302, systemMeth.getName() + " in system class " + systemClass.getName());
 					} else {
-						if (verbose) vrb.println(" ldSysCls: newMethInx="+methIndex);
+						if (dbg) vrb.println(" ldSysCls: newMethInx="+methIndex);
 						newMethods[methIndex] = method;
-						if (verbose) vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
+						if (dbg) vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
 					}
 				}
 				systemMeth = (SystemMethod)systemMeth.next;
@@ -264,7 +301,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			systemMeth = (SystemMethod) systemMeth.next;
 		}
 
-		if(verbose) vrb.println("<loadSystemClass");
+		if(dbg) vrb.println("<loadSystemClass");
 	}
 	
 	private static void registerWellKnownNames() {

@@ -11,7 +11,8 @@ import ch.ntb.inf.deep.comp.targettest.statements.StatementSuite;
 import ch.ntb.inf.deep.comp.targettest.unsafe.UnsafeSuite;
 import ch.ntb.inf.deep.comp.targettest.various.VariousSuite;
 
-@Suite({ PrimitivesSuite.class, StatementSuite.class, ArraySuite.class, CastSuite.class, ConditionsSuite.class, ObjectsSuite.class, UnsafeSuite.class, VariousSuite.class })//     
+//@Suite({ PrimitivesSuite.class, StatementSuite.class, ArraySuite.class, CastSuite.class, ConditionsSuite.class, ObjectsSuite.class, UnsafeSuite.class, VariousSuite.class })//     
+@Suite({ PrimitivesSuite.class, StatementSuite.class, ArraySuite.class, CastSuite.class, ConditionsSuite.class, ObjectsSuite.class, VariousSuite.class })//     
 @MaxErrors(100)
 
 public class CompilerTestSuite {

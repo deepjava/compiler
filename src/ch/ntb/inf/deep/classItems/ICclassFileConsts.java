@@ -64,7 +64,7 @@ public interface ICclassFileConsts {
 		dpfDeclaration = dpfBase+2,	// not used yet! class is used for declarations of static fields, instance fields, local variables
 		dpfInstances = dpfBase+3,	// there might be objects of this class in the running system
 		dpfTypeTest = dpfBase+4,	// there are type tests with this type (instructions: checkcast, instanceof)
-		dpfClassMark = dpfBase+5,	// mark flag during traverses
+		dpfClassMark = dpfBase+5,	// mark flag, used during traverses of the class list
 		dpfExtended = dpfBase+6,	// class has extensions (one or more)
 
 		//--- field flags:

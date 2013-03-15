@@ -32,12 +32,12 @@ public class RefType extends Type {
 	public int classFieldsSize; // size of all class fields on the target, rounded to the next multiple of "fieldSizeUnit" (in bytes)
 	public int objectSize;	// size of object of this type (in bytes)
 
-	protected RefType(HString name, Type type){
+	protected RefType(HString name, Type type) {
 		super(name, type);
 	}
 
 	/** append reference type to reference type list */
-	protected static void appendRefType(RefType newType){
+	protected static void appendRefType(RefType newType) {
 		if(enAssertion) assert refTypeList != null && refTypeListTail != null;
 	
 		refTypeListTail.next = newType;
@@ -57,7 +57,7 @@ public class RefType extends Type {
 	 * if not found, create type and insert into list,
 	 * returns type
 	*/
-	protected static RefType getRefTypeByNameAndUpdate(char typeCategory, HString registeredTypeName, Type baseType){
+	protected static RefType getRefTypeByNameAndUpdate(char typeCategory, HString registeredTypeName, Type baseType) {
 		RefType type = null;
 		if (typeCategory == tcRef) {	// class type or interface type
 			Item cls = getRefTypeByName(registeredTypeName);
@@ -99,30 +99,30 @@ public class RefType extends Type {
 		return type;
 	}
 
-	protected Item getMethod(HString name, HString descriptor){
+	protected Item getMethod(HString name, HString descriptor) {
 		Item item = null;
-		if(methods != null)  item = methods.getMethod(name, descriptor);
-		if(item == null && type != null) item = type.getMethod(name, descriptor);
+		if (methods != null) item = methods.getMethod(name, descriptor);
+		if (item == null && type != null) item = type.getMethod(name, descriptor);
 		return item;
 	}
 	
 	public Item getMethod(int methTabIndex) {
 		Item m = this.methods;
-		while(m != null && m.index != methTabIndex) m = m.next;
-		if(m == null) m = ((Class)this.type).getMethod(methTabIndex);
+		while (m != null && m.index != methTabIndex) m = m.next;
+		if (m == null) m = ((Class)this.type).getMethod(methTabIndex);
 		return m;
 	}
 
-	private Item getMethodOrStub(HString name, HString descriptor){
+	private Item getMethodOrStub(HString name, HString descriptor) {
 		Item meth = getMethod(name, descriptor);
-		if(meth == null) meth = new ItemStub(this, name, descriptor);
+		if (meth == null) meth = new ItemStub(this, name, descriptor);
 		return meth;
 	}
 
-	protected Item getMethodOrStub(int cpMethInfoIndex){
+	protected Item getMethodOrStub(int cpMethInfoIndex) {
 		//pre: all strings in the const are already registered in the proper hash table.
 		Item method = null;
-		if(Class.cpItems[cpMethInfoIndex] == null){
+		if (Class.cpItems[cpMethInfoIndex] == null){
 			int csx = Class.cpIndices[cpMethInfoIndex]; // get class and signature indices
 			RefType cls = (RefType) getCpClassEntryAndUpdate(csx>>>16);
 			int sx = Class.cpIndices[csx & 0xFFFF];
@@ -140,7 +140,7 @@ public class RefType extends Type {
 	 * @param cpClassInfoIndex index of ClassInfo entry
 	 * @return object of this type Class
 	 */
-	Item getCpClassEntryAndUpdate(int cpClassInfoIndex){
+	Item getCpClassEntryAndUpdate(int cpClassInfoIndex) {
 		//pre: all strings in the const pool are already registered in the proper hash table.
 		Item cls = Class.cpItems[cpClassInfoIndex];
 		if (cls == null) {

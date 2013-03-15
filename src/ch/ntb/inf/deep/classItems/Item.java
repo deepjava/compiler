@@ -74,10 +74,6 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 		return null;
 	}
 
-	protected int createInterfaceIdsToRoot() {
-		return 0;
-	}
-
 	Item getReplacedStub() {
 		return this;
 	}
@@ -113,11 +109,6 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 		}
 		return cln;
 	}
-
-	protected void fixupLoadedClasses() {
-		assert false : "override this method at class: " + getClass().getName();
-	}
-
 
 	//--- debug primitives
 	public void printFields(int indentLevel){ vrb.println("no meth printFields for class "+ getClass().getName());}
