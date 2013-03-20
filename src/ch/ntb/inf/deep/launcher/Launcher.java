@@ -117,8 +117,8 @@ public class Launcher implements ICclassFileConsts {
 				array = array.nextArray;
 			}
 			
-			// proceeding interfaces, creating type descriptors 
-			if (dbg) vrb.println("[Launcher] creating type descriptors for interfaces:");
+			// proceeding interfaces, creating constant block 
+			if (dbg) vrb.println("[Launcher] creating constant block for interfaces:");
 			Class intf = Class.typeChkInterfaces;
 			while (intf != null) {
 				if(dbg) vrb.println("> Interface: " + intf.name);
@@ -127,7 +127,7 @@ public class Launcher implements ICclassFileConsts {
 				intf = intf.nextTypeChkInterface;
 			}
 			
-			// Loop One: proceeding std classes, creating constant block, translating code , calculating code size
+			// Loop One: proceeding standard classes, creating constant block, translating code , calculating code size
 			if (dbg) vrb.println("[Launcher] (loop one) proceeding classes:");
 			if (reporter.nofErrors <= 0) {
 				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
@@ -173,7 +173,7 @@ public class Launcher implements ICclassFileConsts {
 						// calculate required code size
 						if(reporter.nofErrors <= 0) {
 							if(dbg) vrb.println("    calculating code size and offsets");
-							Linker32.calculateCodeSizeAndOffsets(clazz);
+							Linker32.calculateCodeSizeAndMethodOffsets(clazz);
 						}
 						
 						clazz = clazz.nextExtLevelClass;
@@ -239,11 +239,11 @@ public class Launcher implements ICclassFileConsts {
 			if (dbg) vrb.println("[Launcher] Creating global constant table");
 			Linker32.createGlobalConstantTable();
 			
-			// Loop Three: proceeding std classes, 
+			// Loop Three: proceeding standard classes, updating constant blocks, method fix ups 
 			if (dbg) vrb.println("[Launcher] (loop three) proceeding classes:");
 			if (reporter.nofErrors <= 0) {
 				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if (dbg) vrb.println("  Extentsion level " + extLevel + ":");
+					if (dbg) vrb.println("  Extension level " + extLevel + ":");
 					clazz = Class.extLevelOrdClasses[extLevel];
 					while (clazz != null && reporter.nofErrors <= 0) { 
 						if (dbg) vrb.println("  > Class: " + clazz.name);
@@ -296,67 +296,64 @@ public class Launcher implements ICclassFileConsts {
 				if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
 			}
 			
-			if(reporter.nofErrors > 0) {
+			if (reporter.nofErrors > 0) {
 				log.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 				log.println();
 			} else {
 				log.println("Compilation and target image generation successfully finished");
 				log.println();
 			}
-		} catch(IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public static void downloadTargetImage() {
-		if(Configuration.getActiveProject().getProgrammer()!= null) {
-			if(reporter.nofErrors <= 0) {
+		if (Configuration.getActiveProject().getProgrammer()!= null) {
+			if (reporter.nofErrors <= 0) {
 				Board b = Configuration.getBoard();
 				TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
 				TargetMemorySegment tms = Linker32.targetImage;
-				if(b != null) {
+				if (b != null) {
 					int c = 0;
-					while(tc == null) {
-						if(dbg) vrb.println("[Launcher] Opening target connection");
+					while (tc == null) {
+						if (dbg) vrb.println("[Launcher] Opening target connection");
 						openTargetConnection();
 						c++;
-						if(c > 4) {
+						if (c > 4) {
 							reporter.error(800, "Can't open target connection: tried 5 times");
 							return;
 						}
 					}
 					try {
-						if(dbg) vrb.println("[Launcher] Initializing registers");
+						if (dbg) vrb.println("[Launcher] Initializing registers");
 						tc.initRegisters(b.getCpuRegisterInits());
 						tc.initRegisters(b.getBoardRegisterInits());
 						tc.initRegisters(targetConfig.getRegisterInits());
-						for(int i = 0; i < b.getCPU().getNofGPRs(); i++) {
+						for (int i = 0; i < b.getCPU().getNofGPRs(); i++) {
 							tc.setGprValue(i, 0);
 						}
 						log.println("Downloading target image:");
-						while(tms != null && reporter.nofErrors <= 0) {
-							if(dbg) vrb.print("  Proceeding TMS #" + tms.id);
-							if(tms.segment == null ){ // this should never happen
+						while (tms != null && reporter.nofErrors <= 0) {
+							if (dbg) vrb.print("  Proceeding TMS #" + tms.id);
+							if (tms.segment == null) { // this should never happen
 								// TODO add error message here
 								if(dbg) vrb.println(" -> skipping (segment not defined)");
-							}
-							else {
+							} else {
 								if(dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.getName());
 								tc.writeTMS(tms);
 							}
 							tms = tms.next;
 						}
 						tc.resetEreasedFlag();
-					} catch(TargetConnectionException e) {
+					} catch (TargetConnectionException e) {
 						reporter.error(TargetConnection.errDownloadFailed);
 						reporter.nofErrors++;
 					}
-				}
-				else { // Configuration Error: Board not set!
+				} else { // Configuration Error: Board not set!
 					// TODO add error message here
 				}
-			}
-			else { // reporter.nofErrors > 0
+			} else { // reporter.nofErrors > 0
 				reporter.error(TargetConnection.errNoTargetImage);
 				reporter.nofErrors++;
 			}

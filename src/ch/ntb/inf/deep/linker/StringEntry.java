@@ -27,14 +27,14 @@ import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
-public class StringItem extends BlockItem {
+public class StringEntry extends ConstBlkEntry {
 	
 	private static final int tag = 0x55555555;
 	private static final int constHeaderSize = 3 * 4; // byte
 	
 	Item ref;
 	
-	public StringItem(Item ref) {
+	public StringEntry(Item ref) {
 		this.ref = ref;
 		this.name = ref.name;
 	}
@@ -70,24 +70,31 @@ public class StringItem extends BlockItem {
 		return written;
 	}
 	
+	protected void insertBytes(byte[] bytes, int offset, int val) {
+		for (int i = 0; i < 4; ++i) {
+		    int shift = i << 3; // i * 8
+		    bytes[offset + 3 - i] = (byte)((val & (0xff << shift)) >>> shift);
+		}
+	}
+	
 	public byte[] getBytes() {
 		HString s = ((StringLiteral)ref).string;
 		int size = getItemSize();
 		byte[] bytes = new byte[size];
 		int offset = 0; int word = 0; int c = 0;
-		inserteBytes(bytes, offset, tag); offset += 4;
-		inserteBytes(bytes, offset, getStringClassAddr()); offset += 4;
+		insertBytes(bytes, offset, tag); offset += 4;
+		insertBytes(bytes, offset, getStringClassAddr()); offset += 4;
 		for(int i = getHeaderSize() - constHeaderSize; i > 0; i--) {
 			bytes[offset] = 0;
 			offset++;
 		}
-		inserteBytes(bytes, offset, getNumberOfChars()); offset += 4;
+		insertBytes(bytes, offset, getNumberOfChars()); offset += 4;
 		for(int j = 0; j < getNumberOfChars(); j++) {
 			word = (word << 16) + s.charAt(j);
 			c++;
 			if(c > 1 || j == s.length() - 1) {
 				if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
-				inserteBytes(bytes, offset, word); offset += 4;
+				insertBytes(bytes, offset, word); offset += 4;
 				c = 0;
 				word = 0;
 			}

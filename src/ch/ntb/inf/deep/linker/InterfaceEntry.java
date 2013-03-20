@@ -22,35 +22,26 @@ package ch.ntb.inf.deep.linker;
 
 import ch.ntb.inf.deep.strings.HString;
 
-public class FixedValueItem extends BlockItem {
+public class InterfaceEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
-	int val;
+	HString name;
+	short ifaceID;
+	short bmo;
 		
-	public FixedValueItem(HString name, int val) {
-		this.name = name;
-		this.val = val;
+	public InterfaceEntry(HString ifaceName, short ifaceID, short bmo) {
+		this.name = ifaceName;
+		this.ifaceID = ifaceID;
+		this.bmo = bmo;
 	}
 	
-	public FixedValueItem(int val) {
-		this(UNDEF, val);
+	public int getOffset() {
+		return this.bmo;
 	}
 	
-	public FixedValueItem(HString name) {
-		this(name, -1);
-	}
-	
-	public FixedValueItem(String name) {
-		this(HString.getRegisteredHString(name), -1);
-	}
-	
-	public FixedValueItem(String name, int val) {
-		this(HString.getRegisteredHString(name), val);
-	}
-	
-	public void setValue(int val) {
-		this.val = val;
+	public int getID() {
+		return this.ifaceID;
 	}
 	
 	protected int getItemSize() {
@@ -61,7 +52,7 @@ public class FixedValueItem extends BlockItem {
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
-			a[index] = val;
+			a[index] = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
 			written = size;
 		}
 		return written;
@@ -69,19 +60,16 @@ public class FixedValueItem extends BlockItem {
 	
 	public byte[] getBytes() {
 		byte[] bytes = new byte[size];
+		int value = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
 		for (int i = 0; i < size; ++i) {
 		    int shift = i << 3; // i * 8
-		    bytes[(size - 1) - i] = (byte)((val & (0xff << shift)) >>> shift);
+		    bytes[(size - 1) - i] = (byte)((value & (0xff << shift)) >>> shift);
 		}
 		return bytes;
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", val) + " (" + name + ")";
-	}
-	
-	public int getValue() {
-		return val;
+		return String.format("[%08X]", (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF)) + " (" + name + ")";
 	}
 
 }

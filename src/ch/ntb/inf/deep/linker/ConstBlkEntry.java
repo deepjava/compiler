@@ -18,28 +18,31 @@
  * 
  */
 
-package ch.ntb.inf.deep.config;
+package ch.ntb.inf.deep.linker;
 
-import java.io.PrintStream;
-
-import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.strings.HString;
 
-public class SystemMethod extends ConfigElement implements ICclassFileConsts{
-	public int attributes; 	// e.g. (1<<dpfNew) 
-	public int id;	// unique id for system methods		
-	public int offset = -1;
-	public SystemClass owner;
-
-	public SystemMethod(HString name) {
-		this.name = name;
+public class ConstBlkEntry extends Item {
+	
+	protected int getItemSize() {
+		return -1;
 	}
 	
-	//--- debug primitives
-	public void print(int indentLevel){
-		PrintStream vrb = StdStreams.vrb;
-		StdStreams.vrbPrintIndent(indentLevel);
-		vrb.printf("method "+name+" {attributes: 0x%1$x, id: 0x%2$x, offset: 0x%3$x, class: 0x%4$s}\n", attributes, id, offset, owner.name);
+	protected int insertIntoArray(int[] a, int offset) {
+		return -1;
 	}
+	
+	public byte[] getBytes() {
+		return null;
+	}
+	
+	public void printList() {
+		ConstBlkEntry i = this;
+		while (i != null) {
+			StdStreams.vrb.println(i);
+			i = (ConstBlkEntry) i.next;
+		}
+	}
+	
 }

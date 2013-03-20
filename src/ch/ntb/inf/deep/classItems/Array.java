@@ -22,7 +22,7 @@ package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.host.Dbg;
-import ch.ntb.inf.deep.linker.BlockItem;
+import ch.ntb.inf.deep.linker.FixedValueEntry;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Array extends RefType {
@@ -34,7 +34,7 @@ public class Array extends RefType {
 	public byte dimension;	// array dimension
 
 	public Segment segment;
-	public BlockItem typeDescriptor;
+	public FixedValueEntry typeDescriptor;	// reference to first item of array type descriptor (extension level)
 	
 	Array(HString regName, Type compType, int dimension) {
 		super(regName, wktObject); // base type is java/lang/Object

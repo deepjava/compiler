@@ -24,19 +24,19 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.strings.HString;
 
-public class OffsetItem extends BlockItem {
+public class OffsetEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
 	Item itemRef;
 	
-	public OffsetItem(Item ref) {
+	public OffsetEntry(Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = ref.name;
 		else name = UNDEF;
 	}
 	
-	public OffsetItem(String prefix, Item ref) {
+	public OffsetEntry(String prefix, Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = HString.getRegisteredHString(prefix + ref.name);
 		else name = HString.getRegisteredHString(prefix + "???");

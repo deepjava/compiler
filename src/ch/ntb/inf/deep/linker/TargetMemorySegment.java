@@ -57,20 +57,16 @@ public class TargetMemorySegment {
 		}
 	}
 	
-	public TargetMemorySegment(int startAddress, BlockItem item) {
-		this(null, startAddress, item);
-	}
-	
-	public TargetMemorySegment(Segment segment, int startAddress, BlockItem item) {
+	public TargetMemorySegment(Segment segment, int startAddress, ConstBlkEntry item) {
 		this.id = tmsCounter++;
 		this.segment = segment;
 		this.startAddress = startAddress;
-		this.data = new int[item.getBlockSize() / 4];
+		this.data = new int[Linker32.getBlockSize(item) / 4];
 		int offset = 0;
-		while(item != null) {
+		while (item != null) {
 			item.insertIntoArray(data, offset);
 			offset += item.getItemSize();
-			item = item.next;
+			item = (ConstBlkEntry)item.next;
 		}
 	}
 
@@ -108,16 +104,16 @@ public class TargetMemorySegment {
 		addData(addr, d, d.length);
 	}
 	
-	public void addData(int addr, BlockItem item) {
-		int offset = 0;
-		while(item != null) {
-		//	System.out.println(">>>>>> Inserting BlockItem: " + item.name);
-		//	if(addr + offset < 0x60 | addr + offset == 0x800000) StdStreams.vrb.println("++++++ Written to " + addr + "++++++");
-			item.insertIntoArray(data, addr - this.startAddress + offset);
-			offset += item.getItemSize();
-			item = item.next;
-		}
-	}
+//	public void addData(int addr, BlockItem item) {
+//		int offset = 0;
+//		while(item != null) {
+//		//	System.out.println(">>>>>> Inserting BlockItem: " + item.name);
+//		//	if(addr + offset < 0x60 | addr + offset == 0x800000) StdStreams.vrb.println("++++++ Written to " + addr + "++++++");
+//			item.insertIntoArray(data, addr - this.startAddress + offset);
+//			offset += item.getItemSize();
+//			item = (BlockItem)item.next;
+//		}
+//	}
 	
 	public String toString() {
 		StringBuffer sb = new StringBuffer("Target Memory Segment #" + this.id + ":\n  Base Address: 0x" + Integer.toHexString(startAddress) + "\n  Size: " + data.length * 4 + " byte\n  Content:\n");

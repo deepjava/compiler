@@ -61,8 +61,8 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.MemoryMap;
 import ch.ntb.inf.deep.config.Segment;
-import ch.ntb.inf.deep.linker.BlockItem;
-import ch.ntb.inf.deep.linker.FixedValueItem;
+import ch.ntb.inf.deep.linker.ConstBlkEntry;
+import ch.ntb.inf.deep.linker.FixedValueEntry;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -476,15 +476,15 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("Max extension level:         " + Class.maxExtensionLevelStdClasses + "\n");
 			if((c.accAndPropFlags & (1 << apfInterface)) == 0){	
 				sb.append("Machine code base address:   0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset) + "\n");				
-				sb.append("Machine code size:           " + ((FixedValueItem)c.codeBase.next).getValue() + " byte\n");
+				sb.append("Machine code size:           " + ((FixedValueEntry)c.codeBase.next).getValue() + " byte\n");
 				sb.append("Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset) + "\n");
-				sb.append("Constant block size:         " + ((FixedValueItem)c.constantBlock).getValue() + " byte\n");
+				sb.append("Constant block size:         " + ((FixedValueEntry)c.constantBlock).getValue() + " byte\n");
 			}
 			sb.append("Type descriptor address:     0x" + Integer.toHexString(c.address) + "\n");
 			if((c.accAndPropFlags & (1 << apfInterface)) == 0){	
 				sb.append("\nConstantblock:\n");
 				
-				BlockItem item = c.constantBlock;
+				Item item = c.constantBlock;
 				while(item != null){
 					sb.append(item.toString() + "\n");
 					item = item.next;

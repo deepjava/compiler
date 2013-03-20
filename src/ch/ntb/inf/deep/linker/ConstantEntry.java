@@ -25,11 +25,11 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.Type;
 
-public class ConstantItem extends BlockItem implements ICdescAndTypeConsts {
+public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts {
 	
 	Item ref;
 	
-	public ConstantItem(Item ref) {
+	public ConstantEntry(Item ref) {
 		this.ref = ref;
 		this.name = ref.name;
 	}

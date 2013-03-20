@@ -24,7 +24,7 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.strings.HString;
 
-public class AddressItem extends BlockItem {
+public class AddressEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
@@ -32,25 +32,25 @@ public class AddressItem extends BlockItem {
 	Segment segmentRef;
 	boolean isSegment = false;
 	
-	public AddressItem(Item ref) {
+	public AddressEntry(Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = ref.name;
 		else name = UNDEF;
 	}
 	
-	public AddressItem(String prefix, Item ref) {
+	public AddressEntry(String prefix, Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = HString.getRegisteredHString(prefix + ref.name);
 		else name = UNDEF;
 	}
 	
-	public AddressItem(Segment ref) {
+	public AddressEntry(Segment ref) {
 		this.segmentRef = ref;
 		this.name = ref.getFullName();
 		this.isSegment = true;
 	}
 	
-	public AddressItem(String prefix, Segment ref) {
+	public AddressEntry(String prefix, Segment ref) {
 		this.segmentRef = ref;
 		this.name = HString.getRegisteredHString(prefix + ref.getFullName());
 		this.isSegment = true;

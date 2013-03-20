@@ -10,7 +10,7 @@ public class ConfigElement {
 	public ConfigElement next;
 	public ConfigElement prev;
 	
-	HString name;
+	public HString name;
 	
 	public ConfigElement() {}
 	

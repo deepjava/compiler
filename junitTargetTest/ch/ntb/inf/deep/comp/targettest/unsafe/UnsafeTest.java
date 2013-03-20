@@ -2,7 +2,7 @@ package ch.ntb.inf.deep.comp.targettest.unsafe;
 
 import ch.ntb.inf.deep.runtime.ppc32.Decrementer;
 import ch.ntb.inf.deep.unsafe.US;
-import ch.ntb.inf.junitTarget.Assert;
+import ch.ntb.inf.junitTarget.*;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
 import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Test;
@@ -60,6 +60,7 @@ public class UnsafeTest {
 
 	static int res;
 	static long l1;
+
 	@Test
 	// tests use of floats in exceptions 
 	public static void testFloatsInExc() {

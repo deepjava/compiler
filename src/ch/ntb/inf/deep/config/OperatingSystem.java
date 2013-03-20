@@ -20,6 +20,7 @@
 
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
@@ -179,6 +180,50 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		return exceptions;
 	}
 
+	/* 
+	 * returns all methods defined in system classes with a fixed offset 
+	 * the returned array is sorted with ascending offsets
+	 */
+	public SystemMethod[] getSystemMethodsWithOffsets(CPU cpu) {
+		SystemMethod meth;
+		SystemClass[] sysClass = Configuration.getSystemClasses();
+		int nof = 0;
+		for (int i = 0; i < sysClass.length; i++) {
+			meth = sysClass[i].methods;	
+			while (meth != null) {
+				if (meth.offset >= 0) nof++;
+				meth = (SystemMethod)meth.next;
+			}
+		}
+		if (nof > 0) {
+			SystemMethod[] sysMeths = new SystemMethod[nof];
+			int count = 0;
+			for (int i = 0; i < sysClass.length; i++) {
+				meth = sysClass[i].methods;	
+				while (meth != null) {
+					if (meth.offset >= 0) {
+						meth.owner = sysClass[i];
+						sysMeths[count++] = meth;
+					}
+					meth = (SystemMethod)meth.next;
+				}
+			}
+			// ascending (bubble sort), lowest key comes first
+			int maxIndex = sysMeths.length-1;
+			for (int left = 0; left < maxIndex; left++) {
+				for (int right = maxIndex-1; right >= left; right--) {
+					if (sysMeths[right].offset > sysMeths[right+1].offset) { // swap
+						SystemMethod m = sysMeths[right];
+						sysMeths[right] = sysMeths[right+1];
+						sysMeths[right+1] = m;
+					}
+				}
+			}
+
+			return sysMeths;
+		} else return null; 
+	}
+	
 	public SystemMethod getSystemMethodById(int id, CPU cpu) {
 		SystemMethod meth;
 		SystemClass[] sysClass = {

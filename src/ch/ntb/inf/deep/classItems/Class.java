@@ -26,8 +26,7 @@ import java.io.InputStream;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.host.Dbg;
-import ch.ntb.inf.deep.linker.BlockItem;
-import ch.ntb.inf.deep.linker.FixedValueItem;
+import ch.ntb.inf.deep.linker.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
@@ -88,21 +87,13 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	private Class[] imports;	// imported classes (StdClasses, Interfaces) which are found in the const pool of this class and which have a class file (no arrays)
 	private int nofImports;	// number of imports, no arrays as they have no class files
 	
-	public BlockItem constantBlock; // reference to the first entry of the constant block (=constBlockSize entry)
-	public BlockItem codeBase; // reference to the codeBase entry
-	public BlockItem varBase; // reference to the varBase entry
-	public BlockItem classPtrList; // reference to the beginning of the pointer list (class fields) (=nofPtrs entry)
-	public BlockItem typeDescriptor; // reference to the type descriptor (size entry)
-	public BlockItem stringPool; // reference to the beginning of the string pool
-	public BlockItem constantPool; // reference to the beginning of the constant pool
-	public BlockItem instPtrTable; // reference to the beginning of the pointer table (instance fields)
-	public BlockItem intfTypeChkTable; // reference to the beginning of the interface table
-	public FixedValueItem instPtrTableOffset; // offset to the table with all instance fields which are references
-	public FixedValueItem intfTypeChkTableOffset; // offset to the table with all implemented interfaces of this class whose type is checked for
-	public BlockItem constantBlockChecksum; // reference to the end of the constant block (=fcs entry)
+	public FixedValueEntry constantBlock; // reference to the first entry of the constant block (=constBlockSize entry)
+	public FixedValueEntry codeBase; // reference to the codeBase entry
+	public FixedValueEntry typeDescriptor; // reference to the type descriptor (size entry)
+	public FixedValueEntry constantBlockChecksum; // reference to the end of the constant block (=fcs entry)
 	
 	public int typeDescriptorSize; // size of the type descriptor on the target (in byte)
-	public int typeDescriptorOffset;
+	public int typeDescriptorOffset;	// offset in bytes from start of constant block to type descriptor (size)
 	public int stringPoolSize; // size of this pool on the target (in byte)
 	public int constantPoolSize; // size of this pool on the target (in byte)
 	
@@ -293,7 +284,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	}
 
 	public Method getClassConstructor() {
-		if(this.methods != null) return (Method)this.methods.getItemByName("<clinit>");
+		if(this.methods != null) return (Method)this.methods.getItemByName(CFR.hsClassConstrName);
 		return null;
 	}
 
@@ -505,10 +496,12 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		instFields = getFieldListAndUpdate(instFieldLists);
 
 		// chain the field lists
-		Item tail = getTailItem(classFields);
-		classFields = appendItem(classFields, tail, constFields);
-		tail = getTailItem(instFields);
-		instFields = appendItem(instFields, tail, classFields);
+		Item tail = null;
+		if (classFields != null) tail = classFields.getTail();
+		classFields = appendItemList(classFields, tail, constFields);
+		tail = null;
+		if (instFields != null) tail = instFields.getTail();
+		instFields = appendItemList(instFields, tail, classFields);
 
 		if(verbose) vrb.println("<readFields");
 	}
@@ -636,7 +629,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			}
 		}
 		assert methods == null;
-		methods = appendItem(clsMethHead, clsMethTail, instMethHead);	// chain class and instance methods
+		methods = appendItemList(clsMethHead, clsMethTail, instMethHead);	// chain class and instance methods
 		nofClassMethods = nofClsMeths;
 		nofInstMethods = nofInstMeths;
 	}
@@ -833,7 +826,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			objectSize = (objectSize + fieldSizeUnit-1) & -fieldSizeUnit;
 			while (item != clsFields) {
 				item.offset = objectSize;
-				objectSize +=  item.type.getTypeSize();
+				objectSize +=  ((Type)item.type).getTypeSize();
 				item = item.next;
 			}
 
@@ -843,7 +836,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			classFieldsSize = 0;
 			while (item != clsFields) {
 				item.offset = classFieldsSize;
-				classFieldsSize +=  item.type.getTypeSize();
+				classFieldsSize +=  ((Type)item.type).getTypeSize();
 				item = item.next;
 			}
 
@@ -900,7 +893,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * the list is then sorted according to it's field <code>chkId</code>
 	 */
 	protected void createIntfTypeChkList() {
-		assert (accAndPropFlags & (1<<apfInterface)) == 0; 
+//		assert (accAndPropFlags & (1<<apfInterface)) == 0; 
 		intfTypeChkList = new InterfaceList();
 		Item item = this;
 		do {

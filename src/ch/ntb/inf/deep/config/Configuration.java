@@ -479,15 +479,8 @@ public class Configuration implements ErrorCodes, IAttributes, ICclassFileConsts
 		return -1;
 	}
 	
-	@Deprecated
-	public static String getSystemMethodForID(int id){
-		SystemMethod sysMeth= getSystemMethodById(id);
-		if(sysMeth != null) return sysMeth.name.toString();
-		return null;
-	}
-	
-	public static SystemMethod getSystemMethodById(int id) {
-		return activeProject.getOperatingSystem().getSystemMethodById(id, activeProject.getBoard().getCPU());
+	public static SystemMethod[] getSystemMethodsWithOffsets() {
+		return activeProject.getOperatingSystem().getSystemMethodsWithOffsets(activeProject.getBoard().getCPU());
 	}
 
 	public static HString[] getRootClassNames() {

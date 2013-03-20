@@ -184,6 +184,13 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 				cls = cls.nextExtLevelClass;
 			}
 		}
+		for (int exl = 0; exl <= Class.maxExtensionLevelInterfaces; exl++) {
+			Class intf = Class.extLevelOrdInterfaces[exl];
+			while (intf != null) {
+				intf.createIntfTypeChkList();
+				intf = intf.nextExtLevelClass;
+			}
+		}
 
 		if (dbg) vrb.println("max ext level std classes = " + Class.maxExtensionLevelStdClasses);
 		if (dbg) vrb.println("max ext level interfaces = " + Class.maxExtensionLevelInterfaces);

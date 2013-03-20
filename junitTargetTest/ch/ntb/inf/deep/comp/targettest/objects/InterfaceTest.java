@@ -182,16 +182,16 @@ public class InterfaceTest {
 		Assert.assertFalse("instance40", o instanceof IDexA[][]);	
 		
 		o = new IAexA[2];
-//		Assert.assertFalse("instance50", o instanceof IAexA[]);				
-//		Assert.assertFalse("instance51", o instanceof IBexA[]);				
+		Assert.assertTrue("instance50", o instanceof IAexA[]);				
+		Assert.assertFalse("instance51", o instanceof IBexA[]);				
 		
 		o = new IDexA[2];
-//		Assert.assertFalse("instance60", o instanceof IAexA[]);				
-//		Assert.assertFalse("instance61", o instanceof ICexA[]);				
-//		Assert.assertTrue("instance62", o instanceof IDexA[]);				
-//		Assert.assertTrue("instance63", o instanceof CCexA[]);				
-//		Assert.assertFalse("instance64", o instanceof ICexA);				
-//		Assert.assertFalse("instance65", o instanceof ICexA[][]);				
+		Assert.assertFalse("instance60", o instanceof IAexA[]);				
+		Assert.assertTrue("instance61", o instanceof ICexA[]);				
+		Assert.assertTrue("instance62", o instanceof IDexA[]);				
+		Assert.assertFalse("instance63", o instanceof CCexA[]);				
+		Assert.assertFalse("instance64", o instanceof ICexA);				
+		Assert.assertFalse("instance65", o instanceof ICexA[][]);				
 		
 		CmdTransmitter.sendDone();
 	}
@@ -242,8 +242,8 @@ public class InterfaceTest {
 	// tests a class implementing a single interface with several methods
 	public static void testMethods2(){
 		IAexD cls = new CAexD();
-//		Assert.assertEquals("test1", 5 ,cls.ima11());
-//		Assert.assertEquals("test2", 255 ,cls.ima12(-1));
+		Assert.assertEquals("test1", 5 ,cls.ima11());
+		Assert.assertEquals("test2", 255 ,cls.ima12(-1));
 		
 		CmdTransmitter.sendDone();		
 	}

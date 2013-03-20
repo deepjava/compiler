@@ -26,10 +26,6 @@ public class LocalVar extends Item {
 	int startPc, length; // life range: [startPc, startPc+length]
 //	int index; // starts at this slot, long and double occupy this slot and next slot (index+1)
 
-	//--- constructors
-	LocalVar(){
-	}
-
 	//--- debug primitives
 	
 	public void print(int indentLevel){
