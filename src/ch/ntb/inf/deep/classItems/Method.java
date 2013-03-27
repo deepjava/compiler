@@ -63,7 +63,7 @@ public class Method extends ClassMember {
 
 	protected Method getMethod(HString name, HString descriptor){
 		Method item = this;
-		while(item != null && (item.name != name || item.methDescriptor != descriptor) ) item = (Method)item.next;
+		while (item != null && (item.name != name || item.methDescriptor != descriptor) ) item = (Method)item.next;
 		return item;
 	}
 
@@ -130,21 +130,15 @@ public class Method extends ClassMember {
 		HString name = HString.getRegisteredHString(jname);
 		Method m = null;
 		if (compSpecSubroutines == null) {
-			//System.out.println(">>> create first subroutine: " + name);
 			m = new Method(name);
 			compSpecSubroutines = m;
-			//System.out.println(">>> done ");
 		} else {
 			m = (Method)compSpecSubroutines.getItemByName(name);
 			if(m == null) { // method doesn't exist -> create it
-				//System.out.println(">>> not found, creating: " + jname);
 				m = new Method(name);
 				m.next = compSpecSubroutines;
 				compSpecSubroutines = m;
-			} else {
-				//System.out.println(">>> found: " + jname + " nothing to do");
 			}
-			//System.out.println(">>> done ");
 		}		
 		return m;
 	}
@@ -249,4 +243,5 @@ public class Method extends ClassMember {
 			m = (Method)m.next;
 		}
 	}
+
 }

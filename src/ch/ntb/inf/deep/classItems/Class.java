@@ -64,7 +64,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	public Class nextTypeChkInterface;	// to build lists with interfaces which are used as array component and whose type is checked for
 	public Item[] constPool; // reduced constant pool
 
-	public Method[] extMethTable; // syntax: { instanceMethod } im
+	public Method[] methTable; // standard class: table with all instance methods including superclasses, interface: table with all methods excluding superclass
 	public int nofMethods; // number of methods
 	public int nofInstMethods, nofClassMethods; // number of methods defined in this class file
 	public int methTabLength; // number of methods for the type descriptor
@@ -82,6 +82,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		
 	public Class[] interfaces;	// all interfaces this class implements, if this class is an interface array contains all superinterfaces
 	public int nofInterfaces;	// number of interfaces
+	public InterfaceList intfCallList; // contains all implemented interfaces including superinterfaces which type is checked for ??????????????????????????????????????????????????????????????
 	public InterfaceList intfTypeChkList; // contains all implemented interfaces including superinterfaces which type is checked for
 
 	private Class[] imports;	// imported classes (StdClasses, Interfaces) which are found in the const pool of this class and which have a class file (no arrays)
@@ -187,7 +188,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				vrb.println("\n>dump of class: " + name);
 				//					stab.print("String Table in state: 3");
 				//					printOrigConstPool("\nconstant pool \nstate: 3");
-				//					printReducedConstPool("\nconstant pool \nstate: 3");
+									printReducedConstPool("\nconstant pool \nstate: 3");
 				//					printClassList("class list \nstate: 3");
 				//					print(0);
 				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
@@ -798,8 +799,14 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		assert nofItems == 0;
 		if (verbose) vrb.println("<updateConstPool");
 	}
-
+	
+	/**
+	 * extension level is set, size of class and instance fields are calculated, index of methods are set
+	 * imports are handled, class is added to initClassesList or nonInitClassesList
+	 * superclasses or superinterfaces are handled first (recursively)
+	 */
 	protected void fixupLoadedClasses() {
+//		boolean verbose = true;
 		if ((accAndPropFlags & 1<<dpfClassMark) == 0 ) {	// mark not set -> class not done yet
 			if (verbose) vrb.println(">fixup of class: " + this.name);
 			accAndPropFlags |= 1<<dpfClassMark;	// set mark
@@ -808,14 +815,15 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			else if ((accAndPropFlags & 1<<apfInterface) == 0 ) {	// std-class
 				((Class)type).fixupLoadedClasses();	// handle superclass first
 				Class baseCls = (Class)type;
-				baseCls.accAndPropFlags |= (1<<dpfExtended);	// flag is only for stdClasses, for interfaces it is set later 
+				baseCls.accAndPropFlags |= (1<<dpfExtended);	// class has extensions 
 				objectSize = baseCls.objectSize;
 				extensionLevel = baseCls.extensionLevel + 1;
 				if (extensionLevel > maxExtensionLevelStdClasses ) maxExtensionLevelStdClasses = extensionLevel;
 			} else {	// interface
 				if (interfaces != null) {
-					interfaces[0].fixupLoadedClasses();	// first handle superinterface
+					for (Class intf : interfaces) intf.fixupLoadedClasses();	// first handle superinterface
 					extensionLevel = interfaces[0].extensionLevel + 1;
+					accAndPropFlags |= (1<<dpfExtended);	// interface has extensions 
 				} else extensionLevel = 1;
 				if (extensionLevel > maxExtensionLevelInterfaces ) maxExtensionLevelInterfaces = extensionLevel;
 			}
@@ -842,24 +850,33 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 
 			// all instance methods get index, index of class methods will be -1
 			// overwritten methods get index of method of superclass
+			// handle interfaces differently
 			Item meth = methods;
-			if (type == null) {	//  java/lang/Object
+			if ((accAndPropFlags & 1<<apfInterface) == 0 ) {	// std-class	
+				if (type == null) {	//  java/lang/Object
+					methTabLength = 0;
+					while (meth != null) {
+						meth.index = -1;
+						if ((meth.accAndPropFlags & (1<<apfStatic)) == 0) meth.index = methTabLength++;
+						meth = meth.next;
+					}
+				} else {	// any other class ( not java/lang/Object)
+					Class baseCls = (Class)type;
+					methTabLength = baseCls.methTabLength;
+					while (meth != null) {
+						meth.index = -1;
+						if ((meth.accAndPropFlags & (1<<apfStatic)) == 0) {	// instance method
+							Item baseMeth = baseCls.getMethod(meth.name, ((Method)meth).methDescriptor);
+							if (baseMeth == null) meth.index = methTabLength++;
+							else meth.index = baseMeth.index;
+						}
+						meth = meth.next;
+					}
+				}
+			} else {	// interface
 				methTabLength = 0;
 				while (meth != null) {
-					meth.index = -1;
-					if ((meth.accAndPropFlags & (1<<apfStatic)) == 0) meth.index = methTabLength++;
-					meth = meth.next;
-				}
-			} else {	// any other class ( not java/lang/Object)
-				Class baseCls = (Class)type;
-				methTabLength = baseCls.methTabLength;
-				while (meth != null) {
-					meth.index = -1;
-					if ((meth.accAndPropFlags & (1<<apfStatic)) == 0) {// instance method
-						Item baseMeth = baseCls.getMethod(meth.name, ((Method)meth).methDescriptor);
-						if (baseMeth == null) meth.index = methTabLength++;
-						else meth.index = baseMeth.index;
-					}
+					meth.index = methTabLength++;
 					meth = meth.next;
 				}
 			}
@@ -888,38 +905,87 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	}
 
 	/**
+	 * sets interface id in superinterfaces, recursively up to root interfaces
+	 */
+	protected void setIntfIdToRoot(Class[] interfaces) { 
+		if (interfaces != null) {
+			for (Class intf : interfaces) {
+				intf.index = Class.currInterfaceId++;
+				setIntfIdToRoot(intf.interfaces);
+			}
+		}
+	}
+
+	/**
+	 * creates a list with all interfaces and their superinterfaces this class implements 
+	 * and whose index is >= 0. That is, those interfaces contain methods which are called by invokeinterface
+	 * the list is then sorted according to it's id (field <code>index</code>).
+	 */
+	protected void createIntfCallList() { 
+		Item item = this;
+		do {
+			Class[] interfaces = ((Class)item).interfaces;
+			if (interfaces != null) addCallInterfaceList(interfaces);
+			item = item.type;	// go to super class of this class
+		} while (item != null);
+	}
+
+	private void addCallInterfaceList(Class[] interfaces) {
+		for (int n = 0; n < interfaces.length; n++) {
+			Class interf = interfaces[n];
+			if (interf.index > 0) {
+				if (intfCallList == null) intfCallList = new InterfaceList();
+				intfCallList.appendCallId(interf);
+			}
+			if (interf.interfaces != null) addCallInterfaceList(interf.interfaces);	// interface has superinterfaces
+		}	
+	}
+
+	/**
 	 * creates a list with all interfaces this class and its superclasses implement
 	 * and whose type is checked for
 	 * the list is then sorted according to it's field <code>chkId</code>
 	 */
-	protected void createIntfTypeChkList() {
-//		assert (accAndPropFlags & (1<<apfInterface)) == 0; 
-		intfTypeChkList = new InterfaceList();
+	protected void createIntfTypeChkList() { 
 		Item item = this;
 		do {
 			Class[] interfaces = ((Class)item).interfaces;
-			if (interfaces != null) checkInterfaceList(interfaces);
+			if (interfaces != null) addCheckInterfaceList(interfaces);
 			item = item.type;	// go to super class of this class
 		} while (item != null);
-		intfTypeChkList.sortChkId();
+		if ((accAndPropFlags & (1<<apfInterface)) != 0 && (accAndPropFlags & (1<<dpfTypeTest)) != 0) {
+			if (intfTypeChkList == null) intfTypeChkList = new InterfaceList();
+			intfTypeChkList.appendChkId(this);	// interfaces must include own chkId
+		}
+		if (intfTypeChkList != null) intfTypeChkList.sortChkId();
 	}
 	
-	private void checkInterfaceList(Class[] interfaces) {
+	private void addCheckInterfaceList(Class[] interfaces) {
 		for (int n = 0; n < interfaces.length; n++) {
 			Class interf = interfaces[n];
-			if (interf.chkId > 0) intfTypeChkList.appendChkId(interf);
-			if (interf.interfaces != null) checkInterfaceList(interf.interfaces);	// interface has superinterfaces
+			if (interf.chkId > 0) {
+				if (intfTypeChkList == null) intfTypeChkList = new InterfaceList();
+				intfTypeChkList.appendChkId(interf);
+			}
+			if (interf.interfaces != null) addCheckInterfaceList(interf.interfaces);	// interface has superinterfaces
 		}	
 	}
 
+	/**
+	 * 
+	 */
+	public void insertMethods(Method[] table) {
+		if (type != null) ((Class)type).insertMethods(table);
+		Item meth = methods;
+		while (meth != null) {
+			if (meth.index >= 0) table[meth.index] = (Method)meth;
+			meth = meth.next;
+		}
+	}
+	
 	protected int createInterfaceIdsToRoot() {
 		assert (accAndPropFlags & (1<<apfInterface)) != 0;
-
-//			System.out.println("handle interface " + name);
-		if (index <= 0) {
-//			System.out.println("type = " + type.name);
-//			if (type.type != null)
-//				System.out.println("type.type = " + type.type.name);
+		if (index < 0) {
 			if (type != null && type.type != null) {	// this interface has a 
 				assert false; // kommt nie hierher, weil type fur alle Object ist und type.type == null
 				index = ((Class)type).createInterfaceIdsToRoot();
@@ -1029,7 +1095,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 //vrb.printf(" <updateMethodList: name=%1$s, index=%2$d\n", name, index);
 	}
 
-
 	void getInterfaceMethodTable( Method[] methTable ){
 //vrb.printf(" >getInterfaceMethodTable: name=%1$s, index=%2$d, extensionLevel=%3$d\n", name, index, extensionLevel);
 
@@ -1055,35 +1120,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			}
 			item = item.type;
 		} while (item != null);
-	}
-
-	private int getInterfaceSortKey(Class interf) {
-		assert interf.extensionLevel<(1<<8) && interf.methTabLength<(1<<12);
-		int key = 0;
-		if ((interf.accAndPropFlags & (1<<dpfInterfCall)) != 0 ) key = 1;
-		key = ((key<<8) | interf.extensionLevel)<<12 |  interf.methTabLength;
-		// key: (binary) 0b0...0k | eeee'eeee | mmmm'mmmm'mmmm
-		// k    '1' if interface has methods which are called bei invokeinterface, else '0'
-		// e    extension level
-		// m    method table length
-		return key;
-	}
-
-	void sortInterfaces() {	// descending (bubble sort), highest key comes first
-		if (interfaces != null) {
-			int maxIndex = interfaces.length-1;
-			for (int left = 0; left < maxIndex; left++) {
-				for (int right = maxIndex-1; right >= left; right--) {
-					int leftKey = getInterfaceSortKey(interfaces[right]);
-					int rightKey = getInterfaceSortKey(interfaces[right+1]);
-					if (leftKey < rightKey){ // swap
-						Class intf = interfaces[right];
-						interfaces[right] = interfaces[right+1];
-						interfaces[right+1] = intf;
-					}
-				}
-			}
-		}
 	}
 
 	//--- debug primitives
@@ -1123,6 +1159,19 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				cls = cls.nextExtLevelClass;
 			}
 		}
+	}
+
+	public static void printIntfCallMethods() {
+		vrb.printf("\n--- calls of interface methods in standard classes:\n");
+		for (int exl = 1; exl <= maxExtensionLevelStdClasses; exl++) {
+			if (extLevelOrdClasses == null) break;
+			Class cls = extLevelOrdClasses[exl];
+			while (cls != null) {
+				cls.printIntfCallMethods(1);
+				cls = cls.nextExtLevelClass;
+			}
+		}
+		vrb.printf("\n\n");
 	}
 
 	public static void printArrays() {
@@ -1184,13 +1233,13 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	public void printMethods(int indentLevel){
 		indent(indentLevel);
 		vrb.printf("methods: clsMeths #=%1$d, instMeths #=%2$d, methTabLength=%3$d", nofClassMethods, nofInstMethods, methTabLength);
-		if( extMethTable != null ){
-			vrb.printf( ", extMethTable.length=%1$d\n", extMethTable.length );
+		if( methTable != null ){
+			vrb.printf( ", extMethTable.length=%1$d\n", methTable.length );
 			int n = 0;
-			while( n < extMethTable.length ){
+			while( n < methTable.length ){
 				indent(indentLevel+1);
 				vrb.printf("[%1$2d] ", n);
-				extMethTable[n].printHeaderX(0);
+				methTable[n].printHeaderX(0);
 				vrb.println();
 				n++;
 			}
@@ -1292,7 +1341,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	}
 
 	public void printInterfaces(int indentLevel) {
-		if (interfaces != null){
+		if (interfaces != null) {
 			indent(indentLevel++);
 			vrb.println("implements:");
 			indent(indentLevel); printInterface(interfaces[0]); vrb.println(); 
@@ -1303,9 +1352,24 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		}
 	}
 
+	public void printIntfCallMethods(int indentLevel) {
+		if (intfCallList != null) {
+			vrb.println("class " + name + " has methods which are called by invokeinterface in");
+			for( int n = 0; n < intfCallList.length; n++){
+				Class interf = intfCallList.getInterfaceAt(n);
+				vrb.printf("\tname=%1$s, id=%2$d, #meths=%3$d\n", interf.name, interf.index, interf.methTabLength);
+				Item m = interf.methods;
+				while (m != null) {
+					if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {((Method)m).printName(3); vrb.println();}
+					m = m.next;
+				}
+			}
+		}
+	}
+
 	void printOrigConstPool(String title) {
 		vrb.println(title);
-		for(int pe = 1; pe < constPoolCnt; pe++){
+		for(int pe = 1; pe < constPoolCnt; pe++) {
 			printCpEntry(pe, cpTags[pe], 1);
 		}		
 	}
@@ -1351,5 +1415,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 //		vrb.println("----------");
 //		constantBlock.printListRaw();
 	}
-	
+
+
 }

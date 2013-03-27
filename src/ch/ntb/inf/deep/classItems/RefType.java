@@ -102,7 +102,7 @@ public class RefType extends Type {
 	protected Item getMethod(HString name, HString descriptor) {
 		Item item = null;
 		if (methods != null) item = methods.getMethod(name, descriptor);
-		if (item == null && type != null) item = type.getMethod(name, descriptor);
+		if (item == null && type != null) item = type.getMethod(name, descriptor); // goes recursively through superclasses
 		return item;
 	}
 	

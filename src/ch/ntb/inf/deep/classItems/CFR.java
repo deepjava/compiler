@@ -29,7 +29,6 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 	public static void buildSystem(HString[] rootClassNames, File[] parentDirsOfClassFiles, SystemClass[] sysClasses, int userReqAttributes) throws IOException {
 
 		Item.errRep.nofErrors = 0;
-		Method.compSpecSubroutines = null; // /TODO move this to init function?
 		ClassFileAdmin.registerParentDirs(parentDirsOfClassFiles);
 
 		int nofRootClasses = rootClassNames.length;
@@ -104,9 +103,6 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 					cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
 					Class.extLevelOrdClasses[extLevel] = cls;
 					Class.nofStdClasses++;
-					// list with all interfaces this class implements is sorted according to the following criteria
-					// interface has methods which are called by invokeinterface, extension level, method table length
-					cls.sortInterfaces();
 				}
 				//				}else if( (propFlags & (1<<apfEnum) ) != 0 ){
 				//					cls.nextClass = enums;
@@ -143,12 +139,12 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		for (int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--) {
 			Class cls = Class.extLevelOrdInterfaces[exl];
 			while (cls != null) {
-				// set interface identifiers for groups of interfaces in order to arrange method tables
-				if (cls.index <= 0 && (cls.accAndPropFlags&(1<<dpfInterfCall)) != 0) {
-					cls.createInterfaceIdsToRoot();
-					cls.cleanUpInterfaceMethsAndGetMethTabLength();
+				// set interface identifiers for interfaces with methods called by invokeinterface
+				if (cls.index < 0 && (cls.accAndPropFlags&(1<<dpfInterfCall)) != 0) {
+					cls.index = Class.currInterfaceId++;
+					cls.setIntfIdToRoot(cls.interfaces);	// set id's in superinterfaces
 				}
-				// set interface identifiers for interfaces whose type is checked
+				// set interface check identifiers for interfaces whose type is checked
 				if ((cls.accAndPropFlags & (1<<dpfTypeTest)) != 0) {
 					cls.chkId = Class.currInterfaceChkId++;
 				}
@@ -156,25 +152,24 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			}
 		}
 		
-		// arrange instance methods according to interfaces
-		MethodArrangement methA= new MethodArrangement( Class.maxExtensionLevelStdClasses, Class.maxMethTabLen, Class.maxInterfMethTabLen);
-		for (int exl = Class.maxExtensionLevelStdClasses; exl > 0; exl--) {
-			Class cls = Class.extLevelOrdClasses[exl];
-			while (cls != null) {
-				methA.arrangeInterfaceMethodsForThisClassStack(cls);
-				cls = cls.nextExtLevelClass;
-			}
-		}
-		
 		// generate instance method tables
+		if (dbg) vrb.println(">generating instance method tables");
 		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
 			Class cls = Class.extLevelOrdClasses[exl];
-			while (cls != null){
-				cls.fixInstanceMethodsOfThisClass();
-				methA.generateMethodTableForThisClass(cls);
+			while (cls != null) {
+				if (dbg) vrb.println(cls.name + ": method table length=" + cls.methTabLength);
+				cls.methTable = new Method[cls.methTabLength];
+				cls.insertMethods(cls.methTable);
+				cls.createIntfCallList();
+				InterfaceList list = cls.intfCallList;
+				if (list != null) {
+					list.sortId();
+					if (list.length != 1 || (list.length == 1) && list.getFront().methTabLength != 1) Method.createCompSpecSubroutine("imDelegIiMm"); //imDelegIiMm;
+				}
 				cls = cls.nextExtLevelClass;
 			}
 		}
+		if (dbg) vrb.println("<generating instance method tables");
 
 		// creates a list with all interfaces this class and its superclasses implement and whose type is checked for
 		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
@@ -184,6 +179,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 				cls = cls.nextExtLevelClass;
 			}
 		}
+		// the same for all interfaces
 		for (int exl = 0; exl <= Class.maxExtensionLevelInterfaces; exl++) {
 			Class intf = Class.extLevelOrdInterfaces[exl];
 			while (intf != null) {
@@ -194,6 +190,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 
 		if (dbg) vrb.println("max ext level std classes = " + Class.maxExtensionLevelStdClasses);
 		if (dbg) vrb.println("max ext level interfaces = " + Class.maxExtensionLevelInterfaces);
+		if (dbg) Class.printIntfCallMethods();
 		if (dbg) Class.printInterfaces();
 		if (dbg) Class.printArrays();
 		if (dbg) Class.printTypeChkInterfaces();
@@ -217,12 +214,14 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		RefType.nofRefTypes = 0;
 		Class.nofStdClasses = 0; Class.nofInterfaceClasses = 0; Class.nofInitClasses = 0; Class.nofNonInitClasses = 0; Class.nofArrays = 0;
 		Class.initClassesTail = null; Class.nonInitClassesTail = null;
-		Class.currInterfaceId = 0;
+		Class.currInterfaceId = 1;
 		Class.currInterfaceChkId = 1;
 
 		Type.setUpBaseTypeTable();
 		Type.setAttributeTable(Item.stab);
 
+		Method.compSpecSubroutines = null; 
+		
 		if(dbg) vrb.println("<init build system");
 	}
 

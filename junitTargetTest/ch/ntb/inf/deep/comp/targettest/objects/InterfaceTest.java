@@ -232,61 +232,89 @@ public class InterfaceTest {
 	@Test
 	// tests a class implementing a single interface with a single method
 	public static void testMethods1() {
-		IAexD cls = new CAexD();
-		Assert.assertEquals("test1", 5, cls.ima11());
-		
+		IAexA cls = new CXexA();
+		Assert.assertEquals("test1", 1, cls.ima11());
+		IAexB cls1 = new CXexB();
+		Assert.assertEquals("test1", 101, cls1.ima11());
 		CmdTransmitter.sendDone();		
 	}
 
 	@Test
 	// tests a class implementing a single interface with several methods
 	public static void testMethods2(){
-		IAexD cls = new CAexD();
-		Assert.assertEquals("test1", 5 ,cls.ima11());
-		Assert.assertEquals("test2", 255 ,cls.ima12(-1));
-		
+		IBexA cls = new CYexA();
+		Assert.assertEquals("test1", 22 ,cls.imb11());
+		Assert.assertEquals("test2", 23 ,cls.imb12());
+		cls = new CAexA();
+		Assert.assertEquals("test3", 26 ,cls.imb11());
+		Assert.assertEquals("test4", 27 ,cls.imb12());
+		IAexD cls1 = new CAexD();
+		Assert.assertEquals("test5", 5 ,cls1.ima11());
+		Assert.assertEquals("test6", 266 ,cls1.ima12(10));
 		CmdTransmitter.sendDone();		
 	}
 
 	@Test
 	// tests a class implementing several interfaces
 	public static void testMethods3(){
-		IAexD cls = new CBexD();
-//		Assert.assertEquals("test1", -1, cls.ima11());
-//		Assert.assertEquals("test2", 19, cls.ima12(-1));
-//		ICexD cls2 = new CBexD();
-//		Assert.assertEquals("test3", 30, cls2.imc11());
-//		Assert.assertEquals("test4", 12, cls2.ima11());
+		IBexA cls1 = new CCexA();
+		Assert.assertEquals("test1", 26 ,cls1.imb11());
+		Assert.assertEquals("test2", 27 ,cls1.imb12());
+		ICexA cls2 = new CCexA();
+		Assert.assertEquals("test3", 32, cls2.imc11());
+		Assert.assertEquals("test4", 33, cls2.imc12());
+		IDexA cls3 = new CZexA();
+		Assert.assertEquals("test10", 122, cls3.imc11());
+		Assert.assertEquals("test11", 123, cls3.imc12());
+		Assert.assertEquals("test12", 124, cls3.imd21());
+		CEexA cls4 = new CEexA();
+		Assert.assertEquals("test20", 40, cls4.cme41());
+		Assert.assertEquals("test21", 41, cls4.imd21());
 		
 		CmdTransmitter.sendDone();		
 	}
-	
+
 	@Test
-	//Test overriding methods
+	//Test overriding methods and interface methods
 	public static void testMethods4(){
-//		InterfaceTestClass1 itc1 = new InterfaceTestClass1();
-//		InterfaceTestClass2 itc2 = new InterfaceTestClass2();
-//		InterfaceTestClass3 itc3 = new InterfaceTestClass3();
-//		Object itc4 = new InterfaceTestClass4();
-//
-//		Assert.assertEquals("itc1m11", 5 ,itc1.method11());
-//		Assert.assertEquals("itc1m12", 259 ,itc1.method12(3));
-//		
-//		Assert.assertEquals("itc2m11", -1 ,itc2.method11());
-//		Assert.assertEquals("itc2m12", 261 ,itc2.method12(5));
-//		Assert.assertFalse("itc2m22", itc2.method22(false));
-//		Assert.assertEquals("((InterfaceTestClass1)itc2)m11", -1 ,((InterfaceTestClass1)itc2).method11());
-//				
-//		
-//		Assert.assertEquals("itc3m11", 5 ,itc3.method11());
-//		Assert.assertEquals("itc3m12", 251 ,itc3.method12(5));
-//		Assert.assertEquals("itc3m12", 1023 ,itc3.method32());
-//		Assert.assertEquals("((InterfaceTestClass1)itc3)m12", 251 ,((InterfaceTestClass1)itc3).method12(5));
-//		
-//		Assert.assertEquals("itc4m11", 2921 ,itc4.method11());
-//		Assert.assertEquals("itc4m12", 259 ,itc4.method12(3));
-//		Assert.assertEquals("((InterfaceTestClass1)itc4)m11", 2921 ,((InterfaceTestClass1)itc4).method11());
-//		
+		CAexD cls1 = new CAexD();
+		CBexD cls2 = new CBexD();
+
+		Assert.assertEquals("test1", 5, cls1.ima11());
+		Assert.assertEquals("test2", 259, cls1.ima12(3));
+		
+		Assert.assertEquals("test11", -1, cls2.ima11());
+		Assert.assertEquals("test12", 25, cls2.ima12(5));
+		Assert.assertEquals("test13", 30, cls2.imc11());
+
+		CmdTransmitter.sendDone();		
+	}
+
+	@Test
+	// tests a class implementing several interfaces
+	public static void testMethods5(){
+		IEexB cls1 = new CZexB();
+		Assert.assertEquals("test1", 104, cls1.imXY());
+		Assert.assertEquals("test2", 102, cls1.imX1());
+		IGexB cls2 = new CTexB(2);
+		Assert.assertEquals("test3", 43, cls2.imXY());
+		Assert.assertEquals("test4", 42, cls2.imf21());
+		Assert.assertEquals("test5", 61, cls2.img31());
+		IBexB cls3 = new CRexB();
+		Assert.assertEquals("test6", 31, cls3.ima11());
+		Assert.assertEquals("test7", 32, cls3.imX1());
+
+		CmdTransmitter.sendDone();		
+	}
+
+	@Test
+	// tests the class constructor of an interface
+	public static void testInterfaceConstructor(){
+//		Object cls = new CXexA();
+//		int a = ((CXexA)cls).ima11();
+//		Object o = ((CXexA)cls).cmx11();
+//		Assert.assertTrue("test1", o != null);
+
 		CmdTransmitter.sendDone();		
 	}
 

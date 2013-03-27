@@ -98,6 +98,15 @@ public class InterfaceList {
 	}
 
 	/**
+	 * append interface if field index is not present in the list
+	 */
+	void appendCallId(Class interf) {
+		int n = length-1;
+		while (n >= 0 && interfaces[n].index != interf.index) n--;
+		if (n < 0) append(interf);
+	}
+
+	/**
 	 * append interface if field chkId is not present in the list
 	 */
 	void appendChkId(Class interf) {
@@ -120,9 +129,9 @@ public class InterfaceList {
 	}
 
 	/**
-	 * sort interfaces according to their ident(index) in descending way
+	 * sort interfaces according to their id (index) in descending way
 	 */
-	void packIntfTable() {
+	void sortId() {
 		for (int left = 0; left < length-1; left++) {
 			for (int right = left+1; right < length; right++) {
 				if (interfaces[left].index < interfaces[right].index) {

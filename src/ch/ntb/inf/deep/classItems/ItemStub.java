@@ -41,10 +41,47 @@ public class ItemStub extends Item {
 
 	Item getReplacedStub() {
 		Item item;
-		if (type == null) item = owner.getMethod(name, descriptor);
-		else item = ((Class)owner).getField(name);
-		if (enAssertion) assert item != null;
+		if (type == null) {	// must be method
+			item = owner.getMethod(name, descriptor); // searches in class and in all superclasses
+			if (item == null) {	// method not found
+				assert (owner.accAndPropFlags & (1<<apfInterface)) != 0: "owner must be interface";	// method must be in superinterface of owner, which must be interface itself
+				Class[] interfaces = ((Class)owner).interfaces;
+				if (interfaces != null) item = checkInterfacesForMethod(interfaces);
+			}
+		} else {
+			item = ((Class)owner).getField(name);	// must be field, searches in class and in all superclasses
+			if (item == null) {	// field not found
+				// field must be in interface or superinterface of owner, field can only be of type Object
+				Class[] interfaces = ((Class)owner).interfaces;
+				if (interfaces != null) item = checkInterfacesForField(interfaces);
+			}
+		}
+		if (enAssertion) assert item != null: "stub of " + name + " not found";
 		item.accAndPropFlags |= this.accAndPropFlags;
+		return item;
+	}
+
+	private Item checkInterfacesForMethod(Class[] interfaces) {
+		Item item = null;
+		for (int n = 0; n < interfaces.length; n++) {
+			Class intf = interfaces[n];
+			item = intf.getMethod(name, descriptor);
+			if (item != null) return item;
+			if (intf.interfaces != null) item = checkInterfacesForMethod(intf.interfaces);	// search in superinterfaces
+			if (item != null) return item;
+		}	
+		return item;
+	}
+
+	private Item checkInterfacesForField(Class[] interfaces) {
+		Item item = null;
+		for (int n = 0; n < interfaces.length; n++) {
+			Class intf = interfaces[n];
+			item = intf.getField(name);
+			if (item != null) return item;
+			if (intf.interfaces != null) item = checkInterfacesForField(intf.interfaces);	// search in superinterfaces
+			if (item != null) return item;
+		}	
 		return item;
 	}
 

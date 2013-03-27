@@ -26,7 +26,6 @@ public class InterfaceEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
-	HString name;
 	short ifaceID;
 	short bmo;
 		
@@ -48,6 +47,10 @@ public class InterfaceEntry extends ConstBlkEntry {
 		return size;
 	}
 	
+	public void setBmo(int offset) {
+		bmo = (short)offset;
+	}
+
 	protected int insertIntoArray(int[] a, int offset) {
 		int index = offset / 4;
 		int written = 0;

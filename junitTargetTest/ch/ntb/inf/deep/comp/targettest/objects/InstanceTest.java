@@ -142,7 +142,7 @@ public class InstanceTest {
 		
 		CmdTransmitter.sendDone();
 	}
-
+	
 	@Test
 	public static void testInstance5() {
 		Object o = new CDexC(); 
@@ -154,8 +154,24 @@ public class InstanceTest {
 	}
 
 	@Test
+	public static void testInstance6() {
+			Object[] firstRow = new ClassB[5];
+			Object[][] data = new ClassB[4][];
+			int len = data.length;
+			Assert.assertEquals("test1", 4, len);
+			data[0] = firstRow;
+			len = data[0].length;
+			Assert.assertEquals("test2", 5, len);
+			data[1] = new ClassB[3];
+			len = data[1].length;
+			Assert.assertEquals("test3", 3, len);
+
+			CmdTransmitter.sendDone();
+		}
+
+	@Test
 	// Test type guard
-	public static void testTypeGuard(){
+	public static void testTypeGuard1(){
 		Object obj = null;
 		ClassB res = (ClassB)obj;
 		res = (ClassC)obj;
@@ -176,72 +192,23 @@ public class InstanceTest {
 		// must fail
 //		obj1 = (ClassA[])obj;
 		
-//		Object y1 = new InterfaceTestClass1(); 
-//		Assert.assertEquals("test1.var0", 23, ((IAexD)y1).var0);
-//		Assert.assertEquals("test1.m11", 5, ((IAexD) y1).method11());
-//			Object obj = new InterfaceTestClass1();
-//				
-//			Assert.assertEquals("TypeGuardClass1.var0", 23,((InterfaceTestClass1)obj).var0);
-//			Assert.assertEquals("TypeGuardClass1.var1", 2.125,((InterfaceTestClass1)obj).var1, 0.01);
-//			Assert.assertEquals("TypeGuardClass1.var2", 1.15f, ((InterfaceTestClass1)obj).var2 , 0.01f);
-//			Assert.assertTrue("TypeGuardClass1.var3", ((InterfaceTestClass1)obj).var3);
-//			Assert.assertEquals("TypeGuardClass1.var4", 0x5555555555L, ((InterfaceTestClass1)obj).var4);
-//			Assert.assertEquals("TypeGuardClass1.var5", (byte)127, ((InterfaceTestClass1)obj).var5);
-//			Assert.assertEquals("TypeGuardClass1.var6", (short)256,((InterfaceTestClass1)obj).var6);
-//			Assert.assertEquals("TypeGuardClass1.var7", 'Z', ((InterfaceTestClass1)obj).var7);
-//					
-//			obj = new InterfaceTestClass2();
-//			
-//			Assert.assertEquals("TypeGuardClass2.i1Var0", 23,((InterfaceTestClass2)obj).getVar0());
-//			Assert.assertEquals("TypeGuardClass2.i1Var1", 2.125,((InterfaceTestClass2)obj).getVar1(), 0.01);
-//			Assert.assertEquals("TypeGuardClass2.i1Var2", 1.15f, ((InterfaceTestClass2)obj).getVar2() , 0.01f);
-//			Assert.assertTrue("TypeGuardClass2.i1Var3", ((InterfaceTestClass2)obj).getVar3());
-//			Assert.assertEquals("TypeGuardClass2.i1Var4", 0x5555555555L, ((InterfaceTestClass2)obj).getVar4());
-//			Assert.assertEquals("TypeGuardClass2.i1Var5", (byte)127, ((InterfaceTestClass2)obj).getVar5());
-//			Assert.assertEquals("TypeGuardClass2.i1Var6", (short)256,((InterfaceTestClass2)obj).getVar6());
-//			Assert.assertEquals("TypeGuardClass2.i1Var7", 'Z', ((InterfaceTestClass2)obj).getVar7());
-//			Assert.assertEquals("TypeGuardClass2.i2Var0", 45,((InterfaceTestClass2)obj).getI2Var0());
-//			Assert.assertEquals("TypeGuardClass2.i2Var1", 3.1459,((InterfaceTestClass2)obj).getI2Var1(), 0.01);
-//			Assert.assertEquals("TypeGuardClass2.i2Var2", 3.33f, ((InterfaceTestClass2)obj).getI2Var2() , 0.01f);
-//			Assert.assertFalse("TypeGuardClass2.i2Var3", ((InterfaceTestClass2)obj).getI2Var3());
-//			Assert.assertEquals("TypeGuardClass2.i2Var4", 0xAAAAAAAAAAL, ((InterfaceTestClass2)obj).getI2Var4());
-//			Assert.assertEquals("TypeGuardClass2.i2Var5", (byte)-128, ((InterfaceTestClass2)obj).getI2Var5());
-//			Assert.assertEquals("TypeGuardClass2.i2Var6", (short)-264,((InterfaceTestClass2)obj).getI2Var6());
-//			Assert.assertEquals("TypeGuardClass2.i2Var7", 'B', ((InterfaceTestClass2)obj).getI2Var7());
-//			
-//			obj = new InterfaceTestClass3();
-//			
-//			Assert.assertEquals("TypeGuardClass3.var0", 23,((InterfaceTestClass3)obj).var0);
-//			Assert.assertEquals("TypeGuardClass3.var1", 2.125,((InterfaceTestClass3)obj).var1, 0.01);
-//			Assert.assertEquals("TypeGuardClass3.var2", 1.15f, ((InterfaceTestClass3)obj).var2 , 0.01f);
-//			Assert.assertTrue("TypeGuardClass3.var3", ((InterfaceTestClass3)obj).var3);
-//			Assert.assertEquals("TypeGuardClass3.var4", 0x5555555555L, ((InterfaceTestClass3)obj).var4);
-//			Assert.assertEquals("TypeGuardClass3.var5", (byte)127, ((InterfaceTestClass3)obj).var5);
-//			Assert.assertEquals("TypeGuardClass3.var6", (short)256,((InterfaceTestClass3)obj).var6);
-//			Assert.assertEquals("TypeGuardClass3.var7", 'Z', ((InterfaceTestClass3)obj).var7);
-//			Assert.assertEquals("TypeGuardClass3.var8", 89,((InterfaceTestClass3)obj).var8);
-//			Assert.assertEquals("TypeGuardClass3.var9", 7.775,((InterfaceTestClass3)obj).var9, 0.01);
-//			Assert.assertEquals("TypeGuardClass3.var10", 9.32f, ((InterfaceTestClass3)obj).var10 , 0.01f);
-//			Assert.assertFalse("TypeGuardClass3.var11", ((InterfaceTestClass3)obj).var11);
-//			Assert.assertEquals("TypeGuardClass3.var12", 0xBBBBBBBBBBL, ((InterfaceTestClass3)obj).var12);
-//			Assert.assertEquals("TypeGuardClass3.var13", (byte)64, ((InterfaceTestClass3)obj).var13);
-//			Assert.assertEquals("TypeGuardClass3.var14", (short)1023,((InterfaceTestClass3)obj).var14);
-//			Assert.assertEquals("TypeGuardClass3.var15", 'L', ((InterfaceTestClass3)obj).var15);
-//			
-//			obj = new InterfaceTestClass4();
-//			
-//			Assert.assertEquals("TypeGuardClass4.var0", 23,((InterfaceTestClass4)obj).var0);
-//			Assert.assertEquals("TypeGuardClass4.var1", 2.125,((InterfaceTestClass4)obj).var1, 0.01);
-//			Assert.assertEquals("TypeGuardClass4.var2", 1.15f, ((InterfaceTestClass4)obj).var2 , 0.01f);
-//			Assert.assertTrue("TypeGuardClass4.var3", ((InterfaceTestClass4)obj).var3);
-//			Assert.assertEquals("TypeGuardClass4.var4", 0x5555555555L, ((InterfaceTestClass4)obj).var4);
-//			Assert.assertEquals("TypeGuardClass4.var5", (byte)127, ((InterfaceTestClass4)obj).var5);
-//			Assert.assertEquals("TypeGuardClass4.var6", (short)256,((InterfaceTestClass4)obj).var6);
-//			Assert.assertEquals("TypeGuardClass4.var7", 'Z', ((InterfaceTestClass4)obj).var7);
-
 		CmdTransmitter.sendDone();
 	}
-	
+
+	@Test
+	// Test type guard
+	public static void testTypeGuard2(){
+		Object o1 = new ICexC[3];
+		((ICexC[])o1)[2] = new CEexC();
+		Assert.assertEquals("test1", 400, ((IAexC[])o1)[2].ima11());
+		// must fail
+		Assert.assertEquals("test2", 402, ((ICexC[])o1)[2].imc21());
+		Assert.assertEquals("test3", 401, ((IBexC[])o1)[2].imb12());
+		Assert.assertEquals("test4", 404, ((CEexC)((ICexC[])o1)[2]).ime31());
+		
+		CmdTransmitter.sendDone();
+	}
+
 }
 
 

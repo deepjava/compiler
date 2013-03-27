@@ -6,9 +6,8 @@ public class CXexA implements IAexA {
 		return 1;
 	}
 	
-	public int cmx11() {
-		return 11;
+	public Object cmx11() {
+		return o1;
 	}
 	
-
 }

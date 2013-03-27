@@ -5,12 +5,15 @@ import ch.ntb.inf.junitTarget.CmdTransmitter;
 import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Test;
 import ch.ntb.inf.deep.comp.targettest.objects.helper.*;
+import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleA.*;
+import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleB.*;
 
 /**
- * NTB 12.04.2011
+ * NTB 12.03.2013
  * 
- * @author Roger Millischer
+ * @author Urs Graf
  * 
+ * Tests for inheritance
  */
 
 @MaxErrors(100)
@@ -62,7 +65,7 @@ public class InheritanceTest {
 	
 	@Test
 	//Test overriding methods
-	public static void testMethods(){
+	public static void testMethods1(){
 		ClassA clzA = new ClassA(); 
 		ClassB clzB = new ClassB(true);
 		
@@ -100,6 +103,45 @@ public class InheritanceTest {
 		CmdTransmitter.sendDone();		
 	}
 	
+	@Test
+	public static void testMethods2(){
+		CEexA o1 = new CEexA(); 
+		Assert.assertEquals("test1", 25, o1.cma11());
+		Assert.assertEquals("test2", 27, o1.imb12());
+		Assert.assertEquals("test3", 37, o1.imc12());
+		Assert.assertEquals("test4", 35, o1.cmd31());
+		Assert.assertEquals("test5", 41, o1.imd21());
+		Assert.assertEquals("test6", 40, o1.cme41());		
+		CBexA o2 = new CBexA(); 
+		Assert.assertEquals("test10", 300, o2.cmb21());
+		Assert.assertEquals("test11", 301, o2.cma11());
+		Assert.assertEquals("test12", 26, o2.imb11());
+		Assert.assertEquals("test12", 302, o2.imb12());
+		ICexA o3 = new CEexA(); 
+		Assert.assertEquals("test20", 25, ((CAexA)o3).cma11());
+		Assert.assertEquals("test21", 27, ((CAexA)o3).imb12());
+		Assert.assertEquals("test22", 27, ((IBexA)o3).imb12());
+		Assert.assertEquals("test23", 37, o3.imc12());
+		Assert.assertEquals("test24", 35, ((CDexA)o3).cmd31());
+		Assert.assertEquals("test25", 41, ((IDexA)o3).imd21());
+		Assert.assertEquals("test26", 40, ((CEexA)o3).cme41());		
+
+		IAexB o4 = new CXexB(); 
+		Assert.assertEquals("test30", 111, ((CXexB)o4).cmx11());
+		Assert.assertEquals("test31", 101, o4.ima11());
+		o4 = new CYexB();
+		Assert.assertEquals("test32", 23, ((IBexB)o4).imX1());
+		o4 = new CZexB();
+		Assert.assertEquals("test33", 103, ((ICexB)o4).imc31());
+		o4 = new CSexB();
+		Assert.assertEquals("test34", 41, ((CSexB)o4).cms21());
+		Assert.assertEquals("test35", 42, ((IFexB)o4).imf21());
+		Assert.assertEquals("test36", 43, ((IFexB)o4).imXY());		
+		o4 = new CTexB(-1);
+		Assert.assertEquals("test37", 59, ((CTexB)o4).cmt31());
+
+		CmdTransmitter.sendDone();		
+	}
 }
 
 

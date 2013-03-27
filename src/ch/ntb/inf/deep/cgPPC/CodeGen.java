@@ -1909,7 +1909,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						}
 					} else if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						refReg = opds[0].reg;
-						offset = (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset;
+						offset = (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset;
 						createItrap(ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(ppcLwz, res.regGPR1, refReg, -4);
 						createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, offset);	// delegate method
@@ -2144,16 +2144,32 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				sReg1 = opds[0].reg;
 				ref = (MonadicRef)instr;
 				t = (Type)ref.item;
-				if (t.category == tcRef) {	// object is regular class
-					offset = ((Class)t).extensionLevel;
-					createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
-					createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 8);	// jump to end
-					createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-					createItrapSimm(ppcTwi, TOifnequal, res.regGPR1, 0);	// is not array?
-					createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-					createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-					loadConstantAndFixup(res.regGPR1, t);	// addr of type
-					createItrap(ppcTw, TOifnequal, res.regGPR1, 0);
+				if (t.category == tcRef) {	// object (to test for) is regular class or interface
+					if ((t.accAndPropFlags & (1<<apfInterface)) != 0) {	// object is interface
+						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 11);	// jump to end
+						createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+						createItrapSimm(ppcTwi, TOifnequal, res.regGPR1, 0);	// is not array?
+						createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+						createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
+						createIrDrArB(ppcAdd, res.regGPR1, res.regGPR1, 0);
+						// label 1
+						createIrDrAd(ppcLhzu, 0, res.regGPR1, 0);
+						createICRFrAsimm(ppcCmpi, CRF0, 0, ((Class)t).chkId);	// is interface chkId
+						createIrDrAsimm(ppcAddi, res.regGPR1, res.regGPR1, 2);
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 1			
+						createItrapSimm(ppcTwi, TOifnequal, 0, ((Class)t).chkId);	// chkId is not equal
+					} else {	// object is regular class
+						offset = ((Class)t).extensionLevel;
+						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 8);	// jump to end
+						createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+						createItrapSimm(ppcTwi, TOifnequal, res.regGPR1, 0);	// is not array?
+						createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+						createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
+						loadConstantAndFixup(res.regGPR1, t);	// addr of type
+						createItrap(ppcTw, TOifnequal, res.regGPR1, 0);
+					}
 				} else {	// object is an array
 					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
 						createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
@@ -2163,10 +2179,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrDrAd(ppcLwz, 0, sReg1, -4);	// get tag
 						loadConstantAndFixup(res.regGPR1, t);	// addr of type
 						createItrap(ppcTw, TOifnequal, res.regGPR1, 0);
-					} else {	// array of regular class
+					} else {	// array of regular classes or interfaces
 						int nofDim = ((Array)t).dimension;
 						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
-						offset = ((Class)(((Array)t).componentType)).extensionLevel;
 						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
 							createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
 							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 14);	// jump to end
@@ -2186,23 +2201,47 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 							createICRFrAsimm(ppcCmpi, CRF0, res.regGPR1, nofDim);
 							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 2);	// jump to end	
 							createItrap(ppcTw, TOalways, 0, 0);
-						} else {
-							createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
-							createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 13);	// jump to end
-							createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-							createItrapSimm(ppcTwi, TOifequal, res.regGPR1, 0);	// is array?
-							
-							createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-							createIrDrAd(ppcLwz, 0, res.regGPR1, 0);	
-							createIrArSSHMBME(ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
-							createItrapSimm(ppcTwi, TOifnequal, 0, nofDim);	// check dim
+						} else {	// array of regular classes or interfaces but not java/lang/Object
+							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
+								createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 16);	// jump to end
+								createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+								createItrapSimm(ppcTwi, TOifequal, res.regGPR1, 0);	// is array?
 
-							createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
-							createItrapSimm(ppcTwi, TOifequal, res.regGPR1, 0);	// is 0?
+								createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+								createIrDrAd(ppcLwz, 0, res.regGPR1, 0);	
+								createIrArSSHMBME(ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
+								createItrapSimm(ppcTwi, TOifnequal, 0, nofDim);	// check dim
 
-							createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-							loadConstantAndFixup(res.regGPR1, compType);	// addr of component type
-							createItrap(ppcTw, TOifnequal, res.regGPR1, 0);
+								createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
+								createItrapSimm(ppcTwi, TOifequal, res.regGPR1, 0);	// is 0?
+								createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
+								createIrDrArB(ppcAdd, res.regGPR1, res.regGPR1, 0);
+								// label 1
+								createIrDrAd(ppcLhzu, 0, res.regGPR1, 0);
+								createICRFrAsimm(ppcCmpi, CRF0, 0, ((Class)compType).chkId);	// is interface chkId
+								createIrDrAsimm(ppcAddi, res.regGPR1, res.regGPR1, 2);
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 1			
+								createItrapSimm(ppcTwi, TOifnequal, 0, ((Class)compType).chkId);	// chkId is not equal
+							} else {	// array of regular classes
+								offset = ((Class)(((Array)t).componentType)).extensionLevel;
+								createICRFrAsimm(ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 13);	// jump to end
+								createIrDrAd(ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
+								createItrapSimm(ppcTwi, TOifequal, res.regGPR1, 0);	// is array?
+
+								createIrDrAd(ppcLwz, res.regGPR1, sReg1, -4);	// get tag
+								createIrDrAd(ppcLwz, 0, res.regGPR1, 0);	
+								createIrArSSHMBME(ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
+								createItrapSimm(ppcTwi, TOifnequal, 0, nofDim);	// check dim
+
+								createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
+								createItrapSimm(ppcTwi, TOifequal, res.regGPR1, 0);	// is 0?
+
+								createIrDrAd(ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
+								loadConstantAndFixup(res.regGPR1, compType);	// addr of component type
+								createItrap(ppcTw, TOifnequal, res.regGPR1, 0);
+							}
 						}
 					}
 				}
@@ -3491,14 +3530,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			m.machineCode.iCount = 0;
 			m.machineCode.createIrArSuimm(ppcOri, regAux3, regAux1, 0xffff);	// interface id
 			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
-			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset);	// set to address before first interface 
+			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset);	// set to address before first interface 
 			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);	// set to next interface
 			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, 0);	// get interface
 			m.machineCode.createICRFrArB(ppcCmpl, CRF0, 0, regAux3);
 			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);;
 			m.machineCode.createIrArS(ppcExtsh, 0, 0);
-			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
-			m.machineCode.createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
+			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method offset
+			m.machineCode.createIrDrArB(ppcAdd, regAux1, regAux1, 0);	
 			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// reload tag
 			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
 			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);

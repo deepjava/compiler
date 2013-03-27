@@ -20,7 +20,7 @@ public class ArrayInstanceTest {
 		Object a1 = new A[3];
 		Assert.assertTrue("checkType1", a1 instanceof A[]);
 		Assert.assertFalse("checkType2", a1 instanceof AA[]);
-//		Assert.assertFalse("checkType3", a1 instanceof IA[]);
+		Assert.assertFalse("checkType3", a1 instanceof IA[]);
 		Assert.assertFalse("checkType4", a1 instanceof B[]);
 		Assert.assertFalse("checkType5", a1 instanceof A[][]);
 		Assert.assertFalse("checkType6", a1 instanceof short[]);
@@ -32,7 +32,7 @@ public class ArrayInstanceTest {
 		a1 = new AA[3];
 		Assert.assertTrue("checkType11", a1 instanceof A[]);
 		Assert.assertTrue("checkType12", a1 instanceof AA[]);
-//		Assert.assertFalse("checkType13", a1 instanceof IA[]);
+		Assert.assertTrue("checkType13", a1 instanceof IA[]);
 		Assert.assertFalse("checkType14", a1 instanceof B[]);
 		Assert.assertFalse("checkType15", a1 instanceof A[][]);
 		Assert.assertFalse("checkType16", a1 instanceof short[]);
@@ -43,7 +43,7 @@ public class ArrayInstanceTest {
 		
 		a1 = new byte[4];
 		Assert.assertFalse("checkType31", a1 instanceof A[]);
-//		Assert.assertFalse("checkType32", a1 instanceof IA[]);
+		Assert.assertFalse("checkType32", a1 instanceof IA[]);
 		Assert.assertFalse("checkType33", a1 instanceof A[][]);
 		Assert.assertFalse("checkType34", a1 instanceof short[]);
 		Assert.assertFalse("checkType35", a1 instanceof short[][]);
@@ -63,7 +63,7 @@ public class ArrayInstanceTest {
 
 		Assert.assertTrue("checkType1", a1 instanceof A[][]);
 		Assert.assertFalse("checkType2", a1 instanceof AA[][]);
-//		Assert.assertFalse("checkType3", a1 instanceof IA[][]);
+		Assert.assertFalse("checkType3", a1 instanceof IA[][]);
 		Assert.assertFalse("checkType4", a1 instanceof B[][]);
 		Assert.assertFalse("checkType5", a1 instanceof A[]);
 		Assert.assertFalse("checkType6", a1 instanceof short[]);
@@ -76,7 +76,7 @@ public class ArrayInstanceTest {
 		a1 = new AA[3][2];
 		Assert.assertTrue("checkType21", a1 instanceof A[][]);
 		Assert.assertTrue("checkType22", a1 instanceof AA[][]);
-//		Assert.assertFalse("checkType23", a1 instanceof IA[][]);
+		Assert.assertTrue("checkType23", a1 instanceof IA[][]);
 		Assert.assertFalse("checkType24", a1 instanceof B[][]);
 		Assert.assertFalse("checkType25", a1 instanceof AA[]);
 		Assert.assertFalse("checkType26", a1 instanceof short[]);
@@ -87,11 +87,16 @@ public class ArrayInstanceTest {
 		Assert.assertFalse("checkType31", a1 instanceof Object[][][]);
 		
 		a1 = new IA[3][2];
-//
+		Assert.assertFalse("checkType41", a1 instanceof A[][]);
+		Assert.assertFalse("checkType42", a1 instanceof AA[][]);
+		Assert.assertTrue("checkType43", a1 instanceof IA[][]);
+		Assert.assertFalse("checkType44", a1 instanceof IB[][]);
+		Assert.assertFalse("checkType45", a1 instanceof IA[]);
+
 		
 		a1 = new byte[4][3];
 		Assert.assertFalse("checkType61", a1 instanceof A[][]);
-//		Assert.assertFalse("checkType62", a1 instanceof IA[][]);
+		Assert.assertFalse("checkType62", a1 instanceof IA[][]);
 		Assert.assertFalse("checkType63", a1 instanceof A[]);
 		Assert.assertFalse("checkType64", a1 instanceof short[]);
 		Assert.assertFalse("checkType65", a1 instanceof short[][]);
@@ -112,7 +117,7 @@ public class ArrayInstanceTest {
 
 		Assert.assertTrue("checkType1", a1 instanceof A[][][]);
 		Assert.assertFalse("checkType2", a1 instanceof AA[][][]);
-//		Assert.assertFalse("checkType3", a1 instanceof IA[][][]);
+		Assert.assertFalse("checkType3", a1 instanceof IA[][][]);
 		Assert.assertFalse("checkType4", a1 instanceof B[][][]);
 		Assert.assertFalse("checkType5", a1 instanceof A[][]);
 		Assert.assertFalse("checkType6", a1 instanceof short[][]);
@@ -126,7 +131,7 @@ public class ArrayInstanceTest {
 		a1 = new AA[3][2][2];
 		Assert.assertTrue("checkType21", a1 instanceof A[][][]);
 		Assert.assertTrue("checkType22", a1 instanceof AA[][][]);
-//		Assert.assertFalse("checkType23", a1 instanceof IA[][][);
+		Assert.assertTrue("checkType23", a1 instanceof IA[][][]);
 		Assert.assertFalse("checkType24", a1 instanceof B[][][]);
 		Assert.assertFalse("checkType25", a1 instanceof AA[][]);
 		Assert.assertFalse("checkType26", a1 instanceof short[][]);
@@ -136,13 +141,22 @@ public class ArrayInstanceTest {
 		Assert.assertTrue("checkType30", a1 instanceof Object[][]);
 		Assert.assertTrue("checkType31", a1 instanceof Object[][][]);
 		Assert.assertFalse("checkType32", a1 instanceof Object[][][][]);
+		Assert.assertFalse("checkType33", a1 instanceof IA[][]);
+		Assert.assertFalse("checkType34", a1 instanceof IA[][][][]);
+		Assert.assertFalse("checkType35", a1 instanceof IA);
 		
 		a1 = new IA[3][2][2];
-//
+		Assert.assertFalse("checkType41", a1 instanceof A[][][]);
+		Assert.assertTrue("checkType42", a1 instanceof IA[][][]);
+		Assert.assertFalse("checkType43", a1 instanceof A[][]);
+		Assert.assertFalse("checkType44", a1 instanceof IB[][][]);
+		Assert.assertFalse("checkType45", a1 instanceof B[][][]);
+		Assert.assertFalse("checkType46", a1 instanceof AA[][][]);
+
 		
 		a1 = new byte[4][3][2];
 		Assert.assertFalse("checkType61", a1 instanceof A[][][]);
-//		Assert.assertFalse("checkType62", a1 instanceof IA[][][);
+		Assert.assertFalse("checkType62", a1 instanceof IA[][][]);
 		Assert.assertFalse("checkType63", a1 instanceof A[][]);
 		Assert.assertFalse("checkType64", a1 instanceof short[][]);
 		Assert.assertFalse("checkType65", a1 instanceof short[][][]);

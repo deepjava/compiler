@@ -53,7 +53,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	public static final int tdInstPtrTableOffset = tdClassNameAddrOffset + 4;
 	public static final int tdIntfTypeChkTableOffset = tdInstPtrTableOffset + 4;
 	public static final int tdBaseClass0Offset = tdIntfTypeChkTableOffset + 4;
-	public static int typeTableLength = -1;
+	public static int typeTableLength = -1;	// size of type table in bytes
 	
 	// String pool:
 	public static final int stringHeaderConstSize = 3 * 4;
@@ -207,24 +207,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			
 			assert getBlockSize(clazz.typeDescriptor) == tdBaseClass0Offset : "type descriptor not properly built";
 
-			// Type descriptor: create type table (base classes)
-			if(dbg) vrb.println("    - Inserting base classes:");
-			Class baseClass = (Class)clazz.type;
-			AddressEntry typeTable = new AddressEntry(clazz);
-			Item typeTableHead = typeTable;
-			for (int i = 0; i < Class.maxExtensionLevelStdClasses; i++) {
-				if (baseClass != null) {
-					if (dbg) vrb.println("      > " + baseClass.name);
-					typeTableHead = typeTableHead.insertHead(new AddressEntry(baseClass));
-					baseClass = (Class)baseClass.type;
-				} else {
-					if (dbg) vrb.println("      > 0 (padding)");
-					typeTable.appendTail(new FixedValueEntry("padding", 0));
-				}
-			}
-			typeTableLength = getBlockSize(typeTableHead);
-			clazz.typeDescriptor.appendTail(typeTableHead);
-
 			// Type descriptor: interface type check table
 			if (dbg) vrb.println("   Creating interface type check table");
 			FixedValueEntry intfTypeChkTable = null;
@@ -275,16 +257,19 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			intfTypeChkTableOffset.setValue(offset);
 
 		} else { // standard class
-			if(dbg) {
+//			System.out.println("welche interfaces werden von dieser klasse impl?");
+//			if (clazz.intfCallList != null) clazz.intfCallList.print();
+			if (dbg) {
 				vrb.println("=== Extended Method Table ===");
-				for(int i = 0; i < clazz.extMethTable.length; i++) {
-					vrb.println("[" + i + "] Name = " + clazz.extMethTable[i].name + " Index = " + Integer.toHexString(clazz.extMethTable[i].index));
+				for (int i = 0; i < clazz.methTable.length; i++) {
+					vrb.println(clazz.methTable[i].name);
+					vrb.println("[" + i + "] Name = " + clazz.methTable[i].name + " Index = " + Integer.toHexString(clazz.methTable[i].index));
 				}
 				vrb.println("=============================");
 			}
 
 			// Header
-			if(dbg) vrb.println("   Creating header");
+			if (dbg) vrb.println("   Creating header");
 			clazz.constantBlock = new FixedValueEntry("constBlockSize");
 			clazz.codeBase = new FixedValueEntry("codeBase");
 			clazz.constantBlock.appendTail(clazz.codeBase);
@@ -325,7 +310,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			// Type descriptor: create method table
 			if(dbg) vrb.println("    - Inserting method table:");
 			for(int i = 0; i < clazz.methTabLength; i++) {
-				typeDescriptorHead = typeDescriptorHead.insertHead(new AddressEntry(clazz.extMethTable[i])); 
+				typeDescriptorHead = typeDescriptorHead.insertHead(new AddressEntry(clazz.methTable[i])); 
 			}
 
 			// Type descriptor: insert class name address
@@ -363,29 +348,55 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			clazz.typeDescriptor.appendTail(typeTableHead);
 
 			// Type descriptor: add interface table for interface methods
-			if(clazz.extMethTable.length > clazz.methTabLength) {
-				if(dbg) vrb.println("    - Inserting interface table");
-				int counter = clazz.methTabLength;
-				if(dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: " + clazz.extMethTable[counter].name + " (Owner: " + clazz.extMethTable[counter].owner + ")");
-				AddressEntry interfaceTable = new AddressEntry(clazz.extMethTable[counter++]);
-				int id, bmo;
-				//vrb.println("      ==> ifaceTAbLength = " + clazz.ifaceTabLength + "; nofInterfaces = " + clazz.nofInterfaces);
+			InterfaceList list = clazz.intfCallList;
+			if (list != null) {
+				AddressEntry interfaceTable;				
+				if (list.length != 1 || (list.length == 1) && list.getFront().methTabLength != 1) {
+					if(dbg) vrb.print("    - Inserting interface table, length=");
+					int len = clazz.intfCallList.length;
+					if(dbg) vrb.println(len);
 
-				if (counter < clazz.extMethTable.length) {
-					do {
-						id = clazz.extMethTable[counter].index >>> 16;
-						bmo = clazz.extMethTable[counter].index & 0xFFFF;
-						if (bmo > clazz.methTabLength) bmo = 8 + typeTableLength + (clazz.nofInterfaces + bmo - clazz.methTabLength) * 4; 
-						// TODO @Martin: fix offset (only interfaces with methods should be honored) 
-						else bmo = tdMethTabOffset - bmo * 4;
-						if (dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: ID = " + id + "; bmo = " + bmo);
-						interfaceTable.appendTail(new InterfaceEntry(clazz.extMethTable[counter].owner.name, (short)id, (short)bmo));
-					} while ((clazz.extMethTable[counter++].index >>> 16) > 0);
-
-					while (counter < clazz.extMethTable.length) {
-						if (dbg) vrb.println("      + clazz.extMethTable[" + counter + "]: Method = " + clazz.extMethTable[counter].name);
-						interfaceTable.appendTail(new AddressEntry(clazz.extMethTable[counter++]));
+					interfaceTable = new AddressEntry(Method.getCompSpecSubroutine("imDelegIiMm"));
+					int n = 0;
+					while (n < len) {	// insert interfaces
+						Class intf = clazz.intfCallList.getInterfaceAt(n);
+						if(dbg) vrb.println("      > interface: " + intf.name);
+						int id = intf.index;
+						if (n == len - 1) id = 0;	// set id of last interface to 0
+						interfaceTable.appendTail(new InterfaceEntry(intf.name, (short)id, (short)0));
+						n++;
 					}
+					n = 0;
+					int bmo = tdBaseClass0Offset + typeTableLength + (len+1) * Linker32.slotSize;	// method offset from field "size"
+					while (n < len) {	// insert methods
+						Class intf = clazz.intfCallList.getInterfaceAt(n);
+						if(dbg) vrb.println("      methods for interface: " + intf.name);
+						InterfaceEntry ie = (InterfaceEntry)interfaceTable.getItemByName(intf.name);
+						ie.setBmo(bmo);	//correct method offset
+						Method intfMeth = (Method)intf.methods;
+						while (intfMeth != null) {
+							if ((intfMeth.accAndPropFlags & (1<<apfStatic)) == 0) {	// omit static methods in interfaces
+								if(dbg) vrb.println("        - " + intfMeth.name);
+								Method[] table = clazz.methTable;
+								int k = 0;
+								while (intfMeth.name != table[k].name || intfMeth.methDescriptor != table[k].methDescriptor) k++;
+								Method clsMeth = table[k];
+								assert clsMeth != null : "interface method not found in class method table";
+								interfaceTable.appendTail(new AddressEntry(clsMeth));
+								bmo += Linker32.slotSize;
+							}
+							intfMeth = (Method)intfMeth.next;
+						} 
+						n++;
+					}
+				} else {	// 1 interface with 1 method, insert method directly
+					Method[] table = clazz.methTable;
+					Method intfMeth = (Method)list.getFront().methods;
+					int k = 0;
+					while (intfMeth.name != table[k].name || intfMeth.methDescriptor != table[k].methDescriptor) k++;
+					Method clsMeth = table[k];
+					assert clsMeth != null : "interface method not found in class method table";
+					interfaceTable = new AddressEntry(clsMeth);
 				}
 
 				clazz.typeDescriptor.appendTail(interfaceTable);
@@ -394,7 +405,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			// Type descriptor: interface type check table
 			if (dbg) vrb.println("   Creating interface type check table");
 			FixedValueEntry intfTypeChkTable = null;
-			int len = clazz.intfTypeChkList.length;
+			int len = 0;
+			if (clazz.intfTypeChkList != null) len = clazz.intfTypeChkList.length;
 			if (len > 0) {
 				for (int n = 0; n < len; n += 2) {
 					Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
@@ -801,7 +813,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if (s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 			else {
 				if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, getBlockSize(a.typeDescriptor));
-				a.offset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
+				a.offset = roundUpToNextWord(s.getUsedSize());
 				s.addToUsedSize(getBlockSize(a.typeDescriptor));
 				a.segment = s;
 				if (dbg) vrb.println("    Segment for type descriptor: " + a.segment.getName());
@@ -820,15 +832,15 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			else {
 				int constBlockSize = intf.constantBlock.getValue();
 				if (s.subSegments != null) s = getFirstFittingSegment(s, atrConst, constBlockSize);
-				intf.offset = roundUpToNextWord(s.getUsedSize()); // TODO check if this is correct!!!
-				s.addToUsedSize(constBlockSize);
+				intf.constOffset = s.getUsedSize();
+				if (constBlockSize > 0) s.addToUsedSize(roundUpToNextWord(constBlockSize));
 				intf.constSegment = s;
 				if (dbg) vrb.println("    Segment for type descriptor: " + intf.constSegment.getName());
 			}	
 			intf = intf.nextTypeChkInterface;
 		}
 		
-		//Segment[] sysTabs = Configuration.getSysTabSegments(); // TODO @Martin: implement this for more than one system table!
+		//Segment[] sysTabs = Configuration.getSysTabSegments();
 		if (sysTabSegments != null && sysTabSegments.length > 0) {
 			for (int i = 0; i < sysTabSegments.length; i++) {
 				sysTabSegments[i].addToUsedSize(getBlockSize(systemTable)); 
@@ -877,9 +889,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 //		final boolean dbg = true;
 		if (dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for class \"" + clazz.name +"\":\n");
 		if ((clazz.accAndPropFlags & (1 << apfInterface)) != 0) {	// interface
-			int constBlockBase =  clazz.constSegment.getBaseAddress() + clazz.constOffset;
-//			int classDescriptorBase = constBlockBase + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
-
 			// type descriptor
 			clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + clazz.typeDescriptorOffset;
 
@@ -1097,7 +1106,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Class intf = Class.typeChkInterfaces;
 		while (intf != null) {
 			if (dbg) vrb.println("  Proceeding interface \"" + intf.name + "\":");
-			addTargetMemorySegment(new TargetMemorySegment(intf.constSegment, intf.constSegment.getBaseAddress() + intf.offset, intf.constantBlock));
+			addTargetMemorySegment(new TargetMemorySegment(intf.constSegment, intf.constSegment.getBaseAddress() + intf.constOffset, intf.constantBlock));
 			intf = intf.nextTypeChkInterface;
 		}
 				
@@ -1530,7 +1539,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Class intf = Class.typeChkInterfaces;
 		int ic = 0;
 		while (intf != null) {
-			vrb.println("INTERFACE: " + intf.name + " (#" + ic++ + ")");
+			vrb.println("INTERFACE: " + intf.name + " (#" + ic++ + ") (id=" + intf.index + " chkId="+ intf.chkId + ")");
 			vrb.println("Number of class methods:     " + intf.nofClassMethods);
 			vrb.println("Number of instance methods:  " + intf.nofInstMethods);
 			vrb.println("Number of class fields:      " + intf.nofClassFields);
