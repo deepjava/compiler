@@ -122,14 +122,14 @@ public class Launcher implements ICclassFileConsts {
 			if (dbg) vrb.println("[Launcher] creating constant block for interfaces:");
 			Class intf = Class.typeChkInterfaces;	// handle interfaces with type checks
 			while (intf != null) {
-				if(dbg) vrb.println("> Interface: " + intf.name);
-				if(dbg) vrb.println("  creating type descriptor");
+				if(dbg) vrb.println("> Interface: " + intf.name + " creating type descriptor");
 				Linker32.createConstantBlock(intf);
 				intf = intf.nextTypeChkInterface;
 			}
 			intf = Class.initClasses;	// handle interfaces with class constructor
 			while (intf != null) {
 				if (intf.constantBlock == null)	{ // not yet handled
+					if(dbg) vrb.println("> Interface: " + intf.name + " creating type descriptor");
 					Linker32.createConstantBlock(intf);
 				}
 				intf = intf.nextClass;
@@ -190,21 +190,24 @@ public class Launcher implements ICclassFileConsts {
 			}
 			
 			// handle interfaces with class constructor, translating code , calculating code size
-			intf = Class.initClasses;	
-			while (intf != null) {
-				method = (Method)intf.methods;
-				while (method != null && reporter.nofErrors <= 0) {
-					if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods class constructors
-						if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-						method.cfg = new CFG(method);
-						method.ssa = new SSA(method.cfg);
-						method.machineCode = new CodeGen(method.ssa); 
+			Class cls = Class.initClasses;	
+			while (cls != null) {
+				if ((cls.accAndPropFlags & (1<<apfInterface)) != 0) {
+					method = (Method)cls.methods;
+					while (method != null && reporter.nofErrors <= 0) {
+						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods class constructors
+							if (true) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+							method.cfg = new CFG(method);
+							method.ssa = new SSA(method.cfg);
+							method.machineCode = new CodeGen(method.ssa); 
+						}
+						method = (Method)method.next;
 					}
-					method = (Method)method.next;
+					// calculate required code size
+					Linker32.calculateCodeSizeAndMethodOffsets(cls);
+					if (true) vrb.println("    > Interface: " + cls.name + " calculating code size");
 				}
-				// calculate required code size
-				Linker32.calculateCodeSizeAndMethodOffsets(intf);
-				intf = intf.nextClass;
+				cls = cls.nextClass;
 			}
 
 

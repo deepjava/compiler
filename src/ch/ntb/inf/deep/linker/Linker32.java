@@ -1066,7 +1066,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void generateTargetImage() {
-		
 		if(dbg) vrb.println("[LINKER] START: Generating target image:\n");
 		
 		// handle std classes
@@ -1081,6 +1080,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				while (m != null) {
 					if (m.machineCode != null) {
 						if (dbg) vrb.println("         > Method \"" + m.name + "\":");
+						assert m.address != -1;
 						addTargetMemorySegment(new TargetMemorySegment(c.codeSegment, m.address, m.machineCode.instructions, m.machineCode.iCount));
 					}
 					m = (Method)m.next;
@@ -1088,6 +1088,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				
 				// consts
 				if(dbg) vrb.println("    2) Constantblock:");
+				assert c.constSegment.getBaseAddress() + c.constOffset != -1;
 				addTargetMemorySegment(new TargetMemorySegment(c.constSegment, c.constSegment.getBaseAddress() + c.constOffset, c.constantBlock));
 				
 				c = c.nextExtLevelClass;
@@ -1098,6 +1099,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Array a = Class.arrayClasses;
 		while (a != null) {
 			if (dbg) vrb.println("  Proceeding array \"" + a.name + "\":");
+			assert a.segment.getBaseAddress() + a.offset != -1;
 			addTargetMemorySegment(new TargetMemorySegment(a.segment, a.segment.getBaseAddress() + a.offset, a.typeDescriptor));
 			a = a.nextArray;
 		}
@@ -1106,6 +1108,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		Class intf = Class.typeChkInterfaces;
 		while (intf != null) {
 			if (dbg) vrb.println("  Proceeding interface \"" + intf.name + "\":");
+			assert intf.constSegment.getBaseAddress() + intf.constOffset != -1;
 			addTargetMemorySegment(new TargetMemorySegment(intf.constSegment, intf.constSegment.getBaseAddress() + intf.constOffset, intf.constantBlock));
 			intf = intf.nextTypeChkInterface;
 		}
@@ -1331,22 +1334,20 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	private static void addTargetMemorySegment(TargetMemorySegment tms) {
-		if(targetImage == null) {
+		if (targetImage == null) {
 			if(dbg) vrb.println("      >>>> Adding first target memory segment (#" + tms.id + ")");
 			targetImage = tms;
-		}
-		else {
+		} else {
 			TargetMemorySegment current = targetImage;
-			if(current.startAddress < tms.startAddress) {
-				while(current.next != null && tms.startAddress > current.next.startAddress) {
+			if (current.startAddress < tms.startAddress) {
+				while (current.next != null && tms.startAddress > current.next.startAddress) {
 					current = current.next;
 				}
-				if(dbg) vrb.println("      >>>> Inserting target memory segment #" + tms.id + " after target memory segment #" + current.id);
+				if (dbg) vrb.println("      >>>> Inserting target memory segment #" + tms.id + " after target memory segment #" + current.id);
 				tms.next = current.next;
 				current.next = tms;
-			}
-			else {
-				if(dbg) vrb.println("      >>>> Inserting target memory segment #" + tms.id + " before first target memory segment segment");
+			} else {
+				if (dbg) vrb.println("      >>>> Inserting target memory segment #" + tms.id + " before first target memory segment segment");
 				tms.next = current;
 				targetImage = tms;
 			}

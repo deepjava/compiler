@@ -40,6 +40,7 @@ public class TargetMemorySegment {
 		this.id = tmsCounter++;
 		this.segment = segment;
 		this.startAddress = startAddress;
+		assert startAddress != -1;
 		this.data = data;
 	}
 	
@@ -51,6 +52,7 @@ public class TargetMemorySegment {
 		this.id = tmsCounter++;
 		this.segment = segment;
 		this.startAddress = startAddress;
+		assert startAddress != -1;
 		this.data = new int[length];
 		for(int i = 0; i < length; i++) {
 			this.data[i] = data[i];
@@ -61,6 +63,7 @@ public class TargetMemorySegment {
 		this.id = tmsCounter++;
 		this.segment = segment;
 		this.startAddress = startAddress;
+		assert startAddress != -1;
 		this.data = new int[Linker32.getBlockSize(item) / 4];
 		int offset = 0;
 		while (item != null) {
@@ -78,42 +81,13 @@ public class TargetMemorySegment {
 				addr >= this.startAddress && 
 				addr + length * 4 <= this.startAddress + this.data.length * 4) {
 			
-			for(int i = 0; i < length; i++) {
-				//if(addr == 0x0 || addr == 0x800000)StdStreams.vrb.println("  >>> Writing 0x" + Integer.toHexString(d[i]) + " to 0x" + Integer.toHexString(addr + i * 4) + " (" + ((addr - this.startAddress) / 4 + i) + ")");
-				this.data[(addr - this.startAddress) / 4 + i] = d[i];
-			}
-		}
-		else { // TODO @Martin: remove all debung outputs!
-			StdStreams.vrb.println("          ++++++++++ ERROR ++++++++++");
-			StdStreams.vrb.println("            > Cound not add the data to the target memory segment.");
-			StdStreams.vrb.print("            > The error was: ");
-			if(d == null) StdStreams.vrb.println("the given data array (d) was null!");
-			else if(d.length <= 0 || length <= 0) StdStreams.vrb.println("the array length or the given length was zero!");
-			else if(addr < this.startAddress || addr + length * 4 > this.startAddress + this.data.length * 4) StdStreams.vrb.println("out of range!");
-			else if(length > d.length) StdStreams.vrb.println("length > d.length");
-			else StdStreams.vrb.println("<unknown>");
-			StdStreams.vrb.println("              Start address of tms: 0x" + Integer.toHexString(this.startAddress));
-			StdStreams.vrb.println("              End address of tms: 0x" + Integer.toHexString((this.startAddress + this.data.length * 4)));
-			StdStreams.vrb.println("              Address for inserting data: 0x" + Integer.toHexString(addr));
-			StdStreams.vrb.println("              Size of the data to insert: " + d.length * 4 + " byte (0x" + Integer.toHexString(d.length * 4) + " byte)");
-			
+			for(int i = 0; i < length; i++) this.data[(addr - this.startAddress) / 4 + i] = d[i];
 		}
 	}
 	
 	public void addData(int addr, int[] d) {
 		addData(addr, d, d.length);
 	}
-	
-//	public void addData(int addr, BlockItem item) {
-//		int offset = 0;
-//		while(item != null) {
-//		//	System.out.println(">>>>>> Inserting BlockItem: " + item.name);
-//		//	if(addr + offset < 0x60 | addr + offset == 0x800000) StdStreams.vrb.println("++++++ Written to " + addr + "++++++");
-//			item.insertIntoArray(data, addr - this.startAddress + offset);
-//			offset += item.getItemSize();
-//			item = (BlockItem)item.next;
-//		}
-//	}
 	
 	public String toString() {
 		StringBuffer sb = new StringBuffer("Target Memory Segment #" + this.id + ":\n  Base Address: 0x" + Integer.toHexString(startAddress) + "\n  Size: " + data.length * 4 + " byte\n  Content:\n");
