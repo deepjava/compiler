@@ -1091,7 +1091,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void updateSystemTable() {
-		boolean dbg = true;
 		if (dbg) vrb.println("[LINKER] START: Updating system table\n");
 		
 		// handle std classes
