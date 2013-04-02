@@ -23,18 +23,18 @@ package ch.ntb.inf.deep.linker;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.strings.HString;
 
-public class ConstantBlockEntry extends ConstBlkEntry {
+public class SysTabEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
 	Class clazz;
 	
-	public ConstantBlockEntry(Class clazz) {
+	public SysTabEntry(Class clazz) {
 		this.clazz = clazz;
 		this.name = clazz.name;
 	}
 	
-	public ConstantBlockEntry(String prefix, Class clazz) {
+	public SysTabEntry(String prefix, Class clazz) {
 		this.clazz = clazz;
 		this.name = HString.getRegisteredHString(prefix + clazz.name);
 	}

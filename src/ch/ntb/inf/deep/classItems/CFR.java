@@ -85,7 +85,6 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		Class.extLevelOrdClasses = new Class[Class.maxExtensionLevelStdClasses+1];
 		Class.extLevelOrdInterfaces = new Class[Class.maxExtensionLevelInterfaces+1];
 		Class.arrayClasses = null;
-		Class.typeChkInterfaces = null;
 		
 		while (refType != null){
 			refType.accAndPropFlags &= ~(1<<dpfClassMark); // clear mark
@@ -122,11 +121,11 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 						Class compType = (Class)arr.componentType;
 						compType.accAndPropFlags |= (1<<dpfTypeTest);	// set flag in component type 
 						// add to list if not already present
-						Class intf = Class.typeChkInterfaces;
-						while (intf != null && intf != compType) intf = intf.nextTypeChkInterface;
+						Class intf = Class.constBlockInterfaces;
+						while (intf != null && intf != compType) intf = intf.nextInterface;
 						if (intf == null) {
-							compType.nextTypeChkInterface = Class.typeChkInterfaces; 
-							Class.typeChkInterfaces = compType;
+							compType.nextInterface = Class.constBlockInterfaces; 
+							Class.constBlockInterfaces = compType;
 						}
 					}
 				}
@@ -193,7 +192,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		if (dbg) Class.printIntfCallMethods();
 		if (dbg) Class.printInterfaces();
 		if (dbg) Class.printArrays();
-		if (dbg) Class.printTypeChkInterfaces();
+		if (dbg) Class.printConstBlockInterfaces();
 		
 		Class.releaseLoadingResources();
 		log.print("Loading class files ");
@@ -216,6 +215,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		Class.initClassesTail = null; Class.nonInitClassesTail = null;
 		Class.currInterfaceId = 1;
 		Class.currInterfaceChkId = 1;
+		Class.constBlockInterfaces = null;
 
 		Type.setUpBaseTypeTable();
 		Type.setAttributeTable(Item.stab);

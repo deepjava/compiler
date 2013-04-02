@@ -310,10 +310,10 @@ public class InterfaceTest {
 	@Test
 	// tests the class constructor of an interface
 	public static void testInterfaceConstructor(){
-//		Object cls = new CXexA();
-//		int a = ((CXexA)cls).ima11();
-//		Object o = ((CXexA)cls).cmx11();
-//		Assert.assertTrue("test1", o != null);
+		Object cls = new CXexA();
+		int a = ((CXexA)cls).ima11();
+		Object o = ((CXexA)cls).cmx11();
+		Assert.assertTrue("test1", o != null);
 
 		CmdTransmitter.sendDone();		
 	}

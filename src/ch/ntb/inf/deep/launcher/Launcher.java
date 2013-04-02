@@ -120,21 +120,13 @@ public class Launcher implements ICclassFileConsts {
 			
 			// proceeding interfaces, creating constant block 
 			if (dbg) vrb.println("[Launcher] creating constant block for interfaces:");
-			Class intf = Class.typeChkInterfaces;	// handle interfaces with type checks
+			Class intf = Class.constBlockInterfaces;	// handle interfaces list
 			while (intf != null) {
 				if(dbg) vrb.println("> Interface: " + intf.name + " creating type descriptor");
 				Linker32.createConstantBlock(intf);
-				intf = intf.nextTypeChkInterface;
+				intf = intf.nextInterface;
 			}
-			intf = Class.initClasses;	// handle interfaces with class constructor
-			while (intf != null) {
-				if (intf.constantBlock == null)	{ // not yet handled
-					if(dbg) vrb.println("> Interface: " + intf.name + " creating type descriptor");
-					Linker32.createConstantBlock(intf);
-				}
-				intf = intf.nextClass;
-			}
-			
+
 			// Loop One: proceeding standard classes, creating constant block, translating code , calculating code size
 			if (dbg) vrb.println("[Launcher] (loop one) proceeding classes:");
 			if (reporter.nofErrors <= 0) {
@@ -190,26 +182,23 @@ public class Launcher implements ICclassFileConsts {
 			}
 			
 			// handle interfaces with class constructor, translating code , calculating code size
-			Class cls = Class.initClasses;	
-			while (cls != null) {
-				if ((cls.accAndPropFlags & (1<<apfInterface)) != 0) {
-					method = (Method)cls.methods;
-					while (method != null && reporter.nofErrors <= 0) {
-						if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods class constructors
-							if (true) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-							method.cfg = new CFG(method);
-							method.ssa = new SSA(method.cfg);
-							method.machineCode = new CodeGen(method.ssa); 
-						}
-						method = (Method)method.next;
+			intf = Class.constBlockInterfaces;	
+			while (intf != null) {
+				method = (Method)intf.methods;
+				while (method != null && reporter.nofErrors <= 0) {
+					if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only with class constructors
+						if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+						method.cfg = new CFG(method);
+						method.ssa = new SSA(method.cfg);
+						method.machineCode = new CodeGen(method.ssa); 
 					}
-					// calculate required code size
-					Linker32.calculateCodeSizeAndMethodOffsets(cls);
-					if (true) vrb.println("    > Interface: " + cls.name + " calculating code size");
+					method = (Method)method.next;
 				}
-				cls = cls.nextClass;
+				// calculate required code size
+				Linker32.calculateCodeSizeAndMethodOffsets(intf);
+				if (dbg) vrb.println("    > Interface: " + intf.name + " calculating code size");
+				intf = intf.nextInterface;
 			}
-
 
 			// handle compiler specific methods
 			CodeGen.generateCompSpecSubroutines();
@@ -236,12 +225,12 @@ public class Launcher implements ICclassFileConsts {
 			
 			// calculate absolute addresses for interfaces
 			if(dbg) vrb.println("[Launcher] calculate absolute addresses for interfaces:");
-			intf = Class.typeChkInterfaces;
+			intf = Class.constBlockInterfaces;
 			while (intf != null && reporter.nofErrors <= 0) {
 				if (dbg) vrb.println("> Interface: " + intf.name);
 				if (dbg) vrb.println("  calculating absolute addresses");
 				Linker32.calculateAbsoluteAddresses(intf);
-				intf = intf.nextTypeChkInterface;
+				intf = intf.nextInterface;
 			}
 			
 			// Loop Two: proceeding std classes, calculate absolute addresses
@@ -286,11 +275,8 @@ public class Launcher implements ICclassFileConsts {
 						while (method != null && reporter.nofErrors <= 0) {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-	
-								// Code generator: fix up
 								if (dbg) vrb.println("      doing fixups");
 								method.machineCode.doFixups();
-								//if(dbg) vrb.println(method.machineCode.toString());
 							}
 							method = (Method)method.next;
 						}
@@ -299,6 +285,25 @@ public class Launcher implements ICclassFileConsts {
 					}
 				}
 			}
+
+			// proceeding interfaces, updating constant blocks, method fix ups
+			if(dbg) vrb.println("[Launcher] (loop three) proceeding interfaces:");
+			intf = Class.constBlockInterfaces;
+			while (intf != null && reporter.nofErrors <= 0) {
+				if (dbg) vrb.println("> Interface: " + intf.name);
+				Linker32.updateConstantBlock(intf);
+				method = (Method)intf.methods;
+				while (method != null && reporter.nofErrors <= 0) {
+					if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+						if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+						if (dbg) vrb.println("      doing fixups");
+						method.machineCode.doFixups();
+					}
+					method = (Method)method.next;
+				}
+				intf = intf.nextInterface;
+			}
+			
 
 			// handle compiler specific methods
 			Method m = Method.compSpecSubroutines;	// Code generator: fix up
@@ -309,7 +314,7 @@ public class Launcher implements ICclassFileConsts {
 				m = (Method)m.next;
 			}
 
-			// Linker: update system table
+			// Linker: update system table, determine size of code
 			if (reporter.nofErrors <= 0) {
 				Linker32.updateSystemTable();
 			}
@@ -485,7 +490,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	protected static void saveCommandTableToFile(String fileName) {
-		if(reporter.nofErrors <= 0){
+		if (reporter.nofErrors <= 0){
 			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));
 			path.mkdirs(); // create directories if not existing
 			try {

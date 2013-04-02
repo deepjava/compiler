@@ -27,7 +27,7 @@ public class RefType extends Type {
 	public static RefType refTypeList, refTypeListTail;	// objects of reference type {(Std-)Class, (Interface-)Class, (Array-)Class, (Enum-)Class, (EnumArray-)Class}
 	public static int nofRefTypes;	// total number of objects of reference type
 
-	public Item methods;	// list with all methods
+	public Item methods;	// list with all methods, methods are chained, class methods followed by instance methods
 
 	public int classFieldsSize; // size of all class fields on the target, rounded to the next multiple of "fieldSizeUnit" (in bytes)
 	public int objectSize;	// size of object of this type (in bytes)

@@ -44,7 +44,9 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	public static Class[] extLevelOrdClasses, extLevelOrdInterfaces;	// all classes and interfaces are linked in lists according to their extension level
 //	private static Class enums, enumArrays;
 	public static Array arrayClasses;	// array classes 
-	public static Class typeChkInterfaces;	// interfaces which are used as array component and whose type is checked for 
+	public static Class constBlockInterfaces;	// interfaces which need a constant block and type descriptor
+												// - are used as array component and whose type is checked for or (2)
+												// - have a class constructor (clinit)
 	public static Class[] rootClasses;	// contains all root classes
 	public static int nofRootClasses;	// number of root classes
 
@@ -61,13 +63,13 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	//--- instance fields
 	public Class nextClass;	// to build lists with initClasses and nonInitClasses
 	public Class nextExtLevelClass;	// to build lists with extLevelOrdClasses and extLevelOrdInterfaces
-	public Class nextTypeChkInterface;	// to build lists with interfaces which are used as array component and whose type is checked for
+	public Class nextInterface;	// to build lists with starting point "constBlockInterfaces", see above
 	public Item[] constPool; // reduced constant pool
 
-	public Method[] methTable; // standard class: table with all instance methods including superclasses, interface: table with all methods excluding superclass
-	public int nofMethods; // number of methods
+	public Method[] methTable; // standard class: table with all instance methods including superclasses, interface: table with all methods excluding superclasses and excluding class constructor (clinit)
+	public int nofMethods; // number of methods (class and instance methods)
 	public int nofInstMethods, nofClassMethods; // number of methods defined in this class file
-	public int methTabLength; // number of methods for the type descriptor
+	public int methTabLength; // number of methods for the type descriptor, length of methTable (see above)
 	
 	public int extensionLevel; // extensionLevel of class java.lang.Object is 0
 	public static short currInterfaceId;	// used to number interface id's
@@ -82,7 +84,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		
 	public Class[] interfaces;	// all interfaces this class implements, if this class is an interface array contains all superinterfaces
 	public int nofInterfaces;	// number of interfaces
-	public InterfaceList intfCallList; // contains all implemented interfaces including superinterfaces which type is checked for ??????????????????????????????????????????????????????????????
+	public InterfaceList intfCallList; // contains all implemented interfaces including superinterfaces which contain methods which are called by invokeinterface
 	public InterfaceList intfTypeChkList; // contains all implemented interfaces including superinterfaces which type is checked for
 
 	private Class[] imports;	// imported classes (StdClasses, Interfaces) which are found in the const pool of this class and which have a class file (no arrays)
@@ -167,7 +169,15 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			readMethods(clfInStrm, userReqAttributes);
 			readClassAttributes(clfInStrm, userReqAttributes);
 
-			if ((accAndPropFlags & (1<<apfEnum)) == 0) {	// if class or interface but not an enum
+//			if ((accAndPropFlags & (1<<apfEnum)) != 0) {
+//				System.out.println("ist enum");
+//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
+//			}
+//			if ((accAndPropFlags & (1<<apfEnumArray)) != 0) {
+//				System.out.println("ist enum");
+//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
+//			}
+//			if ((accAndPropFlags & (1<<apfEnum)) == 0) {	// if class or interface but not an enum
 				// analyse byte code
 				if (verbose) vrb.println(">analyseByteCode:");
 				Item item = methods;
@@ -182,7 +192,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				if (verbose) vrb.println("<analyseByteCode");
 
 				this.accAndPropFlags |= (1<<dpfClassLoaded);
-			}
+//			}
 
 			if (verbose) {
 				vrb.println("\n>dump of class: " + name);
@@ -213,7 +223,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 					}
 				} // else is array which has no class file
 			}
-		} else if (CFR.clsDbg) vrb.print("\tclass not loaded yet");
+		} else if (CFR.clsDbg) vrb.println("\tclass not loaded yet: " + name);
 		if (verbose) vrb.println("<loadClass");
 		if (CFR.clsDbg) vrb.println("class: " + name + " loaded");
 	}
@@ -876,7 +886,10 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			} else {	// interface
 				methTabLength = 0;
 				while (meth != null) {
-					meth.index = methTabLength++;
+					meth.index = -1;
+					if ((meth.accAndPropFlags & (1<<apfStatic)) == 0) {	// is not clinit
+						meth.index = methTabLength++;
+					}
 					meth = meth.next;
 				}
 			}
@@ -885,15 +898,18 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				for(int index = imports.length-1; index >= 0; index--) imports[index].fixupLoadedClasses();
 			}
 
-			// add classes with class constructor to list "initClasses"
+			// add classes or interfaces with class constructor to list "initClasses"
 			// add classes without class constructor and which are not interfaces to "nonInitClasses"
-			ClassMember clsInit = null;
 			if (methods != null) {
-				clsInit = (Method)methods.getItemByName(CFR.hsClassConstrName);
-				if (clsInit != null) {	// StdClass or Interface with class constructor
+				ClassMember clsInit = (Method)methods.getItemByName(CFR.hsClassConstrName);
+				if (clsInit != null) {	// std-class or interface with class constructor
 					if (initClassesTail == null ) initClasses = this; else initClassesTail.nextClass = this;
 					initClassesTail = this;
 					nofInitClasses++;
+					if ((accAndPropFlags & (1 << apfInterface)) != 0) {	// additionally add interface with class constructor to interface list
+						nextInterface = Class.constBlockInterfaces; 
+						Class.constBlockInterfaces = this;
+					}
 				} else if ((accAndPropFlags & 1<<apfInterface) == 0) {
 					if( nonInitClassesTail == null ) nonInitClasses = this; else nonInitClassesTail.nextClass = this;
 					nonInitClassesTail = this;
@@ -983,145 +999,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		}
 	}
 	
-	protected int createInterfaceIdsToRoot() {
-		assert (accAndPropFlags & (1<<apfInterface)) != 0;
-		if (index < 0) {
-			if (type != null && type.type != null) {	// this interface has a 
-				assert false; // kommt nie hierher, weil type fur alle Object ist und type.type == null
-				index = ((Class)type).createInterfaceIdsToRoot();
-//				type.accAndPropFlags |= (1<<dpfExtended);
-			} else
-				index = getNextInterfaceId();
-		} else {	// index != 0: index already defined
-			if ((accAndPropFlags & (1<<dpfExtended)) != 0 ) return getNextInterfaceId();
-		}
-		return index;
-	}
-
-	protected int cleanUpInterfaceMethsAndGetMethTabLength() {
-		if (extensionLevel > 0 && (accAndPropFlags & (1<<dpfClassMark)) == 0 ) {
-			assert (accAndPropFlags & (1<<apfInterface)) != 0;
-//vrb.printf(" >cleanUp: cls.name=%1$s, extLevel=%2$d, dflags=", name, extensionLevel); Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
-			accAndPropFlags |= (1<<dpfClassMark);	// set mark flag
-			methTabLength = ((Class)type).cleanUpInterfaceMethsAndGetMethTabLength();
-			if( extensionLevel == 1 ) methTabLength = 0;
-
-			Item meth = methods;
-			Item pred = null;
-			while(meth != null){
-				meth.index = methTabLength;
-//vrb.printf(" =cleanUp: cls.name=%1$s, extLevel=%2$d, nofInstMethods=%3$d, meth.name=%4$s, meth.index=%5$d\n", name, this.extensionLevel, nofInstMethods, meth.name, meth.index);
-				boolean remove = false;
-				Item item = null;
-				if( (meth.accAndPropFlags & (1<<dpfInterfCall)) == 0) remove = true;
-				else item = type.getMethod( meth.name, ((Method)meth).methDescriptor );
-				if( item != null | remove ){
-					nofInstMethods--;
-//vrb.printf(" -cleanUp: cls.name=%1$s, extLevel=%2$d, nofInstMethods=%3$d, meth.name=%4$s, meth.index=%5$d\n", name, this.extensionLevel, nofInstMethods, meth.name, meth.index);
-					if( pred == null ) methods = meth.next;  else  pred.next =  meth.next;
-				}else{
-					methTabLength++;
-					pred = meth;
-				}
-				meth = meth.next;
-			}
-//vrb.printf(" <cleanUp: name=%1$s, dflags=", name); Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'C'); vrb.println();
-		}
-		return methTabLength;
-	}
-
-	void getMethodTable( Method[] methTable, int[] levelIndices ){
-		// assert  index of static methods is less than 0,  formal: ((meth.accAndPropFlags & (1<<apfStatic)) != 0)  == (meth.index < 0)
-//vrb.printf(" >getMethodTable: name=%1$s, index=%2$d, extensionLevel=%3$d\n", name, index, extensionLevel);
-
-		Method meth = (Method)methods;
-		if (extensionLevel == 0) {
-			levelIndices[0] = 0;
-			while (meth != null) {
-				if (meth.index >= 0) methTable[ meth.index ] = meth; // just for instance methods
-				meth = (Method)meth.next;
-			}			
-		} else {// extensionLevel > 0
-			Class bType = (Class)type;
-			bType.getMethodTable( methTable, levelIndices );
-			while( meth != null ){
-				if( meth.index >= 0){// just for instance methods
-					if( meth.index < levelIndices[this.extensionLevel]){// replace this index by the index of this meth of the base class
-						Method baseMeth = (Method)bType.getMethod( meth.name, meth.methDescriptor );
-						meth.index = baseMeth.index;
-						meth.fixed = baseMeth.fixed;
-					}
-					methTable[ meth.index ] = meth;
-				}
-				meth = (Method)meth.next;
-			}						
-		}
-		levelIndices[this.extensionLevel+1] = this.methTabLength;
-
-//vrb.printf(" <getMethodTable: name=%1$s, index=%2$d\n", name, index);
-	}
-
-	private int getMethodPosition( Method[] methTable, int nofMethods, Method method ){
-		assert nofMethods >= 1 && method != null;
-		int pos = nofMethods;
-		HString name = method.name;
-		HString desc = method.methDescriptor;
-		do{
-			pos--;
-			if( pos < 0) break;
-			method = methTable[pos];
-		}while( name != method.name || desc != method.methDescriptor );
-		return pos;
-	}
-
-	void updateMethodList( Method[] methTable, int nofMethods ){
-		// assert  index of static methods is less than 0,  formal: ((meth.accAndPropFlags & (1<<apfStatic)) != 0)  == (meth.index < 0)
-//vrb.printf(" >updateMethodList: name=%1$s, index=%2$d, extensionLevel=%3$d, #meths=%4$d\n", name, index, extensionLevel, nofMethods);
-
-		if( type != null) ((Class)type).updateMethodList( methTable, nofMethods );
-		
-		Method meth = (Method)methods;
-		while( meth != null){
-//vrb.printf(" =updateML 10: meth.name=%1$s%2$s [%3$d], cls.name=%4$s\n", meth.name, meth.methDescriptor, meth.index, name );
-			if( meth.index >= 0 ){// for instance methods
-				int index = getMethodPosition( methTable, nofMethods,  meth );
-				assert index >= 0;
-				meth.index = index;
-				meth.fixed = methTable[ index ].fixed;
-			}
-			meth = (Method)meth.next;
-		}
-
-//vrb.printf(" <updateMethodList: name=%1$s, index=%2$d\n", name, index);
-	}
-
-	void getInterfaceMethodTable( Method[] methTable ){
-//vrb.printf(" >getInterfaceMethodTable: name=%1$s, index=%2$d, extensionLevel=%3$d\n", name, index, extensionLevel);
-
-		if( extensionLevel > 1 ) ((Class)type).getInterfaceMethodTable( methTable );
-		Method meth = (Method)methods;
-		while( meth != null ){
-			methTable[meth.index] = meth;
-			meth = (Method)meth.next;
-		}			
-//vrb.printf(" <getInterfaceMethodTable: name=%1$s, index=%2$d\n", name, index);
-	}
-
-	void collectCallInterfacesFromTopExtLevelTo0( InterfaceList interfList ){
-		assert (accAndPropFlags & (1<<apfInterface)) == 0; // object must not be an interface
-		Item item = this;
-		do {
-			Class cls = (Class)item;
-			if (cls.interfaces != null) {
-				for (int n = 0; n < cls.interfaces.length; n++) {
-					Class interf = cls.interfaces[n];
-					if ((interf.accAndPropFlags & (1<<dpfInterfCall)) != 0 ) interfList.appendSorted(interf);
-				}
-			}
-			item = item.type;
-		} while (item != null);
-	}
-
 	//--- debug primitives
 	public void printItemCategory() {
 		vrb.print("class");
@@ -1130,8 +1007,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	public static void printInitSequence() {
 		vrb.printf("\n--- init sequence: (#=%1$d)\n", nofInitClasses);
 		Class cls = initClasses;
-		while( cls != null ){
-			if( (cls.accAndPropFlags&(1<<apfInterface)) != 0) vrb.print("  interface");  else  vrb.print("  class    ");  
+		while (cls != null ){
+			if ((cls.accAndPropFlags&(1<<apfInterface)) != 0) vrb.print("  interface"); else vrb.print("  class    ");  
 			vrb.printf(" %1$s (extLevel=%2$d)\n", cls.name, cls.extensionLevel );
 			cls = cls.nextClass;
 		}
@@ -1139,7 +1016,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 
 	public static void printStdClasses() {
 		vrb.printf("\n--- standard classes: (#=%1$d)\n", nofStdClasses);
-		for( int exl = 0; exl <= maxExtensionLevelStdClasses; exl++){
+		for (int exl = 0; exl <= maxExtensionLevelStdClasses; exl++) {
 			if (extLevelOrdClasses == null) break;
 			Class cls = extLevelOrdClasses[exl];
 			while (cls != null) {
@@ -1183,12 +1060,12 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		}
 	}
 
-	public static void printTypeChkInterfaces() {
-		vrb.printf("\n--- type check interfaces\n");
-		Class cls = typeChkInterfaces;
+	public static void printConstBlockInterfaces() {
+		vrb.printf("\n--- interfaces with constant block\n");
+		Class cls = constBlockInterfaces;
 		while (cls != null) {
 			cls.print(1);
-			cls = cls.nextTypeChkInterface;
+			cls = cls.nextInterface;
 		}
 	}
 
