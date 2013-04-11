@@ -26,15 +26,12 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Dyadic extends SSAInstruction {
 	
-	public Dyadic(int opCode, SSAValue operand1, SSAValue operand2){
+	public Dyadic(int opCode, SSAValue operand1, SSAValue operand2, int bca) {
+		this.bca = bca;
 		ssaOpcode = opCode;
 		operands = new SSAValue[]{operand1,operand2};
 	}
 
-	public Dyadic(int opCode){
-		ssaOpcode = opCode;
-	}
-	
 	@Override
 	public SSAValue[] getOperands() {
 		return operands;
@@ -75,6 +72,7 @@ public class Dyadic extends SSAInstruction {
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 			if (result.regGPR2 != -1) sb.append(", regAux2=" + result.regGPR2);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 }

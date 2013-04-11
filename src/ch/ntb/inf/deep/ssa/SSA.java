@@ -23,9 +23,7 @@ package ch.ntb.inf.deep.ssa;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 /**
  * @author millischer
@@ -35,13 +33,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	private static boolean dbg = false;
 	public CFG cfg;
 	public int nofLoopheaders;
-	public boolean isParam[];
-	public int paramType[];
-	private LineNrSSAInstrPair[] lineNumTab; //entries are sorted by bca
+	public boolean isParam[]; // indicates which locals are passed as parameters
+	public int paramType[]; // types of those parameters
+	private LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
 	public int highestLineNr;
 	public int lowestLineNr;	
-	private int lineNumTabEntryCnt;
-	private int lineNumTabIndex;
 	private int returnCount;
 	private SSANode returnNodes[];
 	private SSANode loopHeaders[];
@@ -56,18 +52,13 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		returnNodes = new SSANode[4];
 		nofLoopheaders = 0;
 		nofSortedNodes = 0;	
-		lineNumTabEntryCnt = 0;
-		lineNumTabIndex = 0;
 		highestLineNr = 0;
 		lowestLineNr = 0;
 		
-		if(cfg.method.lineNrTab != null)
-			lineNumTab = new LineNrSSAInstrPair[cfg.method.lineNrTab.length];
-		
-		determineParam();
+		determineParam();	// fills parameter array
 		sortNodes((SSANode)cfg.rootNode);
 		
-		if(dbg){
+		if(dbg) {
 			StdStreams.vrb.print("Node order: ");
 			for(int i = 0; i < nofSortedNodes - 1; i++){
 				StdStreams.vrb.print("[" + sortedNodes[i].firstBCA + ":"+ sortedNodes[i].lastBCA + "], ");
@@ -76,7 +67,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			if(isParam.length > 0){
 				StdStreams.vrb.println("IsParam");
 				StdStreams.vrb.print("[ ");
-				for(int i = 0; i < isParam.length - 1; i++){
+				for (int i = 0; i < isParam.length - 1; i++) {
 					StdStreams.vrb.print(isParam[i] + ", ");
 				}
 				StdStreams.vrb.println(isParam[isParam.length - 1] + " ]");
@@ -85,16 +76,14 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		
 		determineStateArray();
-		sortLineNumTable();
 		
 		//if the method have multiple return statements, so check if in the last node all required parameters are loaded
-		if (returnCount > 1){
+		if (returnCount > 1) {
 			int nofParams = cfg.method.nofParams;
-			if(((cfg.method.accAndPropFlags & (1 << apfStatic)) == 0) && ((cfg.method.accAndPropFlags & (1 << dpfSysPrimitive)) == 0)){//method isn't static
-//			if ((cfg.method.accAndPropFlags & (1<<apfStatic)) == 0) {	// instance method
+			if ((cfg.method.accAndPropFlags & (1<<apfStatic)) == 0) {	// instance method
 				nofParams++;	// add parameter "this"
 			}
-			if(nofParams > 0){
+			if (nofParams > 0){
 				//search last node
 				SSANode last = null;
 				for (int i = 0;  i < returnCount; i++) {
@@ -119,7 +108,9 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			}
 		}
 		renumberInstructions(cfg);
-		if(dbg)print(0);
+		createLineNrSSATable();
+//		if (true) StdStreams.vrb.println(cfg.toString());
+//		if (true) StdStreams.vrb.println(toString());
 	}
 
 	public void determineStateArray() {		
@@ -177,22 +168,28 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 	}
 	
-	public SSANode[] getNodes(){
+	/**
+	 * @return array with all SSA nodes of this ssa 
+	 */
+	public SSANode[] getNodes() {
 		SSANode current = (SSANode) this.cfg.rootNode;
 		SSANode[] nodes = new SSANode[this.getNofNodes()];
-		for(int i = 0; i < nodes.length; i++){
+		for (int i = 0; i < nodes.length; i++){
 			nodes[i] = current;
 			current = (SSANode)current.next;
 		}
 		return nodes;		
 	}
 	
-	public int getNofNodes(){
+	/**
+	 * @return nof SSA nodes in this ssa
+	 */
+	public int getNofNodes() {
 		int count = 0;
-		SSANode current = (SSANode)this.cfg.rootNode;
+		CFGNode current = this.cfg.rootNode;
 		while(current != null){
 			count++;
-			current = (SSANode)current.next;
+			current = current.next;
 		}
 		return count;
 	}
@@ -218,13 +215,12 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	
 	
 	private void determineParam(){
-		int flags = cfg.method.accAndPropFlags;
 		String descriptor = cfg.method.methDescriptor.toString();
 		int index = cfg.method.maxStackSlots;
 		isParam = new boolean[cfg.method.maxStackSlots + cfg.method.maxLocals];
 		paramType = new int[cfg.method.maxStackSlots + cfg.method.maxLocals];
-		if(((flags & (1 << apfStatic)) == 0) && ((flags & (1 << dpfSysPrimitive)) == 0)){//method isn't static
-//		if ((flags & (1<<apfStatic)) == 0){	// instance method, add parameter "this"
+		int flags = cfg.method.accAndPropFlags;
+		if ((flags & (1<<apfStatic)) == 0) {	// instance method, add parameter "this"
 			isParam[index] = true;
 			paramType[index++] = SSAValue.tRef;
 		}
@@ -294,62 +290,6 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		return type;
 	}
 
-	/**
-	 * Prints out the SSA readable.
-	 * <p>
-	 * <b>Example:</b>
-	 * <p>
-	 * 
-	 * <pre>
-	 * SSA 4:
-	 *     SSANode0:
-	 *       EntrySet {[ , ], [ ,  ]}
-	 *          NoOpnd[sCloadConst]
-	 *          Dyadic[sCadd] ( Integer, Integer )
-	 *          Dyadic[sCadd] ( Integer, Integer )
-	 *          Dyadic[sCadd] ( Integer, Integer )
-	 *          Monadic[sCloadVar] ( Void )
-	 *          NoOpnd[sCloadConst]
-	 *          Dyadic[sCadd] ( Integer, Integer )
-	 *       ExitSet {[ , ], [ Integer (null), Integer (null) ]}
-	 * </pre>
-	 * 
-	 * @param level
-	 *            defines how much to indent
-	 */
-	public void print(int level) {
-		int count = 0;
-		SSANode node = (SSANode) this.cfg.rootNode;
-
-		for (int i = 0; i < level; i++)
-			StdStreams.vrb.print("\t");
-		StdStreams.vrb.println("SSA for Method: " + cfg.method.owner.name + "." + cfg.method.name + cfg.method.methDescriptor);
-		
-		SSA.renumberInstructions(cfg);
-
-		while (node != null) {
-			node.print(level + 1, count);
-			StdStreams.vrb.println("");
-			node = (SSANode) node.next;
-			count++;
-		}
-	}
-	
-
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		SSANode node = (SSANode) this.cfg.rootNode;
-		
-		sb.append("SSA for Method: " + cfg.method.owner.name + "." + cfg.method.name + cfg.method.methDescriptor + "\n");
-		SSA.renumberInstructions(cfg);
-		
-		while (node != null) {
-			sb.append(node.nodeToString() + "\n");
-			node = (SSANode) node.next;
-		}
-		return sb.toString();
-	}
-	
 	public void countAndMarkReturns(SSANode node){
 		if(returnCount >= returnNodes.length){
 			SSANode[]temp = new SSANode[2*returnNodes.length];
@@ -361,83 +301,68 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		returnNodes[returnCount++] = node; 
 	}
 	
-	protected void createLineNrPair(int bca, SSAInstruction instr){
-		if (lineNumTabEntryCnt == lineNumTab.length && lineNumTab[lineNumTabEntryCnt - 1].instr != null){
-			return;
-		}
-		
-		if (lineNumTabIndex < lineNumTab.length && bca == ((cfg.method.lineNrTab[lineNumTabIndex] >> 16) & 0xFFFF)){
-			lineNumTab[lineNumTabEntryCnt++] = new LineNrSSAInstrPair(bca, cfg.method.lineNrTab[lineNumTabIndex++] & 0xFFFF, instr);
-			setHighestLowestLineNr(cfg.method.lineNrTab[lineNumTabIndex-1] & 0xFFFF);
-		} else {
-			if (lineNumTabEntryCnt > 0 && lineNumTab[lineNumTabEntryCnt - 1].instr == null){
-				lineNumTab[lineNumTabEntryCnt - 1].instr = instr;
+
+	private void createLineNrSSATable() {
+		int[] origTab = cfg.method.lineNrTab;
+		if (origTab != null) lineNumTab = new LineNrSSAInstrPair[origTab.length];
+		SSANode node = (SSANode) cfg.rootNode;
+		for (int n = 0; n < origTab.length; n++) {
+			int pc = (origTab[n] >> 16) & 0xFFFF;
+			if (pc == 0) {
+				lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[0]);
+				setHighestLowestLineNr(origTab[n] & 0xFFFF);
+			} else {
+				while (node != null) {
+					int i = 0;
+					while (i < node.nofInstr && pc > node.instructions[i].bca) i++;
+					if (i < node.nofInstr) {
+						if (pc == node.instructions[i].bca)
+							lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
+						else if (i > 0 && pc == node.instructions[i-1].bca)
+							lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i-1]);
+						else 
+							lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
+						setHighestLowestLineNr(origTab[n] & 0xFFFF);
+						break;
+
+					}
+					node = (SSANode) node.next;
+				}
 			}
 		}
 	}
-	
-	public LineNrSSAInstrPair[] getLineNrTable(){
+
+	public LineNrSSAInstrPair[] getLineNrTable() {
 		return lineNumTab;
 	}
 	
-	public int getNumberOfLineNrEntries(){
-		return lineNumTabEntryCnt;
-	}
-	
-	protected void setLineNrTabIndex(int bca){
-		int i;
-		for(i = 0; i < cfg.method.lineNrTab.length && bca != ((cfg.method.lineNrTab[i] >> 16) & 0xFFFF); i++);
-		if(i < cfg.method.lineNrTab.length)
-			lineNumTabIndex = i;
-	}
-	
-	private void sortLineNumTable(){
-		addEntriesForEliminatedGotos();
-		if (lineNumTabEntryCnt == lineNumTab.length){
-			for (int i = 0; i < lineNumTab.length - 1; i++){
-				for (int j = i; j < lineNumTab.length - 1 && lineNumTab[j].bca > lineNumTab[j + 1].bca ; j++){
-					LineNrSSAInstrPair temp = lineNumTab[j + 1];
-					lineNumTab[j + 1] = lineNumTab[j];
-					lineNumTab[j] = temp;
-					i = 0; //check from start of array 
-				}
-			}
-		} else {
-			ErrorReporter.reporter.error(500," for method " + cfg.method.name.toString() + " in class " + cfg.method.owner.name.toString());
-		}
-	}
-	
-	private void addEntriesForEliminatedGotos(){
-		//search for missing entries
-		for (int j = 0; lineNumTabEntryCnt < lineNumTab.length && j < lineNumTab.length; j++){
-			int i = 0;
-			while (i < lineNumTabEntryCnt){
-				if (((cfg.method.lineNrTab[j]>>16) & 0xFFFF) == lineNumTab[i].bca)	break;
-				i++;
-			}
-			if (i >= lineNumTabEntryCnt && ((cfg.code[(cfg.method.lineNrTab[j] >> 16) & 0xFFFF] & 0xFF) == 0xa7 || (cfg.code[(cfg.method.lineNrTab[j] >> 16) & 0xFFFF] & 0xFF) == 0xc8)){ // it must be goto or goto_w
-				lineNumTab[lineNumTabEntryCnt++] = new LineNrSSAInstrPair((cfg.method.lineNrTab[j] >> 16) & 0xFFFF, cfg.method.lineNrTab[j] & 0xFFFF, null);
-				setHighestLowestLineNr(cfg.method.lineNrTab[j] & 0xFFFF);
-			}
-		}
-	}
-	
-	private void setHighestLowestLineNr(int lineNr){
-		if(highestLineNr < 1){ //no lineNr is set before
+	private void setHighestLowestLineNr(int lineNr) {
+		if (highestLineNr < 1) { // no lineNr is set before
 			highestLineNr = lineNr;
 			lowestLineNr = lineNr;
 		}
-		if(highestLineNr < lineNr){
-			highestLineNr = lineNr;
-		}
-		if(lineNr < lowestLineNr){
-			lowestLineNr = lineNr;
-		}		
+		if (highestLineNr < lineNr)	highestLineNr = lineNr;
+		if (lineNr < lowestLineNr) lowestLineNr = lineNr;	
 	}
 
 	public void printLineNumTab() {
-		StdStreams.vrb.println("lineNumTabEntryCnt=" + lineNumTabEntryCnt + " lineNumTab.length="+lineNumTab.length);
-		for (int i = 0; i < lineNumTab.length && lineNumTab[i]!=null; i++) StdStreams.vrb.println(lineNumTab[i].toString());
+		StdStreams.vrb.println("lineNumTab.length=" + lineNumTab.length);
+		for (int i = 0; i < lineNumTab.length && lineNumTab[i] != null; i++) StdStreams.vrb.println(lineNumTab[i].toString());
 	}
+
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		SSANode node = (SSANode) this.cfg.rootNode;
+		
+		sb.append("SSA for Method: " + cfg.method.owner.name + "." + cfg.method.name + cfg.method.methDescriptor + "\n");
+		SSA.renumberInstructions(cfg);
+		
+		while (node != null) {
+			sb.append(node.toString() + "\n");
+			node = (SSANode) node.next;
+		}
+		return sb.toString();
+	}
+	
 
 }

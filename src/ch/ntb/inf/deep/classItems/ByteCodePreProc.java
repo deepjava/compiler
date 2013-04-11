@@ -57,7 +57,7 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 
 	/**
 	 * Replaces the one byte constant pool index <code>byteCode[addr]</code> with the new index in <code>cpNewIndices[oldIndex]</code>
-	 * and coalesces the parameter flags (<code>accFlags</code>) with the flags in the field <code>accAndPorpFlags</code>
+	 * and coalesces the parameter flags (<code>accFlags</code>) with the flags in the field <code>accAndPropFlags</code>
 	 * of the item referenced by the new index.
 	 * <br>For test purposes: the referenced item is also returned.
 	 * @param addr  the position of the const pool index in the byte code
@@ -153,30 +153,21 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 				case bCldc:
 					item = fix1ByteCpIndexAndSetAccFlags(addr, 1<<dpfReadAccess);
 					if (assertions) {
-//						Type type = Type.selectInStringOrPrimitiveTypesByRef(item.type);
-//						assert type != null;
-//						assert type.sizeInBits > 0 &&  type.sizeInBits  <= 32;
-						// item can be symbolic reference as well
+						assert item != null;
 					}
 					break;
 				case bCldc_w:
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfReadAccess);
 					if (assertions) {
-//						Type type = Type.selectInWellKnownTypes(item.type);
-//						assert type != null;
-//						assert type.sizeInBits > 0 &&  type.sizeInBits  <= 32;
-						// item can be symbolic reference as well
+						assert item != null;
 					}
 					break;
 				case bCldc2_w:
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfReadAccess);
 					if (assertions) {
-						Type type = Type.selectInWellKnownTypes(item.type);
-						assert type != null;
-						assert type.sizeInBits == 64;
+						assert item != null;
 					}
 					break;
-
 				case bCgetstatic: case bCgetfield:
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfReadAccess);
 					if (assertions) {
@@ -189,7 +180,6 @@ public class ByteCodePreProc implements ICclassFileConsts, ICjvmInstructionOpcs,
 						assert item != null;
 					}
 					break;
-
 				case bCinvokevirtual: case bCinvokespecial: case bCinvokestatic:
 					item = fix2ByteCpIndexAndSetAccFlags(addr, 1<<dpfCall);
 					if (assertions) {

@@ -38,15 +38,19 @@ public class ItemStub extends Item {
 		this.descriptor = methDescriptor;
 	}
 	
-
 	Item getReplacedStub() {
 		Item item;
 		if (type == null) {	// must be method
 			item = owner.getMethod(name, descriptor); // searches in class and in all superclasses
 			if (item == null) {	// method not found
-				assert (owner.accAndPropFlags & (1<<apfInterface)) != 0: "owner must be interface";	// method must be in superinterface of owner, which must be interface itself
-				Class[] interfaces = ((Class)owner).interfaces;
-				if (interfaces != null) item = checkInterfacesForMethod(interfaces);
+				if (owner == Type.wktEnum) { // if class is enum, search for Enum.valueOf(Enum[],String)	
+					item = owner.getMethod(name, HString.getRegisteredHString("([Ljava/lang/Enum;Ljava/lang/String;)Ljava/lang/Enum;"));
+					assert item != null: "method valueOf in Enum not found";
+				} else { // method must be in superinterface of owner, which must be interface itself
+					assert (owner.accAndPropFlags & (1<<apfInterface)) != 0: "owner must be interface";
+					Class[] interfaces = ((Class)owner).interfaces;
+					if (interfaces != null) item = checkInterfacesForMethod(interfaces);
+				}
 			}
 		} else {
 			item = ((Class)owner).getField(name);	// must be field, searches in class and in all superclasses

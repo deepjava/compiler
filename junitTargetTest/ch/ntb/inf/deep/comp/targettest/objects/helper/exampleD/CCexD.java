@@ -14,4 +14,8 @@ public class CCexD extends CAexD implements	ICexD {
 		return var6 - i;
 	}
 	
+	public int cmc21() {
+		return 100;
+	}
+	
 }

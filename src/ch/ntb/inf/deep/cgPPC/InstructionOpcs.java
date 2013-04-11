@@ -158,7 +158,7 @@ interface InstructionOpcs {
 		"",
 		"",
 		"",
-		"",
+		"ifnequal",
 		"",
 		"",
 		"",

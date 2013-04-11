@@ -29,7 +29,7 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class StringEntry extends ConstBlkEntry {
 	
-	private static final int tag = 0x55555555;
+	private static final int tag = 0x80000000; // set mark bit, clear array bit and primitive array bit
 	private static final int constHeaderSize = 3 * 4; // byte
 	
 	Item ref;
@@ -53,7 +53,7 @@ public class StringEntry extends ConstBlkEntry {
 			a[index++] = tag;
 			a[index++] = getStringClassAddr();
 			for(int i = 0; i < objectSize / 4; i ++) {
-				a[index++] = 0; // TODO @Martin: insert object here...
+				a[index++] = 0; // TODO @Martin: insert fields of object here...
 			}
 			a[index++] = getNumberOfChars();
 			for(int j = 0; j < getNumberOfChars(); j++) {
@@ -107,9 +107,7 @@ public class StringEntry extends ConstBlkEntry {
 	}
 	
 	private static int getStringClassAddr() {
-		if(Type.wktString != null)
-			return Type.wktString.address;
-		
+		if (Type.wktString != null) return Type.wktString.address;	
 		ErrorReporter.reporter.error(701, "String (Type.wktString == null)");
 		return -1;
 	}

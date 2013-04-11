@@ -31,7 +31,8 @@ public abstract class SSAInstruction implements SSAInstructionMnemonics {
 	protected SSAValue[] operands;
 	public SSAValue result;
 	public int ssaOpcode;
-	public int machineCodeOffset = -1; // needs for debug purpose ex. step into
+	public int bca = -1; // used for debugging, marks bca of associated bytecode instruction
+	public int machineCodeOffset = -1; // used for debugging, e.g. step into
 	
 	public abstract void setOperands(SSAValue[] operands);
 	public abstract SSAValue[] getOperands();

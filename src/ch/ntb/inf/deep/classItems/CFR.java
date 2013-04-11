@@ -13,7 +13,7 @@ import ch.ntb.inf.deep.strings.StringTable;
 
 public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
 	static final boolean clsDbg = false;
-	static final boolean dbg = Item.verbose;
+	static final boolean dbg = Item.dbg;
 	static PrintStream vrb = Item.vrb;
 	static PrintStream log = Item.log;
 	static ErrorReporter errRep = Item.errRep;
@@ -33,14 +33,6 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 
 		int nofRootClasses = rootClassNames.length;
 		initBuildSystem(nofRootClasses);
-
-//		Class clsObject = (Class)Type.wellKnownTypes[Type.txObject];
-//		clsObject.loadClass(userReqAttributes);
-//		clsObject.completeLoadingOfRootClass();
-
-//		Class clsString = (Class)Type.wellKnownTypes[Type.txString];
-//		clsString.loadClass(userReqAttributes);
-//		clsString.completeLoadingOfRootClass();
 
 		if (sysClasses != null) for (SystemClass cls : sysClasses) loadSystemClass(cls, userReqAttributes);
 
@@ -97,19 +89,12 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 					cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
 					Class.extLevelOrdInterfaces[extLevel] = cls;
 					Class.nofInterfaceClasses++;
-				} else {	// is std-class, enum, enumArray
+				} else {	// is std-class or enum
 					if (cls.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls.methTabLength;
 					cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
 					Class.extLevelOrdClasses[extLevel] = cls;
 					Class.nofStdClasses++;
 				}
-				//				}else if( (propFlags & (1<<apfEnum) ) != 0 ){
-				//					cls.nextClass = enums;
-				//					enums = cls;
-				//				}else if( (propFlags & (1<<apfEnumArray) ) != 0 ){
-				//					cls.nextClass = enumArrays;
-				//					enumArrays = cls;
-				//				}
 			} else {	
 				assert refType instanceof Array;
 				Array arr = (Array)refType;

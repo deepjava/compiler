@@ -134,10 +134,10 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("  Extension level " + extLevel + ":");
 					clazz = Class.extLevelOrdClasses[extLevel];
 					while (clazz != null && reporter.nofErrors <= 0) {
-						if(dbg) vrb.println("  > Class: " + clazz.name);
+						if (dbg) vrb.println("  > Class: " + clazz.name);
 						
 						// Create constant block
-						if(reporter.nofErrors <= 0) {
+						if (reporter.nofErrors <= 0) {
 							if(dbg) vrb.println("    creating constant block");
 							Linker32.createConstantBlock(clazz);
 						}
@@ -145,24 +145,25 @@ public class Launcher implements ICclassFileConsts {
 						method = (Method)clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
-								if(dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 	
 								// Create CFG
 								if(reporter.nofErrors <= 0) {
-									if(dbg) vrb.println("      building CFG");
+									if (dbg) vrb.println("      building CFG");
 									method.cfg = new CFG(method);
 								}
 	
 								// Create SSA
 								if(reporter.nofErrors <= 0) {
-									if(dbg) vrb.println("      building SSA");
+									if (dbg) vrb.println("      building SSA");
 									method.ssa = new SSA(method.cfg);
-									//if(dbg) method.ssa.print(0);
 								}
-	
+//								System.out.println(method.owner.name + "." + method.name);
+//								method.ssa.printLineNumTab();
+//								System.out.println();
 								// Create machine code
 								if(reporter.nofErrors <= 0) {
-									if(dbg) vrb.println("      creating machine code");
+									if (dbg) vrb.println("      creating machine code");
 									method.machineCode = new CodeGen(method.ssa); 
 								}
 	
@@ -252,11 +253,11 @@ public class Launcher implements ICclassFileConsts {
 			}
 
 			// handle compiler specific methods
-			Linker32.calculateAbsoluteAddressesForCompSpecSubroutines();
+			if (reporter.nofErrors <= 0) Linker32.calculateAbsoluteAddressesForCompSpecSubroutines();
 			
 			// Create global constant table
 			if (dbg) vrb.println("[Launcher] Creating global constant table");
-			Linker32.createGlobalConstantTable();
+			if (reporter.nofErrors <= 0) Linker32.createGlobalConstantTable();
 			
 			// Loop Three: proceeding standard classes, updating constant blocks, method fix ups 
 			if (dbg) vrb.println("[Launcher] (loop three) proceeding classes:");

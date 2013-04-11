@@ -51,8 +51,21 @@ public class StringTest {
 		byte[] a1 = str1.getBytes();
 		Assert.assertEquals("stringGetBytesTest", new byte[] {'a','b','c'}, a1);
 		char[] a2 = new char[5];
-//		str1.getChars(a2, 1);
+//		str1.getChars(a2, 1);	// cannot be tested, String in Std-Lib is different
 //		Assert.assertEquals("stringGetBytesTest", new byte[] {'a','b','c'}, a1);
+		
+		CmdTransmitter.sendDone();
+	}
+	
+	@Test
+	public static void typeTest() {
+		Object o = "hello";
+		String str1 = (String) o;
+		Assert.assertEquals("test1", str1, "hello");
+		char[] a1 = new char[] {'a', 'b', 'c', 'd', 'e'};
+		o = new String(a1);
+		str1 = (String) o;
+		Assert.assertEquals("test2", str1, "abcde");
 		
 		CmdTransmitter.sendDone();
 	}

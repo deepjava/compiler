@@ -29,25 +29,12 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class MonadicRef extends Monadic {
 	public Item item;
 	
-	public MonadicRef(int opCode) {
-		super(opCode);		
+	public MonadicRef(int opCode, SSAValue operand, int bca){
+		super(opCode, operand, bca);
 	}
 	
-	public MonadicRef(int opCode, Item item){
-		super(opCode);
-		this.item = item;
-	}
-	
-	public MonadicRef(int opCode, SSAValue operand){
-		super(opCode,operand);
-	}
-	
-	public MonadicRef(int opCode, Item item, SSAValue operand){
-		super(opCode,operand);
-		this.item = item;
-	}
-	
-	public void setArgs(Item item){
+	public MonadicRef(int opCode, Item item, SSAValue operand, int bca) {
+		super(opCode, operand, bca);
 		this.item = item;
 	}
 	
@@ -82,6 +69,7 @@ public class MonadicRef extends Monadic {
 			if (result.reg != -1) sb.append(", reg=" + result.reg);
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 	

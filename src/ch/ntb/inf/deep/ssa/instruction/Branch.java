@@ -20,22 +20,24 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Branch extends SSAInstruction {
 	
-	public Branch(int opCode, SSAValue operand1, SSAValue operand2){
+	public Branch(int opCode, SSAValue operand1, SSAValue operand2, int bca) {
+		this.bca = bca;
 		ssaOpcode = opCode;
 		operands = new SSAValue[]{operand1,operand2};
 	}
 
-	public Branch(int opCode, SSAValue operand1){
+	public Branch(int opCode, SSAValue operand1, int bca) {
+		this.bca = bca;
 		ssaOpcode = opCode;
 		operands = new SSAValue[]{operand1};
 	}
 
-	public Branch(int opCode){
+	public Branch(int opCode, int bca) {
+		this.bca = bca;
 		ssaOpcode = opCode;
 	}
 
@@ -66,7 +68,7 @@ public class Branch extends SSAInstruction {
 				sb.append("Branch["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + "}");
 		}
 		sb.append(" (" + result.typeName() + ")");
-		
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 	

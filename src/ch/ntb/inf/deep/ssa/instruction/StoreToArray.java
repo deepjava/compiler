@@ -26,13 +26,10 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class StoreToArray extends SSAInstruction {
 
-	public StoreToArray(int opCode, SSAValue arrayref, SSAValue index, SSAValue value){
+	public StoreToArray(int opCode, SSAValue arrayref, SSAValue index, SSAValue value, int bca) {
 		ssaOpcode = opCode;
 		operands = new SSAValue[]{arrayref, index, value};
-	}
-
-	public StoreToArray(int opCode){
-		ssaOpcode = opCode;
+		this.bca = bca;
 	}
 	
 	@Override
@@ -75,6 +72,7 @@ public class StoreToArray extends SSAInstruction {
 			if (result.reg != -1) sb.append(", reg=" + result.reg);
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 

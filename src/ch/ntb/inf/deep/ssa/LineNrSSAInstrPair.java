@@ -27,6 +27,12 @@ public class LineNrSSAInstrPair implements SSAInstructionMnemonics {
 	public int lineNr;
 	public SSAInstruction instr;
 	
+	/**
+	 * creates a line number pair consisting of a byte code address and a SSA instruction
+	 * @param bca
+	 * @param lineNr
+	 * @param instr
+	 */
 	public LineNrSSAInstrPair(int bca, int lineNr, SSAInstruction instr){
 		this.bca = bca;
 		this.lineNr = lineNr;
@@ -35,9 +41,9 @@ public class LineNrSSAInstrPair implements SSAInstructionMnemonics {
 	
 	@Override
 	public String toString(){
-		if(instr == null)
+		if (instr == null)
 			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " has no SSAInstruction";
-		if(instr.machineCodeOffset == -1)
+		if (instr.machineCodeOffset == -1)
 			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + instr.toString();
 		return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + instr.toString() + " <=> CodeOffset " + instr.machineCodeOffset;
 	}

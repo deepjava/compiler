@@ -30,24 +30,17 @@ public class Call extends SSAInstruction {
 	public Item item;
 	public boolean invokespecial;
 
-	public Call(int opCode) {
-		ssaOpcode = opCode;
-	}
-	
-	public Call(int opCode, Item item){
+	public Call(int opCode, Item item, int bca) {
 		ssaOpcode = opCode;
 		this.item = item;
+		this.bca = bca;
 	}
-	
-	public Call(int opCode,SSAValue[] operands){
-		ssaOpcode = opCode;
-		this.operands = operands;
-	}
-	
-	public Call(int opCode, Item item, SSAValue[] operands){
+
+	public Call(int opCode, Item item, SSAValue[] operands, int bca) {
 		ssaOpcode = opCode;
 		this.item = item;
 		this.operands = operands;
+		this.bca = bca;
 	}
 
 	@Override
@@ -58,10 +51,6 @@ public class Call extends SSAInstruction {
 	@Override
 	public void setOperands(SSAValue[] operands) {
 		this.operands = operands;
-	}
-	
-	public void setArgs(Item item){
-		this.item = item;
 	}
 	
 	@Override
@@ -107,6 +96,7 @@ public class Call extends SSAInstruction {
 			if (result.reg != -1) sb.append(", reg=" + result.reg);
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 

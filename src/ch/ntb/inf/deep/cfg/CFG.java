@@ -171,7 +171,7 @@ public class CFG implements ICjvmInstructionMnemonics {
 		if (dbg) StdStreams.vrb.println("build dom");
 		for (int i = 0; i < rootNode.nofSuccessors; i++)
 			visitDom(rootNode.successors[i], rootNode);
-		if (dbg) printToLog();
+		if (dbg) StdStreams.vrb.println(toString());
 	}
 
 	/**
@@ -425,7 +425,7 @@ public class CFG implements ICjvmInstructionMnemonics {
 		return ((bytes[index]&0xff)<<24) | (bytes[index+1]&0xff)<<16 | (bytes[index+2]&0xff)<<8 | (bytes[index+3]&0xff);
 	}
 
-	private String cfgToString() {
+	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CFG of method " + method.owner.name + "." + method.name + "\n");
 		int i = 0;
@@ -459,15 +459,5 @@ public class CFG implements ICjvmInstructionMnemonics {
 		}
 		return sb.toString();
 	}
-	@Override
-	public String toString(){
-		return this.cfgToString();
-	}
 
-	/**
-	 * Prints all nodes of a CFG for debugging purposes.
-	 */
-	public void printToLog() {
-		StdStreams.vrb.println(this.cfgToString());
-	}
 }

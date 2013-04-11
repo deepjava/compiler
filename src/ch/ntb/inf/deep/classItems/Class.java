@@ -42,7 +42,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	public static Class initClasses, initClassesTail;	// classes with class constructor (StdClasses and Interfaces)
 	public static Class nonInitClasses, nonInitClassesTail;	// classes without class constructor (only StdClasses)
 	public static Class[] extLevelOrdClasses, extLevelOrdInterfaces;	// all classes and interfaces are linked in lists according to their extension level
-//	private static Class enums, enumArrays;
 	public static Array arrayClasses;	// array classes 
 	public static Class constBlockInterfaces;	// interfaces which need a constant block and type descriptor
 												// - are used as array component and whose type is checked for or (2)
@@ -128,7 +127,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 */
 	protected void loadClass(int userReqAttributes) throws IOException {
 		if (CFR.clsDbg) vrb.println("load class: " + name);
-		if (verbose) vrb.println(">loadClass: " + name);
+		if (dbg) vrb.println(">loadClass: " + name);
 		if ((accAndPropFlags & ((1<<dpfClassLoaded) | (1<<dpfSynthetic))) == 0 ) {	// if not yet loaded and not synthetic
 			InputStream inStrm = ClassFileAdmin.getClassFileInputStream(name);	// new FileInputStream
 
@@ -138,7 +137,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			loadConstPool(clfInStrm);
 			accAndPropFlags |= clfInStrm.readUnsignedShort();	// read access and property flags of class file
 
-			if (verbose) {
+			if (dbg) {
 				printOrigConstPool("\nconstant pool \nstate: 0");
 				printClassList("class list \nstate: 0");
 				print(0);
@@ -146,7 +145,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 
 			updateConstPool();
 
-			//				if(verbose){
+			//				if(dbg){
 			//					printOrigConstPool("\nconstant pool \nstate: 1");
 			//					printClassList("class list \nstate: 1");
 			//					print(0);
@@ -155,11 +154,11 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			clfInStrm.readUnsignedShort();	// read this class index
 
 			int thisSupClassCpInx = clfInStrm.readUnsignedShort();
-			if (verbose) vrb.println("thisSupClassCpInx=" + thisSupClassCpInx);
+			if (dbg) vrb.println("thisSupClassCpInx=" + thisSupClassCpInx);
 			if (thisSupClassCpInx > 0) {
 				int constPoolInx = cpIndices[thisSupClassCpInx];
 				type = (Class)constPool[constPoolInx];
-				if (verbose) {
+				if (dbg) {
 					vrb.print("superClassName="); type.printName(); vrb.println();
 				}
 			}
@@ -169,41 +168,27 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			readMethods(clfInStrm, userReqAttributes);
 			readClassAttributes(clfInStrm, userReqAttributes);
 
-//			if ((accAndPropFlags & (1<<apfEnum)) != 0) {
-//				System.out.println("ist enum");
-//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
-//			}
-//			if ((accAndPropFlags & (1<<apfEnumArray)) != 0) {
-//				System.out.println("ist enum");
-//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
-//			}
-//			if ((accAndPropFlags & (1<<apfEnum)) == 0) {	// if class or interface but not an enum
-				// analyse byte code
-				if (verbose) vrb.println(">analyseByteCode:");
-				Item item = methods;
-				while (item != null) {
-					Method meth = (Method)item;
-					if (verbose) {
-						vrb.print("\nmethod: "); meth.printHeader(); vrb.print(" (owner="); meth.owner.printName(); vrb.println(')');
-					}
-					ByteCodePreProc.analyseCodeAndFixCpRefs(cpIndices, constPool, meth.code);
-					item = item.next;
+			// analyze byte code
+			if (dbg) vrb.println(">analyseByteCode:");
+			Item item = methods;
+			while (item != null) {
+				Method meth = (Method)item;
+				if (dbg) {
+					vrb.print("\nmethod: "); meth.printHeader(); vrb.print(" (owner="); meth.owner.printName(); vrb.println(')');
 				}
-				if (verbose) vrb.println("<analyseByteCode");
-
-				this.accAndPropFlags |= (1<<dpfClassLoaded);
-//			}
-
-			if (verbose) {
-				vrb.println("\n>dump of class: " + name);
-				//					stab.print("String Table in state: 3");
-				//					printOrigConstPool("\nconstant pool \nstate: 3");
-									printReducedConstPool("\nconstant pool \nstate: 3");
-				//					printClassList("class list \nstate: 3");
-				//					print(0);
-				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
-				vrb.println("\n<end of dump: " + name + "++++++++++++++++++++++++");
+				ByteCodePreProc.analyseCodeAndFixCpRefs(cpIndices, constPool, meth.code);
+				item = item.next;
 			}
+			if (dbg) vrb.println("<analyseByteCode");
+
+			this.accAndPropFlags |= (1<<dpfClassLoaded);
+
+			//			if (dbg) {
+			//				vrb.println("\n>dump of class: " + name);
+			//				printReducedConstPool("\nconstant pool \nstate: 3");
+			//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
+			//				vrb.println("\n<end of dump: " + name + "++++++++++++++++++++++++");
+			//			}
 
 			clfInStrm.close();
 		}
@@ -224,7 +209,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				} // else is array which has no class file
 			}
 		} else if (CFR.clsDbg) vrb.println("\tclass not loaded yet: " + name);
-		if (verbose) vrb.println("<loadClass");
+		if (dbg) vrb.println("<loadClass");
 		if (CFR.clsDbg) vrb.println("class: " + name + " loaded");
 	}
 
@@ -260,7 +245,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * skips next attribute with length attrLength, when index is > 0 skipped attribute is logged  
 	 */
 	private static void skipAttribute(DataInputStream clfInStrm, int attrLength, int cpIndexOfAttribute) throws IOException {
-		if (verbose) {
+		if (dbg) {
 			if (cpIndexOfAttribute > 0) {
 				vrb.print(" skipped attribute: ");
 				vrb.printf("length=%1$d, cp[%2$d] = ", attrLength, cpIndexOfAttribute);
@@ -268,11 +253,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			}
 		}
 		clfInStrm.skipBytes(attrLength);
-	}
-
-	private static int getNextInterfaceId() {
-		currInterfaceId++;
-		return currInterfaceId;
 	}
 
 	/**
@@ -362,7 +342,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * adds item to field lists (instance, class, const) according to size
 	 */
 	private void addItemToFieldList(Item item){
-		if(verbose) vrb.println(">addItemToFieldList");
+		if(dbg) vrb.println(">addItemToFieldList");
 		Type type = (Type)item.type;
 		char typeCategory = type.category;
 		char typeNickName = type.name.charAt(0);
@@ -403,14 +383,14 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			item.next = constFieldLists[fieldListIndex];  constFieldLists[fieldListIndex] = item;			
 			nofConstFields++;
 		}
-		if (verbose) vrb.println("<addItemToFieldList");
+		if (dbg) vrb.println("<addItemToFieldList");
 	}
 
 	/**
 	 * reads out field list with all the fields with the same size in order
 	 */
 	private Item getFieldListAndUpdate(Item[] fieldLists) {
-		if(verbose) vrb.printf(">getFieldListAndUpdate: class: %1$s\n", name);
+		if(dbg) vrb.printf(">getFieldListAndUpdate: class: %1$s\n", name);
 
 		Item head = null, tail = null;
 
@@ -428,7 +408,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			}
 		}
 
-		if(verbose) vrb.println("<getFieldListAndUpdate");
+		if(dbg) vrb.println("<getFieldListAndUpdate");
 		return head;
 	}
 
@@ -693,17 +673,17 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	}
 
 	private void loadConstPool(DataInputStream clfInStrm) throws IOException{
-		if (verbose) vrb.println(">loadConstPool:");
+		if (dbg) vrb.println(">loadConstPool:");
 		
 		magic = clfInStrm.readInt();
 		if (magic != 0xcafeBabe) throw new IOException("illegal class file");
-		if (verbose) vrb.printf("magic=0x%1$4x\n", magic);
+		if (dbg) vrb.printf("magic=0x%1$4x\n", magic);
 
 		version = clfInStrm.readInt();
-		if (verbose) vrb.printf("version=%1$d.%2$d\n", (version&0xFFFF), (version>>>16));
+		if (dbg) vrb.printf("version=%1$d.%2$d\n", (version&0xFFFF), (version>>>16));
 
 		constPoolCnt = clfInStrm.readUnsignedShort();
-		if (verbose) vrb.printf("constPoolCnt=%1$d\n", constPoolCnt);
+		if (dbg) vrb.printf("constPoolCnt=%1$d\n", constPoolCnt);
 		allocatePoolArray(constPoolCnt);
 		for (int pEntry = 1; pEntry < constPoolCnt; pEntry++) {
 			int tag = clfInStrm.readUnsignedByte();
@@ -735,11 +715,11 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				throw new IOException("illegal tag in const pool");
 			}
 		}
-		if (verbose) vrb.println("<loadConstPool");
+		if (dbg) vrb.println("<loadConstPool");
 	}
 
 	private void updateConstPool() throws IOException {
-		if (verbose) vrb.println(">updateConstPool:");
+		if (dbg) vrb.println(">updateConstPool:");
 		//pre: all strings in the const are already registered in the proper hash table.
 		int nofItems = 0;
 		int pEntry;
@@ -807,7 +787,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			}
 		}
 		assert nofItems == 0;
-		if (verbose) vrb.println("<updateConstPool");
+		if (dbg) vrb.println("<updateConstPool");
 	}
 	
 	/**
@@ -818,7 +798,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	protected void fixupLoadedClasses() {
 //		boolean verbose = true;
 		if ((accAndPropFlags & 1<<dpfClassMark) == 0 ) {	// mark not set -> class not done yet
-			if (verbose) vrb.println(">fixup of class: " + this.name);
+			if (dbg) vrb.println(">fixup of class: " + this.name);
 			accAndPropFlags |= 1<<dpfClassMark;	// set mark
 
 			if (type == null) {objectSize = 0; extensionLevel = 0;}	// java/lang/object
@@ -916,7 +896,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 					nofNonInitClasses++;
 				}
 			}
-			if (verbose) vrb.println("<fixup of class: " + this.name);
+			if (dbg) vrb.println("<fixup of class: " + this.name);
 		}
 	}
 

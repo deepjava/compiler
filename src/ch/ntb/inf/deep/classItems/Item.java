@@ -29,7 +29,7 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
 public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTypeConsts {
-	static final boolean verbose = false, enAssertion = true;
+	static final boolean dbg = false, enAssertion = true;
 	static PrintStream vrb = StdStreams.vrb;
 	static PrintStream log = StdStreams.log;
 	static ErrorReporter errRep = ErrorReporter.reporter;
@@ -117,7 +117,8 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 	}
 
 	/**
-	 * returns item in linked list starting from parameter <code>this</code> with name <code>jname</code>
+	 * returns item in linked list starting from parameter <code>this</code> with name <code>jname</code>.
+	 * <code>jname</code> is registered in the string table if not already present 
 	 */
 	public Item getItemByName(String jname) {
 		HString name = stab.insertCondAndGetEntry(jname);

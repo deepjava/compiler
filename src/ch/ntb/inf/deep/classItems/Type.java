@@ -31,6 +31,7 @@ public class Type extends Item {
 	public static Type[] wellKnownTypes;	// contains primitive types and reference types
 	public static RefType wktObject;
 	public static RefType wktString;
+	public static RefType wktEnum;
 
 	public char category;	// { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
 	public byte sizeInBits; // { 1..8, 16, 32, 64 }
@@ -86,9 +87,11 @@ public class Type extends Item {
 
 		registerWellKnownClasses(txObject, "java/lang/Object");
 		registerWellKnownClasses(txString, "java/lang/String");
+		registerWellKnownClasses(txEnum, "java/lang/Enum");
 		
 		wktObject = (RefType) wellKnownTypes[txObject];
 		wktString = (RefType) wellKnownTypes[txString];
+		wktEnum = (RefType) wellKnownTypes[txEnum];
 	}
 
 	protected static void setAttributeTable(StringTable stab) {
@@ -143,7 +146,7 @@ public class Type extends Item {
 	 * parses parameter typeDesc and returns type
 	 */
 	protected static Type getTypeByDescriptor(HString typeDesc) {
-		if(verbose) vrb.printf(">getTypeByDescriptor: descriptor=%1$s\n", typeDesc);
+		if(dbg) vrb.printf(">getTypeByDescriptor: descriptor=%1$s\n", typeDesc);
 
 		int length = typeDesc.length();
 		char category = typeDesc.charAt(0);
@@ -160,7 +163,7 @@ public class Type extends Item {
 		} else
 			assert false;
 
-		if (verbose) vrb.printf("<getTypeByDescriptor: type.name=%1$s\n", type.name);
+		if (dbg) vrb.printf("<getTypeByDescriptor: type.name=%1$s\n", type.name);
 		return type;
 	}
 

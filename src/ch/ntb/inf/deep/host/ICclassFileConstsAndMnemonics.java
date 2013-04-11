@@ -48,8 +48,8 @@ public interface ICclassFileConstsAndMnemonics extends  ICclassFileConsts{
 			"interface", 			// 9
 			"abstract", 			// 10
 			"strict", 				// 11
-			"enumArray", 			// 12
-			"deprecated", 			// 13
+			"synthetic|enumArray", 	// 12
+			"annotation", 			// 13
 			"enum", 				// 14
 			
 			//---- deep properties

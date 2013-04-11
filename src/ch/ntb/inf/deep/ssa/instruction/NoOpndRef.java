@@ -29,16 +29,8 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class NoOpndRef extends NoOpnd {
 	public Item field;
 
-	public NoOpndRef(int opcode){
-		super(opcode);
-	}
-	
-	public NoOpndRef(int opcode, Item field) {
-		super(opcode);
-		this.field = field;
-	}
-	
-	public void setArg(Item field){
+	public NoOpndRef(int opcode, Item field, int bca) {
+		super(opcode, bca);
 		this.field = field;
 	}
 
@@ -70,6 +62,7 @@ public class NoOpndRef extends NoOpnd {
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 			if (result.regGPR2 != -1) sb.append(", regAux2=" + result.regGPR2);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 

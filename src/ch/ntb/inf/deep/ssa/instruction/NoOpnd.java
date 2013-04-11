@@ -28,7 +28,12 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class NoOpnd extends SSAInstruction {
 	
-	public NoOpnd(int opcode){
+	public NoOpnd(int opcode, int bca) {
+		ssaOpcode = opcode;		
+		this.bca = bca;
+	}
+
+	public NoOpnd(int opcode) {
 		ssaOpcode = opcode;		
 	}
 
@@ -47,7 +52,7 @@ public class NoOpnd extends SSAInstruction {
 		StringBuilder sb = new StringBuilder();
 		sb.append(result.n + ": ");
 		sb.append("NoOpnd["+ scMnemonics[ssaOpcode]+"] ");
-		if (ssaOpcode == sCloadConst) 
+		if (ssaOpcode == sCloadConst) {
 			if (result.constant instanceof StdConstant) {
 				StdConstant constant = (StdConstant)result.constant;
 				if (constant.name == null) {
@@ -65,14 +70,19 @@ public class NoOpnd extends SSAInstruction {
 						sb.append(Double.longBitsToDouble(value));
 				}
 				sb.append(" (" + result.typeName() + ")");
-			} else {
+			} else if (result.constant instanceof StringLiteral) {
 				StringLiteral str = (StringLiteral)result.constant;
 				if (str != null) sb.append("\"" + str.string + "\"");
 				else sb.append("null");
 				sb.append(" (" + result.typeName() + ")");
+			} else if (result.constant instanceof ch.ntb.inf.deep.classItems.Class) {
+				sb.append(result.constant.name);
+			} else if (result.constant instanceof ch.ntb.inf.deep.classItems.Field) {
+				sb.append(result.constant.name);
+			} else if (result.constant == null) {
+				sb.append("null");
 			}
-		else
-			sb.append("(" + result.typeName() + ")");
+		} else sb.append("(" + result.typeName() + ")");
 		if (result.index != -1) sb.append(", index=" + result.index);
 		if (result.join != null) {
 			sb.append(", join=[" + result.index + "(");
@@ -92,6 +102,7 @@ public class NoOpnd extends SSAInstruction {
 			if (result.reg != -1) sb.append(", reg=" + result.reg);
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 }

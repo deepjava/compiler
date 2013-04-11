@@ -26,13 +26,15 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Monadic extends SSAInstruction {
 
-	public Monadic(int opCode,SSAValue operand){
+	public Monadic(int opCode, SSAValue operand) {
 		ssaOpcode = opCode;
 		operands = new SSAValue[]{operand};
 	}
 	
-	public Monadic(int opCode){
+	public Monadic(int opCode,SSAValue operand, int bca) {
+		this.bca = bca;
 		ssaOpcode = opCode;
+		operands = new SSAValue[]{operand};
 	}
 	
 	@Override
@@ -76,6 +78,7 @@ public class Monadic extends SSAInstruction {
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 			if (result.regGPR2 != -1) sb.append(", regAux2=" + result.regGPR2);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 	

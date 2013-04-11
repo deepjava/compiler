@@ -436,7 +436,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if (dbg) vrb.println("   Creating pointer table (instance fields)");
 			FixedValueEntry instPtrTable = new FixedValueEntry("nofInstPtrs");
 			ptrCounter = 0;
-			if (clazz.nofInstRefs > 0) {
+			if (clazz.nofInstRefs > 0 && clazz != Type.wktString) {	// do not include instance reference fields in class String 
 				Item field = clazz.firstInstReference;
 				while (field != clazz.classFields) {
 					if (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray ) {
@@ -1058,11 +1058,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void calculateAbsoluteAddressesForCompSpecSubroutines() {
-		if(dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for compiler specific methods:\n");
+		if (dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for compiler specific methods:\n");
 		Method m = Method.compSpecSubroutines;
-		while(m != null) {
+		while (m != null) {
 			m.address = compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset + m.offset;
-			if(dbg) vrb.print("    > " + m.name + ": Offset = 0x" + Integer.toHexString(m.offset) + ", Index = 0x" + Integer.toHexString(m.index) + ", Address = 0x" + Integer.toHexString(m.address) + "\n");
+			if (dbg) vrb.print("    > " + m.name + ": Offset = 0x" + Integer.toHexString(m.offset) + ", Index = 0x" + Integer.toHexString(m.index) + ", Address = 0x" + Integer.toHexString(m.address) + "\n");
 			m = (Method)m.next;
 		}
 		if (dbg) vrb.println("\n[LINKER] END: Calculating absolute addresses for compiler specific methods.\n");

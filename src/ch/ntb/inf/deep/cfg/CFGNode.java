@@ -176,7 +176,7 @@ public class CFGNode {
 	}
 
 	@Override
-	public final String toString() {
+	public String toString() {
 		return "CFG-Node [" + firstBCA + ":" + lastBCA + "]";
 	}
 

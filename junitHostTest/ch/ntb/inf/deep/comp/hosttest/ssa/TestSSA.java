@@ -67,9 +67,8 @@ public class TestSSA implements ICclassFileConsts{
 	public static SSANode[] getAndTestSSA(String methodName, int nofNodes, int nofLoopheaders) {
 		int i = 0;
 		while (i < ssa.length && ! ssa[i].cfg.method.name.equals(HString.getHString(methodName))) i++;
-		assertEquals("number of nodes not as expected", nofNodes, ssa[i].getNofNodes());
-		assertEquals("number of loopheaders not as expected",nofLoopheaders,ssa[i].nofLoopheaders);
-		assertEquals("number of linenumbertabel entries not as expected", ssa[i].cfg.method.lineNrTab.length, ssa[i].getNumberOfLineNrEntries());
+		assertEquals("nof nodes not as expected", nofNodes, ssa[i].getNofNodes());
+		assertEquals("nof loopheaders not as expected",nofLoopheaders,ssa[i].nofLoopheaders);
 		return ssa[i].getNodes();
 	}
 

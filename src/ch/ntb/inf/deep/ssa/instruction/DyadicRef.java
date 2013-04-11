@@ -28,30 +28,9 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class DyadicRef extends Dyadic {
 	public Item field;
 
-	public DyadicRef(int opCode) {
-		super(opCode);
-	}
-
-	public DyadicRef(int opCode, Item field) {
-		super(opCode);
+	public DyadicRef(int opCode, Item field, SSAValue operand1, SSAValue operand2, int bca) {
+		super(opCode, operand1, operand2, bca);
 		this.field = field;
-	}
-
-	public DyadicRef(int opCode, SSAValue operand1,	SSAValue operand2) {
-		super(opCode, operand1, operand2);
-	}
-
-	public DyadicRef(int opCode, Item field, SSAValue operand1, SSAValue operand2) {
-		super(opCode, operand1, operand2);
-		this.field = field;
-	}
-
-	public void setArg(Item field) {
-		this.field = field;
-	}
-
-	public Item getArg() {
-		return field;
 	}
 
 	@Override
@@ -80,6 +59,7 @@ public class DyadicRef extends Dyadic {
 			if (result.reg != -1) sb.append(", reg=" + result.reg);
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		}
+		sb.append(", bca=" + bca);
 		return sb.toString();
 	}
 }

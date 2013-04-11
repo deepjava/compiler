@@ -47,7 +47,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	
 	static int idGET1, idGET2, idGET4, idGET8;
 	static int idPUT1, idPUT2, idPUT4, idPUT8;
-	static int idBIT, idASM, idHALT, idADR_OF_METHOD;
+	static int idBIT, idASM, idHALT, idADR_OF_METHOD, idREF;
 	static int idENABLE_FLOATS;
 	static int idGETGPR, idGETFPR, idGETSPR;
 	static int idPUTGPR, idPUTFPR, idPUTSPR;
@@ -152,15 +152,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
 //		ssa.cfg.printToLog();
-//		ssa.print(0);
+//		StdStreams.vrb.println(ssa.toString());
 		RegAllocator.buildIntervals(ssa);
 //		if (dbg) {
 //			StdStreams.vrb.println("phi functions resolved");
 //			RegAllocator.printJoins();
 //		}
-//		ssa.print(0);
 		
-		if(dbg) StdStreams.vrb.println("assign registers to parameters");
+		if (dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b.next != null) {
 			b = (SSANode) b.next;
@@ -168,7 +167,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		lastExitSet = b.exitSet;
 		// determine, which parameters go into which register
 		parseExitSet(lastExitSet, maxStackSlots);
-		if(dbg) {
+		if (dbg) {
 			StdStreams.vrb.print("parameter go into register: ");
 			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
 			StdStreams.vrb.println();
@@ -176,7 +175,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		if(dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocator.assignRegisters(this);
-//		ssa.print(0);
 		if (dbg) {
 			StdStreams.vrb.println("phi functions resolved");
 			RegAllocator.printJoins();
@@ -205,16 +203,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		SSANode node = (SSANode)ssa.cfg.rootNode;
 		while (node != null) {
-			node.codeStartAddr = iCount;
+			node.codeStartIndex = iCount;
 			translateSSA(node);
-			node.codeEndAddr = iCount-1;
+			node.codeEndIndex = iCount-1;
 			node = (SSANode) node.next;
 		}
 		node = (SSANode)ssa.cfg.rootNode;
 		while (node != null) {	// resolve local branch targets
 			if (node.nofInstr > 0) {
 				if ((node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) || (node.instructions[node.nofInstr-1].ssaOpcode == sCswitch)) {
-					int code = this.instructions[node.codeEndAddr];
+					int code = this.instructions[node.codeEndIndex];
 					CFGNode[] successors = node.successors;
 					switch (code & 0xfc000000) {
 					case ppcB:			
@@ -222,26 +220,26 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 							int nofCases = (code & 0xffff) >> 2;
 							int k;
 							for (k = 0; k < nofCases; k++) {
-								int branchOffset = ((SSANode)successors[k]).codeStartAddr - (node.codeEndAddr+1-(nofCases-k)*2);
-								this.instructions[node.codeEndAddr+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
+								int branchOffset = ((SSANode)successors[k]).codeStartIndex - (node.codeEndIndex+1-(nofCases-k)*2);
+								this.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
 							}
-							int branchOffset = ((SSANode)successors[k]).codeStartAddr - node.codeEndAddr;
-							this.instructions[node.codeEndAddr] &= 0xfc000000;
-							this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
+							this.instructions[node.codeEndIndex] &= 0xfc000000;
+							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
 						} else {
-							int branchOffset = ((SSANode)successors[0]).codeStartAddr - node.codeEndAddr;
-							this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+							int branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
+							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
 						}
 						break;
 					case ppcBc:
-						int branchOffset = ((SSANode)successors[1]).codeStartAddr - node.codeEndAddr;
-						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0xffff;
+						int branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
+						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0xffff;
 						break;
 					}
 				} else if (node.instructions[node.nofInstr-1].ssaOpcode == sCreturn) {
 					if (node.next != null) {
-						int branchOffset = iCount - node.codeEndAddr;
-						this.instructions[node.codeEndAddr] |= (branchOffset << 2) & 0x3ffffff;
+						int branchOffset = iCount - node.codeEndIndex;
+						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
 					}
 				}
 			}
@@ -255,7 +253,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		} else {
 			insertEpilog(stackSize);
 		}
-		if (dbg) {ssa.print(0); StdStreams.vrb.print(toString());}
+		if (dbg) {StdStreams.vrb.print(ssa.toString()); StdStreams.vrb.print(toString());}
 	}
 
 	public CodeGen() {}
@@ -460,10 +458,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						break;
 					case tRef: case tAbyte: case tAshort: case tAchar: case tAinteger:
 					case tAlong: case tAfloat: case tAdouble: case tAboolean: case tAref:
-						if (res.constant == null) // object = null
+						if (res.constant == null) {// object = null
 							loadConstant(dReg, 0);
-						else	// ref to constant string
+						} else if ((ssa.cfg.method.owner.accAndPropFlags & (1<<apfEnum)) != 0 && ssa.cfg.method.name.equals(HString.getHString("valueOf"))) {	// special case 
+							loadConstantAndFixup(res.reg, res.constant); // load address of static field "ENUM$VALUES"
+							createIrDrAd(ppcLwz, res.reg, res.reg, 0);	// load reference to object on heap
+						} else {	// ref to constant string
 							loadConstantAndFixup(res.reg, res.constant);
+						}
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -1823,7 +1825,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				Call call = (Call)instr;
 				Method m = (Method)call.item;
 				if ((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
-					if (m.id == idGET1) {	//GET1
+					if (m.id == idGET1) {	// GET1
 						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 						createIrArS(ppcExtsb, res.reg, res.reg);
 					} else if (m.id == idGET2) { // GET2
@@ -1885,6 +1887,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						Class clazz = (Class)(RefType.refTypeList.getItemByName(className.toString()));
 						Item method = clazz.methods.getItemByName(methName.toString());
 						loadConstantAndFixup(res.reg, method);	// addr of method
+					} else if (m.id == idREF) { // REF
+						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
 					} else if (m.id == idDoubleToBits) { // DoubleToBits
 						createIrSrAd(ppcStfd, opds[0].reg, stackPtr, tempStorageOffset);
 						createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset);
@@ -2449,8 +2453,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		// count register usage
 		int i = paramStartGPR;
-//		System.out.println("i = " + i);
-//		System.out.println("srcGPR[i] = " + srcGPR[i]);
+		//		System.out.println("i = " + i);
+		//		System.out.println("srcGPR[i] = " + srcGPR[i]);
 
 		if (dbg) {
 			StdStreams.vrb.print("srcGPR = ");
@@ -2458,8 +2462,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			StdStreams.vrb.println();
 			StdStreams.vrb.print("srcGPRcount = ");
 			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPRcount[i] + ","); 
-		StdStreams.vrb.println();
-	}
+			StdStreams.vrb.println();
+		}
 
 		while (srcGPR[i] != 0) srcGPRcount[srcGPR[i++]]++;
 		i = paramStartFPR;
@@ -3549,43 +3553,45 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = (Method)cls.methods.getItemByName("PUT1"); 
-		if(m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("PUT2"); 
-		if(m != null) idPUT2 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUT2 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("PUT4"); 
-		if(m != null) idPUT4 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUT4 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("PUT8"); 
-		if(m != null) idPUT8 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUT8 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GET1"); 
-		if(m != null) idGET1 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGET1 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GET2"); 
-		if(m != null) idGET2 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGET2 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GET4"); 
-		if(m != null) idGET4 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGET4 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GET8"); 
-		if(m != null) idGET8 = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGET8 = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("BIT"); 
-		if(m != null) idBIT = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idBIT = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("ASM"); 
-		if(m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GETGPR"); 
-		if(m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GETFPR"); 
-		if(m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("GETSPR"); 
-		if(m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("PUTGPR"); 
-		if(m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("PUTFPR"); 
-		if(m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("PUTSPR"); 
-		if(m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("ADR_OF_METHOD"); 
-		if(m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("HALT"); 
-		if(m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = (Method)cls.methods.getItemByName("ENABLE_FLOATS"); 
-		if(m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = (Method)cls.methods.getItemByName("REF"); 
+		if (m != null) idREF = m.id; else {ErrorReporter.reporter.error(631); return;}
 		
 		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/lowLevel/LL");
 		if (cls == null) {ErrorReporter.reporter.error(632); return;}
