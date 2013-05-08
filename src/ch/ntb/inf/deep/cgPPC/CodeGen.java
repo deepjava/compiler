@@ -191,7 +191,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			StdStreams.vrb.println();
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-			if (ssa.cfg.method.name.equals(HString.getRegisteredHString("reset"))) {	// reset has no prolog
+			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
 			} else {
 				stackSize = calcStackSizeException();
 				insertPrologException();
@@ -246,7 +246,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			node = (SSANode) node.next;
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-			if (ssa.cfg.method.name.equals(HString.getHString("reset"))) {	// reset needs no epilog
+			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
 			} else {
 				insertEpilogException(stackSize);
 			}
@@ -3552,52 +3552,52 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	public static void init() { 
 		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
-		Method m = (Method)cls.methods.getItemByName("PUT1"); 
+		Method m = Configuration.getOS().getSystemMethodByName(cls, "PUT1");
 		if (m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("PUT2"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUT2"); 
 		if (m != null) idPUT2 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("PUT4"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUT4"); 
 		if (m != null) idPUT4 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("PUT8"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUT8"); 
 		if (m != null) idPUT8 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GET1"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GET1"); 
 		if (m != null) idGET1 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GET2"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GET2"); 
 		if (m != null) idGET2 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GET4"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GET4"); 
 		if (m != null) idGET4 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GET8"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GET8"); 
 		if (m != null) idGET8 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("BIT"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "BIT"); 
 		if (m != null) idBIT = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("ASM"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "ASM"); 
 		if (m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GETGPR"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
 		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GETFPR"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETFPR"); 
 		if (m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("GETSPR"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETSPR"); 
 		if (m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("PUTGPR"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTGPR"); 
 		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("PUTFPR"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTFPR"); 
 		if (m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("PUTSPR"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTSPR"); 
 		if (m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("ADR_OF_METHOD"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "ADR_OF_METHOD"); 
 		if (m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("HALT"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "HALT"); 
 		if (m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("ENABLE_FLOATS"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "ENABLE_FLOATS"); 
 		if (m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = (Method)cls.methods.getItemByName("REF"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "REF"); 
 		if (m != null) idREF = m.id; else {ErrorReporter.reporter.error(631); return;}
 		
 		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/lowLevel/LL");
 		if (cls == null) {ErrorReporter.reporter.error(632); return;}
-		m = (Method)cls.methods.getItemByName("doubleToBits"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "doubleToBits"); 
 		if(m != null) idDoubleToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
-		m = (Method)cls.methods.getItemByName("bitsToDouble"); 
+		m = Configuration.getOS().getSystemMethodByName(cls, "bitsToDouble"); 
 		if(m != null) idBitsToDouble = m.id; else {ErrorReporter.reporter.error(633); return;}
 		
 		objectSize = Type.wktObject.objectSize;
@@ -3611,7 +3611,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		Linker32.addGlobalConstant(int2floatConst3);
 		
 		final Class stringClass = (Class)Type.wktString;
-		final Class heapClass = (Class)RefType.refTypeList.getItemByName(Configuration.getHeapClassname().toString());
+		final Class heapClass = Configuration.getOS().heapClass;	
 		if ((stringClass != null) && (stringClass.methods != null)) {	// check if string class is loaded at all
 			stringNewstringMethod = (Method)stringClass.methods.getItemByName("newstring"); 
 			if(heapClass != null) {

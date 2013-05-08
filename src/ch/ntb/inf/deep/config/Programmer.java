@@ -1,8 +1,9 @@
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Programmer extends ConfigElement {
+public class Programmer extends Item {
 
 	private HString description;
 	

@@ -20,7 +20,7 @@
 
 package ch.ntb.inf.deep.eclipse.ui.model;
 
-public class OperationObject {
+public class TargetOpObject {
 	public long value;
 	/**
 	 * type of the value
@@ -68,17 +68,17 @@ public class OperationObject {
 	 */
 	public String errorMsg;
 	
-	public OperationObject(){
+	public TargetOpObject(){
 		description = "";
 	}
 	
-	public OperationObject(int operation, String description){
+	public TargetOpObject(int operation, String description){
 		this.operation = operation;
 		this.description = description;
 		this.errorMsg = "";
 	}
 	
-	public OperationObject(int operation, String description, long value, int type, int representation, int registerSize){
+	public TargetOpObject(int operation, String description, long value, int type, int representation, int registerSize){
 		this.operation = operation;
 		this.description = description;
 		this.value = value;

@@ -23,11 +23,14 @@ package ch.ntb.inf.deep.classItems;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.linker.*;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.strings.StringTable;
 
 public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstructionOpcs {
 	//--- static fields
@@ -103,10 +106,10 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	public int codeOffset, varOffset, constOffset; // the offset of the code/class fields/constant block in the dedicated segment
 
 	HString srcFileName; // file ident + ".java", e.g.  String.java  for java/lang/String.java
-	
+
 	// debug fields
 	int magic, version;
-	
+
 	// const pool arrays
 	static Item[] cpItems;
 	static HString[] cpStrings;
@@ -114,83 +117,82 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	static byte[] cpTags;
 	static int prevCpLenth, constPoolCnt;
 
-	public Class(HString registeredCpClassName){
+	public Class(HString registeredCpClassName) {
 		super(registeredCpClassName, null);
 		category = tcRef;
 		sizeInBits = 32;
 	}
-	
+
 	/**
 	 * loads a class with chosen set of attribute
 	 * further attributes are skipped
 	 * all imported classes in the constant pool are loaded as well
 	 */
-	protected void loadClass(int userReqAttributes) throws IOException {
+	protected void loadClass(int userReqAttributes) {
+//				boolean dbg = true;
 		if (CFR.clsDbg) vrb.println("load class: " + name);
 		if (dbg) vrb.println(">loadClass: " + name);
-		if ((accAndPropFlags & ((1<<dpfClassLoaded) | (1<<dpfSynthetic))) == 0 ) {	// if not yet loaded and not synthetic
+		if ((accAndPropFlags & (1<<dpfClassLoaded)) == 0 ) {	// if not yet loaded and not synthetic
 			InputStream inStrm = ClassFileAdmin.getClassFileInputStream(name);	// new FileInputStream
 
 			if (inStrm == null) {errRep.error(300, name.toString()); return;}
 			DataInputStream clfInStrm = new DataInputStream(inStrm);	// new DataInputStream
 
-			loadConstPool(clfInStrm);
-			accAndPropFlags |= clfInStrm.readUnsignedShort();	// read access and property flags of class file
+			try {
+				loadConstPool(clfInStrm);
+				accAndPropFlags |= clfInStrm.readUnsignedShort();	// read access and property flags of class file
 
-			if (dbg) {
-				printOrigConstPool("\nconstant pool \nstate: 0");
-				printClassList("class list \nstate: 0");
-				print(0);
-			}
-
-			updateConstPool();
-
-			//				if(dbg){
-			//					printOrigConstPool("\nconstant pool \nstate: 1");
-			//					printClassList("class list \nstate: 1");
-			//					print(0);
-			//				}
-
-			clfInStrm.readUnsignedShort();	// read this class index
-
-			int thisSupClassCpInx = clfInStrm.readUnsignedShort();
-			if (dbg) vrb.println("thisSupClassCpInx=" + thisSupClassCpInx);
-			if (thisSupClassCpInx > 0) {
-				int constPoolInx = cpIndices[thisSupClassCpInx];
-				type = (Class)constPool[constPoolInx];
 				if (dbg) {
-					vrb.print("superClassName="); type.printName(); vrb.println();
+					//				printOrigConstPool("\nconstant pool \nstate: 0");
+					//				printClassList("class list \nstate: 0");
+					//				print(0);
 				}
-			}
 
-			readInterfaces(clfInStrm);
-			readFields(clfInStrm);
-			readMethods(clfInStrm, userReqAttributes);
-			readClassAttributes(clfInStrm, userReqAttributes);
+				updateConstPool();
 
-			// analyze byte code
-			if (dbg) vrb.println(">analyseByteCode:");
-			Item item = methods;
-			while (item != null) {
-				Method meth = (Method)item;
+				//				if(dbg){
+				//					printOrigConstPool("\nconstant pool \nstate: 1");
+				//					printClassList("class list \nstate: 1");
+				//					print(0);
+				//				}
+
+				clfInStrm.readUnsignedShort();	// read this class index
+
+				int thisSupClassCpInx = clfInStrm.readUnsignedShort();
+				if (dbg) vrb.println("thisSupClassCpInx=" + thisSupClassCpInx);
+				if (thisSupClassCpInx > 0) {
+					int constPoolInx = cpIndices[thisSupClassCpInx];
+					type = (Class)constPool[constPoolInx];
+					if (dbg) {vrb.print("superClassName="); type.printName(); vrb.println();}
+				}
+
+				readInterfaces(clfInStrm);
+				readFields(clfInStrm);
+				readMethods(clfInStrm, userReqAttributes);
+				readClassAttributes(clfInStrm, userReqAttributes);
+
+				// analyze byte code
+				if (dbg) vrb.println(">analyseByteCode:");
+				Item item = methods;
+				while (item != null) {
+					Method meth = (Method)item;
+					if (dbg) {vrb.print("\nmethod: "); meth.printHeader(); vrb.print(" (owner="); meth.owner.printName(); vrb.println();}
+					ByteCodePreProc.analyseCodeAndFixCpRefs(cpIndices, constPool, meth.code);
+					item = item.next;
+				}
+				if (dbg) vrb.println("<analyseByteCode");
+
+				this.accAndPropFlags |= (1<<dpfClassLoaded);
+
 				if (dbg) {
-					vrb.print("\nmethod: "); meth.printHeader(); vrb.print(" (owner="); meth.owner.printName(); vrb.println(')');
+					//				vrb.println("\n>dump of class: " + name);
+					printReducedConstPool("\nconstant pool \nstate: 3");
+					//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
+					//				vrb.println("\n<end of dump: " + name + "++++++++++++++++++++++++");
 				}
-				ByteCodePreProc.analyseCodeAndFixCpRefs(cpIndices, constPool, meth.code);
-				item = item.next;
-			}
-			if (dbg) vrb.println("<analyseByteCode");
 
-			this.accAndPropFlags |= (1<<dpfClassLoaded);
-
-			//			if (dbg) {
-			//				vrb.println("\n>dump of class: " + name);
-			//				printReducedConstPool("\nconstant pool \nstate: 3");
-			//				Dbg.printAccAndPropertyFlags(accAndPropFlags); Dbg.println();
-			//				vrb.println("\n<end of dump: " + name + "++++++++++++++++++++++++");
-			//			}
-
-			clfInStrm.close();
+				clfInStrm.close();
+			} catch (IOException e) {e.printStackTrace();};
 		}
 		//--- load referenced classes
 		if (CFR.clsDbg) vrb.println("\tload referenced classes: #=" + (nofImports-1));
@@ -203,7 +205,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				if (item instanceof Class) {
 					Class cls = (Class)item;
 					if (impIndex > 0) imports[--impIndex] = (Class)cls;	// without first entry (this class)
-					if ((cls.accAndPropFlags & ((1<<dpfClassLoaded) | (1<<dpfSynthetic))) == 0) { // if not yet loaded and not synthetic
+					if ((cls.accAndPropFlags & (1<<dpfClassLoaded)) == 0) { // if not yet loaded and not synthetic
+//					if ((cls.accAndPropFlags & ((1<<dpfClassLoaded) | (1<<dpfSynthetic))) == 0) { // if not yet loaded and not synthetic
 						cls.loadClass(userReqAttributes);
 					}
 				} // else is array which has no class file
@@ -286,20 +289,20 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * @param methDescriptor a registered string
 	 * @return the selected method or newly created one
 	 */
-	Method insertCondAndGetMethod(HString methName, HString methDescriptor) {
-		//pre: all strings in the const are already registered in the proper hash table.
-		Item item = methods;
-		while(item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) item = item.next;
-		Method method;
-		if(item != null) {
-			method = (Method)item;
-		} else {// create Method and update method list
-			Type returnType = Method.getReturnType(methDescriptor);
-			method = new Method(methName, returnType, methDescriptor);
-			method.next = methods;  methods = method;
-		}
-		return method;
-	}
+//	Method insertCondAndGetMethod(HString methName, HString methDescriptor) {
+//		//pre: all strings in the const are already registered in the proper hash table.
+//		Item item = methods;
+//		while (item != null && (item.name != methName || ((Method)item).methDescriptor != methDescriptor) ) item = item.next;
+//		Method method;
+//		if (item != null) {
+//			method = (Method)item;
+//		} else {// create Method and update method list
+//			Type returnType = Method.getReturnType(methDescriptor);
+//			method = new Method(methName, returnType, methDescriptor);
+//			method.next = methods;  methods = method;
+//		}
+//		return method;
+//	}
 
 	/**
 	 * returns existing field or newly created stub of field
@@ -342,7 +345,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * adds item to field lists (instance, class, const) according to size
 	 */
 	private void addItemToFieldList(Item item){
-		if(dbg) vrb.println(">addItemToFieldList");
+//		if(dbg) vrb.println(">addItemToFieldList");
 		Type type = (Type)item.type;
 		char typeCategory = type.category;
 		char typeNickName = type.name.charAt(0);
@@ -383,7 +386,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			item.next = constFieldLists[fieldListIndex];  constFieldLists[fieldListIndex] = item;			
 			nofConstFields++;
 		}
-		if (dbg) vrb.println("<addItemToFieldList");
+//		if (dbg) vrb.println("<addItemToFieldList");
 	}
 
 	/**
@@ -509,7 +512,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		Item clsMethHead = null, clsMethTail = null;
 		Item instMethHead = null, instMethTail = null;
 
-		while (methodCnt-- > 0){
+		while (methodCnt-- > 0) {
 			int flags;
 			HString name, descriptor;
 
@@ -519,22 +522,31 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 			name = cpStrings[index];
 			index = clfInStrm.readUnsignedShort();
 			descriptor = cpStrings[index];
-			if (descriptor == CFR.hsCommandDescriptor && name != CFR.hsClassConstrName && (flags & (1<<apfStatic)) != 0){
+			if (descriptor == CFR.hsCommandDescriptor && name != CFR.hsClassConstrName && (flags & (1<<apfStatic)) != 0) {
 				flags |= (1<<dpfCommand);	// this method can be a command
 			}
 			Type returnType = Method.getReturnType(descriptor);
-			Method method = new Method(name, returnType, descriptor);
+			Method method = null;
+			if ((accAndPropFlags & (1<<dpfSysPrimitive)) != 0) { // class is defined in configuration, method might be created already
+				method = Configuration.getOS().getSystemMethodByName(this, name);
+				if (method == null) method = new Method(name, returnType, descriptor);
+				else {
+					method.methDescriptor = descriptor;
+					method.type = returnType;
+					method.nofParams = Method.nofParameters(descriptor);
+				}
+			} else method = new Method(name, returnType, descriptor);
 			method.owner = this;
 			
 			//--- read method attributes {Code, Deprecated, Synthetic}
 			int attrCnt = clfInStrm.readUnsignedShort();
-			while (attrCnt-- > 0){
+			while (attrCnt-- > 0) {
 				int cpInxOfAttr = clfInStrm.readUnsignedShort();
-				int attr = selectAttribute( cpInxOfAttr );
+				int attr = selectAttribute(cpInxOfAttr);
 				int attrLength = clfInStrm.readInt();
-				switch (attr){
+				switch (attr) {
 				case atxCode:
-					if ((userReqAttributes&(1<<atxCode)) == 0) {
+					if ((userReqAttributes & (1<<atxCode)) == 0) {
 						skipAttribute(clfInStrm, attrLength, 0); // skip without logging
 						break;
 					}
@@ -604,7 +616,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 					skipAttribute(clfInStrm, attrLength, index);
 				}
 			}
-
 			flags |= method.accAndPropFlags;
 			method.accAndPropFlags = flags;
 			
@@ -615,7 +626,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				clsMethTail = method;
 			} else {	// instance method
 				nofInstMeths++;
-				if(instMethHead == null) instMethHead = method; else instMethTail.next = method;
+				if (instMethHead == null) instMethHead = method; else instMethTail.next = method;
 				instMethTail = method;
 			}
 		}
@@ -657,19 +668,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		prevCpLenth = 0;  	constPoolCnt = 0;
 		HString.releaseBuffers();
 		ClassFileAdmin.clear();
-
-//		StringTable.resetTable();
-//		hsNumber = null;
-//		wellKnownTypes = null;
-//		classFileAttributeTable = null;
-	}
-
-	void fixInstanceMethodsOfThisClass(){
-		Item meth = methods;
-		while (meth != null){
-			if (meth.index >= 0) ((Method)meth).fixed = true;
-			meth = meth.next;
-		}
 	}
 
 	private void loadConstPool(DataInputStream clfInStrm) throws IOException{
@@ -855,7 +853,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 					methTabLength = baseCls.methTabLength;
 					while (meth != null) {
 						meth.index = -1;
-						if ((meth.accAndPropFlags & (1<<apfStatic)) == 0) {	// instance method
+						if ((meth.accAndPropFlags & ((1<<apfStatic))) == 0) {	// instance method
 							Item baseMeth = baseCls.getMethod(meth.name, ((Method)meth).methDescriptor);
 							if (baseMeth == null) meth.index = methTabLength++;
 							else meth.index = baseMeth.index;
@@ -1069,7 +1067,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		vrb.println("\nend of class list\n");
 	}
 
-	public void printFields(int indentLevel){
+	public void printFields(int indentLevel) {
 		indent(indentLevel);
 		vrb.printf("fields: (instFields: #=%1$d, objSize=%2$d B", nofInstFields, objectSize);
 		vrb.printf("; clsFields: #=%1$d, clsFieldsSize=%2$d B; constFields: #=%3$d)\n", nofClassFields, classFieldsSize, nofConstFields);
@@ -1081,33 +1079,31 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		vrb.println();
 	
 		Item item = instFields;
-		while(item != null){
+		while (item != null) {
 			item.println(indentLevel+1);
 			item = item.next;
 		}
 	}
 
-	public void printMethods(int indentLevel){
+	public void printMethods(int indentLevel) {
 		indent(indentLevel);
-		vrb.printf("methods: clsMeths #=%1$d, instMeths #=%2$d, methTabLength=%3$d", nofClassMethods, nofInstMethods, methTabLength);
-		if( methTable != null ){
-			vrb.printf( ", extMethTable.length=%1$d\n", methTable.length );
+		vrb.printf("methods: clsMeths #=%1$d, instMeths #=%2$d, methTabLength=%3$d\n", nofClassMethods, nofInstMethods, methTabLength);
+		if (methTable != null) {
 			int n = 0;
-			while( n < methTable.length ){
+			while (n < methTable.length) {
 				indent(indentLevel+1);
 				vrb.printf("[%1$2d] ", n);
 				methTable[n].printHeaderX(0);
 				vrb.println();
 				n++;
 			}
-		}else{
-			vrb.println();
-			Item item = methods;
-			while(item != null){
-				item.println(indentLevel+1);
-				item = item.next;
-			}
 		}
+		Item item = methods;
+			while (item != null) {
+				((Method)item).printHeaderX(indentLevel+1);
+				vrb.println();
+				item = item.next;
+				}
 		vrb.println();
 	}
 
@@ -1233,7 +1229,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 
 	private void printReducedConstPool(String title) {
 		vrb.printf("\nreduced constant pool: %1$s (nOfImports=%2$d)\n", title, nofImports);
-		for(int pe = 0; pe < constPool.length; pe++){
+		for (int pe = 0; pe < constPool.length; pe++) {
 			vrb.printf("  [%1$3d] ", pe);
 			printRedCpEntry(pe);
 			vrb.println();
@@ -1253,7 +1249,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		indent(indentLevel+1);
 		
 		vrb.printf("source file: %1$s, extLevel=%2$d(max=)", srcFileName, this.extensionLevel);
-		if ((this.accAndPropFlags&(1<<apfInterface)) != 0) {
+		if ((this.accAndPropFlags & (1<<apfInterface)) != 0) {
 			String icall, iTest;
 			if ((this.accAndPropFlags&(1<<dpfInterfCall)) == 0 ) icall = ""; else icall = ", iCall";
 			if ((this.accAndPropFlags&(1<<dpfTypeTest)) == 0 ) iTest = ""; else iTest = ", iTest";
@@ -1261,8 +1257,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 		} else
 			vrb.printf("%1$d, id=%2$d\n", maxExtensionLevelStdClasses, index);  
 		
-		printImports(indentLevel+1);
-		printInterfaces(indentLevel+1);
+//		printImports(indentLevel+1);
+//		printInterfaces(indentLevel+1);
 //		printFields(indentLevel+1);
 		printMethods(indentLevel+1);
 	}

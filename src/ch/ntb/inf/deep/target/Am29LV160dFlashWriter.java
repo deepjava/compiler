@@ -21,7 +21,7 @@
 package ch.ntb.inf.deep.target;
 
 import ch.ntb.inf.deep.config.Device;
-import ch.ntb.inf.deep.config.Memorysector;
+import ch.ntb.inf.deep.config.MemSector;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
@@ -59,15 +59,15 @@ public class Am29LV160dFlashWriter {
 	}
 
 	public void eraseDevice(Device dev) {
-		StdStreams.log.println("erasing device " + dev.getName().toString());
+		StdStreams.log.println("erasing device " + dev.name.toString());
 		try {
-			bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
-			bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
-			bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x01000100);
-			bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
-			bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
-			bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x08000800);
-			waitByDataPoll(dev.getbaseAddress(), 0xFFFFFFFF, 30000);
+			bdi.writeWord(dev.address + 0x1554, 0x55005500);
+			bdi.writeWord(dev.address + 0xAA8, 0xAA00AA00);
+			bdi.writeWord(dev.address + 0x1554, 0x01000100);
+			bdi.writeWord(dev.address + 0x1554, 0x55005500);
+			bdi.writeWord(dev.address + 0xAA8, 0xAA00AA00);
+			bdi.writeWord(dev.address + 0x1554, 0x08000800);
+			waitByDataPoll(dev.address, 0xFFFFFFFF, 30000);
 		} catch (TargetConnectionException e) {
 			ErrorReporter.reporter.error(TargetConnection.errConnectionLost,"while erasing device");
 		}
@@ -75,24 +75,24 @@ public class Am29LV160dFlashWriter {
 	}
 
 	public void eraseMarkedSectors(Device dev) {
-		Memorysector current = dev.sector;
+		MemSector current = dev.sector;
 		while (current != null){
-			if(current.used){
-				StdStreams.log.println("erasing " + dev.getName().toString() + " sector " + current.getName().toString());
+			if (current.used){
+				StdStreams.log.println("erasing " + dev.name.toString() + " sector " + current.name.toString());
 				try {
-					bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
-					bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
-					bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x01000100);
-					bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
-					bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
-					bdi.writeWord(current.getBaseAddress(), 0x0C000C00);
-					waitByDataPoll(current.getBaseAddress(), 0xFFFFFFFF, 5000);
+					bdi.writeWord(dev.address + 0x1554, 0x55005500);
+					bdi.writeWord(dev.address + 0xAA8, 0xAA00AA00);
+					bdi.writeWord(dev.address + 0x1554, 0x01000100);
+					bdi.writeWord(dev.address + 0x1554, 0x55005500);
+					bdi.writeWord(dev.address + 0xAA8, 0xAA00AA00);
+					bdi.writeWord(current.address, 0x0C000C00);
+					waitByDataPoll(current.address, 0xFFFFFFFF, 5000);
 				} catch (TargetConnectionException e) {
 					ErrorReporter.reporter.error(TargetConnection.errConnectionLost,"while erasing sector");
 					return;
 				}
 			}
-			current = (Memorysector)current.next;
+			current = (MemSector)current.next;
 		}
 		
 	}
@@ -116,9 +116,9 @@ public class Am29LV160dFlashWriter {
 	public void unlockBypass(Device dev, boolean unlock){
 		if(unlock) { // enable fast programming mode
 			try {
-				bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x55005500);
-				bdi.writeWord(dev.getbaseAddress()+ 0xAA8, 0xAA00AA00);
-				bdi.writeWord(dev.getbaseAddress()+ 0x1554, 0x04000400);
+				bdi.writeWord(dev.address + 0x1554, 0x55005500);
+				bdi.writeWord(dev.address + 0xAA8, 0xAA00AA00);
+				bdi.writeWord(dev.address + 0x1554, 0x04000400);
 				unlocked = true;
 			} catch (TargetConnectionException e) {
 				// TODO add error msg here
@@ -126,8 +126,8 @@ public class Am29LV160dFlashWriter {
 		}
 		else { // disable fast programming
 			try {
-				bdi.writeWord(dev.getbaseAddress(), 0x09000900);
-				bdi.writeWord(dev.getbaseAddress(), 0x0);
+				bdi.writeWord(dev.address, 0x09000900);
+				bdi.writeWord(dev.address, 0x0);
 				unlocked = false;
 			} catch (TargetConnectionException e) {
 				// TODO add error msg here

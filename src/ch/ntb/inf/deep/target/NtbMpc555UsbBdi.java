@@ -4,7 +4,6 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
-import ch.ntb.inf.deep.config.RegisterInitList;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
@@ -24,15 +23,13 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	private static TargetConnection tc;
 	private Device dev;
 	private BDI bdi;
-	private int memoryBaseAddress;
+	private int memoryBaseAddress; // temporary memory for transferring FPR values
 	private boolean flashErased = false;
 	
 	private NtbMpc555UsbBdi() {}
 	
 	public static TargetConnection getInstance() {
-		if(tc != null && !tc.isConnected()){
-			tc = null;
-		}
+		if(tc != null && !tc.isConnected()) tc = null;
 		if (tc == null) {
 			if(dbg) StdStreams.vrb.println("[TARGET] NtbMpc555UsbBdi: Creating new NtbMpc555UsbBdi... ");
 			tc = new NtbMpc555UsbBdi();
@@ -47,12 +44,12 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	
 	@Override
 	public synchronized void init() throws TargetConnectionException {
-		memoryBaseAddress = Configuration.getMemoryBaseAddress();
-		if(!isConnected()) {
-			if(dbg) StdStreams.vrb.println("[TARGET] Connecting... ");
+		memoryBaseAddress = Configuration.getBoard().cpu.memorymap.getDeviceByName("InternalRam").getSegmentByName("Constants").address;
+		if (!isConnected()) {
+			if (dbg) StdStreams.vrb.println("[TARGET] Connecting... ");
 			openConnection();
 		}
-		if(dbg) StdStreams.vrb.println("[TARGET] Reseting... ");
+		if (dbg) StdStreams.vrb.println("[TARGET] Reseting... ");
 		resetTarget();
 	}
 
@@ -71,7 +68,6 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 			}
 			throw new TargetConnectionException(e.getMessage(), e);
 		}
-	
 	}
 
 	@Override
@@ -128,22 +124,13 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	}
 	
 	@Override
-	public synchronized void initRegisters(RegisterInitList regInitList) throws TargetConnectionException {
-		RegisterInit regInit = regInitList.getFirstRegInit();
-		while(regInit != null) {
-			initRegister(regInit);
-			regInit = (RegisterInit)regInit.next;
-		}
-	}
-	
-	@Override
 	public synchronized void initRegister(RegisterInit regInit) throws TargetConnectionException {
-		setRegisterValue(regInit.getRegister(), regInit.getInitValue());
+		setRegisterValue(regInit.reg, regInit.initValue);
 	}
 
 	@Override
 	public synchronized void setRegisterValue(String regName, int value) throws TargetConnectionException {
-		Register reg = Configuration.getRegiststerByName(regName);
+		Register reg = Configuration.getRegisterByName(regName);
 		if(reg != null) {
 			setRegisterValue(reg, value);
 		}
@@ -152,19 +139,19 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 
 	@Override
 	public synchronized void setRegisterValue(Register reg, int value) throws TargetConnectionException {
-		if(dbg) StdStreams.vrb.println("  Setting register " + reg.getName() + " to 0x" + Integer.toHexString(value));
-		switch(reg.getType()) {
+		if (dbg) StdStreams.vrb.println("  Setting register " + reg.name + " to 0x" + Integer.toHexString(value));
+		switch(reg.regType) {
 			case Parser.sGPR:
-				setGprValue(reg.getAddress(), value);
+				setGprValue(reg.address, value);
 				break;
 			case Parser.sFPR:
-				setFprValue(reg.getAddress(), value);
+				setFprValue(reg.address, value);
 				break;
 			case Parser.sSPR:
-				setSprValue(reg.getAddress(), value);
+				setSprValue(reg.address, value);
 				break;
 			case Parser.sIOR:
-				setIorValue(reg.getAddress(), value);
+				setIorValue(reg.address, value);
 				break;
 			case Parser.sMSR:
 				setMsrValue(value);
@@ -197,11 +184,13 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 
 	@Override
 	public synchronized void setFprValue(int fpr, long value) throws TargetConnectionException {
-		int temp;
+		int temp1, temp2;
 		try {
-			temp = bdi.readMem(memoryBaseAddress, 4);
+			temp1 = bdi.readMem(memoryBaseAddress, 4);
+			temp2 = bdi.readMem(memoryBaseAddress+4, 4);
 			bdi.writeFPR(fpr, memoryBaseAddress, value);
-			bdi.writeMem(memoryBaseAddress, temp, 4);
+			bdi.writeMem(memoryBaseAddress, temp1, 4);
+			bdi.writeMem(memoryBaseAddress+4, temp2, 4);
 		} catch (BDIException e) {
 			throw new TargetConnectionException(e.getMessage(), e);
 		}
@@ -227,7 +216,7 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 
 	@Override
 	public synchronized int getRegisterValue(String regName) throws TargetConnectionException {
-		Register reg = Configuration.getRegiststerByName(regName);
+		Register reg = Configuration.getRegisterByName(regName);
 		if(reg != null) {
 			return getRegisterValue(reg);
 		}
@@ -237,15 +226,15 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 
 	@Override
 	public synchronized int getRegisterValue(Register reg) throws TargetConnectionException {
-		switch(reg.getType()) {
+		switch(reg.regType) {
 			case Parser.sGPR:
-				return getGprValue(reg.getAddress());
+				return getGprValue(reg.address);
 			case Parser.sFPR:
-				return (int)getFprValue(reg.getAddress());
+				return (int)getFprValue(reg.address);
 			case Parser.sSPR:
-				return getSprValue(reg.getAddress());
+				return getSprValue(reg.address);
 			case Parser.sIOR:
-				return getIorValue(reg.getAddress());
+				return getIorValue(reg.address);
 			case Parser.sMSR:
 				return getMsrValue();
 			case Parser.sCR:
@@ -260,7 +249,7 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 
 	@Override
 	public synchronized long getRegisterValue64(String regName) throws TargetConnectionException {
-		Register reg = Configuration.getRegiststerByName(regName);
+		Register reg = Configuration.getRegisterByName(regName);
 		if(reg != null) {
 			return getRegisterValue(reg);
 		}
@@ -270,15 +259,15 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 
 	@Override
 	public synchronized long getRegisterValue64(Register reg) throws TargetConnectionException {
-		switch(reg.getType()) {
+		switch(reg.regType) {
 			case Parser.sGPR:
-				return getGprValue(reg.getAddress());
+				return getGprValue(reg.address);
 			case Parser.sFPR:
-				return getFprValue(reg.getAddress());
+				return getFprValue(reg.address);
 			case Parser.sSPR:
-				return getSprValue(reg.getAddress());
+				return getSprValue(reg.address);
 			case Parser.sIOR:
-				return getIorValue(reg.getAddress());
+				return getIorValue(reg.address);
 			case Parser.sMSR:
 				return getMsrValue();
 			case Parser.sCR:
@@ -305,11 +294,13 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	@Override
 	public synchronized long getFprValue(int fpr) throws TargetConnectionException {
 		long value = 0;
-		int temp;
+		int temp1, temp2;
 		try {
-			temp = bdi.readMem(memoryBaseAddress, 4);
+			temp1 = bdi.readMem(memoryBaseAddress, 4);
+			temp2 = bdi.readMem(memoryBaseAddress+4, 4);
 			value = bdi.readFPR(fpr, memoryBaseAddress);
-			bdi.writeMem(memoryBaseAddress, temp, 4);
+			bdi.writeMem(memoryBaseAddress, temp1, 4);
+			bdi.writeMem(memoryBaseAddress+4, temp2, 4);
 		} catch (BDIException e) {
 			throw new TargetConnectionException(e.getMessage(), e);
 		}
@@ -422,12 +413,12 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	public synchronized void writeTMS(TargetMemorySegment tms) throws TargetConnectionException {
 		Am29LV160dFlashWriter flashWriter = null;
 		int count = 0;
-		if(tms.segment.owner.getTechnology() == 0) { // RAM device
+		if(tms.segment.owner.technology == 0) { // RAM device
 			int dataSizeToTransfer = tms.data.length;
 			int startAddr = tms.startAddress;
 			int index = 0;
 			if(count%5 == 0){
-				StdStreams.vrb.print('.');
+				StdStreams.log.print('.');
 			}
 			while(dataSizeToTransfer > 0) {
 				// limitation for fast download is 101 words
@@ -462,23 +453,23 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 				//if(dataSizeToTransfer <= 0) StdStreams.vrb.println();
 			}
 			count++;
-			if(tms.next == null || tms.next.segment.owner.getTechnology() != 0){
+			if(tms.next == null || tms.next.segment.owner.technology != 0){
 				StdStreams.vrb.println();
 			}
 		}
-		else if(tms.segment.owner.getTechnology() == 1) { // Flash device
-			if(tms.segment.owner.getMemoryType() == Configuration.AM29LV160D){
+		else if (tms.segment.owner.technology == 1) { // Flash device
+			if (tms.segment.owner.memorytype == Configuration.AM29LV160D){
 				flashWriter = new Am29LV160dFlashWriter(this);
 				if(!flashErased){ // erase all used sectors
 					TargetMemorySegment current = tms;
 					// first mark all used sectors
-					while(current != null && current.segment.owner.getMemoryType() == Configuration.AM29LV160D){
+					while(current != null && current.segment.owner.memorytype == Configuration.AM29LV160D){
 						current.segment.owner.markUsedSectors(current);
 						current = current.next;
 					}
 					// second erase all marked sectors
 					ch.ntb.inf.deep.config.Device[] devs = Configuration.getDevicesByType(Configuration.AM29LV160D);
-					for(int i = 0; i < devs.length; i++) {
+					for (int i = 0; i < devs.length; i++) {
 						if(devs[i] == null) System.out.println("ERROR: devs[" + i + "] == null");
 						else flashWriter.eraseMarkedSectors(devs[i]);
 					}
@@ -496,7 +487,7 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 				}
 			}
 			else{ // other memory type
-					ErrorReporter.reporter.error(errMemWriterNotImplemented, "for Device " + tms.segment.owner.getName().toString());
+					ErrorReporter.reporter.error(errMemWriterNotImplemented, "for Device " + tms.segment.owner.name.toString());
 					return;
 			}
 		}
@@ -508,126 +499,126 @@ public class NtbMpc555UsbBdi extends TargetConnection {
 	@Override
 	public synchronized void setBreakPoint(int address) throws TargetConnectionException {
 		//1. Disable Instruction breakpoint interrupt
-		Register der = Configuration.getRegiststerByName("DER");
+		Register der = Configuration.getRegisterByName("DER");
 		if(der == null)return;
-		int derValue = getSprValue(der.getAddress()) & ~0x4;
-		setSprValue(der.getAddress(), derValue);
+		int derValue = getSprValue(der.address) & ~0x4;
+		setSprValue(der.address, derValue);
 		
 		// 2. read ICTRL
-		Register ictrl = Configuration.getRegiststerByName("ICTRL");
+		Register ictrl = Configuration.getRegisterByName("ICTRL");
 		if(ictrl == null)return;
-		int ictrlValue = getSprValue(ictrl.getAddress());
+		int ictrlValue = getSprValue(ictrl.address);
 	
 		//3. decide which CMP is free an set it appropriate
 		if((ictrlValue & 0x80000) == 0){//CMPA is free
-			Register cmpa = Configuration.getRegiststerByName("CMPA");
+			Register cmpa = Configuration.getRegisterByName("CMPA");
 			if(cmpa == null)return;
-			setSprValue(cmpa.getAddress(), address);
-			setSprValue(ictrl.getAddress(), ictrlValue | 0x80080800);//CTA = equals, IWP0 = match from CMPA, SIWP0EN = trap enabled
+			setSprValue(cmpa.address, address);
+			setSprValue(ictrl.address, ictrlValue | 0x80080800);//CTA = equals, IWP0 = match from CMPA, SIWP0EN = trap enabled
 		}else if((ictrlValue & 0x20000) == 0){//CMPB is free
-			Register cmpb = Configuration.getRegiststerByName("CMPB");
+			Register cmpb = Configuration.getRegisterByName("CMPB");
 			if(cmpb == null)return;
-			setSprValue(cmpb.getAddress(), address);
-			setSprValue(ictrl.getAddress(), ictrlValue | 0x10020400);//CTB = equals, IWP1 = match from CMPB, SIWP1EN = trap enabled			
+			setSprValue(cmpb.address, address);
+			setSprValue(ictrl.address, ictrlValue | 0x10020400);//CTB = equals, IWP1 = match from CMPB, SIWP1EN = trap enabled			
 		}else if((ictrlValue & 0x8000) == 0){//CMPC is free
-			Register cmpc = Configuration.getRegiststerByName("CMPC");
+			Register cmpc = Configuration.getRegisterByName("CMPC");
 			if(cmpc == null)return;
-			setSprValue(cmpc.getAddress(), address);
-			setSprValue(ictrl.getAddress(), ictrlValue | 0x2008200);//CTC = equals, IWP2 = match from CMPC, SIWP2EN = trap enabled
+			setSprValue(cmpc.address, address);
+			setSprValue(ictrl.address, ictrlValue | 0x2008200);//CTC = equals, IWP2 = match from CMPC, SIWP2EN = trap enabled
 		}else if((ictrlValue & 0x2000) == 0){//CMPD is free
-			Register cmpd = Configuration.getRegiststerByName("CMPD");
+			Register cmpd = Configuration.getRegisterByName("CMPD");
 			if(cmpd == null)return;
-			setSprValue(cmpd.getAddress(), address);
-			setSprValue(ictrl.getAddress(), ictrlValue | 0x402100);//CTD = equals, IWP3 = match from CMPD, SIWP3EN = trap enabled
+			setSprValue(cmpd.address, address);
+			setSprValue(ictrl.address, ictrlValue | 0x402100);//CTD = equals, IWP3 = match from CMPD, SIWP3EN = trap enabled
 		}
 		
 		//4. Enable instruction breakpoint interrupt
-		setSprValue(der.getAddress(), derValue | 0x4);	
+		setSprValue(der.address, derValue | 0x4);	
 	}
 
 	@Override
 	public synchronized void removeBreakPoint(int address) throws TargetConnectionException {
 		//1. Disable Instruction breakpoint interrupt
-		Register der = Configuration.getRegiststerByName("DER");
+		Register der = Configuration.getRegisterByName("DER");
 		if(der == null)return;
-		int derValue = getSprValue(der.getAddress()) & ~0x4;
-		setSprValue(der.getAddress(), derValue);
+		int derValue = getSprValue(der.address) & ~0x4;
+		setSprValue(der.address, derValue);
 		
 		// 2. read ICTRL
-		Register ictrl = Configuration.getRegiststerByName("ICTRL");
+		Register ictrl = Configuration.getRegisterByName("ICTRL");
 		if(ictrl == null)return;
-		int ictrlValue = getSprValue(ictrl.getAddress());
+		int ictrlValue = getSprValue(ictrl.address);
 		
 		//3. find correct CMP
 		if((ictrlValue & 0x80000) != 0){//CMPA is used
-			Register cmpa = Configuration.getRegiststerByName("CMPA");
+			Register cmpa = Configuration.getRegisterByName("CMPA");
 			if(cmpa == null)return;
-			int cmpaValue = getSprValue(cmpa.getAddress());
+			int cmpaValue = getSprValue(cmpa.address);
 			if(cmpaValue == address){
-				setSprValue(ictrl.getAddress(), ictrlValue & ~0xE00C0800);
+				setSprValue(ictrl.address, ictrlValue & ~0xE00C0800);
 				//4. Enable instruction breakpoint interrupt
-				setSprValue(der.getAddress(), derValue | 0x4);
+				setSprValue(der.address, derValue | 0x4);
 				return;
 			}
 		}
 		if((ictrlValue & 0x20000) != 0){//CMPB is used
-			Register cmpb = Configuration.getRegiststerByName("CMPB");
+			Register cmpb = Configuration.getRegisterByName("CMPB");
 			if(cmpb == null)return;
-			int cmpbValue = getSprValue(cmpb.getAddress());
+			int cmpbValue = getSprValue(cmpb.address);
 			if(cmpbValue == address){
-				setSprValue(ictrl.getAddress(), ictrlValue & ~0x1C030400);
+				setSprValue(ictrl.address, ictrlValue & ~0x1C030400);
 				//4. Enable instruction breakpoint interrupt
-				setSprValue(der.getAddress(), derValue | 0x4);
+				setSprValue(der.address, derValue | 0x4);
 				return;
 			}
 			
 		}
 		if((ictrlValue & 0x8000) != 0){//CMPC is used
-			Register cmpc = Configuration.getRegiststerByName("CMPC");
+			Register cmpc = Configuration.getRegisterByName("CMPC");
 			if(cmpc == null)return;
-			int cmpcValue = getSprValue(cmpc.getAddress());
+			int cmpcValue = getSprValue(cmpc.address);
 			if(cmpcValue == address){
-				setSprValue(ictrl.getAddress(), ictrlValue & ~0x38C200);
+				setSprValue(ictrl.address, ictrlValue & ~0x38C200);
 				//4. Enable instruction breakpoint interrupt
-				setSprValue(der.getAddress(), derValue | 0x4);
+				setSprValue(der.address, derValue | 0x4);
 				return;
 			}
 			
 		}
 		if((ictrlValue & 0x2000) != 0){//CMPD is used
-			Register cmpd = Configuration.getRegiststerByName("CMPD");
+			Register cmpd = Configuration.getRegisterByName("CMPD");
 			if(cmpd == null)return;
-			int cmpdValue = getSprValue(cmpd.getAddress());
+			int cmpdValue = getSprValue(cmpd.address);
 			if(cmpdValue == address){
-				setSprValue(ictrl.getAddress(), ictrlValue & ~0x73100);
+				setSprValue(ictrl.address, ictrlValue & ~0x73100);
 				//4. Enable instruction breakpoint interrupt
-				setSprValue(der.getAddress(), derValue | 0x4);
+				setSprValue(der.address, derValue | 0x4);
 				return;
 			}
 		}
 		
 		//4. Enable instruction breakpoint interrupt
-		setSprValue(der.getAddress(), derValue | 0x4);	
+		setSprValue(der.address, derValue | 0x4);	
 	}
 
 	@Override
 	public synchronized void confirmBreakPoint(int address) throws TargetConnectionException {
 		//1. Disable Instruction breakpoint interrupt
-		Register der = Configuration.getRegiststerByName("DER");
+		Register der = Configuration.getRegisterByName("DER");
 		if(der == null)return;
-		int derValue = getSprValue(der.getAddress()) & ~0x4;
-		setSprValue(der.getAddress(), derValue);
+		int derValue = getSprValue(der.address) & ~0x4;
+		setSprValue(der.address, derValue);
 		
 		// 2. read ICTRL
-		Register ictrl = Configuration.getRegiststerByName("ICTRL");
+		Register ictrl = Configuration.getRegisterByName("ICTRL");
 		if(ictrl == null)return;
-		int ictrlValue = getSprValue(ictrl.getAddress());
+		int ictrlValue = getSprValue(ictrl.address);
 		
 		// 3. set ignore first match on i-bus
-		setSprValue(ictrl.getAddress(), ictrlValue | 0x8);		
+		setSprValue(ictrl.address, ictrlValue | 0x8);		
 		
 		//4. Enable instruction breakpoint interrupt
-		setSprValue(der.getAddress(), derValue | 0x4);	
+		setSprValue(der.address, derValue | 0x4);	
 	}
 
 	

@@ -29,8 +29,9 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
 public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTypeConsts {
-	static final boolean dbg = false, enAssertion = true;
-	static PrintStream vrb = StdStreams.vrb;
+	protected static final boolean dbg = false;
+	static final boolean enAssertion = true;
+	public static PrintStream vrb = StdStreams.vrb;
 	static PrintStream log = StdStreams.log;
 	static ErrorReporter errRep = ErrorReporter.reporter;
 
@@ -47,10 +48,6 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 	public int address = -1; // the absolute address of this item on the target
 	public int index = -1; // index in table
 	
-	public static void indent(int indentLevel) {
-		StdStreams.vrbPrintIndent(indentLevel);
-	}
-
 	protected Item() {}
 
 	Item(HString name) {
@@ -196,4 +193,10 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 	public void printAddress() {
 		vrb.print("address = " + address);
 	}
+	
+	public static void indent(int indentLevel) {
+		StdStreams.vrbPrintIndent(indentLevel);
+	}
+
+
 }

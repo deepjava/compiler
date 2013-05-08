@@ -28,6 +28,7 @@ public class IORegister extends Register {
 	
 	public IORegister(){	
 	}
+	
 	public IORegister(String name, int value, int representation, int size){
 		this.name = name;
 		this.value = value;

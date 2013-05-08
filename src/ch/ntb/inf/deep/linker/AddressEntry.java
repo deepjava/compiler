@@ -29,7 +29,7 @@ public class AddressEntry extends ConstBlkEntry {
 	private static final int size = 4;
 	
 	Item itemRef;
-	Segment segmentRef;
+	Segment segment;
 	boolean isSegment = false;
 	
 	public AddressEntry(Item ref) {
@@ -45,13 +45,13 @@ public class AddressEntry extends ConstBlkEntry {
 	}
 	
 	public AddressEntry(Segment ref) {
-		this.segmentRef = ref;
+		this.segment = ref;
 		this.name = ref.getFullName();
 		this.isSegment = true;
 	}
 	
 	public AddressEntry(String prefix, Segment ref) {
-		this.segmentRef = ref;
+		this.segment = ref;
 		this.name = HString.getRegisteredHString(prefix + ref.getFullName());
 		this.isSegment = true;
 	}
@@ -62,11 +62,11 @@ public class AddressEntry extends ConstBlkEntry {
 	
 	protected int insertIntoArray(int[] a, int offset) {
 		int address;
-		if(isSegment) address = segmentRef.getBaseAddress();
+		if (isSegment) address = segment.address;
 		else address = itemRef.address;
 		int index = offset / 4;
 		int written = 0;
-		if(offset + size <= a.length * 4) {
+		if (offset + size <= a.length * 4) {
 			a[index] = address;
 			written = size;
 		}
@@ -84,14 +84,14 @@ public class AddressEntry extends ConstBlkEntry {
 	
 	public String toString() {
 		int address;
-		if(isSegment) address = segmentRef.getBaseAddress();
+		if(isSegment) address = segment.address;
 		else address = itemRef.address;
 		return String.format("[%08X]", address) + " (" + name + ")";
 	}
 	
 	public int getAddress() {
 		int address;
-		if(isSegment) address = segmentRef.getBaseAddress();
+		if(isSegment) address = segment.address;
 		else address = itemRef.address;
 		return address;
 	}

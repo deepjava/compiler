@@ -1,16 +1,22 @@
-/*******************************************************************************
- * Copyright (c) 2005, 2007 IBM Corporation and others.
+/*
+ * Copyright (c) 2011 NTB Interstate University of Applied Sciences of Technology Buchs.
+ *
+ * http://www.ntb.ch/inf
+ * 
  * All rights reserved. This program and the accompanying materials 
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * Eclipse Public License for more details.
+ * 
  * Contributors:
- *     IBM Corporation - initial API and implementation
- *     Bjorn Freeman-Benson - initial API and implementation
- *     Millischer Roger  - adapted to deep (based on the example PDAMainTab)
- *******************************************************************************/
-
+ *     NTB - initial implementation
+ * 
+ */
 package ch.ntb.inf.deep.eclipse.ui.tabs;
 
 import org.eclipse.core.resources.IFile;
@@ -34,66 +40,48 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 
+import ch.ntb.inf.deep.config.Board;
+import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.RunConfiguration;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
-/**
- * Tab to specify the Deep program to run/debug.
- */
 public class DeepMainTab extends AbstractLaunchConfigurationTab {
 
-	private Text fProgramText, targetConfig;
+	private Text fProgramText;
 	private String program;
 	private String locationPath;
-	private Button fProgramButton, ram, flash, other;
-	private String lastChoise = "";
-	private String BOOT_FROM_RAM = "BootFromRam";
-	private String BOOT_FROM_FLASH = "BootFromFlash";
+	private String runConf;
+	private Button[] runConfigs;
+	private Group group2;
+	private Composite comp;
 	
 	private SelectionAdapter selectionListener = new SelectionAdapter() {
-		public void widgetSelected(SelectionEvent e){
-			if (e.widget.equals(ram)){
-				ram.setSelection(true);
-				flash.setSelection(false);
-				if(other.getSelection()){
-					other.setSelection(false);
-					targetConfig.setEnabled(false);
-					targetConfig.setText("");
+		public void widgetSelected(SelectionEvent e) {
+			for (int i = 0; i < runConfigs.length; i++) {
+				if (e.widget.equals(runConfigs[i])) {
+					String conf = runConfigs[i].getText();
+					RunConfiguration rc = Configuration.getBoard().runConfig;
+					while (rc != null) {
+						if (rc.description.equals(conf)) runConf = rc.name.toString();
+						rc = (RunConfiguration) rc.next;
+					}
+
 				}
-			}else if (e.widget.equals(flash)){
-				flash.setSelection(true);
-				ram.setSelection(false);
-				if(other.getSelection()){
-					other.setSelection(false);
-					targetConfig.setEnabled(false);
-					targetConfig.setText("");
-				}
-			}else if (e.widget.equals(other)){
-				ram.setSelection(false);
-				flash.setSelection(false);
-				other.setSelection(true);
-				targetConfig.setEnabled(true);
-				targetConfig.setText(lastChoise);
 			}
 			updateLaunchConfigurationDialog();
 		}
 	};
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.debug.ui.ILaunchConfigurationTab#createControl(org.eclipse
-	 * .swt.widgets.Composite)
-	 */
 	public void createControl(Composite parent) {
 		Font font = parent.getFont();
 
-		Composite comp = new Composite(parent, SWT.NONE);
+		comp = new Composite(parent, SWT.NONE);
 		setControl(comp);
 		GridLayout topLayout = new GridLayout();
 		topLayout.verticalSpacing = 0;
@@ -119,169 +107,98 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 				updateLaunchConfigurationDialog();
 			}
 		});
-		fProgramButton = createPushButton(group1, "&Browse...", null); //$NON-NLS-1$
-		fProgramButton.addSelectionListener(new SelectionAdapter() {
+		Button deepFileBrowse = createPushButton(group1, "&Browse...", null);
+		deepFileBrowse.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				browseFiles();
+				ResourceListSelectionDialog dialog = new ResourceListSelectionDialog( getShell(), ResourcesPlugin.getWorkspace().getRoot(), IResource.FILE);
+				dialog.setTitle("Deep Program");
+				dialog.setMessage("Select deep project file");
+				if (dialog.open() == Window.OK) {
+					Object[] files = dialog.getResult();
+					IFile file = (IFile) files[0];
+					locationPath = file.getProject().getFullPath().toString();
+					fProgramText.setText(file.getProjectRelativePath().toString());
+					program = file.getProjectRelativePath().toString();
+				}
 			}
 		});
-		
-		Group group3 = new Group(comp, SWT.NONE);
-		group3.setText("Target configuration");
-		GridLayout gridLayout2 = new GridLayout(2, false);
-		group3.setLayout(gridLayout2);
-		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
-		gridData.horizontalSpan = 2;//TODO check
-		group3.setLayoutData(gridData);
-		Label label2 = new Label(group3,SWT.NONE);
-		label2.setText("Select a targetConfiguration");
-		label2.setLayoutData(gridData);
-		
-		ram = new Button(group3, SWT.RADIO);
-		ram.setText("Boot from ram");
-		ram.setSelection(false);
-		ram.addSelectionListener(selectionListener);
-		ram.setLayoutData(gridData);
-		flash = new Button(group3, SWT.RADIO);
-		flash.setText("Boot from flash");
-		flash.setSelection(false);
-		flash.addSelectionListener(selectionListener);
-		flash.setLayoutData(gridData);
-		other = new Button(group3, SWT.RADIO);
-		other.setText("Other");
-		other.setSelection(false);
-		other.addSelectionListener(selectionListener);
-		targetConfig = new Text(group3, SWT.SINGLE | SWT.BORDER);
-		GridData gridData2 = new GridData();
-//		gridData2.horizontalAlignment = SWT.FILL;
-		gridData2.grabExcessHorizontalSpace = true;
-		targetConfig.setLayoutData(gridData2);
-		targetConfig.setEnabled(false);
 	}
 
-	/**
-	 * Open a resource chooser to select a program
-	 */
-	protected void browseFiles() {
-		ResourceListSelectionDialog dialog = new ResourceListSelectionDialog( getShell(), ResourcesPlugin.getWorkspace().getRoot(), IResource.FILE);
-		dialog.setTitle("Deep Program");
-		dialog.setMessage("Select deep project file");
-		if (dialog.open() == Window.OK) {
-			Object[] files = dialog.getResult();
-			IFile file = (IFile) files[0];
-			locationPath = file.getProject().getFullPath().toString();
-//			String temp = fProgramText.getText();
-//			if (!temp.equals("")) {
-//				temp = temp + ";";
-//			}
-			fProgramText.setText(file.getProjectRelativePath().toString());
-			program = file.getProjectRelativePath().toString();
-		}
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.debug.ui.ILaunchConfigurationTab#setDefaults(org.eclipse.
-	 * debug.core.ILaunchConfigurationWorkingCopy)
-	 */
 	public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.debug.ui.ILaunchConfigurationTab#initializeFrom(org.eclipse
-	 * .debug.core.ILaunchConfiguration)
-	 */
 	public void initializeFrom(ILaunchConfiguration configuration) {
 		try {
 			program = configuration.getAttribute(DeepPlugin.ATTR_DEEP_PROGRAM,	(String) null);
 			if (program != null) {
+				locationPath = configuration.getAttribute(DeepPlugin.ATTR_DEEP_LOCATION, "");
+				runConf = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, "");
 				fProgramText.setText(program);
-			}
-			locationPath = configuration.getAttribute(	DeepPlugin.ATTR_DEEP_LOCATION, "");
-			String targetConf = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, BOOT_FROM_RAM);
-			if(targetConf.endsWith(BOOT_FROM_RAM)){
-				ram.setSelection(true);
-				flash.setSelection(false);
-				if(other.getSelection()){
-					other.setSelection(false);
-					targetConfig.setEnabled(false);
-					targetConfig.setText("");
+				if (group2 != null) { 
+					if (group2.getChildren().length > 0) for (Control ctrl : group2.getChildren()) ctrl.dispose();
+					group2.dispose();
 				}
-			}else if(targetConf.equals(BOOT_FROM_FLASH)){
-				ram.setSelection(false);
-				flash.setSelection(true);
-				if(other.getSelection()){
-					other.setSelection(false);
-					targetConfig.setEnabled(false);
-					targetConfig.setText("");
+				group2 = new Group(comp, SWT.NONE);
+				group2.setText("Target configuration");
+				GridLayout gridLayout2 = new GridLayout(2, false);
+				group2.setLayout(gridLayout2);
+				GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+				gridData.horizontalSpan = 2;
+				group2.setLayoutData(gridData);
+				Label label = new Label(group2,SWT.NONE);
+				label.setText("Select an available target configuration from the list");
+				label.setLayoutData(gridData);
+				Configuration.readProjectFileAndRunConfigs(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + locationPath + IPath.SEPARATOR + program);
+				Board b = Configuration.getBoard();
+				if (b == null) {
+					label.setText("No configuration available");
+					Configuration.readProjectFile(program);
 				}
-			}else{
-				ram.setSelection(false);
-				flash.setSelection(false);
-				other.setSelection(true);
-				targetConfig.setEnabled(true);
-				targetConfig.setText(targetConf);
+				else label.setText("Select an available configuration");
+				RunConfiguration rc = Configuration.getBoard().runConfig;
+				int nof = 0;
+				while (rc != null) {nof++; rc = (RunConfiguration) rc.next;}
+				runConfigs = new Button[nof];
+				int i = 0;
+				rc = Configuration.getBoard().runConfig;
+				while (rc != null) {
+					runConfigs[i] = new Button(group2, SWT.RADIO);
+					runConfigs[i].setText(rc.description);
+					if (rc.name.toString().equals(runConf)) runConfigs[i].setSelection(true);
+					else runConfigs[i].setSelection(false);
+					runConfigs[i].addSelectionListener(selectionListener);
+					runConfigs[i].setLayoutData(gridData);
+					i++;
+					rc = (RunConfiguration) rc.next;
+				}
 			}
-		
 		} catch (CoreException e) {
 			setErrorMessage(e.getMessage());
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.debug.ui.ILaunchConfigurationTab#performApply(org.eclipse
-	 * .debug.core.ILaunchConfigurationWorkingCopy)
-	 */
 	public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-		
 		configuration.setAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, program);
 		configuration.setAttribute(DeepPlugin.ATTR_DEEP_LOCATION, locationPath);
-		if(ram.getSelection()){
-			configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , BOOT_FROM_RAM);
-		}else if(flash.getSelection()){
-			configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , BOOT_FROM_FLASH);
-		}else{
-			configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , targetConfig.getText());
-		}
-
+		configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , runConf);
+		Configuration.setActiveTargetConfig(runConf);
+		
 		// perform resource mapping for contextual launch
 		IResource[] resources = null;
 		if (program != null) {
 			IPath path = new Path(locationPath + "/" + program);
-			IResource res = ResourcesPlugin.getWorkspace().getRoot()
-					.findMember(path);
+			IResource res = ResourcesPlugin.getWorkspace().getRoot().findMember(path);
 			if (res != null) {
 				resources = new IResource[] { res };
 			}
 		}
 		configuration.setMappedResources(resources);
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#getName()
-	 */
+	
 	public String getName() {
 		return "Main";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.debug.ui.ILaunchConfigurationTab#isValid(org.eclipse.debug
-	 * .core.ILaunchConfiguration)
-	 */
 	public boolean isValid(ILaunchConfiguration launchConfig) {
 		setErrorMessage(null);
 		setMessage(null);
@@ -309,11 +226,6 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.debug.ui.ILaunchConfigurationTab#getImage()
-	 */
 	public Image getImage() {
 		return null; // DebugUIPlugin.getDefault().getImageRegistry().get(DebugUIPlugin.IMG_OBJ_PDA);
 	}

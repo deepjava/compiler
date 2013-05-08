@@ -32,7 +32,7 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 public class SuspendAction implements IWorkbenchWindowActionDelegate {
 
 	private IWorkbenchWindow window;
-    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.action.SuspendAction";
+    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction";
 	
 	@Override
 	public void dispose() {}
@@ -45,20 +45,14 @@ public class SuspendAction implements IWorkbenchWindowActionDelegate {
 	@Override
 	public void run(IAction action) {
 		TargetConnection bdi = Launcher.getTargetConnection();
-		if(bdi == null){
+		if (bdi == null) {
 			ErrorReporter.reporter.error(TargetConnection.errTargetNotFound);
 			return;
 		}
 		try {
-		if(!bdi.isConnected()){//reopen
-			bdi.openConnection();
-		}
-		if(bdi.getTargetState() == TargetConnection.stateRunning){
+			if (!bdi.isConnected()) bdi.openConnection();
 			bdi.stopTarget();
-		}
-		} catch (TargetConnectionException e) {
-		}
-
+		} catch (TargetConnectionException e) {}
 	}
 
 	@Override

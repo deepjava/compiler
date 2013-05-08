@@ -45,7 +45,8 @@ public class SysTabEntry extends ConstBlkEntry {
 	
 	protected int insertIntoArray(int[] a, int offset) {
 		int address;
-		address = clazz.constSegment.getBaseAddress() + clazz.constOffset;
+		if (clazz.constSegment != null) address = clazz.constSegment.address + clazz.constOffset;
+		else address = 0;	// if class is synthetic
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
@@ -65,11 +66,11 @@ public class SysTabEntry extends ConstBlkEntry {
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", clazz.constSegment.getBaseAddress() + clazz.constOffset) + " (" + name + ")";
+		return String.format("[%08X]", clazz.constSegment.address + clazz.constOffset) + " (" + name + ")";
 	}
 	
 	public int getAddress() {
-		return clazz.constSegment.getBaseAddress() + clazz.constOffset;
+		return clazz.constSegment.address + clazz.constOffset;
 	}
 
 }

@@ -3,8 +3,8 @@ package ch.ntb.inf.deep.classItems;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import ch.ntb.inf.deep.config.SystemClass;
-import ch.ntb.inf.deep.config.SystemMethod;
+
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -26,23 +26,20 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 	static HString hsClassConstrName;	// name of the class constructor method
 	static HString hsCommandDescriptor;	// descriptor of a command method
 
-	public static void buildSystem(HString[] rootClassNames, File[] parentDirsOfClassFiles, SystemClass[] sysClasses, int userReqAttributes) throws IOException {
-
+	public static void buildSystem(HString[] rootClassNames, File[] parentDirsOfClassFiles, Class[] sysClasses, int userReqAttributes) {
+//		boolean dbg = true;
 		Item.errRep.nofErrors = 0;
 		ClassFileAdmin.registerParentDirs(parentDirsOfClassFiles);
 
 		int nofRootClasses = rootClassNames.length;
-		initBuildSystem(nofRootClasses);
+		Class.rootClasses = new Class[nofRootClasses];	// all root classes get registered separately
 
-		if (sysClasses != null) for (SystemClass cls : sysClasses) loadSystemClass(cls, userReqAttributes);
-
-		if (dbg) Class.printClassList("state: sysClasses loaded, class list:");
+		if (sysClasses != null) for (Class cls : sysClasses) loadSystemClass(cls, userReqAttributes);
 
 		for (int rc = 0; rc < nofRootClasses && errRep.nofErrors == 0; rc++){
 			String sname = rootClassNames[rc].toString();
-			if(dbg) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
+			if (dbg) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass(sname, userReqAttributes);
-			if(errRep.nofErrors > 0) return;
 		}
 
 		// iterates through all classes and replaces all stubs in the constant pool of that class  
@@ -51,9 +48,9 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		while (type != null) {
 			if (type instanceof Class) {
 				Class cls = (Class)type;
-				if(cls.constPool != null) {
+				if (cls.constPool != null) {
 					Item[] cp = cls.constPool;
-					for(int cpx = cp.length-1; cpx >= 0; cpx--) cp[cpx] = cp[cpx].getReplacedStub();
+					for (int cpx = cp.length-1; cpx >= 0; cpx--) cp[cpx] = cp[cpx].getReplacedStub();
 				}
 			}
 			type = type.next;
@@ -84,7 +81,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			if (refType instanceof Class){
 				Class cls = (Class)refType;
 				int extLevel = cls.extensionLevel;
-				if ((propFlags & (1<<apfInterface)) != 0 ){	// is interface
+				if ((propFlags & (1<<apfInterface)) != 0 ) {	// is interface
 					if (cls.methTabLength > Class.maxInterfMethTabLen ) Class.maxInterfMethTabLen = cls.methTabLength;
 					cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
 					Class.extLevelOrdInterfaces[extLevel] = cls;
@@ -174,21 +171,21 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 
 		if (dbg) vrb.println("max ext level std classes = " + Class.maxExtensionLevelStdClasses);
 		if (dbg) vrb.println("max ext level interfaces = " + Class.maxExtensionLevelInterfaces);
-		if (dbg) Class.printIntfCallMethods();
-		if (dbg) Class.printInterfaces();
-		if (dbg) Class.printArrays();
-		if (dbg) Class.printConstBlockInterfaces();
+//		if (dbg) Class.printIntfCallMethods();
+//		if (dbg) Class.printInterfaces();
+//		if (dbg) Class.printArrays();
+//		if (dbg) Class.printConstBlockInterfaces();
+//		Class.printClassList("");
 		
 		Class.releaseLoadingResources();
 		log.print("Loading class files ");
 		if (errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
-	private static void initBuildSystem(int nofRootClasses) {
+	public static void initBuildSystem() {
 		if (dbg) vrb.println(">init build system:");
 
 		Class.nofRootClasses = 0;
-		Class.rootClasses = new Class[nofRootClasses];	// all root classes get registered separately
 		Class.prevCpLenth = 0;  Class.constPoolCnt = 0;
 
 		Item.stab = StringTable.getInstance();
@@ -207,11 +204,11 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 
 		Method.compSpecSubroutines = null; 
 		
-		if(dbg) vrb.println("<init build system");
+		if (dbg) vrb.println("<init build system");
 	}
 
-	private static void loadRootClass(String rootClassName, int userReqAttributes) throws IOException {
-		if(dbg) vrb.println(">loadRootClass: " + rootClassName);
+	private static void loadRootClass(String rootClassName, int userReqAttributes) {
+		if (dbg) vrb.println(">loadRootClass: " + rootClassName);
 
 		HString hRootClassName = Item.stab.insertCondAndGetEntry(rootClassName);
 		Class root = new Class(hRootClassName);
@@ -223,76 +220,39 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		if(dbg) vrb.println("<loadRootClass");
 	}
 
-	private static void loadSystemClass(SystemClass systemClass, int userReqAttributes) throws IOException {
-		String systemClassName = systemClass.getName().toString();
-		
-		if (dbg) vrb.println(">loadSystemClass: "+systemClassName);
-		if (dbg) {
-			vrb.printf("  sysClsAttributes1=0x%1$x", systemClass.attributes);
-			Dbg.printAccAndPropertyFlags(systemClass.attributes); Dbg.println();
-		}
-		
-		// if class has methods defined in the configuration -> set dpfSysPrimitive
-		// add all attributes from those methods to local variable 
-		int sysClsAttr = systemClass.attributes;
-		SystemMethod systemMeth = systemClass.methods;
-		if (systemMeth != null) sysClsAttr |= 1<<dpfSysPrimitive;
-		while (systemMeth != null){
-			sysClsAttr |= (systemMeth.attributes & dpfSetMethProperties);
-			systemMeth = (SystemMethod)systemMeth.next;
-		}
+	private static void loadSystemClass(Class sysClass, int userReqAttributes) {
+		// a system class is already defined in the configuration -> dpfSysPrimitive is set
+		assert ((sysClass.accAndPropFlags & (1<<dpfSysPrimitive)) != 0);
 
-		if (dbg) {
-			vrb.printf("  unified sysClsAttributes1=0x%1$x", sysClsAttr);
-			Dbg.printAccAndPropertyFlags(sysClsAttr); Dbg.println();
-		}
-
-		HString hSysClassName = Item.stab.insertCondAndGetEntry(systemClassName);
-		Class cls = (Class)Class.getRefTypeByName(hSysClassName);
-		if (cls == null) {
-			cls = new Class(hSysClassName);
-			RefType.appendRefType((RefType)cls);
-		}
-		cls.loadClass(userReqAttributes);
-		// add flags which are set by the configuration to the class flags
-		cls.accAndPropFlags |= sysClsAttr & (dpfSetClassProperties | dpfSetMethProperties);
+		if (dbg) vrb.println(">loadSystemClass: " + sysClass.name);
+		if (dbg) {vrb.printf("  sysClsAttributes=0x%1$x", sysClass.accAndPropFlags); Dbg.printAccAndPropertyFlags(sysClass.accAndPropFlags); Dbg.println();}
+		
+		sysClass.loadClass(userReqAttributes);
 
 		// class = Heap.java, set up new memory method table
-		if ((sysClsAttr & (1<<dpfNew)) != 0 ){	
-			systemMeth = systemClass.methods;
-			while (systemMeth != null) {
-				Item method = cls.methods.getItemByName(systemMeth.getName());
-				if (method == null){
-					errRep.error(301, systemMeth.getName() + " in system class " + systemClass.getName());
+		if ((sysClass.accAndPropFlags & (1<<dpfNew)) != 0 ){	
+			Method[] sysMethods = Configuration.getOS().getSystemMethods(sysClass);
+			int i = 0;
+			while (i < sysMethods.length) {
+				Method m = sysMethods[i];
+				if (m == null) {errRep.error(301, m.name + " in system class " + sysClass.name);
 				} else {
-					if (dbg)vrb.printf("lsc: method=%1$s, attr=0x%2$x\n", (cls.name + "." + method.name), systemMeth.attributes);
-					int methIndex  = (systemMeth.id-1)&0xFF;
-					if (methIndex >= nofNewMethods){
-						errRep.error(302, systemMeth.getName() + " in system class " + systemClass.getName());
-					} else {
-						if (dbg) vrb.println(" ldSysCls: newMethInx="+methIndex);
-						newMethods[methIndex] = method;
-						if (dbg) vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, method.name);
-					}
+					if (dbg) vrb.printf("lsc: method=%1$s, attr=0x%2$x, id=0x%3$x\n", (sysClass.name + "." + m.name), m.accAndPropFlags, m.id);
+					int methIndex = 0;
+					if (m.id != 0) { // if id == 0 do nothing
+						methIndex = (m.id - 1) & 0xFF;
+						if (methIndex >= nofNewMethods) {errRep.error(302, m.name + " in system class " + sysClass.name);
+						} else {
+							if (dbg) vrb.println(" ldSysCls: newMethInx=" + methIndex);
+							newMethods[methIndex] = m;
+							if (dbg) vrb.printf("lsc: newMethods[%1$d]: %2$s\n", methIndex, m.name);
+						}
+					}				
 				}
-				systemMeth = (SystemMethod)systemMeth.next;
+				i++;
 			}
 		}
-
-		// update method attributes (with system method attributes)
-		systemMeth = systemClass.methods;
-		while (systemMeth != null){
-			Method method = (Method)cls.methods.getItemByName(systemMeth.getName());
-			if (method != null){
-				method.offset = systemMeth.offset;
-				method.id = systemMeth.id;
-				method.accAndPropFlags |= (systemMeth.attributes & dpfSetMethProperties) | (1<<dpfSysPrimitive);
-				if ((method.accAndPropFlags & (1<<dpfSynthetic)) != 0) ((Method)method).clearCodeAndAssociatedFields();
-			} // else: methods defined in the configuration but not present in class file
-			systemMeth = (SystemMethod) systemMeth.next;
-		}
-
-		if(dbg) vrb.println("<loadSystemClass");
+		if (dbg) vrb.println("<loadSystemClass");
 	}
 	
 	private static void registerWellKnownNames() {

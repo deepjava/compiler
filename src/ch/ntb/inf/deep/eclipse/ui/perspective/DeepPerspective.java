@@ -47,6 +47,8 @@ public class DeepPerspective implements IPerspectiveFactory {
 		bot.addView("org.eclipse.ui.views.ProblemView");
 		bot.addView("org.eclipse.ui.views.TaskList");
 		bot.addView("org.eclipse.ui.console.ConsoleView");
+		bot.addView("ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView");
+		bot.addView("ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView");
 		
 		IFolderLayout rightTop = layout.createFolder("rightTop", IPageLayout.RIGHT, 0.80f, layout.getEditorArea());
 		rightTop.addView(IPageLayout.ID_OUTLINE);

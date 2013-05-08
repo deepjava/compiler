@@ -33,9 +33,9 @@ public class Method extends ClassMember {
 	//--- instance fields
 	public HString methDescriptor;
 
-	public int id;
+	public int id; // id given by configuration
 	public byte[] code; // java byte code of this method
-	boolean fixed;
+	public boolean fixed; // true, if offset is given by configuration
 	
 	public CodeGen machineCode; // machine code of this method
 	public CFG cfg; // cfg of this method
@@ -49,21 +49,25 @@ public class Method extends ClassMember {
 	public int maxStackSlots, maxLocals;
 
 	//--- constructors
-	public Method(HString name){
+	public Method(HString name) {
 		super(name, null);
 	}
 
-	public Method(HString name, Type returnType, HString methDescriptor){
+	public Method(HString name, Type returnType, HString methDescriptor) {
 		super(name, returnType);
 		this.methDescriptor = methDescriptor;
 		nofParams = nofParameters(methDescriptor);
 	}
 
-	//--- instance methods
-
-	protected Method getMethod(HString name, HString descriptor){
+	protected Method getMethod(HString name, HString descriptor) {
 		Method item = this;
-		while (item != null && (item.name != name || item.methDescriptor != descriptor) ) item = (Method)item.next;
+		if (descriptor != null) {
+			while (item != null && (item.name != name || item.methDescriptor != descriptor)) item = (Method)item.next;
+		} else {
+			while (item != null && item.name != name) {
+				item = (Method)item.next;
+			}
+		}
 		return item;
 	}
 
@@ -92,7 +96,7 @@ public class Method extends ClassMember {
 		return machineCode.iCount * 4;
 	}
 	
-	private static int nofParameters(HString methDescriptor){
+	static int nofParameters(HString methDescriptor){
 		int pos = methDescriptor.indexOf('(') + 1;
 		int end = methDescriptor.lastIndexOf(')');
 		assert pos == 1 && end >= 1;
@@ -193,38 +197,34 @@ public class Method extends ClassMember {
 
 	public void printHeader(){
 		int flags = accAndPropFlags;
-		if( (flags & (1<<dpfSysPrimitive)) != 0 ) flags &=  ~sysMethCodeMask;
-		Dbg.printJavaAccAndPropertyFlags(flags, 'M');
-		type.printTypeCategory(); type.printName(); // return type
-		vrb.print(' ');  vrb.print(name);  vrb.print(methDescriptor);
+//		if ((flags & (1<<dpfSysPrimitive)) != 0) flags &=  ~sysMethCodeMask;
+		Dbg.printAccAndPropertyFlags(flags, 'M');
+		if (type != null) {type.printTypeCategory(); type.printName();} // return type
+		vrb.print(' ');  vrb.print(name);  
+		if (methDescriptor != null) vrb.print(methDescriptor);
 	}
 
 	public void printHeaderX(int indentLevel){
 		indent(indentLevel);
-		char methAttr;
-		if( index == -1 ) methAttr = 'I'; // interface method
-		else if( fixed ) methAttr = 'F';
-		else methAttr = '~';
-		vrb.printf("%1$c<%2$d> %3$s.%4$s%5$s", methAttr, index, owner.name, name, methDescriptor);  
-		Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
+		vrb.printf("<%2$d> %3$s.%4$s%5$s", index, owner.name, name, methDescriptor);  
+		Dbg.printAccAndPropertyFlags(accAndPropFlags, 'M');
 	}
 
 	public void printShort(int indentLevel){
 		indent(indentLevel);
-		vrb.printf("meth  %1$s. %2$s%3$s", owner.name, name, methDescriptor);  Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
+		vrb.printf("meth  %1$s. %2$s%3$s", owner.name, name, methDescriptor);  Dbg.printAccAndPropertyFlags(accAndPropFlags, 'M');
 	}
 
 	public void print(int indentLevel){
 		indent(indentLevel);
 		printHeader();
 		vrb.print(";//dFlags");
-		if( (accAndPropFlags & (1<<dpfSysPrimitive)) == 0 ) Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
-		else{
+		if ((accAndPropFlags & (1<<dpfSysPrimitive)) == 0) Dbg.printDeepAccAndPropertyFlags(accAndPropFlags, 'M');
+		else {
 			Dbg.printDeepAccAndPropertyFlags(accAndPropFlags & ~sysMethCodeMask, 'M');
 			vrb.printf("; mAttr=0x%1$3x", accAndPropFlags & sysMethCodeMask);
 		}
 		vrb.printf(", nofParams=%1$d, index=%2$d\n", nofParams, index);
-
 		indent(indentLevel+1);
 		vrb.print("code: ");
 		if(this.code == null) vrb.println("none"); else vrb.printf("%1$d B\n", code.length);

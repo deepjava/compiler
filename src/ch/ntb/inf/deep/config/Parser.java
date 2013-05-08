@@ -28,12 +28,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.classItems.ICjvmInstructionOpcs;
+import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.RefType;
+import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvmInstructionOpcs {
+public class Parser implements ICclassFileConsts {
 
 	private static final boolean dbg = false;
 
@@ -144,33 +147,56 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			sOsType = g9 + 33,
 			sImgFile = g9 + 34,
 			sImgFormat = g9 + 35,
-			sCondition = g9 + 36;
+			sCondition = g9 + 36,
+			sHeapClass = g9 + 37;
 	
 	// -------- Block keywords: 
-	private static final short g10 = g9 + 37,
-			sMeta = g10,
-			sBoard = g10 + 1,
-			sCpu = g10 + 2,
-			sDevice = g10 + 3,
-			sReginit = g10 + 4,
-			sSegment = g10 + 5,
-			sMemorymap = g10 + 6,
-			sModules = g10 + 7,
-			sTargetConf = g10 + 8,
-			sProject = g10 + 9,
-			sSegmentarray = g10 + 10,
-			sRegistermap = g10 + 11,
-			sRegister = g10 + 12,
-			sOperatingSystem = g10 + 13,
-			sSysConst = g10 + 14,
-			sMethod = g10 + 15,
-			sMemorysector = g10 + 16,
-			sMemorysectorArray = g10 + 17,
-			sSystem = g10 + 18,
-			sProgrammer = g10 + 19,
-			sProgrammerOpts = g10 + 20,
-			sCompiler = g10 + 21,
-			sArch = g10 + 22;
+	private static final short g10 = g9 + 38,
+			sMeta = g10;
+
+	public static final short sBoard = g10 + 1;
+
+	private static final short sCpu = g10 + 2;
+
+	private static final short sDevice = g10 + 3;
+
+	private static final short sReginit = g10 + 4;
+
+	private static final short sSegment = g10 + 5;
+
+	private static final short sMemorymap = g10 + 6;
+
+	private static final short sModules = g10 + 7;
+
+	private static final short sRunConf = g10 + 8;
+
+	private static final short sProject = g10 + 9;
+
+	private static final short sSegmentarray = g10 + 10;
+
+	private static final short sRegistermap = g10 + 11;
+
+	private static final short sRegister = g10 + 12;
+
+	public static final short sOperatingSystem = g10 + 13;
+
+	private static final short sSysConst = g10 + 14;
+
+	private static final short sMethod = g10 + 15;
+
+	private static final short sMemorysector = g10 + 16;
+
+	private static final short sMemorysectorArray = g10 + 17;
+
+	private static final short sSystem = g10 + 18;
+
+	public static final short sProgrammer = g10 + 19;
+
+	private static final short sProgrammerOpts = g10 + 20;
+
+	private static final short sCompiler = g10 + 21;
+
+	private static final short sArch = g10 + 22;
 	
 	// -------- Designator, IntNumber,
 	private static final short g11 = g10 + 23,
@@ -186,97 +212,97 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			sRam = g13,
 			sFlash = g13 + 1; 
 
-	protected static int nOfErrors;
 	private static ErrorReporter reporter = ErrorReporter.reporter;
-	
 	private int sym;
 	private String strBuffer;
 	private int chBuffer;
 	private int intNumber;
-
-	private BufferedReader configFile;
-	private Library currentLib;
+	private BufferedReader file;
 	private Project currentProject;
-	
+	private SystemConstant currentConsts = null;
 	private BufferedInputStream bufStream = null;
-
-	// For error prints
 	private int lineNumber = 1;
 	private String currentFileName;
 
-	private Constants currentConsts = null;
 	
-	public Parser(File configFile, Library lib) {
+	public Parser(File configFile) {
 		currentFileName = configFile.getAbsolutePath();
-		currentLib = lib;
-		if(configFile.exists()){
+		if (configFile.exists()) {
 			try {
 				bufStream = new BufferedInputStream(new FileInputStream(configFile));
+				file = new BufferedReader(new InputStreamReader(bufStream));
+			} catch (FileNotFoundException e) {
+				ErrorReporter.reporter.error(205, currentFileName + " not found");
 			}
-			catch (FileNotFoundException e) {
-				ErrorReporter.reporter.error(errIOExp, currentFileName + " not found");
-			}
 		}
-		if(bufStream != null){
-			bufStream.mark(Integer.MAX_VALUE);
-			
-		}
-		else {
-			ErrorReporter.reporter.error(errIOExp, "failed to open file " + currentFileName);
-		}
+		if (bufStream != null) bufStream.mark(Integer.MAX_VALUE);
+		else ErrorReporter.reporter.error(205, "failed to open file " + currentFileName);
 	}
 	
-	public Parser(File projectFile, Project project) {
-		currentFileName = projectFile.getAbsolutePath();
+	public Parser (Project project) {
+		this(project.projectFile);
 		currentProject = project;
-		if(projectFile.exists()){
-			try {
-				bufStream = new BufferedInputStream(new FileInputStream(projectFile));
-			}
-			catch (FileNotFoundException e) {
-				ErrorReporter.reporter.error(errIOExp, currentFileName + " not found");
-			}
+	}
+	
+	public void parse() {
+		try {
+			if (currentProject != null) parseProjectFile();
+			else parseConfigFile();
+			bufStream.close();
+		} catch (IOException e) {
+			reporter.error(205, "failure while reading file " + currentFileName);
 		}
-		if(bufStream != null){
-			bufStream.mark(Integer.MAX_VALUE);
-			
+	}
+
+	public String[] parse(int specSym) {
+		String[] str = new String[]{"not available", "not available"};
+		try {
+			next(); // read first symbol
+			if (reporter.nofErrors <= 0) meta();
+			while (sym != sEndOfFile) {
+				if (sym == specSym) {
+					if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering board section");
+					next();
+					if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return null;}
+					if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting board name to: " + strBuffer);
+					str[0] = strBuffer;
+					next();
+					if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
+					next();
+					while (sym == sDescription || sym == sCpuType || sym == sSysConst || sym == sMemorymap || sym == sReginit || sym == sRunConf) {
+						if (sym == sDescription) {
+							str[1] = descriptionAssignment();
+							if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + str[1]);
+						}
+						next();
+					}
+				} else next();
+			}
+			bufStream.close();
+		} catch (IOException e) {
+			ErrorReporter.reporter.error(205, "failure while reading file " + currentFileName);
 		}
-		else {
-			ErrorReporter.reporter.error(errIOExp, "failed to open file " + currentFileName);
+		return str;
+	}
+	
+
+	public void parseRunConfigs() {
+		try {
+			next(); // read first symbol
+			if (reporter.nofErrors <= 0) meta();
+			while (sym != sEndOfFile) {
+				if (sym == sBoard) board();
+				next();
+			}
+			bufStream.close();
+		} catch (IOException e) {
+			reporter.error(205, "failure while reading file " + currentFileName);
 		}
 	}
 	
-	static void incrementErrors() {
-		nOfErrors++;
-	}
-
-	public void start() {
-		clear();
-		if(reporter.nofErrors <= 0) {
-			try {
-				bufStream.reset();
-				configFile = new BufferedReader(new InputStreamReader(bufStream));
-				if(this.currentLib != null) {
-					readConfigFile();
-				}
-				else {
-					readProjectFile();
-				}
-				bufStream.close();
-			}
-			catch(IOException e) {
-				ErrorReporter.reporter.error(errIOExp, "failure while reading file " + currentFileName);
-			}
-		}
-	}
-	
-	protected int readConfigFile() {
-		// read first Symbol
-		next();
-
-		if(reporter.nofErrors <= 0) meta();
-
-//		while (sym != sEndOfFile && reporter.nofErrors <= 0) {
+	protected int parseConfigFile() {
+		next(); // read first symbol
+		if (reporter.nofErrors <= 0) meta();
 		while (sym != sEndOfFile) {
 			switch (sym) {
 			case sCompiler:
@@ -295,77 +321,57 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				programmer();
 				break;
 			case sProject:
-				reporter.error(errUnexpectetSymExp,	"in " + currentFileName+ " at Line " + lineNumber + symToString() + " not allowed in library config files!");
+				reporter.error(206,	"in " + currentFileName+ " at Line " + lineNumber + symToString() + " not allowed in library config files!");
 				break;
 			case sOperatingSystem:
 				operatingSystem();
 				break;
 			default:
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp,	"in " + currentFileName+ " at Line " + lineNumber + " expectet symbol: compiler | board | cpu | programmer | operating system, received symbol: " + symToString());
+				reporter.error(206,	"in " + currentFileName+ " at Line " + lineNumber + " expectet symbol: compiler | board | cpu | programmer | operating system, received symbol: " + symToString());
 				next();
 			}
 		}
 		return 0;
 	}
-	
-	protected int readProjectFile() {
-		// read first Symbol
-		next();
 
-		if(reporter.nofErrors <= 0) meta();
-
+	protected int parseProjectFile() {
+		next(); // read first symbol
+		if (reporter.nofErrors <= 0) meta();
 		while (sym != sEndOfFile && reporter.nofErrors <= 0) {
 			switch (sym) {
 			case sProject:
 				project();
 				break;
 			default:
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp,	"in " + currentFileName+ " at Line " + lineNumber + " expectet symbol: project, received symbol: " + symToString());
+				reporter.error(206,	"in " + currentFileName+ " at Line " + lineNumber + " expectet symbol: project, received symbol: " + symToString());
 				next();
 			}
 		}
 		return 0;
 	}
 
-	/**
-	 * Reads a String from the Configfile
-	 * 
-	 * @return a String
-	 */
 	private String readString() {
-		if (sym != sQuotationMark) {
-			nOfErrors++;
-			reporter.error(errQuotationMarkExp, "in " + currentFileName
-					+ " at Line " + lineNumber);
-			return "";
-		}
+		if (sym != sQuotationMark) {reporter.error(204, "in " + currentFileName	+ " at Line " + lineNumber); return "";}
 		StringBuffer sb = new StringBuffer();
 		int ch;
 		try {
-			ch = configFile.read();
+			ch = file.read();
 			while ((ch > 34 && ch <= 126) || ch == ' ' || ch == '!') {
 				sb.append((char) ch);
-				ch = configFile.read();
+				ch = file.read();
 			}
 			chBuffer = ch;
 			next();
-			if (sym != sQuotationMark) {
-				nOfErrors++;
-				reporter.error(errQuotationMarkExp, "in " + currentFileName	+ " at Line " + lineNumber);
-				return "";
-			}
+			if (sym != sQuotationMark) {reporter.error(204, "in " + currentFileName	+ " at Line " + lineNumber); return "";}
 		} catch (IOException e) {
-			reporter.error(errIOExp, e.getMessage());
+			reporter.error(205, e.getMessage());
 		}
 		next();
 		return sb.toString();
 	}
 
 	private boolean isKeyword(String str) {
-		String temp = str.toLowerCase();// only for keywords for which the case
-		// sensitivity will not be considered
+		String temp = str.toLowerCase(); // case sensitivity will not be considered
 		sym = sDesignator;
 		switch (temp.charAt(0)) {
 		case 'a':
@@ -403,8 +409,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				sym = sCode;
 				return true;
 			} else if (str.equals("compiler")) {
-					sym = sCompiler;
-					return true;
+				sym = sCompiler;
+				return true;
 			} else if (str.equals("condition")) {
 				sym = sCondition;
 				return true;
@@ -444,13 +450,13 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			}
 			break;
 		case 'e':
-			if(str.equals("exception")){
+			if (str.equals("exception")) {
 				sym = sException;
 				return true;
-			}if(str.equals("exchnd")){
+			} else if (str.equals("exchnd")) {
 				sym = sExcHnd;
 				return true;
-			}else if(str.equals("exceptionbaseclass")) {
+			} else if (str.equals("exceptionbaseclass")) {
 				sym = sExceptionBaseClass;
 				return true;
 			}
@@ -476,6 +482,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		case 'h':
 			if (str.equals("heap")) {
 				sym = sHeap;
+				return true;
+			} else if (str.equals("heapclass")) {
+				sym = sHeapClass;
 				return true;
 			} else if (temp.equals("hex")) {
 				sym = sHex;
@@ -579,7 +588,10 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			}
 			break;
 		case 'r':
-			if (str.equals("read")) {
+			if (str.equals("ram")) {
+				sym = sRam;
+				return true;
+			} else if (str.equals("read")) {
 				sym = sRead;
 				return true;
 			} else if (str.equals("register")) {
@@ -597,8 +609,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			} else if (str.equals("rootclasses")) {
 				sym = sRootclasses;
 				return true;
-			} else if (str.equals("ram")){
-				sym = sRam;
+			} else if (str.equals("runconfiguration")) {
+				sym = sRunConf;
 				return true;
 			}
 			break;
@@ -644,9 +656,6 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		case 't':
 			if (str.equals("type")) {
 				sym = sType;
-				return true;
-			} else if (str.equals("targetconfiguration")) {
-				sym = sTargetConf;
 				return true;
 			} else if (str.equals("technology")){
 				sym = sTechnology;
@@ -697,11 +706,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				ch = chBuffer;
 				chBuffer = 0;
 			} else {
-				ch = configFile.read();
+				ch = file.read();
 			}
 			switch (ch) {
 			case '#':
-				configFile.readLine();
+				file.readLine();
 				lineNumber++;
 				next();
 				break; // Ignore comments
@@ -770,7 +779,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 					sb = new StringBuffer();
 					do {
 						sb.append((char) ch);
-						ch = configFile.read();
+						ch = file.read();
 					} while ((ch >= 'a' && ch <= 'z')
 							|| (ch >= 'A' && ch <= 'Z')
 							|| (ch >= '0' && ch <= '9') || ch == '_' || ch == '<' || ch == '>');
@@ -783,16 +792,16 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 					sym = sNumber;
 					intNumber = 0;
 					if (ch == '0') {
-						ch = configFile.read();
+						ch = file.read();
 						if (ch == 'x' || ch == 'X') {// its maybe a hex digit
 							sb = new StringBuffer();
 							sb.append("0x");
-							ch = configFile.read();
+							ch = file.read();
 							while ((ch >= '0' && ch <= '9')
 									|| (ch >= 'a' && ch <= 'f')
 									|| (ch >= 'A' && ch <= 'F')) {
 								sb.append((char) ch);
-								ch = configFile.read();
+								ch = file.read();
 							}
 							chBuffer = ch;
 							//work around for problem when in hex-int-number the most significant bit is set;
@@ -808,17 +817,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 							chBuffer = ch;
 							return;
 						} else {// check if it is a digit
-							if (!(ch >= '0' && ch <= '9')) {
-								nOfErrors++;
-								reporter.error(errDigitExp, "in " + currentFileName	+ " at Line " + lineNumber);
-								chBuffer = ch;
-								break;
-							}
+							if (!(ch >= '0' && ch <= '9')) {reporter.error(200, "in " + currentFileName	+ " at Line " + lineNumber); chBuffer = ch;	break;}
 						}
 					}
 					do {
 						intNumber = intNumber * 10 + ch - '0';
-						ch = configFile.read();
+						ch = file.read();
 					} while (ch >= '0' && ch <= '9');
 					chBuffer = ch;
 				} else if (ch == -1)
@@ -827,7 +831,7 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 					sym = sUndef;
 			}
 		} catch (IOException e) {
-			reporter.error(errIOExp, e.getMessage());
+			reporter.error(205, e.getMessage());
 		}
 	}
 
@@ -885,6 +889,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "var";
 		case sHeap:
 			return "heap";
+		case sHeapClass:
+			return "heapClass";
 		case sStack:
 			return "stack";
 		case sSysTab:
@@ -940,11 +946,11 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		case sArraysize:
 			return "arraysize";
 		case sNofsegements:
-			return "nofsegements";
+			return "nofsegments";
 		case sKernel:
 			return "kernel";
 		case sExceptionBaseClass:
-			return "exceptionbaseclass";
+			return "exceptionBaseClass";
 		case sUs:
 			return "us";
 		case sAddr:
@@ -1007,8 +1013,8 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 			return "memorymap";
 		case sModules:
 			return "modules";
-		case sTargetConf:
-			return "targetconfiguration";
+		case sRunConf:
+			return "runconfiguration";
 		case sProject:
 			return "project";
 		case sSegmentarray:
@@ -1055,329 +1061,175 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 	}
 
 	private void meta() {
-		if (sym != sMeta) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: meta, received symbol: "
-					+ symToString());
-			return;
-		}
+		if (sym != sMeta) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: meta, received symbol: "	+ symToString()); return;}
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 		versionAssignment();
 		fileDescAssignment();
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 	
 	private void compiler() {
-		if (sym != sCompiler) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: compiler, received symbol: " + symToString());
-			return;
-		}
+		if (sym != sCompiler) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: compiler, received symbol: " + symToString()); return;}
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
-		currentConsts = currentLib.getCompilerConstants();
-		sysconst(currentConsts);
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		Configuration.setCompilerConstants(sysconst(null));
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 
 	private void arch() {
-		if (sym != sArch) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: arch, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering arch section");
+		if (sym != sArch) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: arch, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering arch section");
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting arch name to: " + strBuffer);
-		Arch a = currentLib.addArch(strBuffer); 
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting arch name to: " + strBuffer);
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
-		while(sym == sRegistermap) {
-			if(sym == sRegistermap) {
-				registermap(a);
-			}
-		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
-		next();
-	}
-	
-	private void board() {
-		if(sym != sBoard) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: board, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering board section");
-		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting board name to: " + strBuffer);
-		Board b = currentLib.addBoard(strBuffer); 
-		currentConsts = b.sysConstants;
-		next();
-		if(sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
-		next();
-		while(sym == sDescription || sym == sCpuType || sym == sSysConst || sym == sMemorymap || sym == sReginit || sym == sTargetConf) {
-			if(sym == sDescription) {
-				String description = descriptionAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
-				b.setDescription(description);
-			}
-			else if(sym == sCpuType) {
-				String cpuName = cpuTypeAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting cpu type to " + cpuName);
-				CPU cpu = currentLib.getCpuByName(cpuName);
-				if(cpu == null) {
-					cpu = currentLib.addCpu(cpuName);
-				}
-				b.setCpu(cpu);
-			}
-			else if(sym == sSysConst) {
-				sysconst(b.sysConstants);
-			}
-			else if(sym == sMemorymap) {
-				b.memorymap = new MemoryMap();
-				memorymap(b.memorymap);
-			}
-			else if(sym == sReginit) {
-				reginit(b.reginit);
-			}
-			else { // sym == sTargetConf
-				targetconfiguration(b);
-			}
-		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		Arch arch = Configuration.getBoard().cpu.arch; 
+		assert arch != null;
+		if (sym == sRegistermap) arch.regs = registermap(null);
+		if (dbg) StdStreams.vrb.println("[CONF] registermap for architecture done");
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 	
 	private void cpu() {
-		if(sym != sCpu) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: cpu, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering cpu section");
+		if (sym != sCpu) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: cpu, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering cpu section");
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting CPU name to: " + strBuffer);
-		CPU cpu = currentLib.addCpu(strBuffer);
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting CPU name to: " + strBuffer);
+		CPU cpu = Configuration.getBoard().cpu;
+		assert cpu != null;
 		currentConsts = cpu.sysConstants;
 		next();
-		if(sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if(sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		while(sym == sDescription || sym == sCpuArch || sym == sSysConst || sym == sMemorymap || sym == sRegistermap || sym == sReginit) {
-			if(sym == sDescription) {
+		while (sym == sDescription || sym == sCpuArch || sym == sSysConst || sym == sMemorymap || sym == sRegistermap || sym == sReginit) {
+			if (sym == sDescription) {
 				String description = descriptionAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
-				cpu.setDescription(description);
-			}
-			else if(sym == sCpuArch) {
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
+				cpu.description = HString.getHString(description);
+			} else if (sym == sCpuArch) {
 				String archName = archAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting cpuarch to " + archName);
-				Arch cpuArch = currentLib.getArchByName(archName);
-				if(cpuArch == null) {
-					cpuArch = currentLib.addArch(archName);
-				}
-				cpu.setArch(cpuArch);
-			}
-			else if(sym == sSysConst) {
-				sysconst(cpu.sysConstants);
-			}
-			else if(sym == sMemorymap) {
-				cpu.memorymap = new MemoryMap();
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting cpuarch to " + archName);
+				Arch arch = new Arch(archName);
+				cpu.arch = arch;
+				Configuration.readConfigFile(Configuration.archPath, arch);
+			} else if (sym == sSysConst) {
+				if (dbg) StdStreams.vrb.println("[CONF] entering sysconst of cpu");
+				cpu.sysConstants = sysconst(Configuration.getCompilerConstants());
+				if (dbg) StdStreams.vrb.println("[CONF] sysconst of cpu done");
+			} else if (sym == sMemorymap) {
+				cpu.memorymap = new MemMap("Cpu");
 				memorymap(cpu.memorymap);
-			}
-			else if(sym == sRegistermap) {
-				registermap(cpu);
-			}
-			else { //sym == sReginit
-				reginit(cpu.reginit);
+			} else if (sym == sRegistermap) {
+				cpu.regs = registermap(cpu.arch.regs);
+			} else { //sym == sReginit
+				cpu.regInits = reginit(cpu.regInits);
 			}
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
+		next();
+	}
+	
+	private void board() {
+		if (sym != sBoard) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: board, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering board section");
+		next();
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting board name to: " + strBuffer);
+		next();
+		if(sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
+		next();
+		while (sym == sDescription || sym == sCpuType || sym == sSysConst || sym == sMemorymap || sym == sReginit || sym == sRunConf) {
+			if (sym == sDescription) {
+				String description = descriptionAssignment();
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
+				Configuration.getBoard().description = HString.getHString(description);
+			} else if (sym == sCpuType) {
+				String cpuName = cpuTypeAssignment();
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting cpu type to " + cpuName);
+				CPU cpu = new CPU(cpuName);
+				Configuration.getBoard().cpu = cpu;
+				Configuration.readConfigFile(Configuration.cpuPath, cpu);
+			} else if (sym == sSysConst) {
+				Board b = Configuration.getBoard();
+				assert b != null;
+				b.sysConstants = sysconst(b.cpu.sysConstants);
+			} else if (sym == sMemorymap) {
+				MemMap mm = Configuration.getBoard().memorymap = new MemMap("Board");
+				memorymap(mm);
+			} else if (sym == sReginit) Configuration.getBoard().regInits = reginit(Configuration.getBoard().regInits);
+			else runConfiguration(Configuration.getBoard()); // sym == sRunConf
 		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 	
 	private void programmer() {
-		if(sym != sProgrammer) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmer, received symbol: " + symToString());
-			return;
-		}
+		if(sym != sProgrammer) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmer, received symbol: " + symToString()); return;}
 		next();
-		
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		Programmer prog = currentLib.addProgrammer(strBuffer);
+		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		Programmer prog = Configuration.getProgrammer();
+		assert prog != null;
 		next();
-		
-		if(sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if(sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		
-		if(sym != sDescription) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString());
-			return;
-		}
+		if(sym != sDescription) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return;}
 		prog.setDescription(descriptionAssignment());
-		
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 	
-	private void programmeropts() {
-		
-	}
+	private void programmeropts() {}
 	
-	private void sysconst(Constants sysConsts) {
-		if (sym != sSysConst) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: sysconst, received symbol: " + symToString());
-			return;
-		}
+	private SystemConstant sysconst(SystemConstant sysConsts) {
+		if (sym != sSysConst) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: sysconst, received symbol: " + symToString()); return null;}
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
+		SystemConstant head = sysConsts;
+		currentConsts = head;
 		while (sym == sDesignator) {
-			sysConsts.addConst(strBuffer, varAssignment());
+			String cName = strBuffer;
+			int val = varAssignment();
+			SystemConstant c = new SystemConstant(cName, val);
+			if (sysConsts == null) {sysConsts = c; head = sysConsts;}
+			else head = (SystemConstant) head.insertHead(c);
+			currentConsts = head;
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
+		return head;
 	}
 	
-	private void memorymap(MemoryMap mm) {
-		if (sym != sMemorymap) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: memorymap, received symbol: " + symToString());
-			return;
-		}
+	private void memorymap(MemMap mm) {
+		if (sym != sMemorymap) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: memorymap, received symbol: " + symToString()); return;}
 		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering memorymap section");
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		while (sym == sDevice || sym == sSegment || sym == sSegmentarray) {
-			if (sym == sDevice) {
-				mm.addDevice(device());
-			}
-			else if (sym == sSegment) {
-				//Segment s = segment(mm, false, 0, 0, null);
-				Segment s = segment(mm, null);
-//				if(s != null) mm.addSegment(s);
-			}
-			else { // sym == sSegmentarray
-				segmentArray(mm, false, null);
-			}
+		while (sym == sDevice || sym == sSegment) {
+			if (sym == sDevice) mm.addDevice(device());
+			else segment(mm); // sym == sSegment
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 	
 	private Device device() {
-		if(sym != sDevice) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: device, received symbol: " + symToString());
-			return null;
-		}
+		if(sym != sDevice) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: device, received symbol: " + symToString()); return null;}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return null;
-		}
+		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return null;}
 		String devName = strBuffer;
 		next();
-		if(sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if(sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
 		String memType = null;
 		int technology = -1;
@@ -1388,56 +1240,30 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		while (sym == sAttributes || sym == sBase || sym == sWidth	|| sym == sSize || sym == sTechnology || sym == sMemorytype ) {
 			if (sym == sAttributes) {
 				attributes = attributeAssignment();
-				int mask = ((1 << atrRead) | (1 << atrWrite));
-				if ((attributes & ~mask) != 0) {
-					attributes = attributes & mask;
-					// TODO warn user
+				if ((attributes & ~((1 << dpfSegRead) | (1 << dpfSegWrite))) != 0) {
+					reporter.error(251, "in " + currentFileName + " at Line " + lineNumber); return null;
 				}
-			}
-			else if (sym == sBase) {
-				base = baseAssignment();
-			}
-			else if (sym == sWidth) {
-				width = widthAssignment();
-			}
-			else if (sym == sSize){
-				size = sizeAssignment();
-			}
-			else if (sym == sTechnology){
-				technology = technologyAssignment();
-			}
-			else if (sym == sMemorytype){
+			} else if (sym == sBase) base = baseAssignment();
+			else if (sym == sWidth) width = widthAssignment();
+			else if (sym == sSize) size = sizeAssignment();
+			else if (sym == sTechnology) technology = technologyAssignment();
+			else if (sym == sMemorytype) {
 				next();
-				if (sym != sEqualsSign) {
-					nOfErrors++;
-					reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-				}
+				if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber);}
 				next();
 				memType = readString();
-				if (sym != sSemicolon) {
-					nOfErrors++;
-					reporter.error(errSemicolonMissExp, "in " + currentFileName + " before Line " + lineNumber);
-				}
+				if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName + " before Line " + lineNumber);}
 				next();
 			} 
 		}
-		Device device =new Device(devName, base, size, width, attributes, technology);
-		device.setMemoryType(memType);
-		while( sym == sMemorysector || sym == sMemorysectorArray) {
-			if(sym == sMemorysector){
-				device.addSector(sector());
-			}
-			else if(sym == sMemorysectorArray) {
-				sectorArray(device);
-			}
+		Device device = new Device(devName, base, size, width, attributes, technology, memType);
+		while ( sym == sMemorysector || sym == sMemorysectorArray) {
+			if(sym == sMemorysector) device.addSector(sector());
+			else if(sym == sMemorysectorArray) sectorArray(device);
 		}
-		if(sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		if (attributes == 0 || width == 0 || size == 0 || technology == -1 || (technology > 0 && memType == null) || (technology > 0 && device.sector == null)) {
-			reporter.error(errInconsistentattributes, "in " + currentFileName + " Missing attribute while creating device \"" + devName + "\"");
+			reporter.error(223, "in " + currentFileName + " Missing attribute while creating device \"" + devName + "\"");
 			return null;
 		}
 		next();
@@ -1445,26 +1271,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 	}
 	
 	private void sectorArray(Device dev){
-		if (sym != sMemorysectorArray) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: memorysector, received symbol: " + symToString());
-		}
+		if (sym != sMemorysectorArray) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: memorysector, received symbol: " + symToString());}
 		next();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: designator, received symbol: "
-					+ symToString());
-			return;
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
 		String designator = strBuffer;
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
 		int secSize = -1;
 		int nofSectors = 0;
@@ -1478,1062 +1290,482 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				nofSectors = nofSectorAssignment();
 			}			
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-
-		}
-		if(secSize == -1 || nofSectors == 0 || base == -1){
-			reporter.error(errInconsistentattributes, "in " + currentFileName
-					+ " Missing attribute by creation sector array in device: "
-					+ dev.toString());
-			return;
-		}
-		for(int i = 0; i < nofSectors; i++){
-			dev.addSector(new Memorysector(designator + "_" + i, base + i * secSize, secSize));
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
+		if (secSize == -1 || nofSectors == 0 || base == -1) {reporter.error(223, "in " + currentFileName + " Missing attribute by creation sector array in device: " + dev.toString()); return;}
+		for (int i = 0; i < nofSectors; i++) dev.addSector(new MemSector(designator + "_" + i, base + i * secSize, secSize));
 		next();
 	}
 	
-	private Memorysector sector(){
-		if (sym != sMemorysector) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: memorysector, received symbol: " + symToString());
-			return null;
-		}
+	private MemSector sector(){
+		if (sym != sMemorysector) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: memorysector, received symbol: " + symToString()); return null;}
 		next();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: designator, received symbol: "
-					+ symToString());
-			return null;
-		}
-		Memorysector sec = new Memorysector(strBuffer);
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber	+ " expected symbol: designator, received symbol: "	+ symToString()); return null;}
+		MemSector sec = new MemSector(strBuffer);
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
 		while (sym == sSectorSize || sym == sBase){
-			if(sym == sSectorSize){
-				sec.setSize(sectorSizeAssignment());
-			}else{ //sBase
-				sec.setBaseAddress(baseAssignment());
-			}			
+			if (sym == sSectorSize) sec.size = sectorSizeAssignment();
+			else sec.address = baseAssignment();		
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
 		return sec;		
 	}
 		
-	private Segment segment(MemoryMap mm, Segment parentSegment) {
-		if(sym != sSegment) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: segment, received symbol: " + symToString());
-			return null;
-		}
+	private Segment segment(MemMap mm) {
+		if (sym != sSegment) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: segment, received symbol: " + symToString()); return null;}
 		next();
 		String segDesignator = segmentDesignator();
 		String[] fullSegName = segDesignator.split("\\.");
 		Segment seg;
+
+		if (fullSegName.length < 2) {reporter.error(222, "in "	+ currentFileName + " at Line "	+ lineNumber + " Device name not given. Sytax error in: " + segDesignator); return null;}
+		Device dev = mm.getDeviceByName(fullSegName[0]);
+		if(dev == null) {reporter.error(220, fullSegName[0] + " in " + currentFileName + " at line " + lineNumber); return null;}
+		seg = new Segment(fullSegName[1], dev);
+		seg.attributes = dev.attributes;
+		seg.width = dev.width;
+		dev.addSegment(seg);
 		
-		if(parentSegment != null || fullSegName.length > 2) { // segment is a sub segment
-			String segName;
-			if(fullSegName.length > 2) {
-				segName = fullSegName[fullSegName.length - 1];
-				parentSegment = mm.getSegmentByName(segDesignator.substring(0, segDesignator.lastIndexOf('.')));
-				if(parentSegment == null) {
-					reporter.error(errNoSuchSegment,"in "	+ currentFileName + " at Line "	+ lineNumber + " Segment not found: " + fullSegName[fullSegName.length - 2]);
-					incrementErrors();
-					return null;
-				}
-			}
-			else { 
-				segName = segDesignator;
-			}
-			seg = new Segment(segName, parentSegment.owner);
-			seg.setAttributes(parentSegment.attributes);
-			seg.setWidth(parentSegment.width);
-			parentSegment.addSubSegment(seg);
-		}
-		else { // segment is not a sub segment
-			if(fullSegName.length < 2) { // device name not given
-				reporter.error(errSyntax,"in "	+ currentFileName + " at Line "	+ lineNumber + " Device name not given. Sytax error in: " + segDesignator);
-				incrementErrors();
-				return null;
-			}
-			Device dev = mm.getDeviceByName(fullSegName[0]);
-			if(dev == null) {
-				ErrorReporter.reporter.error(errNoSuchDevice, fullSegName[0] + " in " + currentFileName + " at line " + lineNumber);
-				incrementErrors();
-				return null;
-			}
-			seg = new Segment(fullSegName[1], dev);
-			seg.setAttributes(dev.getAttributes());
-			seg.setWidth(dev.getWidth());
-			dev.addSegment(seg);
-		}
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
 		while (sym == sAttributes || sym == sBase || sym == sWidth || sym == sSize) {
 			switch (sym) {
 			case sAttributes:
-				seg.setAttributes(attributeAssignment());
+				seg.attributes = attributeAssignment();
 				break;
 			case sBase:
-				seg.setBaseAddress(baseAssignment());
+				seg.address = baseAssignment();
 				break;
 			case sWidth:
-				seg.setWidth(widthAssignment());
+				seg.width = widthAssignment();
 				break;
 			case sSize:
-				seg.setSize(sizeAssignment());
+				seg.size = sizeAssignment();
 				break;
 			}
 		}
-		while (sym == sSegmentarray || sym == sSegment) {
-			if (sym == sSegmentarray) {
-				segmentArray(mm, true, seg);
-			}
-			else { // sym == sSegment
-				segment(mm, seg);
-			}
-		}
-		if ((seg.attributes & (1 << atrHeap)) != 0) {
-			mm.registerHeapSegment(seg);
-		}
-		if ((seg.attributes & (1 << atrStack)) != 0) {
-			mm.registerStackSegment(seg);
-		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if ((seg.attributes & (1 << dpfSegHeap)) != 0) mm.registerHeapSegment(seg);
+		if ((seg.attributes & (1 << dpfSegStack)) != 0) mm.registerStackSegment(seg);
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
 		return seg;
 	}
 
-	private void segmentArray(MemoryMap mm, boolean isSubSegment, Segment parent) {
-		int arraySize = 0;
-		int baseAddr = -1;
-		int width = -1;
-		int attributes = 0;
-		int nofSegments = 0;
-
-		if (sym != sSegmentarray) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber	+ " expected symbol: segmentarray, received symbol: " + symToString());
-			return;
-		}
+	private RegisterInit reginit(RegisterInit regInit) {
+		if (sym != sReginit) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: reginit, received symbol: " + symToString()); return null;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering reginit section");
 		next();
-		String segName = segmentDesignator();
-		Device dev;
-		if (!isSubSegment) {
-			int indexOf = segName.indexOf('.', 0);
-			if(indexOf != -1) {
-				segName = segName.substring(indexOf + 1);
-				String devName = segName.substring(0, indexOf);
-				dev = mm.getDeviceByName(devName);
-				if (dev == null) {
-					reporter.error(errNoSuchDevice, devName.toString() + " for Segment " + segName.toString());
-					return;
-				}
-
-				indexOf = segName.indexOf('.', 0);
-				if(indexOf != -1) {// it is true when the new Segment is a
-					// Subsegment
-					String segment = segName.substring(0, indexOf);
-					Segment seg = dev.getSegementByName(segment);
-					segName = segName.substring(indexOf + 1);
-					indexOf = segName.indexOf('.', 0);
-					while(indexOf != -1) {
-						segment = segName.substring(0, indexOf);
-						seg = seg.getSubSegmentByName(segment);
-						segName = segName.substring(indexOf + 1);
-						indexOf = segName.indexOf('.', 0);
-					}
-					parent = seg;
-					attributes = seg.getAttributes();
-					width = seg.width;
-				}
-				else {
-					attributes = dev.getAttributes();
-					width = dev.getWidth();
-				}
-			}
-			else {
-				reporter.error(errSyntax,	"Error in memorymap segementarray definition (" + segName.toString() + "), segmentarray names starts with the device name!");
-				return;
-			}
-		}
-		else {
-			dev = parent.owner;
-		}
-
-		if(sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
-		next();
-		int segSize = segmentSizeAssignment();
-		while (sym == sArraysize || sym == sWidth || sym == sNofsegements || sym == sBase || sym == sAttributes) {
-			if(sym == sArraysize) {
-				arraySize = arraySizeAssignment();
-			}
-			else if(sym == sNofsegements) {
-				nofSegments = nofSegmentAssignment();
-			}
-			else if(sym == sWidth) {
-				width = widthAssignment();
-			}
-			else if(sym == sAttributes) {
-				attributes = attributeAssignment();
-			}
-			else{ // sym == sBase
-				baseAddr = baseAssignment();
-			}
-		}
-		if(sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "  + lineNumber);
-			return;
-		}
-		if(arraySize != 0) {
-			if(nofSegments != 0) {
-				if(nofSegments != (arraySize / segSize)) {
-					reporter.error(errInconsistentattributes,"Number of segemts in segmentarray creation not as expected");
-					return;
-				}
-			}
-			else {
-				nofSegments = arraySize / segSize;
-				if(arraySize % segSize != 0) {
-					reporter.error(errInconsistentattributes,"Segmentsize is not a multiple of Arraysize");
-					return;
-				}
-			}
-		}
-		else {
-			if(nofSegments == 0) {
-				reporter.error(errInconsistentattributes, "in " + currentFileName + " Missing attribute in segmentarray creation");
-				return;
-			}
-		}
-		// from here is nofSegments != 0
-		if(attributes == 0){
-			attributes = parent.attributes;
-		}
-		if(width == -1){
-			width = parent.width;
-		}
-		Segment root = new Segment(segName.toString() + 1, dev, baseAddr, segSize, width, attributes);
-		Segment current = root;
-
-		// setReference for heap and stack segments
-		if((current.attributes & (1 << atrHeap)) != 0) {
-			mm.registerHeapSegment(current);
-		}
-		if((current.attributes & (1 << atrStack)) != 0) {
-			mm.registerStackSegment(current);
-		}
-
-		for(int i = 2; i <= nofSegments; i++) {
-			if(baseAddr != -1) {
-				baseAddr += segSize;
-			}
-			current.next = new Segment(segName.toString() + i, dev, baseAddr, segSize, width, attributes);
-			current = (Segment)current.next;
-			// setReference for heap and stack segments
-			if ((current.attributes & (1 << atrHeap)) != 0) {
-				mm.registerHeapSegment(current);
-			}
-			if ((current.attributes & (1 << atrStack)) != 0) {
-				mm.registerStackSegment(current);
-			}
-		}
-		next();
-		if (parent != null) {
-			parent.addSubSegment(root);
-		} else if (!isSubSegment) {
-			dev.addSegment(root);
-		} else {
-			reporter.error(errInvalidParameter, "in " + currentFileName + " at Line " + lineNumber + " Parent Segment must be given for Subsegmentarrays");
-		}
-	}
-	
-	private void reginit(RegisterInitList reginits) {
-		if (sym != sReginit) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: reginit, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering reginit section");
-		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
 		while (sym == sDesignator) {
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: New reginit for register " + strBuffer);
-				reginits.addRegInit(strBuffer,	varAssignment());
+			if(dbg) StdStreams.vrb.println("[CONF] Parser: New reginit for register " + strBuffer);
+			String rName = strBuffer;
+			int val = varAssignment();
+			Register r = (Register) Configuration.getBoard().cpu.regs.getItemByName(rName);
+			if (r == null) assert false;
+			RegisterInit r1 = new RegisterInit(r, val);
+			if (regInit == null) regInit = r1;
+			else regInit = (RegisterInit) regInit.insertHead(r1);
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: reginit section done");
 		next();
+		return regInit;
 	}
 	
-	private void system(TargetConfiguration targetConfig) {
-		if (sym != sSystem) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: system, received symbol: "
-					+ symToString());
-			return;
-		}
+	private void system(RunConfiguration runConfig) {
+		if (sym != sSystem) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: system, received symbol: "	+ symToString()); return;}
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
 		while (sym == sSystemtable ) {
-			Module root = moduleAssignment(false);
+			Module root = moduleAssignment();
 			while (root != null) {
-				targetConfig.addSystemModule(root);
+				runConfig.addSystemModule(root);
 				root = (Module)root.next;
 			}
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
 	
-	// If modules are called from MemoryMap, targetConfig = null;
-	private void modules(TargetConfiguration targetConfig) {
-		if (sym != sModules) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: modules, received symbol: " + symToString());
-			return;
-		}
+	private void modules(RunConfiguration runConfig) {
+		if (sym != sModules) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: modules, received symbol: " + symToString()); return;}
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
 		while (sym == sKernel || sym == sException || sym == sHeap	|| sym == sDesignator || sym == sDefault) {
-			Module root = moduleAssignment(true);
-			while (root != null) {
-				targetConfig.addModule(root);
-				root = (Module)root.next;
+			Module mod = moduleAssignment();
+			while (mod != null) {
+				runConfig.addModule(mod);
+				mod = (Module)mod.next;
 			}
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		if(targetConfig != null){
-			Module def = targetConfig.getModuleByName(Configuration.DEFAULT);
-			if(def == null){
-				nOfErrors++;
-				reporter.error(errNoDefaultSegmentDef, "in " + currentFileName + " at " + targetConfig.name);
-				return;
-			}
+		if (runConfig != null) {
+			Module def = runConfig.getModuleByName(Configuration.DEFAULT);
+			if (def == null) {reporter.error(231, "in " + currentFileName + " at " + runConfig.name); return;}
 		}
 	}
 	
-	private Module moduleAssignment(boolean modulesBlock){
-		// if it was called from modules set modulesBlock true otherwise false
-		Module root = null, current = null;
+	private Module moduleAssignment() {
+		Module root = null;
+		HString name = null;
 		do {
-			if (sym == sComma) {// breaks the endless loop
-				next();
-			}
+			if (sym == sComma) next();
 			switch (sym) {
 			case sKernel:
-				if (root == null) {
-					root = new Module(Configuration.KERNEL);
-					current = root;
-				} else {
-					current.next = new Module(Configuration.KERNEL);
-					current = (Module)current.next;
-				}
+				name = Configuration.KERNEL;
 				next();
 				break;
-			case sException:
-				if (root == null) {
-					root = new Module(Configuration.EXCEPTION);
-					current = root;
-				} else {
-					current.next = new Module(Configuration.EXCEPTION);
-					current = (Module)current.next;
-				}
+			case sException: 
+				name = Configuration.EXCEPTION;
 				next();
 				break;
 			case sHeap:
-				if (root == null) {
-					root = new Module(Configuration.HEAP);
-					current = root;
-				} else {
-					current.next = new Module(Configuration.HEAP);
-					current = (Module)current.next;
-				}
+				name = Configuration.HEAP;
 				next();
 				break;
 			case sDefault:
-				if (root == null) {
-					root = new Module(Configuration.DEFAULT);
-					current = root;
-				} else {
-					current.next = new Module(Configuration.DEFAULT);
-					current = (Module)current.next;
-				}
+				name = Configuration.DEFAULT;
 				next();
 				break;
-			case sDesignator:
-				if(!modulesBlock){
-					reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " Unexpected symbol: " + symToString() + " by system block creation");
-					break;
-				}
-				if (root == null) {
-					root = new Module(concatenatedDesignator());
-					current = root;
-				} else {
-					current.next = new Module(concatenatedDesignator());
-					current = (Module)current.next;
-				}
+			case sDesignator:	// must not be system module
+				String jname = concatenatedDesignator();
+				name = HString.getRegisteredHString(jname);
 				break;
 			case sSystemtable:
-				if (root == null) {
-					root = new Module(Configuration.SYSTEMTABLE);
-					current = root;
-				} else {
-					current.next = new Module(Configuration.SYSTEMTABLE);
-					current = (Module)current.next;
-				}
+				name = Configuration.SYSTEMTABLE;
 				next();
 				break;
 			default:
-				reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " Unexpected symbol: " + symToString() + " by module creation");
+				reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " Unexpected symbol: " + symToString() + " by module creation");
 				break;
 			}
+			Module mod = new Module(name);
+			if (root == null) root = mod;
+			else root.appendTail(mod);
 		} while (sym == sComma);
-		if (sym != sColon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName + " before Line " + lineNumber);
-			return null;
-		}
+		if (sym != sColon) {reporter.error(209, "in " + currentFileName + " before Line " + lineNumber); return null;}
 		do {
-			current = root;
 			SegmentAssignment assign = null;
 			next();
 			switch (sym) {
 			case sConst:
-				assign = new SegmentAssignment(Configuration.CONST);
+				name = Configuration.CONST;
 				next();
 				break;
 			case sCode:
-				assign = new SegmentAssignment(Configuration.CODE);
+				name = Configuration.CODE;
 				next();
 				break;
 			case sVar:
-				assign = new SegmentAssignment(Configuration.VAR);
+				name = Configuration.VAR;
 				next();
 				break;
 			case sHeap:
-				assign = new SegmentAssignment(Configuration.HEAP);
+				name = Configuration.HEAP;
 				next();
 				break;
 			case sStack:
-				assign = new SegmentAssignment(Configuration.STACK);
+				name = Configuration.STACK;
 				next();
 				break;
 			case sSysTab:
-				assign = new SegmentAssignment(Configuration.SYSTAB);
+				name = Configuration.SYSTAB;
 				next();
 				break;
 			default:
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp,	"in " + currentFileName + " at Line " + lineNumber + " expected symbol: contentattribute, received symbol: " + symToString());
+				reporter.error(206,	"in " + currentFileName + " at Line " + lineNumber + " expected symbol: contentattribute, received symbol: " + symToString());
 				return null;
 			}
-			if (sym != sAt) {
-				nOfErrors++;
-				reporter.error(errAssignExp, "in " + currentFileName
-						+ " at Line " + lineNumber);
-				return null;
-			}
+			if (sym != sAt) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
 			next();
-			assign.setSegmentDesignator(segmentDesignator());
-			while (current != null) {
-				if(modulesBlock){					
-					current.setSegmentAssignment(assign);
-				}else{
-					current.addSegmentAssignment(assign);
-				}
-				current = (Module)current.next;
+			String desig = segmentDesignator();
+			assign = new SegmentAssignment(name, HString.getRegisteredHString(desig));
+			Module m = root;
+			while (m != null) {
+				m.addSegmentAssignment(assign);
+				assign = new SegmentAssignment(name, HString.getRegisteredHString(desig));
+				m = (Module)m.next;
 			}
 
 		} while (sym == sComma);
 
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return null;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return null;}
 		next();
 		return root;
 	}
 	
 	private Register register() {
-		if (sym != sRegister) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: register, received symbol: "
-					+ symToString());
-			return null;
-		}
+		if (sym != sRegister) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: register, received symbol: " + symToString()); return null;}
 		next();
-		if (!(sym == sDesignator || sym == sCR || sym == sMSR || sym == sFPSCR)) { // TODO check this
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: designator | CR | MSR | FPSCR, received symbol: "
-					+ symToString());
+		if (!(sym == sDesignator || sym == sCR || sym == sMSR || sym == sFPSCR)) {
+			reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator | CR | MSR | FPSCR, received symbol: " + symToString());
 			return null;
 		}
 		Register reg;
-		if(sym != sDesignator){
-			reg = new Register(HString.getRegisteredHString(symToString()));
-		} else {
-			reg = new Register(HString.getRegisteredHString(strBuffer));
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: New register " + reg.getName());
+		if (sym != sDesignator)	reg = new Register(HString.getRegisteredHString(symToString()));
+		else reg = new Register(HString.getRegisteredHString(strBuffer));
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
 		while (sym == sType || sym == sAddr || sym == sSize || sym == sRepr) {
-			if (sym == sType) {
-				reg.setType(typeAssignment());
-			}
-			if (sym == sAddr) {
-				reg.setAddress(addressAssignment());
-			}
-			if (sym == sSize) {
-				reg.setSize(sizeAssignment());
-			}
-			if (sym == sRepr) {
-				reg.setRepresentation(registerRepresentationAssignment());
-			}
+			if (sym == sType) reg.regType = typeAssignment();
+			if (sym == sAddr) reg.address = addressAssignment();
+			if (sym == sSize) reg.size = sizeAssignment();
+			if (sym == sRepr) reg.repr = registerRepresentationAssignment();
 		}
-		if (reg.type < 0 || reg.size < 0) {
-			reporter.error(errInconsistentattributes, "in " + currentFileName
-					+ " Missing attribute in creation of Register: "
-					+ reg.getName().toString());
-		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if (reg.regType < 0 || reg.size < 0) reporter.error(223, "in " + currentFileName + " Missing attribute in creation of Register: " + reg.name.toString());
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
 		return reg;
 	}
 	
-	private void registermap(CPU cpu) {
-		if (sym != sRegistermap) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: registermap, received symbol: " + symToString());
-			return;
-		}
+	private Register registermap(Register regs) {
+		if (sym != sRegistermap) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: registermap, received symbol: " + symToString()); return null;}
 		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering registermap section");
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
-		cpu.registermap = new RegisterMap();
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
+		Register head = null;
 		while (sym == sRegister) {
-			cpu.registermap.addRegister(register());
+			Register r = register();
+			if (head == null) head = r;
+			else head.appendTail(r);
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
+		return (Register) Item.appendItemList(head, head.getTail(), regs);
 	}
 	
-	private void registermap(Arch arch) {
-		if (sym != sRegistermap) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: registermap, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering registermap section");
+	private void runConfiguration(Board b) {
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering runconfiguration section");
+		if (sym != sRunConf) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: runconfiguration, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering runconfiguration section");
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
-		arch.registermap = new RegisterMap();
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		RunConfiguration runConfig = new RunConfiguration(strBuffer);
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting run configuration name to: " + strBuffer);
 		next();
-		while (sym == sRegister) {
-			arch.registermap.addRegister(register());
-		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
-	}
-	
-	private void targetconfiguration(Board b) {
-		if (sym != sTargetConf) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: targetconfiguration, received symbol: " + symToString());
-			return;
+		while (sym == sDescription || sym == sReginit || sym == sSystem || sym == sModules) {
+			if (sym == sDescription) runConfig.description = descriptionAssignment();
+			else if (sym == sReginit) runConfig.regInits = reginit(null);
+			else if (sym == sSystem) system(runConfig);
+			else modules(runConfig); // sym == sModules
 		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering targetconfiguration section");
-		next();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		TargetConfiguration targetConfig = new TargetConfiguration(strBuffer, b);
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting target configuration name to: " + strBuffer);
-		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
-		next();
-		while(sym == sReginit || sym == sSystem || sym == sModules){
-			if(sym == sReginit){
-				reginit(targetConfig.reginits);
-			}
-			else if(sym == sSystem){				
-				system(targetConfig);
-			}
-			else { // sym == sModules
-				modules(targetConfig);
-			}
-		}
-		Module sysMod = targetConfig.getSystemModules();
-		if(sysMod == null){
-			nOfErrors++;
-			reporter.error(errNoSysTabSegmentDef, "in system " + currentFileName + " at " + targetConfig.name);
-			return;
-		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
-		b.addTargetConfiguration(targetConfig);
+		Module sysMod = runConfig.systemModules;
+		if (sysMod == null) {reporter.error(232, "in system " + currentFileName + " at " + runConfig.name); return;}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return;}
+		b.addRunConfiguration(runConfig);
 		next();
 	}
 
 	private void project() {
-		if (sym != sProject) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: project, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering project section");
+		if (sym != sProject) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: project, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering project section");
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		currentProject.setName(strBuffer);
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting project name to: " + strBuffer);
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		currentProject.setProjectName(strBuffer);
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting project name to: " + strBuffer);
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		if (sym != sLibPath) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: libpath, received symbol: " + symToString() + " -> libpath has to be specified first in project");
-			return;
-		}
+		if (sym != sLibPath) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: libpath, received symbol: " + symToString() + " -> libpath has to be specified first in project"); return;}
 		HString[] libPath = libPathAssignment();
-		if(dbg)  {
+		if (dbg) {
 			StdStreams.vrb.print("[CONF] Parser: Setting library path to: \"");
-			for(int i = 0; i < libPath.length; i++) {
+			for (int i = 0; i < libPath.length; i++) {
 				StdStreams.vrb.print(libPath[i].toString());
-				if(i < libPath.length - 1) StdStreams.vrb.print(", ");
+				if (i < libPath.length - 1) StdStreams.vrb.print(", ");
 			}
 			StdStreams.vrb.println("\"");
 		}
-		currentProject.setLibPath(libPath);
-		while(sym == sRootclasses || sym == sBoardType || sym == sOsType	|| sym == sProgrammerType || sym == sProgrammerOpts || sym == sTctFile || sym == sImgFile || sym == sImgFormat) {
-			if(sym == sRootclasses) {
-				if(dbg) StdStreams.vrb.print("[CONF] Parser: Setting rootclasses to: ");
-				HString[] classes = rootClassesAssignment();
-				currentProject.setRootClasses(classes);
-				if(dbg) StdStreams.vrb.println(currentProject.getRootClassNames());
-			}
-			else if (sym == sBoardType) {
-				if(dbg) StdStreams.vrb.print("[CONF] Parser: Setting board type to: ");
-				String boardName = boardTypeAssignment();
-				Board b = currentProject.setBoard(boardName);
-				if(b == null) {
-					reporter.error(errBoardNotFound, boardName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
-					nOfErrors++;
-					return;
-				}
-				if(dbg) if(b != null) StdStreams.vrb.println(b.getName());
-			}
-			else if(sym == sOsType) {
-				if(dbg) StdStreams.vrb.print("[CONF] Parser: Setting os type to: ");
-				String osName = osTypeAssignment();
-				OperatingSystem os = currentProject.setOperatingSystem(osName);
-				if(os == null) {
-					reporter.error(errOsNotFound, osName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
-					nOfErrors++;
-					return;
-				}
-				if(dbg) if(os != null) StdStreams.vrb.println(os.getName());
-			}
-			else if(sym == sProgrammerType) {
-				if(dbg) StdStreams.vrb.print("[CONF] Parser: Setting programmer type to: ");
-				String programmerName = programmerTypeAssignment();
-				Programmer programmer = currentProject.setProgrammer(programmerName);
-				if(programmer == null) {
-					reporter.error(errProgrammerNotFound, programmerName + ", searched in \"" + currentProject.getLibPathAsSingleString() + "\"");
-					nOfErrors++;
-					return;
-				}
-				if(dbg) if(programmer != null) StdStreams.vrb.println(programmer.getName());
-			}
-			else if(sym == sProgrammerOpts) {
+		Configuration.getActiveProject().createLibs(libPath);
+		while (sym == sRootclasses || sym == sBoardType || sym == sOsType	|| sym == sProgrammerType || sym == sProgrammerOpts || sym == sTctFile || sym == sImgFile || sym == sImgFormat) {
+			if (sym == sRootclasses) {
+				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting rootclasses");
+				Configuration.setRootClasses(rootClassesAssignment());
+			} else if (sym == sBoardType) {
+				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting board type to: ");
+				Configuration.setBoard(boardTypeAssignment());
+				if (dbg) if (Configuration.getBoard() != null) StdStreams.vrb.println(Configuration.getBoard().name);
+			} else if (sym == sOsType) {
+				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting os type to: ");
+				Configuration.setOS(osTypeAssignment());				
+				if (dbg) if (Configuration.getOS() != null) StdStreams.vrb.println(Configuration.getOS().name);
+			} else if (sym == sProgrammerType) {
+				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting programmer type to: ");
+				Configuration.setProgrammer(programmerTypeAssignment());
+				if (dbg) if(Configuration.getProgrammer() != null) StdStreams.vrb.println(Configuration.getProgrammer().name);
+			} else if (sym == sProgrammerOpts) {
 				// TODO
 				next();
-			}
-			else if(sym == sImgFile) {
-				String imgFile = imgFileAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + imgFile);
-				currentProject.setImgFile(imgFile);
-			}
-			else if(sym == sImgFormat) {
+			} else if (sym == sImgFile) {
+				currentProject.setImgFileName(imgFileAssignment());
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + currentProject.getImgFileName());
+			} else if (sym == sImgFormat) {
 				// TODO
 				next();
-			}
-			else { // sym == sTctFile
-				currentProject.setTctFile(tctFileAssignment());
+			} else { // sym == sTctFile
+				currentProject.setTctFileName(tctFileAssignment());
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting target command file to " + currentProject.getTctFileName());
 			}
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		if (currentProject.getRootClasses() == null || currentProject.getBoard() == null) {
-			nOfErrors++;
-			reporter.error(errMissingTag,"in " + currentFileName + " \"project\" tags \"rootclasses, boardtype and ostype\" must be defined");
+		if (Configuration.getRootClasses() == null || Configuration.getBoard() == null || Configuration.getOS() == null) {
+			reporter.error(229,"in " + currentFileName + " \"project\" tags \"rootclasses, boardtype and ostype\" must be defined"); 
 			return;
 		}
 	}
 
 	private void operatingSystem() {
-		if (sym != sOperatingSystem) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: operatingsystem, received symbol: " + symToString());
-			return;
-		}
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Entering operatingsystem section");
+		if (sym != sOperatingSystem) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: operatingsystem, received symbol: " + symToString()); return;}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering operatingsystem section");
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
 		String osName = strBuffer;
-		if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting os name to: " + osName);
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting os name to: " + osName);
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		OperatingSystem os = currentLib.addOperatingSystem(osName);
-		SystemClass sysClass;
-		while (sym == sDescription || sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException) {
-			if(sym == sDescription) {
-				String description = descriptionAssignment();
-				if(dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
-				os.setDescription(description);
-			}
-			else if(sym == sException){
-				os.addException(systemClass(true));
-			}
+		OperatingSystem os = Configuration.getOS();
+		assert os != null;
+		while (sym == sDescription || sym == sKernel || sym == sHeapClass || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException) {
+			if (sym == sDescription) os.setDescription(descriptionAssignment());
+			else if (sym == sException) os.addExceptionClass(systemClass(true));
 			else if (sym == sKernel) {
-				os.addKernel(systemClass(false));
-			}
-			else if (sym == sHeap) {
-				os.addHeap(systemClass(false));
-			}
-			else if (sym == sExceptionBaseClass) {
-				os.addExceptionBaseClass(systemClass(false));
-			}
-			else if (sym == sUs) {
-				os.addUS(systemClass(false));
-			}
-			else if (sym == sLowlevel) {
-				os.addLowlevel(systemClass(false));
-			}
+				Class cls = systemClass(false);
+				if (cls != null) os.kernelClass = cls;
+			} else if (sym == sHeapClass) {
+				Class cls = systemClass(false);
+				if (cls != null) os.heapClass = cls;
+			} else if (sym == sExceptionBaseClass) os.exceptionBaseClass = systemClass(false);
+			else if (sym == sUs) os.usClass = systemClass(false);
+			else if (sym == sLowlevel) os.llClass = systemClass(false);
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
-		if (os.getNofExceptionBaseClassImplementations() <= 0 || os.getNofHeapImplementations() <= 0 || os.getNofKernelImplementations() <= 0 || os.getNofUsImplementations() <= 0 || os.getNofLowlevelImplementations() <= 0) {
-			nOfErrors++;
-			reporter.error(	errMissingTag,"in "	+ currentFileName + " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined");
-			return;
-		}
-		currentLib.addOperatingSystem(osName);
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
+		assert os.exceptionBaseClass != null;
+		assert os.heapClass != null;
+		assert os.kernelClass != null;
+		if (os.exceptionBaseClass == null || os.heapClass == null || os.kernelClass == null || os.usClass == null || os.llClass == null) {
+			reporter.error(229, "in "	+ currentFileName + " \"operatingsystem\" tags \"kernel, heap, exceptionbaseclass, us and lowlevel\" must be defined"); return;}
 		next();
 	}
 
-	private SystemClass systemClass(boolean isExceptionClass) {
-		boolean isExceptionBase = false;
-		if (!(sym == sKernel || sym == sHeap || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException)) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + "received symbol: " + symToString());
-			return null;
-		}
-		if (sym == sExceptionBaseClass){
-			isExceptionBase = true;
+	private Class systemClass(boolean isExceptionClass) {
+//		boolean isExceptionBase = false;
+		if (!(sym == sKernel || sym == sHeapClass || sym == sExceptionBaseClass || sym == sUs || sym == sLowlevel || sym == sException)) {
+			reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + "received symbol: " + symToString()); return null;
 		}
 		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
-		if (sym != sClass) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + "expected Symbol: class, received symbol: " + symToString());
-			return null;
-		}
-		SystemClass clazz = new SystemClass(classAssignment());		
-		SystemMethod meth;
-		while (sym == sMethod || sym == sCondition) {
-			if (sym == sCondition) {
-				conditionAssignment(clazz);
-			}
-			else if (sym == sMethod) {
-				meth = method();
-				clazz.addMethod(meth);
-				clazz.addAttributes(meth.attributes);
-				if(!isExceptionClass && meth.offset != -1){
-					reporter.error(errFixMethAddrNotSupported);
-					return null;
-				}
-			}
-		}
-
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
-		next();
-		if(isExceptionBase){
-			clazz.addAttributes(1 << dpfExcHnd);
-		}
-		return clazz;
-	}
-
-	private SystemMethod method() {
-		if (sym != sMethod) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: method, received symbol: "
-					+ symToString());
-			return null;
-		}
-		next();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: designator, received symbol: "
-					+ symToString());
-			return null;
-		}
-		SystemMethod method = new SystemMethod(HString.getRegisteredHString(strBuffer));
-		next();
-		if (sym != sLBrace) {
-			nOfErrors++;
-			reporter.error(errLBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
-		next();
-		while (sym == sAttributes || sym == sId || sym  == sOffset) {
+		if (sym != sClass) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + "expected Symbol: class, received symbol: " + symToString()); return null;}
+		String name = classAssignment();
+		int conditionType = -1;
+		if (sym == sCondition) conditionType = conditionAssignment();
+		String condName = strBuffer;
+		Method meth = null;
+		int attr = 0, methAttr = 0;
+		while (sym == sAttributes || sym == sMethod) {
 			if (sym == sAttributes) {
-				method.attributes |= attributeAssignment();
+				attr = attributeAssignment();
+			} else {
+				Method newMeth = systemMethod();
+				if (meth == null) meth = newMeth;
+				else meth.appendTail(newMeth);
+				methAttr |= newMeth.accAndPropFlags;
+				if (!isExceptionClass && meth.offset != -1) {reporter.error(234); return null;}
+			}
+		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
+		next();
+		if ((conditionType == sCpuArch && !Configuration.getBoard().cpu.arch.name.equals(HString.getHString(condName))) || 
+				(conditionType == sCpuType && !Configuration.getBoard().cpu.name.equals(HString.getHString(condName)))) return null;	// class does not belong to this cpu 
+		HString hSysClassName = Item.stab.insertCondAndGetEntry(name);
+		Class cls = new Class(hSysClassName);		
+		RefType.appendRefType(cls);
+		cls.methods = meth;
+		cls.accAndPropFlags |= attr;
+		cls.accAndPropFlags |= 1<<dpfSysPrimitive;	// class is defined in the configuration
+		if ((methAttr & (1<<dpfNew)) != 0) cls.accAndPropFlags |= 1<<dpfNew;	// class contains new methods (is heap class)
+		if ((methAttr & (1<<dpfExcHnd)) != 0) cls.accAndPropFlags |= 1<<dpfExcHnd;	// // class contains exception handler method
+//		if (isExceptionBase) cls.accAndPropFlags |= (1 << dpfExcHnd);
+		if (Configuration.dbg) Item.vrb.println("[CONF] create system class: " + name);
+		return cls;
+	}
+
+	private Method systemMethod() {
+		if (sym != sMethod) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: method, received symbol: "	+ symToString()); return null;}
+		next();
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: "	+ symToString()); return null;}
+		Method method = new Method(HString.getRegisteredHString(strBuffer));
+		next();
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
+		next();
+		while (sym == sAttributes || sym == sId || sym == sOffset) {
+			if (sym == sAttributes) {
+				method.accAndPropFlags |= attributeAssignment();
 			} else if (sym == sId) {
 				next();
-				if (sym != sEqualsSign) {
-					nOfErrors++;
-					reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-					return null;
-				}
+				if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
 				next();
 				int id = expression();
 				method.id = id;
-
-				if (sym != sSemicolon) {
-					nOfErrors++;
-					reporter.error(errSemicolonMissExp, "in " + currentFileName
-							+ " before Line " + lineNumber);
-					return null;
-				}
+				if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return null;}
 				next();
-			}else if(sym == sOffset){
+			} else if (sym == sOffset) {
 				method.offset = offsetAssignment();
+				method.fixed = true;
 			}
 		}
-		if (sym != sRBrace) {
-			nOfErrors++;
-			reporter.error(errRBraceExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
+		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
+		method.accAndPropFlags |= (1 << dpfSysPrimitive);	// method is defined in the configuration
 		next();
 		return method;
 	}
 
 	private String versionAssignment() {
 		String s;
-		if (sym != sVersion) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: version, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sVersion) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: version, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return "";}
 		next();
 		s = readString();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 
 	private String fileDescAssignment() {
 		String s;
-		if (sym != sDescription) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: description, received symbol: "
-					+ symToString());
-			return "";
-		}
+		if (sym != sDescription) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString());	return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return "";}
 		next();
 		s = readString();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 
 	private int varAssignment() {
 		int res = Integer.MAX_VALUE;
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: designator, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber	+ " expected symbol: designator, received symbol: "	+ symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
 		res = expression();
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
-
 	}
 
 	private int expression() {
@@ -2577,289 +1809,135 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		} else if (sym == sLParen) {
 			next();
 			value = expression();
-			if (sym == sRParen) {
-				next();
-			} else {
-				nOfErrors++;
-				reporter.error(errRParenExp, "in " + currentFileName + " at Line " + lineNumber);
-			}
+			if (sym == sRParen) next();
+			else reporter.error(201, "in " + currentFileName + " at Line " + lineNumber);
 		} else if (sym == sDesignator) {
-			value = currentConsts.getValueOfConstant(strBuffer);
+			assert currentConsts != null;
+			value = ((SystemConstant)currentConsts.getItemByName(strBuffer)).val;
 			next();
-		} else {
-			nOfErrors++;
-			reporter.error(errDigitExp, "in " + currentFileName + " at Line " + lineNumber);
-		}
-		if(isNeg){
-			return -value;
-		}
+		} else reporter.error(200, "in " + currentFileName + " at Line " + lineNumber);
+		if (isNeg) return -value;
 		return value;
 	}
 
 	private String descriptionAssignment() {
 		String s;
-		if (sym != sDescription) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sDescription) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
 		s = readString();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 	
 	private String boardTypeAssignment() {
 		String s;
-		if (sym != sBoardType) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: boardtype, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sBoardType) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: boardtype, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return "";
-		}
+		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return "";}
 		s = strBuffer;
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 	
 	private String osTypeAssignment() {
 		String s;
-		if (sym != sOsType) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: ostype, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sOsType) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: ostype, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return "";
-		}
+		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return "";}
 		s = strBuffer;
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 	
 	private String programmerTypeAssignment() {
 		String s;
-		if (sym != sProgrammerType) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmertype, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sProgrammerType) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmertype, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return "";}
 		s = strBuffer;
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 	
 	private String imgFileAssignment() {
 		String s;
-		if (sym != sImgFile) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sImgFile) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
 		s = readString();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 	
 	private String cpuTypeAssignment() {
 		String s;
-		if (sym != sCpuType) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: base, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sCpuType) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: base, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return "";
-		}
+		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return "";}
 		s = strBuffer;
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 
 	private String archAssignment() {
 		String s;
-		if (sym != sCpuArch) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: cpuarch, received symbol: " + symToString());
-			return "";
-		}
+		if (sym != sCpuArch) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: cpuarch, received symbol: " + symToString()); return "";}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return "";
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return "";
-		}
+		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return "";}
 		s = strBuffer;
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 	
 	private int baseAssignment() {
 		int res = -1;
-		if (sym != sBase) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: base, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sBase) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: base, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
 		res = expression();
-		if(res == Integer.MAX_VALUE){
-			res = -1;
-		}
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
+		if(res == Integer.MAX_VALUE) res = -1;
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 	
 	private int technologyAssignment() {
 		int res = -1;
-		if (sym != sTechnology) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: technology, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sTechnology) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: technology, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
-		if(sym == sRam){
-			res = 0;
-		}else if(sym == sFlash){
-			res = 1;
-		}else{
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: Ram or Flash, received symbol: " + symToString());
-			return res;
-		}		
+		if (sym == sRam) res = 0;
+		else if (sym == sFlash)	res = 1;
+		else {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: Ram or Flash, received symbol: " + symToString()); return res;}		
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return -1;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return -1;}
 		next();
 		return res;
 		
@@ -2867,251 +1945,86 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 
 	private int nofSectorAssignment() {
 		int res = -1;
-		if (sym != sNofSectors) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: nofsector, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sNofSectors) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: nofsector, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
 		res = expression();
-		if(res == Integer.MAX_VALUE){
-			res = -1;
-		}
-		
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
+		if(res == Integer.MAX_VALUE) res = -1;
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 
 	private int widthAssignment() {
 		int res = Integer.MAX_VALUE;
-		if (sym != sWidth) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: width, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sWidth) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: width, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
 		res = expression();
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 
 	private int sizeAssignment() {
 		int res = Integer.MAX_VALUE;
-		if (sym != sSize) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: size, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sSize) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: size, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
 		res = expression();
 
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 
 	private int sectorSizeAssignment() {
 		int res = Integer.MAX_VALUE;
-		if (sym != sSectorSize) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: sectorsize, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sSectorSize) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: sectorsize, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return res;}
 		next();
 		res = expression();
 		
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
-		next();
-		return res;
-	}
-
-	private int segmentSizeAssignment() {
-		int res = Integer.MAX_VALUE;
-		if (sym != sSegmentsize) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: segmentsize, received symbol: "
-					+ symToString());
-			return res;
-		}
-		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return res;
-		}
-		next();
-		res = expression();
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
-		next();
-		return res;
-	}
-
-	private int arraySizeAssignment() {
-		int res = Integer.MAX_VALUE;
-		if (sym != sArraysize) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: arraysize, received symbol: "
-					+ symToString());
-			return res;
-		}
-		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return res;
-		}
-		next();
-		res = expression();
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
-		next();
-		return res;
-	}
-
-	private int nofSegmentAssignment() {
-		int res = Integer.MAX_VALUE;
-		if (sym != sNofsegements) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: nofsegments, received symbol: "
-					+ symToString());
-			return res;
-		}
-		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
-		next();
-		res = expression();
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 
 	private int attributeAssignment() {
 		int res = 0;
-		if (sym != sAttributes) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: attributes, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sAttributes) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: attributes, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber );
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber ); return res;}
 		do {
 			next();
 			switch (sym) {
 			case sRead:
-				res |= (1 << atrRead);
+				res |= (1 << dpfSegRead);
 				break;
 			case sWrite:
-				res |= (1 << atrWrite);
+				res |= (1 << dpfSegWrite);
 				break;
 			case sConst:
-				res |= (1 << atrConst);
+				res |= (1 << dpfSegConst);
 				break;
 			case sCode:
-				res |= (1 << atrCode);
+				res |= (1 << dpfSegCode);
 				break;
 			case sVar:
-				res |= (1 << atrVar);
+				res |= (1 << dpfSegVar);
 				break;
 			case sHeap:
-				res |= (1 << atrHeap);
+				res |= (1 << dpfSegHeap);
 				break;
 			case sStack:
-				res |= (1 << atrStack);
+				res |= (1 << dpfSegStack);
 				break;
 			case sSysTab:
-				res |= (1 << atrSysTab);
+				res |= (1 << dpfSegSysTab);
 				break;
 			case sNew:
 				res |= (1 << dpfNew);
@@ -3126,172 +2039,78 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 				res |= (1 << dpfExcHnd);
 				break;
 			default:
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp, "in " + currentFileName
-						+ " at Line " + lineNumber
-						+ " expected symbol: some attribute, received symbol: "
-						+ symToString());
-				return res;
+				reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: some attribute, received symbol: "	+ symToString()); return res;
 			}
 			next();
 		} while (sym == sComma);
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 
 	private int typeAssignment() {
 		int s;
-		if (sym != sType) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: type, received symbol: " + symToString());
-			return sUndef;
-		}
+		if (sym != sType) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: type, received symbol: " + symToString()); return sUndef;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return sUndef;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return sUndef;}
 		next();
-		if (sym == sGPR || sym == sFPR || sym == sSPR || sym == sIOR || sym == sMSR || sym == sCR || sym == sFPSCR) {
-			s = sym;
-		} else {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " unexpected symbol: " + symToString());
-			return sUndef;
-		}
+		if (sym == sGPR || sym == sFPR || sym == sSPR || sym == sIOR || sym == sMSR || sym == sCR || sym == sFPSCR) s = sym;
+		else {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " unexpected symbol: " + symToString()); return sUndef;}
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 
 	private int registerRepresentationAssignment() {
 		int s = sUndef;
-		if (sym != sRepr) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: repr, received symbol: " + symToString());
-			return s;
-		}
+		if (sym != sRepr) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: repr, received symbol: " + symToString()); return s;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return s;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return s;}
 		next();
-		if (sym != sDez && sym != sBin && sym != sHex) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: dez | bin | hex, received symbol: "
-					+ symToString());
-			return s;
-		}
+		if (sym != sDez && sym != sBin && sym != sHex) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: dez | bin | hex, received symbol: "	+ symToString()); return s;}
 		s = sym;
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return s;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
 	}
 
 	private int addressAssignment() {
 		int res = Integer.MAX_VALUE;
-		if (sym != sAddr) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: addr, received symbol: "
-					+ symToString());
-			return res;
-		}
+		if (sym != sAddr) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: addr, received symbol: " + symToString()); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "+ lineNumber); return res;}
 		next();
 		res = expression();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 	
 	private int offsetAssignment() {
 		int res = -1;
-		if (sym != sOffset) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: addr, received symbol: "
-					+ symToString() );
-			return res;
-		}
+		if (sym != sOffset) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: addr, received symbol: " + symToString() ); return res;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return res;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return res;}
 		next();
 		res = expression();
-
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return res;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return res;}
 		next();
 		return res;
 	}
 
 	private String concatenatedDesignator() {
 		StringBuffer sb = new StringBuffer();
-		if (sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected symbol: designator, received symbol: "
-					+ symToString());
-			return sb.toString();
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return sb.toString();}
 		sb.append(strBuffer);
 		next();
 		while (sym == sDot || sym == sDiv) {
 			sb.append("/");
 			next();
-			if (sym == sMul) {
-				sb.append("*");
-			} else if (sym != sDesignator) {
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp, "in " + currentFileName
-						+ " at Line " + lineNumber
-						+ " expected symbol: designator, received symbol: "
-						+ symToString());
-				return sb.toString();
-			} else {
-				sb.append(strBuffer);
-			}
+			if (sym == sMul) sb.append("*");
+			else if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return sb.toString();}
+			else sb.append(strBuffer);
 			next();
 		}
 		return sb.toString();
@@ -3299,116 +2118,43 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 
 	private String classAssignment() {
 		String str = null;
-		if (sym != sClass) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName
-					+ " at Line " + lineNumber
-					+ " expected: rootclasses, received symbol: "	// TODO check this: rootclasses or classes???
-					+ symToString());
-			return null;
-		}
+		if (sym != sClass) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: rootclasses, received symbol: " + symToString()); return null;}// TODO check this: rootclasses or classes???
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
-		
-			next();
-			str = readString();
-			
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return null;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
+		next();
+		str = readString();
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return null;}
 		next();
 		return str;
 	}
 	
-	private void conditionAssignment(SystemClass sysClass) {
+	private int conditionAssignment() {
 		int conditionType = -1;
-		String s;
-		if(sym != sCondition) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected: condition, received symbol: " + symToString());
-			return;
-		}
+		if (sym != sCondition) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: condition, received symbol: " + symToString()); return -1;}
 		next();
-		if(sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return -1;}
 		next();
-		if(sym == sCpuArch) {
-			conditionType = sCpuArch;
-		}
-		else if(sym == sCpuType) {
-			conditionType = sCpuType;
-		}
-		else {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected: cpuarch | cputype, received symbol: " + symToString());
-			return;
-		}
+		if (sym == sCpuArch) conditionType = sCpuArch;
+		else if (sym == sCpuType) conditionType = sCpuType;
+		else {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: cpuarch | cputype, received symbol: " + symToString()); return -1;}
 		next();
-		if(sym != sColon) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName	+ " at Line " + lineNumber + " expected: colon (:), received symbol: " + symToString());
-			return;
-		}
+		if (sym != sColon) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: colon (:), received symbol: " + symToString()); return -1;}
 		next();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return;
-		}
-		s = strBuffer;
-		if(conditionType == sCpuArch) {
-			Arch a = currentLib.getArchByName(s);
-			if(a == null) {
-				nOfErrors++;
-				reporter.error(9999, "Arch not found: " + s); // TODO add correct error number here!
-				return;
-			}
-			sysClass.addCondition(a);
-		}
-		else { // conditionType == sCpuType
-			CPU c = currentLib.getCpuByName(s);
-			if(c == null) {
-				nOfErrors++;
-				reporter.error(9999, "CPU not found: " + s); // TODO add correct error number here!
-				return;
-			}
-			sysClass.addCondition(c);
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return -1;}
 		next();
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return -1;}
 		next();
+		return conditionType;
 	}
 
 	private String segmentDesignator() {
 		StringBuffer sb = new StringBuffer();
-		if(sym != sDesignator) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-			return sb.toString();
-		}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return sb.toString();}
 		sb.append(strBuffer);
 		next();
-		while(sym == sDot) {
+		while (sym == sDot) {
 			next();
-			if (sym != sDesignator) {
-				nOfErrors++;
-				reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString());
-				return sb.toString();
-			}
+			if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return sb.toString();}
 			sb.append(".");
 			sb.append(strBuffer);
 			next();
@@ -3419,30 +2165,18 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 	private HString[] rootClassesAssignment() {
 		String[] tempList = new String[Configuration.maxNofRootClasses];
 		int count = 0;
-		if (sym != sRootclasses) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected: rootclasses, received symbol: " + symToString());
-			return null;
-		}
+		if (sym != sRootclasses) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected: rootclasses, received symbol: " + symToString()); return null;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line "	+ lineNumber);
-			return null;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		do {
 			next();
 			tempList[count] = readString().replace('.', '/');
 			tempList[count] = tempList[count].replace('\\', '/');
 			count++;
 		} while (sym == sComma);
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName	+ " before Line " + lineNumber);
-			return null;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return null;}
 		HString[] rootClasses = new HString[count];
-		while(count > 0) {
+		while (count > 0) {
 			count--;
 			rootClasses[count] = HString.getRegisteredHString(tempList[count]);
 		}
@@ -3451,38 +2185,24 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 	}
 
 	private HString[] libPathAssignment() {
-		String[] tempList = new String[Configuration.maxNofRootClasses];
+		String[] tempList = new String[Configuration.maxNofLibPaths];
 		int count = 0;
-		if (sym != sLibPath) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected: libpath, received symbol: " + symToString());
-			return null;
-		}
+		if (sym != sLibPath) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected: libpath, received symbol: " + symToString()); return null;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		String str;
 		do {
 			next();
 			str = readString();
 			if(str.length() > 0 && str.charAt(str.length() - 1) != '/') {
-				if(!str.endsWith(".jar")){
-					str = str + '/';
-				}
+				if(!str.endsWith(".jar")) str = str + '/';
 			}
 			tempList[count] = str.replace('\\', '/');
 			count++;
 		} while (sym == sComma);
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName + " before Line " + lineNumber);
-			return null;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName + " before Line " + lineNumber); return null;}
 		HString[] libPaths = new HString[count];
-		while(count > 0) {
+		while (count > 0) {
 			count--;
 			libPaths[count] = HString.getRegisteredHString(tempList[count]);
 		}
@@ -3492,17 +2212,9 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 
 	private String tctFileAssignment() {
 		String tctFileName = null;
-		if (sym != sTctFile) {
-			nOfErrors++;
-			reporter.error(errUnexpectetSymExp, "in " + currentFileName + " at Line " + lineNumber + " expected: tctFile, received symbol: " + symToString());
-			return null;
-		}
+		if (sym != sTctFile) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected: tctFile, received symbol: " + symToString()); return null;}
 		next();
-		if (sym != sEqualsSign) {
-			nOfErrors++;
-			reporter.error(errAssignExp, "in " + currentFileName + " at Line " + lineNumber);
-			return null;
-		}
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
 		if(sym == sNone) {
 			tctFileName = null;
@@ -3514,25 +2226,12 @@ public class Parser implements ErrorCodes, IAttributes, ICclassFileConsts, ICjvm
 		}
 		else if(sym == sQuotationMark){
 			String str = readString();
-			if(str.length() > 0) {
-				tctFileName = str;
-			}
-			else {
-				tctFileName = null;
-			}
+			if(str.length() > 0) tctFileName = str;
+			else tctFileName = null;
 		}
-		if (sym != sSemicolon) {
-			nOfErrors++;
-			reporter.error(errSemicolonMissExp, "in " + currentFileName
-					+ " before Line " + lineNumber);
-			return null;
-		}
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return null;}
 		next();
 		return tctFileName;
 	}
 	
-	protected static void clear() {
-		nOfErrors = 0;
-	}
-
 }

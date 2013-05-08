@@ -47,7 +47,7 @@ public class ItemStub extends Item {
 					item = owner.getMethod(name, HString.getRegisteredHString("([Ljava/lang/Enum;Ljava/lang/String;)Ljava/lang/Enum;"));
 					assert item != null: "method valueOf in Enum not found";
 				} else { // method must be in superinterface of owner, which must be interface itself
-					assert (owner.accAndPropFlags & (1<<apfInterface)) != 0: "owner must be interface";
+					assert (owner.accAndPropFlags & (1<<apfInterface)) != 0: "owner must be interface (name=" + name + descriptor + " owner=" + owner.name + ")";
 					Class[] interfaces = ((Class)owner).interfaces;
 					if (interfaces != null) item = checkInterfacesForMethod(interfaces);
 				}
@@ -93,11 +93,11 @@ public class ItemStub extends Item {
 	public void print(int indentLevel) {
 		indent(indentLevel);
 		vrb.print("stub of ");
-		if( type == null) vrb.printf("method: (%1$s).%2$s, d=%3$s", owner.name, name, descriptor);
+		if (type == null) vrb.printf("method: (%1$s).%2$s, d=%3$s", owner.name, name, descriptor);
 		else vrb.printf("field: name=%1$s, t=%2$s", name, type.name);
-		vrb.print(", dFlags:"); Dbg.printDeepAccAndPropertyFlags(this.accAndPropFlags);
-		if( owner != null ){
-			vrb.print(", owner.Flags:"); Dbg.printDeepAccAndPropertyFlags(owner.accAndPropFlags);			
+		vrb.print(", dFlags:"); Dbg.printAccAndPropertyFlags(this.accAndPropFlags);
+		if (owner != null) {
+			vrb.print(", owner.Flags:"); Dbg.printAccAndPropertyFlags(owner.accAndPropFlags);			
 		}
 	}
 

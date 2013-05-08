@@ -80,14 +80,14 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			reportError(x);
 			return false;
 		}
-		save();
+		saveProjectPreferences();
 		dispose();
 		return true;
 	}
 
 	@Override
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
-		setWindowTitle("NTB Project Wizard");
+		setWindowTitle("NTB deep Project Wizard");
 		setDefaultPageImageDescriptor(getImageDescriptor("deep.gif"));
 		setNeedsProgressMonitor(true);
 	}
@@ -110,7 +110,6 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 
 	private ImageDescriptor getImageDescriptor(String relativePath) {
 		String iconPath = "icons/full/obj16/";
-
 		try {
 			DeepPlugin plugin = DeepPlugin.getDefault();
 			URL installURL = plugin.getBundle().getEntry("/");
@@ -120,76 +119,6 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return null;
-		}
-	}
-
-	private InputStream getClassPathFileContent() {
-		String libpath = model.getLibrary().getPathAsString();
-		StringBuffer sb = new StringBuffer();
-		File srcFolder = new File(libpath + "/src");
-		sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
-		sb.append("<classpath>\n");
-		sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
-		if(srcFolder.exists()) {			
-			sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\" sourcepath=\"" + libpath + "/src\"/>\n");
-		}
-		else {			
-			sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
-		}
-		sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
-		sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
-		sb.append("</classpath>\n");
-		return new ByteArrayInputStream(sb.toString().getBytes());
-	}
-
-	private void createClassPath(IProject project) {
-		IFile file = project.getFile(".classpath");
-		try {
-			file.create(getClassPathFileContent(), true, null);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private void createDeepFile(){
-		IFile file = project.getFile(project.getName() +".deep");
-		   try{
-			   file.create(getDeepFileContent(), false, null);
-		   } catch(CoreException e){
-			   e.printStackTrace();
-		   }
-	}
-	
-	private InputStream getDeepFileContent(){
-		GregorianCalendar cal = new GregorianCalendar();
-		StringBuffer sb = new StringBuffer();
-		sb.append("#deep-1\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
-		sb.append("\tdescription = \"deep project file for " + project.getName() + "\";\n");
-		sb.append("}\n\n");
-		sb.append("project " + project.getName() + " {\n\tlibpath = ");
-		sb.append("\"" + model.getLibrary().getPathAsString() + "\";\n");
-		sb.append("\tboardtype = ");
-		if(model != null && model.getBoard() != null) sb.append(model.getBoard().getName().toString());
-		sb.append(";\n");
-		sb.append("\tostype = ");
-		if(model != null && model.getOs() != null) sb.append(model.getOs().getName().toString());
-		sb.append(";\n");
-		sb.append("\tprogrammertype = ");
-		if(model != null && model.getProgrammer() != null) sb.append(model.getProgrammer().getName().toString());
-		sb.append(";\n");
-		sb.append("\trootclasses = \"\";\n}\n");
-		
-		return new ByteArrayInputStream(sb.toString().getBytes());
-	}
-
-	private void createFolders(IProject project) {
-		IFolder scrFolder = project.getFolder("src");
-		IFolder binFolder = project.getFolder("bin");
-		try {
-			scrFolder.create(true, true, null);
-			binFolder.create(true, true, null);
-		} catch (CoreException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -203,36 +132,82 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			description.setLocation(projectConfigPage.getLocationPath());
 		}					
 		
-		
 		try {
 			project.create(description, monitor);
 			monitor.worked(10);
 			if (project.exists()) {
 				project.open(monitor);
 				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-			} else {
-				return;
-			}
+			} else return;
 			description = project.getDescription();		
 			description.setNatureIds(new String[] {"ch.ntb.inf.deep.nature.DeepNature",	"org.eclipse.jdt.core.javanature" });
 			project.setDescription(description, new SubProgressMonitor(monitor, 10));
-		} catch (CoreException e) {
-			System.out.println("CoreException: " + e.getLocalizedMessage());
-			e.printStackTrace();
-		}finally{
-			createFolders(project);
-			createClassPath(project);
-			createDeepFile();
+		} catch (CoreException e) {e.printStackTrace();
+		} finally {
+			// create folders
+			IFolder scrFolder = project.getFolder("src");
+			IFolder binFolder = project.getFolder("bin");
+			try {
+				scrFolder.create(true, true, null);
+				binFolder.create(true, true, null);
+			} catch (CoreException e) {e.printStackTrace();}
+			
+			// create classpath file
+			IFile file = project.getFile(".classpath");
+			String libpath = model.getLibrary().getAbsolutePath();
+			StringBuffer sb = new StringBuffer();
+			File srcFolder = new File(libpath + "/src");
+			sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
+			sb.append("<classpath>\n");
+			sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
+			if (srcFolder.exists()) sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\" sourcepath=\"" + libpath + "/src\"/>\n");
+			else sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
+			sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
+			sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
+			sb.append("</classpath>\n");
+			InputStream in = new ByteArrayInputStream(sb.toString().getBytes());
+			try {
+				file.create(in, true, null);
+			} catch (CoreException e) {e.printStackTrace();}
+
+			// create deep file
+			file = project.getFile(project.getName() +".deep");
+			GregorianCalendar cal = new GregorianCalendar();
+			sb = new StringBuffer();
+			sb.append("#deep-1\n\nmeta {\n\tversion = \"" + cal.getTime() +"\";\n");
+			sb.append("\tdescription = \"deep project file for " + project.getName() + "\";\n");
+			sb.append("}\n\n");
+			sb.append("project " + project.getName() + " {\n\tlibpath = ");
+			String str = model.getLibrary().getAbsolutePath();
+			str = str.replace('/', '\\');			
+			sb.append("\"" + str + "\";\n");
+			sb.append("\tboardtype = ");
+			if (model != null && model.getBoard() != null) sb.append(model.getBoard()[0]);
+			sb.append(";\n");
+			sb.append("\tostype = ");
+			if (model != null && model.getOs() != null) sb.append(model.getOs()[0]);
+			sb.append(";\n");
+			sb.append("\tprogrammertype = ");
+			if (model != null && model.getProgrammer() != null) sb.append(model.getProgrammer()[0]);
+			sb.append(";\n\n#\tenter names of rootclasses, e.g.");
+			sb.append("\n#\trootclasses = \"test.MyFirstTestClass\",\"other.MySecondTestClass\";");
+			sb.append("\n\trootclasses = \"\";\n}\n");
+			in = new ByteArrayInputStream(sb.toString().getBytes());
+			try {
+				file.create(in, false, null);
+			} catch(CoreException e) {e.printStackTrace();}
 			monitor.done();
 		}
 	}
 	
-	private void save(){
+	private void saveProjectPreferences(){
 		ProjectScope scope = new ProjectScope(project);
-		IEclipsePreferences pref = scope.getNode("deepStart");//TODO implement check if this node exists...
-		pref.put("board", model.getBoard().getName().toString());
-		pref.put("rts", model.getOs().getName().toString());
-		pref.put("libPath", model.getLibrary().getPathAsString());
+		IEclipsePreferences pref = scope.getNode("deepStart");
+		if (pref == null) System.out.println("no node: deepStart");
+		pref.put("board", model.getBoard()[0]);
+		pref.put("programmer", model.getProgrammer()[0]);
+		pref.put("os", model.getOs()[0]);
+		pref.put("libPath", model.getLibrary().getAbsolutePath());
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
@@ -245,7 +220,6 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 	}
 	
 	public static IStatus makeStatus(Exception x) {
-
 		if (x instanceof CoreException) {
 			return ((CoreException) x).getStatus();
 		} else {

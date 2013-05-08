@@ -20,36 +20,20 @@
 
 package ch.ntb.inf.deep.config;
 
-import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
-public class ValueAssignment extends ConfigElement {
-	
-	int value;
-	
-	public ValueAssignment(String jname, int value){
+public class SystemConstant extends Item {
+	public int val;
+
+	public SystemConstant(String jname, int val) {
 		this.name = HString.getRegisteredHString(jname);
-		this.value = value;
+		this.val = val;
+		if (Configuration.dbg) vrb.println("[CONF] adding constant " + jname + " = 0x" + Integer.toHexString(val));
 	}
 	
-	public int getValue() {
-		return value;
-	}
-	
-	public void setValue(int value) {
-		this.value = value;
-	}
-	
-	public void print(int indentLevel){
-		StdStreams.vrb.print(name.toString() + " = 0x" + Integer.toHexString(value));	
-	}
-	
-	public void println(int indentLevel){
-		while(indentLevel > 0){
-			StdStreams.vrb.print("  ");
-			indentLevel--;
-		}
-		StdStreams.vrb.println(name.toString() + " = 0x" + Integer.toHexString(value));	
+	public String toString(){
+		return name.toString() + " = 0x" + Integer.toHexString(val);
 	}
 
 }

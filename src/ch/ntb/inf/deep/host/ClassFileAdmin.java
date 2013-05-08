@@ -26,6 +26,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -36,9 +38,9 @@ public class ClassFileAdmin {
 	private static PrintStream vrb = StdStreams.vrb;
 	
 	public static final String classFileType =  ".class";
-	public static int errChangingParentDir = 303, errMsgIllegalParentDir = 304;
-
+//	public static final String deepFileType =  ".deep";
 	private static File[] parentDirs; // parent directories of class files
+	
 	public static void  clear(){
 		parentDirs = null;
 	}
@@ -50,26 +52,24 @@ public class ClassFileAdmin {
 	 * <br>During registering, each given directory is checked for existence. An error is reported if it does not exist or if it is not a directory.
 	 * @param parentDirectories   parent directories
 	 */
-	public static void registerParentDirs(File[] parentDirectories){
-		if(dbg) vrb.println("Registering parent dirs of class files:");
-		if(ClassFileAdmin.parentDirs != null)
-			ErrorReporter.reporter.error(errChangingParentDir);
-		else{
+	public static void registerParentDirs(File[] parentDirectories) {
+		if (dbg) vrb.println("Registering parent directories of class files:");
+		if (ClassFileAdmin.parentDirs != null)
+			ErrorReporter.reporter.error(303);
+		else {
 			int nofPaths = parentDirectories.length;
 			ClassFileAdmin.parentDirs = new File[nofPaths];
 			boolean error = false;
-			for(int path = 0; path < nofPaths; path++){
-				//String parentPath = parentDirectories[path];
-				if(dbg) vrb.print("  Registering: "+ parentDirectories[path].getAbsolutePath() + '\t');
-				//File parentDir = new File( parentPath );
-				if(!parentDirectories[path].exists() || (!parentDirectories[path].isDirectory() && !parentDirectories[path].getName().endsWith(".jar"))){
-					ErrorReporter.reporter.error(errMsgIllegalParentDir);
+			for (int path = 0; path < nofPaths; path++){
+				if (dbg) vrb.print("  Registering: "+ parentDirectories[path].getAbsolutePath() + '\t');
+				if (!parentDirectories[path].exists() || (!parentDirectories[path].isDirectory() && !parentDirectories[path].getName().endsWith(".jar"))) {
+					ErrorReporter.reporter.error(304, parentDirectories[path].getAbsolutePath());
 					error = true;
 				}
 				ClassFileAdmin.parentDirs[path] = parentDirectories[path];
-				if(dbg) vrb.println();
+				if (dbg) vrb.println();
 			}
-			if(error) clear();
+			if (error) clear();
 		}
 	}
 
@@ -79,16 +79,17 @@ public class ClassFileAdmin {
 	 * @param className
 	 * @return  File reference of the class file or <code>null</code>
 	 */
-	public static InputStream getClassFileInputStream(HString className){
-		if( parentDirs == null ) return null;
+	public static InputStream getClassFileInputStream(HString className) {
+		if (parentDirs == null) return null;
 		InputStream inStrm = null;
 		String clsFileName = className.toString() + classFileType;
 		int pd = 0;
-		do{
-			if(parentDirs[pd].isDirectory()){
+		do {
+			if (parentDirs[pd].isDirectory()) {
+				if (dbg) vrb.println(className + ": search in dir");
 				File clsFile;
 				clsFile = new File(parentDirs[pd], clsFileName);
-				if(clsFile.isFile()){
+				if (clsFile.isFile()) {
 					try {
 						inStrm = new FileInputStream(clsFile);
 					} catch (FileNotFoundException fnfE) {
@@ -96,16 +97,22 @@ public class ClassFileAdmin {
 						fnfE.getCause();
 					}
 				}
-			}else{
+			} else {
+				if (dbg) vrb.println(className + ": search in jar file");
 				JarFile jar = null;
 				ZipEntry entry = null;
 				try {
 					jar = new JarFile(parentDirs[pd]);
+//					Enumeration<JarEntry> e = jar.entries();
+//					while (e.hasMoreElements()) {
+//					      JarEntry je = (JarEntry) e.nextElement();
+//					      String name = je.getName();
+//					      System.out.println(name);
+//					}
 					entry = jar.getEntry(clsFileName);
-				}catch(IOException e1){
-				}
-				try{
-					if(entry != null){
+				} catch (IOException e1) { }
+				try {
+					if (entry != null) {
 						inStrm = jar.getInputStream(entry);
 					}
 				} catch (IOException e) {
@@ -114,23 +121,69 @@ public class ClassFileAdmin {
 				}
 			}
 			++pd;
-		}while( inStrm == null && pd < parentDirs.length);
+		} while (inStrm == null && pd < parentDirs.length);
 		return inStrm;
 	}
+
+	/**
+	 * Returns the file reference of the class file specified by its <code>className</code> or <code>null</code>
+	 * if it is not found.
+	 * @param className
+	 * @return  File reference of the class file or <code>null</code>
+	 */
+//	public static InputStream getClassFileInputStream(HString className) {
+//		if (parentDirs == null) return null;
+//		InputStream inStrm = null;
+//		String clsFileName = className.toString() + classFileType;
+//		int pd = 0;
+//		do {
+//			if (parentDirs[pd].isDirectory()) {
+//				if (dbg) vrb.println(className + ": search in dir");
+//				File clsFile;
+//				clsFile = new File(parentDirs[pd], clsFileName);
+//				if (clsFile.isFile()) {
+//					try {
+//						inStrm = new FileInputStream(clsFile);
+//					} catch (FileNotFoundException fnfE) {
+//						ErrorReporter.reporter.error(300, fnfE.getMessage());
+//						fnfE.getCause();
+//					}
+//				}
+//			} else {
+//				if (dbg) vrb.println(className + ": search in jar file");
+//				JarFile jar = null;
+//				ZipEntry entry = null;
+//				try {
+//					jar = new JarFile(parentDirs[pd]);
+//					entry = jar.getEntry(clsFileName);
+//				} catch (IOException e1) { }
+//				try {
+//					if (entry != null) {
+//						inStrm = jar.getInputStream(entry);
+//					}
+//				} catch (IOException e) {
+//					ErrorReporter.reporter.error(300, e.getMessage());
+//					e.getCause();
+//				}
+//			}
+//			++pd;
+//		} while (inStrm == null && pd < parentDirs.length);
+//		return inStrm;
+//	}
 
 	public static void printParentDirs(){
 		PrintStream out = StdStreams.vrb;
 		out.println("Registered parent dirs of class files:");
-		if( parentDirs != null ){
+		if (parentDirs != null) {
 			int nofPaths = parentDirs.length;
-			for(int pd = 0; pd < nofPaths; pd++){
+			for (int pd = 0; pd < nofPaths; pd++){
 				File parentDir = parentDirs[pd];
 				try{
 					out.printf("  Parent dir [%1$d] = %2$s, name = %3$s", pd, parentDir.getCanonicalPath(), parentDir.getName() );
 				}catch(IOException e){
 					e.printStackTrace();
 				}
-				if( ! parentDir.exists() || ! parentDir.isDirectory() ) out.print(", " +errMsgIllegalParentDir);
+				if (!parentDir.exists() || ! parentDir.isDirectory()) out.print(", " +304);
 				out.println();
 			}
 		}

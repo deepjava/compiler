@@ -37,8 +37,8 @@ public class RefType extends Type {
 	}
 
 	/** append reference type to reference type list */
-	protected static void appendRefType(RefType newType) {
-		if(enAssertion) assert refTypeList != null && refTypeListTail != null;
+	public static void appendRefType(RefType newType) {
+		if (enAssertion) assert refTypeList != null && refTypeListTail != null;
 	
 		refTypeListTail.next = newType;
 		refTypeListTail = newType;

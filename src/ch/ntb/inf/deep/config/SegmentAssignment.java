@@ -20,32 +20,31 @@
 
 package ch.ntb.inf.deep.config;
 
+import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class SegmentAssignment {
-	SegmentAssignment next;
+public class SegmentAssignment extends Item {
 	HString contentAttribute;
 	HString segmentDesignator;
+	Segment seg;
+	Device dev;
 
-	public SegmentAssignment(HString contentAttribute){
-		this.contentAttribute = contentAttribute;
+	public SegmentAssignment(HString attr, HString desig){
+		contentAttribute = attr;
+		segmentDesignator = desig;
+		String[] jname = desig.toString().split("\\.");
+		Board b = Configuration.getBoard();
+		if (b == null) {ErrorReporter.reporter.error(238, ", must be defined before target configuration"); return;}
+		dev = b.getDeviceByName(HString.getRegisteredHString(jname[0]));
+		if (dev == null) {ErrorReporter.reporter.error(220, ", device required in target configuration is not found in memory map"); return;}
+		seg = dev.getSegmentByName(jname[1]);
+		if (seg == null) {ErrorReporter.reporter.error(254, ", segment required in target configuration is not found in memory map"); return;}
 	}
 	
-	public void setSegmentDesignator(String designator){
-		segmentDesignator = HString.getRegisteredHString(designator);
-	}
-	
-	public void print(int indentLevel){
-		StdStreams.vrb.print(contentAttribute.toString() + "@" + segmentDesignator.toString());
-	}
-	
-	public void println(int indentLevel){
-		while(indentLevel > 0){
-			StdStreams.vrb.print("  ");
-			indentLevel--;
-		}
-		StdStreams.vrb.println(contentAttribute.toString() + "@" + segmentDesignator.toString());
+	public String toString() {
+		return (contentAttribute + "@" + dev.name + "." + seg.name);
 	}
 	
 }

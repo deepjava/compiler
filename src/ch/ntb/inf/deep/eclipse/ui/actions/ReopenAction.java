@@ -33,7 +33,7 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 public class ReopenAction implements IWorkbenchWindowActionDelegate {
 
 	private IWorkbenchWindow window;
-    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.action.ReopenAction";
+    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction";
 	
 	@Override
 	public void dispose() {}

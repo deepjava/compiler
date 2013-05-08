@@ -1,47 +1,44 @@
 package ch.ntb.inf.deep.eclipse.ui.wizard;
 
-import ch.ntb.inf.deep.config.Board;
-import ch.ntb.inf.deep.config.Library;
-import ch.ntb.inf.deep.config.OperatingSystem;
-import ch.ntb.inf.deep.config.Programmer;
+import java.io.File;
 
 public class DeepProjectModel {
 
-	private Library lib;
-	private Board board;
-	private Programmer programmer;
-	private OperatingSystem os;
+	private File lib;
+	private String[] board;
+	private String[] osName;
+	private String[] programmerName;
 
-	public void setLibrary(Library lib) {
+	public void setLibrary(File lib) {
 		this.lib = lib;
 	}
 	
-	public Library getLibrary() {
+	public File getLibrary() {
 		return this.lib;
 	}
 
-	public Board getBoard() {
+	public String[] getBoard() {
 		return board;
 	}
 
-	public void setBoard(Board board) {
-		this.board = board;
+	public void setBoard(String[] b) {
+		board = b;
 	}
 
-	public Programmer getProgrammer() {
-		return programmer;
+	public String[] getProgrammer() {
+		return programmerName;
 	}
 
-	public void setProgrammer(Programmer programmer) {
-		this.programmer = programmer;
+	public void setProgrammer(String[] prog) {
+		this.programmerName = prog;
 	}
 
-	public OperatingSystem getOs() {
-		return os;
+	public String[] getOs() {
+		return osName;
 	}
 
-	public void setOs(OperatingSystem os) {
-		this.os = os;
+	public void setOs(String[] os) {
+		this.osName = os;
 	}
 	
 }

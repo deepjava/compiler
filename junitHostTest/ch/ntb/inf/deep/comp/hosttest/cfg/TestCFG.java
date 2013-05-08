@@ -3,8 +3,13 @@ package ch.ntb.inf.deep.comp.hosttest.cfg;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.IOException;
+
+import org.junit.BeforeClass;
+
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
@@ -14,13 +19,17 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class TestCFG implements ICclassFileConsts {
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
-	static String workspace = System.getProperty("user.dir");
-	static Project project = Configuration.addProject(workspace + "/junitHostTest.deep");
+	static String workspace;
+	static Project project;
 
-    /**
-	 * Array of CFGs of all methods
-	 */
-	static public CFG[] cfg;
+	public static void readConfig() {
+		CFR.initBuildSystem();
+		workspace = System.getProperty("user.dir");
+		project = Configuration.readProjectFile(workspace + "/junitHostTest.deep");
+	}
+
+ 
+	public static CFG[] cfg;
 
 
     /**
@@ -29,7 +38,7 @@ public class TestCFG implements ICclassFileConsts {
 	 * @param clazz
 	 *            Java class object
 	 */
-	static public void createCFG(Class clazz) {
+	public static void createCFG(Class clazz) {
 		
 		// create CFG
 		Method m1,m2;

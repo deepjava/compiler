@@ -27,7 +27,6 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -49,7 +48,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
-import ch.ntb.inf.deep.eclipse.ui.model.FloRegister;
+
 import ch.ntb.inf.deep.eclipse.ui.model.RegModel;
 import ch.ntb.inf.deep.eclipse.ui.model.Register;
 import ch.ntb.inf.deep.launcher.Launcher;
@@ -59,20 +58,20 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 /**
  * The view is connected to the model using a content provider.
  * <p>
- * It displays the contents of the FPR
+ * It displays the content of the machine state register
  * <p>
  */
 
-public class FprView extends ViewPart implements ISelectionListener {
+public class MSRView extends ViewPart implements ISelectionListener {
 
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.ui.FprView";
+	public static final String ID = "ch.ntb.inf.deep.ui.MSRView";
 
 	private TableViewer viewer;
 	private Action toHex;
-	private Action toDouble;
+	private Action toDez;
 	private Action toBin;
 	private Action refresh;
 	private Action suspend;
@@ -96,37 +95,15 @@ public class FprView extends ViewPart implements ISelectionListener {
 		}
 
 		public Object[] getElements(Object parent) {
-			FloRegister dummy = new FloRegister();
 			Register[] regs = null;
 			if (model != null) {
-				regs = model.getMod(1);
+				regs = model.getMod(3);
 			} 
-			if(model == null || model.getMod(1) == null) {
-				// Defaul all is Zero
-				regs = new Register[33];
-				for (int i = 0; i < regs.length - 1; i++) {
-					regs[i] = new FloRegister("FPR" + i, 0, 3);
-				}
-				regs[32] = new Register("FPSCR", 0, 0);
-
+			if(model == null || model.getMod(3) == null) {
+				regs = new Register[1];
+				regs[0] = new Register("MSR", 0, 0);
 			}
-			if(regs.length < 33){
-				return regs;
-			}
-			// Group in blocks of 4 elements and separate FPSCR
-			int regCount = 0;
-			Register[] fpr = new Register[41];
-			fpr[0] = regs[32];// FPSCR
-			for (int i = 1; i < fpr.length; i++) {
-				if (i == 1 || i == 6 || i == 11 || i == 16 || i == 21
-						|| i == 26 || i == 31 || i == 36) {
-					fpr[i] = dummy;
-				} else {
-					fpr[i] = regs[regCount];
-					regCount++;
-				}
-			}
-			return fpr;
+			return regs;
 
 		}
 	}
@@ -146,23 +123,12 @@ public class FprView extends ViewPart implements ISelectionListener {
 						return "";
 					}
 					if (((Register) obj).representation == 0) {// BIN
-						String value;
+						String value = Integer
+								.toBinaryString(((Register) obj).value);
 						String temp = "";
-						int length, nofSpaces;
 
-						if (obj instanceof FloRegister) {
-							value = Long
-									.toBinaryString(((FloRegister) obj).floatValue);
-							// complete to 64 Bit
-							length = 64 - value.length();
-							nofSpaces = 15;
-						} else {
-							value = Integer
-									.toBinaryString(((Register) obj).value);
-							// complete to 32 Bit
-							length = 32 - value.length();
-							nofSpaces = 7;
-						}
+						// complete to 32 Bit
+						int length = 32 - value.length();
 						for (int y = 0; y < length; y++) {
 							temp = temp + "0";
 						}
@@ -171,28 +137,18 @@ public class FprView extends ViewPart implements ISelectionListener {
 						// insert Spaces
 						int z = 4;
 						temp = value.substring(0, 4);
-						for (int x = 0; x < nofSpaces; x++) {
+						for (int x = 0; x < 7; x++) {
 							temp = temp + " " + value.substring(z, z + 4);
 							z = z + 4;
 						}
 						return temp;
 					}
 					if (((Register) obj).representation == 1) {// HEX
-						if (obj instanceof FloRegister) {
-							return "0x"
-									+ Long
-											.toHexString(((FloRegister) obj).floatValue);
-						} else {
-							return "0x"
-									+ Integer
-											.toHexString(((Register) obj).value);
-						}
+						return "0x"
+								+ Integer.toHexString(((Register) obj).value);
 					}
-					if (((Register) obj).representation == 3
-							&& obj instanceof FloRegister) {// DOUBLE
-						Double dTemp = Double
-								.longBitsToDouble(((FloRegister) obj).floatValue);
-						return dTemp.toString();
+					if (((Register) obj).representation == 2) {// DEZ
+						return Integer.toString(((Register) obj).value);
 					}
 				default:
 					throw new RuntimeException("Should not happen");
@@ -215,7 +171,7 @@ public class FprView extends ViewPart implements ISelectionListener {
 		viewer = new TableViewer(parent, SWT.V_SCROLL | SWT.FULL_SELECTION);
 		// Create Columns
 		String[] titels = { "Register", "Value" };
-		int[] bounds = { 60, 450 };
+		int[] bounds = { 60, 230 };
 		for (int i = 0; i < titels.length; i++) {
 			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 			column.getColumn().setText(titels[i]);
@@ -247,7 +203,7 @@ public class FprView extends ViewPart implements ISelectionListener {
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
-				FprView.this.fillContextMenu(manager);
+				MSRView.this.fillContextMenu(manager);
 			}
 		});
 		Menu menu = menuMgr.createContextMenu(viewer.getControl());
@@ -265,9 +221,9 @@ public class FprView extends ViewPart implements ISelectionListener {
 	}
 
 	protected void fillContextMenu(IMenuManager manager) {
-		manager.add(toDouble);
-		manager.add(toBin);
 		manager.add(toHex);
+		manager.add(toBin);
+		manager.add(toDez);
 
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
@@ -277,11 +233,6 @@ public class FprView extends ViewPart implements ISelectionListener {
 		manager.add(refresh);
 		manager.add(suspend);
 		manager.add(resume);
-	}
-
-	public void showMessage(String message) {
-		MessageDialog.openInformation(viewer.getControl().getShell(),
-				"Floatingpoint Register", message);
 	}
 
 	/**
@@ -304,18 +255,18 @@ public class FprView extends ViewPart implements ISelectionListener {
 			}
 		};
 		toHex.setText("ToHex");
-		toDouble = new Action() {
+		toDez = new Action() {
 			public void run() {
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection) selection)
 						.getFirstElement();
 				if (obj instanceof Register) {
-					((Register) obj).representation = 3;
+					((Register) obj).representation = 2;
 				}
 				viewer.refresh();
 			}
 		};
-		toDouble.setText("ToDouble");
+		toDez.setText("ToDez");
 		toBin = new Action() {
 			public void run() {
 				ISelection selection = viewer.getSelection();
@@ -347,7 +298,6 @@ public class FprView extends ViewPart implements ISelectionListener {
 					if(!bdi.isConnected()){//reopen
 						bdi.openConnection();
 					}
-					
 					if (bdi.getTargetState() != TargetConnection.stateDebug) {
 						bdi.stopTarget();
 					}
@@ -384,28 +334,26 @@ public class FprView extends ViewPart implements ISelectionListener {
 		resume.setImageDescriptor(img);
 	}
 
-
 	public RegModel getModel() {
 		return model;
-	}
-
-	private synchronized void update() {
-		if (model == null){
-			model = RegModel.getInstance();
-		}else{
-			model.updateFprMod();
-		}
-		if(model.getMod(1) != null){
-			viewer.setInput(model);
-			viewer.getControl().setEnabled(true);
-			viewer.refresh();
-		}
 	}
 
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 	}
 
+	private synchronized void update() {
+		if (model == null) {
+			model = RegModel.getInstance();
+		}else{
+			model.updateMSRModel();
+		}
+		if(model.getMod(3) != null){
+			viewer.setInput(model);
+			viewer.getControl().setEnabled(true);
+			viewer.refresh();
+		}
+	}
 
 	public Viewer getViewer() {
 		return viewer;
@@ -413,7 +361,7 @@ public class FprView extends ViewPart implements ISelectionListener {
 
 	@Override
 	public void dispose() {
-		model.clearMod(1);
+		model.clearMod(3);
 		getSite().getWorkbenchWindow().getSelectionService()
 				.removeSelectionListener(IDebugUIConstants.ID_DEBUG_VIEW, this);
 		super.dispose();

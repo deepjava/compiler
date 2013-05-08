@@ -75,7 +75,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		}
 		
 		if(location.charAt(0) == IPath.SEPARATOR ){			
-			Launcher.buildAll(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + IPath.SEPARATOR + location + IPath.SEPARATOR + program, targetConfig);			
+			Launcher.buildAll(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + /*IPath.SEPARATOR +*/ location + IPath.SEPARATOR + program, targetConfig);			
 		}
 		else {
 			Launcher.buildAll(location + IPath.SEPARATOR + program, targetConfig);
@@ -88,10 +88,6 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		}
 		
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
-			Launcher.saveTargetImageToFile();
-			Launcher.saveCommandTableToFile();
-		}
-		if(ErrorReporter.reporter.nofErrors == 0 ) {
 			monitor.worked(60);
 			Launcher.openTargetConnection();
 			Launcher.downloadTargetImage();
@@ -103,8 +99,5 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		IDebugTarget target = new DummyDebugTarget(launch);
 		launch.addDebugTarget(target);
 		target.terminate();
-		
-		
-		
 	}
 }

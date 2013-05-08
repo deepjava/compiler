@@ -20,56 +20,24 @@
 
 package ch.ntb.inf.deep.config;
 
-import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
-public class RegisterInit extends ConfigElement {
+public class RegisterInit extends Item {
 	
-	private Register register;
-	private int initValue;
+	public Register reg;
+	public int initValue;
 	
 	public RegisterInit(Register register, int initValue){
-		this.name = HString.getRegisteredHString(register.getName() + "_init");
-		this.register = register;
+		this.name = HString.getRegisteredHString(register.name + "_init");
+		this.reg = register;
 		this.initValue = initValue;
-	}
-	
-	
-	public void print(int indentLevel){
-		StdStreams.vrb.print(register.getName().toString() + String.format(" = 0x%08X", initValue));	
-	}
-	
-	public void println(int indentLevel){
-		while(indentLevel > 0){
-			StdStreams.vrb.print("  ");
-			indentLevel--;
-		}
-		StdStreams.vrb.println(register.getName().toString() + String.format(" = 0x%08X", initValue));	
-	}
-	
-	public RegisterInit getRegisterInitByRegister(Register reg) {
-		RegisterInit ri = (RegisterInit)this.getHead();
-		while(ri != null && ri.register != reg) {
-			ri = (RegisterInit)ri.next;
-		}
-		return ri;
-	}
-	
-	public void setInitValue(int val) {
-		this.initValue = val;
+//		if (Configuration.dbg) vrb.println("[CONF] adding init register " + reg.name + " = 0x" + Integer.toHexString(initValue));
 	}
 	
 	@Override
 	public String toString(){
-		return register.getName().toString() + String.format(" = 0x%08X", initValue);
-	}
-
-	public Register getRegister() {
-		return register;
-	}
-	
-	public int getInitValue() {
-		return initValue;
+		return reg.name.toString() + String.format(" = 0x%08X", initValue);
 	}
 
 }

@@ -65,9 +65,8 @@ import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Register;
-import ch.ntb.inf.deep.config.RegisterMap;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
-import ch.ntb.inf.deep.eclipse.ui.model.OperationObject;
+import ch.ntb.inf.deep.eclipse.ui.model.TargetOpObject;
 import ch.ntb.inf.deep.launcher.Launcher;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
@@ -76,17 +75,16 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
 	private TableViewer viewer;
-	private OperationObject[] elements;
+	private TargetOpObject[] elements;
 	private Action toChar;
 	private Action toHex;
 	private Action toDez;
 	private Action toDouble;
 	private IEclipsePreferences prefs;
 	
-	private static String KERNEL;
 	private static String cmdAddrName = "cmdAddr";
 
-	private String[] choice =new String[]{"", "Register", "Variable","Address", "TargetCMD"};
+	private String[] choice = new String[]{"", "Register", "Variable","Address", "TargetCMD"};
 
 	private static Image UP = DeepPlugin.createImage("full/obj32/up.gif");
 	private static Image DOWN = DeepPlugin.createImage("full/obj32/down.gif");
@@ -97,12 +95,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 	static final byte slotSize = 4; // 4 bytes
 		
-	class ViewLabelProvider extends LabelProvider implements
-			ITableLabelProvider {
+	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
 
 		public String getColumnText(Object obj, int index) {
-			if ((obj instanceof OperationObject)) {
-				OperationObject op = (OperationObject)obj;
+			if ((obj instanceof TargetOpObject)) {
+				TargetOpObject op = (TargetOpObject)obj;
 				if(index == 0){
 					return choice[op.operation];
 				}else if(index == 1){
@@ -238,8 +235,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		@Override
 		public Image getColumnImage(Object element, int columnIndex) {
-			if ((element instanceof OperationObject)) {
-				OperationObject op = (OperationObject)element;
+			if ((element instanceof TargetOpObject)) {
+				TargetOpObject op = (TargetOpObject)element;
 				if(op.operation != 0 && op.operation < 4 && columnIndex == 4){
 					return UP;
 				}
@@ -253,7 +250,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 	@Override
 	public void createPartControl(Composite parent) {
-		prefs = new InstanceScope().getNode(DeepPlugin.PLUGIN_ID);
+		prefs = InstanceScope.INSTANCE.getNode(DeepPlugin.PLUGIN_ID);
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(1, false));
 
@@ -320,24 +317,24 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		viewer.setLabelProvider(new ViewLabelProvider());
 		getSite().setSelectionProvider(viewer);
 		
-		String storedOperations = prefs.get("storedOperations", "");
+		String storedOperations = prefs.get("storedTargetOperations", "");
 		String[] vars = storedOperations.split(";");
 
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
-		elements = new OperationObject[32];
+		elements = new TargetOpObject[32];
 		if(vars.length > 1){
 			for(int i = 0; i < vars.length && i < elements.length; i++){
 				String[] obj = vars[i].split(",");
 				if(obj.length > 1){
-					elements[i] = new OperationObject(Integer.decode(obj[0]),obj[1]);
+					elements[i] = new TargetOpObject(Integer.decode(obj[0]),obj[1]);
 				}else{
-					elements[i] = new OperationObject();
+					elements[i] = new TargetOpObject();
 				}
 			}
 		}else{
 			for (int i = 0; i < 32; i++) {
-				elements[i] = new OperationObject();
+				elements[i] = new TargetOpObject();
 			}
 		}
 		viewer.setInput(elements);
@@ -378,8 +375,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			public void run() {
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				if(obj instanceof OperationObject){
-					((OperationObject)obj).representation = 4;
+				if(obj instanceof TargetOpObject){
+					((TargetOpObject)obj).representation = 4;
 				}
 				viewer.refresh();
 			}
@@ -389,8 +386,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					public void run() {
 						ISelection selection = viewer.getSelection();
 						Object obj = ((IStructuredSelection) selection).getFirstElement();
-						if(obj instanceof OperationObject){
-							((OperationObject)obj).representation = 1;
+						if(obj instanceof TargetOpObject){
+							((TargetOpObject)obj).representation = 1;
 						}
 						viewer.refresh();
 					}
@@ -400,8 +397,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					public void run() {
 						ISelection selection = viewer.getSelection();
 						Object obj = ((IStructuredSelection) selection).getFirstElement();
-						if(obj instanceof OperationObject){
-							((OperationObject)obj).representation = 2;
+						if(obj instanceof TargetOpObject){
+							((TargetOpObject)obj).representation = 2;
 						}
 						viewer.refresh();
 					}
@@ -411,8 +408,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			public void run() {
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				if(obj instanceof OperationObject){
-					((OperationObject)obj).representation = 3;
+				if(obj instanceof TargetOpObject){
+					((TargetOpObject)obj).representation = 3;
 				}
 				viewer.refresh();
 			}
@@ -441,13 +438,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		@Override
 		protected Object getValue(Object element) {
-			return ((OperationObject)element).description;
+			return ((TargetOpObject)element).description;
 
 		}
 
 		@Override
 		protected void setValue(Object element, Object value) {
-			OperationObject op = (OperationObject)element;
+			TargetOpObject op = (TargetOpObject)element;
 			if(value == null){
 				return;
 			}
@@ -510,7 +507,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 		@Override
 		protected Object getValue(Object element) {
-			OperationObject op = (OperationObject) element;
+			TargetOpObject op = (TargetOpObject) element;
 			switch (op.operation) {
 			case 1:
 				switch (op.registerType) {
@@ -605,11 +602,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		@Override
 		protected void setValue(Object element, Object value) {
-			OperationObject op = (OperationObject)element;
+			TargetOpObject op = (TargetOpObject)element;
 			try{
 				if(choice[op.operation].equals("Register")){
-					if(((OperationObject)element).registerType != -1){
-						if(((OperationObject)element).registerType == Parser.sFPR){
+					if(((TargetOpObject)element).registerType != -1){
+						if(((TargetOpObject)element).registerType == Parser.sFPR){
 							op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
 						}else{
 							op.value = Long.decode(String.valueOf(value));
@@ -655,13 +652,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 			@Override
 			protected Object getValue(Object element) {
-				OperationObject op = (OperationObject) element;
+				TargetOpObject op = (TargetOpObject) element;
 				return op.operation;
 			}
 
 			@Override
 			protected void setValue(Object element, Object value) {
-				OperationObject op = (OperationObject)element;
+				TargetOpObject op = (TargetOpObject)element;
 				op.errorMsg = "";
 				if((Integer)value < 0){
 					op.operation = 0;
@@ -709,10 +706,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		@Override
 		protected Object getValue(Object element) {
-			OperationObject op = (OperationObject)element;
+			TargetOpObject op = (TargetOpObject)element;
 			op.errorMsg = "";
 			if(choice[op.operation].equals("Register")){
-				if(((OperationObject)element).registerType != -1){
+				if(((TargetOpObject)element).registerType != -1){
 					readFromRegister(op, HString.getRegisteredHString(op.description));						
 				}
 			}else if(choice[op.operation].equals("Variable")){
@@ -752,10 +749,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 		@Override
 		protected Object getValue(Object element) {
-			OperationObject op = (OperationObject)element;
+			TargetOpObject op = (TargetOpObject)element;
 			op.errorMsg = "";
 				if(choice[op.operation].equals("Register")){
-					if(((OperationObject)element).registerType != -1){
+					if(((TargetOpObject)element).registerType != -1){
 						setToRegister(op);						
 					}
 				}else if(choice[op.operation].equals("Variable")){
@@ -775,36 +772,34 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 	
-	private void sendCMD(OperationObject op, String param) {
-		if(param.equals("")){
-			return;
-		}
-		boolean wasFreezeAsserted;
-		HString kernelName = Configuration.getKernelClassname();
-		if(kernelName == null){
+	private void sendCMD(TargetOpObject op, String fullQualName) {
+		if (fullQualName.equals("")) return;
+		if (Configuration.getOS() == null) {
 			op.errorMsg = "configuration isn't loaded";
 			return;
 		}
-		KERNEL = kernelName.toString(); 
-		String fullQualName = param;
-		int lastDot = fullQualName.lastIndexOf(".");
-		if(lastDot < 0){
-			op.errorMsg = "invalid description";
+		Class kernel = Configuration.getOS().kernelClass;
+
+		fullQualName = fullQualName.replace('.', '/');
+		fullQualName = fullQualName.replace('\\', '/');
+		int lastDot = fullQualName.lastIndexOf("/");
+		if (lastDot == -1) {
+			op.errorMsg = "specify package.class.command";
 			return;
 		}
 		String clazzName = fullQualName.substring(0, lastDot);
-		clazzName = clazzName.replace('.', '/');
-		String methName = fullQualName.substring(lastDot + 1);
+		String cmdName = fullQualName.substring(lastDot + 1);
+		op.description = fullQualName;
+
 		Class classList = (Class)RefType.refTypeList;
-		if(classList == null){
-			op.errorMsg = "system not builded";
+		if (classList == null) {
+			op.errorMsg = "system not built";
 			return;
 		}
 		Class clazz = (Class)classList.getItemByName(clazzName);
-		Class kernel = (Class) classList.getItemByName(KERNEL);
 		if (clazz != null && kernel != null) {
 			int cmdAddr = ((Field) kernel.classFields.getItemByName(cmdAddrName)).address;
-			Method meth = (Method) clazz.methods.getItemByName(methName);
+			Method meth = (Method) clazz.methods.getItemByName(cmdName);
 			if (meth != null) {
 				//Save address for display
 				op.addr = meth.address;
@@ -817,12 +812,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if(!bdi.isConnected()){
 						bdi.openConnection();
 					}
-					wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
+					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if (!wasFreezeAsserted) {
 						bdi.stopTarget();
 					}
 					bdi.writeWord(cmdAddr, meth.address);
-					op.description = param;
 					op.cmdSend = true;
 					
 					if (!wasFreezeAsserted) {
@@ -839,7 +833,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 	
-	private void readFromAddress(OperationObject op){
+	private void readFromAddress(TargetOpObject op){
 		boolean wasFreezeAsserted;
 		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
@@ -867,16 +861,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 
-	private void readVariable(OperationObject op, String fullQualName){
-		boolean wasFreezeAsserted;
-		int lastDot = fullQualName.lastIndexOf(".");
-		if (lastDot == -1){
-			op.errorMsg = "invalid description";
+	private void readVariable(TargetOpObject op, String fullQualName){
+		fullQualName = fullQualName.replace('.', '/');
+		fullQualName = fullQualName.replace('\\', '/');
+		int lastDot = fullQualName.lastIndexOf("/");
+		if (lastDot == -1) {
+			op.errorMsg = "specify package.class.varName";
 			return;
 		}
 		String clazzName = fullQualName.substring(0, lastDot);
-		clazzName = clazzName.replace('.', '/');
 		String varName = fullQualName.substring(lastDot + 1);
+		op.description = fullQualName;
 		if(RefType.refTypeList == null){
 			op.errorMsg = "system not builded";
 			return;
@@ -914,7 +909,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						bdi.openConnection();
 					}
 					
-					wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
+					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
 					}
@@ -966,23 +961,27 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 	
-	private void readFromRegister(OperationObject op, HString registerName) {
+	private void readFromRegister(TargetOpObject op, HString registerName) {
 		boolean found = false;
-		CPU cpu = Configuration.getActiveProject().getBoard().getCPU();
+		if (Configuration.getBoard() == null){
+			op.errorMsg = "no configuration loaded";
+			return;
+		}
+		CPU cpu = Configuration.getBoard().cpu;
 		Register reg = null;
-		if(cpu != null) reg = cpu.getRegisterByName(registerName); 
-		if(reg != null) {
-			op.registerSize = reg.getSize();
-			op.registerType = reg.getType();
-			op.addr = reg.getAddress();
+		if (cpu != null) reg = (Register) cpu.regs.getItemByName(registerName); 
+		if (reg != null) {
+			op.registerSize = reg.size;
+			op.registerType = reg.regType;
+			op.addr = reg.address;
 			op.description = registerName.toString();
 			found = true;
 		}
 		
-		if(found){
+		if (found) {
 			boolean wasFreezeAsserted;
 			TargetConnection bdi = Launcher.getTargetConnection();
-			if(bdi == null){
+			if (bdi == null){
 				op.errorMsg = "target not connected";
 				return;
 			}
@@ -1036,11 +1035,12 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				op.errorMsg = "target not initialized";
 			}
 		}else{
+			op.description = registerName.toString();
 			op.errorMsg = "register not found";
 		}
 	}
 	
-	private void setToAddress(OperationObject op){
+	private void setToAddress(TargetOpObject op){
 		boolean wasFreezeAsserted;
 		TargetConnection bdi = Launcher.getTargetConnection();
 		if(bdi == null){
@@ -1068,11 +1068,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 	}
 	
-	private void setVariable(OperationObject op, String value){
+	private void setVariable(TargetOpObject op, String value){
 		boolean wasFreezeAsserted;
 		int lastDot = op.description.lastIndexOf(".");
 		if(lastDot < 0){
-			op.errorMsg = "invalide descriptor";
+			op.errorMsg = "invalid descriptor";
 			return;
 		}
 		String clazzName = op.description.substring(0, lastDot);
@@ -1133,7 +1133,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			op.errorMsg = "class not found";
 		}
 	}
-	private void setToRegister(OperationObject op){
+	
+	private void setToRegister(TargetOpObject op){
 
 		boolean wasFreezeAsserted;
 		TargetConnection bdi = Launcher.getTargetConnection();
@@ -1192,7 +1193,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		for(int i = 0; i < elements.length; i++){
 			sb.append(elements[i].operation + "," + elements[i].description + ";");
 		}
-		prefs.put("storedOperations", sb.toString());
+		prefs.put("storedTargetOperations", sb.toString());
 		try {
 			prefs.flush();
 		} catch (BackingStoreException e) {
@@ -1200,5 +1201,4 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 		
-	
 }

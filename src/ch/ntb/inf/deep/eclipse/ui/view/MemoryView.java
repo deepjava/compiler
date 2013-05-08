@@ -22,6 +22,8 @@ package ch.ntb.inf.deep.eclipse.ui.view;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
+import org.eclipse.jface.viewers.ComboBoxCellEditor;
+import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -30,10 +32,14 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Item;
@@ -43,7 +49,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
-import ch.ntb.inf.deep.eclipse.ui.model.MemorySegment;
+import ch.ntb.inf.deep.eclipse.ui.model.MemoryEntry;
 import ch.ntb.inf.deep.launcher.Launcher;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
@@ -54,11 +60,14 @@ public class MemoryView extends ViewPart implements Listener {
 	private Text addr;
 	private Text count;
 	private Button button;
+	private int width;
+	final String[] choice = new String[]{"1 Byte", "2 Bytes", "4 Bytes"};
+	private MemoryEntry[] segs;
+	private int startAddr;
 	
 	static final byte slotSize = 4; // 4 bytes
 	
-	class ViewLabelProvider extends LabelProvider implements
-			ITableLabelProvider {
+	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
 
 		public String getColumnText(Object obj, int index) {
 			if(obj instanceof String){
@@ -69,15 +78,24 @@ public class MemoryView extends ViewPart implements Listener {
 			}
 			switch (index) {
 			case 0:
-				if (((MemorySegment) obj).addr == -1) {
+				if (((MemoryEntry) obj).addr == -1) {
 					return "";
 				}
-				return String.format("0x%08X",((MemorySegment) obj).addr);
+				return String.format("0x%08X",((MemoryEntry) obj).addr);
 			case 1:
-				if (((MemorySegment) obj).addr == -1) {
+				if (((MemoryEntry) obj).addr == -1) {
 					return "";
 				}
-				return String.format("0x%08X", ((MemorySegment) obj).value);
+				switch (width) {
+				case 1:
+					return String.format("0x%02X", ((MemoryEntry) obj).value & 0xff);
+				case 2:
+					return String.format("0x%04X", ((MemoryEntry) obj).value & 0xffff);
+				case 4:
+					return String.format("0x%08X", ((MemoryEntry) obj).value);
+				default:
+					return String.format("0x%08X", ((MemoryEntry) obj).value);
+				}
 			default:
 				throw new RuntimeException("Should not happen");
 			}
@@ -90,10 +108,9 @@ public class MemoryView extends ViewPart implements Listener {
 
 	@Override
 	public void createPartControl(Composite parent) {
-		GridLayout layout = new GridLayout(5, false);
-		parent.setLayout(layout);
+		parent.setLayout(new GridLayout(7, false));
 		Label label = new Label(parent, SWT.NONE);
-		label.setText("start address:   ");
+		label.setText("Start address:   ");
 		addr = new Text(parent, SWT.BORDER);
 		addr.addListener(SWT.Verify, new Listener() {
 			public void handleEvent(Event e) {
@@ -125,8 +142,24 @@ public class MemoryView extends ViewPart implements Listener {
 				}
 			}
 		});
-		Label label2 = new Label(parent, SWT.NONE);
-		label2.setText("nofWords:   ");
+		label = new Label(parent, SWT.NONE);
+		label.setText("Element size:   ");
+		
+		final Combo combo = new Combo(parent,SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+		combo.add(choice[0]);
+		combo.add(choice[1]);
+		combo.add(choice[2]);	
+		combo.select(2);
+		combo.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				if (combo.getText().equals(choice[0])) width = 1;
+				if (combo.getText().equals(choice[1])) width = 2;
+				if (combo.getText().equals(choice[2])) width = 4;
+			}
+		});
+
+		label = new Label(parent, SWT.NONE);
+		label.setText("nof Elements:   ");
 		count = new Text(parent, SWT.BORDER);
 		count.addListener(SWT.Verify, new Listener() {
 			public void handleEvent(Event e) {
@@ -193,9 +226,7 @@ public class MemoryView extends ViewPart implements Listener {
 		viewer.setLabelProvider(new ViewLabelProvider());
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
-		viewer.setInput(new MemorySegment[] { new MemorySegment(),
-				new MemorySegment(), new MemorySegment() });// TODO fill Array
-															// into
+		viewer.setInput(new MemoryEntry[] {new MemoryEntry(-1, 0), new MemoryEntry(-1, 0)});
 
 		// Layout the viewer
 		GridData gridData = new GridData();
@@ -211,13 +242,12 @@ public class MemoryView extends ViewPart implements Listener {
 	@Override
 	public void setFocus() {
 		viewer.getControl().setFocus();
-
 	}
 
 	@Override
 	public void handleEvent(Event event) {
 		if (event.widget.equals(button)) {
-			int startAddr = 0;
+			startAddr = 0;
 			int size = 0;
 			String addrStr = addr.getText();
 			String countStr = count.getText();
@@ -254,14 +284,26 @@ public class MemoryView extends ViewPart implements Listener {
 				}
 			}
 			if (size > 0) {
-				MemorySegment[] segs = new MemorySegment[size];
+				segs = new MemoryEntry[size];
 				try {
 					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
 					if (!wasFreezeAsserted) {
 						bdi.stopTarget();
 					}
 					for (int i = 0; i < size; i++) {
-						segs[i] = new MemorySegment(startAddr + i * 4, bdi.readWord(startAddr + i * 4));
+						switch (width) {
+						case 1:
+							segs[i] = new MemoryEntry(startAddr + i, bdi.readByte(startAddr + i));
+							break;
+						case 2: 
+							segs[i] = new MemoryEntry(startAddr + i * 2, bdi.readHalfWord(startAddr + i * 2));
+							break;
+						case 4: 
+							segs[i] = new MemoryEntry(startAddr + i * 4, bdi.readWord(startAddr + i * 4));
+							break;
+						default: 
+							segs[i] = new MemoryEntry(startAddr + i * 4, bdi.readWord(startAddr + i * 4));
+						}
 					}
 					if (!wasFreezeAsserted) {
 						bdi.startTarget();
@@ -298,7 +340,7 @@ public class MemoryView extends ViewPart implements Listener {
 		 * @return boolean
 		 */
 		public boolean canModify(Object element, String property) {
-			MemorySegment p = (MemorySegment)element;
+			MemoryEntry p = (MemoryEntry)element;
 			if (p.addr > -1 && property.equals("Value")) {
 				return true;
 			}
@@ -315,9 +357,18 @@ public class MemoryView extends ViewPart implements Listener {
 		 * @return Object
 		 */
 		public Object getValue(Object element, String property) {
-			MemorySegment p = (MemorySegment) element;
+			MemoryEntry p = (MemoryEntry) element;
 			if ("Value".equals(property))
-				return String.format("0x%08X",p.value);
+				switch (width) {
+				case 1:
+					return String.format("0x%02X", p.value & 0xff);
+				case 2:
+					return String.format("0x%04X", p.value & 0xffff); 
+				case 4:
+					return String.format("0x%08X", p.value);
+				default:
+					return String.format("0x%08X", p.value);
+				}
 			else if ("Address".equals(property))
 				return String.format("0x%08X",p.addr);
 			else
@@ -335,10 +386,9 @@ public class MemoryView extends ViewPart implements Listener {
 		 *            the value
 		 */
 		public void modify(Object element, String property, Object value) {
-			if (element instanceof Item)
-				element = ((Item) element).getData();
+			if (element instanceof Item) element = ((Item) element).getData();
 
-			MemorySegment p = (MemorySegment) element;
+			MemoryEntry p = (MemoryEntry) element;
 			if ("Value".equals(property)){
 				try{
 					p.value =Integer.decode((String) value);
@@ -353,7 +403,16 @@ public class MemoryView extends ViewPart implements Listener {
 					if(!wasFreezeAsserted){
 						bdi.stopTarget();
 					}
-					bdi.writeWord(p.addr, p.value);
+					switch (width) {
+					case 1:
+						bdi.writeByte(p.addr, (byte)p.value);
+					case 2:
+						bdi.writeHalfWord(p.addr, (short)p.value);
+					case 4:
+						bdi.writeWord(p.addr, p.value);
+					default:
+						bdi.writeWord(p.addr, p.value);
+					}
 					if(!wasFreezeAsserted){
 						bdi.startTarget();
 					}
@@ -364,10 +423,11 @@ public class MemoryView extends ViewPart implements Listener {
 					return;
 				}
 
-			// Force the viewer to refresh
-			viewer.refresh();
+				// Force the viewer to refresh
+				viewer.refresh();
+			}
 		}
 	}
-	}
 }
+
 

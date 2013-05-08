@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.cgPPC.RegAllocator;
+import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.comp.hosttest.cfg.TestCFG;
@@ -20,8 +21,14 @@ public class TestCgPPC implements ICclassFileConsts {
 	static SSA[] ssa;
 	static CodeGen[] code;
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
-	static String workspace = System.getProperty("user.dir");
-	static Project project = Configuration.addProject(workspace + "/junitHostTest.deep");
+	static String workspace;
+	static Project project;
+
+	public static void readConfig() {
+		CFR.initBuildSystem();
+		workspace = System.getProperty("user.dir");
+		project = Configuration.readProjectFile(workspace + "/junitHostTest.deep");
+	}
 
 	public static void createCgPPC(Class clazz) {
 		TestCFG.createCFG(clazz);

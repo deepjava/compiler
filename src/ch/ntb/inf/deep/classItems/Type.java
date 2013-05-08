@@ -146,7 +146,7 @@ public class Type extends Item {
 	 * parses parameter typeDesc and returns type
 	 */
 	protected static Type getTypeByDescriptor(HString typeDesc) {
-		if(dbg) vrb.printf(">getTypeByDescriptor: descriptor=%1$s\n", typeDesc);
+//		if(dbg) vrb.printf(">getTypeByDescriptor: descriptor=%1$s\n", typeDesc);
 
 		int length = typeDesc.length();
 		char category = typeDesc.charAt(0);
@@ -163,7 +163,7 @@ public class Type extends Item {
 		} else
 			assert false;
 
-		if (dbg) vrb.printf("<getTypeByDescriptor: type.name=%1$s\n", type.name);
+//		if (dbg) vrb.printf("<getTypeByDescriptor: type.name=%1$s\n", type.name);
 		return type;
 	}
 

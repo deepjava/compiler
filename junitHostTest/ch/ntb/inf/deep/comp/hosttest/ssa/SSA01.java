@@ -1,9 +1,7 @@
 package ch.ntb.inf.deep.comp.hosttest.ssa;
 
-import java.io.IOException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -14,15 +12,9 @@ public class SSA01 extends TestSSA {
 
 	@BeforeClass
 	public static void setUp() {
-		Configuration.setActiveProject(project);
-		project.setActiveTargetConfiguration("BootFromRam");
+		readConfig();
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T01SimpleMethods") };
-		try {
-			CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
- 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if(Class.nofRootClasses > 0){
 			createSSA(Class.rootClasses[0]);
 		}

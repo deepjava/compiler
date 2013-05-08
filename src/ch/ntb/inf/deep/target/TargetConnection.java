@@ -2,7 +2,6 @@ package ch.ntb.inf.deep.target;
 
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
-import ch.ntb.inf.deep.config.RegisterInitList;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
 
 public abstract class TargetConnection {
@@ -40,8 +39,6 @@ public abstract class TargetConnection {
 	
 	public abstract void initRegister(RegisterInit registerInit) throws TargetConnectionException;
 
-	public abstract void initRegisters(RegisterInitList registerInitList) throws TargetConnectionException;
-	
 	public abstract void setRegisterValue(String regName, int value) throws TargetConnectionException;
 	
 	public abstract void setRegisterValue(Register reg, int value) throws TargetConnectionException;

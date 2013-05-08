@@ -20,74 +20,45 @@
 
 package ch.ntb.inf.deep.config;
 
-import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Module extends ConfigElement {
-	SegmentAssignment root;
-	SegmentAssignment tail;
-	
-	public Module(String jname) {
-		this.name = HString.getRegisteredHString(jname);
-	}
+public class Module extends Item {
+	SegmentAssignment segAssign;
 	
 	public Module(HString name) {
 		this.name = name;
 	}
 	
-	public void setSegmentAssignment(SegmentAssignment assign){
-		if(root == null){
-			root = assign;
-			tail = root;
+	public void addSegmentAssignment(SegmentAssignment a) {
+		if (segAssign == null) segAssign = a;
+		else segAssign.appendTail(a);
+	}
+
+	public Segment getSegment(HString attr) {
+		SegmentAssignment a = segAssign;
+		while (a != null) {
+			if (a.contentAttribute == attr) return a.seg;
+			a = (SegmentAssignment) a.next;
 		}
-		int segHash = assign.contentAttribute.hashCode();
-		SegmentAssignment current = root;
-		while(current != null){
-			if(current.contentAttribute.hashCode() == segHash){
-				if(current.contentAttribute.equals(assign.contentAttribute)){
-					//TODO warn the User
-					//Overwrite the old assignment
-					current.segmentDesignator = assign.segmentDesignator;
-					return;
-				}
-			}
-			current = current.next;			
-		}
-		tail.next = assign;
-		tail = tail.next;
+		return null;
 	}
 	
-	/**
-	 * without protection of duplicated entries
-	 * @param assign
-	 */
-	public void addSegmentAssignment(SegmentAssignment assign){
-		if(root == null){
-			root = assign;
-			tail = root;
-		}else{
-			tail.next = assign;
-			tail = tail.next;
+	public void print(int indentLevel) {
+		indent(indentLevel);
+		vrb.println("module = " + name.toString() + " {");
+		indent(indentLevel+1);
+		vrb.println("segment assignments = {");
+		SegmentAssignment a = segAssign;
+		while (a != null) {
+			indent(indentLevel+2);
+			vrb.println(a.toString());
+			a = (SegmentAssignment) a.next;
 		}
+		indent(indentLevel+1);
+		vrb.println("}");
+		indent(indentLevel);
+		vrb.println("}");
 	}
-	
-	public SegmentAssignment getSegmentAssignments(){
-		return root;
-	}
-	
-	public void println(int indentLevel){
-		for(int i = indentLevel; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.print(name.toString() + " : ");
-		SegmentAssignment current = root;
-		while(current != null){
-			current.print(indentLevel + 1);
-			if(current.next != null){
-				StdStreams.vrb.print(", ");
-			}
-			current = current.next;
-		}
-		StdStreams.vrb.println(";");		
-	}
+
 }

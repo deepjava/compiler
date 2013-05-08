@@ -22,26 +22,26 @@ package ch.ntb.inf.deep.config;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.Item;
+import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
 
-public class OperatingSystem extends ConfigElement implements ICclassFileConsts, ErrorCodes {
-	private static final int maxNofImplementations = 4;
-	
+public class OperatingSystem extends Item implements ICclassFileConsts {
+	private static final int maxNofExceptionClasses = 16;
 	private HString description;
-	private SystemClass[] us = new SystemClass[maxNofImplementations];
-	private int nOfUsImplementations = 0;
-	private SystemClass[] lowlevel = new SystemClass[maxNofImplementations];
-	private int nOfLowlevelImplementations = 0;
-	private SystemClass[] kernel = new SystemClass[maxNofImplementations];
-	private int nOfKernelImplementations = 0;
-	private SystemClass[] heap = new SystemClass[maxNofImplementations];
-	private int nOfHeapImplementations = 0;
-	private SystemClass[] exceptionBaseClass = new SystemClass[maxNofImplementations];
-	private int nOfExceptionBaseClassImplementations = 0;
-	private SystemClass exceptions;
-	private SystemClass list;
+	public Class usClass;
+	public Class llClass;
+	public Class kernelClass;
+	public Class heapClass;
+	Class resetClass;
+	Class exceptionBaseClass;
+	Class[] exceptions = new Class[maxNofExceptionClasses];
+	int nofExcClasses;
+	Class[] sysClasses;
+	Method[][] sysMethods;
 
 	public OperatingSystem(String jname) {
 		this.name = HString.getRegisteredHString(jname);
@@ -49,61 +49,18 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 	
 	public void setDescription(String desc) {
 		this.description = HString.getRegisteredHString(desc);
-	}
-	
-	public void addUS(SystemClass us) {
-		if(nOfUsImplementations < maxNofImplementations) {
-			this.us[nOfUsImplementations++] = us;
-			this.addClass(us);
-		}
-	}
-	
-	public void addLowlevel(SystemClass ll) {
-		if(nOfLowlevelImplementations < maxNofImplementations) {
-			this.lowlevel[nOfLowlevelImplementations++] = ll;
-			this.addClass(ll);
-		}
-	}
-	
-	public void addKernel(SystemClass kernel) {
-		if(nOfKernelImplementations < maxNofImplementations) {
-			this.kernel[nOfKernelImplementations++] = kernel;
-			this.addClass(kernel);
-		}
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
 	}
 		
-	public void addHeap(SystemClass heap) {
-		if(nOfHeapImplementations < maxNofImplementations) {
-			this.heap[nOfHeapImplementations++] = heap;
-			this.addClass(heap);
-		}
-	}
-	
-	public void addExceptionBaseClass(SystemClass ebc) {
-		if(nOfExceptionBaseClassImplementations < maxNofImplementations) {
-			this.exceptionBaseClass[nOfExceptionBaseClassImplementations++] = ebc;
-			this.addClass(ebc);
-		}
-	}
-	
-	public void addException(SystemClass exception) {
-		if(Configuration.dbg) StdStreams.vrb.println("[CONF] OperatingSystem: adding exception " + exception.getName());
-		if(exceptions != null) {
-			if(Configuration.dbg) StdStreams.vrb.print("  Looking for exception " + exception.getName());
-			SystemClass e = (SystemClass)exceptions.getElementByName(exception.name);
-			if(e == null) {
-				if(Configuration.dbg) StdStreams.vrb.println(" -> not found -> adding exception");
-				exceptions.insertBefore(exception);
-				exceptions = exception;
-			}
-			else {
-				if(Configuration.dbg) StdStreams.vrb.println(" -> found -> noting to do");
-			}
-		}
-		else {
-			if(Configuration.dbg) StdStreams.vrb.println("  Adding first exception");
-			this.exceptions = exception;
-			this.addClass(exception);
+	public void addExceptionClass(Class exc) {
+		if (exc == null) return;
+		if (Configuration.dbg) vrb.println("[CONF] OperatingSystem: adding exception " + exc.name);
+		if (nofExcClasses == maxNofExceptionClasses) {ErrorReporter.reporter.error(252); return;}
+		exceptions[nofExcClasses++] = exc;
+		int index = exc.name.lastIndexOf('R');
+		if (index > 0 ) {
+			HString str = exc.name.substring(index);
+			if (Configuration.RESETCLASS.equals(str)) resetClass = exc;
 		}
 	}
 
@@ -111,184 +68,143 @@ public class OperatingSystem extends ConfigElement implements ICclassFileConsts,
 		return description;
 	}
 	
-	public SystemClass getUS(CPU cpu) {
-		int i = 0;
-		while(i < nOfUsImplementations) {
-			if(us[i].checkCondition(cpu)) return us[i];
-			i++;
-		}
-		return null;
-	}
-	
-	public int getNofUsImplementations() {
-		return nOfUsImplementations;
-	}
-	
-	public SystemClass getLowlevel(CPU cpu) {
-		int i = 0;
-		while(i < nOfUsImplementations) {
-			if(lowlevel[i].checkCondition(cpu)) return lowlevel[i];
-			i++;
-		}
-		return null;
-	}
-	
-	public int getNofLowlevelImplementations() {
-		return nOfLowlevelImplementations;
-	}
-	
-	public SystemClass getKernel(CPU cpu) {
-		int i = 0;
-		while(i < nOfKernelImplementations) {
-			if(kernel[i].checkCondition(cpu)) return kernel[i];
-			i++;
-		}
-		return null;
-	}
-	
-	public int getNofKernelImplementations() {
-		return nOfKernelImplementations;
-	}
-	
-	public SystemClass getHeap(CPU cpu) {
-		int i = 0;
-		while(i < nOfHeapImplementations) {
-			if(heap[i].checkCondition(cpu)) return heap[i];
-			i++;
-		}
-		return null;
-	}
-	
-	public int getNofHeapImplementations() {
-		return nOfHeapImplementations;
-	}
-	
-	public SystemClass getExceptionBaseClass(CPU cpu) {
-		int i = 0;
-		while(i < nOfExceptionBaseClassImplementations) {
-			if(exceptionBaseClass[i].checkCondition(cpu)) return exceptionBaseClass[i];
-			i++;
-		}
-		return null;
-	}
-	
-	public int getNofExceptionBaseClassImplementations() {
-		return nOfExceptionBaseClassImplementations;
-	}
-	
-	public SystemClass getExceptions() {
-		return exceptions;
-	}
-
-	/* 
+	/** 
 	 * returns all methods defined in system classes with a fixed offset 
 	 * the returned array is sorted with ascending offsets
 	 */
-	public SystemMethod[] getSystemMethodsWithOffsets(CPU cpu) {
-		SystemMethod meth;
-		SystemClass[] sysClass = Configuration.getSystemClasses();
+	public Method[] getSystemMethodsWithOffsets() {
 		int nof = 0;
-		for (int i = 0; i < sysClass.length; i++) {
-			meth = sysClass[i].methods;	
-			while (meth != null) {
-				if (meth.offset >= 0) nof++;
-				meth = (SystemMethod)meth.next;
+		for (int i = 0; i < sysClasses.length; i++) {
+			Method[] meths = sysMethods[i];
+			for (int j = 0; j < meths.length; j++) {
+				if (meths[j].fixed) nof++;
 			}
 		}
 		if (nof > 0) {
-			SystemMethod[] sysMeths = new SystemMethod[nof];
+			Method[] mOff = new Method[nof];
 			int count = 0;
-			for (int i = 0; i < sysClass.length; i++) {
-				meth = sysClass[i].methods;	
-				while (meth != null) {
-					if (meth.offset >= 0) {
-						meth.owner = sysClass[i];
-						sysMeths[count++] = meth;
-					}
-					meth = (SystemMethod)meth.next;
+			for (int i = 0; i < sysClasses.length; i++) {
+				Method[] meths = sysMethods[i];
+				for (int j = 0; j < meths.length; j++) {
+					if (meths[j].fixed) mOff[count++] = meths[j];
 				}
 			}
 			// ascending (bubble sort), lowest key comes first
-			int maxIndex = sysMeths.length-1;
+			int maxIndex = mOff.length-1;
 			for (int left = 0; left < maxIndex; left++) {
 				for (int right = maxIndex-1; right >= left; right--) {
-					if (sysMeths[right].offset > sysMeths[right+1].offset) { // swap
-						SystemMethod m = sysMeths[right];
-						sysMeths[right] = sysMeths[right+1];
-						sysMeths[right+1] = m;
+					if (mOff[right].offset > mOff[right+1].offset) { // swap
+						Method m = mOff[right];
+						mOff[right] = mOff[right+1];
+						mOff[right+1] = m;
 					}
 				}
 			}
-
-			return sysMeths;
+			return mOff;
 		} else return null; 
 	}
 	
-	public SystemMethod getSystemMethodById(int id, CPU cpu) {
-		SystemMethod meth;
-		SystemClass[] sysClass = {
-			getUS(cpu),
-			getLowlevel(cpu),
-			getHeap(cpu),
-			getKernel(cpu)
-		};
-		
-		for (int i = 0; i < sysClass.length; i++) {
-			meth = sysClass[i].methods;	
-			while (meth != null){
-				if ((meth.id) == id){
-					return meth;
+	/**
+	 * goes through the refTypeList and inserts all classes which are defined as system classes into array
+	 * for each class all the methods defined in the configuration are inserted in an array as well
+	 */
+	void addSysClassesAndMethods() {
+		int nof = 0;
+		Item type = RefType.refTypeList;
+		while (type != null) {
+			if ((type.accAndPropFlags & (1<<dpfSysPrimitive)) != 0) nof++;
+			type = type.next;
+		}
+		if (nof == 0) return;
+		sysClasses = new Class[nof];
+		sysMethods = new Method[nof][];
+		int i = 0;
+		type = RefType.refTypeList;
+		while (type != null) {
+			if ((type.accAndPropFlags & (1<<dpfSysPrimitive)) != 0) {
+				sysClasses[i] = (Class) type;
+				Item meth = ((Class) type).methods;
+				nof = 0;
+				while (meth != null) {
+					nof++;
+					meth = meth.next;
 				}
-				meth = (SystemMethod)meth.next;
-			}
-		}
-		return null; 
-	}
-	
-	public SystemMethod getSystemMethodByName(HString registeredName, CPU cpu) {
-		SystemMethod meth;
-		SystemClass[] sysClass = {
-			getUS(cpu),
-			getLowlevel(cpu),
-			getHeap(cpu),
-			getKernel(cpu)
-		};
-		
-		for(int i = 0; i < sysClass.length; i++) {
-			meth = sysClass[i].methods;	
-			while(meth != null){
-				if(meth.name == registeredName){
-					return meth;
+				sysMethods[i] = new Method[nof];
+				int k = 0;
+				meth = ((Class) type).methods;	
+				while (meth != null) {
+					sysMethods[i][k++] = (Method) meth;
+					meth = (Method)meth.next;
 				}
-				meth = (SystemMethod)meth.next;
+				((Class) type).methods = null;
+				i++;
 			}
+			type = type.next;
 		}
-		return null;
+	}
+
+	public Method[] getSystemMethods(Class cls) {
+		int i = 0;
+		assert sysClasses != null;
+		while (i < sysClasses.length) {
+			if (sysClasses[i].name.equals(cls.name)) break;
+			i++;
+		}
+		assert i < sysClasses.length;
+		return sysMethods[i];
 	}
 	
-	public SystemMethod getExceptionMethodByName(HString name, CPU cpu) {
-		SystemClass sysClass = exceptions;
-		SystemMethod m;
-		while(sysClass != null) {
-			if(sysClass.checkCondition(cpu)){ 
-				m = (SystemMethod)sysClass.methods.getElementByName(name);
-				if(m != null) return m;
-			}
-			sysClass = (SystemClass)sysClass.next;
-		}
-		return null;
+	public Method getSystemMethodByName(Class cls, String name) {
+		HString hName = HString.getHString(name);
+		return getSystemMethodByName(cls, hName);
 	}
-	
-	public SystemClass getAllSystemClasses() {
-		return list;
-	}
-	
-	private void addClass(SystemClass clazz) {
-		if(list == null) {
-			list = clazz;
+
+	public Method getSystemMethodByName(Class cls, HString name) {
+		int i = 0;
+		assert sysClasses != null;
+		while (i < sysClasses.length) {
+			if (sysClasses[i].name.equals(cls.name)) break;
+			i++;
 		}
-		else {
-			list.append(clazz);
+		assert i < sysClasses.length;
+		Method[] meths = sysMethods[i];
+		i = 0;
+		while (i < meths.length) {
+			if (meths[i].name.equals(name)) break;
+			i++;
 		}
+		if (i < meths.length) return meths[i];
+		else return null;
 	}
+
+	public int getSystemMethodIdByName(Class cls, HString name) {
+		int i = 0;
+		assert sysClasses != null;
+		while (i < sysClasses.length) {
+			if (sysClasses[i].name.equals(cls.name)) break;
+			i++;
+		}
+		assert i < sysClasses.length;
+		Method[] meths = sysMethods[i];
+		i = 0;
+		while (i < meths.length) {
+			if (meths[i].name.equals(name)) break;
+			i++;
+		}
+		if (i < meths.length) return meths[i].id;
+		else return -1;
+	}
+
+
+	public Class getSystemClassByName(HString name) {
+		int i = 0;
+		assert sysClasses != null;
+		while (i < sysClasses.length) {
+			if (sysClasses[i].name.equals(name)) break;
+			i++;
+		}
+		assert i < sysClasses.length;
+		return sysClasses[i];
+	}
+
 }

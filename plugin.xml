@@ -81,10 +81,10 @@
    <extension
          point="org.eclipse.ui.propertyPages">
       <page
-            class="ch.ntb.inf.deep.eclipse.ui.properties.ProjectPage"
+            class="ch.ntb.inf.deep.eclipse.ui.properties.DeepProjectPage"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.properties.ProjectPage"
-            name="Target configuration">
+            id="ch.ntb.inf.deep.ui.properties.DeepProjectPage"
+            name="Deep Project Settings">
          <enabledWhen>
             <adapt
                   type="org.eclipse.core.resources.IProject">
@@ -132,9 +132,9 @@
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.GprView"
+            class="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.GprView"
+            id="ch.ntb.inf.deep.ui.GPRView"
             name="General Purpose Register View"
             restorable="true">
          <description>
@@ -143,9 +143,9 @@
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.FprView"
+            class="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.FprView"
+            id="ch.ntb.inf.deep.ui.FPRView"
             name="Floating Point Register View"
             restorable="true">
          <description>
@@ -154,10 +154,10 @@
       </view>
       <view
             category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.MsrView"
+            class="ch.ntb.inf.deep.eclipse.ui.view.MSRView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.MaStRegView"
-            name="Machinestate register View"
+            id="ch.ntb.inf.deep.ui.MSRView"
+            name="Machine State Register View"
             restorable="true">
          <description>
             Display the content of the machine state register
@@ -198,7 +198,7 @@
             restorable="true">
          <description>
             View to interact with the target. Possible actions are:
-TargetCommands, read from address, write to address, read and modify static variables, 
+target command, read from address, write to address, read and modify static variables, 
 read and modify registers
          </description>
       </view>
@@ -214,7 +214,7 @@ read and modify registers
             name="ClassTreeView"
             restorable="true">
          <description>
-            Display which classes where downloded and their CFG's, SSA's and machincode
+            Display all loaded classes with their CFG, SSA and machincode, shows memory devices and their segments
          </description>
       </view>
    </extension>
@@ -247,7 +247,7 @@ read and modify registers
       </shortcut>
    </extension>
    <extension
-         point="org.eclipse.ui.actionSets">
+	  point="org.eclipse.ui.actionSets">
       <actionSet
             description="This is a action set from the deep plugin"
             id="ch.ntb.inf.deep.eclipse.workbenchActionSet"
@@ -293,62 +293,6 @@ read and modify registers
                style="push"
                toolbarPath="Normal/additions"
                tooltip="resume the target">
-         </action>
-      </actionSet>
-      <actionSet
-            description="Prints the Memory Map"
-            id="ch.ntb.inf.deep.eclipse.workbenchActionSet.printClassList"
-            label="Deep ClasslistSet"
-            visible="false">
-         <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
-               icon="icons/full/obj16/print.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.PrintClasslistAction"
-               label="Print Memory Map"
-               style="push"
-               toolbarPath="Normal/additions"
-               tooltip="prints the Memory Map">
-         </action>
-         <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
-               icon="icons/full/obj16/constBlock.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintConstantBlock"
-               label="Print Constantblock"
-               state="false"
-               style="toggle"
-               toolbarPath="Normal/additions"
-               tooltip="enable Constantblock printing">
-         </action>
-         <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
-               disabledIcon="icons/full/dlcl16/deepInactiv.gif"
-               icon="icons/full/obj16/constField.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintConstFields"
-               label="Print Constant Fields"
-               state="false"
-               style="toggle"
-               toolbarPath="Normal/additions"
-               tooltip="enalble constant field printing">
-         </action>
-         <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
-               icon="icons/full/obj16/field.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintFields"
-               label="Print Fields"
-               state="false"
-               style="toggle"
-               toolbarPath="Normal/additions"
-               tooltip="enable field printing">
-         </action>
-         <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ClasslistAction"
-               icon="icons/full/obj16/method.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.setPrintMethod"
-               label="Print Methods"
-               state="false"
-               style="toggle"
-               toolbarPath="Normal/additions"
-               tooltip="enable method printing">
          </action>
       </actionSet>
    </extension>

@@ -77,16 +77,26 @@ public interface ICclassFileConsts {
 		dpfCommand = dpfBase+8,		// method can be a command, i.e. this method can be invoked by an outside client
 		dpfCall = dpfBase+9,		// method gets called by the bc instructions invokestatic or invokevirtual
 		dpfExcHndCall = dpfBase+10,	// method gets invoked directly or indirectly by an exception handler method
-		dpfExcHnd = dpfBase+11,		// method is an exception handler, i.e. this method is invoked by hardware
 
 		//--- class and method flags:
 		//--- meaning as class flag: class has method(s) with this flag (at least one)
+		dpfExcHnd = dpfBase+11,		// method is an exception handler, i.e. this method is invoked by hardware
 		dpfInterfCall = dpfBase+12,	// method gets invoked by the bc instruction invokeinterface, interface(class) is referenced by invokeinterface
 		dpfNew = dpfBase+13, 		// method flag: method gets invoked by the bc instructions: {new,  newarray,  anewarray, multianewarray}
 		dpfUnsafe = dpfBase+14,		// method is unsafe, flag so far not used
-		dpfSysPrimitive = dpfBase+15,	// method is a system primitive, that means it is defined in the configuration, flag so far not used
-		dpfSynthetic = dpfBase+16; 	// synthetic field or method (items have no source)
+		dpfSysPrimitive = dpfBase+15,	// method or class is a system primitive, that means it is defined in the configuration
+		dpfSynthetic = dpfBase+16, 	// synthetic field or method (items have no source), e.g. methods defined in the configuration (unsafe, low level ...)
 
+		//--- segment flags:
+		dpfSegRead = dpfBase+0,		// segment is readable
+		dpfSegWrite = dpfBase+1,	// segment is writable
+		dpfSegConst = dpfBase+2,	// segment for constants
+		dpfSegCode = dpfBase+3,		// segment for code
+		dpfSegVar = dpfBase+4,		// segment for variables
+		dpfSegHeap = dpfBase+5,		// segment for heap
+		dpfSegStack = dpfBase+6,	// segment for stack
+		dpfSegSysTab = dpfBase+7;	// segment for system table
+	
 	int apfSetJavaAccAndProperties = (1<<apfEnum)|(1<<apfAnnotation)|(1<<apfSynthetic)|(1<<apfStrict)|(1<<apfAbstract)|(1<<apfInterface)
 			|(1<<apfNative)|(1<<apfVarargs)|(1<<apfTransient)|(1<<apfBridge)|(1<<apfVolatile)|(1<<apfSynchronized)|(1<<apfSuper)|(1<<apfFinal)
 			|(1<<apfStatic)|(1<<apfProtected)|(1<<apfPrivate)|(1<<apfPublic);

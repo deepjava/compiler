@@ -36,10 +36,10 @@ public class StringTable {
 	private final int hashCodeMask;
 
 	public static void resetTable(){
-		if(strTab != null){
+		if (strTab != null){
 			strTab.tab = new HString[strTab.tab.length];
 			strTab.nofEntries = 0;
-			if(strTab.undefIdent != null)  strTab.undefIdent = strTab.insertCondAndGetEntry(strTab.undefIdent );
+			if (strTab.undefIdent != null)  strTab.undefIdent = strTab.insertCondAndGetEntry(strTab.undefIdent );
 		}
 	}
 

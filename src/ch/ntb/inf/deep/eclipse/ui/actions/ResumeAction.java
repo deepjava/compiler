@@ -33,7 +33,7 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 public class ResumeAction implements IWorkbenchWindowActionDelegate {
 
 	private IWorkbenchWindow window;
-    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.action.ResumeAction";
+    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction";
 	
 	@Override
 	public void dispose() {}
@@ -46,20 +46,14 @@ public class ResumeAction implements IWorkbenchWindowActionDelegate {
 	@Override
 	public void run(IAction action) {
 		TargetConnection bdi = Launcher.getTargetConnection();
-		if(bdi == null){
+		if (bdi == null) {
 			ErrorReporter.reporter.error(TargetConnection.errTargetNotFound);
 			return;
 		}
 		try {
-			if(!bdi.isConnected()){//reopen
-				bdi.openConnection();
-			}
-			if(bdi.getTargetState() != TargetConnection.stateRunning){
-				bdi.startTarget();
-			}
-		} catch (TargetConnectionException e) {			
-		}
-
+			if(!bdi.isConnected()) bdi.openConnection();
+			bdi.startTarget();
+		} catch (TargetConnectionException e) {	}
 	}
 
 	@Override

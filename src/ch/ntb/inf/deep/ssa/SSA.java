@@ -60,11 +60,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		
 		if(dbg) {
 			StdStreams.vrb.print("Node order: ");
-			for(int i = 0; i < nofSortedNodes - 1; i++){
+			for (int i = 0; i < nofSortedNodes - 1; i++){
 				StdStreams.vrb.print("[" + sortedNodes[i].firstBCA + ":"+ sortedNodes[i].lastBCA + "], ");
 			}
 			StdStreams.vrb.println("[" + sortedNodes[nofSortedNodes-1].firstBCA + ":"+ sortedNodes[nofSortedNodes-1].lastBCA + "]");
-			if(isParam.length > 0){
+			if (isParam.length > 0){
 				StdStreams.vrb.println("IsParam");
 				StdStreams.vrb.print("[ ");
 				for (int i = 0; i < isParam.length - 1; i++) {
@@ -116,7 +116,6 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public void determineStateArray() {		
 		// visit all
 		for (int i = 0; i < nofSortedNodes; i++) {
-			if(dbg)StdStreams.vrb.println(((CFGNode)sortedNodes[i]).toString());
 			//reset traversed for next use
 			sortedNodes[i].traversed = false;
 			sortedNodes[i].mergeAndDetermineStateArray(this);

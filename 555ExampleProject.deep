@@ -20,7 +20,7 @@ project ExampleProjectMpc555 {
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/EnumTest1";	
 #	rootclasses = "ch.ntb.inf.deep.comp.targettest.objects.InterfaceTest";
 #	rootclasses = "ch.ntb.inf.deep.trglib.targettest.SystemTest";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/EPOStest1";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/HeapTest3";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/demo/SystemInOutReflector";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/driver/ffs/FileTransfer";
 #	rootclasses = "SpezAusb1";

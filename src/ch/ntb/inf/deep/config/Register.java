@@ -20,123 +20,42 @@
 
 package ch.ntb.inf.deep.config;
 
-import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Register extends ConfigElement {
-	public Register nextWithInitValue;
-	int type = -1;
-	int addr = -1;
-	int size = -1;
-	int repr;
+public class Register extends Item {
+	public int regType = -1;
+	public int size = -1;
+	int repr = Parser.sHex;
 	
-	public Register(HString name){
+	public Register(HString name) {
 		this.name = name;
+//		if (Configuration.dbg) StdStreams.vrb.println("[CONF] adding register " + name);
 	}
 	
-	public void setAddress(int addr){
-		this.addr = addr;
-	}
-	
-	public void setSize(int size){
-		this.size = size;
-	}
-	
-	public void setType(int type){
-		this.type = type;
-		if(repr == 0){
-			repr = Parser.sHex;
-		}
-	}
-		
-	public void setRepresentation(int repr){
-		this.repr = repr;
-	}
-	
-	public int getAddress(){
-		return addr;
-	}
-	
-	public int getSize(){
-		return size;
-	}
-	
-	public int getType(){
-		return type;
-	}
-	
-	public int getRepresentation(){
-		return repr;
-	}
-	
-	public HString getTypeName(){
-		if(type == Parser.sGPR){
-			return HString.getRegisteredHString("GPR");
-		}
-		if(type == Parser.sFPR){
-			return HString.getRegisteredHString("FPR");
-		}
-		if(type == Parser.sSPR){
-			return HString.getRegisteredHString("SPR");
-		}
-		if(type == Parser.sIOR){
-			return HString.getRegisteredHString("IOR");
-		}
-		if (type == Parser.sMSR){
-			return HString.getRegisteredHString("MSR");
-		}
-		if (type == Parser.sCR){
-			return HString.getRegisteredHString("CR");
-		}
-		if (type == Parser.sFPSCR){
-			return HString.getRegisteredHString("FPSCR");
-		}
-		
+	public HString getRegTypeName() {
+		if (regType == Parser.sGPR) return HString.getRegisteredHString("GPR");
+		if (regType == Parser.sFPR) return HString.getRegisteredHString("FPR");
+		if (regType == Parser.sSPR) return HString.getRegisteredHString("SPR");
+		if (regType == Parser.sIOR) return HString.getRegisteredHString("IOR");
+		if (regType == Parser.sMSR) return HString.getRegisteredHString("MSR");
+		if (regType == Parser.sCR) return HString.getRegisteredHString("CR");
+		if (regType == Parser.sFPSCR) return HString.getRegisteredHString("FPSCR");
 		return HString.getRegisteredHString("Undefined Type");
 	}
 	
-	public HString getReprName(){
-		if(repr == Parser.sDez){
-			return HString.getRegisteredHString("Dez");
-		}
-		if(repr == Parser.sBin){
-			return HString.getRegisteredHString("Bin");
-		}
-		if(repr == Parser.sHex){
-			return HString.getRegisteredHString("Hex");
-		}
+	public HString getReprName() {
+		if (repr == Parser.sDez) return HString.getRegisteredHString("Dez");
+		if (repr == Parser.sBin) return HString.getRegisteredHString("Bin");
+		if (repr == Parser.sHex) return HString.getRegisteredHString("Hex");
 		return HString.getRegisteredHString("Undefined Representation");
 	}
 	
-	public void println(int indentLevel){
-		for(int i = indentLevel; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("register " + name.toString() + " {");
-		
-		for(int i = indentLevel + 1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("type: " + getTypeName() + ";");
-		
-		for(int i = indentLevel + 1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("address: " + addr + ";");
-		
-		for(int i = indentLevel + 1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("size: " + size + ";");
-		
-		for(int i = indentLevel + 1; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("repr: " + getReprName() + ";");
-		
-		for(int i = indentLevel; i > 0; i--){
-			StdStreams.vrb.print("  ");
-		}
-		StdStreams.vrb.println("}");
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("register " + name.toString() + " {");
+		sb.append("type: " + regType + ", " + "address: " + address + ", " + "size: " + size + ", " + "repr: " + getReprName());
+		sb.append("}");
+		return sb.toString();
 	}
 }

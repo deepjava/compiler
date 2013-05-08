@@ -47,7 +47,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	/**
 	 *  default Lib Path
 	 */
-	public static final String LIB_PATH = "I:/deep/lib";
+	public static final String LIB_PATH = "I:\\deep\\lib";
 	
 	/**
 	 * Unique identifier for the deep model (value 
@@ -67,9 +67,8 @@ public class DeepPlugin extends AbstractUIPlugin {
 	 */
 	public static final String ATTR_DEEP_LOCATION = ID_DEEP_MODEL + ".ATTR_DEEP_LOCATION";
 	/**
-	 * Launch configuration attribute key. Value is a path to a target image.
-	 * The path is a string representing a full path
-	 * to a target image in the workspace. 
+	 * Launch configuration attribute key. Value is a path to a target configuration.
+	 * The path is a string representing a full path to a target image in the workspace. 
 	 */
 	public static final String ATTR_TARGET_CONFIG = ID_DEEP_MODEL + ".ATTR_TARGET_CONFIG";
 	

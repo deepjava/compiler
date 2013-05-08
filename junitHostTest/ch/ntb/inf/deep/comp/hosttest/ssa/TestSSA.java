@@ -1,6 +1,7 @@
 package ch.ntb.inf.deep.comp.hosttest.ssa;
 
 import static org.junit.Assert.assertEquals;
+import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.comp.hosttest.cfg.TestCFG;
@@ -12,8 +13,14 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class TestSSA implements ICclassFileConsts{
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
-	static String workspace = System.getProperty("user.dir");
-	static Project project = Configuration.addProject(workspace + "/junitHostTest.deep");
+	static String workspace;
+	static Project project;
+
+	public static void readConfig() {
+		CFR.initBuildSystem();
+		workspace = System.getProperty("user.dir");
+		project = Configuration.readProjectFile(workspace + "/junitHostTest.deep");
+	}
 
 	static public SSA[] ssa;
 

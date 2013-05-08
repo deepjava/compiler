@@ -48,6 +48,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.CodeGen;
+import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ClassMember;
 import ch.ntb.inf.deep.classItems.Field;
@@ -57,9 +58,11 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.ConstField;
 import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
-import ch.ntb.inf.deep.config.MemoryMap;
+import ch.ntb.inf.deep.config.MemMap;
+import ch.ntb.inf.deep.config.MemSector;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.linker.ConstBlkEntry;
 import ch.ntb.inf.deep.linker.FixedValueEntry;
@@ -99,7 +102,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 		public Object[] getChildren(Object parent) {
 			Object[] item = null;
-			if(parent instanceof Class){
+			if (parent instanceof Class) {
 				Class clazz = (Class)parent;
 				int nofChildren = 0;
 				//determine number of children
@@ -136,7 +139,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				}
 				return item;
 			}
-			if(parent instanceof Method){
+			if (parent instanceof Method && (((Item)parent).accAndPropFlags & (1<<dpfSynthetic)) == 0) {
 				Method meth = (Method)parent;
 				//every method have 3 children: cfg, ssa and machineCode
 				//create array for children
@@ -149,7 +152,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				
 				return item;
 			}
-			if(parent instanceof ClassChild){
+			if (parent instanceof ClassChild) {
 				int index = 0;
 				Class clazz = (Class)((ClassChild)parent).owner;
 				Item child;
@@ -181,15 +184,22 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 					return item;
 				}
 			}
-			if(parent instanceof RootElement){
-				if(RefType.nofRefTypes < 1)return new Object[]{"No Classses loaded"};
-				Item[] classes = new Item[RefType.nofRefTypes];
-				int count = 0;
-				Item classmember = ((RootElement)parent).children;
-				while(classmember != null && count < classes.length){
-						classes[count++] = classmember;
-					classmember = classmember.next;
+			if (parent instanceof RootElement){
+				if (RefType.nofRefTypes < 1) return new Object[]{"No Classes loaded"};
+				int nof = 0;
+				Item cls = ((RootElement)parent).children;
+				while (cls != null) {
+					if ((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) nof++;
+					cls = cls.next;
 				}
+				Item[] classes = new Item[nof];
+				int count = 0;
+				cls = ((RootElement)parent).children;
+				while (cls != null && count < classes.length) {
+					if ((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) classes[count++] = cls;
+					cls = cls.next;
+				}
+				
 				return classes;
 			}
 			return item;
@@ -236,19 +246,11 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			return null;
 		}
 		public String getText(Object element) {
-			if(element instanceof MemoryMap){
-				return "Memory Map";					
-			}
-			if(element instanceof Device){
-				return((Device)element).getName().toString();
-			}
-			if(element instanceof Segment){
-				return ((Segment)element).getName().toString();
-			}
-			if(element instanceof String){
-				return (String)element;
-			}
-			
+			if (element instanceof Board) return "Memory Map";					
+			if (element instanceof MemMap) return ((MemMap)element).name.toString();					
+			if (element instanceof Device) return ((Device)element).name.toString();
+			if (element instanceof Segment) return ((Segment)element).name.toString();
+			if (element instanceof String) return (String)element;
 			return "";
 		}
 	}
@@ -257,25 +259,33 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 		@Override
 		public Object[] getChildren(Object parentElement) {
-			if(parentElement instanceof MemoryMap){
-				MemoryMap memMap = (MemoryMap)parentElement;
-				if(memMap.getDevices() == null)return new Object[]{"No memory map loaded"};
+			if (parentElement instanceof Board) {
+				Board b = (Board)parentElement;
+				if (b.memorymap == null || b.cpu.memorymap == null) return new Object[]{"No memory map loaded"};
+				MemMap[] maps = new MemMap[2];
+				maps[0] = b.memorymap;
+				maps[1] = b.cpu.memorymap;
+				return maps;
+			}			
+			if (parentElement instanceof MemMap) {
+				MemMap memMap = (MemMap)parentElement;
+				if (memMap.devs == null) return new Object[]{"No devices loaded"};
 				Device[] devices = new Device[memMap.getNofDevices()];
-				Device dev = memMap.getDevices();
-				for(int i = 0; i < devices.length && dev != null;i++){
+				Device dev = memMap.devs;
+				for (int i = 0; i < devices.length && dev != null; i++) {
 					devices[i] = dev;
 					dev = (Device)dev.next;
 				}			
 				return devices;
 			}			
-			if(parentElement instanceof Device){
+			if (parentElement instanceof Device){
 				Segment segs =((Device)parentElement).segments;
 				Segment current = segs;
 				int count;
-				for(count = 0; current != null; count++)current = (Segment)current.next;
-				if(count > 0){
+				for (count = 0; current != null; count++)current = (Segment)current.next;
+				if (count > 0){
 					Segment seg[] = new Segment[count];
-					for(int i = 0; i < seg.length && segs != null; i++){
+					for (int i = 0; i < seg.length && segs != null; i++){
 						seg[i] = segs;
 						segs = (Segment)segs.next;
 					}
@@ -311,18 +321,10 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 		@Override
 		public boolean hasChildren(Object element) {
-			if(element instanceof MemoryMap){
-				return true;
-			}			
-			if(element instanceof Device){
-				if(((Device)element).segments != null){
-					return true;
-				}
-			}
-			if(element instanceof Segment){
-				if(((Segment)element).subSegments != null){
-					return true;
-				}
+			if (element instanceof Board) return true;
+			if (element instanceof MemMap) return true;
+			if (element instanceof Device) {
+				if(((Device)element).segments != null) return true;
 			}
 			return false;
 		}
@@ -356,7 +358,6 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		classTreeViewer.setLabelProvider(new ClassTreeLabelProvider());
 		classTreeViewer.setContentProvider(new ClassTreeContentProvider());
 		classTreeViewer.setAutoExpandLevel(2);
-		//classTreeViewer.setInput(new TreeInput(new RootElement(HString.getRegisteredHString("Loaded Classes"), Type.classList)));
 		classTreeViewer.addSelectionChangedListener(this);
 
 		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
@@ -374,7 +375,6 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		deviceTreeViewer.setLabelProvider(new DeviceTreeLabelProvider());
 		deviceTreeViewer.setContentProvider(new DeviceTreeContentProvider());
 		deviceTreeViewer.setAutoExpandLevel(2);
-		//if(Configuration.getBoard() != null) deviceTreeViewer.setInput(Configuration.getBoard().getMemoryMap()); // TODO add CPU memory map here
 		deviceTreeViewer.addSelectionChangedListener(this);
 		
 		
@@ -402,7 +402,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("Classes, Interfaces and Arrays:"), RefType.refTypeList)));
 				classTreeViewer.getControl().setEnabled(true);
 				classTreeViewer.refresh();
-				deviceTreeViewer.setInput(new TreeInput(Configuration.getBoard().getMemoryMap())); // TODO add CPU memory map here
+				Board b = Configuration.getBoard();
+				if (b != null) deviceTreeViewer.setInput(new TreeInput(b)); else deviceTreeViewer.setInput(new TreeInput("not loaded"));
 				deviceTreeViewer.getControl().setEnabled(true);
 				deviceTreeViewer.refresh();
 			}
@@ -458,14 +459,14 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	public void selectionChanged(SelectionChangedEvent event) {
 		Object obj = ((IStructuredSelection)event.getSelection()).getFirstElement();
 		StringBuilder sb = new StringBuilder();
-		if(obj instanceof Class){
+		if (obj instanceof Class) {
 			Class c = (Class)obj;
 			sb.append("Name:                        " + c.name + "\n");
 			sb.append("Number of class methods:     " + c.nofClassMethods + "\n");
 			sb.append("Number of instance methods:  " + c.nofInstMethods + "\n");
 			sb.append("Number of class fields:      " + c.nofClassFields + "\n");
 			if((c.accAndPropFlags & (1 << apfInterface)) == 0){				
-				sb.append("Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset) + "\n");
+				sb.append("Class field base address:    0x" + Integer.toHexString(c.varSegment.address + c.varOffset) + "\n");
 			}
 			sb.append("Class fields size:           " + c.classFieldsSize + " byte\n");
 			sb.append("Number of instance fields:   " + c.nofInstFields + "\n");
@@ -475,9 +476,9 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("Number of references:        " + c.nofClassRefs + "\n");
 			sb.append("Max extension level:         " + Class.maxExtensionLevelStdClasses + "\n");
 			if((c.accAndPropFlags & (1 << apfInterface)) == 0){	
-				sb.append("Machine code base address:   0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset) + "\n");				
+				sb.append("Machine code base address:   0x" + Integer.toHexString(c.codeSegment.address + c.codeOffset) + "\n");				
 				sb.append("Machine code size:           " + ((FixedValueEntry)c.codeBase.next).getValue() + " byte\n");
-				sb.append("Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset) + "\n");
+				sb.append("Constant block base address: 0x" + Integer.toHexString(c.constSegment.address + c.constOffset) + "\n");
 				sb.append("Constant block size:         " + ((FixedValueEntry)c.constantBlock).getValue() + " byte\n");
 			}
 			sb.append("Type descriptor address:     0x" + Integer.toHexString(c.address) + "\n");
@@ -491,6 +492,18 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				}
 			}
 			
+			textViewer.getDocument().set(sb.toString());
+			textViewer.refresh();
+			return;
+		}
+		if (obj instanceof Array) {
+			Array a = (Array)obj;
+			sb.append("Name:                        " + a.name + "\n");
+			sb.append("Dimension:                   " + a.dimension + "\n");
+			sb.append("Element type:                " + a.componentType.name + "\n");
+			sb.append("Element size:                " + a.componentType.sizeInBits / 8 + " byte (" + a.componentType.sizeInBits + " bit)\n");
+			sb.append("Type descriptor address:     0x" + Integer.toHexString(a.address) + "\n");
+		
 			textViewer.getDocument().set(sb.toString());
 			textViewer.refresh();
 			return;
@@ -578,15 +591,31 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			textViewer.refresh();
 			return;
 		}
-		if(obj instanceof Device){
+		if (obj instanceof Device) {
 			Device dev = (Device)obj;
-			textViewer.getDocument().set(dev.toString());
+			sb.append("device = " + dev.name.toString() + " {\n");
+			sb.append("   technology = ");
+			if (dev.technology == 0) sb.append("Ram\n");
+			else if (dev.technology == 1) sb.append("Flash\n");
+			else sb.append("Unkown\n");
+			sb.append("   attributes = 0x" + Integer.toHexString(dev.attributes) + "\n");
+			sb.append("   width = " + dev.width + "\n");
+			sb.append("   base = 0x" + Integer.toHexString(dev.address) + "\n");
+			sb.append("   size = 0x" + Integer.toHexString(dev.size) + "\n");
+			sb.append("}\n");
+			textViewer.getDocument().set(sb.toString());
 			textViewer.refresh();
 			return;
 		}
-		if(obj instanceof Segment){
+		if (obj instanceof Segment) {
 			Segment seg = (Segment)obj;
-			textViewer.getDocument().set(seg.toString());
+			sb.append("segment = " + seg.name.toString() + " {\n");
+			sb.append("   attributes = 0x" + Integer.toHexString(seg.attributes) + "\n");
+			sb.append("   width = " + seg.width + "\n");
+			sb.append("   base = 0x" + Integer.toHexString(seg.address) + "\n");
+			sb.append("   size = 0x" + Integer.toHexString(seg.size) + "\n");
+			sb.append("}\n");
+			textViewer.getDocument().set(sb.toString());
 			textViewer.refresh();
 			return;
 		}

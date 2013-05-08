@@ -35,7 +35,7 @@ import ch.ntb.inf.deep.config.*;
 import ch.ntb.inf.deep.host.*;
 import ch.ntb.inf.deep.strings.HString;
 
-public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttributes {
+public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	
 	// Slot size:
 	public static final byte slotSize = 4; // 4 bytes
@@ -118,10 +118,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		if(dbg) vrb.println("  Looking for segments for the system table: ");
 		sysTabSegments = Configuration.getSysTabSegments();
-		if(sysTabSegments != null && sysTabSegments.length > 0) {
-			if(dbg) {
-				for(int i = 0; i < sysTabSegments.length; i++) {
-					vrb.println("     -> found: " + sysTabSegments[i].getName());
+		if (sysTabSegments != null && sysTabSegments.length > 0) {
+			if (dbg) {
+				for (int i = 0; i < sysTabSegments.length; i++) {
+					vrb.println("     -> found: " + sysTabSegments[i].name);
 				}
 			}
 		}
@@ -169,7 +169,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 
 	public static void createConstantBlock(Class clazz) {			
-		if(dbg) vrb.println("[LINKER] START: Preparing constant block for class \"" + clazz.name +"\":");
+		if (dbg) vrb.println("[LINKER] START: Preparing constant block for class \"" + clazz.name +"\":");
 		if ((clazz.accAndPropFlags & (1 << apfInterface)) != 0) {	// interface 
 			// Header
 			if(dbg) vrb.println("   Creating header");
@@ -607,7 +607,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		while(constant != null) {
 			constant.setIndex(index);
 			constant.setOffset(offset);
-			constant.setAddress(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset + offset);
+			constant.setAddress(globalConstantTableSegment.address + globalConstantTableOffset + offset);
 			index++;
 			offset += constant.getItemSize();
 			constant = (ConstantEntry)constant.next;
@@ -616,10 +616,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void calculateCodeSizeAndMethodOffsets(Class clazz) {
-		if (dbg) vrb.println("[LINKER] START: Calculating code size and methods offsets for class \"" + clazz.name +"\":\n");
-		
-		// machine code size
-		if (dbg) vrb.println("  1) Code:");
+		if (dbg) vrb.println("[LINKER] Calculating code size and methods offsets for class \"" + clazz.name +"\":");
 		Method m = (Method)clazz.methods;
 		int codeSize = 0; // machine code size for the whole class
 		while (m != null) {
@@ -632,10 +629,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 			m = (Method)m.next;
 		}
-		((FixedValueEntry)clazz.codeBase.next).setValue(codeSize);	// set code size
-		
+		((FixedValueEntry)clazz.codeBase.next).setValue(codeSize);	// set code size	
 		if (dbg) vrb.println("    Total code size: " + codeSize + " byte");		
-		if (dbg) vrb.println("\n[LINKER] END: Calculating code size for class \"" + clazz.name +"\"\n");
 	}
 	
 	public static void calculateCodeSizeAndOffsetsForCompilerSpecSubroutines() {
@@ -665,48 +660,29 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if(dbg) vrb.println("  Number of heaps:   " + nofHeaps);
 		if(dbg) vrb.println("  Number of classes: " + RefType.nofRefTypes);
 		
-		// Find the kernel
-		HString kernelClassName = Configuration.getKernelClassname();
-		if(kernelClassName == null) {
-			kernelClassName = HString.getRegisteredHString("<undefined>");
-			reporter.error(740, "kernel class not set");
-		}
-		Item kernelClass = RefType.refTypeList.getItemByName(kernelClassName.toString());
+		Item kernelClass = Configuration.getOS().kernelClass;
+		if (kernelClass == null) {reporter.error(740, "kernel class not set"); return;}
 		Item kernelClinit = null;
-		int kernelClinitAddr = -1;
-		if(kernelClass != null) {
-			kernelClinit = ((Class)kernelClass).getClassConstructor();
-			if(kernelClinit != null) {
-				kernelClinitAddr = kernelClinit.address;
-			}
-			else {
-				reporter.error(730, kernelClassName.toString() + ".<clinit>");
-			}
-		}
-		else {
-			reporter.error(702, kernelClassName.toString());
-		}
-		
+		kernelClinit = ((Class)kernelClass).getClassConstructor();
 		if(dbg) vrb.println("  Kernel class:      " + kernelClass.name);
-		if(dbg) vrb.println("  -> Clinit Addr.:   " + kernelClinitAddr);
 				
 		// Create the system table
 		systemTable = new FixedValueEntry("classConstOffset", stNofStacks + ( 2 * nofStacks + 2 * nofHeaps) * 4 + 12);
 		systemTable.appendTail(new FixedValueEntry("stackOffset", stNofStacks));
 		systemTable.appendTail(new FixedValueEntry("heapOffset", stNofStacks + 2 * nofStacks * 4 + 4));
-		systemTable.appendTail(new AddressEntry("kernelClinitAddr: " + kernelClassName + ".",kernelClinit));
+		systemTable.appendTail(new AddressEntry("kernelClinitAddr: " + kernelClass.name + ".",kernelClinit));
 		systemTable.appendTail(new FixedValueEntry("resetOffset", Configuration.getResetOffset()));
 		sysTabSizeToCopy = new FixedValueEntry("sizeToCopy", -1);
 		systemTable.appendTail(sysTabSizeToCopy);
 		systemTable.appendTail(new FixedValueEntry("nofStacks", nofStacks));
 		for(int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
 			systemTable.appendTail(new AddressEntry("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
-			systemTable.appendTail(new FixedValueEntry("sizeStack" + i, Configuration.getStackSegments()[i].getSize()));
+			systemTable.appendTail(new FixedValueEntry("sizeStack" + i, Configuration.getStackSegments()[i].size));
 		}
 		systemTable.appendTail(new FixedValueEntry("nofHeaps", nofHeaps));
 		for(int i = 0; i < nofHeaps; i++) { //reference to each heap and the size of each heap
 			systemTable.appendTail(new AddressEntry("baseHeap" + i + ": ", Configuration.getHeapSegments()[i])); // base address
-			systemTable.appendTail(new FixedValueEntry("sizeHeap" + i, Configuration.getHeapSegments()[i].getSize()));
+			systemTable.appendTail(new FixedValueEntry("sizeHeap" + i, Configuration.getHeapSegments()[i].size));
 		}
 		systemTable.appendTail(new FixedValueEntry("nofClasses", Class.nofInitClasses + Class.nofNonInitClasses));
 		Class clazz = Class.initClasses; int i = 0;
@@ -733,29 +709,28 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 		
 	public static void freezeMemoryMap() {
+//		boolean dbg = true;
 		if (dbg) vrb.println("[LINKER] START: Freeze memory map:\n");
-		
 		if (dbg) vrb.println("1) Set a segment for the code, the static fields and the constant block for each class");
 		Segment s;
 
 		// handle exception handlers in system classes first
-		SystemMethod[] meth = Configuration.getSystemMethodsWithOffsets();
+		if (dbg) vrb.println("  handle exception handlers in system classes first");
+		Method[] meth = Configuration.getOS().getSystemMethodsWithOffsets();
+		if (dbg) vrb.println("  nof methods with offset set by configuation = " + meth.length);
 		if (meth != null) {
-			for (SystemMethod m : meth) {
-				Class c = (Class)Class.getRefTypeByName(m.owner.name);
-				Item m1 = c.methods.getItemByName(m.getName());
-				s = Configuration.getCodeSegmentOf(c.name);
+			for (Method m : meth) {
+				if (dbg) vrb.println("    handle method: " + m.name + " in class: " + m.owner.name);
+				Class c = (Class)RefType.getRefTypeByName(m.owner.name);
+				s = Configuration.getCodeSegmentOf(c);
 				if (s == null) reporter.error(710, "Can't get a memory segment for the code of class " + c.name + "!\n");
 				else {
-					int offset = m1.offset;
-					int size = ((Method)m1).getCodeSizeInBytes();
-					if (offset <= s.getUsedSize()) reporter.error(710, "bla " + c.name + "!\n");
-					s.addToUsedSize(roundUpToNextWord(offset - s.getUsedSize() + size));
+					int offset = m.offset;
+					int size = ((Method)m).getCodeSizeInBytes();
+					if (offset <= s.usedSize) reporter.error(710, "bla " + c.name + "!\n");
+					s.addToUsedSize(roundUpToNextWord(offset - s.usedSize + size));
 					c.codeSegment = s;
-					if (dbg) {
-						vrb.println("    Code-Segment: " + c.codeSegment.getFullName());
-						vrb.println("    Code-Offset: " + Integer.toHexString(c.codeOffset));
-					}
+					if (dbg) vrb.println("    Code-Segment: " + c.codeSegment.getFullName() + ", offset=0x" + Integer.toHexString(c.codeOffset));
 				}
 			}
 		}
@@ -766,44 +741,42 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			c = Class.extLevelOrdClasses[extLevel];
 			while (c != null && reporter.nofErrors <= 0) {
 				if (dbg) vrb.println("  Proceeding Class " + c.name);
-				
-				// Code
-				s = Configuration.getCodeSegmentOf(c.name);
-				if (s == null) reporter.error(710, "Can't get a memory segment for the code of class " + c.name + "!\n");
-				else {
-					int codeSize = ((FixedValueEntry)c.codeBase.next).getValue();	// get code size
-					if (s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, codeSize);
-					c.codeOffset = s.getUsedSize();
-					if (codeSize > 0) s.addToUsedSize(roundUpToNextWord(codeSize));
-					c.codeSegment = s;
-					if (dbg) {
-						vrb.println("    Code-Segment: " + c.codeSegment.getFullName());
-						vrb.println("    Code-Offset: " + Integer.toHexString(c.codeOffset));
+				if ((c.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+					if (dbg) vrb.println("   is synthetic, omit");
+				} else {
+
+					// Code
+					s = Configuration.getCodeSegmentOf(c);
+					if (s == null) reporter.error(710, "Can't get a memory segment for the code of class " + c.name + "!\n");
+					else {
+						int codeSize = ((FixedValueEntry)c.codeBase.next).getValue();	// get code size
+						c.codeOffset = s.usedSize;
+						if (codeSize > 0) s.addToUsedSize(roundUpToNextWord(codeSize));
+						c.codeSegment = s;
+						if (dbg) vrb.println("    Code-Segment: " + c.codeSegment.getFullName() + ", offset=0x" + Integer.toHexString(c.codeOffset));
 					}
+
+					// Var
+					s = Configuration.getVarSegmentOf(c);
+					if (s == null) reporter.error(710, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
+					else {
+						c.varOffset = s.usedSize;
+						if (c.classFieldsSize > 0) s.addToUsedSize(roundUpToNextWord(c.classFieldsSize));
+						c.varSegment = s;
+						if (dbg) vrb.println("    Var-Segment: " + c.varSegment.getFullName());
+					}
+
+					// Const
+					s = Configuration.getConstSegmentOf(c);
+					if (s == null) reporter.error(710, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
+					else {
+						int constBlockSize = c.constantBlock.getValue();
+						c.constOffset = s.usedSize;
+						if (constBlockSize > 0) s.addToUsedSize(roundUpToNextWord(constBlockSize));
+						c.constSegment = s;
+						if (dbg) vrb.println("    Const-Segment: " + c.constSegment.getFullName());
+					}	
 				}
-				
-				// Var
-				s = Configuration.getVarSegmentOf(c.name);
-				if (s == null) reporter.error(710, "Can't get a memory segment for the static variables of class " + c.name + "!\n");
-				else {
-					if (s.subSegments != null) s = getFirstFittingSegment(s, atrVar, c.classFieldsSize);
-					c.varOffset = s.getUsedSize();
-					if (c.classFieldsSize > 0) s.addToUsedSize(roundUpToNextWord(c.classFieldsSize));
-					c.varSegment = s;
-					if (dbg) vrb.println("    Var-Segment: " + c.varSegment.getFullName());
-				}
-				
-				// Const
-				s = Configuration.getConstSegmentOf(c.name);
-				if (s == null) reporter.error(710, "Can't get a memory segment for the constant block of class " + c.name + "!\n");
-				else {
-					int constBlockSize = c.constantBlock.getValue();
-					if (s.subSegments != null) s = getFirstFittingSegment(s, atrConst, constBlockSize);
-					c.constOffset = s.getUsedSize();
-					if (constBlockSize > 0) s.addToUsedSize(roundUpToNextWord(constBlockSize));
-					c.constSegment = s;
-					if (dbg) vrb.println("    Const-Segment: " + c.constSegment.getFullName());
-				}		
 				c = c.nextExtLevelClass;
 			}
 		}
@@ -817,11 +790,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			
 			if (s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 			else {
-				if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, getBlockSize(a.typeDescriptor));
-				a.offset = roundUpToNextWord(s.getUsedSize());
+				a.offset = roundUpToNextWord(s.usedSize);
 				s.addToUsedSize(getBlockSize(a.typeDescriptor));
 				a.segment = s;
-				if (dbg) vrb.println("    Segment for type descriptor: " + a.segment.getName());
+				if (dbg) vrb.println("    Segment for type descriptor: " + a.segment.name);
 			}	
 			a = a.nextArray;
 		}
@@ -832,30 +804,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if (dbg) vrb.println("  Proceeding interface " + intf.name);
 			
 			// Code
-			s = Configuration.getCodeSegmentOf(intf.name);
+			s = Configuration.getCodeSegmentOf(intf);
 			if (s == null) reporter.error(710, "Can't get a memory segment for the code of interface " + intf.name + "!\n");
 			else {
 				int codeSize = ((FixedValueEntry)intf.codeBase.next).getValue();	// get code size
 				if (codeSize > 0) { 
-					if (s.subSegments != null) s = getFirstFittingSegment(s.subSegments, atrCode, codeSize);
-
-					intf.codeOffset = s.getUsedSize();
+					intf.codeOffset = s.usedSize;
 					if (codeSize > 0) s.addToUsedSize(roundUpToNextWord(codeSize));
 					intf.codeSegment = s;
-					if (dbg) {
-						vrb.println("    Code-Segment: " + intf.codeSegment.getFullName());
-						vrb.println("    Code-Offset: " + Integer.toHexString(intf.codeOffset));
-					}
+					if (dbg) vrb.println("    Code-Segment: " + intf.codeSegment.getFullName() + ", offset=0x" + Integer.toHexString(intf.codeOffset));
 				}
 			}
 
 			// Var
-			s = Configuration.getVarSegmentOf(intf.name);
+			s = Configuration.getVarSegmentOf(intf);
 			if (s == null) reporter.error(710, "Can't get a memory segment for the static variables of interface " + intf.name + "!\n");
 			else {
 				if (intf.classFieldsSize > 0) { 
-					if (s.subSegments != null) s = getFirstFittingSegment(s, atrVar, intf.classFieldsSize);
-					intf.varOffset = s.getUsedSize();
+					intf.varOffset = s.usedSize;
 					if (intf.classFieldsSize > 0) s.addToUsedSize(roundUpToNextWord(intf.classFieldsSize));
 					intf.varSegment = s;
 					if (dbg) vrb.println("    Var-Segment: " + intf.varSegment.getFullName());
@@ -863,20 +829,18 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 
 			// Const
-			s = Configuration.getConstSegmentOf(intf.name);
+			s = Configuration.getConstSegmentOf(intf);
 			if (s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of interface " + intf.name + "!\n");
 			else {
 				int constBlockSize = intf.constantBlock.getValue();
-				if (s.subSegments != null) s = getFirstFittingSegment(s, atrConst, constBlockSize);
-				intf.constOffset = s.getUsedSize();
+				intf.constOffset = s.usedSize;
 				if (constBlockSize > 0) s.addToUsedSize(roundUpToNextWord(constBlockSize));
 				intf.constSegment = s;
-				if (dbg) vrb.println("    Segment for type descriptor: " + intf.constSegment.getName());
+				if (dbg) vrb.println("    Segment for type descriptor: " + intf.constSegment.name);
 			}	
 			intf = intf.nextInterface;
 		}
 		
-		//Segment[] sysTabs = Configuration.getSysTabSegments();
 		if (sysTabSegments != null && sysTabSegments.length > 0) {
 			for (int i = 0; i < sysTabSegments.length; i++) {
 				sysTabSegments[i].addToUsedSize(getBlockSize(systemTable)); 
@@ -887,46 +851,52 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		s = Configuration.getDefaultConstSegment();
 		if (s == null) reporter.error(710, "Can't get a memory segment for the global constant table!\n");
 		else {
-			if(s.subSegments != null) s = getFirstFittingSegment(s, atrConst, getBlockSize(globalConstantTable));
-			globalConstantTableOffset = roundUpToNextWord(s.getUsedSize());
+			globalConstantTableOffset = roundUpToNextWord(s.usedSize);
 			s.addToUsedSize(getBlockSize(globalConstantTable));
 			globalConstantTableSegment = s;
-			if(dbg) vrb.println("    Segment for global constant table: " + globalConstantTableSegment.getName());
+			if(dbg) vrb.println("    Segment for global constant table: " + globalConstantTableSegment.name);
 		}
 		
 		if (dbg) vrb.println("  Proceeding compiler specific methods");
 		s = Configuration.getDefaultConstSegment();
 		if (s == null) reporter.error(710, "Can't get a memory segment for the compiler specific methods!\n");
 		else {
-			if(s.subSegments != null) s = getFirstFittingSegment(s, atrCode, compilerSpecificMethodsCodeSize);
-			compilerSpecificMethodsOffset = roundUpToNextWord(s.getUsedSize());
+			compilerSpecificMethodsOffset = roundUpToNextWord(s.usedSize);
 			s.addToUsedSize(compilerSpecificMethodsCodeSize);
 			compilerSpecSubroutinesSegment = s;
-			if(dbg) vrb.println("    Segment for compiler specific methods: " + compilerSpecSubroutinesSegment.getName());
+			if(dbg) vrb.println("    Segment for compiler specific methods: " + compilerSpecSubroutinesSegment.name);
 		}
 		
 		if(dbg) vrb.println("2) Check and set the size for each used segment");
-		Device[] d = Configuration.getBoard().getAllDevices();
-		for(int i = 0; i < d.length; i++) {
-			if(dbg) vrb.println("  Proceeding device " + d[i].getName());
-			if(d[i].segments != null && d[i].segments.getTail() != null) setSegmentSize((Segment)d[i].segments.getTail());
+		Device[] d = Configuration.getAllDevices();
+		for (int i = 0; i < d.length; i++) {
+			if(dbg) vrb.println("  Proceeding device " + d[i].name);
+			Segment seg = d[i].segments;
+			while (seg != null) {
+				setSegmentSize(seg);
+				seg = (Segment) seg.next;
+			}
 		}
 		
-		if(dbg) vrb.println("3) Set base addresses for each used segment");
-		for(int i = 0; i < d.length; i++) {
-			if(dbg) vrb.println("  Proceeding device " + d[i].getName());
-			if(d[i].segments != null) setBaseAddress(d[i].segments, d[i].getbaseAddress());
+		if (dbg) vrb.println("3) Set base addresses for each used segment (devices found: " + d.length + ")");
+		for (int i = 0; i < d.length; i++) {
+			if (dbg) vrb.println("  Proceeding device " + d[i].name);
+			Segment seg = d[i].segments;
+			int baseAddr = d[i].address;
+			while (seg != null) {
+				baseAddr = setBaseAddress(seg, baseAddr);
+				seg = (Segment) seg.next;
+			}
 		}
-		
 		if(dbg) vrb.println("[LINKER] END: Freeze memory map.");
 	}
 	
 	public static void calculateAbsoluteAddresses(Class clazz) {
-		if (dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for class \"" + clazz.name +"\":\n");
+		if (dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for class \"" + clazz.name +"\":");
 		if ((clazz.accAndPropFlags & (1 << apfInterface)) != 0) {	// interface
 			if (clazz.codeSegment != null) {
-				int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
-				int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
+				int varBase = clazz.varSegment.address + clazz.varOffset;
+				int codeBase = clazz.codeSegment.address + clazz.codeOffset;
 
 				// static fields
 				if (clazz.nofClassFields > 0) {
@@ -935,8 +905,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 					while (field != null && field != clazz.constFields) { // go through all class fields, stop at const fields	
 						if (varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 						else {
-							if(varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
-							if(field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
+							if (varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
+							if (field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
 						}
 
 						if (dbg) vrb.print("    > " + field.name + ": Offset = 0x" + Integer.toHexString(field.offset) + ", Index = 0x" + Integer.toHexString(field.index) + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
@@ -960,12 +930,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				}
 			}
 			// type descriptor
-			clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + clazz.typeDescriptorOffset;
+			clazz.address = clazz.constSegment.address + clazz.constOffset + clazz.typeDescriptorOffset;
 
 		} else { // std class
-			int varBase = clazz.varSegment.getBaseAddress() + clazz.varOffset;
-			int codeBase = clazz.codeSegment.getBaseAddress() + clazz.codeOffset;
-			int constBlockBase =  clazz.constSegment.getBaseAddress() + clazz.constOffset;
+			int varBase = clazz.varSegment.address + clazz.varOffset;
+			int codeBase = clazz.codeSegment.address + clazz.codeOffset;
+			int constBlockBase =  clazz.constSegment.address + clazz.constOffset;
 			int classDescriptorBase = constBlockBase + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
 			int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
 			int constPoolBase = stringPoolBase + clazz.stringPoolSize;
@@ -973,10 +943,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(dbg) {
 				vrb.println("  Code base: 0x" + Integer.toHexString(codeBase));
 				vrb.println("  Var base: 0x" + Integer.toHexString(varBase));
-				vrb.println("  Const segment base address: 0x" + Integer.toHexString(clazz.constSegment.getBaseAddress()));
+				vrb.println("  Const segment base address: 0x" + Integer.toHexString(clazz.constSegment.address));
 				vrb.println("  Const offset: 0x" + Integer.toHexString(clazz.constOffset));
 				vrb.println("  Const block base address: 0x" + Integer.toHexString(constBlockBase));
-				vrb.println("  Number of class refereces: " + clazz.nofClassRefs);
+				vrb.println("  Number of class references: " + clazz.nofClassRefs);
 				vrb.println("  Class descriptor base: 0x" + Integer.toHexString(classDescriptorBase));
 				vrb.println("  String pool base: 0x" + Integer.toHexString(stringPoolBase));
 				vrb.println("  Const pool base: 0x" + Integer.toHexString(constPoolBase));
@@ -989,8 +959,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				while (field != null && field != clazz.constFields) { // go through all class fields, stop at const fields	
 					if (varBase != -1 && field.offset != -1) field.address = varBase + field.offset;
 					else {
-						if(varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
-						if(field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
+						if (varBase == -1) reporter.error(724, "varBase of class " + clazz.name + " not set");
+						if (field.offset == -1) reporter.error(721, "offset of field " + field.name + " in class " + clazz.name + " not set!"); 
 					}
 
 					if (dbg) vrb.print("    > " + field.name + ": Offset = 0x" + Integer.toHexString(field.offset) + ", Index = 0x" + Integer.toHexString(field.index) + ", Address = 0x" + Integer.toHexString(field.address) + "\n");
@@ -1005,7 +975,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				while (method != null) {
 					if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) { 
 						if (method.offset != -1) {
-							method.address = clazz.codeSegment.getBaseAddress() + method.offset;
+							method.address = clazz.codeSegment.address + method.offset;
 						}
 						//	else reporter.error(9999, "Error while calculating absolute address of fix set method " + method.name + ". Offset: " + method.offset + ", Segment: " + clazz.codeSegment.getName() + ", Base address of Segment: " + clazz.codeSegment.getBaseAddress());
 					}
@@ -1046,14 +1016,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			}
 
 			// type descriptor
-			clazz.address = clazz.constSegment.getBaseAddress() + clazz.constOffset + clazz.typeDescriptorOffset;
+			clazz.address = clazz.constSegment.address + clazz.constOffset + clazz.typeDescriptorOffset;
 		}
 
-		if(dbg) vrb.println("\n[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"\n");
+		if(dbg) vrb.println("[LINKER] END: Calculating absolute addresses for class \"" + clazz.name +"\"");
 	}
 
 	public static void calculateAbsoluteAddresses(Array array) {
-		array.address = array.segment.getBaseAddress() + array.offset + 4;	
+		array.address = array.segment.address + array.offset + 4;	
 		// array.offset is pointer to entry "extension level", set address to next entry  
 	}
 	
@@ -1061,7 +1031,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if (dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for compiler specific methods:\n");
 		Method m = Method.compSpecSubroutines;
 		while (m != null) {
-			m.address = compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset + m.offset;
+			m.address = compilerSpecSubroutinesSegment.address + compilerSpecificMethodsOffset + m.offset;
 			if (dbg) vrb.print("    > " + m.name + ": Offset = 0x" + Integer.toHexString(m.offset) + ", Index = 0x" + Integer.toHexString(m.index) + ", Address = 0x" + Integer.toHexString(m.address) + "\n");
 			m = (Method)m.next;
 		}
@@ -1072,10 +1042,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		if (dbg) vrb.println("[LINKER] START: Updating constant block for class \"" + clazz.name +"\":\n");
 
 		if (dbg) vrb.println("  Inserting code base");
-		if (clazz.codeSegment != null) ((FixedValueEntry)clazz.codeBase).setValue(clazz.codeSegment.getBaseAddress() + clazz.codeOffset); // codeBase
+		if (clazz.codeSegment != null) ((FixedValueEntry)clazz.codeBase).setValue(clazz.codeSegment.address + clazz.codeOffset); // codeBase
 		// codeSize already set...
 		if (dbg) vrb.println("  Inserting var base");
-		if (clazz.varSegment != null) ((FixedValueEntry)clazz.codeBase.next.next).setValue(clazz.varSegment.getBaseAddress() + clazz.varOffset); // varBase
+		if (clazz.varSegment != null) ((FixedValueEntry)clazz.codeBase.next.next).setValue(clazz.varSegment.address + clazz.varOffset); // varBase
 		if (dbg) vrb.println("  Inserting var size");
 		((FixedValueEntry)clazz.codeBase.next.next.next).setValue(clazz.classFieldsSize); // varSize
 		
@@ -1098,10 +1068,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			Class c;
 			c = Class.extLevelOrdClasses[extLevel];
 			while (c != null && reporter.nofErrors <= 0) {
-				// Code
-				monitorUsedSpace(((FixedValueEntry)c.codeBase).getValue(), ((FixedValueEntry)c.codeBase.next).getValue());
-				// Constant block
-				monitorUsedSpace(c.constSegment.getBaseAddress() + c.constOffset, ((FixedValueEntry)c.constantBlock).getValue());
+				if ((c.accAndPropFlags & (1 << dpfSynthetic)) == 0) {	// omit synthetic classes
+					// Code
+					monitorUsedSpace(((FixedValueEntry)c.codeBase).getValue(), ((FixedValueEntry)c.codeBase.next).getValue());
+					// Constant block
+					monitorUsedSpace(c.constSegment.address + c.constOffset, ((FixedValueEntry)c.constantBlock).getValue());
+				}
 				c = c.nextExtLevelClass;
 			}
 		}
@@ -1119,31 +1091,31 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			// Code
 			monitorUsedSpace(((FixedValueEntry)intf.codeBase).getValue(), ((FixedValueEntry)intf.codeBase.next).getValue());
 			// Constant block
-			monitorUsedSpace(intf.constSegment.getBaseAddress() + intf.constOffset, ((FixedValueEntry)intf.constantBlock).getValue());
+			monitorUsedSpace(intf.constSegment.address + intf.constOffset, ((FixedValueEntry)intf.constantBlock).getValue());
 
 			intf = intf.nextInterface;
 		}
 		
 		if (sysTabSegments != null && sysTabSegments.length > 0) {
 			for (int i = 0; i < sysTabSegments.length; i++) {
-				monitorUsedSpace(sysTabSegments[i].getBaseAddress(), getBlockSize(systemTable)); 
+				monitorUsedSpace(sysTabSegments[i].address, getBlockSize(systemTable)); 
 			}
 		}
 				
 		if (compilerSpecificMethodsCodeSize > 0) {
-			monitorUsedSpace(compilerSpecSubroutinesSegment.getBaseAddress() + compilerSpecificMethodsOffset, compilerSpecificMethodsCodeSize);
+			monitorUsedSpace(compilerSpecSubroutinesSegment.address + compilerSpecificMethodsOffset, compilerSpecificMethodsCodeSize);
 		}
 		
 		if(globalConstantTable != null) {
-			monitorUsedSpace(globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, getBlockSize(globalConstantTable));
+			monitorUsedSpace(globalConstantTableSegment.address + globalConstantTableOffset, getBlockSize(globalConstantTable));
 		}
 		
 		// handle exception handlers in system classes
-		SystemMethod[] meth = Configuration.getSystemMethodsWithOffsets();
+		Method[] meth = Configuration.getOS().getSystemMethodsWithOffsets();
 		if (meth != null) {
-			for (SystemMethod m : meth) {
+			for (Method m : meth) {
 				Class c = (Class)Class.getRefTypeByName(m.owner.name);
-				Item m1 = c.methods.getItemByName(m.getName());
+				Item m1 = c.methods.getItemByName(m.name);
 				monitorUsedSpace(((Method)m1).offset, ((Method)m1).getCodeSizeInBytes());
 			}
 		}
@@ -1161,40 +1133,43 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	
 	public static void generateTargetImage() {
 		if(dbg) vrb.println("[LINKER] START: Generating target image:\n");
-		
+
 		// handle std classes
 		for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 			Class c;
 			c = Class.extLevelOrdClasses[extLevel];
 			while (c != null && reporter.nofErrors <= 0) {
 				if (dbg) vrb.println("  Proceeding class \"" + c.name + "\":");
-				// code
-				Method m = (Method)c.methods;
-				if (dbg) vrb.println("    1) Code:");
-				while (m != null) {
-					if (m.machineCode != null) {
-						if (dbg) vrb.println("         > Method \"" + m.name + "\":");
-						assert m.address != -1;
-						addTargetMemorySegment(new TargetMemorySegment(c.codeSegment, m.address, m.machineCode.instructions, m.machineCode.iCount));
+				if ((c.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+					if (dbg) vrb.println("   is synthetic, omit");
+				} else {
+					// code
+					Method m = (Method)c.methods;
+					if (dbg) vrb.println("    1) Code:");
+					while (m != null) {
+						if (m.machineCode != null) {
+							if (dbg) vrb.println("         > Method \"" + m.name + "\":");
+							assert m.address != -1;
+							addTargetMemorySegment(new TargetMemorySegment(c.codeSegment, m.address, m.machineCode.instructions, m.machineCode.iCount));
+						}
+						m = (Method)m.next;
 					}
-					m = (Method)m.next;
+
+					// consts
+					if(dbg) vrb.println("    2) Constantblock:");
+					assert c.constSegment.address + c.constOffset != -1;
+					addTargetMemorySegment(new TargetMemorySegment(c.constSegment, c.constSegment.address + c.constOffset, c.constantBlock));
 				}
-				
-				// consts
-				if(dbg) vrb.println("    2) Constantblock:");
-				assert c.constSegment.getBaseAddress() + c.constOffset != -1;
-				addTargetMemorySegment(new TargetMemorySegment(c.constSegment, c.constSegment.getBaseAddress() + c.constOffset, c.constantBlock));
-				
 				c = c.nextExtLevelClass;
 			}
 		}
-				
+
 		// handle arrays
 		Array a = Class.arrayClasses;
 		while (a != null) {
 			if (dbg) vrb.println("  Proceeding array \"" + a.name + "\":");
-			assert a.segment.getBaseAddress() + a.offset != -1;
-			addTargetMemorySegment(new TargetMemorySegment(a.segment, a.segment.getBaseAddress() + a.offset, a.typeDescriptor));
+			assert a.segment.address + a.offset != -1;
+			addTargetMemorySegment(new TargetMemorySegment(a.segment, a.segment.address + a.offset, a.typeDescriptor));
 			a = a.nextArray;
 		}
 		
@@ -1213,20 +1188,20 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				m = (Method)m.next;
 			}		
 			// consts
-			assert intf.constSegment.getBaseAddress() + intf.constOffset != -1;
-			addTargetMemorySegment(new TargetMemorySegment(intf.constSegment, intf.constSegment.getBaseAddress() + intf.constOffset, intf.constantBlock));
+			assert intf.constSegment.address + intf.constOffset != -1;
+			addTargetMemorySegment(new TargetMemorySegment(intf.constSegment, intf.constSegment.address + intf.constOffset, intf.constantBlock));
 			intf = intf.nextInterface;
 		}
 				
 		if (dbg) vrb.println("  Proceeding system table(s):");
 		Segment[] s = Configuration.getSysTabSegments();
-		if (dbg) vrb.println("  > Address: 0x" + Integer.toHexString(s[0].getBaseAddress()));
+		if (dbg) vrb.println("  > Address: 0x" + Integer.toHexString(s[0].address));
 		for (int i = 0; i < sysTabSegments.length; i++) {
-			addTargetMemorySegment(new TargetMemorySegment(s[i], s[i].getBaseAddress(), systemTable)); // TODO@Martin: Implement additive system table for ram/flash boot
+			addTargetMemorySegment(new TargetMemorySegment(s[i], s[i].address, systemTable)); // TODO@Martin: Implement additive system table for ram/flash boot
 		}
 		
 		if (dbg) vrb.println("  Proceeding global constant table:");
-		addTargetMemorySegment(new TargetMemorySegment(globalConstantTableSegment, globalConstantTableSegment.getBaseAddress() + globalConstantTableOffset, globalConstantTable));
+		addTargetMemorySegment(new TargetMemorySegment(globalConstantTableSegment, globalConstantTableSegment.address + globalConstantTableOffset, globalConstantTable));
 		
 		if (dbg) vrb.println("  Proceeding compiler specific methods:");
 		Method cssr = Method.compSpecSubroutines;
@@ -1278,10 +1253,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
-		currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
+		currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
 		binFile = new FileOutputStream(currentFileName);
 		if(dbg) vrb.println("  Writing to file: " + currentFileName);
-		int currentAddress = dev.getbaseAddress();
+		int currentAddress = dev.address;
 		while(tms != null) {
 			while(currentAddress < tms.startAddress) {
 				binFile.write(0);
@@ -1296,9 +1271,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			if(tms.next != null && tms.next.segment.owner != dev) {
 				binFile.close();
 				dev = tms.next.segment.owner;
-				currentFileName = new String(pathAndFileName + "." +dev.getName() + fileExtension);
+				currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
 				binFile = new FileOutputStream(currentFileName);
-				currentAddress = dev.getbaseAddress();
+				currentAddress = dev.address;
 				if(dbg) vrb.println("  Writing to file: " + currentFileName);
 			}
 			tms = tms.next;
@@ -1309,7 +1284,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 	
 	public static void writeCommandTableToFile(String fileName) throws IOException {
-		if(dbg) vrb.println("[LINKER] START: Writing command table to file: \"" + fileName +"\":\n");
+		if(dbg) vrb.println("[LINKER] START: Writing command table to file: \"" + fileName +"\":");
 		
 		SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date buildTime = new Date();
@@ -1321,17 +1296,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         
         Field cmdAddrField;
         int cmdAddr = -1;
-        Class kernel = (Class)RefType.refTypeList.getItemByName(Configuration.getKernelClassname().toString());
-        if(kernel != null) {
-        	if(dbg) vrb.println("  Kernel: " + kernel.name);
+        Class kernel = (Class)RefType.refTypeList.getItemByName(Configuration.getOS().kernelClass.name);
+        if (kernel != null) {
+        	if (dbg) vrb.println("  Kernel: " + kernel.name);
         	cmdAddrField = (Field)kernel.classFields.getItemByName("cmdAddr");
         	if(cmdAddrField != null) {
-        		if(dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
+        		if (dbg) vrb.println("  cmdAddrField: " + cmdAddrField.name + "@" + cmdAddrField.address);
         		cmdAddr = cmdAddrField.address;
         	}
         	else reporter.error(790, "Field cmdAddrField in the Kernel not set");
         }
-        else reporter.error(701, "Kernel (" + Configuration.getKernelClassname() + ")");
+        else reporter.error(701, "Kernel (" + Configuration.getOS().kernelClass.name + ")");
         
         tctFile.write("cmdAddr@");
         tctFile.write(String.valueOf(cmdAddr));
@@ -1340,9 +1315,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         Item clazz = RefType.refTypeList;
         Method method;
         
-        while(clazz != null) {
-        	if(clazz instanceof Class) {
-        		if(dbg) vrb.println("  Proceeding class \"" + clazz.name + "\"");
+        while (clazz != null) {
+        	if (clazz instanceof Class) {
+        		if (dbg) vrb.println("  proceeding class \"" + clazz.name + "\"");
 	        	method = (Method)((Class)clazz).methods;
 	        	
 	        	tctFile.write('>');
@@ -1367,9 +1342,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
         	clazz = clazz.next;
         }
         tctFile.close();
-        
         if(dbg) vrb.println("Command table written to \"" + fileName + "\"");
-	
 		if(dbg) vrb.println("[LINKER] END: Writing command table to file.");
 	}
 		
@@ -1394,24 +1367,20 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 		return barray;
 	}
 	
-	private static void setBaseAddress(Segment s, int baseAddress) {
-		//descend
-		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
-		//set baseaddress
-		if((s.getSize() > 0 && s.getUsedSize() > 0) || ((s.getAttributes() & ((1 << atrStack) | (1 << atrHeap) | (1 << atrSysTab))) != 0)){ 
-			if(s.getBaseAddress() == -1) s.setBaseAddress(baseAddress);
-			if(dbg) vrb.println("    setting base address of segment " + s.getName() +" to "+ Integer.toHexString(baseAddress) + " with the size of " + s.getSize() + " bytes");
-		}
-		// traverse from left to right
-		if(s.next != null) setBaseAddress((Segment)s.next, s.getSize()+ baseAddress);
+	private static int setBaseAddress(Segment s, int addr) {
+//		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
+		if ((s.size > 0 && s.usedSize > 0) || ((s.attributes & ((1 << dpfSegStack) | (1 << dpfSegHeap) | (1 << dpfSegSysTab))) != 0)) { 
+			if (s.address == -1) s.address = addr;
+			if (dbg) vrb.println("    setting base address of segment " + s.name +" to 0x"+ Integer.toHexString(addr) + " with the size of 0x" + Integer.toHexString(s.size) + " bytes");
+		} else if (dbg) vrb.println("    segment " + s.name +" not used");
+		return s.size + addr;
 	}
 
 	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute, int requiredSize) {
 		Segment t = s;
-		while(t != null) {
-			if((t.getAttributes() & (1 << contentAttribute)) != 0) {
-				if(t.subSegments != null) t = getFirstFittingSegment(t.subSegments, contentAttribute, requiredSize);
-				if(t.getSize() <= 0 || t.getSize() - t.getUsedSize() > requiredSize) return t;
+		while (t != null) {
+			if ((t.attributes & (1 << contentAttribute)) != 0) {
+				if(t.size <= 0 || t.size - t.usedSize > requiredSize) return t;
 			}
 			t = (Segment)t.next;
 		}
@@ -1419,19 +1388,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 	}
 
 	private static void setSegmentSize(Segment s) {
-		if(s.subSegments != null && s.subSegments.getTail() != null) {
-			setSegmentSize((Segment)s.subSegments.getTail());
-		}
-		if(s.getSize() <= 0) {
-			if(dbg) vrb.println("    setting used size for segment " + s.getName());
-			s.setSize(roundUpToNextWord(s.getUsedSize()));
-		}
-		else if(s.getSize() < s.getUsedSize()) { 
-			reporter.error(711, "Segment " + s.getName() + " is too small! Size is manually set to " + s.getSize() + " byte, but required size is " + s.getUsedSize() + " byte!\n");
-		}
-		if(s.prev != null) {
-			setSegmentSize((Segment)s.prev);
-		}
+//		if (s.subSegments != null && s.subSegments.getTail() != null) {
+//			setSegmentSize((Segment)s.subSegments.getTail());
+//		}
+		if (s.size <= 0) {
+			s.size = roundUpToNextWord(s.usedSize);
+			if (dbg) vrb.println("    setting used size for segment " + s.name + " to 0x" + Integer.toHexString(s.size));
+		} else if (s.size < s.usedSize) {reporter.error(711, "Segment " + s.name + " is too small! Size is manually set to " + s.size + " byte, but required size is " + s.usedSize + " byte!\n");
+		} else if (dbg) vrb.println("    size for segment " + s.name + " set by configuration to 0x" + Integer.toHexString(s.size));
 	}
 		
 	protected static int roundUpToNextWord(int val) {
@@ -1555,36 +1519,28 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 				vrb.println("Code offset:                 0x" + Integer.toHexString(c.codeOffset));
 				vrb.println("Var offset:                  0x" + Integer.toHexString(c.varOffset));
 				vrb.println("Const offset:                0x" + Integer.toHexString(c.constOffset));
-				vrb.println("Code segment:                " + c.codeSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.getBaseAddress()) + ", size: " + c.codeSegment.getSize() + " byte)");
-				vrb.println("Var segment:                 " + c.varSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.getBaseAddress()) + ", size: " + c.varSegment.getSize() + " byte)");
-				vrb.println("Const segment:               " + c.constSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress()) + ", size: " + c.constSegment.getSize() + " byte)");
+				vrb.println("Code segment:                " + c.codeSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.codeSegment.address) + ", size: " + c.codeSegment.size + " byte)");
+				vrb.println("Var segment:                 " + c.varSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.varSegment.address) + ", size: " + c.varSegment.size + " byte)");
+				vrb.println("Const segment:               " + c.constSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(c.constSegment.address) + ", size: " + c.constSegment.size + " byte)");
 				vrb.println("Type descriptor address:     0x" + Integer.toHexString(c.address));
-				vrb.println("Constant block base address: 0x" + Integer.toHexString(c.constSegment.getBaseAddress() + c.constOffset));
-				vrb.println("Code base address:           0x" + Integer.toHexString(c.codeSegment.getBaseAddress() + c.codeOffset));
-				vrb.println("Class field base address:    0x" + Integer.toHexString(c.varSegment.getBaseAddress() + c.varOffset));
+				vrb.println("Constant block base address: 0x" + Integer.toHexString(c.constSegment.address + c.constOffset));
+				vrb.println("Code base address:           0x" + Integer.toHexString(c.codeSegment.address + c.codeOffset));
+				vrb.println("Class field base address:    0x" + Integer.toHexString(c.varSegment.address + c.varOffset));
 
 				if (printMethods) {
 					vrb.println("Methods:");
 					Method m = (Method)c.methods;
 					int mc = 0;
-					if(m == null) vrb.println(">  No methods in this class");
+					if (m == null) vrb.println(">  No methods in this class");
 					else {
-						while(m != null) {
+						while (m != null) {
 							vrb.println("> Method #" + mc++ + ": " + m.name +  m.methDescriptor);
 							vrb.println("  Flags:     0x" + Integer.toHexString(m.accAndPropFlags));
-							if((m.accAndPropFlags & ((1 << dpfNew) | (1 << dpfUnsafe) | (1 << dpfSysPrimitive) | (1 << dpfSynthetic))) != 0) {	
-								if((m.accAndPropFlags & (1 << dpfNew)) != 0) {
-									vrb.println("  Special:   New");
-								}
-								if((m.accAndPropFlags & (1 << dpfUnsafe)) != 0) {
-									vrb.println("  Special:   Unsafe");
-								}
-								if((m.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) {
-									vrb.println("  Special:   System primitive");
-								}
-								if((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
-									vrb.println("  Special:   Synthetic");
-								}
+							if ((m.accAndPropFlags & ((1 << dpfNew) | (1 << dpfUnsafe) | (1 << dpfSysPrimitive) | (1 << dpfSynthetic))) != 0) {	
+								if ((m.accAndPropFlags & (1 << dpfNew)) != 0) vrb.println("  Special:   New");
+								if((m.accAndPropFlags & (1 << dpfUnsafe)) != 0) vrb.println("  Special:   Unsafe");
+								if((m.accAndPropFlags & (1 << dpfSysPrimitive)) != 0) vrb.println("  Special:   System primitive");
+								if((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) vrb.println("  Special:   Synthetic");
 								vrb.println("  Static:    yes");
 							}
 							else {
@@ -1661,9 +1617,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts, IAttrib
 			vrb.println("Const offset:                0x" + Integer.toHexString(intf.constOffset));
 //			vrb.println("Code segment:                " + intf.codeSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(intf.codeSegment.getBaseAddress()) + ", size: " + intf.codeSegment.getSize() + " byte)");
 			assert intf.constSegment != null;
-			vrb.println("Const segment:               " + intf.constSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(intf.constSegment.getBaseAddress()) + ", size: " + intf.constSegment.getSize() + " byte)");
+			vrb.println("Const segment:               " + intf.constSegment.getFullName() + " (Base address: 0x" + Integer.toHexString(intf.constSegment.address) + ", size: " + intf.constSegment.size + " byte)");
 			vrb.println("Type descriptor address:     0x" + Integer.toHexString(intf.address));
-			vrb.println("Constant block base address: 0x" + Integer.toHexString(intf.constSegment.getBaseAddress() + intf.constOffset));
+			vrb.println("Constant block base address: 0x" + Integer.toHexString(intf.constSegment.address + intf.constOffset));
 //			vrb.println("Code base address:           0x" + Integer.toHexString(intf.codeSegment.getBaseAddress() + intf.codeOffset));
 //			vrb.println("Class field base address:    0x" + Integer.toHexString(intf.varSegment.getBaseAddress() + intf.varOffset));
 			vrb.println("Address:  0x" + Integer.toHexString(intf.address));

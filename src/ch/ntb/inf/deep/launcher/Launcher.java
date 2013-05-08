@@ -27,24 +27,23 @@ import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.Library;
 import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
-import ch.ntb.inf.deep.config.TargetConfiguration;
-import ch.ntb.inf.deep.config.ValueAssignment;
+import ch.ntb.inf.deep.config.RegisterInit;
+import ch.ntb.inf.deep.config.RunConfiguration;
+import ch.ntb.inf.deep.config.SystemConstant;
+import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
@@ -58,13 +57,15 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 public class Launcher implements ICclassFileConsts {
 	
 	private static final boolean dbg = false;
+	private static final boolean dbgProflg = false;
 	
 	private static ErrorReporter reporter = ErrorReporter.reporter;
 	private static PrintStream log = StdStreams.log;
 	private static PrintStream vrb = StdStreams.vrb;
 	private static TargetConnection tc;
+	private static long time;
 
-	public static void buildAll(String projectConfigFile, String targetConfiguration) {
+	public static void buildAll(String deepProjectFileName, String targetConfigurationName) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 		
@@ -74,204 +75,203 @@ public class Launcher implements ICclassFileConsts {
 		
 		// Reset error reporter
 		reporter.clear();
+		CFR.initBuildSystem();
 		
 		// Read configuration
-		if(dbg) vrb.println("[Launcher] Loading Configuration");
-		log.println("Loading project file \"" + projectConfigFile + "\"");
-		Project project = Configuration.addProject(projectConfigFile);
-		Configuration.setActiveProject(project);
-		project.setActiveTargetConfiguration(targetConfiguration);
-		
-		HString[] rootClassNames = Configuration.getRootClassNames();
-		if(rootClassNames != null && reporter.nofErrors <= 0) {
-			log.println("Root classes in project \"" + project.getName() + "\":");
-			for(int i = 0; i < rootClassNames.length; i++) {
-				log.println("  " + rootClassNames[i]);
+		if (dbgProflg) time = System.nanoTime();
+		if (dbg) vrb.println("[Launcher] Loading Configuration");
+		log.println("Loading deep project file \"" + deepProjectFileName + "\"");
+		Project project = Configuration.readProjectFile(deepProjectFileName);
+		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
+		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
+//		Configuration.print();
+
+		HString[] rootClassNames = Configuration.getRootClasses();
+		if (reporter.nofErrors <= 0) {
+			int nof = rootClassNames.length;
+			if (nof == 0 || (nof == 1 && rootClassNames[0].equals(HString.getHString("")))) reporter.error(305);
+			if (rootClassNames != null && reporter.nofErrors <= 0) {
+				log.println("Root classes in project \"" + project.getProjectName() + "\":");
+				for (int i = 0; i < rootClassNames.length; i++) {
+					log.println("   " + rootClassNames[i]);
+				}
 			}
 		}
-		
-		try {
-			// Read required classes
-			if(reporter.nofErrors <= 0) {
-				if(dbg) vrb.println("[Launcher] Loading Classfiles");
-				CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
-//				CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), null, attributes);
-			}
-			
-			// Initialize compiler components
-			if(reporter.nofErrors <= 0) {
-				if(dbg) vrb.println("[Launcher] Initializing Linker");
-				Linker32.init();
-			}
-			if(reporter.nofErrors <= 0) {
-				if(dbg) vrb.println("[Launcher] Initializing Code Generator");
-				CodeGen.init();
-			}
-			
-			// creating type descriptors for arrays
-			if(dbg) vrb.println("[Launcher] creating type descriptors for arrays:");
-			array = Class.arrayClasses;
-			while (array != null) {
-				if(dbg) vrb.println("> Array: " + array.name);
-				if(dbg) vrb.println("  creating type descriptor");
-				Linker32.createTypeDescriptor(array);
-				array = array.nextArray;
-			}
-			
-			// proceeding interfaces, creating constant block 
-			if (dbg) vrb.println("[Launcher] creating constant block for interfaces:");
-			Class intf = Class.constBlockInterfaces;	// handle interfaces list
-			while (intf != null) {
-				if(dbg) vrb.println("> Interface: " + intf.name + " creating type descriptor");
-				Linker32.createConstantBlock(intf);
-				intf = intf.nextInterface;
-			}
 
-			// Loop One: proceeding standard classes, creating constant block, translating code , calculating code size
-			if (dbg) vrb.println("[Launcher] (loop one) proceeding classes:");
-			if (reporter.nofErrors <= 0) {
-				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if (dbg) vrb.println("  Extension level " + extLevel + ":");
-					clazz = Class.extLevelOrdClasses[extLevel];
-					while (clazz != null && reporter.nofErrors <= 0) {
-						if (dbg) vrb.println("  > Class: " + clazz.name);
-						
+		// Read required classes
+		if (reporter.nofErrors <= 0) {
+			if (dbg) vrb.println("[Launcher] Loading Classfiles");
+			CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
+			//				CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), null, attributes);
+			if (dbgProflg) {vrb.println("duration for reading class files = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
+		}
+
+		// Initialize compiler components
+		if (reporter.nofErrors <= 0) {
+			if (dbg) vrb.println("[Launcher] Initializing Linker");
+			Linker32.init();
+		}
+		if (reporter.nofErrors <= 0) {
+			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
+			CodeGen.init();
+		}
+
+		// creating type descriptors for arrays
+		if (dbg) vrb.println("[Launcher] creating type descriptors for arrays:");
+		array = Class.arrayClasses;
+		while (array != null) {
+			if (dbg) vrb.println("> Array: " + array.name);
+			if (dbg) vrb.println("  creating type descriptor");
+			Linker32.createTypeDescriptor(array);
+			array = array.nextArray;
+		}
+
+		// proceeding interfaces, creating constant block 
+		if (dbg) vrb.println("[Launcher] creating constant block for interfaces:");
+		Class intf = Class.constBlockInterfaces;	// handle interfaces list
+		while (intf != null) {
+			if (dbg) vrb.println("> Interface: " + intf.name + " creating type descriptor");
+			Linker32.createConstantBlock(intf);
+			intf = intf.nextInterface;
+		}
+
+		// Loop One: proceeding standard classes, creating constant block, translating code , calculating code size
+		if (dbg) vrb.println("[Launcher] (loop one) proceeding classes:");
+		if (reporter.nofErrors <= 0) {
+			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+				if (dbg) vrb.println("  Extension level " + extLevel + ":");
+				clazz = Class.extLevelOrdClasses[extLevel];
+				while (clazz != null && reporter.nofErrors <= 0) {
+					if (dbg) vrb.println("  > Class: " + clazz.name);
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+						if (dbg) vrb.println("   is synthetic, omit");
+					} else {
+
 						// Create constant block
 						if (reporter.nofErrors <= 0) {
-							if(dbg) vrb.println("    creating constant block");
+							if(dbg) vrb.println("[LAUNCHER] creating constant block for " + clazz.name);
 							Linker32.createConstantBlock(clazz);
 						}
-						
+
 						method = (Method)clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
-								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-	
+								if (dbg) {vrb.print("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: "); Dbg.printAccAndPropertyFlags(method.accAndPropFlags); vrb.println();}
 								// Create CFG
-								if(reporter.nofErrors <= 0) {
-									if (dbg) vrb.println("      building CFG");
+								if (reporter.nofErrors <= 0) {
 									method.cfg = new CFG(method);
 								}
-	
 								// Create SSA
-								if(reporter.nofErrors <= 0) {
-									if (dbg) vrb.println("      building SSA");
+								if (reporter.nofErrors <= 0) {
 									method.ssa = new SSA(method.cfg);
 								}
-//								System.out.println(method.owner.name + "." + method.name);
-//								method.ssa.printLineNumTab();
-//								System.out.println();
 								// Create machine code
-								if(reporter.nofErrors <= 0) {
-									if (dbg) vrb.println("      creating machine code");
+								if (reporter.nofErrors <= 0) {
 									method.machineCode = new CodeGen(method.ssa); 
 								}
-	
-							}
+							} else if (dbg) vrb.print("method " + method.name + " is synthetic or abstract");
 							method = (Method)method.next;
 						}
-	
+
 						// calculate required code size
-						if(reporter.nofErrors <= 0) {
-							if(dbg) vrb.println("    calculating code size and offsets");
+						if (reporter.nofErrors <= 0) {
+							if(dbg) vrb.println("[LAUNCHER] calculating code size and offsets");
 							Linker32.calculateCodeSizeAndMethodOffsets(clazz);
 						}
-						
-						clazz = clazz.nextExtLevelClass;
 					}
-				}
-			}
-			
-			// handle interfaces with class constructor, translating code , calculating code size
-			intf = Class.constBlockInterfaces;	
-			while (intf != null) {
-				method = (Method)intf.methods;
-				while (method != null && reporter.nofErrors <= 0) {
-					if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only with class constructors
-						if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-						method.cfg = new CFG(method);
-						method.ssa = new SSA(method.cfg);
-						method.machineCode = new CodeGen(method.ssa); 
-					}
-					method = (Method)method.next;
-				}
-				// calculate required code size
-				Linker32.calculateCodeSizeAndMethodOffsets(intf);
-				if (dbg) vrb.println("    > Interface: " + intf.name + " calculating code size");
-				intf = intf.nextInterface;
-			}
 
-			// handle compiler specific methods
-			CodeGen.generateCompSpecSubroutines();
-			Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
-			
-			if (reporter.nofErrors <= 0) {
-				// create system table
-				if (dbg) vrb.println("[Launcher] Creating system table");
-				Linker32.createSystemTable();
-				// freeze memory map (arrange in memory segments) for std classes, arrays, interfaces, compiler specific methods, system table
-				if (dbg) vrb.println("[Launcher] Freezing memory map");
-				Linker32.freezeMemoryMap();
-			}
-			
-			// calculate absolute addresses for arrays
-			if (dbg) vrb.println("[Launcher] calculate absolute addresses for arrays:");
-			array = Class.arrayClasses;
-			while (array != null && reporter.nofErrors <= 0) {
-				if (dbg) vrb.println("> Array: " + array.name);
-				if (dbg) vrb.println("  calculating absolute addresses");
-				Linker32.calculateAbsoluteAddresses(array);
-				array = array.nextArray;
-			}
-			
-			// calculate absolute addresses for interfaces
-			if(dbg) vrb.println("[Launcher] calculate absolute addresses for interfaces:");
-			intf = Class.constBlockInterfaces;
-			while (intf != null && reporter.nofErrors <= 0) {
-				if (dbg) vrb.println("> Interface: " + intf.name);
-				if (dbg) vrb.println("  calculating absolute addresses");
-				Linker32.calculateAbsoluteAddresses(intf);
-				intf = intf.nextInterface;
-			}
-			
-			// Loop Two: proceeding std classes, calculate absolute addresses
-			if (dbg) vrb.println("[Launcher] (loop two) proceeding classes:");
-			if (reporter.nofErrors <= 0) {
-				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if (dbg) vrb.println("  Extension level " + extLevel + ":");
-					clazz = Class.extLevelOrdClasses[extLevel];
-					while (clazz != null && reporter.nofErrors <= 0) {
-						if (dbg) vrb.println("  > Class: " + clazz.name);
-						
-						// Linker: calculate absolute addresses
-						if (dbg) vrb.println("    calculating absolute addresses");
-						Linker32.calculateAbsoluteAddresses(clazz);
-						
-						clazz = clazz.nextExtLevelClass;
-					}
+					clazz = clazz.nextExtLevelClass;
 				}
 			}
+		}
 
-			// handle compiler specific methods
-			if (reporter.nofErrors <= 0) Linker32.calculateAbsoluteAddressesForCompSpecSubroutines();
-			
-			// Create global constant table
-			if (dbg) vrb.println("[Launcher] Creating global constant table");
-			if (reporter.nofErrors <= 0) Linker32.createGlobalConstantTable();
-			
-			// Loop Three: proceeding standard classes, updating constant blocks, method fix ups 
-			if (dbg) vrb.println("[Launcher] (loop three) proceeding classes:");
-			if (reporter.nofErrors <= 0) {
-				for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-					if (dbg) vrb.println("  Extension level " + extLevel + ":");
-					clazz = Class.extLevelOrdClasses[extLevel];
-					while (clazz != null && reporter.nofErrors <= 0) { 
-						if (dbg) vrb.println("  > Class: " + clazz.name);
-		
+		// handle interfaces with class constructor, translating code , calculating code size
+		if(dbg) vrb.println("[LAUNCHER] handle interfaces with class constructor");
+		intf = Class.constBlockInterfaces;	
+		while (intf != null) {
+			method = (Method)intf.methods;
+			while (method != null && reporter.nofErrors <= 0) {
+				if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only with class constructors
+					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+					method.cfg = new CFG(method);
+					method.ssa = new SSA(method.cfg);
+					method.machineCode = new CodeGen(method.ssa); 
+				}
+				method = (Method)method.next;
+			}
+			// calculate required code size
+			Linker32.calculateCodeSizeAndMethodOffsets(intf);
+			if (dbg) vrb.println("    > Interface: " + intf.name + " calculating code size");
+			intf = intf.nextInterface;
+		}
+
+		// handle compiler specific methods
+		if(dbg) vrb.println("[LAUNCHER] compiler specific methods");
+		CodeGen.generateCompSpecSubroutines();
+		Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
+
+		if (reporter.nofErrors <= 0) {
+			Linker32.createSystemTable();	// create system table
+
+			// freeze memory map (arrange in memory segments) for std classes, arrays, interfaces, compiler specific methods, system table
+			Linker32.freezeMemoryMap();
+		}
+
+		// calculate absolute addresses for arrays
+		if (dbg) vrb.println("[Launcher] calculate absolute addresses for arrays:");
+		array = Class.arrayClasses;
+		while (array != null && reporter.nofErrors <= 0) {
+			Linker32.calculateAbsoluteAddresses(array);
+			if (dbg) vrb.println(" > Array: " + array.name + ", addr:0x" + Integer.toHexString(array.address));
+			array = array.nextArray;
+		}
+
+		// calculate absolute addresses for interfaces
+		if(dbg) vrb.println("[Launcher] calculate absolute addresses for interfaces:");
+		intf = Class.constBlockInterfaces;
+		while (intf != null && reporter.nofErrors <= 0) {
+			Linker32.calculateAbsoluteAddresses(intf);
+			if (dbg) vrb.println(" > Interface: " + intf.name + ", addr:0x" + Integer.toHexString(intf.address));
+			intf = intf.nextInterface;
+		}
+
+		// Loop Two: proceeding std classes, calculate absolute addresses
+		if (dbg) vrb.println("[Launcher] (loop two) proceeding classes:");
+		if (reporter.nofErrors <= 0) {
+			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+				clazz = Class.extLevelOrdClasses[extLevel];
+				while (clazz != null && reporter.nofErrors <= 0) {
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+						if (dbg) vrb.println("   is synthetic, omit");
+					} else Linker32.calculateAbsoluteAddresses(clazz);
+					clazz = clazz.nextExtLevelClass;
+				}
+			}
+		}
+
+		// handle compiler specific methods
+		if (reporter.nofErrors <= 0) Linker32.calculateAbsoluteAddressesForCompSpecSubroutines();
+
+		// Create global constant table
+		if (dbg) vrb.println("[Launcher] Creating global constant table");
+		if (reporter.nofErrors <= 0) Linker32.createGlobalConstantTable();
+
+		// Loop Three: proceeding standard classes, updating constant blocks, method fix ups 
+		if (dbg) vrb.println("[Launcher] (loop three) proceeding classes:");
+		if (reporter.nofErrors <= 0) {
+			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+				if (dbg) vrb.println("  Extension level " + extLevel + ":");
+				clazz = Class.extLevelOrdClasses[extLevel];
+				while (clazz != null && reporter.nofErrors <= 0) { 
+					if (dbg) vrb.println("  > Class: " + clazz.name);
+					if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+						if (dbg) vrb.println("   is synthetic, omit");
+					} else {
+
 						// Linker: update constant block
 						if (dbg) vrb.println("    updating constant block");
 						Linker32.updateConstantBlock(clazz);
-						
+
 						method = (Method)clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
@@ -281,74 +281,73 @@ public class Launcher implements ICclassFileConsts {
 							}
 							method = (Method)method.next;
 						}
-						
-						clazz = clazz.nextExtLevelClass;
 					}
+					clazz = clazz.nextExtLevelClass;
 				}
 			}
+		}
 
-			// proceeding interfaces, updating constant blocks, method fix ups
-			if(dbg) vrb.println("[Launcher] (loop three) proceeding interfaces:");
-			intf = Class.constBlockInterfaces;
-			while (intf != null && reporter.nofErrors <= 0) {
-				if (dbg) vrb.println("> Interface: " + intf.name);
-				Linker32.updateConstantBlock(intf);
-				method = (Method)intf.methods;
-				while (method != null && reporter.nofErrors <= 0) {
-					if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
-						if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
-						if (dbg) vrb.println("      doing fixups");
-						method.machineCode.doFixups();
-					}
-					method = (Method)method.next;
+		// proceeding interfaces, updating constant blocks, method fix ups
+		if(dbg) vrb.println("[Launcher] (loop three) proceeding interfaces:");
+		intf = Class.constBlockInterfaces;
+		while (intf != null && reporter.nofErrors <= 0) {
+			if (dbg) vrb.println("> Interface: " + intf.name);
+			Linker32.updateConstantBlock(intf);
+			method = (Method)intf.methods;
+			while (method != null && reporter.nofErrors <= 0) {
+				if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
+					if (dbg) vrb.println("      doing fixups");
+					method.machineCode.doFixups();
 				}
-				intf = intf.nextInterface;
+				method = (Method)method.next;
 			}
-			
+			intf = intf.nextInterface;
+		}
 
-			// handle compiler specific methods
-			Method m = Method.compSpecSubroutines;	// Code generator: fix up
-			while (m != null) {
-				if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
-				if (dbg) vrb.println("      doing fixups");
-				m.machineCode.doFixups();
-				m = (Method)m.next;
-			}
 
-			// Linker: update system table, determine size of code
-			if (reporter.nofErrors <= 0) {
-				Linker32.updateSystemTable();
-			}
-			
-			// Linker: Create target image
-			if (reporter.nofErrors <= 0) {
-				if (dbg) vrb.println("[Launcher] Generating target image");
-				Linker32.generateTargetImage();
-			}
-			
-			// Create target command table file if necessary
-			if (reporter.nofErrors <= 0) {
-				HString tctFileName = Configuration.getActiveProject().getTctFile();
-				if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
-			}
-			
-			if (reporter.nofErrors > 0) {
-				log.println("Compilation failed with " + reporter.nofErrors + " error(s)");
-				log.println();
-			} else {
-				log.println("Compilation and target image generation successfully finished");
-				log.println();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		// handle compiler specific methods
+		Method m = Method.compSpecSubroutines;	// Code generator: fix up
+		while (m != null) {
+			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
+			if (dbg) vrb.println("      doing fixups");
+			m.machineCode.doFixups();
+			m = (Method)m.next;
+		}
+
+		// Linker: update system table, determine size of code
+		if (reporter.nofErrors <= 0) {
+			Linker32.updateSystemTable();
+			if (dbgProflg) {vrb.println("duration for generating ssa, code and linking = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
+		}
+
+		// Linker: Create target image
+		if (reporter.nofErrors <= 0) {
+			if (dbg) vrb.println("[Launcher] Generating target image");
+			Linker32.generateTargetImage();
+		}
+
+		// Create target command table file if necessary
+		if (reporter.nofErrors <= 0) {
+			HString tctFileName = Configuration.getActiveProject().getTctFileName();
+			if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
+			if (dbgProflg) {vrb.println("duration for generating target file = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
+		}
+
+		if (reporter.nofErrors > 0) {
+			log.println("Compilation failed with " + reporter.nofErrors + " error(s)");
+			log.println();
+		} else {
+			log.println("Compilation and target image generation successfully finished");
+			log.println();
 		}
 	}
 	
 	public static void downloadTargetImage() {
-		if (Configuration.getActiveProject().getProgrammer()!= null) {
+		if (Configuration.getProgrammer() != null) {
 			if (reporter.nofErrors <= 0) {
 				Board b = Configuration.getBoard();
-				TargetConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
+				RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
 				TargetMemorySegment tms = Linker32.targetImage;
 				if (b != null) {
 					int c = 0;
@@ -363,20 +362,25 @@ public class Launcher implements ICclassFileConsts {
 					}
 					try {
 						if (dbg) vrb.println("[Launcher] Initializing registers");
-						tc.initRegisters(b.getCpuRegisterInits());
-						tc.initRegisters(b.getBoardRegisterInits());
-						tc.initRegisters(targetConfig.getRegisterInits());
-						for (int i = 0; i < b.getCPU().getNofGPRs(); i++) {
-							tc.setGprValue(i, 0);
+						RegisterInit r = b.regInits;
+						while (r != null) {
+							tc.initRegister(r);
+							r = (RegisterInit) r.next;
 						}
+						r = targetConfig.regInits;
+						while (r != null) {
+							tc.initRegister(r);
+							r = (RegisterInit) r.next;
+						}
+						for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setGprValue(i, 0);
 						log.println("Downloading target image:");
 						while (tms != null && reporter.nofErrors <= 0) {
 							if (dbg) vrb.print("  Proceeding TMS #" + tms.id);
 							if (tms.segment == null) { // this should never happen
 								// TODO add error message here
-								if(dbg) vrb.println(" -> skipping (segment not defined)");
+								if (dbg) vrb.println(" -> skipping (segment not defined)");
 							} else {
-								if(dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.getName());
+								if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
 								tc.writeTMS(tms);
 							}
 							tms = tms.next;
@@ -393,13 +397,13 @@ public class Launcher implements ICclassFileConsts {
 				reporter.error(TargetConnection.errNoTargetImage);
 				reporter.nofErrors++;
 			}
-		}
+		} else reporter.error(810);
 	}
 	
 	public static void startTarget() {
 		if (reporter.nofErrors <= 0) {
-			if(tc != null) {
-				vrb.println("Starting target");
+			if (tc != null) {
+				log.println("Starting target");
 				try {
 					tc.startTarget();
 				} catch (TargetConnectionException e) {
@@ -420,11 +424,11 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void openTargetConnection() {
-		if(dbg) vrb.println("[Launcher] Opening target connection");
-		if(Configuration.getActiveProject().getProgrammer()!= null) {
+		if (dbg) vrb.println("[Launcher] Opening target connection");
+		if (Configuration.getProgrammer()!= null) {
 			tc = getTargetConnection();
-			if(tc != null) {
-				if(dbg) vrb.println(" -> ok");
+			if (tc != null) {
+				if (dbg) vrb.println(" -> ok");
 				try {
 					if(dbg) vrb.println("  Initializing target connection");
 					tc.init();
@@ -433,13 +437,8 @@ public class Launcher implements ICclassFileConsts {
 					e.printStackTrace();
 				}
 			}
-			else {
-				System.out.println("[ERROR] Can't get a connection to the target"); // TODO improve this
-			}
-		}
-		else {
-			if(dbg) vrb.println("  -> no programmer defined in current project");
-		}
+			else reporter.error(803);
+		} else reporter.error(810);
 	}
 	
 	public static void reopenTargetConnection() {
@@ -461,8 +460,8 @@ public class Launcher implements ICclassFileConsts {
 
 	public static void saveTargetImageToFile() {
 		Project currentProject = Configuration.getActiveProject();
-		if(reporter.nofErrors <= 0 && currentProject!= null && currentProject.getImgFile() != null && !currentProject.getImgFile().equals("")) {
-			saveTargetImageToFile(Configuration.getActiveProject().getImgFile(), Configuration.BIN);
+		if (reporter.nofErrors <= 0 && currentProject!= null && currentProject.getImgFileName() != null && !currentProject.getImgFileName().equals(HString.getHString(""))) {
+			saveTargetImageToFile(Configuration.getActiveProject().getImgFileName().toString(), Configuration.BIN);
 		}
 	}
 	
@@ -486,10 +485,6 @@ public class Launcher implements ICclassFileConsts {
 		}	
 	}
 	
-	public static void saveCommandTableToFile() {
-		
-	}
-	
 	protected static void saveCommandTableToFile(String fileName) {
 		if (reporter.nofErrors <= 0){
 			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));
@@ -503,110 +498,79 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static TargetConnection getTargetConnection() {
-		if(tc == null) {
+		if (tc == null) {
 			Programmer programmer = Configuration.getProgrammer();
-			if(programmer != null) {
-				HString programmerName = programmer.getName();
-				if(programmerName == HString.getRegisteredHString("ntbMpc555UsbBdi")) {
-					if(dbg) vrb.println("  Getting instance of target connection for ntbMpc555UsbBdi");
+			if (programmer != null) {
+				HString programmerName = programmer.name;
+				if (programmerName == HString.getRegisteredHString("ntbMpc555UsbBdi")) {
+					if (dbg) vrb.println("  Getting instance of target connection for ntbMpc555UsbBdi");
 					tc = NtbMpc555UsbBdi.getInstance();
 				}
-				else {
-					System.out.println("ERROR: Programmer \"" + programmerName + "\" not found"); // TODO improve this
-				}
-			}
-			else {
-				System.out.println("ERROR: Programmer not defined"); // TODO improve this
-			}
+				else reporter.error(811);
+			} else reporter.error(810);
 		}
 		return tc;
 	}
 	
 	protected static void createInterfaceFiles(String libraryPath) {
-		Library lib = Configuration.addLibrary(libraryPath);
-		String basePath = lib.getPathAsString() + File.separatorChar + "src" + File.separatorChar +
+		String basePath = libraryPath + File.separatorChar + "src" + File.separatorChar +
 				"ch"  + File.separatorChar + "ntb"  + File.separatorChar + "inf"  + 
 				File.separatorChar + "deep"  + File.separatorChar + "runtime";
 		
-		createCompilerInterfaceFile(lib, basePath);
+		createCompilerInterfaceFile(basePath);
 		
-		Arch[] a = lib.getArchs();
-		for(int i = 0; i < a.length; i++) {
-			createArchInterfaceFile(a[i], basePath);
-		}
-		
-		Board[] b = lib.getBoards();
-		for(int i = 0; i < b.length; i++) {
-			createBoardInterfaceFile(b[i], basePath);
-		}
+		Board b = Configuration.getBoard();
+		createArchInterfaceFile(b.cpu.arch, basePath);
+		createBoardInterfaceFile(b, basePath);
 	}
 		
-	private static void createCompilerInterfaceFile(Library lib, String basePath) {
+	private static void createCompilerInterfaceFile(String basePath) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
 		String fileName = "IdeepCompilerConstants.java";
 		try {
-			// check if path exists
 			File dir = new File(basePath);
-			if(!dir.exists()) {
-				dir.mkdirs();
-			}
-			
+			if (!dir.exists()) dir.mkdirs();
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
-			
 			vrb.println("Creating " + f.getAbsolutePath());
-			
 			fw.write("package ch.ntb.inf.deep.runtime;\n\n");
-			
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			
 			fw.write("public interface IdeepCompilerConstants {\n");
-			
 			fw.write("\n\t// Compiler constants\n");
-			ValueAssignment current = lib.getFirstCompConst();
-			while(current != null) {
-				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
-				current = (ValueAssignment)current.next;
+			SystemConstant curr = Configuration.getCompilerConstants();
+			while (curr != null) {
+				fw.write("\tpublic static final int " + curr.name.toString() + " = 0x" + Integer.toHexString(curr.val) + ";\n");
+				curr = (SystemConstant)curr.next;
 			}
 			fw.write("}");
 			fw.flush();
 			fw.close();
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		} catch (IOException e) {e.printStackTrace();}
 	}
 	
 	private static void createArchInterfaceFile(Arch a, String basePath) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
-		String archName = a.getName().toString();
+		String archName = a.name.toString();
 		basePath = basePath + File.separatorChar + archName;
 		String fileName = "I" + archName + ".java";
 		try {
-			// check if path exists
 			File dir = new File(basePath);
-			if(!dir.exists()) {
-				dir.mkdirs();
-			}
-			
+			if(!dir.exists()) dir.mkdirs();
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
-			
 			vrb.println("Creating " + f.getAbsolutePath());
-			
 			fw.write("package ch.ntb.inf.deep.runtime." + archName + ";\n\n");
-			
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			
 			fw.write("public interface I" + archName + " {\n");
-			
-			Register[] reg;
+			Register reg;
 			fw.write("\n\t// Registermap for architecture \"" + archName + "\"\n");
-			reg = a.getAllRegisters();
-			for(int i = 0; i < reg.length; i++) {
-				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x" + Integer.toHexString(reg[i].getAddress()) + ";\n");
+			reg = a.regs;
+			while (reg != null) {
+				fw.write("\tpublic static final int " + reg.name + " = 0x" + Integer.toHexString(reg.address) + ";\n");
+				reg = (Register) reg.next;
 			}
 			fw.write("}");
 			fw.flush();
@@ -620,46 +584,38 @@ public class Launcher implements ICclassFileConsts {
 	private static void createBoardInterfaceFile(Board b, String basePath) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
-		String boardName = b.getName().toString();
-		String cpuName = b.getCPU().getName().toString();
+		String boardName = b.name.toString();
+		String cpuName = b.cpu.name.toString();
 		basePath = basePath + File.separatorChar + cpuName;
 		String fileName = "I" + boardName + ".java";
 		try {
-			// check if path exists
 			File dir = new File(basePath);
-			if(!dir.exists()) {
-				dir.mkdirs();
-			}
-			
+			if(!dir.exists()) dir.mkdirs();			
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
-			
 			vrb.println("Creating " + f.getAbsolutePath());
-			
 			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
-			
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			
 			fw.write("public interface I" + boardName + " {\n");
-			
 			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
-			ValueAssignment current = b.getCPU().getSysConstants().getFirstConstant();
-			while(current != null) {
-				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
-				current = (ValueAssignment)current.next;
+			SystemConstant curr = b.cpu.sysConstants;
+			while (curr != null && curr != Configuration.getCompilerConstants()) {
+				fw.write("\tpublic static final int " + curr.name.toString() + " = 0x" + Integer.toHexString(curr.val) + ";\n");
+				curr = (SystemConstant) curr.next;
 			}
 			
 			fw.write("\n\t// System constants of board " + boardName + "\n");
-			current = b.getSysConstants().getFirstConstant();
-			while(current != null) {
-				fw.write("\tpublic static final int " + current.getName().toString() + " = 0x" + Integer.toHexString(current.getValue()) + ";\n");
-				current = (ValueAssignment)current.next;
+			curr = b.sysConstants;
+			while (curr != null && curr != b.cpu.sysConstants) {
+				fw.write("\tpublic static final int " + curr.name.toString() + " = 0x" + Integer.toHexString(curr.val) + ";\n");
+				curr = (SystemConstant) curr.next;
 			}
 			
 			fw.write("\n\t// Specific registers of CPU \" + cpuName + \"\n");
-			Register[] reg = b.getCPU().getCpuSpecificRegisters();
-			for(int i = 0; i < reg.length; i++) {
-				fw.write("\tpublic static final int " + reg[i].getName() + " = 0x" + Integer.toHexString(reg[i].getAddress()) + ";\n");
+			Register reg = b.cpu.regs;
+			while (reg != null && reg != b.cpu.arch.regs) {
+				fw.write("\tpublic static final int " + reg.name + " = 0x" + Integer.toHexString(reg.address) + ";\n");
+				reg = (Register) reg.next;
 			}
 			fw.write("}");
 			fw.flush();

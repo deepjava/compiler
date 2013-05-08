@@ -2652,7 +2652,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			throw new IndexOutOfBoundsException("Stack overflow");
 		}
 		//set index for unsubscripted SSAValues
-		if(value.index < 0){
+		if (value.index < 0){
 			value.index = stackpointer + 1;
 		}
 		exitSet[stackpointer + 1] = value;

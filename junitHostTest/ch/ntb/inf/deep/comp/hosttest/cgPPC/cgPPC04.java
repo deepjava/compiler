@@ -1,10 +1,8 @@
 package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import static org.junit.Assert.*;
-import java.io.IOException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import ch.ntb.inf.deep.cgPPC.CodeGen;
 import ch.ntb.inf.deep.cgPPC.RegAllocator;
 import ch.ntb.inf.deep.classItems.CFR;
@@ -16,14 +14,9 @@ public class cgPPC04 extends TestCgPPC {
 
 	@BeforeClass
 	public static void setUp() {
-		Configuration.setActiveProject(project);
-		project.setActiveTargetConfiguration("BootFromRam");
+		readConfig();
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T04Loops") };
-		try {
-			CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
 			createCgPPC(Class.rootClasses[0]);
 		}

@@ -41,4 +41,6 @@ Bundle-ClassPath: tempLibs/ch.ntb.inf.libusbJava.jar,
  tempLibs/ch.ntb.inf.mcdp.ide.jar,
  .
 Bundle-Vendor: www.ntb.ch/inf
-Import-Package: gnu.io
+Import-Package: gnu.io,
+ org.eclipse.ltk.core.refactoring,
+ org.eclipse.ltk.core.refactoring.participants
