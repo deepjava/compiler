@@ -311,9 +311,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 
 		@Override
 		public Object getParent(Object element) {
-			if(element instanceof Segment){
+			if (element instanceof Segment){
 				Segment seg = (Segment)element;
-				if(seg.parent != null)return seg.parent;
 				return seg.owner;
 			}
 			return null;

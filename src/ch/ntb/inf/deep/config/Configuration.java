@@ -407,7 +407,7 @@ public class Configuration implements ICclassFileConsts {
 	public static Segment[] getSysTabSegments() {
 		if (dbg) vrb.println("[CONF] getSysTabSegments");
 		Segment[] sysTabSegments = new Segment[1];
-		Module mod = (Module)activeRunConfig.systemModules.getItemByName(SYSTEMTABLE);
+		Module mod = (Module)activeRunConfig.system.getItemByName(SYSTEMTABLE);
 		if (mod == null) {reporter.error(237, SYSTEMTABLE.toString());	return null;}
 		Segment seg = mod.getSegment(SYSTAB);
 		sysTabSegments[0] = seg;
@@ -610,7 +610,7 @@ public class Configuration implements ICclassFileConsts {
 			vrb.println("description = " + tc.description);
 			indent(indentLevel+2);
 			vrb.println("system modules {");
-			Module m = tc.systemModules;
+			Module m = tc.system;
 			while (m != null) {m.print(indentLevel+3); m = (Module) m.next;}
 			indent(indentLevel+2); 
 			vrb.println("}");

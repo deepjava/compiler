@@ -1559,7 +1559,7 @@ public class Parser implements ICclassFileConsts {
 			else if (sym == sSystem) system(runConfig);
 			else modules(runConfig); // sym == sModules
 		}
-		Module sysMod = runConfig.systemModules;
+		Module sysMod = runConfig.system;
 		if (sysMod == null) {reporter.error(232, "in system " + currentFileName + " at " + runConfig.name); return;}
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		b.addRunConfiguration(runConfig);

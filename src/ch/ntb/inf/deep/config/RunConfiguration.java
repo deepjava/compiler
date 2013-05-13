@@ -27,7 +27,7 @@ import ch.ntb.inf.deep.strings.HString;
 public class RunConfiguration extends Item {
 	public String description;
 	Module modules;
-	Module systemModules;
+	Module system;
 	public RegisterInit regInits;
 	
 	public RunConfiguration(String jname) {
@@ -50,10 +50,10 @@ public class RunConfiguration extends Item {
 			
 	public void addSystemModule(Module mod){
 		if (Configuration.dbg) vrb.println("[CONF] TargetConfiguration: Adding new system module: " + mod.name);
-		if (systemModules == null) systemModules = mod;
+		if (system == null) system = mod;
 		else {
-			mod.next = systemModules;
-			systemModules = mod;
+			mod.next = system;
+			system = mod;
 		}		
 	}
 

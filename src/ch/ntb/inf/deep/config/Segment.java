@@ -26,7 +26,6 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class Segment extends Item {
 	public Device owner;
-	public Segment parent;
 	public int attributes = 0;
 	public int size = 0;
 	public int usedSize = 0;
@@ -49,14 +48,6 @@ public class Segment extends Item {
 		
 	public HString getFullName() {
 		String name = this.name.toString();
-		Segment ps = this.parent;
-		Segment ts = this;
-		while(ps != null) {
-			name = ps.name + "." + name;
-			if(ps.parent == null) ts = ps;
-			ps = ps.parent;
-		}
-		name = ts.owner.name + "." + name;
 		return HString.getRegisteredHString(name);
 	}
 	
