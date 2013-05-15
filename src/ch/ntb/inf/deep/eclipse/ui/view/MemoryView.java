@@ -406,10 +406,13 @@ public class MemoryView extends ViewPart implements Listener {
 					switch (width) {
 					case 1:
 						bdi.writeByte(p.addr, (byte)p.value);
+						break;
 					case 2:
 						bdi.writeHalfWord(p.addr, (short)p.value);
+						break;
 					case 4:
 						bdi.writeWord(p.addr, p.value);
+						break;
 					default:
 						bdi.writeWord(p.addr, p.value);
 					}
