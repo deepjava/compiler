@@ -8,7 +8,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="junitTargetTest"/>
 	<classpathentry kind="src" path="junitHostTest"/>
-	<classpathentry kind="lib" path="/ch.ntb.inf.junitTarget/bin" sourcepath="/ch.ntb.inf.junitTarget/src"/>
+	<classpathentry kind="lib" path="/ch.ntb.inf.junitTarget/bin"/>
 	<classpathentry kind="lib" path="/ch.ntb.inf.deep.trglib/bin" sourcepath="/ch.ntb.inf.deep.trglib/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
