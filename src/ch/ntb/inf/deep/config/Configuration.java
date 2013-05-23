@@ -202,6 +202,7 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static String[][] searchDescInConfig(File configDir, short symbol) {
+		reporter.clear();
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return !name.startsWith(".") && name.endsWith(".deep");
