@@ -1,5 +1,6 @@
 package ch.ntb.inf.deep.eclipse.ui.refactoring;
 
+import java.io.File;
 import java.util.GregorianCalendar;
 
 import org.eclipse.core.resources.IProject;
@@ -28,10 +29,6 @@ public class RenameDeepProject extends RenameParticipant {
 	@Override
 	public Change createChange(IProgressMonitor arg0) throws CoreException,
 			OperationCanceledException {
-//		IProject p = pType.getProject();  // limit to the current project
-		System.out.println("createChange");
-		System.out.println(p.getName());
-		System.out.println(p.getProject().getName());
 		return null;
 	}
 
@@ -42,18 +39,14 @@ public class RenameDeepProject extends RenameParticipant {
 
 	@Override
 	protected boolean initialize(Object element) {
-		
-		System.out.println("initialize");
-		System.out.println(getArguments().getNewName());
-		// read deep project file
+		String newName = getArguments().getNewName();
 		p = (IProject) element;
-		System.out.println(p.getName());
-		System.out.println(p.getProject().getName());
-		System.out.println("deep file ist: " + (p.getLocation()	+ "/" + p.getName() + ".deep"));
-//		dfc = new DeepFileChanger(p.getLocation()	+ "/" + p.getName() + ".deep");
-//		GregorianCalendar cal = new GregorianCalendar();
-//		dfc.changeContent("version", "\"" + cal.getTime().toString() + "\"");
+		dfc = new DeepFileChanger(p.getLocation()	+ "/" + p.getName() + ".deep");
+		dfc.changeContent("description", "\"deep project file for " + newName + "\"");
+		dfc.changeProjectName(newName);
 		dfc.save();
+		File oldFile = new File(p.getLocation()	+ "/" + p.getName() + ".deep"); 
+		oldFile.renameTo(new File(p.getLocation()	+ "/" + newName + ".deep"));
 		return true;
 	}
 

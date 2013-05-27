@@ -38,10 +38,10 @@ public class DeepFileChanger {
 			int indexOfComment = fileContent.lastIndexOf("#", indexOfKey);
 			int indexOfNewLine = fileContent.lastIndexOf("\n", indexOfKey);
 			if (indexOfComment < indexOfNewLine) {
-				int indexOfstartToken = fileContent.indexOf("=", indexOfKey);
+				int indexOfStartToken = fileContent.indexOf("=", indexOfKey);
 				int indexOfEndToken = fileContent.indexOf(";", indexOfKey);
-				if (indexOfstartToken < 0 || indexOfEndToken < 0) return "not available";
-				String str = fileContent.substring(indexOfstartToken+1, indexOfEndToken);
+				if (indexOfStartToken < 0 || indexOfEndToken < 0) return "not available";
+				String str = fileContent.substring(indexOfStartToken+1, indexOfEndToken);
 				return str.trim();	
 			} else { // its a comment
 				start = indexOfKey + 1;
@@ -57,15 +57,21 @@ public class DeepFileChanger {
 		while (indexOfKey > -1) {
 			int indexOfComment = fileContent.lastIndexOf("#", indexOfKey);
 			int indexOfNewLine = fileContent.lastIndexOf("\n", indexOfKey);
-			int indexOfEndtoken = fileContent.indexOf(";", indexOfKey);
+			int indexOfEndToken = fileContent.indexOf(";", indexOfKey);
 			if (indexOfComment < indexOfNewLine) {
-				fileContent.replace(indexOfKey, indexOfEndtoken, key + " = " + value);
+				fileContent.replace(indexOfKey, indexOfEndToken, key + " = " + value);
 				return;
 			} else { // its a comment
 				start = indexOfKey + 1;
 				indexOfKey = fileContent.indexOf(key, start);
 			}
 		}
+	}
+	
+	public void changeProjectName(String newName) {
+		int indexOfBracket = fileContent.indexOf("{", fileContent.indexOf("{", 0) + 1);
+		int indexOfNewLine = (fileContent.substring(0, indexOfBracket)).lastIndexOf("\n", indexOfBracket);
+		fileContent.replace(indexOfNewLine + 1, indexOfBracket, "project " + newName + " ");
 	}
 	
 	public void changeLibPath(String newPath) {
@@ -92,5 +98,6 @@ public class DeepFileChanger {
 			e.printStackTrace();
 		}
 	}
+	
 }
 
