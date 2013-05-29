@@ -2,13 +2,9 @@ package ch.ntb.inf.deep.comp.targettest.objects;
 
 import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
+import ch.ntb.inf.junitTarget.Ignore;
 import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Test;
-import ch.ntb.inf.deep.comp.targettest.objects.helper.ClassA;
-import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleA.*;
-import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleB.*;
-import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleC.*;
-import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleD.*;
 
 /**
  * NTB 12.03.2013
@@ -34,6 +30,7 @@ public class EnumTest {
 		CmdTransmitter.sendDone();		
 	}
 	
+	@Ignore
 	@Test
 	public static void testEnumSwitch() {
 		int res = 0;
@@ -51,7 +48,7 @@ public class EnumTest {
 		case BLACK: res = 2000; break;
 		case RED: res = 3000; break;
 		}
-		Assert.assertEquals("test3", 3000, res);
+		Assert.assertEquals("test2", 3000, res);
 		
 		Color state1 = Color.BLACK;
 		switch (state1) {
@@ -66,4 +63,4 @@ public class EnumTest {
 		
 }
 
-enum Color { WHITE, BLACK, RED;}
+enum Color {WHITE, BLACK, RED}
