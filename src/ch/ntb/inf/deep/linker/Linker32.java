@@ -651,20 +651,20 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 	
 	public static void createSystemTable() {
-		if(dbg) vrb.println("[LINKER] START: Create system table:\n");
+		if (dbg) vrb.println("[LINKER] START: Create system table:\n");
 		
 		// Number of stacks, heaps and classes
 		int nofStacks = Configuration.getNumberOfStacks();
 		int nofHeaps = Configuration.getNumberOfHeaps();
-		if(dbg) vrb.println("  Number of stacks:  " + nofStacks);
-		if(dbg) vrb.println("  Number of heaps:   " + nofHeaps);
-		if(dbg) vrb.println("  Number of classes: " + RefType.nofRefTypes);
+		if (dbg) vrb.println("  Number of stacks:  " + nofStacks);
+		if (dbg) vrb.println("  Number of heaps:   " + nofHeaps);
+		if (dbg) vrb.println("  Number of classes: " + RefType.nofRefTypes);
 		
 		Item kernelClass = Configuration.getOS().kernelClass;
 		if (kernelClass == null) {reporter.error(740, "kernel class not set"); return;}
 		Item kernelClinit = null;
 		kernelClinit = ((Class)kernelClass).getClassConstructor();
-		if(dbg) vrb.println("  Kernel class:      " + kernelClass.name);
+		if (dbg) vrb.println("  Kernel class:      " + kernelClass.name);
 				
 		// Create the system table
 		systemTable = new FixedValueEntry("classConstOffset", stNofStacks + ( 2 * nofStacks + 2 * nofHeaps) * 4 + 12);
@@ -675,37 +675,45 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		sysTabSizeToCopy = new FixedValueEntry("sizeToCopy", -1);
 		systemTable.appendTail(sysTabSizeToCopy);
 		systemTable.appendTail(new FixedValueEntry("nofStacks", nofStacks));
-		for(int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
+		for (int i = 0; i < nofStacks; i++) { // reference to each stack and the size of each stack
 			systemTable.appendTail(new AddressEntry("baseStack" + i + ": ", Configuration.getStackSegments()[i])); // base address
 			systemTable.appendTail(new FixedValueEntry("sizeStack" + i, Configuration.getStackSegments()[i].size));
 		}
 		systemTable.appendTail(new FixedValueEntry("nofHeaps", nofHeaps));
-		for(int i = 0; i < nofHeaps; i++) { //reference to each heap and the size of each heap
+		for (int i = 0; i < nofHeaps; i++) { //reference to each heap and the size of each heap
 			systemTable.appendTail(new AddressEntry("baseHeap" + i + ": ", Configuration.getHeapSegments()[i])); // base address
 			systemTable.appendTail(new FixedValueEntry("sizeHeap" + i, Configuration.getHeapSegments()[i].size));
 		}
 		systemTable.appendTail(new FixedValueEntry("nofClasses", Class.nofInitClasses + Class.nofNonInitClasses));
 		Class clazz = Class.initClasses; int i = 0;
+		if (dbg) vrb.println("  init classes");
 		while (clazz != null) { // reference to the constant block of each class with a class constructor (clinit)
 			assert clazz instanceof Class; 
-			systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", clazz));
-			i++;
+			if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {	// omit synthetic classes
+				systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", clazz));
+				if (dbg) vrb.println("    add class " + clazz.name);
+				i++;
+			}
 			clazz = clazz.nextClass;
 		}
 		clazz = Class.nonInitClasses;
-		while(clazz != null) { // reference to the constant block of each class without a class constructor (no clinit)
+		if (dbg) vrb.println("  noninit classes");
+		while (clazz != null) { // reference to the constant block of each class without a class constructor (no clinit)
 			assert clazz instanceof Class; 
-			if ((clazz.accAndPropFlags & (1 << apfInterface)) == 0) {
-				systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", clazz));
-				i++;
+			if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {	// omit synthetic classes
+				if ((clazz.accAndPropFlags & (1 << apfInterface)) == 0) {
+					systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", clazz));
+					if (dbg) vrb.println("    add class " + clazz.name);
+					i++;
+				}
 			}
 			clazz = clazz.nextClass;
 		}
 		systemTable.appendTail(new FixedValueEntry("endOfSystemTable", 0));
 		
-		if(dbg) vrb.println("  Size of the system table: " + getBlockSize(systemTable) + " byte (0x" + Integer.toHexString(getBlockSize(systemTable)) + ")");
+		if (dbg) vrb.println("  Size of the system table: " + getBlockSize(systemTable) + " byte (0x" + Integer.toHexString(getBlockSize(systemTable)) + ")");
 		
-		if(dbg) vrb.println("[LINKER] END: Create system table.\n");
+		if (dbg) vrb.println("[LINKER] END: Create system table.\n");
 	}
 		
 	public static void freezeMemoryMap() {

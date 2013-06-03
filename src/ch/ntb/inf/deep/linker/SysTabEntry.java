@@ -27,15 +27,15 @@ public class SysTabEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
-	Class clazz;
+	Class cls;
 	
 	public SysTabEntry(Class clazz) {
-		this.clazz = clazz;
+		this.cls = clazz;
 		this.name = clazz.name;
 	}
 	
 	public SysTabEntry(String prefix, Class clazz) {
-		this.clazz = clazz;
+		this.cls = clazz;
 		this.name = HString.getRegisteredHString(prefix + clazz.name);
 	}
 	
@@ -45,11 +45,11 @@ public class SysTabEntry extends ConstBlkEntry {
 	
 	protected int insertIntoArray(int[] a, int offset) {
 		int address;
-		if (clazz.constSegment != null) address = clazz.constSegment.address + clazz.constOffset;
-		else address = 0;	// if class is synthetic
+		assert cls.constSegment != null;
+		address = cls.constSegment.address + cls.constOffset;
 		int index = offset / 4;
 		int written = 0;
-		if(offset + size <= a.length * 4) {
+		if (offset + size <= a.length * 4) {
 			a[index] = address;
 			written = size;
 		}
@@ -66,11 +66,14 @@ public class SysTabEntry extends ConstBlkEntry {
 	}
 	
 	public String toString() {
-		return String.format("[%08X]", clazz.constSegment.address + clazz.constOffset) + " (" + name + ")";
+		if (cls.constSegment == null)
+			return String.format("[%08X]", -1) + " (" + name + ")";
+		else 
+			return String.format("[%08X]", cls.constSegment.address + cls.constOffset) + " (" + name + ")";	
 	}
 	
 	public int getAddress() {
-		return clazz.constSegment.address + clazz.constOffset;
+		return cls.constSegment.address + cls.constOffset;
 	}
 
 }
