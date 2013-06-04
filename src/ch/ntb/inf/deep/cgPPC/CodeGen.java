@@ -402,7 +402,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			SSAValue res = instr.result;
 			instr.machineCodeOffset = iCount;
 			
-			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode]);
+//			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode]);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst:
 				opds = instr.getOperands();
@@ -2453,15 +2453,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		// count register usage
 		int i = paramStartGPR;
-		//		System.out.println("i = " + i);
-		//		System.out.println("srcGPR[i] = " + srcGPR[i]);
 
 		if (dbg) {
 			StdStreams.vrb.print("srcGPR = ");
 			for (int k = paramStartGPR; srcGPR[k] != 0; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
 			StdStreams.vrb.println();
 			StdStreams.vrb.print("srcGPRcount = ");
-			for (i = paramStartGPR; srcGPR[i] != 0; i++) StdStreams.vrb.print(srcGPRcount[i] + ","); 
+			for (int n = paramStartGPR; srcGPR[n] != 0; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
 			StdStreams.vrb.println();
 		}
 
