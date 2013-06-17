@@ -1254,14 +1254,19 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	public static void writeTargetImageToBinFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
-		String fileExtension = fileName.substring(fileName.lastIndexOf('.'));
-		String pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+		String fileExtension = "bin";
+		String pathAndFileName = fileName;
+		if(fileName.lastIndexOf('.') > 0) {
+			fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+			pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+		}
+		
 		String currentFileName;
 		FileOutputStream binFile = null; // TODO @Martin: use DataOutputStream!
 		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
-		currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
+		currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
 		binFile = new FileOutputStream(currentFileName);
 		if(dbg) vrb.println("  Writing to file: " + currentFileName);
 		int currentAddress = dev.address;

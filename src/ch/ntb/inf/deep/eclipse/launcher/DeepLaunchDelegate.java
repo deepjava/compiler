@@ -31,6 +31,7 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -88,10 +89,16 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		}
 		
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
+			Launcher.saveTargetImageToFile();
+		}
+		
+		if(ErrorReporter.reporter.nofErrors == 0 ) {
 			monitor.worked(60);
-			Launcher.openTargetConnection();
-			Launcher.downloadTargetImage();
-			Launcher.startTarget();
+			if(Configuration.getProgrammer() != null) {
+				Launcher.openTargetConnection();
+				Launcher.downloadTargetImage();
+				Launcher.startTarget();
+			}
 		}
 		monitor.worked(100);
 		monitor.done();
