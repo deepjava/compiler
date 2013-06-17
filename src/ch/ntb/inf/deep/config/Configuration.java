@@ -105,7 +105,7 @@ public class Configuration implements ICclassFileConsts {
 //		printSystemClasses(2);
 //		printSystemMethods(2);
 		
-		readConfigFile(progPath, programmer);
+		if(programmer != null) readConfigFile(progPath, programmer);
 		if (reporter.nofErrors > 0) return null;
 //		printArchRegisters(2);
 //		printCpuRegisters(2);
@@ -259,7 +259,12 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static void setProgrammer(String jname) {
-		programmer = new Programmer(jname);
+		if(jname.compareToIgnoreCase("none") == 0 || jname.isEmpty()) {
+			programmer = null;
+		}
+		else {
+			programmer = new Programmer(jname);
+		}
 	}
 
 	public static Programmer getProgrammer() {
