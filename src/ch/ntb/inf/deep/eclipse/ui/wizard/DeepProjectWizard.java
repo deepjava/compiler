@@ -162,7 +162,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
 			if (srcFolder.exists()) sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\" sourcepath=\"" + libpath + "/src\"/>\n");
 			else sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
-			sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
+//			sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
 			sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
 			sb.append("</classpath>\n");
 			InputStream in = new ByteArrayInputStream(sb.toString().getBytes());

@@ -65,7 +65,7 @@ public class Launcher implements ICclassFileConsts {
 	private static TargetConnection tc;
 	private static long time;
 
-	public static void buildAll(String deepProjectFileName, String targetConfigurationName) {
+	public static int buildAll(String deepProjectFileName, String targetConfigurationName) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 		
@@ -126,7 +126,7 @@ public class Launcher implements ICclassFileConsts {
 			array = array.nextArray;
 		}
 
-		// proceeding interfaces, creating constant block 
+		// processing interfaces, creating constant block 
 		if (dbg) vrb.println("[Launcher] creating constant block for interfaces:");
 		Class intf = Class.constBlockInterfaces;	// handle interfaces list
 		while (intf != null) {
@@ -135,8 +135,8 @@ public class Launcher implements ICclassFileConsts {
 			intf = intf.nextInterface;
 		}
 
-		// Loop One: proceeding standard classes, creating constant block, translating code , calculating code size
-		if (dbg) vrb.println("[Launcher] (loop one) proceeding classes:");
+		// loop one: processing standard classes, creating constant block, translating code , calculating code size
+		if (dbg) vrb.println("[Launcher] (loop one) processing classes:");
 		if (reporter.nofErrors <= 0) {
 			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 				if (dbg) vrb.println("  Extension level " + extLevel + ":");
@@ -155,7 +155,10 @@ public class Launcher implements ICclassFileConsts {
 
 						method = (Method)clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
-							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+							// handle native methods differently 
+							if ((method.accAndPropFlags & (1 << apfNative)) != 0) {
+								vrb.println("No implementation for " + method);
+							} else if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 								if (dbg) {vrb.print("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: "); Dbg.printAccAndPropertyFlags(method.accAndPropFlags); vrb.println();}
 								// Create CFG
 								if (reporter.nofErrors <= 0) {
@@ -235,8 +238,8 @@ public class Launcher implements ICclassFileConsts {
 			intf = intf.nextInterface;
 		}
 
-		// Loop Two: proceeding std classes, calculate absolute addresses
-		if (dbg) vrb.println("[Launcher] (loop two) proceeding classes:");
+		// loop two: processing std classes, calculate absolute addresses
+		if (dbg) vrb.println("[Launcher] (loop two) processing classes:");
 		if (reporter.nofErrors <= 0) {
 			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 				clazz = Class.extLevelOrdClasses[extLevel];
@@ -252,12 +255,12 @@ public class Launcher implements ICclassFileConsts {
 		// handle compiler specific methods
 		if (reporter.nofErrors <= 0) Linker32.calculateAbsoluteAddressesForCompSpecSubroutines();
 
-		// Create global constant table
+		// create global constant table
 		if (dbg) vrb.println("[Launcher] Creating global constant table");
 		if (reporter.nofErrors <= 0) Linker32.createGlobalConstantTable();
 
-		// Loop Three: proceeding standard classes, updating constant blocks, method fix ups 
-		if (dbg) vrb.println("[Launcher] (loop three) proceeding classes:");
+		// loop three: processing standard classes, updating constant blocks, method fix ups 
+		if (dbg) vrb.println("[Launcher] (loop three) processing classes:");
 		if (reporter.nofErrors <= 0) {
 			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
 				if (dbg) vrb.println("  Extension level " + extLevel + ":");
@@ -274,7 +277,7 @@ public class Launcher implements ICclassFileConsts {
 
 						method = (Method)clazz.methods;
 						while (method != null && reporter.nofErrors <= 0) {
-							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
+							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract) | (1 << apfNative))) == 0) { // proceed only methods with code
 								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 								if (dbg) vrb.println("      doing fixups");
 								method.machineCode.doFixups();
@@ -287,8 +290,8 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 
-		// proceeding interfaces, updating constant blocks, method fix ups
-		if(dbg) vrb.println("[Launcher] (loop three) proceeding interfaces:");
+		// processing interfaces, updating constant blocks, method fix ups
+		if (dbg) vrb.println("[Launcher] (loop three) processing interfaces:");
 		intf = Class.constBlockInterfaces;
 		while (intf != null && reporter.nofErrors <= 0) {
 			if (dbg) vrb.println("> Interface: " + intf.name);
@@ -341,6 +344,8 @@ public class Launcher implements ICclassFileConsts {
 			log.println("Compilation and target image generation successfully finished");
 			log.println();
 		}
+		
+		return reporter.nofErrors;
 	}
 	
 	public static void downloadTargetImage() {
@@ -375,7 +380,7 @@ public class Launcher implements ICclassFileConsts {
 						for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setGprValue(i, 0);
 						log.println("Downloading target image:");
 						while (tms != null && reporter.nofErrors <= 0) {
-							if (dbg) vrb.print("  Proceeding TMS #" + tms.id);
+							if (dbg) vrb.print("  processing TMS #" + tms.id);
 							if (tms.segment == null) { // this should never happen
 								// TODO add error message here
 								if (dbg) vrb.println(" -> skipping (segment not defined)");
@@ -458,31 +463,35 @@ public class Launcher implements ICclassFileConsts {
 		if(tc != null) tc.closeConnection();
 	}
 
-	public static void saveTargetImageToFile() {
+	public static long saveTargetImageToFile() {
 		Project currentProject = Configuration.getActiveProject();
 		if (reporter.nofErrors <= 0 && currentProject!= null && currentProject.getImgFileName() != null && !currentProject.getImgFileName().equals(HString.getHString(""))) {
-			saveTargetImageToFile(Configuration.getActiveProject().getImgFileName().toString(), Configuration.BIN);
-		}
+			return saveTargetImageToFile(Configuration.getActiveProject().getImgFileName().toString(), Configuration.BIN);
+		}	
+		return -1;
 	}
 	
-	protected static void saveTargetImageToFile(String fileName, int format) {
+	protected static long saveTargetImageToFile(String fileName, int format) {
+		long bytesWritten = -1;
 		try {
 			switch(format) {
 			case Configuration.BIN:
 				log.println("Writing target image in binary format to: " + fileName);
-				Linker32.writeTargetImageToBinFile(fileName);
+				bytesWritten = Linker32.writeTargetImageToBinFile(fileName);
 				break;
 			case Configuration.HEX:
 				break;
 			case Configuration.SREC: 
 				break;
 			case Configuration.DTIM:
-				Linker32.writeTargetImageToDtimFile(fileName);
+				bytesWritten = Linker32.writeTargetImageToDtimFile(fileName);
 				break;
 			}
 		} catch(IOException e) {
 			e.printStackTrace();
-		}	
+			bytesWritten = -1;
+		}
+		return bytesWritten;	
 	}
 	
 	protected static void saveCommandTableToFile(String fileName) {

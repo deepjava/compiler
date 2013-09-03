@@ -1227,7 +1227,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		if (dbg) vrb.println("[LINKER] END: Generating target image\n");
 	}
 	
-	public static void writeTargetImageToDtimFile(String fileName) throws IOException {
+	public static long writeTargetImageToDtimFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
 		FileOutputStream timFile = new FileOutputStream(fileName); // TODO @Martin: use DataOutputStream!
@@ -1247,11 +1247,13 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			tms = tms.next;
 		}
 		
-		timFile.close();
+		long bytesWritten = timFile.getChannel().position();
 		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+		timFile.close();
+		return bytesWritten;
 	}
 	
-	public static void writeTargetImageToBinFile(String fileName) throws IOException {
+	public static long writeTargetImageToBinFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
 		String fileExtension = "bin";
@@ -1291,9 +1293,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			}
 			tms = tms.next;
 		}
-		binFile.close();
+		long bytesWritten =  binFile.getChannel().position();
 		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+		binFile.close();
 		log.println("Image file generated");
+		return bytesWritten;
 	}
 	
 	public static void writeCommandTableToFile(String fileName) throws IOException {
