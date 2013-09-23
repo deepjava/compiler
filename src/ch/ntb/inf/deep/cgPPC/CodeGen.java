@@ -2398,7 +2398,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			case sCregMove:
 				opds = instr.getOperands();
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
-				case tInteger: case tChar: case tRef: case tAref: case tAboolean:
+				case tInteger: case tChar: case tShort: case tByte: 
+				case tBoolean: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
 					createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
