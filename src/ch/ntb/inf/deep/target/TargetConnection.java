@@ -6,16 +6,6 @@ import ch.ntb.inf.deep.linker.TargetMemorySegment;
 
 public abstract class TargetConnection {
 		
-	public static final int errTargetNotFound = 800,
-			errDownloadFailed = 801,
-			errNoTargetImage = 802,
-			errConnectionLost = 803,
-			errReopenFailed = 804,
-			errStartTargetFailed = 805,
-			errTargetNotInDebugMode = 806,
-			errMemWriterNotImplemented = 807,
-			errBypassNotUnlocked = 808,
-			errProgrammFailed = 809;
 	public static final byte stateRunning = 0x01;
 	public static final byte stateStopped = 0x02;
 	public static final byte stateDebug = 0x03;
@@ -95,6 +85,6 @@ public abstract class TargetConnection {
 	
 	public abstract int getNofGpr();
 	
-	public abstract void resetEreasedFlag() throws TargetConnectionException;
+	public abstract void resetErasedFlag() throws TargetConnectionException;
 
 }

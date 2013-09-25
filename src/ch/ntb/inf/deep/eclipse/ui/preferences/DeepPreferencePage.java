@@ -55,6 +55,12 @@ public class DeepPreferencePage
 	public void createFieldEditors() {
 		addField(new DirectoryFieldEditor(PreferenceConstants.DEFAULT_LIBRARY_PATH, 
 				"&Default library path:", getFieldEditorParent()));
+		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_BOARD, 
+				"&Default board:", getFieldEditorParent()));
+		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_OS, 
+				"&Default operating system:", getFieldEditorParent()));
+		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_PROGRAMMER, 
+				"&Default programmer:", getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)

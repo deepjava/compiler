@@ -87,11 +87,12 @@ ErrorNr;Description;Solution
 803;Connection to target lost;
 804;Reopen failed;
 805;Starting of device failed;
-806;BDI is not in debug mode;
+806;Target is not in debug mode;
 807;Memory writer is not implemented;
 808;Bypass is not unlocked;
 809;Programming failed;
-810;No programmer defined in configuration;
-811;Programmer not found;
+810;Programmer not found;
+811;Class to connect to programmer not found;
+812;Plugin not found;
 
 900;Connection lost;

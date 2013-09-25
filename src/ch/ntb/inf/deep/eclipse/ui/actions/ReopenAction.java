@@ -47,7 +47,7 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 	public void run(IAction action) {
 		TargetConnection tc = Launcher.getTargetConnection();
 		if(tc == null){
-			ErrorReporter.reporter.error(TargetConnection.errTargetNotFound);
+			ErrorReporter.reporter.error(800);
 			return;
 		}
 		tc.closeConnection();
@@ -57,7 +57,7 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 			StdStreams.log.println("Device succesfully reopened");
 		} catch (TargetConnectionException e) {
 			tc.closeConnection();
-			ErrorReporter.reporter.error(TargetConnection.errReopenFailed);
+			ErrorReporter.reporter.error(804);
 		} catch (InterruptedException e) {
 		}
 	}

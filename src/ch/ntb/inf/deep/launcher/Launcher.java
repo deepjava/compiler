@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -50,7 +51,6 @@ import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
-import ch.ntb.inf.deep.target.NtbMpc555UsbBdi;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
@@ -330,12 +330,19 @@ public class Launcher implements ICclassFileConsts {
 			Linker32.generateTargetImage();
 		}
 
-		// Create target command table file if necessary
+		// Create target command table file if file name defined in the configuration
 		if (reporter.nofErrors <= 0) {
 			HString tctFileName = Configuration.getActiveProject().getTctFileName();
 			if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
 			if (dbgProflg) {vrb.println("duration for generating target file = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 		}
+
+		// Create target image file if file name defined in the configuration
+		if (reporter.nofErrors <= 0) {
+			HString fname = Configuration.getActiveProject().getImgFileName();
+			if (fname != null && !fname.equals(HString.getHString(""))) 
+				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
+		}	
 
 		if (reporter.nofErrors > 0) {
 			log.println("Compilation failed with " + reporter.nofErrors + " error(s)");
@@ -349,62 +356,45 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void downloadTargetImage() {
-		if (Configuration.getProgrammer() != null) {
-			if (reporter.nofErrors <= 0) {
-				Board b = Configuration.getBoard();
-				RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
-				TargetMemorySegment tms = Linker32.targetImage;
-				if (b != null) {
-					int c = 0;
-					while (tc == null) {
-						if (dbg) vrb.println("[Launcher] Opening target connection");
-						openTargetConnection();
-						c++;
-						if (c > 4) {
-							reporter.error(800, "Can't open target connection: tried 5 times");
-							return;
-						}
+		Board b = Configuration.getBoard();
+		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
+		TargetMemorySegment tms = Linker32.targetImage;
+		if (b != null) {
+			int c = 0;
+			if (tc != null) {
+				try {
+					if (dbg) vrb.println("[Launcher] Initializing registers");
+					RegisterInit r = b.regInits;
+					while (r != null) {
+						tc.initRegister(r);
+						r = (RegisterInit) r.next;
 					}
-					try {
-						if (dbg) vrb.println("[Launcher] Initializing registers");
-						RegisterInit r = b.regInits;
-						while (r != null) {
-							tc.initRegister(r);
-							r = (RegisterInit) r.next;
-						}
-						r = targetConfig.regInits;
-						while (r != null) {
-							tc.initRegister(r);
-							r = (RegisterInit) r.next;
-						}
-						for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setGprValue(i, 0);
-						log.println("Downloading target image:");
-						while (tms != null && reporter.nofErrors <= 0) {
-							if (dbg) vrb.print("  processing TMS #" + tms.id);
-							if (tms.segment == null) { // this should never happen
-								// TODO add error message here
-								if (dbg) vrb.println(" -> skipping (segment not defined)");
-							} else {
-								if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
-								tc.writeTMS(tms);
-							}
-							tms = tms.next;
-						}
-						tc.resetEreasedFlag();
-					} catch (TargetConnectionException e) {
-						reporter.error(TargetConnection.errDownloadFailed);
-						reporter.nofErrors++;
+					r = targetConfig.regInits;
+					while (r != null) {
+						tc.initRegister(r);
+						r = (RegisterInit) r.next;
 					}
-				} else { // Configuration Error: Board not set!
-					// TODO add error message here
+					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setGprValue(i, 0);
+					log.println("Downloading target image:");
+					while (tms != null && reporter.nofErrors <= 0) {
+						if (dbg) vrb.print("  processing TMS #" + tms.id);
+						if (tms.segment == null) { // this should never happen
+							// TODO add error message here
+							if (dbg) vrb.println(" -> skipping (segment not defined)");
+						} else {
+							if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
+							tc.writeTMS(tms);
+						}
+						tms = tms.next;
+					}
+					tc.resetErasedFlag();
+				} catch (TargetConnectionException e) {
+					reporter.error(801);
 				}
-			} else { // reporter.nofErrors > 0
-				reporter.error(TargetConnection.errNoTargetImage);
-				reporter.nofErrors++;
-			}
-		} else reporter.error(810);
+			} else 	reporter.error(800);
+		} else	reporter.error(238);
 	}
-	
+
 	public static void startTarget() {
 		if (reporter.nofErrors <= 0) {
 			if (tc != null) {
@@ -412,47 +402,40 @@ public class Launcher implements ICclassFileConsts {
 				try {
 					tc.startTarget();
 				} catch (TargetConnectionException e) {
-					reporter.error(TargetConnection.errStartTargetFailed);
+					reporter.error(805);
 					reporter.nofErrors++;
 				}
 			}
 		}
 	}
-	
+
 	public static void stopTarget() {
 		try {
 			if(tc != null) tc.stopTarget();
 		} catch (TargetConnectionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void openTargetConnection() {
 		if (dbg) vrb.println("[Launcher] Opening target connection");
-		if (Configuration.getProgrammer()!= null) {
-			tc = getTargetConnection();
-			if (tc != null) {
-				if (dbg) vrb.println(" -> ok");
-				try {
-					if(dbg) vrb.println("  Initializing target connection");
-					tc.init();
-				} catch (TargetConnectionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		if (tc != null) {
+			if (dbg) vrb.println(" -> ok");
+			try {
+				if(dbg) vrb.println("  Initializing target connection");
+				tc.init();
+			} catch (TargetConnectionException e) {
+				e.printStackTrace();
 			}
-			else reporter.error(803);
-		} else reporter.error(810);
+		} else reporter.error(803);
 	}
-	
+
 	public static void reopenTargetConnection() {
-		if(tc != null) {
+		if (tc != null) {
 			try {
 				tc.closeConnection();
 				tc.openConnection();
 			} catch (TargetConnectionException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -461,6 +444,48 @@ public class Launcher implements ICclassFileConsts {
 	public static void closeTargetConnection() {
 		if(dbg) vrb.println("[Launcher] Closing target connection");
 		if(tc != null) tc.closeConnection();
+	}
+
+	public static TargetConnection getTargetConnection() {
+//		if (tc == null) {
+//			Programmer programmer = Configuration.getProgrammer();
+//			if (programmer != null) {
+//				HString programmerName = programmer.name;
+//				if (programmerName == HString.getRegisteredHString("noProgrammer")) {
+//					// no programmer, do nothing
+//				}
+//				else if (programmerName == HString.getRegisteredHString("ntbMpc555UsbBdi")) {
+//					if (dbg) vrb.println("  Getting instance of target connection for ntbMpc555UsbBdi");
+////					tc = NtbMpc555UsbBdi.getInstance();
+//					java.lang.Class<?> cls;
+//					try {
+//						cls = java.lang.Class.forName("ch.ntb.inf.usbbdi.mpc555.NtbMpc555UsbBdi");
+//						java.lang.reflect.Method m;
+//						m = cls.getDeclaredMethod("getInstance");
+//						tc = (TargetConnection) m.invoke(cls);
+//					} catch (ClassNotFoundException e) {
+//						e.printStackTrace();
+//					} catch (SecurityException e) {
+//						e.printStackTrace();
+//					} catch (NoSuchMethodException e) {
+//						e.printStackTrace();
+//					} catch (IllegalArgumentException e) {
+//						e.printStackTrace();
+//					} catch (IllegalAccessException e) {
+//						e.printStackTrace();
+//					} catch (InvocationTargetException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//				else reporter.error(811);
+//			} else reporter.error(810);
+//		}
+		return tc;
+	}
+
+	public static void setTargetConnection(TargetConnection tc2) {
+		tc = tc2;
 	}
 
 	public static long saveTargetImageToFile() {
@@ -504,21 +529,6 @@ public class Launcher implements ICclassFileConsts {
 				e.printStackTrace();
 			}
 		}
-	}
-	
-	public static TargetConnection getTargetConnection() {
-		if (tc == null) {
-			Programmer programmer = Configuration.getProgrammer();
-			if (programmer != null) {
-				HString programmerName = programmer.name;
-				if (programmerName == HString.getRegisteredHString("ntbMpc555UsbBdi")) {
-					if (dbg) vrb.println("  Getting instance of target connection for ntbMpc555UsbBdi");
-					tc = NtbMpc555UsbBdi.getInstance();
-				}
-				else reporter.error(811);
-			} else reporter.error(810);
-		}
-		return tc;
 	}
 	
 	protected static void createInterfaceFiles(String libraryPath) {

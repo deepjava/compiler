@@ -45,9 +45,12 @@ public class DeepPlugin extends AbstractUIPlugin {
 	//Resource bundle.
 	private ResourceBundle resourceBundle;
 	/**
-	 *  default Lib Path
+	 *  default entries for deep projects settings
 	 */
 	public static final String LIB_PATH = "I:\\deep\\lib";
+	public static final String BOARD = "ntbMpc555HB";
+	public static final String OS = "ntbSTS";
+	public static final String PROGRAMMER = "ntbMpc555UsbBdi";
 	
 	/**
 	 * Unique identifier for the deep model (value 

@@ -42,7 +42,7 @@ public class Configuration implements ICclassFileConsts {
 	protected static final int maxNumbersOfStackSegments = 4;
 	protected static final int maxNumbersOfSysTables = 4;
 	
-	protected static final String defaultTctFileName = "tct/commandTable.dtct";
+	protected static final String defaultTctFileName = "tct/targetCommands.dtct";
 	protected static final String basePath = "/config/base";
 	protected static final String archPath = "/config/arch";	
 	protected static final String cpuPath = "/config/cpus";
@@ -54,6 +54,12 @@ public class Configuration implements ICclassFileConsts {
 	public static final int HEX = 1;
 	public static final int SREC = 2;
 	public static final int DTIM = 3;
+	public static String[] formatMnemonics = {
+		"binary",
+		"hexadecimal",
+		"srec",
+		"dtim"
+	};	
 	
 	public static final HString CODE = HString.getRegisteredHString("code");
 	public static final HString CONST = HString.getRegisteredHString("const");
@@ -105,7 +111,7 @@ public class Configuration implements ICclassFileConsts {
 //		printSystemClasses(2);
 //		printSystemMethods(2);
 		
-		if(programmer != null) readConfigFile(progPath, programmer);
+		if (programmer != null) readConfigFile(progPath, programmer);
 		if (reporter.nofErrors > 0) return null;
 //		printArchRegisters(2);
 //		printCpuRegisters(2);

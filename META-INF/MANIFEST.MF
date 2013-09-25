@@ -35,9 +35,7 @@ Export-Package: ch.ntb.inf.deep.cgPPC,
  ch.ntb.inf.deep.ssa,
  ch.ntb.inf.deep.ssa.instruction,
  ch.ntb.inf.deep.strings
-Bundle-ClassPath: tempLibs/ch.ntb.inf.libusbJava.jar,
- tempLibs/ch.ntb.inf.mcdp.ide.jar,
- .
+Bundle-ClassPath: .
 Bundle-Vendor: www.ntb.ch/inf
 Import-Package: 
  org.eclipse.ltk.core.refactoring,

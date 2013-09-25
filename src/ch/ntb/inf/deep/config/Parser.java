@@ -504,6 +504,9 @@ public class Parser implements ICclassFileConsts {
 			} else if (str.equals("imgfile")) {
 				sym = sImgFile;
 				return true;
+			} else if (str.equals("imgformat")) {
+				sym = sImgFormat;
+				return true;
 			}
 			break;
 		case 'k':
@@ -697,7 +700,7 @@ public class Parser implements ICclassFileConsts {
 	}
 
 	/**
-	 * determine the next symbol ignores tabs and spaces
+	 * determine the next symbol, ignores tabs and spaces
 	 */
 	private void next() {
 		int ch = 0;
@@ -1053,6 +1056,8 @@ public class Parser implements ICclassFileConsts {
 			return "tctfile";
 		case sImgFile:
 			return "imgfile";
+		case sImgFormat:
+			return "imgformat";
 		case sNone:
 			return "none";
 		default:
@@ -1173,16 +1178,18 @@ public class Parser implements ICclassFileConsts {
 	}
 	
 	private void programmer() {
-		if(sym != sProgrammer) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmer, received symbol: " + symToString()); return;}
+		if (sym != sProgrammer) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmer, received symbol: " + symToString()); return;}
 		next();
-		if(sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
 		Programmer prog = Configuration.getProgrammer();
 		assert prog != null;
 		next();
-		if(sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
+		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
 		next();
-		if(sym != sDescription) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return;}
+		if (sym != sDescription) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return;}
 		prog.setDescription(descriptionAssignment());
+		prog.setPluginId(pluginIdAssignment());
+		prog.setClassName(classNameAssignment());
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line " + lineNumber); return;}
 		next();
 	}
@@ -1610,8 +1617,8 @@ public class Parser implements ICclassFileConsts {
 				currentProject.setImgFileName(imgFileAssignment());
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + currentProject.getImgFileName());
 			} else if (sym == sImgFormat) {
-				// TODO
-				next();
+				currentProject.setImgFileFormat(imgFileFormatAssignment());
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file format to " + Configuration.formatMnemonics[currentProject.getImgFileFormat()]);
 			} else { // sym == sTctFile
 				currentProject.setTctFileName(tctFileAssignment());
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting target command file to " + currentProject.getTctFileName());
@@ -1832,6 +1839,30 @@ public class Parser implements ICclassFileConsts {
 		return s;
 	}
 	
+	private String pluginIdAssignment() {
+		String s;
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return "";}
+		next();
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
+		next();
+		s = readString();
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
+		next();
+		return s;
+	}
+	
+	private String classNameAssignment() {
+		String s;
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return "";}
+		next();
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
+		next();
+		s = readString();
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
+		next();
+		return s;
+	}
+	
 	private String boardTypeAssignment() {
 		String s;
 		if (sym != sBoardType) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: boardtype, received symbol: " + symToString()); return "";}
@@ -1884,6 +1915,21 @@ public class Parser implements ICclassFileConsts {
 		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;
+	}
+	
+	private int imgFileFormatAssignment() {
+		String s;
+		if (sym != sImgFormat) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return -1;}
+		next();
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return -1;}
+		next();
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return -1;}
+		s = strBuffer;
+		next();
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return -1;}
+		next();
+		if (s.equals("binary")) return Configuration.BIN;
+		else return -1;
 	}
 	
 	private String cpuTypeAssignment() {
@@ -2118,7 +2164,7 @@ public class Parser implements ICclassFileConsts {
 
 	private String classAssignment() {
 		String str = null;
-		if (sym != sClass) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: rootclasses, received symbol: " + symToString()); return null;}// TODO check this: rootclasses or classes???
+		if (sym != sClass) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: rootclasses, received symbol: " + symToString()); return null;}
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
@@ -2216,7 +2262,7 @@ public class Parser implements ICclassFileConsts {
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return null;}
 		next();
-		if(sym == sNone) {
+		if (sym == sNone) {
 			tctFileName = null;
 			next();
 		}

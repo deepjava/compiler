@@ -26,4 +26,7 @@ package ch.ntb.inf.deep.eclipse.ui.preferences;
 public class PreferenceConstants {
 
 	public static final String DEFAULT_LIBRARY_PATH = "defaultLibPath";
+	public static final String DEFAULT_BOARD = "defaultBoard";
+	public static final String DEFAULT_OS = "defaultOS";
+	public static final String DEFAULT_PROGRAMMER = "defaultProgrammer";
 }

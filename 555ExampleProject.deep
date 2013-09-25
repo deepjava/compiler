@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2013-02-14";
+	version = "2013-09-25";
 	description = "Example project file";
 }
 
@@ -14,8 +14,9 @@ project ExampleProjectMpc555 {
 	programmertype = ntbMpc555UsbBdi;
 	
 #	rootclasses = "java/lang/Object";
-#	rootclasses = "test/ClassA";
+#	rootclasses = "test/Test1";
 	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest5";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest3";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ActionableTest2";	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/EnumTest1";	
 #	rootclasses = "ch.ntb.inf.deep.comp.targettest.objects.InterfaceTest";
@@ -26,8 +27,8 @@ project ExampleProjectMpc555 {
 #	rootclasses = "SpezAusb1";
 
 #	imgfile = "out/exampleProject.bin"
-#	imgformat = bin;
+#	imgformat = binary;
 
-	tctfile = "tct/targetCommands.dtct";
+#	tctfile = "tct/targetCommands.dtct";
 
 }

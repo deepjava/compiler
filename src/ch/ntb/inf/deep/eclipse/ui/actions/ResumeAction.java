@@ -47,7 +47,7 @@ public class ResumeAction implements IWorkbenchWindowActionDelegate {
 	public void run(IAction action) {
 		TargetConnection bdi = Launcher.getTargetConnection();
 		if (bdi == null) {
-			ErrorReporter.reporter.error(TargetConnection.errTargetNotFound);
+			ErrorReporter.reporter.error(800);
 			return;
 		}
 		try {

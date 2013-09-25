@@ -34,6 +34,7 @@ public class Project extends Item {
 	HString deepProjectName;		// deep project name as specified in the project file
 	HString tctFileName;			// target command file name
 	HString imgFileName;			// image file name
+	int imgFileFormat;				// image file format
 	
 	
 	public Project(String deepFileName) {
@@ -67,14 +68,22 @@ public class Project extends Item {
 		return tctFileName;
 	}
 	
-	public void setImgFileName(String name) {
-		imgFileName = HString.getHString(name);
-	}
-	
 	public HString getImgFileName() {
 		return imgFileName;
 	}
 
+	public void setImgFileName(String name) {
+		imgFileName = HString.getHString(name);
+	}
+	
+	public int getImgFileFormat() {
+		return imgFileFormat;
+	}
+
+	public void setImgFileFormat(int format) {
+		imgFileFormat = format;
+	}
+	
 	public File getProjectDir() {
 		return projectFile.getParentFile();
 	}

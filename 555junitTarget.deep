@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2013-02-14";
+	version = "2013-09-25";
 	description = "Project file for junit target tests";
 }
 
@@ -66,6 +66,6 @@ project junitTargetTestProject {
 #				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest";
 
 # Target command table file
-	tctfile = "../ch.ntb.inf.junitTarget/tct/commandTable.dtct";
+	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
 
 }

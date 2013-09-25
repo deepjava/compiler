@@ -31,9 +31,14 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
+import ch.ntb.inf.deep.eclipse.DeepPlugin;
+import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 
 class TargetConfigPage extends WizardPage {
 		
+	private final String defaultBoard = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_BOARD);
+	private final String defaultOs = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_OS);
+	private final String defaultProgrammer = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_PROGRAMMER);
 	private Combo boardCombo, programmerCombo, osCombo;
 	private String[][] boards;
 	private String[][] operatingSystems;
@@ -73,12 +78,13 @@ class TargetConfigPage extends WizardPage {
 		if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
 			File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
 			boards = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.boardsPath), Parser.sBoard);
-			String[] str = new String[boards.length];
-			int index = 0;
+			String[] str = new String[boards.length + 1];
+			int index = str.length - 1;
 			for (int i = 0; i < boards.length; i++) {
 				str[i] = boards[i][1];
-				if (boards[i][0].contains("NTB MPC555")) index = i;
+				if (boards[i][0].contains(defaultBoard)) index = i;
 			}
+			str[str.length - 1] = "none";
 			boardCombo.setItems(str);
 			boardCombo.select(index);
 		}
@@ -88,10 +94,15 @@ class TargetConfigPage extends WizardPage {
 		if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
 			File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
 			operatingSystems = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.osPath), Parser.sOperatingSystem);
-			String[] str = new String[operatingSystems.length];
-			for (int i = 0; i < operatingSystems.length; i++) str[i] = operatingSystems[i][1];
+			String[] str = new String[operatingSystems.length + 1];
+			int index = str.length - 1;
+			for (int i = 0; i < operatingSystems.length; i++) {
+				str[i] = operatingSystems[i][1];
+				if (operatingSystems[i][0].contains(defaultOs)) index = i;
+			}
+			str[str.length - 1] = "none";
 			osCombo.setItems(str);
-			osCombo.select(0);
+			osCombo.select(index);
 		}
 	}
 	
@@ -99,12 +110,13 @@ class TargetConfigPage extends WizardPage {
 		if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
 			File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
 			programmers = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.progPath), Parser.sProgrammer);
-			String[] str = new String[programmers.length];
-			int index = 0;
+			String[] str = new String[programmers.length + 1];
+			int index = str.length - 1;
 			for (int i = 0; i < programmers.length; i++) {
 				str[i] = programmers[i][1];
-				if (programmers[i][0].contains("555")) index = i;
+				if (programmers[i][0].contains(defaultProgrammer)) index = i;
 			}
+			str[str.length - 1] = "none";
 			programmerCombo.setItems(str);
 			programmerCombo.select(index);
 		}
@@ -114,9 +126,12 @@ class TargetConfigPage extends WizardPage {
 		if (boardCombo.getSelectionIndex() == -1 || osCombo.getSelectionIndex() == -1 || programmerCombo.getSelectionIndex() == -1){
 			return false;
 		}
-		((DeepProjectWizard)getWizard()).model.setBoard(boards[boardCombo.getSelectionIndex()]);
-		((DeepProjectWizard)getWizard()).model.setOs(operatingSystems[osCombo.getSelectionIndex()]);
-		((DeepProjectWizard)getWizard()).model.setProgrammer(programmers[programmerCombo.getSelectionIndex()]);
+		if (boardCombo.getSelectionIndex() != boardCombo.getItemCount() - 1) ((DeepProjectWizard)getWizard()).model.setBoard(boards[boardCombo.getSelectionIndex()]);
+		else ((DeepProjectWizard)getWizard()).model.setBoard(null);
+		if (osCombo.getSelectionIndex() != osCombo.getItemCount() - 1) ((DeepProjectWizard)getWizard()).model.setOs(operatingSystems[osCombo.getSelectionIndex()]);
+		else ((DeepProjectWizard)getWizard()).model.setOs(null);
+		if (programmerCombo.getSelectionIndex() != programmerCombo.getItemCount() - 1) ((DeepProjectWizard)getWizard()).model.setProgrammer(programmers[programmerCombo.getSelectionIndex()]);
+		else ((DeepProjectWizard)getWizard()).model.setProgrammer(null);
 		return true;
 	}
 	

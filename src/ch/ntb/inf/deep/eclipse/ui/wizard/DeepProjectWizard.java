@@ -203,11 +203,15 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 	private void saveProjectPreferences(){
 		ProjectScope scope = new ProjectScope(project);
 		IEclipsePreferences pref = scope.getNode("deepStart");
-		if (pref == null) System.out.println("no node: deepStart");
-		pref.put("board", model.getBoard()[0]);
-		pref.put("programmer", model.getProgrammer()[0]);
-		pref.put("os", model.getOs()[0]);
-		pref.put("libPath", model.getLibrary().getAbsolutePath());
+		if (pref != null) {
+			String[] name = model.getBoard();
+			if (name != null) pref.put("board", name[0]);
+			name = model.getOs();
+			if (name != null) pref.put("os", name[0]);
+			name = model.getProgrammer();
+			if (name != null) pref.put("programmer", name[0]);
+			pref.put("libPath", model.getLibrary().getAbsolutePath());
+		}
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {

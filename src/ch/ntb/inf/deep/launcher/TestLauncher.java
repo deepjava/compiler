@@ -1,9 +1,13 @@
 package ch.ntb.inf.deep.launcher;
 
+import java.lang.reflect.InvocationTargetException;
+
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.MemMap;
+import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.linker.Linker32;
+import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 
@@ -21,14 +25,35 @@ public class TestLauncher {
 //		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/5200ExampleProject.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
-			Launcher.openTargetConnection();
-			Launcher.downloadTargetImage();
-			Launcher.startTarget();
-			Launcher.closeTargetConnection();
-		}
+			Programmer programmer = Configuration.getProgrammer();
+			if (programmer != null) {
+				java.lang.Class<?> cls;
+				try {
+					cls = java.lang.Class.forName(programmer.getClassName().toString());
+					java.lang.reflect.Method m;
+					m = cls.getDeclaredMethod("getInstance");
+					TargetConnection tc = (TargetConnection) m.invoke(cls);
+					Launcher.setTargetConnection(tc);
+					Launcher.openTargetConnection();
+					Launcher.downloadTargetImage();
+					Launcher.startTarget();
+					Launcher.closeTargetConnection();
+				} catch (ClassNotFoundException e) {
+					ErrorReporter.reporter.error(811, programmer.getClassName().toString());
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			} else System.out.println("no programmer defined");
+		} 
 		
-//		Launcher.saveTargetImageToFile("W:/phycorempc5200b/test.bin", Configuration.BIN);
-
 //		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 
 		/* DEBUG OUTPRINTS */

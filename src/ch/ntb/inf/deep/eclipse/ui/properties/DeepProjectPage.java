@@ -196,48 +196,54 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 	private SelectionAdapter listener = new SelectionAdapter() {
 		public void widgetSelected(SelectionEvent e){
 			if (e.widget.equals(boardCombo)) {
-				board = boards[boardCombo.getSelectionIndex()][0];
-			}
-			if (e.widget.equals(programmerCombo)) {
-				programmer = programmers[programmerCombo.getSelectionIndex()][0];
+				if (boardCombo.getSelectionIndex() != boardCombo.getItemCount() - 1) board = boards[boardCombo.getSelectionIndex()][0];
+				else board = "";
 			}
 			if (e.widget.equals(osCombo)) {
-				os = osys[osCombo.getSelectionIndex()][0];
+				if (osCombo.getSelectionIndex() != osCombo.getItemCount() - 1) os = osys[osCombo.getSelectionIndex()][0];
+				else os = "";
+			}
+			if (e.widget.equals(programmerCombo)) {
+				if (programmerCombo.getSelectionIndex() != programmerCombo.getItemCount() - 1) programmer = programmers[programmerCombo.getSelectionIndex()][0];
+				else programmer = "";
 			}
 		}
 	};
 
 	private void readLib() {
 		boards = Configuration.searchDescInConfig(new File(libPath + Configuration.boardsPath), Parser.sBoard);
-		String[] str = new String[boards.length];
-		int index = 0;
+		String[] str = new String[boards.length + 1];
+		int index = boards.length;
 		for (int i = 0; i < boards.length; i++) {
 			str[i] = boards[i][1];
 			//				if (pref.get("board", "").equals(boards[i][0])) index = i;
 			if (board.equals(boards[i][0])) index = i;
 		}
+		str[str.length - 1] = "none";
 		boardCombo.setItems(str);
 		boardCombo.select(index);
 
 		programmers = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.progPath), Parser.sProgrammer);
-		str = new String[programmers.length];
-		index = 0;
+		str = new String[programmers.length + 1];
+		index = programmers.length;
 		for (int i = 0; i < programmers.length; i++) {
 			str[i] = programmers[i][1];
 			//				if (pref.get("programmer", "").equals(programmers[i][0])) index = i;
 			if (programmer.equals(programmers[i][0])) index = i;
 		}
+		str[str.length - 1] = "none";
 		programmerCombo.setItems(str);
 		programmerCombo.select(index);
 
 		osys = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.osPath), Parser.sOperatingSystem);
-		str = new String[osys.length];
-		index = 0;
+		str = new String[osys.length + 1];
+		index = osys.length;
 		for (int i = 0; i < osys.length; i++) {
 			str[i] = osys[i][1];
 			//				if (pref.get("os", "").equals(os[i][0])) index = i;
 			if (os.equals(osys[i][0])) index = i;
 		}
+		str[str.length - 1] = "none";
 		osCombo.setItems(str);
 		osCombo.select(index);
 	}
