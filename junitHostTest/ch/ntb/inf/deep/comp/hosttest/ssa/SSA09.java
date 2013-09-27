@@ -48,7 +48,7 @@ public class SSA09 extends TestSSA {
 	@Test
 	public void callm2(){
 		SSANode[] nodes = getAndTestSSA("callm2", 1, 0);
-		testNode(nodes[0], 12, 0, 21);
+		testNode(nodes[0], 11, 0, 21);
 	}
 	
 	@Test

@@ -510,16 +510,16 @@ public class cgPPC04 extends TestCgPPC {
 		assertNull("wrong join", getJoin(2));
 		assertNull("wrong join", getJoin(3));
 		assertNull("wrong join", getJoin(4));					
-		assertTrue("wrong join", checkJoin(getJoin(5), 0, 75, nonVol, false));	// code
-		assertTrue("wrong join", checkJoin(getJoin(6), 0, 25, nonVol, false));	// message
-		assertTrue("wrong join", checkJoin(getJoin(7), 0, 54, nonVol, false));	// expected
-		assertTrue("wrong join", checkJoin(getJoin(8), 0, 65, nonVol, false));	// actual
-		assertTrue("wrong join", checkJoin(getJoin(9), 0, 39, nonVol, true));	// len
-		assertTrue("wrong join", checkJoin(getJoin(9).next, 39, 110, vol, false));	// len
-		assertTrue("wrong join", checkJoin(getJoin(10), 80, 106, vol, false));	// checkByte
-		assertTrue("wrong join", checkJoin(getJoin(11), 1, 102, nonVol, false));	// m
-		assertTrue("wrong join", checkJoin(getJoin(12), 7, 25, nonVol, true));	// i
-		assertTrue("wrong join", checkJoin(getJoin(12).next, 81, 102, vol, false));	// i
+		assertTrue("wrong join", checkJoin(getJoin(5), 0, 74, nonVol, false));	// code
+		assertTrue("wrong join", checkJoin(getJoin(6), 0, 24, nonVol, false));	// message
+		assertTrue("wrong join", checkJoin(getJoin(7), 0, 53, nonVol, false));	// expected
+		assertTrue("wrong join", checkJoin(getJoin(8), 0, 64, nonVol, false));	// actual
+		assertTrue("wrong join", checkJoin(getJoin(9), 0, 38, nonVol, true));	// len
+		assertTrue("wrong join", checkJoin(getJoin(9).next, 38, 109, vol, false));	// len
+		assertTrue("wrong join", checkJoin(getJoin(10), 79, 105, vol, false));	// checkByte
+		assertTrue("wrong join", checkJoin(getJoin(11), 1, 101, nonVol, false));	// m
+		assertTrue("wrong join", checkJoin(getJoin(12), 6, 24, nonVol, true));	// i
+		assertTrue("wrong join", checkJoin(getJoin(12).next, 80, 101, vol, false));	// i
 		for (int i = 13; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}

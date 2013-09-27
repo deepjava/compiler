@@ -337,13 +337,6 @@ public class Launcher implements ICclassFileConsts {
 			if (dbgProflg) {vrb.println("duration for generating target file = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 		}
 
-		// Create target image file if file name defined in the configuration
-		if (reporter.nofErrors <= 0) {
-			HString fname = Configuration.getActiveProject().getImgFileName();
-			if (fname != null && !fname.equals(HString.getHString(""))) 
-				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
-		}	
-
 		if (reporter.nofErrors > 0) {
 			log.println("Compilation failed with " + reporter.nofErrors + " error(s)");
 			log.println();
@@ -352,6 +345,13 @@ public class Launcher implements ICclassFileConsts {
 			log.println();
 		}
 		
+		// Create target image file if file name defined in the configuration
+		if (reporter.nofErrors <= 0) {
+			HString fname = Configuration.getActiveProject().getImgFileName();
+			if (fname != null && !fname.equals(HString.getHString(""))) 
+				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
+		}	
+
 		return reporter.nofErrors;
 	}
 	
@@ -447,40 +447,6 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static TargetConnection getTargetConnection() {
-//		if (tc == null) {
-//			Programmer programmer = Configuration.getProgrammer();
-//			if (programmer != null) {
-//				HString programmerName = programmer.name;
-//				if (programmerName == HString.getRegisteredHString("noProgrammer")) {
-//					// no programmer, do nothing
-//				}
-//				else if (programmerName == HString.getRegisteredHString("ntbMpc555UsbBdi")) {
-//					if (dbg) vrb.println("  Getting instance of target connection for ntbMpc555UsbBdi");
-////					tc = NtbMpc555UsbBdi.getInstance();
-//					java.lang.Class<?> cls;
-//					try {
-//						cls = java.lang.Class.forName("ch.ntb.inf.usbbdi.mpc555.NtbMpc555UsbBdi");
-//						java.lang.reflect.Method m;
-//						m = cls.getDeclaredMethod("getInstance");
-//						tc = (TargetConnection) m.invoke(cls);
-//					} catch (ClassNotFoundException e) {
-//						e.printStackTrace();
-//					} catch (SecurityException e) {
-//						e.printStackTrace();
-//					} catch (NoSuchMethodException e) {
-//						e.printStackTrace();
-//					} catch (IllegalArgumentException e) {
-//						e.printStackTrace();
-//					} catch (IllegalAccessException e) {
-//						e.printStackTrace();
-//					} catch (InvocationTargetException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//				else reporter.error(811);
-//			} else reporter.error(810);
-//		}
 		return tc;
 	}
 
@@ -488,14 +454,6 @@ public class Launcher implements ICclassFileConsts {
 		tc = tc2;
 	}
 
-	public static long saveTargetImageToFile() {
-		Project currentProject = Configuration.getActiveProject();
-		if (reporter.nofErrors <= 0 && currentProject!= null && currentProject.getImgFileName() != null && !currentProject.getImgFileName().equals(HString.getHString(""))) {
-			return saveTargetImageToFile(Configuration.getActiveProject().getImgFileName().toString(), Configuration.BIN);
-		}	
-		return -1;
-	}
-	
 	protected static long saveTargetImageToFile(String fileName, int format) {
 		long bytesWritten = -1;
 		try {

@@ -96,10 +96,6 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		}
 		
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
-			Launcher.saveTargetImageToFile();
-		}
-		
-		if(ErrorReporter.reporter.nofErrors == 0 ) {
 			monitor.worked(60);
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {

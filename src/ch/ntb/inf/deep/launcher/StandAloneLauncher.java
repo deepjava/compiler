@@ -104,10 +104,6 @@ public class StandAloneLauncher {
 			System.out.println("%%%%%%%%%%%%%%% Compiler specific subroutines %%%%%%%%%%%%%%%"); Method.printCompSpecificSubroutines();
 		}
 
-		long bytesWritten = Launcher.saveTargetImageToFile();
-		if (bytesWritten >= 0) {
-			System.out.println("Image size: " + bytesWritten + " bytes.");
-		}
 	}
 
 }
