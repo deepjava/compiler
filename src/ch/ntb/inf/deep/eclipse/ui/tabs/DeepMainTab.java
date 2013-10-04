@@ -53,9 +53,9 @@ import ch.ntb.inf.deep.eclipse.DeepPlugin;
 
 public class DeepMainTab extends AbstractLaunchConfigurationTab {
 
-	private Text fProgramText;
-	private String program;
-	private String locationPath;
+	private Text fProgramText;	// text box for deep file name
+	private String program;	// deep file name
+	private String locationPath;	// project name
 	private String runConf;
 	private Button[] runConfigs;
 	private Group group2;
@@ -152,15 +152,16 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 				Board b = Configuration.getBoard();
 				if (b == null) {
 					label.setText("No configuration available");
-					Configuration.readProjectFile(program);
+					Configuration.readProjectFile(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + locationPath + IPath.SEPARATOR + program);
 				}
 				else label.setText("Select an available configuration");
-				RunConfiguration rc = Configuration.getBoard().runConfig;
+				RunConfiguration rc = null;
+				if (Configuration.getBoard() != null) rc = Configuration.getBoard().runConfig;
 				int nof = 0;
 				while (rc != null) {nof++; rc = (RunConfiguration) rc.next;}
 				runConfigs = new Button[nof];
 				int i = 0;
-				rc = Configuration.getBoard().runConfig;
+				if (Configuration.getBoard() != null) rc = Configuration.getBoard().runConfig;
 				while (rc != null) {
 					runConfigs[i] = new Button(group2, SWT.RADIO);
 					runConfigs[i].setText(rc.description);

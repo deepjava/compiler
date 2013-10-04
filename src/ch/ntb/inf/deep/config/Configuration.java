@@ -87,6 +87,7 @@ public class Configuration implements ICclassFileConsts {
 	private static RunConfiguration activeRunConfig;
 	
 	public static Project readProjectFile(String projectFile) {
+		reporter.clear();
 		clear();
 
 		if (dbg) vrb.println("[CONF] Configuration: reading project " + projectFile);
@@ -124,6 +125,7 @@ public class Configuration implements ICclassFileConsts {
 	}
 	
 	public static void readProjectFileAndRunConfigs(String projectFile) {
+		reporter.clear();
 		clear();
 		if (dbg) vrb.println("[CONF] Configuration: reading project " + projectFile);
 		project = new Project(projectFile);
@@ -208,7 +210,6 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static String[][] searchDescInConfig(File configDir, short symbol) {
-		reporter.clear();
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return !name.startsWith(".") && name.endsWith(".deep");
@@ -286,6 +287,7 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static void setActiveTargetConfig(String string) {
+		if (board == null) return;
 		RunConfiguration targetConfig = (RunConfiguration)board.getTargetConfigurationByName(string);
 		if (targetConfig != null) activeRunConfig = targetConfig;
 		else reporter.error(223, "Targetconfiguration \"" + string + "\" not found");
@@ -516,7 +518,7 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static void printProject() {
-		vrb.println(project.toString());
+		project.print(0);
 	}
 
 	public static void printSystemClasses(int indentLevel){
