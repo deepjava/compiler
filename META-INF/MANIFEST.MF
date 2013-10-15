@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Eclipse deep Plugin
+Bundle-Name: deep Plugin for Eclipse
 Bundle-SymbolicName: ch.ntb.inf.deep;singleton:=true
 Bundle-Version: 9999
 Bundle-Activator: ch.ntb.inf.deep.eclipse.DeepPlugin
