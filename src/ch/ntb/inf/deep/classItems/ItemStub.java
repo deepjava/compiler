@@ -19,6 +19,7 @@
 package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.host.Dbg;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
 public class ItemStub extends Item {
@@ -34,6 +35,7 @@ public class ItemStub extends Item {
 		super(methName, null);
 		this.owner = owner;
 		this.descriptor = methDescriptor;
+		if (owner.name.equals(HString.getRegisteredHString("java/lang/StringBuilder"))) ErrorReporter.reporter.error(306);;
 	}
 	
 	Item getReplacedStub() {

@@ -179,7 +179,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 					return item;
 				}
 			}
-			if (parent instanceof RootElement){
+			if (parent instanceof RootElement) {
 				if (RefType.nofRefTypes < 1) return new Object[]{"No Classes loaded"};
 				int nof = 0;
 				Item cls = ((RootElement)parent).children;
@@ -191,7 +191,17 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				int count = 0;
 				cls = ((RootElement)parent).children;
 				while (cls != null && count < classes.length) {
-					if ((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) classes[count++] = cls;
+					if (((cls.accAndPropFlags & ((1<<dpfSynthetic) | (1<<apfInterface))) == 0) && (cls instanceof Class)) classes[count++] = cls;
+					cls = cls.next;
+				}
+				cls = ((RootElement)parent).children;
+				while (cls != null && count < classes.length) {
+					if (((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) && ((cls.accAndPropFlags & (1<<apfInterface)) != 0) && (cls instanceof Class)) classes[count++] = cls;
+					cls = cls.next;
+				}
+				cls = ((RootElement)parent).children;
+				while (cls != null && count < classes.length) {
+					if (((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) && (cls instanceof Array)) classes[count++] = cls;
 					cls = cls.next;
 				}
 				
@@ -391,8 +401,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	}
 	
 	private void createActions() {
-		refresh = new Action(){
-			public void run(){
+		refresh = new Action() {
+			public void run() {
 				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("Classes, Interfaces and Arrays:"), RefType.refTypeList)));
 				classTreeViewer.getControl().setEnabled(true);
 				classTreeViewer.refresh();
@@ -459,7 +469,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("Number of class methods:     " + c.nofClassMethods + "\n");
 			sb.append("Number of instance methods:  " + c.nofInstMethods + "\n");
 			sb.append("Number of class fields:      " + c.nofClassFields + "\n");
-			if((c.accAndPropFlags & (1 << apfInterface)) == 0){				
+			if((c.accAndPropFlags & (1 << apfInterface)) == 0) {				
 				sb.append("Class field base address:    0x" + Integer.toHexString(c.varSegment.address + c.varOffset) + "\n");
 			}
 			sb.append("Class fields size:           " + c.classFieldsSize + " byte\n");
@@ -469,16 +479,17 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("Number of base classes:      " + c.extensionLevel + "\n");
 			sb.append("Number of references:        " + c.nofClassRefs + "\n");
 			sb.append("Max extension level:         " + Class.maxExtensionLevelStdClasses + "\n");
-			if((c.accAndPropFlags & (1 << apfInterface)) == 0){	
+			if (c.codeSegment != null) {
 				sb.append("Machine code base address:   0x" + Integer.toHexString(c.codeSegment.address + c.codeOffset) + "\n");				
 				sb.append("Machine code size:           " + ((FixedValueEntry)c.codeBase.next).getValue() + " byte\n");
+			}
+			if (c.constSegment != null) {
 				sb.append("Constant block base address: 0x" + Integer.toHexString(c.constSegment.address + c.constOffset) + "\n");
 				sb.append("Constant block size:         " + ((FixedValueEntry)c.constantBlock).getValue() + " byte\n");
 			}
 			sb.append("Type descriptor address:     0x" + Integer.toHexString(c.address) + "\n");
-			if((c.accAndPropFlags & (1 << apfInterface)) == 0){	
-				sb.append("\nConstantblock:\n");
-				
+			if (c.constantBlock != null) {
+				sb.append("\nConstantblock:\n");	
 				Item item = c.constantBlock;
 				while(item != null){
 					sb.append(item.toString() + "\n");

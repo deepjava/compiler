@@ -19,6 +19,8 @@
 package ch.ntb.inf.deep.comp.targettest.objects.helper.exampleA;
 
 public interface IAexA {
+	String str1 = "xyz";
+	String[] str2 = {"abc", "def", "ghi"};
 
 	Object o1 = new Object();
 //	IAexA o2 = (IAexA) new Object();	// must give class cast exception

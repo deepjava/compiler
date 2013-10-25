@@ -327,14 +327,32 @@ public class InterfaceTest {
 
 	@Test
 	// tests the class constructor of an interface
-	public static void testInterfaceConstructor(){
+	public static void testInterfaceConstructor1() {
 		Object cls = new CXexA();
 		int a = ((CXexA)cls).ima11();
 		Object o = ((CXexA)cls).cmx11();
 		Assert.assertTrue("test1", o != null);
+		String str = ((CXexA)cls).str1;
+		Assert.assertEquals("test2", str, "xyz");
+		str = ((CXexA)cls).str2[0];
+		Assert.assertEquals("test3", str, "abc");
+		str = ((CXexA)cls).str2[2];
+		Assert.assertEquals("test4", str, "ghi");
 
 		CmdTransmitter.sendDone();		
 	}
 
-		
+	@Test
+	// tests the class constructor of an interface
+	public static void testInterfaceConstructor2() {
+		Object cls = new CAexA();
+		String str = ((CAexA)cls).str1;
+		Assert.assertEquals("test1", str, "xyz");
+		str = ((CAexA)cls).str2[0];
+		Assert.assertEquals("test2", str, "abc");
+		str = ((CAexA)cls).str2[2];
+		Assert.assertEquals("test3", str, "ghi");
+
+		CmdTransmitter.sendDone();		
+	}
 }

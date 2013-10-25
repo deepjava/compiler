@@ -132,7 +132,7 @@ public class Launcher implements ICclassFileConsts {
 			intf = intf.nextInterface;
 		}
 
-		// loop one: processing standard classes, creating constant block, translating code , calculating code size
+		// loop one: processing standard classes, creating constant block, translating code, calculating code size
 		if (dbg) vrb.println("[Launcher] (loop one) processing classes:");
 		if (reporter.nofErrors <= 0) {
 			for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
@@ -185,7 +185,7 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 
-		// handle interfaces with class constructor, translating code , calculating code size
+		// handle interfaces with class constructor, translating code, calculating code size
 		if(dbg) vrb.println("[LAUNCHER] handle interfaces with class constructor");
 		intf = Class.constBlockInterfaces;	
 		while (intf != null) {
@@ -304,7 +304,6 @@ public class Launcher implements ICclassFileConsts {
 			}
 			intf = intf.nextInterface;
 		}
-
 
 		// handle compiler specific methods
 		Method m = Method.compSpecSubroutines;	// Code generator: fix up

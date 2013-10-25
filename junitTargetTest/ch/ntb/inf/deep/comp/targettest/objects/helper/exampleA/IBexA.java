@@ -19,6 +19,8 @@
 package ch.ntb.inf.deep.comp.targettest.objects.helper.exampleA;
 
 public interface IBexA {
+	String str1 = "xyz";
+	String[] str2 = {"abc", "def", "ghi"};
 
 	public int imb11();
 	public int imb12();

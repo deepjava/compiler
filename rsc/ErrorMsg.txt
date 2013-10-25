@@ -44,6 +44,7 @@ ErrorNr;Description;Solution
 303;parent directories of class files already set;
 304;illegal parent directories of class files;
 305;no root classes defined;
+306;+ operator for strings not supported;
 
 400;cfgNode not found;
 

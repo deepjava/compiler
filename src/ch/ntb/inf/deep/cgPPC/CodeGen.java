@@ -2884,12 +2884,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				addr = 0;
 			else 
 				addr = fixups[currFixup].address;
-//			if (dbg) { 
-//				StdStreams.vrb.print("\t fix item ");
-//				if(item == null) StdStreams.vrb.print("null"); 
-//				else item.printName();
-//				StdStreams.vrb.println(" at address = " + Integer.toHexString(addr));
-//			}
+			if (dbg) { 
+				if (item == null) StdStreams.vrb.print("\tnull"); 
+				else StdStreams.vrb.println("\t" + item.name + " at 0x" + Integer.toHexString(addr));
+			}
 			int low = addr & 0xffff;
 			int high = (addr >> 16) & 0xffff;
 			if (!((low >> 15) == 0)) high++;

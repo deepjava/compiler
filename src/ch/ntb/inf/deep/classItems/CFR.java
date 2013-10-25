@@ -46,6 +46,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 	public static void buildSystem(HString[] rootClassNames, File[] parentDirsOfClassFiles, Class[] sysClasses, int userReqAttributes) {
 //		boolean dbg = true;
 		Item.errRep.nofErrors = 0;
+		ClassFileAdmin.clear();
 		ClassFileAdmin.registerParentDirs(parentDirsOfClassFiles);
 
 		int nofRootClasses = rootClassNames.length;

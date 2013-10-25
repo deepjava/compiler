@@ -180,169 +180,79 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 
 	public static void createConstantBlock(Class clazz) {			
 		if (dbg) vrb.println("[LINKER] START: Preparing constant block for class \"" + clazz.name +"\":");
-		if ((clazz.accAndPropFlags & (1 << apfInterface)) != 0) {	// interface 
-			// Header
-			if(dbg) vrb.println("   Creating header");
-			clazz.constantBlock = new FixedValueEntry("constBlockSize");
-			clazz.codeBase = new FixedValueEntry("codeBase");
-			clazz.constantBlock.appendTail(clazz.codeBase);
-			clazz.constantBlock.appendTail(new FixedValueEntry("codeSize"));
-			clazz.constantBlock.appendTail(new FixedValueEntry("varBase"));
-			clazz.constantBlock.appendTail(new FixedValueEntry("varSize"));
-			Method classConstructor = clazz.getClassConstructor();
-			if (classConstructor != null) clazz.constantBlock.appendTail(new AddressEntry(classConstructor));
-			else clazz.constantBlock.appendTail(new FixedValueEntry("<clinit>", -1));
-			clazz.constantBlock.appendTail(new FixedValueEntry("nofClassPtrs", 0));
-
-			// Type descriptor: size and extension level
-			if(dbg) vrb.println("   Creating type descriptor");
-			if(dbg) vrb.println("    - Beginning with size");
-			clazz.typeDescriptor = new FixedValueEntry("size");
-			Item typeDescriptorHead = clazz.typeDescriptor;
-			if(dbg) vrb.println("    - Inserting the extension level");
-			typeDescriptorHead = clazz.typeDescriptor.insertHead(new FixedValueEntry("extensionLevel", clazz.extensionLevel));
-
-			// Type descriptor: insert class name address
-			if(dbg) vrb.println("    - Inserting class name address");
-			clazz.typeDescriptor.appendTail(new FixedValueEntry("classNameAddr", 0x12345678));
-
-			// Type descriptor: insert instance pointer table offset
-			if(dbg) vrb.println("    - Inserting instance pointer table offset");
-			clazz.typeDescriptor.appendTail(new FixedValueEntry("instPtrOffset"));
-
-			// Type descriptor: insert interface type check table offset
-			if(dbg) vrb.println("    - Inserting interface type check table offset");
-			FixedValueEntry intfTypeChkTableOffset = new FixedValueEntry("intfTypeCheckOffset");
-			clazz.typeDescriptor.appendTail(intfTypeChkTableOffset);
-			
-			assert getBlockSize(clazz.typeDescriptor) == tdBaseClass0Offset : "type descriptor not properly built";
-
-			// Type descriptor: interface type check table
-			if (dbg) vrb.println("   Creating interface type check table");
-			FixedValueEntry intfTypeChkTable = null;
-			if (clazz.intfTypeChkList != null) {
-				int len = clazz.intfTypeChkList.length;
-				if (len > 0) {
-					for (int n = 0; n < len; n += 2) {
-						Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
-						int val = interf.chkId << 16;
-						if (n < len - 1) {
-							interf = clazz.intfTypeChkList.getInterfaceAt(n + 1);
-							val |= interf.chkId;
-						}
-						if (intfTypeChkTable == null)
-							intfTypeChkTable = new FixedValueEntry("intf id " + n, val);
-						else
-							intfTypeChkTable.appendTail(new FixedValueEntry("intf id " + n, val));
-					}
-					if (len % 2 == 0) {	// make sure last entry is 0
-						intfTypeChkTable.appendTail(new FixedValueEntry("intf id " + len, 0));
-					}
-				}
-			} else intfTypeChkTable = new FixedValueEntry("intf id 0", 0); // there must be an empty entry at least
-			clazz.typeDescriptor.appendTail(intfTypeChkTable);
-
-			// add type descriptor to constant block
-			clazz.constantBlock.appendTail(typeDescriptorHead);
-
-			// append block item for checksum
-			clazz.constantBlockChecksum = new FixedValueEntry("fcs", 0);
-			clazz.constantBlock.appendTail(clazz.constantBlockChecksum);
-
-			// Calculate size of constant block
-			clazz.constantBlock.setValue(getBlockSize(clazz.constantBlock));
-			
-			// Calculating type descriptor offset
-			Item i = clazz.constantBlock;
-			int offset = 0;
-			while (i != clazz.typeDescriptor) {
-				offset += ((ConstBlkEntry)i).getItemSize();
-				i = i.next;
+		if (dbg) {
+			vrb.println("=== Extended Method Table ===");
+			for (int i = 0; i < clazz.methTable.length; i++) {
+				vrb.println(clazz.methTable[i].name);
+				vrb.println("[" + i + "] Name = " + clazz.methTable[i].name + " Index = " + Integer.toHexString(clazz.methTable[i].index));
 			}
-			clazz.typeDescriptorOffset = offset;
+			vrb.println("=============================");
+		}
 
-			// Calculating interface type check list offset
-			i = clazz.typeDescriptor;
-			offset = 0;
-			if (intfTypeChkTable != null) { 
-				while (i != intfTypeChkTable) {
-					offset += ((ConstBlkEntry)i).getItemSize();
-					i = i.next;
+		// Header
+		if (dbg) vrb.println("   Creating header");
+		clazz.constantBlock = new FixedValueEntry("constBlockSize");
+		clazz.codeBase = new FixedValueEntry("codeBase");
+		clazz.constantBlock.appendTail(clazz.codeBase);
+		clazz.constantBlock.appendTail(new FixedValueEntry("codeSize"));
+		clazz.constantBlock.appendTail(new FixedValueEntry("varBase"));
+		clazz.constantBlock.appendTail(new FixedValueEntry("varSize"));
+		Method classConstructor = clazz.getClassConstructor();
+		if (classConstructor != null) clazz.constantBlock.appendTail(new AddressEntry(classConstructor));
+		else clazz.constantBlock.appendTail(new FixedValueEntry("<clinit>", -1));
+
+		// Pointer list (list of class fields which are references)
+		if (dbg) vrb.println("   Creating pointer list (class fields)");
+		FixedValueEntry classPtrList = new FixedValueEntry("nofClassPtrs");
+		int ptrCounter = 0;
+		if (clazz.nofClassRefs > 0) {
+			Item field = clazz.firstClassReference;
+			while (field != clazz.constFields) {
+				if (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray) {
+					assert (field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) != 0;
+					classPtrList.appendTail(new AddressEntry(field));
+					ptrCounter++;
 				}
+				field = field.next;
 			}
-			intfTypeChkTableOffset.setValue(offset);
+			assert ptrCounter == clazz.nofClassRefs : "[Error] Number of added pointers (" + ptrCounter + ") not equal to number of pointers in class (" + clazz.nofClassRefs + ")!";
+		}
+		classPtrList.setValue(ptrCounter);
+		clazz.constantBlock.appendTail(classPtrList);
 
-		} else { // standard class
-			if (dbg) {
-				vrb.println("=== Extended Method Table ===");
-				for (int i = 0; i < clazz.methTable.length; i++) {
-					vrb.println(clazz.methTable[i].name);
-					vrb.println("[" + i + "] Name = " + clazz.methTable[i].name + " Index = " + Integer.toHexString(clazz.methTable[i].index));
-				}
-				vrb.println("=============================");
-			}
+		// Type descriptor: size and extension level
+		if(dbg) vrb.println("   Creating type descriptor");
+		if(dbg) vrb.println("    - Beginning with size");
+		clazz.typeDescriptor = new FixedValueEntry("size");
+		Item typeDescriptorHead = clazz.typeDescriptor;
+		if(dbg) vrb.println("    - Inserting the extension level");
+		typeDescriptorHead = clazz.typeDescriptor.insertHead(new FixedValueEntry("extensionLevel", clazz.extensionLevel));
 
-			// Header
-			if (dbg) vrb.println("   Creating header");
-			clazz.constantBlock = new FixedValueEntry("constBlockSize");
-			clazz.codeBase = new FixedValueEntry("codeBase");
-			clazz.constantBlock.appendTail(clazz.codeBase);
-			clazz.constantBlock.appendTail(new FixedValueEntry("codeSize"));
-			clazz.constantBlock.appendTail(new FixedValueEntry("varBase"));
-			clazz.constantBlock.appendTail(new FixedValueEntry("varSize"));
-			Method classConstructor = clazz.getClassConstructor();
-			if (classConstructor != null) clazz.constantBlock.appendTail(new AddressEntry(classConstructor));
-			else clazz.constantBlock.appendTail(new FixedValueEntry("<clinit>", -1));
-
-			// Pointer list (list of class fields which are references)
-			if (dbg) vrb.println("   Creating pointer list (class fields)");
-			FixedValueEntry classPtrList = new FixedValueEntry("nofClassPtrs");
-			int ptrCounter = 0;
-			if (clazz.nofClassRefs > 0) {
-				Item field = clazz.firstClassReference;
-				while (field != clazz.constFields) {
-					if (((Type)field.type).category == tcRef || ((Type)field.type).category == tcArray) {
-						assert (field.accAndPropFlags & (1 << dpfConst)) == 0 && (field.accAndPropFlags & (1 << apfStatic)) != 0;
-						classPtrList.appendTail(new AddressEntry(field));
-						ptrCounter++;
-					}
-					field = field.next;
-				}
-				assert ptrCounter == clazz.nofClassRefs : "[Error] Number of added pointers (" + ptrCounter + ") not equal to number of pointers in class (" + clazz.nofClassRefs + ")!";
-			}
-			classPtrList.setValue(ptrCounter);
-			clazz.constantBlock.appendTail(classPtrList);
-
-			// Type descriptor: size and extension level
-			if(dbg) vrb.println("   Creating type descriptor");
-			if(dbg) vrb.println("    - Beginning with size");
-			clazz.typeDescriptor = new FixedValueEntry("size");
-			Item typeDescriptorHead = clazz.typeDescriptor;
-			if(dbg) vrb.println("    - Inserting the extension level");
-			typeDescriptorHead = clazz.typeDescriptor.insertHead(new FixedValueEntry("extensionLevel", clazz.extensionLevel));
-
-			// Type descriptor: create method table
+		// Type descriptor: create method table
+		if ((clazz.accAndPropFlags & (1 << apfInterface)) == 0) {	// is not interface 
 			if(dbg) vrb.println("    - Inserting method table:");
 			for(int i = 0; i < clazz.methTabLength; i++) {
 				typeDescriptorHead = typeDescriptorHead.insertHead(new AddressEntry(clazz.methTable[i])); 
 			}
+		}
 
-			// Type descriptor: insert class name address
-			if(dbg) vrb.println("    - Inserting class name address");
-			clazz.typeDescriptor.appendTail(new FixedValueEntry("classNameAddr", 0x12345678));
+		// Type descriptor: insert class name address
+		if(dbg) vrb.println("    - Inserting class name address");
+		clazz.typeDescriptor.appendTail(new FixedValueEntry("classNameAddr", 0x12345678));
 
-			// Type descriptor: insert instance pointer table offset
-			if(dbg) vrb.println("    - Inserting instance pointer table offset");
-			FixedValueEntry instPtrTableOffset = new FixedValueEntry("instPtrOffset");
-			clazz.typeDescriptor.appendTail(instPtrTableOffset);
+		// Type descriptor: insert instance pointer table offset
+		if(dbg) vrb.println("    - Inserting instance pointer table offset");
+		FixedValueEntry instPtrTableOffset = new FixedValueEntry("instPtrOffset");
+		clazz.typeDescriptor.appendTail(instPtrTableOffset);
 
-			// Type descriptor: insert interface type check table offset
-			if(dbg) vrb.println("    - Inserting interface type check table offset");
-			FixedValueEntry intfTypeChkTableOffset = new FixedValueEntry("intfTypeCheckOffset");
-			clazz.typeDescriptor.appendTail(intfTypeChkTableOffset);
-			
-			assert getBlockSize(clazz.typeDescriptor) == tdBaseClass0Offset : "type descriptor not properly built";
+		// Type descriptor: insert interface type check table offset
+		if(dbg) vrb.println("    - Inserting interface type check table offset");
+		FixedValueEntry intfTypeChkTableOffset = new FixedValueEntry("intfTypeCheckOffset");
+		clazz.typeDescriptor.appendTail(intfTypeChkTableOffset);
 
+		assert getBlockSize(clazz.typeDescriptor) == tdBaseClass0Offset : "type descriptor not properly built";
+
+		if ((clazz.accAndPropFlags & (1 << apfInterface)) == 0) {	// is not interface
 			// Type descriptor: create type table (base classes)
 			if(dbg) vrb.println("    - Inserting base classes:");
 			Class baseClass = (Class)clazz.type;
@@ -417,34 +327,43 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 
 				clazz.typeDescriptor.appendTail(interfaceTable);
 			}
+		}
 
-			// Type descriptor: interface type check table
-			if (dbg) vrb.println("   Creating interface type check table");
-			FixedValueEntry intfTypeChkTable = null;
-			int len = 0;
-			if (clazz.intfTypeChkList != null) len = clazz.intfTypeChkList.length;
-			if (len > 0) {
-				for (int n = 0; n < len; n += 2) {
-					Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
-					int val = interf.chkId << 16;
-					if (n < len - 1) {
-						interf = clazz.intfTypeChkList.getInterfaceAt(n + 1);
-						val |= interf.chkId;
-					}
-					if (intfTypeChkTable == null)
-						intfTypeChkTable = new FixedValueEntry("intf id " + n, val);
-					else
-						intfTypeChkTable.appendTail(new FixedValueEntry("intf id " + n, val));
+		// Type descriptor: interface type check table
+		if (dbg) vrb.println("   Creating interface type check table");
+		FixedValueEntry intfTypeChkTable = null;
+		int len = 0;
+		if (clazz.intfTypeChkList != null) len = clazz.intfTypeChkList.length;
+		if (len > 0) {
+			for (int n = 0; n < len; n += 2) {
+				Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
+				int val = interf.chkId << 16;
+				if (n < len - 1) {
+					interf = clazz.intfTypeChkList.getInterfaceAt(n + 1);
+					val |= interf.chkId;
 				}
-				if (len % 2 == 0) {	// make sure last entry is 0
-					intfTypeChkTable.appendTail(new FixedValueEntry("intf id " + len, 0));
-				}
+				if (intfTypeChkTable == null)
+					intfTypeChkTable = new FixedValueEntry("intf id " + n, val);
+				else
+					intfTypeChkTable.appendTail(new FixedValueEntry("intf id " + n, val));
+			}
+			if (len % 2 == 0) {	// make sure last entry is 0
+				intfTypeChkTable.appendTail(new FixedValueEntry("intf id " + len, 0));
+			}
+			clazz.typeDescriptor.appendTail(intfTypeChkTable);
+		} else {
+			if ((clazz.accAndPropFlags & (1 << apfInterface)) != 0) {
+				// there must be an empty entry at least for interfaces
+				intfTypeChkTable = new FixedValueEntry("intf id 0", 0); 
 				clazz.typeDescriptor.appendTail(intfTypeChkTable);
 			}
+		}
 
-			// Type descriptor: instance pointer table (list of instance fields which are references)
+		// Type descriptor: instance pointer table (list of instance fields which are references)
+		FixedValueEntry instPtrTable = null;
+		if ((clazz.accAndPropFlags & (1 << apfInterface)) == 0) {	// is not interface
 			if (dbg) vrb.println("   Creating pointer table (instance fields)");
-			FixedValueEntry instPtrTable = new FixedValueEntry("nofInstPtrs");
+			instPtrTable = new FixedValueEntry("nofInstPtrs");
 			ptrCounter = 0;
 			if (clazz.nofInstRefs > 0 && clazz != Type.wktString) {	// do not include instance reference fields in class String 
 				Item field = clazz.firstInstReference;
@@ -460,110 +379,110 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			}
 			instPtrTable.setValue(ptrCounter);
 			clazz.typeDescriptor.appendTail(instPtrTable);
+		}
 
-			// calculate type descriptor size
-			clazz.typeDescriptorSize = getBlockSize(typeDescriptorHead);
+		// calculate type descriptor size
+		clazz.typeDescriptorSize = getBlockSize(typeDescriptorHead);
 
-			// add type descriptor to constant block
-			clazz.constantBlock.appendTail(typeDescriptorHead);
+		// add type descriptor to constant block
+		clazz.constantBlock.appendTail(typeDescriptorHead);
 
-			// create string pool
-			if (dbg) vrb.println("  Creating string pool");
-			StringEntry stringPool = null;
-			if (clazz.constPool != null) {
-				Item cpe;
-				for (int i = 0; i < clazz.constPool.length; i++) {
-					cpe = clazz.constPool[i];
-					if (cpe.type == Type.wellKnownTypes[txString] && (cpe.accAndPropFlags & (1<<dpfConst)) != 0) { // strings which are not marked as const must not be linked
-						if (stringPool == null) stringPool = new StringEntry(cpe);
-						else stringPool.appendTail(new StringEntry(cpe));
-					}
+		// create string pool
+		if (dbg) vrb.println("  Creating string pool");
+		StringEntry stringPool = null;
+		if (clazz.constPool != null) {
+			Item cpe;
+			for (int i = 0; i < clazz.constPool.length; i++) {
+				cpe = clazz.constPool[i];
+				if (cpe.type == Type.wellKnownTypes[txString] && (cpe.accAndPropFlags & (1<<dpfConst)) != 0) { // strings which are not marked as const must not be linked
+					if (stringPool == null) stringPool = new StringEntry(cpe);
+					else stringPool.appendTail(new StringEntry(cpe));
 				}
 			}
-			if (stringPool != null) {
-				clazz.stringPoolSize = getBlockSize(stringPool);
-				clazz.constantBlock.appendTail(stringPool);
-			}
+		}
+		if (stringPool != null) {
+			clazz.stringPoolSize = getBlockSize(stringPool);
+			clazz.constantBlock.appendTail(stringPool);
+		}
 
-			// create constant pool
-			if (dbg) vrb.println("  Creating constant pool");
-			ConstantEntry constantPool = null;
-			if (clazz.constPool != null) {
-				Item cpe;
-				for (int i = 0; i < clazz.constPool.length; i++) {
-					cpe = clazz.constPool[i];
-					if (checkConstantPoolType(cpe)) {
-						if (constantPool == null) constantPool = new ConstantEntry(cpe);
-						else constantPool.appendTail(new ConstantEntry(cpe));
-					}
+		// create constant pool
+		if (dbg) vrb.println("  Creating constant pool");
+		ConstantEntry constantPool = null;
+		if (clazz.constPool != null) {
+			Item cpe;
+			for (int i = 0; i < clazz.constPool.length; i++) {
+				cpe = clazz.constPool[i];
+				if (checkConstantPoolType(cpe)) {
+					if (constantPool == null) constantPool = new ConstantEntry(cpe);
+					else constantPool.appendTail(new ConstantEntry(cpe));
 				}
 			}
-			if (constantPool != null) {
-				clazz.constantPoolSize = getBlockSize(constantPool);
-				clazz.constantBlock.appendTail(constantPool);
+		}
+		if (constantPool != null) {
+			clazz.constantPoolSize = getBlockSize(constantPool);
+			clazz.constantBlock.appendTail(constantPool);
+		}
+
+		// append block item for checksum
+		clazz.constantBlockChecksum = new FixedValueEntry("fcs", 0);
+		clazz.constantBlock.appendTail(clazz.constantBlockChecksum);
+
+		// Calculate size of constant block
+		clazz.constantBlock.setValue(getBlockSize(clazz.constantBlock));
+
+		// Calculating indexes and offsets for the string- and constant pool
+		int offset, index;
+
+		if (stringPool != null) {
+			if (dbg) vrb.println("  Calculating indexes and offsets for the string pool entries");
+			Item s = stringPool;
+			offset = 0; index = 0;
+			//				while (s != constantPool && s != instPtrTable && s != clazz.constantBlockChecksum) {
+			while (s != constantPool && s != clazz.constantBlockChecksum) {
+				((StringEntry)s).setIndex(index);
+				((StringEntry)s).setOffset(offset);
+				index++;
+				offset += ((ConstBlkEntry)s).getItemSize();
+				s = s.next;
 			}
+		}
 
-			// append block item for checksum
-			clazz.constantBlockChecksum = new FixedValueEntry("fcs", 0);
-			clazz.constantBlock.appendTail(clazz.constantBlockChecksum);
-
-			// Calculate size of constant block
-			clazz.constantBlock.setValue(getBlockSize(clazz.constantBlock));
-
-			// Calculating indexes and offsets for the string- and constant pool
-			int offset, index;
-
-			if (stringPool != null) {
-				if (dbg) vrb.println("  Calculating indexes and offsets for the string pool entries");
-				Item s = stringPool;
-				offset = 0; index = 0;
-				while (s != constantPool && s != instPtrTable && s != clazz.constantBlockChecksum) {
-					((StringEntry)s).setIndex(index);
-					((StringEntry)s).setOffset(offset);
-
-					index++;
-					offset += ((ConstBlkEntry)s).getItemSize();
-
-					s = s.next;
-				}
+		if (constantPool != null) {
+			if(dbg) vrb.println("  Calculating indexes and offsets for the constant pool entries");
+			Item c = constantPool;
+			offset = 0; index = 0;
+			//				while (c != instPtrTable && c != clazz.constantBlockChecksum) {
+			while (c != clazz.constantBlockChecksum) {
+				((ConstantEntry)c).setIndex(index);
+				((ConstantEntry)c).setOffset(offset);
+				index++;
+				offset += ((ConstBlkEntry)c).getItemSize();
+				c = c.next;
 			}
+		}
 
-			if (constantPool != null) {
-				if(dbg) vrb.println("  Calculating indexes and offsets for the constant pool entries");
-				Item c = constantPool;
-				offset = 0; index = 0;
-				while (c != instPtrTable && c != clazz.constantBlockChecksum) {
-					((ConstantEntry)c).setIndex(index);
-					((ConstantEntry)c).setOffset(offset);
+		// Calculating type descriptor offset
+		Item i = clazz.constantBlock;
+		offset = 0;
+		while (i != clazz.typeDescriptor) {
+			offset += ((ConstBlkEntry)i).getItemSize();
+			i = i.next;
+		}
+		clazz.typeDescriptorOffset = offset;
 
-					index++;
-					offset += ((ConstBlkEntry)c).getItemSize();
-
-					c = c.next;
-				}
-			}
-
-			// Calculating type descriptor offset
-			Item i = clazz.constantBlock;
-			offset = 0;
-			while (i != clazz.typeDescriptor) {
+		// Calculating interface type check list offset
+		i = clazz.typeDescriptor;
+		offset = 0;
+		if (intfTypeChkTable != null) { 
+			while (i != intfTypeChkTable) {
 				offset += ((ConstBlkEntry)i).getItemSize();
 				i = i.next;
 			}
-			clazz.typeDescriptorOffset = offset;
+		}
+		intfTypeChkTableOffset.setValue(offset);
 
-			// Calculating interface type check list offset
-			i = clazz.typeDescriptor;
-			offset = 0;
-			if (intfTypeChkTable != null) { 
-				while (i != intfTypeChkTable) {
-					offset += ((ConstBlkEntry)i).getItemSize();
-					i = i.next;
-				}
-			}
-			intfTypeChkTableOffset.setValue(offset);
-
-			// Calculating instance pointer list offset
+		// Calculating instance pointer list offset
+		if ((clazz.accAndPropFlags & (1 << apfInterface)) == 0) {	// is not interface
 			i = clazz.typeDescriptor;
 			offset = 0;
 			while (i != instPtrTable) {
@@ -571,9 +490,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				i = i.next;
 			}
 			instPtrTableOffset.setValue(offset);
-
-			if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
 		}
+
+		if(dbg) vrb.println("\n[LINKER] END: Preparing constant block for class \"" + clazz.name +"\"\n");
 	}
 		
 	public static void createTypeDescriptor(Array array) {
@@ -727,7 +646,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 		
 	public static void freezeMemoryMap() {
-//		boolean dbg = true;
 		if (dbg) vrb.println("[LINKER] START: Freeze memory map:\n");
 		if (dbg) vrb.println("1) Set a segment for the code, the static fields and the constant block for each class");
 		Segment s;
@@ -915,6 +833,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			if (clazz.codeSegment != null) {
 				int varBase = clazz.varSegment.address + clazz.varOffset;
 				int codeBase = clazz.codeSegment.address + clazz.codeOffset;
+				int constBlockBase =  clazz.constSegment.address + clazz.constOffset;
+				int classDescriptorBase = constBlockBase + cblkNofPtrsOffset + (clazz.nofClassRefs + 1) * slotSize;
+				int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
+				int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 
 				// static fields
 				if (clazz.nofClassFields > 0) {
@@ -946,6 +868,31 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 						method = (Method)method.next;
 					}
 				}
+				// Constants
+				if (clazz.constPool != null && clazz.constPool.length > 0) {
+					Item cpe;
+					if (dbg) vrb.println("  Constant pool:");
+					for (int i = 0; i < clazz.constPool.length; i++) {
+						cpe = clazz.constPool[i];
+						if (cpe instanceof StdConstant && (cpe.type == Type.wellKnownTypes[txFloat] || cpe.type == Type.wellKnownTypes[txDouble])) { // constant float or double value -> constant pool
+							if (cpe.offset != -1) {
+								cpe.address = constPoolBase + cpe.offset;
+							}
+							else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
+						}
+						else if (cpe instanceof StringLiteral) { // string literal -> string pool
+							if (cpe.offset != -1) {
+								cpe.address = stringPoolBase + cpe.offset + 8;
+							}
+							else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
+						}
+						if (dbg) {
+							if (cpe.type != null) vrb.print("    - #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + ", Name = " + cpe.name + "\n");
+							else vrb.print("    - #" + i + ": Type = <unknown>, Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + ", Name = " + cpe.name + "\n");
+						}
+					}
+				}
+
 			}
 			// type descriptor
 			clazz.address = clazz.constSegment.address + clazz.constOffset + clazz.typeDescriptorOffset;
@@ -958,7 +905,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			int stringPoolBase = classDescriptorBase + clazz.typeDescriptorSize;
 			int constPoolBase = stringPoolBase + clazz.stringPoolSize;
 
-			if(dbg) {
+			if (dbg) {
 				vrb.println("  Code base: 0x" + Integer.toHexString(codeBase));
 				vrb.println("  Var base: 0x" + Integer.toHexString(varBase));
 				vrb.println("  Const segment base address: 0x" + Integer.toHexString(clazz.constSegment.address));
@@ -1027,8 +974,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 						else reporter.error(721, "Class pool entry #" + i + " (" + cpe.type.name + ")");
 					}
 					if (dbg) {
-						if(cpe.type != null) vrb.print("    - #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
-						else vrb.print("    - #" + i + ": Type = <unknown>, Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + "\n");
+						if (cpe.type != null) vrb.print("    - #" + i + ": Type = " + cpe.type.name + ", Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + ", Name = " + cpe.name + "\n");
+						else vrb.print("    - #" + i + ": Type = <unknown>, Offset = 0x" + Integer.toHexString(cpe.offset) + ", Index = 0x" + Integer.toHexString(cpe.index) + ", Address = 0x" + Integer.toHexString(cpe.address) + ", Name = " + cpe.name + "\n");
 					}
 				}
 			}
@@ -1041,6 +988,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 
 	public static void calculateAbsoluteAddresses(Array array) {
+		if (dbg) vrb.println("\n[LINKER] START: Calculating absolute addresses for array \"" + array.name +"\":");
 		array.address = array.segment.address + array.offset + 4;	
 		// array.offset is pointer to entry "extension level", set address to next entry  
 	}
@@ -1073,7 +1021,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		// Calculate checksum
 		if (dbg) vrb.println("  Calculating checksum:");
 		int fcs = setCRC32(clazz.constantBlock, clazz.constantBlockChecksum);		
-		if (dbg) vrb.println(String.format("CRC32: 0x%08X", fcs));
+		if (dbg) vrb.println(String.format("  CRC32: 0x%08X", fcs));
 		
 		if (dbg) vrb.println("\n[LINKER] END: Updating constant block for class \"" + clazz.name +"\"\n");
 	}
@@ -1488,7 +1436,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			checksum.update(i.getBytes());
 			i = (ConstBlkEntry)i.next;
 		}
-		if (Linker32.dbg) vrb.println();
 		int fcs = (int)checksum.getValue();
 		if (Linker32.dbg) vrb.println("    fsc = 0x" + Integer.toHexString(fcs));
 		// change endianess and complement
