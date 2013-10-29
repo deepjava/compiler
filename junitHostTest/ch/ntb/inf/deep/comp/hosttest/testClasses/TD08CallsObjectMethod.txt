@@ -1,0 +1,73 @@
+
+	public int objectMethod(int param){
+		a += 200;
+		b += 300;
+		return param % 2;		
+	}
+
+}
+
+	"public int objectMethod(int)"
+	//nofStackSlots=3, nofLocalSlots=2, codeLen=28 
+	{
+		  0 aload_0 [this]
+		  1 dup
+		  2 getfield ch/ntb/inf/deep/testClasses/T08Calls.a: short
+		  5 sipush -56
+		  8 iadd
+		  9 i2s
+		 10 putfield ch/ntb/inf/deep/testClasses/T08Calls.a: short
+		 13 getstatic ch/ntb/inf/deep/testClasses/T08Calls.b: byte
+		 16 sipush 300
+		 19 iadd
+		 20 i2b
+		 21 putstatic ch/ntb/inf/deep/testClasses/T08Calls.b: byte
+		 24 iload_1 [param]
+		 25 iconst_2
+		 26 irem
+		 27 ireturn
+
+SSA for Method: objectMethod
+   SSANode 0:
+      EntrySet {[ , , ], [ , ]}
+         0: NoOpnd[sCloadLocal] (Ref),   end=5, index=0, reg=2
+         1: MonadicRef[sCloadFromField] {0} (Short),   end=3, reg=4
+         2: NoOpnd[sCloadConst] 200 (Integer),   end=3
+         3: Dyadic[sCadd] {1, 2} (Integer),   end=4, reg=4
+         4: Monadic[sCconvInt] {3} (Short),   end=5, reg=4
+         5: DyadicRef[sCstoreToField] {0, 4} (Void),   end=5
+         6: NoOpndRef[sCloadFromField]{b} (Byte),   end=8, reg=2
+         7: NoOpnd[sCloadConst] 300 (Integer),   end=8
+         8: Dyadic[sCadd] {6, 7} (Integer),   end=9, reg=2
+         9: Monadic[sCconvInt] {8} (Byte),   end=10, reg=2
+         10: MonadicRef[sCstoreToField] {9} (Void),   end=10
+         11: NoOpnd[sCloadLocal] (Integer),   end=13, index=1, reg=3
+         12: NoOpnd[sCloadConst] 2 (Integer),   end=13, reg=2
+         13: Dyadic[sCrem] {11, 12} (Integer),   end=14, reg=2
+         14: Branch[sCreturn] {13} (Void)
+      ExitSet {[ , , ], [ 0 (Ref), 11 (Integer) ]}
+
+Code for Method: objectMethod
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	c820000	[0xc]	twi  ifequal, r2, 0
+	a8820006	[0x10]	lha  r4, 6(r2)
+	388400c8	[0x14]	addi  r4, r4, 200
+	7c840734	[0x18]	extsh  r4, r4
+	c820000	[0x1c]	twi  ifequal, r2, 0
+	b0820006	[0x20]	sth  r4, 6(r2)
+	38400000	[0x24]	li  r2, 0
+	3c420000	[0x28]	addis  r2, r2, 0
+	88420004	[0x2c]	lbz  r2, 4(r2)
+	7c420774	[0x30]	extsb  r2, r2
+	3842012c	[0x34]	addi  r2, r2, 300
+	7c420774	[0x38]	extsb  r2, r2
+	38800009	[0x3c]	li  r4, 9
+	3c840000	[0x40]	addis  r4, r4, 0
+	98440004	[0x44]	stb  r2, 4(r4)
+	38400002	[0x48]	li  r2, 2
+	8001000c	[0x4c]	lwz  r0, 12(r1)
+	7c0803a6	[0x50]	mtspr  LR, r0
+	38210010	[0x54]	addi  r1, r1, 16
+	4e800020	[0x58]	bclr always, CRF7[SO]

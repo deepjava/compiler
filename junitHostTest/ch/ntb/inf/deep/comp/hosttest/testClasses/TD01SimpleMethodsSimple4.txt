@@ -1,0 +1,120 @@
+    public static void simple4() {
+        int a;
+        a = 100;
+        a = 10000;
+        a = 32767;
+        a = 40000;
+        a = 80000;
+        a = 100000;
+        a = 2147440000;
+        a = 2147483647;
+        a = -100;
+        a = -10000;
+        a = -32768;
+        a = -40000;
+        a = -80000;
+        a = -100000;
+        a = -2147440000;
+        a = -2147483648;
+    }
+
+
+		  0 bipush 100
+		  2 istore_0 [a]
+		  3 sipush 10000
+		  6 istore_0 [a]
+		  7 sipush -1
+		 10 istore_0 [a]
+		 11 ldc 40000
+		 13 istore_0 [a]
+		 14 ldc 80000
+		 16 istore_0 [a]
+		 17 ldc 100000
+		 19 istore_0 [a]
+		 20 ldc 2147440000
+		 22 istore_0 [a]
+		 23 ldc 2147483647
+		 25 istore_0 [a]
+		 26 bipush -100
+		 28 istore_0 [a]
+		 29 sipush -16
+		 32 istore_0 [a]
+		 33 sipush -32768
+		 36 istore_0 [a]
+		 37 ldc -40000
+		 39 istore_0 [a]
+		 40 ldc -80000
+		 42 istore_0 [a]
+		 43 ldc -100000
+		 45 istore_0 [a]
+		 46 ldc -2147440000
+		 48 istore_0 [a]
+		 49 ldc -2147483648
+		 51 istore_0 [a]
+		 52 return
+
+
+method simple4
+	nodeNr:0 from 0 to 52	visited: false
+		predecessor: 
+		successor: 
+
+SSA for Method: simple4
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=0, reg=2
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=1, index=0, reg=2
+         2: NoOpnd[sCloadConst] 100 (Integer),   end=2, index=0, reg=2
+         3: NoOpnd[sCloadConst] 10000 (Integer),   end=3, index=0, reg=2
+         4: NoOpnd[sCloadConst] 32767 (Integer),   end=4, index=0, reg=2
+         5: NoOpnd[sCloadConst] 40000 (Integer),   end=5, index=0, reg=2
+         6: NoOpnd[sCloadConst] 80000 (Integer),   end=6, index=0, reg=2
+         7: NoOpnd[sCloadConst] 100000 (Integer),   end=7, index=0, reg=2
+         8: NoOpnd[sCloadConst] 2147440000 (Integer),   end=8, index=0, reg=2
+         9: NoOpnd[sCloadConst] 2147483647 (Integer),   end=9, index=0, reg=2
+         10: NoOpnd[sCloadConst] -100 (Integer),   end=10, index=0, reg=2
+         11: NoOpnd[sCloadConst] -10000 (Integer),   end=11, index=0, reg=2
+         12: NoOpnd[sCloadConst] -32768 (Integer),   end=12, index=0, reg=2
+         13: NoOpnd[sCloadConst] -40000 (Integer),   end=13, index=0, reg=2
+         14: NoOpnd[sCloadConst] -80000 (Integer),   end=14, index=0, reg=2
+         15: NoOpnd[sCloadConst] -100000 (Integer),   end=15, index=0, reg=2
+         16: NoOpnd[sCloadConst] -2147440000 (Integer),   end=16, index=0, reg=2
+         17: NoOpnd[sCloadConst] -2147483648 (Integer),   end=17, index=0, reg=2
+         18: Branch[sCreturn]  (Void)
+      ExitSet {[ ], [ 17 (Integer) ]}
+
+Code for Method:simple4
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	38400001	[0x10]	li  r2, 1
+	38400064	[0x14]	li  r2, 100
+	38402710	[0x18]	li  r2, 10000
+	38407fff	[0x1c]	li  r2, 32767
+	38409c40	[0x20]	li  r2, -25536
+	3c420001	[0x24]	addis  r2, r2, 1
+	38403880	[0x28]	li  r2, 14464
+	3c420001	[0x2c]	addis  r2, r2, 1
+	384086a0	[0x30]	li  r2, -31072
+	3c420002	[0x34]	addis  r2, r2, 2
+	38405580	[0x38]	li  r2, 21888
+	3c427fff	[0x3c]	addis  r2, r2, 32767
+	3840ffff	[0x40]	li  r2, -1
+	3c428000	[0x44]	addis  r2, r2, -32768
+	3840ff9c	[0x48]	li  r2, -100
+	3840d8f0	[0x4c]	li  r2, -10000
+	38408000	[0x50]	li  r2, -32768
+	384063c0	[0x54]	li  r2, 25536
+	3c42ffff	[0x58]	addis  r2, r2, -1
+	3840c780	[0x5c]	li  r2, -14464
+	3c42ffff	[0x60]	addis  r2, r2, -1
+	38407960	[0x64]	li  r2, 31072
+	3c42fffe	[0x68]	addis  r2, r2, -2
+	3840aa80	[0x6c]	li  r2, -21888
+	3c428001	[0x70]	addis  r2, r2, -32767
+	3c428000	[0x74]	addis  r2, r2, -32768
+	8001000c	[0x78]	lwz  r0, 12(r1)
+	7c0803a6	[0x7c]	mtspr  LR, r0
+	38210010	[0x80]	addi  r1, r1, 16
+	4e800020	[0x84]	bclr always, CRF7[SO]

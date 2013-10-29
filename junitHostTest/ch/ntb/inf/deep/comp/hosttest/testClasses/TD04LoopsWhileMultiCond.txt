@@ -1,0 +1,85 @@
+	public static int whileMultiCond() {
+		int i = 0;
+		while(i < 10 && i >= 0) {
+			i++;
+		}
+		return i;
+	}
+
+	"public static int whileMultiCond()"
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=20 
+	{
+		  0 iconst_0
+		  1 istore_0 [i]
+		  2 goto 8
+		  5 iinc i, 1
+		  8 iload_0 [i]
+		  9 bipush 10
+		 11 if_icmpge 18
+		 14 iload_0 [i]
+		 15 ifge 5
+		 18 iload_0 [i]
+		 19 ireturn
+
+CFG of method whileMultiCond
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [8:11]	
+	nodeNr:1 from 5 to 5	visited: false
+		predecessor: CFG-Node [14:15]	
+		successor: CFG-Node [8:11]	
+	nodeNr:2 from 8 to 11	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [5:5]	
+		successor: CFG-Node [14:15]	CFG-Node [18:19]	
+	nodeNr:3 from 14 to 15	visited: false
+		predecessor: CFG-Node [8:11]	
+		successor: CFG-Node [18:19]	CFG-Node [5:5]	
+	nodeNr:4 from 18 to 19	visited: false
+		predecessor: CFG-Node [8:11]	CFG-Node [14:15]	
+		successor: 
+
+SSA for Method: whileMultiCond
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=4, index=0, reg=2, join={4}
+         1: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function(4) ]}
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=3
+         3: Dyadic[sCadd] {4, 2} (Integer),   end=4, index=0, reg=2, join={4}
+      ExitSet {[ , ], [ 3 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function(4) ]}
+         4: PhiFunction[sCPhiFunc] {0, 3} (Phi-Function),   start=0, end=8, index=0, reg=2
+         5: NoOpnd[sCloadConst] 10 (Integer),   end=6
+         6: Branch[sCBranch] {5, 4} (Void)
+      ExitSet {[ , ], [ Phi-Function(4) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function(4) ]}
+         7: Branch[sCBranch] {4} (Void)
+      ExitSet {[ , ], [ Phi-Function(4) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ Phi-Function(4) ]}
+         8: Branch[sCreturn] {4} (Void)
+      ExitSet {[ , ], [ Phi-Function(4) ]}
+
+Code for Method: whileMultiCond
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	48000008	[0x10]	b  8, [0x18]	
+	38420001	[0x14]	addi  r2, r2, 1
+	2c02000a	[0x18]	cmpi  crf0, 0, r2, 10
+	409f000c	[0x1c]	bc  iffalse, CRF0[LT], 12, [0x28]	
+	2c020000	[0x20]	cmpi  crf0, 0, r2, 0
+	409ffff0	[0x24]	bc  iffalse, CRF0[LT], -16, [0x14]	
+	8001000c	[0x28]	lwz  r0, 12(r1)
+	7c0803a6	[0x2c]	mtspr  LR, r0
+	38210010	[0x30]	addi  r1, r1, 16
+	4e800020	[0x34]	bclr always, CRF7[SO]

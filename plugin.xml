@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="ch.ntb.inf.deep.eclipse.launcher.DeepLaunchDelegate"
+            id="deep.launchType"
+            modes="run"
+            name="Deep Application">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         id="ch.ntb.inf.deep.nature.DeepNature"
+         name="Deep Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="ch.ntb.inf.deep.eclipse.nature.DeepNature">
+         </run>
+      </runtime>
+      <requires-nature
+            id="org.eclipse.jdt.core.javanature">
+      </requires-nature>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="deep.launchType"
+            icon="icons/full/obj16/deep.gif"
+            id="deep.typeImage">
+      </launchConfigurationTypeImage>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="ch.ntb.inf.deep.eclipse.ui.tabs.DeepTabGroup"
+            description="Specify and launch a programm"
+            id="deep.tabGroup"
+            type="deep.launchType">
+      </launchConfigurationTabGroup>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="ch.ntb.inf.deep.eclipse.ui.perspective.DeepPerspective"
+            fixed="false"
+            icon="icons/full/elcl16/deepActiv.gif"
+            id="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            name="Deep">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="ch.ntb.inf.deep.ui.wizard.category"
+            name="Deep">
+      </category>
+      <wizard
+            canFinishEarly="false"
+            category="ch.ntb.inf.deep.ui.wizard.category"
+            class="ch.ntb.inf.deep.eclipse.ui.wizard.DeepProjectWizard"
+            finalPerspective="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            hasPages="true"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.wizard.DeepProjectWizard"
+            name="Deep Project"
+            preferredPerspectives="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            project="true">
+         <description>
+            Generate a deep project
+         </description>
+      </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            class="ch.ntb.inf.deep.eclipse.ui.properties.DeepProjectPage"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.properties.DeepProjectPage"
+            name="Deep Project Settings">
+         <enabledWhen>
+            <adapt
+                  type="org.eclipse.core.resources.IProject">
+            </adapt>
+         </enabledWhen>
+      </page>
+   </extension>
+   <extension
+         id="dummybuilder"
+         point="org.eclipse.core.resources.builders">
+      <builder
+            hasNature="true">
+         <run
+               class="org.eclipse.jdt.internal.core.builder.JavaBuilder">
+         </run>
+      </builder>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            id="ch.ntb.inf.deep.ui.registerview"
+            name="Deep Register Views">
+      </category>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.eclipse.ui.view.UsLeSPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.UsLeSPRView"
+            name="User Level SPR View"
+            restorable="true">
+         <description>
+            Display the content of the user level SPR's
+         </description>
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.eclipse.ui.view.DeSuSPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.DeSuSPRView"
+            name="Development Support SPR View"
+            restorable="true">
+         <description>
+            Display the content of the development support SPR's
+         </description>
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.GPRView"
+            name="General Purpose Register View"
+            restorable="true">
+         <description>
+            Display the content of the general purpose registers
+         </description>
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.FPRView"
+            name="Floating Point Register View"
+            restorable="true">
+         <description>
+            Display the content of the floating point registers
+         </description>
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.eclipse.ui.view.MSRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.MSRView"
+            name="Machine State Register View"
+            restorable="true">
+         <description>
+            Display the content of the machine state register
+         </description>
+      </view>
+      <view
+            category="ch.ntb.inf.deep.ui.registerview"
+            class="ch.ntb.inf.deep.eclipse.ui.view.SuLeSPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.ui.SuLeSPRView"
+            name="Support Level SPR View"
+            restorable="true">
+         <description>
+            Display the content of the support level SPR's
+         </description>
+      </view>
+      <category
+            id="ch.ntb.inf.deep.targetManipulation"
+            name="Deep Target Actions">
+      </category>
+      <view
+            category="ch.ntb.inf.deep.targetManipulation"
+            class="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
+            name="Selected Memory View"
+            restorable="true">
+         <description>
+            Displays the content of the chosen memory space
+         </description>
+      </view>
+      <view
+            category="ch.ntb.inf.deep.targetManipulation"
+            class="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
+            name="TargetOperation"
+            restorable="true">
+         <description>
+            View to interact with the target. Possible actions are:
+target command, read from address, write to address, read and modify static variables, 
+read and modify registers
+         </description>
+      </view>
+      <category
+            id="ch.ntb.inf.deep.ui.Log"
+            name="Deep Logs">
+      </category>
+      <view
+            category="ch.ntb.inf.deep.ui.Log"
+            class="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
+            name="ClassTreeView"
+            restorable="true">
+         <description>
+            Display all loaded classes with their CFG, SSA and machincode, shows memory devices and their segments
+         </description>
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="ch.ntb.inf.deep.eclipse.launcher.DeepLaunchShortcut"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.launcher.DeepLaunchShortcut"
+            label="Deep Application"
+            modes="run">
+         <contextualLaunch>
+            <contextLabel
+                  label="Deep Application"
+                  mode="run">
+            </contextLabel>
+            <enablement>
+               <count
+                     value="1">
+               </count>
+            </enablement>
+         </contextualLaunch>
+         <configurationType
+               id="deep.launchType">
+         </configurationType>
+         <description
+               description="Shortcut to launch a deep aplication"
+               mode="run">
+         </description>
+      </shortcut>
+   </extension>
+   <extension
+	  point="org.eclipse.ui.actionSets">
+      <actionSet
+            description="This is a action set from the deep plugin"
+            id="ch.ntb.inf.deep.eclipse.workbenchActionSet"
+            label="Deep ActionSet"
+            visible="true">
+         <menu
+               id="ch.ntb.inf.deep.eclipse.workbenchMenu"
+               label="deep"
+               path="additions">
+            <groupMarker
+                  name="content">
+            </groupMarker>
+            <separator
+                  name="additions">
+            </separator>
+         </menu>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction"
+               icon="icons/full/obj16/ReopenConnection.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction"
+               label="Reopen USB"
+               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="reopen the USB connection">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
+               icon="icons/full/obj16/TargetSuspend.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
+               label="Suspend Target"
+               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="suspend the target">
+         </action>
+         <action
+               class="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
+               icon="icons/full/obj16/TargetResume.gif"
+               id="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
+               label="Resume Target"
+               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               style="push"
+               toolbarPath="Normal/additions"
+               tooltip="resume the target">
+         </action>
+      </actionSet>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferencePage"
+            id="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferencePage"
+            name="Deep Preferences">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferenceInitializer">
+      </initializer>
+   </extension>
+ 
+  <extension point="org.eclipse.ltk.core.refactoring.renameParticipants">
+  	<renameParticipant class="ch.ntb.inf.deep.eclipse.ui.refactoring.RenameDeepProject" id="ch.ntb.inf.deep.eclipse.ui.refactoring.RenameDeepProject" name="renaming deep projects">
+      <enablement>
+	    <with variable="affectedNatures">
+          <iterate operator="or">
+            <equals value="ch.ntb.inf.deep.nature.DeepNature"/>
+          </iterate>
+        </with>
+        <with variable="element">
+          <instanceof value="org.eclipse.core.resources.IProject"/>
+        </with>
+      </enablement>
+    </renameParticipant>
+  </extension>
+	
+</plugin>

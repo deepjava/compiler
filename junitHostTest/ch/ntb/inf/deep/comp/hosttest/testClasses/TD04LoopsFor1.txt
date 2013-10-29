@@ -1,0 +1,80 @@
+	public static void for1(){
+		int a = 0;
+		for(int i=0; i < 10; i++){
+			a++;
+		}
+	}
+	
+	"public static void for1()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=20 
+	{
+		  0 iconst_0
+		  1 istore_0 [a]
+		  2 iconst_0
+		  3 istore_1 [i]
+		  4 goto 13
+		  7 iinc a, 1
+		 10 iinc i, 1
+		 13 iload_1 [i]
+		 14 bipush 10
+		 16 if_icmplt 7
+		 19 return
+
+CFG of method for1
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: CFG-Node [13:16]	
+	nodeNr:1 from 7 to 10	visited: false
+		predecessor: CFG-Node [13:16]	
+		successor: CFG-Node [13:16]	
+	nodeNr:2 from 13 to 16	is loop header visited: false
+		predecessor: CFG-Node [0:4]	CFG-Node [7:10]	
+		successor: CFG-Node [19:19]	CFG-Node [7:10]	
+	nodeNr:3 from 19 to 19	visited: false
+		predecessor: CFG-Node [13:16]	
+		successor: 
+
+SSA for Method: for1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=7, index=0, reg=2, join={7}
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=8, index=1, reg=3, join={8}
+         2: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 0 (Integer), 1 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=4
+         4: Dyadic[sCadd] {7, 3} (Integer),   end=7, index=0, reg=2, join={7}
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=6
+         6: Dyadic[sCadd] {8, 5} (Integer),   end=8, index=1, reg=3, join={8}
+      ExitSet {[ , ], [ 4 (Integer), 6 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
+         7: PhiFunction[sCPhiFunc] {0, 4} (Phi-Function),   start=0, end=7, index=0, reg=2
+         8: PhiFunction[sCPhiFunc] {1, 6} (Phi-Function),   start=1, end=10, index=1, reg=3
+         9: NoOpnd[sCloadConst] 10 (Integer),   end=10
+         10: Branch[sCBranch] {9, 8} (Void)
+      ExitSet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
+         11: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ Phi-Function(7), Phi-Function(8) ]}
+
+Code for Method: for1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	38600000	[0x10]	li  r3, 0
+	4800000c	[0x14]	b  12, [0x20]	
+	38420001	[0x18]	addi  r2, r2, 1
+	38630001	[0x1c]	addi  r3, r3, 1
+	2c03000a	[0x20]	cmpi  crf0, 0, r3, 10
+	419ffff4	[0x24]	bc  iftrue, CRF0[LT], -12, [0x18]	
+	8001000c	[0x28]	lwz  r0, 12(r1)
+	7c0803a6	[0x2c]	mtspr  LR, r0
+	38210010	[0x30]	addi  r1, r1, 16
+	4e800020	[0x34]	bclr always, CRF7[SO]

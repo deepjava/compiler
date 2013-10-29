@@ -1,0 +1,70 @@
+	public static int classMethod(int param){
+		int x = 0;
+		for(int i = 0; i < param; i++){
+			x = x+3;
+		}
+		return x;		
+	}
+
+	"public static int classMethod(int)"
+	//nofStackSlots=2, nofLocalSlots=3, codeLen=20 
+	{
+		  0 iconst_0
+		  1 istore_1 [x]
+		  2 iconst_0
+		  3 istore_2 [i]
+		  4 goto 13
+		  7 iinc x, 3
+		 10 iinc i, 1
+		 13 iload_2 [i]
+		 14 iload_0 [param]
+		 15 if_icmplt 7
+		 18 iload_1 [x]
+		 19 ireturn
+
+SSA for Method: classMethod
+   SSANode 0:
+      EntrySet {[ , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=9, index=1, reg=3, join={9}
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=10, index=2, reg=4, join={10}
+         2: NoOpnd[sCloadLocal] (Integer),   end=8, index=0, reg=2, join={8}
+         3: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 2 (Integer), 0 (Integer), 1 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         4: NoOpnd[sCloadConst] 3 (Integer),   end=5
+         5: Dyadic[sCadd] {9, 4} (Integer),   end=9, index=1, reg=3, join={9}
+         6: NoOpnd[sCloadConst] 1 (Integer),   end=7
+         7: Dyadic[sCadd] {10, 6} (Integer),   end=10, index=2, reg=4, join={10}
+      ExitSet {[ , ], [ Phi-Function(8), 5 (Integer), 7 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         8: PhiFunction[sCPhiFunc] {2} (Phi-Function),   start=2, end=11, index=0, reg=2 deleted
+         9: PhiFunction[sCPhiFunc] {0, 5} (Phi-Function),   start=0, end=12, index=1, reg=3
+         10: PhiFunction[sCPhiFunc] {1, 7} (Phi-Function),   start=1, end=11, index=2, reg=4
+         11: Branch[sCBranch] {8, 10} (Void)
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         12: Branch[sCreturn] {9} (Void)
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+
+Code for Method: classMethod
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38600000	[0xc]	li  r3, 0
+	38800000	[0x10]	li  r4, 0
+	4800000c	[0x14]	b  12, [0x20]	
+	38630003	[0x18]	addi  r3, r3, 3
+	38840001	[0x1c]	addi  r4, r4, 1
+	7c041000	[0x20]	cmp crf0, 0, r4, r2
+	419ffff4	[0x24]	bc  iftrue, CRF0[LT], -12, [0x18]	
+	7c621b78	[0x28]	lr  r2, r3
+	8001000c	[0x2c]	lwz  r0, 12(r1)
+	7c0803a6	[0x30]	mtspr  LR, r0
+	38210010	[0x34]	addi  r1, r1, 16
+	4e800020	[0x38]	bclr always, CRF7[SO]

@@ -1,0 +1,186 @@
+	public static boolean ConditionalOperator1() {
+		// example, where operand stack is not empty at end of node
+		int mark;
+		boolean bRes;
+		boolean a = false, b = true, c = false;
+		mark = 101;
+		bRes = a ? b : c;
+		mark = 102;
+		bRes = a ? (b ? c : a) : (c ? a : b);
+		mark = 103;
+		return bRes;
+	}
+
+public static boolean ConditionalOperator1()
+	//nofStackSlots=1, nofLocalSlots=5, codeLen=57
+		  0 iconst_0
+		  1 istore_2 [a]
+		  2 iconst_1
+		  3 istore_3 [b]
+		  4 iconst_0
+		  5 istore [c]
+		  7 bipush 101
+		  9 istore_0 [mark]
+		 10 iload_2 [a]
+		 11 ifeq 18
+		 14 iload_3 [b]
+		 15 goto 20
+		 18 iload [c]
+		 20 istore_1 [bRes]
+		 21 bipush 102
+		 23 istore_0 [mark]
+		 24 iload_2 [a]
+		 25 ifeq 41
+		 28 iload_3 [b]
+		 29 ifeq 37
+		 32 iload [c]
+		 34 goto 51
+		 37 iload_2 [a]
+		 38 goto 51
+		 41 iload [c]
+		 43 ifeq 50
+		 46 iload_2 [a]
+		 47 goto 51
+		 50 iload_3 [b]
+		 51 istore_1 [bRes]
+		 52 bipush 103
+		 54 istore_0 [mark]
+		 55 iload_1 [bRes]
+		 56 ireturn
+
+method ConditionalOperator1
+	nodeNr:0 from 0 to 11	visited: false
+		predecessor:
+		successor: CFG-Node [14:15]	CFG-Node [18:18]
+	nodeNr:1 from 14 to 15	visited: false
+		predecessor: CFG-Node [0:11]
+		successor: CFG-Node [20:25]
+	nodeNr:2 from 18 to 18	visited: false
+		predecessor: CFG-Node [0:11]
+		successor: CFG-Node [20:25]
+	nodeNr:3 from 20 to 25	visited: false
+		predecessor: CFG-Node [14:15]	CFG-Node [18:18]
+		successor: CFG-Node [28:29]	CFG-Node [41:43]
+	nodeNr:4 from 28 to 29	visited: false
+		predecessor: CFG-Node [20:25]
+		successor: CFG-Node [32:34]	CFG-Node [37:38]
+	nodeNr:5 from 32 to 34	visited: false
+		predecessor: CFG-Node [28:29]
+		successor: CFG-Node [51:56]
+	nodeNr:6 from 37 to 38	visited: false
+		predecessor: CFG-Node [28:29]
+		successor: CFG-Node [51:56]
+	nodeNr:7 from 41 to 43	visited: false
+		predecessor: CFG-Node [20:25]
+		successor: CFG-Node [46:47]	CFG-Node [50:50]
+	nodeNr:8 from 46 to 47	visited: false
+		predecessor: CFG-Node [41:43]
+		successor: CFG-Node [51:56]
+	nodeNr:9 from 50 to 50	visited: false
+		predecessor: CFG-Node [41:43]
+		successor: CFG-Node [51:56]
+	nodeNr:10 from 51 to 56	visited: false
+		predecessor: CFG-Node [32:34]	CFG-Node [37:38]	CFG-Node [46:47]	CFG-Node [50:50]
+		successor:
+
+SSA for Method: ConditionalOperator1
+   SSANode 0:
+      EntrySet {[ ], [ , , , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=17, index=2, reg=2
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=19, index=3, reg=3
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=16, index=4, reg=4
+         3: NoOpnd[sCloadConst] 101 (Integer),   end=3, index=0, reg=5
+         4: Branch[sCBranch] {0} (Void)
+      ExitSet {[ ], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         5: Monadic[sCRegMove] {1} (Integer),   end=8, index=1, reg=5, join={8}
+         6: Branch[sCBranch]  (Void)
+      ExitSet {[ 1 (Integer)], [ 5 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         7: Monadic[sCRegMove] {2} (Integer),   end=8, index=1, reg=5, join={8}
+      ExitSet {[ 2 (Integer)], [ 7 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ Phi-Function(8)], [ 3 (Integer), , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         8: PhiFunction[sCPhiFunc] {5, 7} (Phi-Function),   start=5, end=8, index=1, reg=5
+         9: NoOpnd[sCloadConst] 102 (Integer),   end=9, index=0, reg=5
+         10: Branch[sCBranch] {0} (Void)
+      ExitSet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         11: Branch[sCBranch] {1} (Void)
+      ExitSet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         12: Monadic[sCRegMove] {2} (Integer),   end=20, index=1, reg=5, join={20}
+         13: Branch[sCBranch]  (Void)
+      ExitSet {[ 2 (Integer)], [ 12 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         14: Monadic[sCRegMove] {0} (Integer),   end=20, index=1, reg=5, join={20}
+         15: Branch[sCBranch]  (Void)
+      ExitSet {[ 0 (Integer)], [ 14 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 7:
+      EntrySet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         16: Branch[sCBranch] {2} (Void)
+      ExitSet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 8:
+      EntrySet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         17: Monadic[sCRegMove] {0} (Integer),   end=20, index=1, reg=5, join={20}
+         18: Branch[sCBranch]  (Void)
+      ExitSet {[ 0 (Integer)], [ 17 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 9:
+      EntrySet {[ ], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         19: Monadic[sCRegMove] {1} (Integer),   end=20, index=1, reg=5, join={20}
+      ExitSet {[ 1 (Integer)], [ 19 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 10:
+      EntrySet {[ Phi-Function(20)], [ 9 (Integer), Phi-Function(8), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         20: PhiFunction[sCPhiFunc] {12, 14, 17, 19} (Phi-Function),   start=12, end=22, index=1, reg=5
+         21: NoOpnd[sCloadConst] 103 (Integer),   end=21, index=0, reg=2
+         22: Branch[sCreturn] {20} (Void)
+      ExitSet {[ ], [ 21 (Integer), Phi-Function(20), 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+Code for Method: ConditionalOperator1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	38600001	[0x10]	li  r3, 1
+	38800000	[0x14]	li  r4, 0
+	38a00065	[0x18]	li  r5, 101
+	2c020000	[0x1c]	cmpi  crf0, 0, r2, 0
+	419d000c	[0x20]	bc  iftrue, CRF0[EQ], 12, [0x2c]	
+	7c651b78	[0x24]	lr  r5, r3
+	48000008	[0x28]	b  8, [0x30]	
+	7c852378	[0x2c]	lr  r5, r4
+	38a00066	[0x30]	li  r5, 102
+	2c020000	[0x34]	cmpi  crf0, 0, r2, 0
+	419d001c	[0x38]	bc  iftrue, CRF0[EQ], 28, [0x54]	
+	2c030000	[0x3c]	cmpi  crf0, 0, r3, 0
+	419d000c	[0x40]	bc  iftrue, CRF0[EQ], 12, [0x4c]	
+	7c852378	[0x44]	lr  r5, r4
+	48000020	[0x48]	b  32, [0x68]	
+	7c451378	[0x4c]	lr  r5, r2
+	48000018	[0x50]	b  24, [0x68]	
+	2c040000	[0x54]	cmpi  crf0, 0, r4, 0
+	419d000c	[0x58]	bc  iftrue, CRF0[EQ], 12, [0x64]	
+	7c451378	[0x5c]	lr  r5, r2
+	48000008	[0x60]	b  8, [0x68]	
+	7c651b78	[0x64]	lr  r5, r3
+	38400067	[0x68]	li  r2, 103
+	7ca22b78	[0x6c]	lr  r2, r5
+	8001000c	[0x70]	lwz  r0, 12(r1)
+	7c0803a6	[0x74]	mtspr  LR, r0
+	38210010	[0x78]	addi  r1, r1, 16
+	4e800020	[0x7c]	bclr always, CRF7[SO]

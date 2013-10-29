@@ -1,0 +1,28 @@
+public class T00EmptyClass {
+}
+
+Gibt nur Defaultkonstruktor. Dieser muss den Defaultkonstruktor der Oberklasse 
+(hier Object) aufrufen. Der Defaultkonstruktor der Oberklasse gibt keinen Wert
+zurück. Das sieht man am Typ "void"
+
+Bytecode:
+public void <init>()
+//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+	0 aload_0 [this]
+	1 invokespecial java/lang/Object(): void
+	4 return 
+	
+
+CFG: 
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+SSA for Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Ref),   end=1, index=0, reg=2
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=1
+         2: Branch[sCreturn]  (Void)
+      ExitSet {[ ], [ 0 (Ref) ]}

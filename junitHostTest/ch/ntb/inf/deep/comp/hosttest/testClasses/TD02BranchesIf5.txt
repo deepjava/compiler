@@ -1,0 +1,72 @@
+	public int if5(int n, int m){//example from mössenböck for loadParameter
+		if(n < 0){
+			n = 0; m = 0;
+		}
+		return n + m;
+	}
+
+	"public int if5(int int)"
+	//nofStackSlots=2, nofLocalSlots=3, codeLen=12 
+	{
+		  0 iload_1 [n]
+		  1 ifge 8
+		  4 iconst_0
+		  5 istore_1 [n]
+		  6 iconst_0
+		  7 istore_2 [m]
+		  8 iload_1 [n]
+		  9 iload_2 [m]
+		 10 iadd
+		 11 ireturn
+
+CFG of method if5
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor: 
+		successor: CFG-Node [4:7]	CFG-Node [8:11]	
+	nodeNr:1 from 4 to 7	visited: false
+		predecessor: CFG-Node [0:1]	
+		successor: CFG-Node [8:11]	
+	nodeNr:2 from 8 to 11	visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [4:7]	
+		successor: 
+
+SSA for Method: if5
+   SSANode 0:
+      EntrySet {[ , ], [ , , ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=5, index=1, reg=3, join={5}
+         1: Branch[sCBranch] {0} (Void)
+      ExitSet {[ , ], [ , 0 (Integer), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ , 0 (Integer), ]}
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=5, index=1, reg=3, join={5}
+         3: NoOpnd[sCloadConst] 0 (Integer),   end=6, index=2, reg=4, join={6}
+      ExitSet {[ , ], [ , 2 (Integer), 3 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ , 0 (Integer), ]}
+         4: NoOpnd[sCloadLocal] (Integer),   end=6, index=2, reg=4, join={6}
+      ExitSet {[ , ], [ , 0 (Integer), 4 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ , Phi-Function(5), Phi-Function(6) ]}
+         5: PhiFunction[sCPhiFunc] {0, 2} (Phi-Function),   end=7, index=1, reg=3
+         6: PhiFunction[sCPhiFunc] {4, 3} (Phi-Function),   end=7, index=2, reg=4
+         7: Dyadic[sCadd] {5, 6} (Integer),   end=8, reg=2
+         8: Branch[sCreturn] {7} (Void)
+      ExitSet {[ , ], [ , Phi-Function(5), Phi-Function(6) ]}
+
+Code for Method:if5
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	2c030000	[0xc]	cmpi  crf0, 0, r3, 0
+	409f000c	[0x10]	bc  iffalse, CRF0[LT], 12, [0x1c]	
+	38600000	[0x14]	li  r3, 0
+	38800000	[0x18]	li  r4, 0
+	7c432214	[0x1c]	add  r2, r3, r4
+	8001000c	[0x20]	lwz  r0, 12(r1)
+	7c0803a6	[0x24]	mtspr  LR, r0
+	38210010	[0x28]	addi  r1, r1, 16
+	4e800020	[0x2c]	bclr always, CRF7[SO]
+

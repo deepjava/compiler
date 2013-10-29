@@ -1,0 +1,187 @@
+Testdokument für die Testklasse T08Calls
+
+Sinn und Zweck:
+Diese Klasse benutzt Methoden in denen andere Methoden, mit oder ohne Rückgabewert, aufgerufen werden. 
+Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden. 
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+public static int classMethCall()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=13
+		  0 iconst_0
+		  1 istore_0 [y]
+		  2 iconst_3
+		  3 invokestatic ch/ntb/inf/deep/testClasses/T08Calls.classMethod(int): int
+		  6 istore_1 [x]
+		  7 iconst_2
+		  8 istore_0 [y]
+		  9 iload_0 [y]
+		 10 iload_1 [x]
+		 11 iadd
+		 12 ireturn
+
+public static int objectMethCall()
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=15 
+		  0 new ch/ntb/inf/deep/testClasses/T08Calls
+		  3 dup
+		  4 invokespecial ch/ntb/inf/deep/testClasses/T08Calls(): void
+		  7 astore_0 [call]
+		  8 aload_0 [call]
+		  9 bipush 9
+		 11 invokevirtual ch/ntb/inf/deep/testClasses/T08Calls.objectMethod(int): int
+		 14 ireturn
+
+public static void callToAnotherClass()
+	//nofStackSlots=0, nofLocalSlots=0, codeLen=4
+		  0 invokestatic ch/ntb/inf/deep/testClasses/T01SimpleMethods.emptyMethodStatic(): void
+		  3 return
+
+public static int classMethod(int)
+	//nofStackSlots=2, nofLocalSlots=3, codeLen=20 
+		  0 iconst_0
+		  1 istore_1 [x]
+		  2 iconst_0
+		  3 istore_2 [i]
+		  4 goto 13
+		  7 iinc x, 3
+		 10 iinc i, 1
+		 13 iload_2 [i]
+		 14 iload_0 [param]
+		 15 if_icmplt 7
+		 18 iload_1 [x]
+		 19 ireturn
+
+public int objectMethod(int)
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=4
+		  0 iload_1 [param]
+		  1 iconst_2
+		  2 irem
+		  3 ireturn
+		  
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method classMethCall
+	nodeNr:0 from 0 to 12	visited: false
+		predecessor: 
+		successor: 
+
+method objectMethCall
+	nodeNr:0 from 0 to 14	visited: false
+		predecessor: 
+		successor: 
+
+method callToAnotherClass
+	nodeNr:0 from 0 to 3	visited: false
+		predecessor: 
+		successor: 
+
+method classMethod
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: CFG-Node [13:15]	
+	nodeNr:1 from 7 to 10	visited: false
+		predecessor: CFG-Node [13:15]	
+		successor: CFG-Node [13:15]	
+	nodeNr:2 from 13 to 15	is loop header visited: false
+		predecessor: CFG-Node [0:4]	CFG-Node [7:10]	
+		successor: CFG-Node [18:19]	CFG-Node [7:10]	
+	nodeNr:3 from 18 to 19	visited: false
+		predecessor: CFG-Node [13:15]	
+		successor: 
+
+method objectMethod
+	nodeNr:0 from 0 to 3	visited: false
+		predecessor: 
+		successor: 
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
+
+
+Method: classMethCall
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         2: Call[sCcall] {1} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.classMethod,   end=0, index=1, reg=-1
+         3: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=0, reg=-1
+         4: Dyadic[sCadd] {3, 2},   end=0, index=-1, reg=-1
+         5: Branch[sCreturn] {4}
+      ExitSet {[ , ], [ 3 (Integer), 2 (Integer) ]}
+
+
+Method: objectMethCall
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         0: Call[sCnew] {-1} (Ref),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   ch/ntb/inf/deep/testClasses/T08Calls.<init>,   end=0, index=-1, reg=-1
+         2: NoOpnd[sCloadConst] 9 (Integer),   end=0, index=-1, reg=-1
+         3: Call[sCcall] {2, 0} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.objectMethod,   end=0, index=-1, reg=-1
+         4: Branch[sCreturn] {3}
+      ExitSet {[ , ], [ 0 (Ref) ]}
+
+
+Method: callToAnotherClass
+   SSANode 0:
+      EntrySet {}
+         0: Call[sCcall] {} (Void),   ch/ntb/inf/deep/testClasses/T01SimpleMethods.emptyMethodStatic,   end=0, index=-1, reg=-1
+         1: Branch[sCreturn] 
+      ExitSet {}
+
+
+Method: classMethod
+   SSANode 0:
+      EntrySet {[ , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=2, reg=-1
+         2: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         3: Branch[sCBranch] 
+      ExitSet {[ , ], [ 2 (Integer), 0 (Integer), 1 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         4: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         5: Dyadic[sCadd] {9, 4},   end=0, index=1, reg=-1
+         6: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         7: Dyadic[sCadd] {10, 6},   end=0, index=2, reg=-1
+      ExitSet {[ , ], [ Phi-Function(8), 5 (Integer), 7 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         8: PhiFunction[sCPhiFunc] {2} (Phi-Function),   end=0, index=0, reg=-1 deleted
+         9: PhiFunction[sCPhiFunc] {0, 5} (Phi-Function),   end=0, index=1, reg=-1
+         10: PhiFunction[sCPhiFunc] {1, 7} (Phi-Function),   end=0, index=2, reg=-1
+         11: Branch[sCBranch] {8, 10}
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+         12: Branch[sCreturn] {9}
+      ExitSet {[ , ], [ Phi-Function(8), Phi-Function(9), Phi-Function(10) ]}
+
+
+Method: objectMethod
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         2: Dyadic[sCrem] {0, 1},   end=0, index=-1, reg=-1
+         3: Branch[sCreturn] {2}
+      ExitSet {[ , ], [ , 0 (Integer) ]}
+

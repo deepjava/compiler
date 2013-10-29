@@ -1,0 +1,213 @@
+	public static void doWhileIf1() {
+		int j, i;
+		boolean b, c;
+
+		j = 0;
+		i = -6; // 0: c TRUE, b FALSE ; - 6 b TRUE c FALSE
+
+		do {
+			j++;
+			i = i + j;
+			b = i < 10;
+			c = j < 5;
+		} while (b && c);
+
+		if (b) {
+			j = -1;
+		} else {
+			j = 1;
+		}
+	}
+
+public static void doWhileIf1()
+	//nofStackSlots=2, nofLocalSlots=4, codeLen=55 
+		  0 iconst_0
+		  1 istore_0 [j]
+		  2 bipush -6
+		  4 istore_1 [i]
+		  5 iinc j, 1
+		  8 iload_1 [i]
+		  9 iload_0 [j]
+		 10 iadd
+		 11 istore_1 [i]
+		 12 iload_1 [i]
+		 13 bipush 10
+		 15 if_icmpge 22
+		 18 iconst_1
+		 19 goto 23
+		 22 iconst_0
+		 23 istore_2 [b]
+		 24 iload_0 [j]
+		 25 iconst_5
+		 26 if_icmpge 33
+		 29 iconst_1
+		 30 goto 34
+		 33 iconst_0
+		 34 istore_3 [c]
+		 35 iload_2 [b]
+		 36 ifeq 43
+		 39 iload_3 [c]
+		 40 ifne 5
+		 43 iload_2 [b]
+		 44 ifeq 52
+		 47 iconst_m1
+		 48 istore_0 [j]
+		 49 goto 54
+		 52 iconst_1
+		 53 istore_0 [j]
+		 54 return
+
+CFG of method doWhileIf1
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: CFG-Node [5:15]	
+	nodeNr:1 from 5 to 15	is loop header visited: false
+		predecessor: CFG-Node [0:4]	CFG-Node [39:40]	
+		successor: CFG-Node [18:19]	CFG-Node [22:22]	
+	nodeNr:2 from 18 to 19	visited: false
+		predecessor: CFG-Node [5:15]	
+		successor: CFG-Node [23:26]	
+	nodeNr:3 from 22 to 22	visited: false
+		predecessor: CFG-Node [5:15]	
+		successor: CFG-Node [23:26]	
+	nodeNr:4 from 23 to 26	visited: false
+		predecessor: CFG-Node [18:19]	CFG-Node [22:22]	
+		successor: CFG-Node [29:30]	CFG-Node [33:33]	
+	nodeNr:5 from 29 to 30	visited: false
+		predecessor: CFG-Node [23:26]	
+		successor: CFG-Node [34:36]	
+	nodeNr:6 from 33 to 33	visited: false
+		predecessor: CFG-Node [23:26]	
+		successor: CFG-Node [34:36]	
+	nodeNr:7 from 34 to 36	visited: false
+		predecessor: CFG-Node [29:30]	CFG-Node [33:33]	
+		successor: CFG-Node [39:40]	CFG-Node [43:44]	
+	nodeNr:8 from 39 to 40	visited: false
+		predecessor: CFG-Node [34:36]	
+		successor: CFG-Node [43:44]	CFG-Node [5:15]	
+	nodeNr:9 from 43 to 44	visited: false
+		predecessor: CFG-Node [34:36]	CFG-Node [39:40]	
+		successor: CFG-Node [47:49]	CFG-Node [52:53]	
+	nodeNr:10 from 47 to 49	visited: false
+		predecessor: CFG-Node [43:44]	
+		successor: CFG-Node [54:54]	
+	nodeNr:11 from 52 to 53	visited: false
+		predecessor: CFG-Node [43:44]	
+		successor: CFG-Node [54:54]	
+	nodeNr:12 from 54 to 54	visited: false
+		predecessor: CFG-Node [47:49]	CFG-Node [52:53]	
+		successor: 
+
+SSA for Method: doWhileIf1
+   SSANode 0:
+      EntrySet {[ , ], [ , , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=2, index=0, reg=2, join={2}
+         1: NoOpnd[sCloadConst] -6 (Integer),   end=3, index=1, reg=3, join={3}
+      ExitSet {[ , ], [ 0 (Integer), 1 (Integer), , ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ Phi-Function(2), Phi-Function(3), Phi-Function(4), Phi-Function(5) ]}
+         2: PhiFunction[sCPhiFunc] {0, 7} (Phi-Function),   start=0, end=16, index=0, reg=2
+         3: PhiFunction[sCPhiFunc] {1, 8} (Phi-Function),   start=1, end=10, index=1, reg=3
+         4: PhiFunction[sCPhiFunc] {14} (Phi-Function),   start=4, end=23, index=2, reg=4 deleted
+         5: PhiFunction[sCPhiFunc] {20} (Phi-Function),   start=5, end=22, index=3, reg=5 deleted
+         6: NoOpnd[sCloadConst] 1 (Integer),   end=7
+         7: Dyadic[sCadd] {2, 6} (Integer),   end=16, index=0, reg=2, join={2}
+         8: Dyadic[sCadd] {3, 7} (Integer),   end=10, index=1, reg=3, join={3}
+         9: NoOpnd[sCloadConst] 10 (Integer),   end=10
+         10: Branch[sCBranch] {9, 8} (Void)
+      ExitSet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(4), Phi-Function(5) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(4), Phi-Function(5) ]}
+         11: NoOpnd[sCloadConst] 1 (Integer),   end=14, reg=4, join={4}
+         12: Branch[sCBranch]  (Void)
+      ExitSet {[ 11 (Integer), ], [ 7 (Integer), 8 (Integer), Phi-Function(4), Phi-Function(5) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(4), Phi-Function(5) ]}
+         13: NoOpnd[sCloadConst] 0 (Integer),   end=14, reg=4, join={4}
+      ExitSet {[ 13 (Integer), ], [ 7 (Integer), 8 (Integer), Phi-Function(4), Phi-Function(5) ]}
+
+   SSANode 4:
+      EntrySet {[ Phi-Function(14), ], [ 7 (Integer), 8 (Integer), Phi-Function(4), Phi-Function(5) ]}
+         14: PhiFunction[sCPhiFunc] {11, 13} (Phi-Function),   start=14, end=23, index=2, reg=4, join={4}
+         15: NoOpnd[sCloadConst] 5 (Integer),   end=16
+         16: Branch[sCBranch] {15, 7} (Void)
+      ExitSet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(5) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(5) ]}
+         17: NoOpnd[sCloadConst] 1 (Integer),   end=20, reg=5, join={5}
+         18: Branch[sCBranch]  (Void)
+      ExitSet {[ 17 (Integer), ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(5) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(5) ]}
+         19: NoOpnd[sCloadConst] 0 (Integer),   end=20, reg=5, join={5}
+      ExitSet {[ 19 (Integer), ], [ 7 (3Integer), 8 (Integer), Phi-Function(14), Phi-Function(5) ]}
+
+   SSANode 7:
+      EntrySet {[ Phi-Function(20), ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(5) ]}
+         20: PhiFunction[sCPhiFunc] {17, 19} (Phi-Function),   start=20, end=22, index=3, reg=5, join={5}
+         21: Branch[sCBranch] {14} (Void)
+      ExitSet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+         22: Branch[sCBranch] {20} (Void)
+      ExitSet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+         23: Branch[sCBranch] {14} (Void)
+      ExitSet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+
+   SSANode 10:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+         24: NoOpnd[sCloadConst] -1 (Integer),   end=27, index=0, reg=2, join={27}
+         25: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 24 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+
+   SSANode 11:
+      EntrySet {[ , ], [ 7 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+         26: NoOpnd[sCloadConst] 1 (Integer),   end=27, index=0, reg=2, join={27}
+      ExitSet {[ , ], [ 26 (Integer), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+
+   SSANode 12:
+      EntrySet {[ , ], [ Phi-Function(27), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+         27: PhiFunction[sCPhiFunc] {24, 26} (Phi-Function),   start=24, end=27, index=0, reg=2
+         28: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ Phi-Function(27), 8 (Integer), Phi-Function(14), Phi-Function(20) ]}
+      
+Code for Method:doWhileIf1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	3860fffa	[0x10]	li  r3, -6
+	38420001	[0x14]	addi  r2, r2, 1
+	7c631214	[0x18]	add  r3, r3, r2
+	2c03000a	[0x1c]	cmpi  crf0, 0, r3, 10
+	409f000c	[0x20]	bc  iffalse, CRF0[LT], 12, [0x2c]	
+	38800001	[0x24]	li  r4, 1
+	48000008	[0x28]	b  8, [0x30]	
+	38800000	[0x2c]	li  r4, 0
+	2c020005	[0x30]	cmpi  crf0, 0, r2, 5
+	409f000c	[0x34]	bc  iffalse, CRF0[LT], 12, [0x40]	
+	38a00001	[0x38]	li  r5, 1
+	48000008	[0x3c]	b  8, [0x44]	
+	38a00000	[0x40]	li  r5, 0
+	2c040000	[0x44]	cmpi  crf0, 0, r4, 0
+	419d000c	[0x48]	bc  iftrue, CRF0[EQ], 12, [0x54]	
+	2c050000	[0x4c]	cmpi  crf0, 0, r5, 0
+	409dffc4	[0x50]	bc  iffalse, CRF0[EQ], -60, [0x14]	
+	2c040000	[0x54]	cmpi  crf0, 0, r4, 0
+	419d000c	[0x58]	bc  iftrue, CRF0[EQ], 12, [0x64]	
+	3840ffff	[0x5c]	li  r2, -1
+	48000008	[0x60]	b  8, [0x68]	
+	38400001	[0x64]	li  r2, 1
+	8001000c	[0x68]	lwz  r0, 12(r1)
+	7c0803a6	[0x6c]	mtspr  LR, r0
+	38210010	[0x70]	addi  r1, r1, 16
+	4e800020	[0x74]	bclr always, CRF7[SO]

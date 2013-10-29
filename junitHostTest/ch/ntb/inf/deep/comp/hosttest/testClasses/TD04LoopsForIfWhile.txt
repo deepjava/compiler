@@ -1,0 +1,144 @@
+	public void forIfWhile(){
+		for(int i = 0; i < 100; i++){
+			if(i > 50){
+				while(i < 75){
+					i++;
+				}
+			}
+			
+		}
+	}
+
+	"public void forIfWhile()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=33 
+	{
+		  0 iconst_0
+		  1 istore_1 [i]
+		  2 goto 26
+		  5 iload_1 [i]
+		  6 bipush 50
+		  8 if_icmple 23
+		 11 goto 17
+		 14 iinc i, 1
+		 17 iload_1 [i]
+		 18 bipush 75
+		 20 if_icmplt 14
+		 23 iinc i, 1
+		 26 iload_1 [i]
+		 27 bipush 100
+		 29 if_icmplt 5
+		 32 return
+
+CFG of method forIfWhile
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [26:29]	
+	nodeNr:1 from 5 to 8	visited: false
+		predecessor: CFG-Node [26:29]	
+		successor: CFG-Node [11:11]	CFG-Node [23:23]	
+	nodeNr:2 from 11 to 11	visited: false
+		predecessor: CFG-Node [5:8]	
+		successor: CFG-Node [17:20]	
+	nodeNr:3 from 14 to 14	visited: false
+		predecessor: CFG-Node [17:20]	
+		successor: CFG-Node [17:20]	
+	nodeNr:4 from 17 to 20	is loop header visited: false
+		predecessor: CFG-Node [11:11]	CFG-Node [14:14]	
+		successor: CFG-Node [23:23]	CFG-Node [14:14]	
+	nodeNr:5 from 23 to 23	visited: false
+		predecessor: CFG-Node [5:8]	CFG-Node [17:20]	
+		successor: CFG-Node [26:29]	
+	nodeNr:6 from 26 to 29	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [23:23]	
+		successor: CFG-Node [32:32]	CFG-Node [5:8]	
+	nodeNr:7 from 32 to 32	visited: false
+		predecessor: CFG-Node [26:29]	
+		successor: 
+
+assign registers to parameters
+[(Ref)r2]
+parameter go into register: 2  
+allocate registers
+phi functions resolved
+joins at index: [,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=2: start=0, end=19, vol, reg=2
+	index=3: start=0, end=19, vol, reg=3
+nofNonVolGPR = 0, nofVolGPR = 2, nofNonVolFPR = 0, nofVolFPR = 0, paramSlotsOnStack = 0
+parameter end at instr no: 16  
+SSA for Method: ch/ntb/inf/deep/testClasses/T04Loops.forIfWhile()V
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer), index=3, join=[3]
+         1: NoOpnd[sCloadLocal] (Ref), index=2, join=[2]
+         2: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 1 (Ref), 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+         3: NoOpnd[sCloadConst] 50 (Integer), index=1, end=4, vol, reg=4
+         4: Branch[sCBranch] {3, 17} (Void)
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+         5: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 8 (Ref), 9 (Integer) ]}
+         6: NoOpnd[sCloadConst] 1 (Integer), end=7
+         7: Dyadic[sCadd] {9, 6} (Integer), index=3, join=[3]
+      ExitSet {[ , ], [ 8 (Ref), 7 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 8 (Ref), 9 (Integer) ]}
+         8: PhiFunction[sCPhiFunc] {1} (Ref), index=2, end=8, last=11 del
+         9: PhiFunction[sCPhiFunc] {17, 7} (Integer), index=3, join=[3], last=11
+         10: NoOpnd[sCloadConst] 75 (Integer), index=1, end=11, vol, reg=4
+         11: Branch[sCBranch] {10, 9} (Void)
+      ExitSet {[ , ], [ 8 (Ref), 9 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ 12 (Ref), 13 (Integer) ]}
+         12: PhiFunction[sCPhiFunc] {16} (Ref), index=2, end=12 del
+         13: PhiFunction[sCPhiFunc] {17, 9} (Integer), index=3, join=[3]
+         14: NoOpnd[sCloadConst] 1 (Integer), end=15
+         15: Dyadic[sCadd] {13, 14} (Integer), index=3, join=[3]
+      ExitSet {[ , ], [ 12 (Ref), 15 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+         16: PhiFunction[sCPhiFunc] {1} (Ref), index=2, join=[2], last=19 del u
+         17: PhiFunction[sCPhiFunc] {0, 15} (Integer), index=3, join=[3], last=19
+         18: NoOpnd[sCloadConst] 100 (Integer), index=1, end=19, vol, reg=4
+         19: Branch[sCBranch] {18, 17} (Void)
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+         20: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ 16 (Ref), 17 (Integer) ]}
+
+Code for Method: ch/ntb/inf/deep/testClasses/T04Loops.forIfWhile()V
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38600000	[0xc]	li  r3, 0
+	48000028	[0x10]	b  40, [0x38]	
+	38800032	[0x14]	li  r4, 50
+	7c032000	[0x18]	cmp crf0, 0, r3, r4
+	40810018	[0x1c]	bc  iffalse, CRF0[GT], 24, [0x34]	
+	48000008	[0x20]	b  8, [0x28]	
+	38630001	[0x24]	addi  r3, r3, 1
+	3880004b	[0x28]	li  r4, 75
+	7c032000	[0x2c]	cmp crf0, 0, r3, r4
+	4180fff4	[0x30]	bc  iftrue, CRF0[LT], -12, [0x24]	
+	38630001	[0x34]	addi  r3, r3, 1
+	38800064	[0x38]	li  r4, 100
+	7c032000	[0x3c]	cmp crf0, 0, r3, r4
+	4180ffd4	[0x40]	bc  iftrue, CRF0[LT], -44, [0x14]	
+	8001000c	[0x44]	lwz  r0, 12(r1)
+	7c0803a6	[0x48]	mtspr  LR, r0
+	38210010	[0x4c]	addi  r1, r1, 16
+	4e800020	[0x50]	bclr always, CRF0[LT]

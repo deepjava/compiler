@@ -1,0 +1,38 @@
+	public static void emptyIntArray(){
+		int[] a = new int[5];
+	}
+
+
+		  0 iconst_5
+		  1 newarray int
+		  3 astore_0 [a]
+		  4 return
+
+method emptyIntArray
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+SSA for Method: emptyIntArray
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, reg=2
+         1: Call[sCnew] {0} (Integer-Array),   5,   end=1, index=0, reg=2
+         2: Branch[sCreturn]  (Void)
+      ExitSet {[ ], [ 1 (Integer-Array) ]}
+
+Code for Method: emptyIntArray
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400005	[0xc]	li  r2, 5
+	e020000	[0x10]	twi  ifless, r2, 0
+	38600000	[0x14]	li  r3, 0
+	3c630000	[0x18]	addis  r3, r3, 0
+	7c6803a6	[0x1c]	mtspr  LR, r3
+	3860000a	[0x20]	li  r3, 10
+	4e800020	[0x24]	bclr always, CRF7[SO]
+	8001000c	[0x28]	lwz  r0, 12(r1)
+	7c0803a6	[0x2c]	mtspr  LR, r0
+	38210010	[0x30]	addi  r1, r1, 16
+	4e800020	[0x34]	bclr always, CRF7[SO]

@@ -1,0 +1,291 @@
+Testdokument für die Testklasse T07Arrays
+
+Sinn und Zweck:
+Diese Klasse benutzt Methoden in denen verschiedene Arrays erzeugt und benutzt werden. 
+Es soll getestet werden, dass der CFG und die SSA für diese korrekt gebildet werden.
+Und das handling stimmt.
+
+Bytecode:
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+
+public static void emptyIntArray()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 iconst_5
+		  1 newarray int
+		  3 astore_0 [a]
+		  4 return
+
+public static int intArray(int)
+	//nofStackSlots=4, nofLocalSlots=3, codeLen=28 
+		  0 iconst_5
+		  1 newarray int
+		  3 astore_1 [b]
+		  4 iconst_0
+		  5 istore_2 [i]
+		  6 goto 18		  
+		  9 aload_1 [b]
+		 10 iload_2 [i]
+		 11 iload_2 [i]
+		 12 iload_0 [start]
+		 13 iadd
+		 14 iastore
+		 15 iinc i, 1		 
+		 18 iload_2 [i]
+		 19 aload_1 [b]
+		 20 arraylength
+		 21 if_icmplt 9		 
+		 24 aload_1 [b]
+		 25 iconst_2
+		 26 iaload
+		 27 ireturn
+
+public static Ljava/lang/String; stringArray()
+	//nofStackSlots=4, nofLocalSlots=1, codeLen=34 
+		  0 iconst_5
+		  1 anewarray java/lang/String
+		  4 dup
+		  5 iconst_0
+		  6 ldc This
+		  8 aastore
+		  9 dup
+		 10 iconst_1
+		 11 ldc is
+		 13 aastore
+		 14 dup
+		 15 iconst_2
+		 16 ldc a
+		 18 aastore
+		 19 dup
+		 20 iconst_3
+		 21 ldc test
+		 23 aastore
+		 24 dup
+		 25 iconst_4
+		 26 ldc string
+		 28 aastore
+		 29 astore_0 [strings]
+		 30 aload_0 [strings]
+		 31 iconst_0
+		 32 aaload
+		 33 areturn
+
+public static void objectArray()
+	//nofStackSlots=4, nofLocalSlots=1, codeLen=16 
+		  0 iconst_3
+		  1 anewarray java/lang/Object
+		  4 astore_0 [objs]
+		  5 aload_0 [objs]
+		  6 iconst_0
+		  7 new java/lang/Object
+		 10 dup
+		 11 invokespecial java/lang/Object(): void
+		 14 aastore
+		 15 return
+
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method emptyIntArray
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method intArray
+	nodeNr:0 from 0 to 6	visited: false
+		predecessor: 
+		successor: CFG-Node [18:21]	
+	nodeNr:1 from 9 to 15	visited: false
+		predecessor: CFG-Node [18:21]	
+		successor: CFG-Node [18:21]	
+	nodeNr:2 from 18 to 21	is loop header visited: false
+		predecessor: CFG-Node [0:6]	CFG-Node [9:15]	
+		successor: CFG-Node [24:27]	CFG-Node [9:15]	
+	nodeNr:3 from 24 to 27	visited: false
+		predecessor: CFG-Node [18:21]	
+		successor: 
+
+method stringArray
+	nodeNr:0 from 0 to 33	visited: false
+		predecessor: 
+		successor: 
+
+method objectArray
+	nodeNr:0 from 0 to 15	visited: false
+		predecessor: 
+		successor: 
+
+method multiArray
+	nodeNr:0 from 0 to 48	visited: false
+		predecessor: 
+		successor: 
+
+method multiObjectArray
+	nodeNr:0 from 0 to 49	visited: false
+		predecessor: 
+		successor: 
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
+
+
+Method: emptyIntArray
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=0, index=-1, reg=-1
+         1: Call[sCnew] {0} (Integer-Array),   end=0, index=0, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ Integer-Array ]}
+
+
+Method: intArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=0, index=-1, reg=-1
+         1: Call[sCnew] {0} (Integer-Array),   end=0, index=1, reg=-1
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=2, reg=-1
+         3: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         4: Branch[sCBranch] 
+      ExitSet {[ , , , ], [ 3 (Integer), Integer-Array, 2 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+         5: Dyadic[sCadd] {11, 9},   end=0, index=-1, reg=-1
+         6: StoreToArray[sCstoreToArray] {10, 11, 5}
+         7: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         8: Dyadic[sCadd] {11, 7},   end=0, index=2, reg=-1
+      ExitSet {[ , , , ], [ Phi-Function(9), Phi-Function(10), 8 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+         9: PhiFunction[sCPhiFunc] {3} (Phi-Function),   end=0, index=0, reg=-1 deleted
+         10: PhiFunction[sCPhiFunc] {1} (Phi-Function),   end=0, index=1, reg=-1 deleted
+         11: PhiFunction[sCPhiFunc] {2, 8} (Phi-Function),   end=0, index=2, reg=-1
+         12: MonadicRef[sCalength] {10},   end=0, index=-1, reg=-1
+         13: Branch[sCBranch] {12, 11}
+      ExitSet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+
+   SSANode 3:
+      EntrySet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+         14: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         15: Dyadic[sCloadFromArray] {10, 14},   end=0, index=-1, reg=-1
+         16: Branch[sCreturn] {15}
+      ExitSet {[ , , , ], [ Phi-Function(9), Phi-Function(10), Phi-Function(11) ]}
+
+
+Method: stringArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ ]}
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=0, index=-1, reg=-1
+         1: Call[sCnew] {0} (Array-Ref),   end=0, index=0, reg=-1
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         3: NoOpnd[sCloadConst] This (Object),   end=0, index=-1, reg=-1
+         4: StoreToArray[sCstoreToArray] {1, 2, 3}
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         6: NoOpnd[sCloadConst] is (Object),   end=0, index=-1, reg=-1
+         7: StoreToArray[sCstoreToArray] {1, 5, 6}
+         8: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         9: NoOpnd[sCloadConst] a (Object),   end=0, index=-1, reg=-1
+         10: StoreToArray[sCstoreToArray] {1, 8, 9}
+         11: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         12: NoOpnd[sCloadConst] test (Object),   end=0, index=-1, reg=-1
+         13: StoreToArray[sCstoreToArray] {1, 11, 12}
+         14: NoOpnd[sCloadConst] 4 (Integer),   end=0, index=-1, reg=-1
+         15: NoOpnd[sCloadConst] string (Object),   end=0, index=-1, reg=-1
+         16: StoreToArray[sCstoreToArray] {1, 14, 15}
+         17: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         18: Dyadic[sCloadFromArray] {1, 17},   end=0, index=-1, reg=-1
+         19: Branch[sCreturn] {18}
+      ExitSet {[ , , , ], [ Array-Ref ]}
+
+
+Method: objectArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ ]}
+         0: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         1: Call[sCnew] {0} (Array-Ref),   end=0, index=0, reg=-1
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         3: Call[sCnew] {-1} (Ref),   end=0, index=-1, reg=-1
+         4: Call[sCcall] {3} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         5: StoreToArray[sCstoreToArray] {1, 2, 3}
+         6: Branch[sCreturn] 
+      ExitSet {[ , , , ], [ Array-Ref ]}
+
+
+Method: multiArray
+   SSANode 0:
+      EntrySet {[ , , , , , , , ], [ , ]}
+         0: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         1: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         2: Call[sCnew] {1, 0} (Array-Ref),   end=0, index=0, reg=-1
+         3: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         4: Call[sCnew] {3} (Array-Ref),   end=0, index=1, reg=-1
+         5: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         6: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         7: Call[sCnew] {6} (Double-Array),   end=0, index=-1, reg=-1
+         8: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         9: NoOpnd[sCloadConst] 2.4 (Double),   end=0, index=-1, reg=-1
+         10: StoreToArray[sCstoreToArray] {7, 8, 9}
+         11: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         12: NoOpnd[sCloadConst] 3.1 (Double),   end=0, index=-1, reg=-1
+         13: StoreToArray[sCstoreToArray] {7, 11, 12}
+         14: StoreToArray[sCstoreToArray] {4, 5, 7}
+         15: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         16: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         17: Call[sCnew] {16} (Double-Array),   end=0, index=-1, reg=-1
+         18: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         19: NoOpnd[sCloadConst] 3.5 (Double),   end=0, index=-1, reg=-1
+         20: StoreToArray[sCstoreToArray] {17, 18, 19}
+         21: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         22: NoOpnd[sCloadConst] 8.3 (Double),   end=0, index=-1, reg=-1
+         23: StoreToArray[sCstoreToArray] {17, 21, 22}
+         24: StoreToArray[sCstoreToArray] {4, 15, 17}
+         25: Branch[sCreturn] 
+      ExitSet {[ , , , , , , , ], [ Array-Ref, Array-Ref ]}
+
+
+Method: multiObjectArray
+   SSANode 0:
+      EntrySet {[ , , , , , , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         1: NoOpnd[sCloadConst] 5 (Integer),   end=0, index=-1, reg=-1
+         2: NoOpnd[sCloadConst] 6 (Integer),   end=0, index=-1, reg=-1
+         3: Call[sCnew] {2, 1, 0} (Array-Ref),   end=0, index=1, reg=-1
+         4: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         5: Call[sCnew] {4} (Array-Ref),   end=0, index=2, reg=-1
+         6: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         7: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         8: Call[sCnew] {7} (Array-Ref),   end=0, index=-1, reg=-1
+         9: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         10: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         11: StoreToArray[sCstoreToArray] {8, 9, 10}
+         12: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         13: StoreToArray[sCstoreToArray] {8, 12, 10}
+         14: StoreToArray[sCstoreToArray] {5, 6, 8}
+         15: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         16: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         17: Call[sCnew] {16} (Array-Ref),   end=0, index=-1, reg=-1
+         18: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         19: StoreToArray[sCstoreToArray] {17, 18, 10}
+         20: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         21: StoreToArray[sCstoreToArray] {17, 20, 10}
+         22: StoreToArray[sCstoreToArray] {5, 15, 17}
+         23: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=-1, reg=-1
+         24: Dyadic[sCloadFromArray] {5, 23},   end=0, index=-1, reg=-1
+         25: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         26: Dyadic[sCloadFromArray] {24, 25},   end=0, index=-1, reg=-1
+         27: Branch[sCreturn] {26}
+      ExitSet {[ , , , , , , ], [ 10 (Object), Array-Ref, Array-Ref ]}
+

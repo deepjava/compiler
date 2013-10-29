@@ -1,0 +1,96 @@
+	public static int switchNear1(int i) {
+		switch(i) {
+		case 0: return 0;
+		case 1: return 1;
+		case 2: return 2;
+		default: return -1;
+		}
+	}
+
+public static int switchNear1(int)
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=36 
+		  0 iload_0 [i]
+		  1 tableswitch
+			Default: 34
+			Case: 0: 28
+			Case: 1: 30
+			Case: 2: 32
+		 28 iconst_0
+		 29 ireturn
+		 30 iconst_1
+		 31 ireturn
+		 32 iconst_2
+		 33 ireturn
+		 34 iconst_m1
+		 35 ireturn
+
+CFG of method switchNear1
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor:
+		successor: CFG-Node [28:29]	CFG-Node [30:31]	CFG-Node [32:33]	CFG-Node [34:35]
+	nodeNr:1 from 28 to 29	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:2 from 30 to 31	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:3 from 32 to 33	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+	nodeNr:4 from 34 to 35	visited: false
+		predecessor: CFG-Node [0:1]
+		successor:
+		
+SSA for Method: switchNear1
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=1, index=0, reg=2
+         1: Branch[sCBranch] {0} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=3, reg=2
+         3: Branch[sCreturn] {2} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         4: NoOpnd[sCloadConst] 1 (Integer),   end=5, reg=2
+         5: Branch[sCreturn] {4} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         6: NoOpnd[sCloadConst] 2 (Integer),   end=7, reg=2
+         7: Branch[sCreturn] {6} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ ], [ 0 (Integer) ]}
+         8: NoOpnd[sCloadConst] -1 (Integer),   end=9, reg=2
+         9: Branch[sCreturn] {8} (Void)
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+Code for Method:switchNear1
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	2c020000	[0xc]	cmpi  crf0, 0, r2, 0
+	419d0018	[0x10]	bc  iftrue, CRF0[EQ], 24, [0x28]	
+	2c020001	[0x14]	cmpi  crf0, 0, r2, 1
+	419d0018	[0x18]	bc  iftrue, CRF0[EQ], 24, [0x30]	
+	2c020002	[0x1c]	cmpi  crf0, 0, r2, 2
+	419d0018	[0x20]	bc  iftrue, CRF0[EQ], 24, [0x38]	
+	4800001c	[0x24]	b  28, [0x40]	
+	38400000	[0x28]	li  r2, 0
+	48000018	[0x2c]	b  24, [0x44]	
+	38400001	[0x30]	li  r2, 1
+	48000010	[0x34]	b  16, [0x44]	
+	38400002	[0x38]	li  r2, 2
+	48000008	[0x3c]	b  8, [0x44]	
+	3840ffff	[0x40]	li  r2, -1
+	8001000c	[0x44]	lwz  r0, 12(r1)
+	7c0803a6	[0x48]	mtspr  LR, r0
+	38210010	[0x4c]	addi  r1, r1, 16
+	4e800020	[0x50]	bclr always, CRF7[SO]

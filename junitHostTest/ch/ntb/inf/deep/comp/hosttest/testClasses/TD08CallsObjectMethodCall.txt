@@ -1,0 +1,59 @@
+	
+	public static int objectMethCall(){
+		T08Calls call = new T08Calls();
+		return call.objectMethod(9);
+	}
+
+	"public static int objectMethCall()"
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=15 
+	{
+		  0 new ch/ntb/inf/deep/testClasses/T08Calls
+		  3 dup
+		  4 invokespecial ch/ntb/inf/deep/testClasses/T08Calls(): void
+		  7 astore_0 [call]
+		  8 aload_0 [call]
+		  9 bipush 9
+		 11 invokevirtual ch/ntb/inf/deep/testClasses/T08Calls.objectMethod(int): int
+		 14 ireturn
+	
+SSA for Method: objectMethCall
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         0: Call[sCnew] {-1} (Ref),   ch/ntb/inf/deep/testClasses/T08Calls,   end=3, index=0, reg=31
+         1: Call[sCcall] {0} (Void),   ch/ntb/inf/deep/testClasses/T08Calls.<init>,   end=1
+         2: NoOpnd[sCloadConst] 9 (Integer),   end=3, reg=2
+         3: Call[sCcall] {0, 2} (Integer),   ch/ntb/inf/deep/testClasses/T08Calls.objectMethod,   end=4, reg=2
+         4: Branch[sCreturn] {3} (Void)
+      ExitSet {[ , ], [ 0 (Ref) ]}
+
+Code for Method: objectMethCall
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001001c	[0x8]	stw  r0, 28(r1)
+	bfe10010	[0xc]	stmw  r31, 16(r1)
+	38400000	[0x10]	li  r2, 0
+	3c420000	[0x14]	addis  r2, r2, 0
+	7c4803a6	[0x18]	mtspr  LR, r2
+	38400004	[0x1c]	li  r2, 4
+	3c420000	[0x20]	addis  r2, r2, 0
+	4e800020	[0x24]	bclr always, CRF7[SO]
+	7c5f1378	[0x28]	lr  r31, r2
+	c9f0000	[0x2c]	twi  ifequal, r31, 0
+	805ffffc	[0x30]	lwz  r2, -4(r31)
+	8042ffe8	[0x34]	lwz  r2, -24(r2)
+	7c4803a6	[0x38]	mtspr  LR, r2
+	7fe2fb78	[0x3c]	lr  r2, r31
+	4e800020	[0x40]	bclr always, CRF7[SO]
+	38400009	[0x44]	li  r2, 9
+	c9f0000	[0x48]	twi  ifequal, r31, 0
+	807ffffc	[0x4c]	lwz  r3, -4(r31)
+	8063ffe8	[0x50]	lwz  r3, -24(r3)
+	7c6803a6	[0x54]	mtspr  LR, r3
+	7c431378	[0x58]	lr  r3, r2
+	7fe2fb78	[0x5c]	lr  r2, r31
+	4e800020	[0x60]	bclr always, CRF7[SO]
+	bbe10010	[0x64]	lmw  r31, 16(r1)
+	8001001c	[0x68]	lwz  r0, 28(r1)
+	7c0803a6	[0x6c]	mtspr  LR, r0
+	38210020	[0x70]	addi  r1, r1, 32
+	4e800020	[0x74]	bclr always, CRF7[SO]

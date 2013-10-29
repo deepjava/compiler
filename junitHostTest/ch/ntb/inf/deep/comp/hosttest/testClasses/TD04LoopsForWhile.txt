@@ -1,0 +1,118 @@
+	public int forWhile(int x){
+		for(int i = 0; i < x; i++){
+			while(x > 4){
+				x--;
+			}
+		}
+		return x;
+	}
+
+	"public int forWhile(int)"
+	//nofStackSlots=2, nofLocalSlots=3, codeLen=23 
+	{
+		  0 iconst_0
+		  1 istore_2 [i]
+		  2 goto 16
+		  5 iinc x, -1
+		  8 iload_1 [x]
+		  9 iconst_4
+		 10 if_icmpgt 5
+		 13 iinc i, 1
+		 16 iload_2 [i]
+		 17 iload_1 [x]
+		 18 if_icmplt 8
+		 21 iload_1 [x]
+		 22 ireturn
+
+CFG of method forWhile
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: CFG-Node [16:18]	
+	nodeNr:1 from 5 to 5	visited: false
+		predecessor: CFG-Node [8:10]	
+		successor: CFG-Node [8:10]	
+	nodeNr:2 from 8 to 10	is loop header visited: false
+		predecessor: CFG-Node [5:5]	CFG-Node [16:18]	
+		successor: CFG-Node [13:13]	CFG-Node [5:5]	
+	nodeNr:3 from 13 to 13	visited: false
+		predecessor: CFG-Node [8:10]	
+		successor: CFG-Node [16:18]	
+	nodeNr:4 from 16 to 18	is loop header visited: false
+		predecessor: CFG-Node [0:2]	CFG-Node [13:13]	
+		successor: CFG-Node [21:22]	CFG-Node [8:10]	
+	nodeNr:5 from 21 to 22	visited: false
+		predecessor: CFG-Node [16:18]	
+		successor: 
+
+assign registers to parameters
+[(Ref)r2, (Integer)r3]
+parameter go into register: 2  3  
+allocate registers
+phi functions resolved
+joins at index: [,,,x,x,,,,,,,,,,,,,,,,,,,,,,,,,,,,]
+live ranges of phi functions
+	index=3: start=0, end=17, vol, reg=3
+	index=4: start=0, end=16, vol, reg=4
+nofNonVolGPR = 0, nofVolGPR = 3, nofNonVolFPR = 0, nofVolFPR = 0, paramSlotsOnStack = 0
+parameter end at instr no: 14  
+SSA for Method: ch/ntb/inf/deep/testClasses/T04Loops.forWhile(I)I
+   SSANode 0:
+      EntrySet {[ , ], [ , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer), index=4, join=[4]
+         1: NoOpnd[sCloadLocal] (Ref), index=2, end=1, vol, reg=2
+         2: NoOpnd[sCloadLocal] (Integer), index=3, join=[3]
+         3: Branch[sCBranch]  (Void)
+      ExitSet {[ , ], [ 1 (Ref), 2 (Integer), 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 6 (Ref), 7 (Integer), 8 (Integer) ]}
+         4: NoOpnd[sCloadConst] -1 (Integer), end=5
+         5: Dyadic[sCadd] {7, 4} (Integer), index=3, join=[3]
+      ExitSet {[ , ], [ 6 (Ref), 5 (Integer), 8 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 6 (Ref), 7 (Integer), 8 (Integer) ]}
+         6: PhiFunction[sCPhiFunc] {1} (Ref), index=2, end=6, last=16 del
+         7: PhiFunction[sCPhiFunc] {14, 5} (Integer), index=3, join=[3], last=16
+         8: PhiFunction[sCPhiFunc] {15} (Integer), index=4, join=[4], last=16 del u
+         9: NoOpnd[sCloadConst] 4 (Integer), index=1, end=10, vol, reg=2
+         10: Branch[sCBranch] {9, 7} (Void)
+      ExitSet {[ , ], [ 6 (Ref), 7 (Integer), 8 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 6 (Ref), 7 (Integer), 8 (Integer) ]}
+         11: NoOpnd[sCloadConst] 1 (Integer), end=12
+         12: Dyadic[sCadd] {8, 11} (Integer), index=4, join=[4]
+      ExitSet {[ , ], [ 6 (Ref), 7 (Integer), 12 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 13 (Ref), 14 (Integer), 15 (Integer) ]}
+         13: PhiFunction[sCPhiFunc] {1} (Ref), index=2, end=13, last=16 del
+         14: PhiFunction[sCPhiFunc] {7, 2} (Integer), index=3, join=[3], last=16
+         15: PhiFunction[sCPhiFunc] {0, 12} (Integer), index=4, join=[4], last=16
+         16: Branch[sCBranch] {14, 15} (Void)
+      ExitSet {[ , ], [ 13 (Ref), 14 (Integer), 15 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ 13 (Ref), 14 (Integer), 15 (Integer) ]}
+         17: Branch[sCreturn] {14} (Void)
+      ExitSet {[ , ], [ 13 (Ref), 14 (Integer), 15 (Integer) ]}
+
+Code for Method: ch/ntb/inf/deep/testClasses/T04Loops.forWhile(I)I
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38800000	[0xc]	li  r4, 0
+	48000018	[0x10]	b  24, [0x28]	
+	3863ffff	[0x14]	addi  r3, r3, -1
+	38400004	[0x18]	li  r2, 4
+	7c031000	[0x1c]	cmp crf0, 0, r3, r2
+	4181fff4	[0x20]	bc  iftrue, CRF0[GT], -12, [0x14]	
+	38840001	[0x24]	addi  r4, r4, 1
+	7c041800	[0x28]	cmp crf0, 0, r4, r3
+	4180ffec	[0x2c]	bc  iftrue, CRF0[LT], -20, [0x18]	
+	7c621b78	[0x30]	lr  r2, r3
+	8001000c	[0x34]	lwz  r0, 12(r1)
+	7c0803a6	[0x38]	mtspr  LR, r0
+	38210010	[0x3c]	addi  r1, r1, 16
+	4e800020	[0x40]	bclr always, CRF0[LT]

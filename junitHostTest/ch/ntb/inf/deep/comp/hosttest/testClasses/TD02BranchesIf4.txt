@@ -1,0 +1,98 @@
+	public void if4() {	// if boolean
+		boolean bool = true;
+		int a = 1;
+		int b = 0;
+
+		if(bool) {
+			b = 8;
+		}
+		else {
+			b = 2;
+		}
+		a = b;
+		a++;
+	}
+
+	"public void if4()"
+	//nofStackSlots=1, nofLocalSlots=4, codeLen=24 
+	{
+		  0 iconst_1
+		  1 istore_1 [bool]
+		  2 iconst_1
+		  3 istore_2 [a]
+		  4 iconst_0
+		  5 istore_3 [b]
+		  6 iload_1 [bool]
+		  7 ifeq 16
+		 10 bipush 8
+		 12 istore_3 [b]
+		 13 goto 18
+		 16 iconst_2
+		 17 istore_3 [b]
+		 18 iload_3 [b]
+		 19 istore_2 [a]
+		 20 iinc a, 1
+		 23 return
+
+CFG of method if4
+	nodeNr:0 from 0 to 7	visited: false
+		predecessor: 
+		successor: CFG-Node [10:13]	CFG-Node [16:17]	
+	nodeNr:1 from 10 to 13	visited: false
+		predecessor: CFG-Node [0:7]	
+		successor: CFG-Node [18:23]	
+	nodeNr:2 from 16 to 17	visited: false
+		predecessor: CFG-Node [0:7]	
+		successor: CFG-Node [18:23]	
+	nodeNr:3 from 18 to 23	visited: false
+		predecessor: CFG-Node [10:13]	CFG-Node [16:17]	
+		successor: 
+
+SSA for Method: if4
+   SSANode 0:
+      EntrySet {[ ], [ , , , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=3, index=1, reg=2
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=1, index=2, reg=3
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=2, index=3, reg=3
+         3: Branch[sCBranch] {0} (Void)
+      ExitSet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         4: NoOpnd[sCloadConst] 8 (Integer),   end=5, index=3, reg=2
+         5: Monadic[sCRegMove] {4} (Integer),   end=9, index=2, reg=2, join={9}
+         6: Branch[sCBranch]  (Void)
+      ExitSet {[ ], [ , 5 (Integer), 1 (Integer), 4 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         7: NoOpnd[sCloadConst] 2 (Integer),   end=8, index=3, reg=3
+         8: Monadic[sCRegMove] {7} (Integer),   end=9, index=2, reg=2, join={9}
+      ExitSet {[ ], [ , 8 (Integer), 1 (Integer), 7 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), Phi-Function(9) ]}
+         9: PhiFunction[sCPhiFunc] {5, 8} (Phi-Function),   start=5, end=11, index=2, reg=2
+         10: NoOpnd[sCloadConst] 1 (Integer),   end=11
+         11: Dyadic[sCadd] {9, 10} (Integer),   end=11, index=2, reg=2
+         12: Branch[sCreturn]  (Void)
+      ExitSet {[ ], [ , 0 (Integer), 11 (Integer), Phi-Function(9) ]}
+
+Code for Method: if4
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400001	[0xc]	li  r2, 1
+	38600001	[0x10]	li  r3, 1
+	38600000	[0x14]	li  r3, 0
+	2c020000	[0x18]	cmpi  crf0, 0, r2, 0
+	419d000c	[0x1c]	bc  iftrue, CRF0[EQ], 12, [0x28]	
+	38400008	[0x20]	li  r2, 8
+	4800000c	[0x24]	b  12, [0x30]	
+	38600002	[0x28]	li  r3, 2
+	7c621b78	[0x2c]	lr  r2, r3
+	38420001	[0x30]	addi  r2, r2, 1
+	8001000c	[0x34]	lwz  r0, 12(r1)
+	7c0803a6	[0x38]	mtspr  LR, r0
+	38210010	[0x3c]	addi  r1, r1, 16
+	4e800020	[0x40]	bclr always, CRF7[SO]

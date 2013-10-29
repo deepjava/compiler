@@ -1,0 +1,193 @@
+	public static int multipleReturns2() {
+		int x = 22;
+		if(x == 1) {
+			return 1;
+		}
+		else if(x == 3) {
+			return 3;
+		}
+		else if(x == 5) {
+			return 5;
+		}
+		else {
+			if(x == 2) {
+				return 2;
+			}
+			else if(x == 4) {
+				return 4;
+			}
+			else {
+				return 100;
+			}
+		}
+	}
+
+public static int multipleReturns2()
+	//nofStackSlots=2, nofLocalSlots=1, codeLen=41 
+		  0 bipush 22
+		  2 istore_0 [x]
+		  3 iload_0 [x]
+		  4 iconst_1
+		  5 if_icmpne 10		  
+		  8 iconst_1
+		  9 ireturn		  
+		 10 iload_0 [x]
+		 11 iconst_3
+		 12 if_icmpne 17		 
+		 15 iconst_3
+		 16 ireturn		 
+		 17 iload_0 [x]
+		 18 iconst_5
+		 19 if_icmpne 24		 
+		 22 iconst_5
+		 23 ireturn		 
+		 24 iload_0 [x]
+		 25 iconst_2
+		 26 if_icmpne 31		 
+		 29 iconst_2
+		 30 ireturn		 
+		 31 iload_0 [x]
+		 32 iconst_4
+		 33 if_icmpne 38		 
+		 36 iconst_4
+		 37 ireturn		 
+		 38 bipush 100
+		 40 ireturn
+
+method multipleReturns2
+	nodeNr:0 from 0 to 5	visited: false
+		predecessor: 
+		successor: CFG-Node [8:9]	CFG-Node [10:12]	
+	nodeNr:1 from 8 to 9	visited: false
+		predecessor: CFG-Node [0:5]	
+		successor: 
+	nodeNr:2 from 10 to 12	visited: false
+		predecessor: CFG-Node [0:5]	
+		successor: CFG-Node [15:16]	CFG-Node [17:19]	
+	nodeNr:3 from 15 to 16	visited: false
+		predecessor: CFG-Node [10:12]	
+		successor: 
+	nodeNr:4 from 17 to 19	visited: false
+		predecessor: CFG-Node [10:12]	
+		successor: CFG-Node [22:23]	CFG-Node [24:26]	
+	nodeNr:5 from 22 to 23	visited: false
+		predecessor: CFG-Node [17:19]	
+		successor: 
+	nodeNr:6 from 24 to 26	visited: false
+		predecessor: CFG-Node [17:19]	
+		successor: CFG-Node [29:30]	CFG-Node [31:33]	
+	nodeNr:7 from 29 to 30	visited: false
+		predecessor: CFG-Node [24:26]	
+		successor: 
+	nodeNr:8 from 31 to 33	visited: false
+		predecessor: CFG-Node [24:26]	
+		successor: CFG-Node [36:37]	CFG-Node [38:40]	
+	nodeNr:9 from 36 to 37	visited: false
+		predecessor: CFG-Node [31:33]	
+		successor: 
+	nodeNr:10 from 38 to 40	visited: false
+		predecessor: CFG-Node [31:33]	
+		successor: 
+
+SSA for Method: multipleReturns2
+   SSANode 0:
+      EntrySet {[ , ], [ ]}
+         0: NoOpnd[sCloadConst] 22 (Integer),   end=18, index=0, reg=2
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=2
+         2: Branch[sCBranch] {1, 0} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=4, reg=3
+         4: Branch[sCreturn] {3} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         5: NoOpnd[sCloadConst] 3 (Integer),   end=6
+         6: Branch[sCBranch] {5, 0} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         7: NoOpnd[sCloadConst] 3 (Integer),   end=8, reg=3
+         8: Branch[sCreturn] {7} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         9: NoOpnd[sCloadConst] 5 (Integer),   end=10
+         10: Branch[sCBranch] {9, 0} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         11: NoOpnd[sCloadConst] 5 (Integer),   end=12, reg=3
+         12: Branch[sCreturn] {11} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 6:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         13: NoOpnd[sCloadConst] 2 (Integer),   end=14
+         14: Branch[sCBranch] {13, 0} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 7:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         15: NoOpnd[sCloadConst] 2 (Integer),   end=16, reg=3
+         16: Branch[sCreturn] {15} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 8:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         17: NoOpnd[sCloadConst] 4 (Integer),   end=18
+         18: Branch[sCBranch] {17, 0} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 9:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         19: NoOpnd[sCloadConst] 4 (Integer),   end=20, reg=2
+         20: Branch[sCreturn] {19} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+   SSANode 10:
+      EntrySet {[ , ], [ 0 (Integer) ]}
+         21: NoOpnd[sCloadConst] 100 (Integer),   end=22, reg=2
+         22: Branch[sCreturn] {21} (Void)
+      ExitSet {[ , ], [ 0 (Integer) ]}
+
+Code for Method: multipleReturns2
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400016	[0xc]	li  r2, 22
+	2c020001	[0x10]	cmpi  crf0, 0, r2, 1
+	409d0010	[0x14]	bc  iffalse, CRF0[EQ], 16, [0x24]	
+	38600001	[0x18]	li  r3, 1
+	7c621b78	[0x1c]	lr  r2, r3
+	48000054	[0x20]	b  84, [0x74]	
+	2c020003	[0x24]	cmpi  crf0, 0, r2, 3
+	409d0010	[0x28]	bc  iffalse, CRF0[EQ], 16, [0x38]	
+	38600003	[0x2c]	li  r3, 3
+	7c621b78	[0x30]	lr  r2, r3
+	48000040	[0x34]	b  64, [0x74]	
+	2c020005	[0x38]	cmpi  crf0, 0, r2, 5
+	409d0010	[0x3c]	bc  iffalse, CRF0[EQ], 16, [0x4c]	
+	38600005	[0x40]	li  r3, 5
+	7c621b78	[0x44]	lr  r2, r3
+	4800002c	[0x48]	b  44, [0x74]	
+	2c020002	[0x4c]	cmpi  crf0, 0, r2, 2
+	409d0010	[0x50]	bc  iffalse, CRF0[EQ], 16, [0x60]	
+	38600002	[0x54]	li  r3, 2
+	7c621b78	[0x58]	lr  r2, r3
+	48000018	[0x5c]	b  24, [0x74]	
+	2c020004	[0x60]	cmpi  crf0, 0, r2, 4
+	409d000c	[0x64]	bc  iffalse, CRF0[EQ], 12, [0x70]	
+	38400004	[0x68]	li  r2, 4
+	48000008	[0x6c]	b  8, [0x74]	
+	38400064	[0x70]	li  r2, 100
+	8001000c	[0x74]	lwz  r0, 12(r1)
+	7c0803a6	[0x78]	mtspr  LR, r0
+	38210010	[0x7c]	addi  r1, r1, 16
+	4e800020	[0x80]	bclr always, CRF7[SO]

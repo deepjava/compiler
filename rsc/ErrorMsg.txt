@@ -1,0 +1,99 @@
+ErrorNr;Description;Solution
+200;wrong number format;
+201;missing right parenthesis;
+202;missing right brace;
+203;missing right bracket;
+204;missing quotation mark;
+205;IO-Exception;
+206;Unexpected Symbol;
+207;Missing left brace;
+208;missing left bracket;
+209;missing semicolon;
+210;missing assignment sign;
+220;Device not found;
+221;Device not found; Make sure, to define the device first, before adding segments
+222;syntax error;
+223;inconsistent attributes;
+224;invalid type;
+225;invalid parameter;
+226;Overwrite protected constant;
+227;undefined constant;
+228;max number of reached;
+229;missing tag;
+230;no such register;
+231;no default segment defined;
+232;no system table segment defined;
+233;to set an init value is not supported;
+234;fix addresses for methods are only in exception methods supported;
+235;no such segment;
+236;Module not found;
+237;System module not found;
+238;Board not found;
+239;Operating system not found;
+241;System constant not found;
+250;configuration file not found;
+251;wrong attribute for device;
+252;too many exception classes;
+253;run configuration defined twice;
+254;segment not found;
+255;no valid library path;
+
+300;class file not found;
+301;system method not found;
+302;id for system method out of range;
+303;parent directories of class files already set;
+304;illegal parent directories of class files;
+305;no root classes defined;
+306;+ operator for strings not supported;
+
+400;cfgNode not found;
+
+500;Generation of line number table failed;
+
+600;no code generated;
+601;method has too many parameters;
+602;fixup out of range;
+603;not enough GPR's for locals;
+604;not enough FPR's for locals;
+610;result of SSA instruction has wrong type;
+611;operand of SSA instruction has wrong type;
+612;operand of SSA new instruction has wrong type;
+620;SSA return instruction not implemented;
+621;SSA branch instruction not implemented;
+623;sCcompl or sCcompg is not followed by branch instruction;
+625;SSA instruction not implemented;
+630;initialization failed, unsafe class not found;
+631;initialization failed, method in unsafe class not found;
+632;initialization failed, low level class not found;
+633;initialization failed, method in low level class not found;
+
+701;Class not loaded;
+702;Class not found;
+703;Array not found;
+710;Segment not found;
+711;Segment size error;
+720;Address not set;
+721;Offset not set;
+722;Index not set;
+723;ID not set;
+724;Base address not set;
+730;Method not found;
+740;Configuration error;
+750;Machine code not generated;
+790;Runtime System error;
+
+800;Target not found! (USB connection failed);
+801;An error occurs while downloading! (Try to reopen);
+802;No target image to load;
+803;Connection to target lost;
+804;Reopen failed;
+805;Starting of device failed;
+806;Target is not in debug mode;
+807;Memory writer is not implemented;
+808;Bypass is not unlocked;
+809;Programming failed;
+810;Programmer not found;
+811;Class to connect to programmer not found;
+812;Plugin not found;
+
+900;Connection lost;

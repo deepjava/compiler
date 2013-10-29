@@ -1,0 +1,34 @@
+#deep-1
+
+meta {
+	version = "2013-09-25";
+	description = "Example project file";
+}
+
+project ExampleProjectMpc555 {
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
+	
+	boardtype = ntbMpc555HB;
+	ostype = ntbSTS;
+	programmertype = ntbMpc555UsbBdi;
+	
+#	rootclasses = "java/lang/Object";
+#	rootclasses = "test/Test1";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest5";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest3";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ActionableTest2";	
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/EnumTest1";	
+#	rootclasses = "ch.ntb.inf.deep.comp.targettest.objects.InterfaceTest";
+#	rootclasses = "ch.ntb.inf.deep.trglib.targettest.SystemTest";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/HeapTest3";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/demo/SystemInOutReflector";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/driver/ffs/FileTransfer";
+#	rootclasses = "SpezAusb1";
+
+#	imgfile = "out/exampleProject.bin"
+#	imgformat = binary;
+
+#	tctfile = "tct/targetCommands.dtct";
+
+}

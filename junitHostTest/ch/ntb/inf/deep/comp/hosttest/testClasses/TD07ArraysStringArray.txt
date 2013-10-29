@@ -1,0 +1,129 @@
+	public static String stringArray(){
+		String[] strings = new String[]{"This", "is", "a", "test", "string"};
+		
+		return strings[0];
+	}
+
+public static Ljava/lang/String; stringArray()
+	//nofStackSlots=4, nofLocalSlots=1, codeLen=34
+		  0 iconst_5
+		  1 anewarray java/lang/String
+		  4 dup
+		  5 iconst_0
+		  6 ldc This
+		  8 aastore
+		  9 dup
+		 10 iconst_1
+		 11 ldc is
+		 13 aastore
+		 14 dup
+		 15 iconst_2
+		 16 ldc a
+		 18 aastore
+		 19 dup
+		 20 iconst_3
+		 21 ldc test
+		 23 aastore
+		 24 dup
+		 25 iconst_4
+		 26 ldc string
+		 28 aastore
+		 29 astore_0 [strings]
+		 30 aload_0 [strings]
+		 31 iconst_0
+		 32 aaload
+		 33 areturn
+
+SSA for Method: stringArray
+   SSANode 0:
+      EntrySet {[ , , , ], [ ]}
+         0: NoOpnd[sCloadConst] 5 (Integer),   end=1, reg=2
+         1: Call[sCnew] {0} (Ref-Array),   java/lang/String,   end=18, index=0, reg=2
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=4, reg=3
+         3: NoOpnd[sCloadConst] This (Ref),   end=4, reg=4
+         4: StoreToArray[sCstoreToArray] {1, 2, 3} (Void),   end=4
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=7, reg=3
+         6: NoOpnd[sCloadConst] is (Ref),   end=7, reg=4
+         7: StoreToArray[sCstoreToArray] {1, 5, 6} (Void),   end=7
+         8: NoOpnd[sCloadConst] 2 (Integer),   end=10, reg=3
+         9: NoOpnd[sCloadConst] a (Ref),   end=10, reg=4
+         10: StoreToArray[sCstoreToArray] {1, 8, 9} (Void),   end=10
+         11: NoOpnd[sCloadConst] 3 (Integer),   end=13, reg=3
+         12: NoOpnd[sCloadConst] test (Ref),   end=13, reg=4
+         13: StoreToArray[sCstoreToArray] {1, 11, 12} (Void),   end=13
+         14: NoOpnd[sCloadConst] 4 (Integer),   end=16, reg=3
+         15: NoOpnd[sCloadConst] string (Ref),   end=16, reg=4
+         16: StoreToArray[sCstoreToArray] {1, 14, 15} (Void),   end=16
+         17: NoOpnd[sCloadConst] 0 (Integer),   end=18, reg=3
+         18: Dyadic[sCloadFromArray] {1, 17} (Ref),   end=19, reg=2
+         19: Branch[sCreturn] {18} (Void)
+      ExitSet {[ , , , ], [ 1 (Ref-Array) ]}
+
+Code for Method: stringArray
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400005	[0xc]	li  r2, 5
+	e020000	[0x10]	twi  ifless, r2, 0
+	38600000	[0x14]	li  r3, 0
+	3c630000	[0x18]	addis  r3, r3, 0
+	7c6803a6	[0x1c]	mtspr  LR, r3
+	38600005	[0x20]	li  r3, 5
+	3c630000	[0x24]	addis  r3, r3, 0
+	4e800020	[0x28]	bclr always, CRF7[SO]
+	38600000	[0x2c]	li  r3, 0
+	38800008	[0x30]	li  r4, 8
+	3c840000	[0x34]	addis  r4, r4, 0
+	c820000	[0x38]	twi  ifequal, r2, 0
+	a8a20008	[0x3c]	lha  r5, 8(r2)
+	7ca32808	[0x40]	tw  ifgeU, r3, r5
+	5465103a	[0x44]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x48]	addi  r6, r2, 12
+	7c85312e	[0x4c]	stwx  r4, r5, r6
+	38600001	[0x50]	li  r3, 1
+	3880000c	[0x54]	li  r4, 12
+	3c840000	[0x58]	addis  r4, r4, 0
+	c820000	[0x5c]	twi  ifequal, r2, 0
+	a8a20008	[0x60]	lha  r5, 8(r2)
+	7ca32808	[0x64]	tw  ifgeU, r3, r5
+	5465103a	[0x68]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x6c]	addi  r6, r2, 12
+	7c85312e	[0x70]	stwx  r4, r5, r6
+	38600002	[0x74]	li  r3, 2
+	38800015	[0x78]	li  r4, 21
+	3c840000	[0x7c]	addis  r4, r4, 0
+	c820000	[0x80]	twi  ifequal, r2, 0
+	a8a20008	[0x84]	lha  r5, 8(r2)
+	7ca32808	[0x88]	tw  ifgeU, r3, r5
+	5465103a	[0x8c]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0x90]	addi  r6, r2, 12
+	7c85312e	[0x94]	stwx  r4, r5, r6
+	38600003	[0x98]	li  r3, 3
+	3880001e	[0x9c]	li  r4, 30
+	3c840000	[0xa0]	addis  r4, r4, 0
+	c820000	[0xa4]	twi  ifequal, r2, 0
+	a8a20008	[0xa8]	lha  r5, 8(r2)
+	7ca32808	[0xac]	tw  ifgeU, r3, r5
+	5465103a	[0xb0]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0xb4]	addi  r6, r2, 12
+	7c85312e	[0xb8]	stwx  r4, r5, r6
+	38600004	[0xbc]	li  r3, 4
+	38800027	[0xc0]	li  r4, 39
+	3c840000	[0xc4]	addis  r4, r4, 0
+	c820000	[0xc8]	twi  ifequal, r2, 0
+	a8a20008	[0xcc]	lha  r5, 8(r2)
+	7ca32808	[0xd0]	tw  ifgeU, r3, r5
+	5465103a	[0xd4]	rlwinm  r5, r3, 2, 0, 29
+	38c2000c	[0xd8]	addi  r6, r2, 12
+	7c85312e	[0xdc]	stwx  r4, r5, r6
+	38600000	[0xe0]	li  r3, 0
+	c820000	[0xe4]	twi  ifequal, r2, 0
+	a8820008	[0xe8]	lha  r4, 8(r2)
+	7ca32008	[0xec]	tw  ifgeU, r3, r4
+	5464103a	[0xf0]	rlwinm  r4, r3, 2, 0, 29
+	38a2000c	[0xf4]	addi  r5, r2, 12
+	7c44282e	[0xf8]	lwzx  r2, r4, r5
+	8001000c	[0xfc]	lwz  r0, 12(r1)
+	7c0803a6	[0x100]	mtspr  LR, r0
+	38210010	[0x104]	addi  r1, r1, 16
+	4e800020	[0x108]	bclr always, CRF7[SO]

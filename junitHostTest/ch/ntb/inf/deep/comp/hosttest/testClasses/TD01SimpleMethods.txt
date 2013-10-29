@@ -1,0 +1,210 @@
+Testdokument für die Testklasse T01SimpleMethods
+
+Sinn und Zweck:
+Diese Klasse definiert verschiedene einfache Methoden. 
+Es soll getestet werden, dass der CFG und die SSA für statische und instanz Methoden 
+mit oder ohne Parameter richtig gebildet werden.
+
+Bytecode:
+
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		0 aload_0 [this]
+		1 invokespecial java/lang/Object(): void
+		4 return  
+		
+public static void emptyMethodStatic()
+	//nofStackSlots=0, nofLocalSlots=0, codeLen=1 
+		0 return
+		
+public void emptyMethod()
+	//nofStackSlots=0, nofLocalSlots=1, codeLen=1 
+		0 return
+		
+public static void assignment1()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=3 
+		0 iconst_1
+		1 istore_0 [x]
+		2 return
+		
+public static void simple1(int)
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=16 
+		0 iconst_0
+		1 istore_1 [x]
+		2 iinc x, 1
+		5 iinc x, 3
+		8 iinc x, -1
+		11 iload_0 [y]
+		12 iconst_1
+		13 iadd
+		14 istore_1 [x]
+		15 return
+		
+public static void simple2()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=13 
+		0 iconst_1
+		1 istore_0 [a]
+		2 iconst_2
+		3 istore_1 [b]
+		4 iconst_3
+		5 istore_0 [a]
+		6 iload_1 [b]
+		7 istore_0 [a]
+		8 iload_0 [a]
+		9 iload_1 [b]
+		10 iadd
+		11 istore_0 [a]
+		12 return
+		
+public static void simple3()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=13 
+		0 iconst_1
+		1 istore_0 [x]
+		2 iconst_2
+		3 istore_1 [y]
+		4 iload_0 [x]
+		5 iload_1 [y]
+		6 iadd
+		7 istore_0 [x]
+		8 iload_0 [x]
+		9 iload_0 [x]
+		10 iadd
+		11 istore_1 [y]
+		12 return
+		
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method emptyMethodStatic
+	nodeNr:0 from 0 to 0	visited: false
+		predecessor: 
+		successor: 
+
+method emptyMethod
+	nodeNr:0 from 0 to 0	visited: false
+		predecessor: 
+		successor: 
+
+method assignment1
+	nodeNr:0 from 0 to 2	visited: false
+		predecessor: 
+		successor: 
+
+method simple1
+	nodeNr:0 from 0 to 15	visited: false
+		predecessor: 
+		successor: 
+
+method simple2
+	nodeNr:0 from 0 to 12	visited: false
+		predecessor: 
+		successor: 
+
+method simple3
+	nodeNr:0 from 0 to 12	visited: false
+		predecessor: 
+		successor: 
+
+method simple4
+	nodeNr:0 from 0 to 52	visited: false
+		predecessor: 
+		successor: 
+
+
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
+
+
+Method: emptyMethodStatic
+   SSANode 0:
+      EntrySet {}
+         0: Branch[sCreturn] 
+      ExitSet {}
+
+
+Method: emptyMethod
+   SSANode 0:
+      EntrySet {[ ]}
+         0: Branch[sCreturn] 
+      ExitSet {[ ]}
+
+
+Method: assignment1
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Integer) ]}
+
+
+Method: simple1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         2: Dyadic[sCadd] {0, 1},   end=0, index=1, reg=-1
+         3: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=-1, reg=-1
+         4: Dyadic[sCadd] {2, 3},   end=0, index=1, reg=-1
+         5: NoOpnd[sCloadConst] -1 (Integer),   end=0, index=-1, reg=-1
+         6: Dyadic[sCadd] {4, 5},   end=0, index=1, reg=-1
+         7: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         8: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         9: Dyadic[sCadd] {7, 8},   end=0, index=1, reg=-1
+         10: Branch[sCreturn] 
+      ExitSet {[ , ], [ 7 (Integer), 9 (Integer) ]}
+
+
+Method: simple2
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=0, reg=-1
+         2: NoOpnd[sCloadConst] 3 (Integer),   end=0, index=0, reg=-1
+         3: Dyadic[sCadd] {1, 1},   end=0, index=0, reg=-1
+         4: Branch[sCreturn] 
+      ExitSet {[ , ], [ 3 (Integer), 1 (Integer) ]}
+
+
+Method: simple3
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=1, reg=-1
+         2: Dyadic[sCadd] {0, 1},   end=0, index=0, reg=-1
+         3: Dyadic[sCadd] {2, 2},   end=0, index=1, reg=-1
+         4: Branch[sCreturn] 
+      ExitSet {[ , ], [ 2 (Integer), 3 (Integer) ]}
+
+
+Method: simple4
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadConst] 100 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 10000 (Integer),   end=0, index=0, reg=-1
+         2: NoOpnd[sCloadConst] 32767 (Integer),   end=0, index=0, reg=-1
+         3: NoOpnd[sCloadConst] 40000 (Integer),   end=0, index=0, reg=-1
+         4: NoOpnd[sCloadConst] 80000 (Integer),   end=0, index=0, reg=-1
+         5: NoOpnd[sCloadConst] 100000 (Integer),   end=0, index=0, reg=-1
+         6: NoOpnd[sCloadConst] 2147440000 (Integer),   end=0, index=0, reg=-1
+         7: NoOpnd[sCloadConst] 2147483647 (Integer),   end=0, index=0, reg=-1
+         8: NoOpnd[sCloadConst] -100 (Integer),   end=0, index=0, reg=-1
+         9: NoOpnd[sCloadConst] -10000 (Integer),   end=0, index=0, reg=-1
+         10: NoOpnd[sCloadConst] -32768 (Integer),   end=0, index=0, reg=-1
+         11: NoOpnd[sCloadConst] -40000 (Integer),   end=0, index=0, reg=-1
+         12: NoOpnd[sCloadConst] -80000 (Integer),   end=0, index=0, reg=-1
+         13: NoOpnd[sCloadConst] -100000 (Integer),   end=0, index=0, reg=-1
+         14: NoOpnd[sCloadConst] -2147440000 (Integer),   end=0, index=0, reg=-1
+         15: NoOpnd[sCloadConst] -2147483648 (Integer),   end=0, index=0, reg=-1
+         16: Branch[sCreturn] 
+      ExitSet {[ ], [ 15 (Integer) ]}
+

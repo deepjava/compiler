@@ -1,0 +1,53 @@
+    public static void simple5() {
+        long a;
+        a = 1;
+        a = -1;
+        a = 0x2233445566778899L;
+        a = 0x9988776655443322L;
+    }
+
+
+	"public static void simple5()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=15 
+	{
+		  0 lconst_1
+		  1 lstore_0 [a]
+		  2 ldc2_w <Long -1>
+		  5 lstore_0 [a]
+		  6 ldc2_w <Long 2464388554683811993>
+		  9 lstore_0 [a]
+		 10 ldc2_w <Long -7383520307673025758>
+		 13 lstore_0 [a]
+		 14 return
+
+SSA for Method: simple5
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 1 (Long),   end=0, index=0, regLong=2, reg=3
+         1: NoOpnd[sCloadConst] -1 (Long),   end=1, index=0, regLong=2, reg=3
+         2: NoOpnd[sCloadConst] 2464388554683811993 (Long),   end=2, index=0, regLong=2, reg=3
+         3: NoOpnd[sCloadConst] -7383520307673025758 (Long),   end=3, index=0, regLong=2, reg=3
+         4: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ 3 (Long), ]}
+
+Code for Method:simple5
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	38400000	[0xc]	li  r2, 0
+	38600001	[0x10]	li  r3, 1
+	3840ffff	[0x14]	li  r2, -1
+	3860ffff	[0x18]	li  r3, -1
+	38404455	[0x1c]	li  r2, 17493
+	3c422233	[0x20]	addis  r2, r2, 8755
+	38608899	[0x24]	li  r3, -30567
+	3c636678	[0x28]	addis  r3, r3, 26232
+	38407766	[0x2c]	li  r2, 30566
+	3c429988	[0x30]	addis  r2, r2, -26232
+	38603322	[0x34]	li  r3, 13090
+	3c635544	[0x38]	addis  r3, r3, 21828
+	8001000c	[0x3c]	lwz  r0, 12(r1)
+	7c0803a6	[0x40]	mtspr  LR, r0
+	38210010	[0x44]	addi  r1, r1, 16
+	4e800020	[0x48]	bclr always, CRF7[SO]
+

@@ -1,0 +1,346 @@
+Testdokument für die Testklasse T02Branches
+
+Sinn und Zweck:
+Diese Klasse definiert verschiedene Klassen- und Instanz-Methoden, welche Verzweigungen beinhalten.  
+Es soll getestet werden, dass der CFG und die SSA richtig gebildet werden. Berücksichtig werden soll, 
+das auch nicht implementierte Zweige einen Knoten erzeugen können.
+
+Bytecode:
+
+public void <init>()
+	//nofStackSlots=1, nofLocalSlots=1, codeLen=5 
+		  0 aload_0 [this]
+		  1 invokespecial java/lang/Object(): void
+		  4 return
+		  
+public static int if1(int)
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=17 
+		  0 iload_0 [a]
+		  1 ifle 11
+		  4 iload_0 [a]
+		  5 iconst_1
+		  6 iadd
+		  7 istore_1 [i]
+		  8 goto 15
+		 11 iload_0 [a]
+		 12 iconst_1
+		 13 isub
+		 14 istore_1 [i]
+		 15 iload_1 [i]
+		 16 ireturn
+		 
+public static void if2()
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=24 
+		  0 iconst_1
+		  1 istore_0 [a]
+		  2 iconst_2
+		  3 istore_1 [b]
+		  4 iload_0 [a]
+		  5 iload_1 [b]
+		  6 if_icmplt 15
+		  9 bipush 6
+		 11 istore_0 [a]
+		 12 goto 18
+		 15 bipush 8
+		 17 istore_0 [a]
+		 18 iload_0 [a]
+		 19 istore_1 [b]
+		 20 iinc a, 1
+		 23 return
+		 
+public static void if3()
+	//nofStackSlots=2, nofLocalSlots=5, codeLen=42 
+		  0 iconst_0
+		  1 istore_0 [x]
+		  2 iconst_1
+		  3 istore_1 [y]
+		  4 iload_0 [x]
+		  5 ifne 41
+		  8 iload_1 [y]
+		  9 iconst_1
+		 10 if_icmpne 41
+		 13 iinc x, 1
+		 16 iload_0 [x]
+		 17 iconst_1
+		 18 if_icmpne 41
+		 21 iinc y, 1
+		 24 iload_1 [y]
+		 25 iconst_2
+		 26 if_icmpne 41
+		 29 iconst_1
+		 30 istore_2 [a]
+		 31 iconst_2
+		 32 istore_3 [b]
+		 33 iload_2 [a]
+		 34 iload_3 [b]
+		 35 isub
+		 36 istore [c]
+		 38 iinc c, 1
+		 41 return
+		 
+public void if4()
+	//nofStackSlots=1, nofLocalSlots=4, codeLen=24 
+		  0 iconst_1
+		  1 istore_1 [bool]
+		  2 iconst_1
+		  3 istore_2 [a]
+		  4 iconst_0
+		  5 istore_3 [b]
+		  6 iload_1 [bool]
+		  7 ifeq 16
+		 10 bipush 8
+		 12 istore_3 [b]
+		 13 goto 18
+		 16 iconst_2
+		 17 istore_3 [b]
+		 18 iload_3 [b]
+		 19 istore_2 [a]
+		 20 iinc a, 1
+		 23 return
+
+CFG:
+method <init>
+	nodeNr:0 from 0 to 4	visited: false
+		predecessor: 
+		successor: 
+
+method if1
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor: 
+		successor: CFG-Node [4:8]	CFG-Node [11:14]	
+	nodeNr:1 from 4 to 8	visited: false
+		predecessor: CFG-Node [0:1]	
+		successor: CFG-Node [15:16]	
+	nodeNr:2 from 11 to 14	visited: false
+		predecessor: CFG-Node [0:1]	
+		successor: CFG-Node [15:16]	
+	nodeNr:3 from 15 to 16	visited: false
+		predecessor: CFG-Node [4:8]	CFG-Node [11:14]	
+		successor: 
+
+method if2
+	nodeNr:0 from 0 to 6	visited: false
+		predecessor: 
+		successor: CFG-Node [9:12]	CFG-Node [15:17]	
+	nodeNr:1 from 9 to 12	visited: false
+		predecessor: CFG-Node [0:6]	
+		successor: CFG-Node [18:23]	
+	nodeNr:2 from 15 to 17	visited: false
+		predecessor: CFG-Node [0:6]	
+		successor: CFG-Node [18:23]	
+	nodeNr:3 from 18 to 23	visited: false
+		predecessor: CFG-Node [9:12]	CFG-Node [15:17]	
+		successor: 
+
+method if3
+	nodeNr:0 from 0 to 5	visited: false
+		predecessor: 
+		successor: CFG-Node [8:10]	CFG-Node [41:41]	
+	nodeNr:1 from 8 to 10	visited: false
+		predecessor: CFG-Node [0:5]	
+		successor: CFG-Node [13:18]	CFG-Node [41:41]	
+	nodeNr:2 from 13 to 18	visited: false
+		predecessor: CFG-Node [8:10]	
+		successor: CFG-Node [21:26]	CFG-Node [41:41]	
+	nodeNr:3 from 21 to 26	visited: false
+		predecessor: CFG-Node [13:18]	
+		successor: CFG-Node [29:38]	CFG-Node [41:41]	
+	nodeNr:4 from 29 to 38	visited: false
+		predecessor: CFG-Node [21:26]	
+		successor: CFG-Node [41:41]	
+	nodeNr:5 from 41 to 41	visited: false
+		predecessor: CFG-Node [0:5]	CFG-Node [8:10]	CFG-Node [13:18]	CFG-Node [21:26]	CFG-Node [29:38]	
+		successor: 
+
+method if4
+	nodeNr:0 from 0 to 7	visited: false
+		predecessor: 
+		successor: CFG-Node [10:13]	CFG-Node [16:17]	
+	nodeNr:1 from 10 to 13	visited: false
+		predecessor: CFG-Node [0:7]	
+		successor: CFG-Node [18:23]	
+	nodeNr:2 from 16 to 17	visited: false
+		predecessor: CFG-Node [0:7]	
+		successor: CFG-Node [18:23]	
+	nodeNr:3 from 18 to 23	visited: false
+		predecessor: CFG-Node [10:13]	CFG-Node [16:17]	
+		successor: 
+
+method if5
+	nodeNr:0 from 0 to 1	visited: false
+		predecessor: 
+		successor: CFG-Node [4:7]	CFG-Node [8:11]	
+	nodeNr:1 from 4 to 7	visited: false
+		predecessor: CFG-Node [0:1]	
+		successor: CFG-Node [8:11]	
+	nodeNr:2 from 8 to 11	visited: false
+		predecessor: CFG-Node [0:1]	CFG-Node [4:7]	
+		successor: 
+
+SSA:
+Method: <init>
+   SSANode 0:
+      EntrySet {[ ], [ ]}
+         0: NoOpnd[sCloadLocal] (Object),   end=0, index=0, reg=-1
+         1: Call[sCcall] {0} (Void),   java/lang/Object.<init>,   end=0, index=-1, reg=-1
+         2: Branch[sCreturn] 
+      ExitSet {[ ], [ 0 (Object) ]}
+
+
+Method: if1
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=0, index=0, reg=-1
+         1: Branch[sCBranch] {0}
+      ExitSet {[ , ], [ 0 (Integer), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 0 (Integer), ]}
+         2: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         3: Dyadic[sCadd] {0, 2},   end=0, index=1, reg=-1
+         4: Branch[sCBranch] 
+      ExitSet {[ , ], [ 0 (Integer), 3 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 0 (Integer), ]}
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         6: Dyadic[sCsub] {0, 5},   end=0, index=1, reg=-1
+      ExitSet {[ , ], [ 0 (Integer), 6 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 0 (Integer), Phi-Function(7) ]}
+         7: PhiFunction[sCPhiFunc] {3, 6} (Phi-Function),   end=0, index=1, reg=-1
+         8: Branch[sCreturn] {7}
+      ExitSet {[ , ], [ 0 (Integer), Phi-Function(7) ]}
+
+
+Method: if2
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=1, reg=-1
+         2: Branch[sCBranch] {1, 0}
+      ExitSet {[ , ], [ 0 (Integer), 1 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 0 (Integer), 1 (Integer) ]}
+         3: NoOpnd[sCloadConst] 6 (Integer),   end=0, index=0, reg=-1
+         4: Branch[sCBranch] 
+      ExitSet {[ , ], [ 3 (Integer), 1 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 0 (Integer), 1 (Integer) ]}
+         5: NoOpnd[sCloadConst] 8 (Integer),   end=0, index=0, reg=-1
+      ExitSet {[ , ], [ 5 (Integer), 1 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ Phi-Function(6), 1 (Integer) ]}
+         6: PhiFunction[sCPhiFunc] {3, 5} (Phi-Function),   end=0, index=1, reg=-1
+         7: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         8: Dyadic[sCadd] {6, 7},   end=0, index=0, reg=-1
+         9: Branch[sCreturn] 
+      ExitSet {[ , ], [ 8 (Integer), Phi-Function(6) ]}
+
+
+Method: if3
+   SSANode 0:
+      EntrySet {[ , ], [ , , , , ]}
+         0: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=0, reg=-1
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=1, reg=-1
+         2: Branch[sCBranch] {0}
+      ExitSet {[ , ], [ 0 (Integer), 1 (Integer), , , ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ 0 (Integer), 1 (Integer), , , ]}
+         3: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         4: Branch[sCBranch] {3, 1}
+      ExitSet {[ , ], [ 0 (Integer), 1 (Integer), , , ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ 0 (Integer), 1 (Integer), , , ]}
+         5: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         6: Dyadic[sCadd] {0, 5},   end=0, index=0, reg=-1
+         7: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         8: Branch[sCBranch] {7, 6}
+      ExitSet {[ , ], [ 6 (Integer), 1 (Integer), , , ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ 6 (Integer), 1 (Integer), , , ]}
+         9: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         10: Dyadic[sCadd] {1, 9},   end=0, index=1, reg=-1
+         11: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=-1, reg=-1
+         12: Branch[sCBranch] {11, 10}
+      ExitSet {[ , ], [ 6 (Integer), 10 (Integer), , , ]}
+
+   SSANode 4:
+      EntrySet {[ , ], [ 6 (Integer), 10 (Integer), , , ]}
+         13: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=2, reg=-1
+         14: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=3, reg=-1
+         15: Dyadic[sCsub] {13, 14},   end=0, index=4, reg=-1
+         16: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         17: Dyadic[sCadd] {15, 16},   end=0, index=4, reg=-1
+      ExitSet {[ , ], [ 6 (Integer), 10 (Integer), 13 (Integer), 14 (Integer), 17 (Integer) ]}
+
+   SSANode 5:
+      EntrySet {[ , ], [ Phi-Function(18), Phi-Function(19), , , ]}
+         18: PhiFunction[sCPhiFunc] {0, 6, 6, 6} (Phi-Function),   end=0, index=0, reg=-1
+         19: PhiFunction[sCPhiFunc] {1, 10, 10} (Phi-Function),   end=0, index=1, reg=-1
+         20: Branch[sCreturn] 
+      ExitSet {[ , ], [ Phi-Function(18), Phi-Function(19), , , ]}
+
+
+Method: if4
+   SSANode 0:
+      EntrySet {[ ], [ , , , ]}
+         0: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=1, reg=-1
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=2, reg=-1
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=3, reg=-1
+         3: Branch[sCBranch] {0}
+      ExitSet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+
+   SSANode 1:
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         4: NoOpnd[sCloadConst] 8 (Integer),   end=0, index=3, reg=-1
+         5: Branch[sCBranch] 
+      ExitSet {[ ], [ , 0 (Integer), 1 (Integer), 4 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), 2 (Integer) ]}
+         6: NoOpnd[sCloadConst] 2 (Integer),   end=0, index=3, reg=-1
+      ExitSet {[ ], [ , 0 (Integer), 1 (Integer), 6 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ ], [ , 0 (Integer), 1 (Integer), Phi-Function(7) ]}
+         7: PhiFunction[sCPhiFunc] {4, 6} (Phi-Function),   end=0, index=2, reg=-1
+         8: NoOpnd[sCloadConst] 1 (Integer),   end=0, index=-1, reg=-1
+         9: Dyadic[sCadd] {7, 8},   end=0, index=2, reg=-1
+         10: Branch[sCreturn] 
+      ExitSet {[ ], [ , 0 (Integer), 9 (Integer), Phi-Function(7) ]}
+
+
+Method: if5
+   SSANode 0:
+      EntrySet {[ , ], [ , , ]}
+         0: NoOpnd[sCloadLocal] (Integer),   end=0, index=1, reg=-1
+         1: Branch[sCBranch] {0}
+      ExitSet {[ , ], [ , 0 (Integer), ]}
+
+   SSANode 1:
+      EntrySet {[ , ], [ , 0 (Integer), ]}
+         2: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=1, reg=-1
+         3: NoOpnd[sCloadConst] 0 (Integer),   end=0, index=2, reg=-1
+      ExitSet {[ , ], [ , 2 (Integer), 3 (Integer) ]}
+
+   SSANode 2:
+      EntrySet {[ , ], [ , 0 (Integer), ]}
+         4: NoOpnd[sCloadLocal] (Integer),   end=0, index=2, reg=-1
+      ExitSet {[ , ], [ , 0 (Integer), 4 (Integer) ]}
+
+   SSANode 3:
+      EntrySet {[ , ], [ , Phi-Function(5), Phi-Function(6) ]}
+         5: PhiFunction[sCPhiFunc] {0, 2} (Phi-Function),   end=0, index=1, reg=-1
+         6: PhiFunction[sCPhiFunc] {4, 3} (Phi-Function),   end=0, index=2, reg=-1
+         7: Dyadic[sCadd] {5, 6},   end=0, index=-1, reg=-1
+         8: Branch[sCreturn] {7}
+      ExitSet {[ , ], [ , Phi-Function(5), Phi-Function(6) ]}
+

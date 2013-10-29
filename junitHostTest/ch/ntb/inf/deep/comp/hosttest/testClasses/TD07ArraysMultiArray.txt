@@ -1,0 +1,160 @@
+	public static void multiArray(){
+		int[][] x = new int[2][3];
+		double [][] d = new double[][]{{2.4d,3.1d},{3.5d,8.3d}};
+	}
+
+		  0 iconst_2
+		  1 iconst_3
+		  2 multianewarray int[][]
+		  6 astore_0 [x]
+		  7 iconst_2
+		  8 anewarray [D
+		 11 dup
+		 12 iconst_0
+		 13 iconst_2
+		 14 newarray double
+		 16 dup
+		 17 iconst_0
+		 18 ldc2_w <Double 2.4>
+		 21 dastore
+		 22 dup
+		 23 iconst_1
+		 24 ldc2_w <Double 3.1>
+		 27 dastore
+		 28 aastore
+		 29 dup
+		 30 iconst_1
+		 31 iconst_2
+		 32 newarray double
+		 34 dup
+		 35 iconst_0
+		 36 ldc2_w <Double 3.5>
+		 39 dastore
+		 40 dup
+		 41 iconst_1
+		 42 ldc2_w <Double 8.3>
+		 45 dastore
+		 46 aastore
+		 47 astore_1 [d]
+		 48 return
+
+SSA for Method: multiArray
+   SSANode 0:
+      EntrySet {[ , , , , , , , ], [ , ]}
+         0: NoOpnd[sCloadConst] 2 (Integer),   end=2, reg=2
+         1: NoOpnd[sCloadConst] 3 (Integer),   end=2, reg=3
+         2: Call[sCnew] {1, 0} (Ref-Array),   [[I,   end=2, index=0, reg=2
+         3: NoOpnd[sCloadConst] 2 (Integer),   end=4, reg=2
+         4: Call[sCnew] {3} (Ref-Array),   [D,   end=24, index=1, reg=31
+         5: NoOpnd[sCloadConst] 0 (Integer),   end=14, reg=30
+         6: NoOpnd[sCloadConst] 2 (Integer),   end=7, reg=2
+         7: Call[sCnew] {6} (Double-Array),   2,   end=14, reg=2
+         8: NoOpnd[sCloadConst] 0 (Integer),   end=10, reg=3
+         9: NoOpnd[sCloadConst] 2.4 (Double),   end=10, reg=1
+         10: StoreToArray[sCstoreToArray] {7, 8, 9} (Void),   end=10
+         11: NoOpnd[sCloadConst] 1 (Integer),   end=13, reg=3
+         12: NoOpnd[sCloadConst] 3.1 (Double),   end=13, reg=1
+         13: StoreToArray[sCstoreToArray] {7, 11, 12} (Void),   end=13
+         14: StoreToArray[sCstoreToArray] {4, 5, 7} (Void),   end=14
+         15: NoOpnd[sCloadConst] 1 (Integer),   end=24, reg=30
+         16: NoOpnd[sCloadConst] 2 (Integer),   end=17, reg=2
+         17: Call[sCnew] {16} (Double-Array),   2,   end=24, reg=2
+         18: NoOpnd[sCloadConst] 0 (Integer),   end=20, reg=3
+         19: NoOpnd[sCloadConst] 3.5 (Double),   end=20, reg=1
+         20: StoreToArray[sCstoreToArray] {17, 18, 19} (Void),   end=20
+         21: NoOpnd[sCloadConst] 1 (Integer),   end=23, reg=3
+         22: NoOpnd[sCloadConst] 8.3 (Double),   end=23, reg=1
+         23: StoreToArray[sCstoreToArray] {17, 21, 22} (Void),   end=23
+         24: StoreToArray[sCstoreToArray] {4, 15, 17} (Void),   end=24
+         25: Branch[sCreturn]  (Void)
+      ExitSet {[ , , , , , , , ], [ 2 (Ref-Array), 4 (Ref-Array) ]}
+
+Code for Method: multiArray
+	9421ffe0	[0x0]	stwu  r1, -32(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001001c	[0x8]	stw  r0, 28(r1)
+	bfa10008	[0xc]	stmw  r29, 8(r1)
+	38400002	[0x10]	li  r2, 2
+	38600003	[0x14]	li  r3, 3
+	38400002	[0x18]	li  r2, 2
+	e020000	[0x1c]	twi  ifless, r2, 0
+	38600000	[0x20]	li  r3, 0
+	3c630000	[0x24]	addis  r3, r3, 0
+	7c6803a6	[0x28]	mtspr  LR, r3
+	38600008	[0x2c]	li  r3, 8
+	3c630000	[0x30]	addis  r3, r3, 0
+	4e800020	[0x34]	bclr always, CRF7[SO]
+	7c5f1378	[0x38]	lr  r31, r2
+	3bc00000	[0x3c]	li  r30, 0
+	38400002	[0x40]	li  r2, 2
+	e020000	[0x44]	twi  ifless, r2, 0
+	3860000b	[0x48]	li  r3, 11
+	3c630000	[0x4c]	addis  r3, r3, 0
+	7c6803a6	[0x50]	mtspr  LR, r3
+	38600007	[0x54]	li  r3, 7
+	4e800020	[0x58]	bclr always, CRF7[SO]
+	38600000	[0x5c]	li  r3, 0
+	38800012	[0x60]	li  r4, 18
+	3c840000	[0x64]	addis  r4, r4, 0
+	c8240018	[0x68]	lfd  fr1, 24(r4)
+	c820000	[0x6c]	twi  ifequal, r2, 0
+	a8820008	[0x70]	lha  r4, 8(r2)
+	7ca32008	[0x74]	tw  ifgeU, r3, r4
+	54641838	[0x78]	rlwinm  r4, r3, 3, 0, 28
+	38a2000c	[0x7c]	addi  r5, r2, 12
+	7c242dae	[0x80]	stfdx  fr1, r4, r5
+	38600001	[0x84]	li  r3, 1
+	38800018	[0x88]	li  r4, 24
+	3c840000	[0x8c]	addis  r4, r4, 0
+	c8240018	[0x90]	lfd  fr1, 24(r4)
+	c820000	[0x94]	twi  ifequal, r2, 0
+	a8820008	[0x98]	lha  r4, 8(r2)
+	7ca32008	[0x9c]	tw  ifgeU, r3, r4
+	54641838	[0xa0]	rlwinm  r4, r3, 3, 0, 28
+	38a2000c	[0xa4]	addi  r5, r2, 12
+	7c242dae	[0xa8]	stfdx  fr1, r4, r5
+	c9f0000	[0xac]	twi  ifequal, r31, 0
+	a87f0008	[0xb0]	lha  r3, 8(r31)
+	7cbe1808	[0xb4]	tw  ifgeU, r30, r3
+	57c3103a	[0xb8]	rlwinm  r3, r30, 2, 0, 29
+	389f000c	[0xbc]	addi  r4, r31, 12
+	7c43212e	[0xc0]	stwx  r2, r3, r4
+	3bc00001	[0xc4]	li  r30, 1
+	38400002	[0xc8]	li  r2, 2
+	e020000	[0xcc]	twi  ifless, r2, 0
+	38600022	[0xd0]	li  r3, 34
+	3c630000	[0xd4]	addis  r3, r3, 0
+	7c6803a6	[0xd8]	mtspr  LR, r3
+	38600007	[0xdc]	li  r3, 7
+	4e800020	[0xe0]	bclr always, CRF7[SO]
+	38600000	[0xe4]	li  r3, 0
+	38800034	[0xe8]	li  r4, 52
+	3c840000	[0xec]	addis  r4, r4, 0
+	c8240018	[0xf0]	lfd  fr1, 24(r4)
+	c820000	[0xf4]	twi  ifequal, r2, 0
+	a8820008	[0xf8]	lha  r4, 8(r2)
+	7ca32008	[0xfc]	tw  ifgeU, r3, r4
+	54641838	[0x100]	rlwinm  r4, r3, 3, 0, 28
+	38a2000c	[0x104]	addi  r5, r2, 12
+	7c242dae	[0x108]	stfdx  fr1, r4, r5
+	38600001	[0x10c]	li  r3, 1
+	3880003a	[0x110]	li  r4, 58
+	3c840000	[0x114]	addis  r4, r4, 0
+	c8240018	[0x118]	lfd  fr1, 24(r4)
+	c820000	[0x11c]	twi  ifequal, r2, 0
+	a8820008	[0x120]	lha  r4, 8(r2)
+	7ca32008	[0x124]	tw  ifgeU, r3, r4
+	54641838	[0x128]	rlwinm  r4, r3, 3, 0, 28
+	38a2000c	[0x12c]	addi  r5, r2, 12
+	7c242dae	[0x130]	stfdx  fr1, r4, r5
+	c9f0000	[0x134]	twi  ifequal, r31, 0
+	a87f0008	[0x138]	lha  r3, 8(r31)
+	7cbe1808	[0x13c]	tw  ifgeU, r30, r3
+	57c3103a	[0x140]	rlwinm  r3, r30, 2, 0, 29
+	389f000c	[0x144]	addi  r4, r31, 12
+	7c43212e	[0x148]	stwx  r2, r3, r4
+	bba10008	[0x14c]	lmw  r29, 8(r1)
+	8001001c	[0x150]	lwz  r0, 28(r1)
+	7c0803a6	[0x154]	mtspr  LR, r0
+	38210020	[0x158]	addi  r1, r1, 32
+	4e800020	[0x15c]	bclr always, CRF7[SO]

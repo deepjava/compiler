@@ -1,0 +1,46 @@
+    public static void whileTrueBreak() {
+    	int a = 10;
+        while(true) {
+        	int b = a + 1;
+        	break;
+        }
+        int b = a;
+    }
+
+	"public static void whileTrueBreak()"
+	//nofStackSlots=2, nofLocalSlots=2, codeLen=10 
+	{
+		  0 bipush 10
+		  2 istore_0 [a]
+		  3 iload_0 [a]
+		  4 iconst_1
+		  5 iadd
+		  6 istore_1 [b]
+		  7 iload_0 [a]
+		  8 istore_1 [b]
+		  9 return
+
+CFG of method whileTrueBreak
+	nodeNr:0 from 0 to 9	visited: false
+		predecessor: 
+		successor: 
+
+SSA for Method: whileTrueBreak
+   SSANode 0:
+      EntrySet {[ , ], [ , ]}
+         0: NoOpnd[sCloadConst] 10 (Integer),   end=2, index=1, reg=2
+         1: NoOpnd[sCloadConst] 1 (Integer),   end=2
+         2: Dyadic[sCadd] {0, 1} (Integer),   end=2, index=1, reg=2
+         3: Branch[sCreturn]  (Void)
+      ExitSet {[ , ], [ 0 (Integer), 0 (Integer) ]}
+
+Code for Method: whileTrueBreak
+	9421fff0	[0x0]	stwu  r1, -16(r1)
+	7c0802a6	[0x4]	mfspr  r0, LR
+	9001000c	[0x8]	stw  r0, 12(r1)
+	3840000a	[0xc]	li  r2, 10
+	38420001	[0x10]	addi  r2, r2, 1
+	8001000c	[0x14]	lwz  r0, 12(r1)
+	7c0803a6	[0x18]	mtspr  LR, r0
+	38210010	[0x1c]	addi  r1, r1, 16
+	4e800020	[0x20]	bclr always, CRF7[SO]
