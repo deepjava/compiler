@@ -53,9 +53,9 @@ public class Configuration implements ICclassFileConsts {
 	public static final int SREC = 2;
 	public static final int DTIM = 3;
 	public static String[] formatMnemonics = {
-		"binary",
-		"hexadecimal",
-		"srec",
+		"BIN",
+		"HEX",
+		"sREC",
 		"dtim"
 	};	
 	

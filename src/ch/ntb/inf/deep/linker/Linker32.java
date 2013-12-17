@@ -19,6 +19,7 @@
 package ch.ntb.inf.deep.linker;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -1214,6 +1215,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	public static long writeTargetImageToBinFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
+		long bytesWritten = 0;
 		String fileExtension = "bin";
 		String pathAndFileName = fileName;
 		if(fileName.lastIndexOf('.') > 0) {
@@ -1227,34 +1229,40 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
 		currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
-		binFile = new FileOutputStream(currentFileName);
-		if(dbg) vrb.println("  Writing to file: " + currentFileName);
-		int currentAddress = dev.address;
-		while(tms != null) {
-			while(currentAddress < tms.startAddress) {
-				binFile.write(0);
-				currentAddress++;
+		try{
+			binFile = new FileOutputStream(currentFileName);
+		
+			if(dbg) vrb.println("  Writing to file: " + currentFileName);
+			int currentAddress = dev.address;
+			while(tms != null) {
+				while(currentAddress < tms.startAddress) {
+					binFile.write(0);
+					currentAddress++;
+				}
+				if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = " + Integer.toHexString(currentAddress));
+				for(int j = 0; j < tms.data.length; j++) {
+					binFile.write(getBytes(tms.data[j]));
+					currentAddress += 4;
+				}
+				
+				if(tms.next != null && tms.next.segment.owner != dev) {
+					binFile.close();
+					dev = tms.next.segment.owner;
+					currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
+					binFile = new FileOutputStream(currentFileName);
+					currentAddress = dev.address;
+					if(dbg) vrb.println("  Writing to file: " + currentFileName);
+				}
+				tms = tms.next;
 			}
-			if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = " + Integer.toHexString(currentAddress));
-			for(int j = 0; j < tms.data.length; j++) {
-				binFile.write(getBytes(tms.data[j]));
-				currentAddress += 4;
-			}
-			
-			if(tms.next != null && tms.next.segment.owner != dev) {
-				binFile.close();
-				dev = tms.next.segment.owner;
-				currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
-				binFile = new FileOutputStream(currentFileName);
-				currentAddress = dev.address;
-				if(dbg) vrb.println("  Writing to file: " + currentFileName);
-			}
-			tms = tms.next;
+			bytesWritten =  binFile.getChannel().position();
+			if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+			binFile.close();
+			log.println("Image file generated");
 		}
-		long bytesWritten =  binFile.getChannel().position();
-		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
-		binFile.close();
-		log.println("Image file generated");
+		catch(Exception e){
+			reporter.error(11, "Writing image file");
+		}
 		return bytesWritten;
 	}
 	

@@ -1616,7 +1616,14 @@ public class Parser implements ICclassFileConsts {
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + currentProject.getImgFileName());
 			} else if (sym == sImgFormat) {
 				currentProject.setImgFileFormat(imgFileFormatAssignment());
-				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file format to " + Configuration.formatMnemonics[currentProject.getImgFileFormat()]);
+				if (dbg) {
+					if(currentProject.imgFileFormat != -1){
+						StdStreams.vrb.println("[CONF] Parser: Setting image file format to " + Configuration.formatMnemonics[currentProject.getImgFileFormat()]);
+					}
+					else{
+						StdStreams.vrb.println("[CONF] Parser: Setting image file format failed " + currentProject.imgFileFormat);
+					}
+				}
 			} else { // sym == sTctFile
 				currentProject.setTctFileName(tctFileAssignment());
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting target command file to " + currentProject.getTctFileName());
@@ -1921,13 +1928,27 @@ public class Parser implements ICclassFileConsts {
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return -1;}
 		next();
-		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return -1;}
-		s = strBuffer;
+		if (sym != sDesignator && (sym != sBin && sym!= sHex)) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return -1;}
+		if (sym == sDesignator){
+			s = strBuffer;
+		}
+		else{
+			if(sym == sBin){
+				s = Configuration.formatMnemonics[0]; // "bin"
+			}
+			else{
+				s = Configuration.formatMnemonics[1]; // "hex"
+			}
+		}
 		next();
 		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return -1;}
 		next();
+		for(int i = 0; i < Configuration.formatMnemonics.length; i++) {
+			if(Configuration.formatMnemonics[i].equalsIgnoreCase(s)) return i;
+		}
+		// Legacy fallback
 		if (s.equals("binary")) return Configuration.BIN;
-		else return -1;
+		return -1;
 	}
 	
 	private String cpuTypeAssignment() {

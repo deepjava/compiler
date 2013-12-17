@@ -26,6 +26,9 @@ public class DeepProjectModel {
 	private String[] board;
 	private String[] osName;
 	private String[] programmerName;
+	private File imgPath;
+	private String imgFormat; 
+	private boolean createImgFile;
 
 	public void setLibrary(File lib) {
 		this.lib = lib;
@@ -59,4 +62,27 @@ public class DeepProjectModel {
 		this.osName = os;
 	}
 	
+	public void setImgPath(File imgPath){
+		this.imgPath = imgPath;
+	}
+	
+	public File getImgPath(){
+		return imgPath;
+	}
+	
+	public void setImgFormat(String imgFormat){
+		this.imgFormat = imgFormat;
+	}
+	
+	public String getImgFormat(){
+		return imgFormat;
+	}
+	
+	public void setCreateImgFile(boolean createImgFile){
+		this.createImgFile = createImgFile;
+	}
+	
+	public boolean createImgFile(){
+		return createImgFile;
+	}
 }

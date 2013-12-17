@@ -185,11 +185,34 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			sb.append("\tostype = ");
 			if (model != null && model.getOs() != null) sb.append(model.getOs()[0]);
 			sb.append(";\n");
-			sb.append("\tprogrammertype = ");
+			if(model.getProgrammer() == null){
+				sb.append("#");
+			}
+			sb.append("\tprogrammertype = "); 
 			if (model != null && model.getProgrammer() != null) sb.append(model.getProgrammer()[0]);
 			sb.append(";\n\n#\tenter names of rootclasses, e.g.");
 			sb.append("\n#\trootclasses = \"test.MyFirstTestClass\",\"other.MySecondTestClass\";");
-			sb.append("\n\trootclasses = \"\";\n}\n");
+			sb.append("\n\trootclasses = \"\";\n\n");
+			if (model != null && !model.createImgFile()){
+				sb.append("#");
+			}
+			sb.append("\timgfile = ");
+			if (model != null && model.getImgPath() == null){
+				str = project.getLocation().toString();
+				str = str.replace('/', '\\');
+				sb.append("\"" + str);
+			}
+			else{
+				str = model.getImgPath().getAbsolutePath();
+				str = str.replace('/', '\\');
+				sb.append("\"" + str);
+			}
+			sb.append("\\" + project.getName() + "." + model.getImgFormat().toLowerCase() + "\";\n");
+			if(model != null && !model.createImgFile()){
+				sb.append("#");
+			}
+			sb.append("\timgformat = " + model.getImgFormat());
+			sb.append(";\n}\n");
 			in = new ByteArrayInputStream(sb.toString().getBytes());
 			try {
 				file.create(in, false, null);

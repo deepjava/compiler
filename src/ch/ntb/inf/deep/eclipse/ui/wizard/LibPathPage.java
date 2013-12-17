@@ -40,7 +40,6 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
-import ch.ntb.inf.deep.strings.HString;
 
 class LibPathPage extends WizardPage {
 		

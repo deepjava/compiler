@@ -459,8 +459,10 @@ public class Launcher implements ICclassFileConsts {
 				bytesWritten = Linker32.writeTargetImageToBinFile(fileName);
 				break;
 			case Configuration.HEX:
+				reporter.error(10, "Writing hex image");
 				break;
-			case Configuration.SREC: 
+			case Configuration.SREC:
+				reporter.error(10, "Writing srec image");
 				break;
 			case Configuration.DTIM:
 				bytesWritten = Linker32.writeTargetImageToDtimFile(fileName);
