@@ -30,10 +30,6 @@ public class NoOpnd extends SSAInstruction {
 		this.bca = bca;
 	}
 
-	public NoOpnd(int opcode) {
-		ssaOpcode = opcode;		
-	}
-
 	@Override
 	public SSAValue[] getOperands() {
 		return null;

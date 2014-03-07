@@ -23,10 +23,6 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.StdStreams;
 
-/**
- * @author millischer
- */
-
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	private static boolean dbg = false;
 	public CFG cfg;
@@ -44,15 +40,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 
 	public SSA(CFG cfg) {
 		this.cfg = cfg;
-		loopHeaders = new SSANode[cfg.getNumberOfNodes()];
-		sortedNodes = new SSANode[cfg.getNumberOfNodes()];
-		returnCount = 0;
+		int nofNodes = cfg.getNumberOfNodes();
+		loopHeaders = new SSANode[nofNodes];
+		sortedNodes = new SSANode[nofNodes];
 		returnNodes = new SSANode[4];
-		nofLoopheaders = 0;
-		nofSortedNodes = 0;	
-		highestLineNr = 0;
-		lowestLineNr = 0;
-		
+
 		determineParam();	// fills parameter array
 		sortNodes((SSANode)cfg.rootNode);
 		
@@ -73,9 +65,36 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			
 		}
 		
-		determineStateArray();
+		// visit all
+		for (int i = 0; i < nofSortedNodes; i++) {
+			SSANode node = sortedNodes[i];
+			node.owner = this;
+			node.traversed = false;	// reset traversed
+			node.mergeAndDetermineStateArray();
+			node.traversCode();	// translate bytecode into ssa instructions
+			node.traversed = true;
+		}
+
+		// visit loop headers again
+		for (int i = 0; i < nofLoopheaders; i++) {
+			SSANode node = loopHeaders[i];
+			node.mergeAndDetermineStateArray();
+		}
 		
-		//if the method have multiple return statements, so check if in the last node all required parameters are loaded
+		// clean up phi-functions
+		for (int i = 0; i < nofSortedNodes; i++) {
+			SSANode node = sortedNodes[i];
+			if (!node.isLoopHeader()){
+				node.eliminateRedundantPhiFunc();
+			}
+		}
+		
+		// clean up phi-functions in loop headers
+		for (int i = 0; i < nofLoopheaders; i++) {
+			loopHeaders[i].eliminateRedundantPhiFunc();
+		}
+		
+		// if the method has multiple return statements, check if all required parameters are loaded in the last node
 		if (returnCount > 1) {
 			int nofParams = cfg.method.nofParams;
 			if ((cfg.method.accAndPropFlags & (1<<apfStatic)) == 0) {	// instance method
@@ -111,57 +130,27 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 //		if (true) StdStreams.vrb.println(toString());
 	}
 
-	public void determineStateArray() {		
-		// visit all
-		for (int i = 0; i < nofSortedNodes; i++) {
-			//reset traversed for next use
-			sortedNodes[i].traversed = false;
-			sortedNodes[i].mergeAndDetermineStateArray(this);
-		}
-
-		// second visit of loop headers
-		for (int i = 0; i < nofLoopheaders; i++) {
-			loopHeaders[i].mergeAndDetermineStateArray(this);
-		}
-		//clean up PhiFunctions
-		for (int i = 0; i < nofSortedNodes; i++) {
-			if(!sortedNodes[i].isLoopHeader()){
-				sortedNodes[i].eliminateRedundantPhiFunc();
-			}
-		}
-		// clean up PhiFunctins in loop headers
-		for (int i = 0; i < nofLoopheaders; i++) {
-			loopHeaders[i].eliminateRedundantPhiFunc();
-		}
-
-	}
-
-	private void sortNodes(SSANode rootNode) {
-		if (rootNode.traversed) {// if its already processed
-			return;
-		}
-		if (rootNode.nofPredecessors > 0) {
-			if (rootNode.isLoopHeader()) {
-
-				if(rootNode.idom != null) sortNodes((SSANode)rootNode.idom);
-				if(!rootNode.traversed){
-					// mark loop headers for traverse a second time
-					loopHeaders[nofLoopheaders++] = rootNode;
-					sortedNodes[nofSortedNodes++] = rootNode;					
+	private void sortNodes(SSANode node) {
+		if (node.traversed) return;	// already processed
+		if (node.nofPredecessors > 0) {
+			if (node.isLoopHeader()) {
+				if(node.idom != null) sortNodes((SSANode) node.idom);
+				if(!node.traversed){
+					loopHeaders[nofLoopheaders++] = node;	// put into loop header list
+					sortedNodes[nofSortedNodes++] = node;					
 				}
 			} else {
-				for (int i = 0; i < rootNode.nofPredecessors; i++) {
-					sortNodes((SSANode) rootNode.predecessors[i]);
-					
+				for (int i = 0; i < node.nofPredecessors; i++) {
+					sortNodes((SSANode) node.predecessors[i]);
 				}
-				if(!rootNode.traversed)sortedNodes[nofSortedNodes++] = rootNode;
+				if (!node.traversed) sortedNodes[nofSortedNodes++] = node;
 			}
 		} else {
-			if(!rootNode.traversed)sortedNodes[nofSortedNodes++] = rootNode;
+			if (!node.traversed) sortedNodes[nofSortedNodes++] = node;
 		}
-		rootNode.traversed = true;
-		for (int i = 0; i < rootNode.nofSuccessors; i++) {
-			sortNodes((SSANode) rootNode.successors[i]);
+		node.traversed = true;
+		for (int i = 0; i < node.nofSuccessors; i++) {
+			sortNodes((SSANode) node.successors[i]);
 		}
 	}
 	
@@ -297,33 +286,35 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		returnNodes[returnCount++] = node; 
 	}
-	
+
 
 	private void createLineNrSSATable() {
 		int[] origTab = cfg.method.lineNrTab;
-		if (origTab != null) lineNumTab = new LineNrSSAInstrPair[origTab.length];
-		SSANode node = (SSANode) cfg.rootNode;
-		for (int n = 0; n < origTab.length; n++) {
-			int pc = (origTab[n] >> 16) & 0xFFFF;
-			if (pc == 0) {
-				lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[0]);
-				setHighestLowestLineNr(origTab[n] & 0xFFFF);
-			} else {
-				while (node != null) {
-					int i = 0;
-					while (i < node.nofInstr && pc > node.instructions[i].bca) i++;
-					if (i < node.nofInstr) {
-						if (pc == node.instructions[i].bca)
-							lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
-						else if (i > 0 && pc == node.instructions[i-1].bca)
-							lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i-1]);
-						else 
-							lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
-						setHighestLowestLineNr(origTab[n] & 0xFFFF);
-						break;
+		if (origTab != null) { 
+			lineNumTab = new LineNrSSAInstrPair[origTab.length];
+			SSANode node = (SSANode) cfg.rootNode;
+			for (int n = 0; n < origTab.length; n++) {
+				int pc = (origTab[n] >> 16) & 0xFFFF;
+				if (pc == 0) {
+					lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[0]);
+					setHighestLowestLineNr(origTab[n] & 0xFFFF);
+				} else {
+					while (node != null) {
+						int i = 0;
+						while (i < node.nofInstr && pc > node.instructions[i].bca) i++;
+						if (i < node.nofInstr) {
+							if (pc == node.instructions[i].bca)
+								lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
+							else if (i > 0 && pc == node.instructions[i-1].bca)
+								lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i-1]);
+							else 
+								lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
+							setHighestLowestLineNr(origTab[n] & 0xFFFF);
+							break;
 
+						}
+						node = (SSANode) node.next;
 					}
-					node = (SSANode) node.next;
 				}
 			}
 		}

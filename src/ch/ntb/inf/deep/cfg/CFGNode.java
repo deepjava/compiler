@@ -19,21 +19,23 @@
 package ch.ntb.inf.deep.cfg;
 
 /**
- * Node in the CFG-Tree with first and last bytecode address (bca).
- * 
- * 
- * @author buesser, graf
+ * Node of the CFG-Tree with first and last bytecode address (bca).
  */
 public class CFGNode {
-	static final int nofLinks = 2;
+	static final int nofLinks = 2;	// default number of successors and predecessors
 
 	/**
-	 * used for finding loop headers.
+	 * Used for finding loop headers.
 	 */
 	boolean visited, active;
 
 	/**
-	 * used for calculating dominator tree.
+	 * Used to identify nodes belonging to catch clauses.
+	 */
+	public boolean isCatch;
+
+	/**
+	 * Used for calculating dominator tree.
 	 */
 	int ref;
 	boolean root = false;
@@ -142,7 +144,6 @@ public class CFGNode {
 	 *            node to add.
 	 */
 	public final void addSuccessor(CFGNode node) {
-//		if (getSuccessor(node.firstBCA) != null) return;	// node already in array
 		int len = successors.length;
 		if (nofSuccessors == len) {
 			CFGNode[] newArray = new CFGNode[2 * len];

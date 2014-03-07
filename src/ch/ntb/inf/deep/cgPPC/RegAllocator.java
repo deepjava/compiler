@@ -37,8 +37,6 @@ import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 /**
  * register allocation
  * 
- * @author graf
- * 
  */
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
 	private static final boolean dbg = false;
@@ -144,7 +142,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (opds != null) {
 				for (SSAValue opd : opds) {
 					SSAInstruction opdInstr = opd.owner;
-					if (opdInstr.ssaOpcode == sCPhiFunc) {	
+					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCPhiFunc)) {	// TODO beschrieben dass owner = null wenn catch
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
 						if (phi.deleted && phi != instr) {
@@ -321,7 +319,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						if (opd.join.end < currNo) opd.join.end = currNo;
 						if (opd.join.start > currNo) opd.join.start = currNo;
 					}
-					if (opdInstr.ssaOpcode == sCloadLocal) {
+					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCloadLocal)) {	//TODO dito
 						if (opd.join != null) opd.join.start = 0;
 						// store last use of a parameter
 						CodeGen.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
@@ -604,7 +602,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (opds != null) {
 				for (SSAValue opd : opds) {
 					if (opd.join == null) {
-						if (opd.owner.ssaOpcode == sCloadLocal) {
+						if ((opd.owner != null) // TODO dito
+							&& (opd.owner.ssaOpcode == sCloadLocal)) {
 							if (CodeGen.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
 								if (opd.type == tLong) {
 									freeReg(gpr, opd.regLong);

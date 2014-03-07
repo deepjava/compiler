@@ -21,9 +21,6 @@ package ch.ntb.inf.deep.ssa;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
-/**
- * @author   millischer
- */
 public class SSAValue implements SSAValueType {
 	public int type;
 	public int index = -1;	// index into state array	
@@ -40,7 +37,7 @@ public class SSAValue implements SSAValueType {
 	public SSAValue join;	// for resolving phi functions
 	public SSAValue next;
 	public boolean nonVol;	// value resides in volatile or nonvolatile register
-	public SSAInstruction owner = null; //instruction which produce this value
+	public SSAInstruction owner = null; //instruction which produces this value
 	
 	
 	public SSAValue(){

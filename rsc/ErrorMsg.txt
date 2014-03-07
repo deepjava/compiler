@@ -48,7 +48,8 @@ ErrorNr;Description;Solution
 305;no root classes defined;
 306;+ operator for strings not supported;
 
-400;cfgNode not found;
+400;node in cfg not found;
+401;last bytecode instruction is not at end of method;
 
 500;Generation of line number table failed;
 

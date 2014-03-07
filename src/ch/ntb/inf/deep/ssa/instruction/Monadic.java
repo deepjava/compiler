@@ -23,11 +23,6 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Monadic extends SSAInstruction {
 
-	public Monadic(int opCode, SSAValue operand) {
-		ssaOpcode = opCode;
-		operands = new SSAValue[]{operand};
-	}
-	
 	public Monadic(int opCode,SSAValue operand, int bca) {
 		this.bca = bca;
 		ssaOpcode = opCode;

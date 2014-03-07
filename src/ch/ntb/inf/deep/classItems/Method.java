@@ -39,7 +39,7 @@ public class Method extends ClassMember {
 	public CFG cfg; // cfg of this method
 	public SSA ssa; // ssa of this method
 	
-	ExceptionTabEntry[] exceptionTab;
+	public ExceptionTabEntry[] exceptionTab;
 	LocalVar[] localVars;
 	public int[] lineNrTab; // entry: (startPc<<16) | lineNr
 
@@ -84,10 +84,6 @@ public class Method extends ClassMember {
 		}
 		locVar.next = lv;
 		if (pred == null) localVars[locVar.index] = locVar; else pred.next = locVar;
-	}
-
-	public byte[] getCode(){
-		return code;
 	}
 
 	public int getCodeSizeInBytes() {
@@ -190,6 +186,13 @@ public class Method extends ClassMember {
 				vrb.printf(" (%1$d : %2$d)", pair>>>16, pair&0xFFFF);
 			}
 			if( (length&(8-1)) != 0) vrb.println();
+		}
+	}
+
+	public void printExceptionTable(int indentLevel) {
+		if (exceptionTab != null) {
+			indent(indentLevel);  vrb.println("exception table");
+			for (ExceptionTabEntry e : exceptionTab) e.println(indentLevel + 1);
 		}
 	}
 

@@ -22,9 +22,6 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
-/**
- * @author  millischer
- */
 public abstract class SSAInstruction implements SSAInstructionMnemonics {
 	protected SSAValue[] operands;
 	public SSAValue result;
