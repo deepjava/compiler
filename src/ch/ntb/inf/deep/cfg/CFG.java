@@ -85,12 +85,14 @@ public class CFG implements ICjvmInstructionMnemonics {
 		if (bca < 0)
 			return null;
 		while (node != null) {
-			if (node.firstBCA <= bca && node.lastBCA >= bca) {
+			if ((bca >= node.firstBCA && bca <= node.lastBCA) || (bca > node.lastBCA && bca < node.next.firstBCA)) {
+//			if ((bca >= node.firstBCA && bca <= node.lastBCA)) {
 				return node;
 			} else {
 				node = node.next;
 			}
 		}
+		assert false;
 		return null; // node not found!!
 	}
 
@@ -112,12 +114,12 @@ public class CFG implements ICjvmInstructionMnemonics {
 		startNode.firstBCA = 0;
 		startNode.lastBCA = findLastBcaInNode(startNode, len);
 		int bca = 0;
-		if (dbg) StdStreams.vrb.println("\nbuild cfg for " + m.owner.name + "." + m.name);
+		if (dbg) StdStreams.vrb.println("build cfg for " + m.owner.name + "." + m.name);
 		if (dbg) m.printExceptionTable(1);
 		
 		while (bca < len) {
 			int bci = code[bca] & 0xff;
-			if (dbg) StdStreams.vrb.println("\t" + bca + " " + bcMnemonics[bci]);
+			if (dbg) StdStreams.vrb.println("   " + bca + " " + bcMnemonics[bci]);
 			int entry = bcAttrTab[bci];
 			int instrLen = (entry >> 8) & 0xF;
 			if (instrLen == 0) {
@@ -153,7 +155,7 @@ public class CFG implements ICjvmInstructionMnemonics {
 				int branchOffset = (short)(((code[bca + 1]&0xff) << 8) | (code[bca + 2]&0xff));
 				split(bca, bca + branchOffset);
 			} else if (bci == bCathrow) {
-				assert (bca == getNode(bca).lastBCA): "athrow is not at end of block";  
+				split(bca, -1); 
 			}
 			
 			bca += instrLen;
@@ -163,19 +165,19 @@ public class CFG implements ICjvmInstructionMnemonics {
 			return;
 		}
 		
-		if (dbg) StdStreams.vrb.println("\tget catch blocks");
+		if (dbg) StdStreams.vrb.println("   get catch blocks");
 		if (m.exceptionTab != null) enterCatchBlocks(m.exceptionTab);
 		
-		if (dbg) StdStreams.vrb.println("\tmarking loop headers");
+		if (dbg) StdStreams.vrb.println("   marking loop headers");
 		markLoopHeaders(rootNode);
 		
-		if (dbg) StdStreams.vrb.println("\teliminating dead nodes");
+		if (dbg) StdStreams.vrb.println("   eliminating dead nodes");
 		eliminateDeadNodes();
 		
-		if (dbg) StdStreams.vrb.println("\tenter predecessors");
+		if (dbg) StdStreams.vrb.println("   enter predecessors");
 		enterPredecessors();
 		
-		if (dbg) StdStreams.vrb.println("build dom");
+		if (dbg) StdStreams.vrb.println("   build dom");
 		findDominators();
 		
 		if (dbg) StdStreams.vrb.println(toString());
@@ -226,13 +228,13 @@ public class CFG implements ICjvmInstructionMnemonics {
 			}
 		}
 		
+		if (branchAddr == -1) return;	// no branch target in case of athrow
 		entry = bcAttrTab[code[branchAddr] & 0xff];
 		if ((entry & (1 << bcapUncondBranch)) != 0) {
-			if (dbg)
-				StdStreams.vrb.println("eliminate goto node at bca = " + branchAddr);
+			if (dbg) StdStreams.vrb.println("      eliminate goto node at bca = " + branchAddr);
 			// branch target is a goto, jump to new target node
 			branchAddr += (short) (((code[branchAddr + 1]&0xff) << 8) | (code[branchAddr + 2]&0xff));
-			if (dbg) StdStreams.vrb.println("new branch address = " + branchAddr);
+			if (dbg) StdStreams.vrb.println("      new branch address = " + branchAddr);
 		}
 		CFGNode targNode = getNode(branchAddr);
 		if (targNode == null) {
@@ -343,8 +345,10 @@ public class CFG implements ICjvmInstructionMnemonics {
 	private final void enterCatchBlocks(ExceptionTabEntry[] entries) {
 		for (ExceptionTabEntry e : entries) {
 			CFGNode catchNode = getNode(e.handlerPc);
+			assert catchNode != null;
 			catchNode.isCatch = true;
-			CFGNode tryNode = getNode(e.endPc);
+			CFGNode tryNode = getNode(e.endPc-1);	// [startPc...[endPc
+			assert tryNode != null;
 			tryNode.addSuccessor(catchNode);
 		}
 	}
@@ -406,7 +410,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 		node.idom = null;
 		for (int i = 0; i < node.nofSuccessors; i++)
 			visitDom(node.successors[i], node);
-		if (dbg) StdStreams.vrb.println(toString());
 	}
 
 	private void visitDom(CFGNode b, CFGNode predecessor) {

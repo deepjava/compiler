@@ -24,6 +24,7 @@ import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class NoOpnd extends SSAInstruction {
+	public boolean firstInCatch;
 	
 	public NoOpnd(int opcode, int bca) {
 		ssaOpcode = opcode;		

@@ -564,7 +564,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 							entry.endPc = clfInStrm.readUnsignedShort();
 							entry.handlerPc = clfInStrm.readUnsignedShort();
 							int catchTypeInx = clfInStrm.readUnsignedShort();
-							assert catchTypeInx != 0;
+							assert catchTypeInx != 0;	//TODO
+//							System.out.println(catchTypeInx);
 							entry.catchType = (Class)cpItems[catchTypeInx];
 						}
 					}

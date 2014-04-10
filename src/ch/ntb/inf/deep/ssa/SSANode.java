@@ -189,7 +189,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 							SSAValue param = ((SSANode) predecessors[i]).exitSet[j];
 							SSAValue temp = param; // store
 
-							// Check if it need a loadParam instruction
+							// Check if a loadParam instruction is necessary
 							if (owner.isParam[j]&& (phiFunctions[j].nofOperands == 0 || param == null)) {
 								param = generateLoadParameter((SSANode) idom, j, firstBCA);
 							}
@@ -459,13 +459,13 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		if (dbg) StdStreams.vrb.println("travers node " + this.toString());
 		for (stackpointer = maxStack - 1; stackpointer >= 0	&& exitSet[stackpointer] == null; stackpointer--);
 		
-		if (isCatch) {	// blocks at the start of catch blocks expect reference to exception on the stack 
-			SSAValue res = new SSAValue();
-			res.type = SSAValue.tRef;
-//			res.thrown = true;
-			System.out.println("is catch in method " + owner.cfg.method.name);
-			pushToStack(res);
-		}
+//		if (isCatch) {	// blocks at the start of catch blocks expect reference to exception on the stack //TODO
+//			SSAValue res = new SSAValue();
+//			res.type = SSAValue.tRef;
+////			res.thrown = true;
+//			System.out.println("is catch in method " + owner.cfg.method.name);
+////			pushToStack(res);
+//		}
 
 		for (int bca = this.firstBCA; bca <= this.lastBCA || wide; bca++) {
 			if (dbg) StdStreams.vrb.println("BCA: " + bca + ", nofStackItems: " + (stackpointer + 1));
@@ -1790,7 +1790,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					value1 = new SSAValue();
 					value1.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
 					value1.index = val + maxStack;
-					SSAInstruction loadInstr = new NoOpnd(sCloadLocal, bca);
+					SSAInstruction loadInstr;
+					if (wide) loadInstr = new NoOpnd(sCloadLocal, bca - 4);
+					else loadInstr = new NoOpnd(sCloadLocal, bca - 2);
 					loadInstr.result = value1;
 					loadInstr.result.owner = loadInstr;
 					addInstruction(loadInstr);
@@ -1801,18 +1803,16 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				value2.constant = new StdConstant(val1, 0);
 				value2.constant.name = HString.getHString("#");
 				value2.constant.type = Type.wellKnownTypes[txInt];
-				instr = new NoOpnd(sCloadConst, bca);
+				if (wide) instr = new NoOpnd(sCloadConst, bca - 4);
+				else instr = new NoOpnd(sCloadConst, bca - 2);
 				instr.result = value2;
 				instr.result.owner = instr;
 				addInstruction(instr);
 				
 				result = new SSAValue();
 				result.type = SSAValue.tInteger | (1 << SSAValue.ssaTaFitIntoInt);
-				if (wide) {
-					instr = new Dyadic(sCadd, value1, value2, bca - 4);
-				} else {
-					instr = new Dyadic(sCadd, value1, value2, bca - 2);
-				}
+				if (wide) instr = new Dyadic(sCadd, value1, value2, bca - 4);
+				else instr = new Dyadic(sCadd, value1, value2, bca - 2);
 				wide = false;
 				instr.result = result;
 				instr.result.owner = instr;
@@ -2060,8 +2060,6 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
 				break;
 			case bCgoto:
-				// val = (short) (ssa.cfg.code[bca + 1] & 0xff << 8 |
-				// ssa.cfg.code[bca + 2]);
 				instr = new Branch(sCbranch, bca);
 				instr.result = new SSAValue();
 				instr.result.owner = instr;
@@ -2070,18 +2068,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				break;
 			case bCjsr:
 				bca = bca + 2; // step over branchbyte1 and branchbyte2
-				String mnemonicJsr = ICjvmInstructionMnemonics.bcMnemonics[bci]; //TODO proper error
-				ErrorReporter.reporter.error("Can not handle " + mnemonicJsr + " bit it occured in " + owner.cfg.method.owner.name + "." + owner.cfg.method.name + owner.cfg.method.methDescriptor + "!");
-				assert false : mnemonicJsr + " found!";
+				ErrorReporter.reporter.error(510);
 				break;
 			case bCret:
 				if (wide) {
 					bca = bca + 2;
 					wide = false;
 				} else bca++;
-				String mnemonicRet = ICjvmInstructionMnemonics.bcMnemonics[bci];
-				ErrorReporter.reporter.error("Can not handle " + mnemonicRet + " bit it occured in " + owner.cfg.method.owner.name + "." + owner.cfg.method.name + owner.cfg.method.methDescriptor + "!");
-				assert false : mnemonicRet + " found!";
+				ErrorReporter.reporter.error(510);
 				break;
 			case bCtableswitch:
 				value1 = popFromStack();
@@ -2608,13 +2602,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				bca = bca + 2; // step over branch byte1 and byte2
 				break;
 			case bCgoto_w:
+				instr = new Branch(sCbranch, bca);
+				instr.result = new SSAValue();
+				instr.result.owner = instr;
+				addInstruction(instr);
 				bca = bca + 4; // step over branch byte1 and byte2...
 				break;
 			case bCjsr_w:
 				bca = bca + 4; // step over branch byte1 and branchbyte2...
-				mnemonicJsr = ICjvmInstructionMnemonics.bcMnemonics[bci];
-				ErrorReporter.reporter.error("Can not handle " + mnemonicJsr + " bit it occured in " + owner.cfg.method.owner.name + "." + owner.cfg.method.name + owner.cfg.method.methDescriptor + "!");
-				assert false : mnemonicJsr + " found!";
+				ErrorReporter.reporter.error(510);
 				break;
 			case bCbreakpoint:
 				// do nothing
@@ -2630,12 +2626,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			throw new IndexOutOfBoundsException("Stack overflow");
 		}
 		//set index for unsubscripted SSAValues
-		if (value.index < 0){
-			value.index = stackpointer + 1;
-		}
+		if (value.index < 0) value.index = stackpointer + 1;
 		exitSet[stackpointer + 1] = value;
 		stackpointer++;
-
 	}
 
 	private SSAValue popFromStack() {
@@ -2647,7 +2640,6 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		exitSet[stackpointer] = null;
 		stackpointer--;
 		return val;
-
 	}
 
 	private void addInstruction(SSAInstruction instr) {
@@ -2694,6 +2686,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			result.type = type;
 			result.index = index;
 			SSAInstruction instr = new NoOpnd(sCloadLocal, bca);
+			if (isCatch) {
+				System.out.println("load at bca="+bca+" in catch");
+				((NoOpnd)instr).firstInCatch = true;
+			}
 			instr.result = result;
 			instr.result.owner = instr;
 			addInstruction(instr);
@@ -2929,25 +2925,19 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	 * if index of ssa value is already set 
 	 */
 	private void storeAndInsertRegMoves(int index, int bca) {
+		if (isCatch && bca == this.firstBCA) {	// thrown exception is handled as a parameter
+			System.out.println("first store instruction in catch at " + bca);//TODO
+			return;
+		}
 		SSAValue val = popFromStack();
 		assert val != null;
 		assert val.index > -1;
-//		assert val.owner != null;
-
-		//		if (value1.thrown) {
-//			value2 = insertRegMoves(this, index, value1, bca);
-//
-		if (val.owner != null && val.owner.ssaOpcode != sCPhiFunc && val.index < maxStack) {	// value exists on the stack
-			//		if (val.owner.ssaOpcode != sCPhiFunc && val.index > -1 && val.index < maxStack){
+		if (val.owner.ssaOpcode != sCPhiFunc && val.index < maxStack) {	// value exists on the stack
 			val.index = index;
 			exitSet[index] = val;
-//			exitSet[index].index = index;	//TODO ganz weg
 		} else {	// is operand of phi-function or index is already set
 			SSAValue val2 = insertRegMoves(this, index, val, bca);			
-			if (val == val2) {
-				exitSet[index] = val;
-//				exitSet[index].index = index;	//TODO ganz weg
-			} //else System.out.println("register move");
+			if (val == val2) exitSet[index] = val;
 		}
 	}
 	
@@ -2971,8 +2961,15 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		return val;
 	}
 
+	public SSAInstruction searchBca(int bca) {
+		for (int i = 0; i < nofInstr; i++) {
+			if (bca <= instructions[i].bca) return instructions[i];
+		}
+		return null;
+	}
+	
 	public String toString() {	
-		if ((nofPhiFunc + nofInstr) <= 0) return super.toString();	//in case of empty SSA, invoke toString of CFGNode 
+		if ((nofPhiFunc + nofInstr) <= 0) return super.toString();	// in case of empty SSA, invoke toString of CFGNode 
 			
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < 3; i++) sb.append(" ");
@@ -3013,5 +3010,6 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		} else sb.append("}\n");
 		return sb.toString();
 	}
+
 
 }

@@ -144,7 +144,7 @@ public class Method extends ClassMember {
 	public static Method getCompSpecSubroutine(String jname) {
 		HString name = HString.getRegisteredHString(jname);
 		Method m = null;
-		if(compSpecSubroutines != null) {
+		if (compSpecSubroutines != null) {
 			m = (Method)compSpecSubroutines.getItemByName(name);
 		}
 		return m;
@@ -241,6 +241,7 @@ public class Method extends ClassMember {
 		Method m = compSpecSubroutines;
 		while(m != null) {
 			vrb.println("Name:    " + m.name + "\tOffset:  " + m.offset + "\tAddress: " + m.address);
+			vrb.println(m.machineCode.toString());
 			m = (Method)m.next;
 		}
 	}

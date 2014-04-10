@@ -26,7 +26,7 @@ public class ExceptionTabEntry {
 	private static PrintStream vrb = Item.vrb;
 
 	//--- instance fields
-	Class catchType;
+	public Class catchType;
 	public int startPc, endPc, handlerPc;
 	
 	//--- debug primitives

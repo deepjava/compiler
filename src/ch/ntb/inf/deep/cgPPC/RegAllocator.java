@@ -33,6 +33,7 @@ import ch.ntb.inf.deep.ssa.SSAValueType;
 import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
+import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
 /**
  * register allocation
@@ -118,6 +119,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				CFGNode[] pred = b.predecessors;
 				for (int i = 0; i < b.nofPredecessors; i++) {
 					SSANode n = (SSANode)pred[i];
+					if (n.nofInstr == 0) continue; // node could have no ssa instruction (in catch clause)
 					val = n.instructions[n.nofInstr - 1].result;
 					if (val != null) {
 						int end = val.n;
@@ -391,7 +393,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	/**
 	 * Assign a register or memory location to all SSAValues
-	 * finally, it determines how many parameters are passed on the stack
+	 * finally, determine how many parameters are passed on the stack
 	 */
 	static void assignRegisters(CodeGen code) {
 		// handle loadLocal first, 
@@ -401,6 +403,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue res = instr.result;
 			if (instr.ssaOpcode == sCloadLocal) {
 				if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
+				if (((NoOpnd)instr).firstInCatch) {res.reg = 2;
+					System.out.println("reg = 2"); continue;
+				}
 				int type = res.type;
 				if (type == tLong) {
 					res.regLong = CodeGen.paramRegNr[res.index - maxStackSlots];

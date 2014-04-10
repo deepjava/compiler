@@ -72,6 +72,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static int stackSize;
 	static boolean tempStorage;
 	static boolean enFloatsInExc;
+	private static int handleExcLoopOffset;
 	
 	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
 	private static int nofParam;	
@@ -109,8 +110,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static boolean newString;
 	
 	public SSA ssa;	// reference to the SSA of a method
-	public int[] instructions;	//contains machine instructions for the ssa of a method
-	public int iCount;	//nof instructions for this method
+	public int[] instructions;	// contains machine instructions for the ssa of a method
+	public int iCount;	// nof instructions for this method
+	int excTabCount;	// start of exception information in instruction array
 	
 	Item[] fixups;	// contains all references whose address has to be fixed by the linker
 	int fCount;	//nof fixups
@@ -149,8 +151,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
-//		ssa.cfg.printToLog();
-//		StdStreams.vrb.println(ssa.toString());
+//		StdStreams.vrb.print(ssa.cfg.toString());
+		StdStreams.vrb.println(ssa.toString());
 		RegAllocator.buildIntervals(ssa);
 //		if (dbg) {
 //			StdStreams.vrb.println("phi functions resolved");
@@ -171,13 +173,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			StdStreams.vrb.println();
 		}
 		
-		if(dbg) StdStreams.vrb.println("allocate registers");
+		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocator.assignRegisters(this);
 		if (dbg) {
 			StdStreams.vrb.println("phi functions resolved");
 			RegAllocator.printJoins();
 		}
-		if(dbg) {
+		if (dbg) {
 			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
 			StdStreams.vrb.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
 			StdStreams.vrb.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
@@ -190,6 +192,12 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
+			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// TODO fertig machen
+				iCount = 0;
+				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -48);
+				createIrSspr(ppcMtspr, EID, 0);	// TODO, was passiert wenn gleich wieder eine exception? muss rein, sonst absturz wenn debugger exception
+				createIrSrAd(ppcStmw, 28, stackPtr, 0);
+				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
 			} else {
 				stackSize = calcStackSizeException();
 				insertPrologException();
@@ -245,6 +253,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
+			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// TODO fertig machen
+				Method m = Method.getCompSpecSubroutine("handleException");
+				assert m != null;
+				loadConstantAndFixup(31, m);
+				createIrSspr(ppcMtspr, LR, 31);
+				createIrDrAd(ppcLmw, 28, stackPtr, 0);
+				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 48);
+				createIBOBILK(ppcBclr, BOalways, 0, false);
 			} else {
 				insertEpilogException(stackSize);
 			}
@@ -400,7 +416,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			SSAValue res = instr.result;
 			instr.machineCodeOffset = iCount;
 			
-//			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode]);
+			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + iCount);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst: {
 				int dReg = res.reg;
@@ -1921,6 +1937,9 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				}
 				break;}
 			case sCthrow: {
+				opds = instr.getOperands();
+				createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);
+				createItrap(ppcTw, TOalways, 0, 0);
 				break;}
 			case sCalength: {
 				opds = instr.getOperands();
@@ -2840,6 +2859,11 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		incInstructionNum();
 	}
 
+	private void createIpat(int pat) {
+		instructions[iCount] = pat;
+		incInstructionNum();
+	}
+
 	private void loadConstant(int reg, int val) {
 		assert(reg != 0);
 		int low = val & 0xffff;
@@ -2882,10 +2906,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		while (currFixup >= 0) {
 			Item item = fixups[currFixup];
 			int addr;
-			if (item == null) // item is null if constant null is loaded (aconst_null) 
+			if (item == null) // item is null, if constant null is loaded (aconst_null) 
 				addr = 0;
 			else 
-				addr = fixups[currFixup].address;
+				addr = item.address;
 			if (dbg) { 
 				if (item == null) StdStreams.vrb.print("\tnull"); 
 				else StdStreams.vrb.println("\t" + item.name + " at 0x" + Integer.toHexString(addr));
@@ -2898,6 +2922,31 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			instructions[currInstr+1] = (instructions[currInstr+1] & 0xffff0000) | (high & 0xffff);
 			currInstr = nextInstr;
 			currFixup--;
+		}
+		// fix addresses of exception information
+		if (ssa == null) return;	// compiler specific subroutines have no unwinding or exception table
+		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) return;	// exception methods have no unwinding or exception table
+		if (dbg) StdStreams.vrb.print("\n\tFixup of exception table for method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");		currInstr = excTabCount;
+		int count = 0;
+		while (instructions[currInstr] != 0xffffffff) {
+			SSAInstruction ssaInstr = ssa.searchBca(instructions[currInstr]);	
+			assert ssaInstr != null;
+			instructions[currInstr++] = ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// start
+			
+			ssaInstr = ssa.searchBca(instructions[currInstr]);	
+			assert ssaInstr != null;
+			instructions[currInstr++] = ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// end
+			
+			ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
+			assert tab != null;
+			ExceptionTabEntry entry = tab[count];
+			assert entry != null;
+			instructions[currInstr++] = entry.catchType.address;	// type
+			
+			ssaInstr = ssa.searchBca(instructions[currInstr] + 1);	// add 1, as first store is ommitted	
+			assert ssaInstr != null;
+			instructions[currInstr++] = ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// handler
+			count++;
 		}
 	}
 
@@ -2977,6 +3026,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	}
 
 	private void insertEpilog(int stackSize) {
+		int epilogStart = iCount;
 		int offset = GPRoffset - 8;
 		if (enFloatsInExc) {
 			createIrDrAd(ppcLfd, 0, stackPtr, offset);
@@ -2999,6 +3049,19 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		createIrSspr(ppcMtspr, LR, 0);
 		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
 		createIBOBILK(ppcBclr, BOalways, 0, false);
+		createIpat((-(iCount-epilogStart)*4) & 0xff);
+		excTabCount = iCount;
+		ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
+		if (tab != null) {
+			for (int i = 0; i < tab.length; i++) {
+				ExceptionTabEntry entry = tab[i];
+				createIpat(entry.startPc);
+				createIpat(entry.endPc);
+				createIpat(entry.catchType.address);
+				createIpat(entry.handlerPc);
+			}
+		}
+		createIpat(0xffffffff);
 	}
 
 	private void insertPrologException() {
@@ -3074,15 +3137,19 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
 		createIrfi(ppcRfi);
 	}
-	
+
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
-		sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
-		for (int i = 0; i < iCount; i++) {
+		if (ssa != null)	// compiler specific subroutines have no ssa
+			sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
+		int i;
+		for (i = 0; i < iCount; i++) {
+			if ((instructions[i] & 0xffffff00) == 0) break;
 			sb.append("\t" + String.format("%08X", instructions[i]));
 			sb.append("\t[0x");
 			sb.append(Integer.toHexString(i * 4));
-			sb.append("]\t" + InstructionDecoder.getMnemonic(instructions[i]));
+			sb.append("]\t");
+			sb.append(InstructionDecoder.getMnemonic(instructions[i]));
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
 			if (opcode == 0x10) {
 				int BD = (short) (instructions[i] & 0xFFFC);
@@ -3092,6 +3159,30 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
 			}
 			sb.append("\n");
+		}
+		if (ssa != null) {	// compiler specific subroutines have no ssa
+			if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) return sb.toString();	// exception methods have no unwinding or exception table 
+		
+			sb.append("\t" + String.format("%08X", instructions[i]));
+			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+			sb.append((byte)instructions[i++]); sb.append("  (offset to unwind code)\n");
+			while (instructions[i] != 0xffffffff) {
+				sb.append("\t" + String.format("%08X", instructions[i]));
+				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (start address of try)\n");
+				sb.append("\t" + String.format("%08X", instructions[i]));
+				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (end address of try)\n");
+				sb.append("\t" + String.format("%08X", instructions[i]));
+				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (address of catch type)\n");
+				sb.append("\t" + String.format("%08X", instructions[i]));
+				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (address of catch)\n");
+			}
+			sb.append("\t" + String.format("%08X", instructions[i]));
+			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+			sb.append("(end of method)\n");
 		}
 		return sb.toString();
 	}
@@ -3535,7 +3626,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);	// set to next interface
 			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, 0);	// get interface
 			m.machineCode.createICRFrArB(ppcCmpl, CRF0, 0, regAux3);
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);;
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);
 			m.machineCode.createIrArS(ppcExtsh, 0, 0);
 			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method offset
 			m.machineCode.createIrDrArB(ppcAdd, regAux1, regAux1, 0);	
@@ -3543,6 +3634,74 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
 			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
 			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
+		}
+		
+		m = Method.getCompSpecSubroutine("handleException");
+		if (m != null) { 
+			m.machineCode = new CodeGen();
+			// exceptionHandler
+			m.machineCode.instructions = new int[16];
+			m.machineCode.fixups = new Item[defaultNofFixup];
+			m.machineCode.iCount = 0;
+			// r2 contains reference to exception, r3 holds SRR0
+			// endless loop, label 1
+			int label1 = m.machineCode.iCount;
+//			handleExcLoopOffset = m.machineCode.iCount * 4;	//TODO kann ev. weg
+
+			// search end of method
+			m.machineCode.createIrArSrB(ppcOr, 4, 3, 3);
+			m.machineCode.createIrDrAd(ppcLwzu, 9, 4, 4);	
+			m.machineCode.createICRFrAsimm(ppcCmpli, CRF0, 9, 0xff);
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -2);
+			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 4);	
+//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
+		
+			// search catch
+			int label2 = m.machineCode.iCount;
+			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 5, -1);
+			int label3 = m.machineCode.iCount;
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 3
+			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 0);	// start 
+			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 15);
+			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 4);	// end 
+			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 12);
+			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 8);	// type 
+			m.machineCode.createIrDrAd(ppcLwz, 6, 5, -4);	// get extension level of exception 
+			m.machineCode.createIrArSSHMBME(ppcRlwinm, 6, 6, 2, 0, 31);	// *2
+			m.machineCode.createIrDrAsimm(ppcAddi, 6, 6, Linker32.tdBaseClass0Offset);	
+			m.machineCode.createIrDrAd(ppcLwz, 7, 2, -4);	// get tag 
+			m.machineCode.createIrDrArB(ppcLwzx, 8, 7, 6);	 
+			m.machineCode.createICRFrArB(ppcCmp, CRF0, 8, 5);		
+			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 4);		
+			m.machineCode.createIrDrAd(ppcLwz, 0, 4, 12);	// get handler address
+			m.machineCode.createIrSspr(ppcMtspr, SRR0, 0);
+			m.machineCode.createIrfi(ppcRfi);
+			
+			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 16);	
+			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 2
+			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label2);
+			
+			
+			//catch not found, label 3
+			correctJmpAddr(m.machineCode.instructions, label3, m.machineCode.iCount);
+			// unwind
+			m.machineCode.createIrDrAd(ppcLwz, 5, stackPtr, 0);	// get back pointer
+			m.machineCode.createIrDrArB(ppcAdd, 7, stackPtr, 5);
+			m.machineCode.createIrDrAd(ppcLwz, 3, 7, -4);	// get LR from stack
+			m.machineCode.loadConstantAndFixup(6, m);
+			m.machineCode.createIrSrAd(ppcStw, 6, stackPtr, -4);	// put addr of handleException
+			m.machineCode.createIrDrArB(ppcAdd, 9, 4, 9);
+			m.machineCode.createIrDrAsimm(ppcAddi, 9, 9, -4);
+			m.machineCode.createIrSspr(ppcMtspr, LR, 9);
+			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // branch to epilog
+//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);			
+//			
+//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 1
+//			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label1);
+			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
+			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
 		}
 	}
 
@@ -3606,6 +3765,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		Linker32.addGlobalConstant(int2floatConst1);
 		Linker32.addGlobalConstant(int2floatConst2);
 		Linker32.addGlobalConstant(int2floatConst3);
+		
+		Method.createCompSpecSubroutine("handleException");
 		
 		final Class stringClass = (Class)Type.wktString;
 		final Class heapClass = Configuration.getOS().heapClass;	

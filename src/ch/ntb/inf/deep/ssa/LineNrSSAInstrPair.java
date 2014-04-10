@@ -21,9 +21,9 @@ package ch.ntb.inf.deep.ssa;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class LineNrSSAInstrPair implements SSAInstructionMnemonics {
-	public int bca;
-	public int lineNr;
-	public SSAInstruction instr;
+	public int bca;	// instruction address in bytecode
+	public int lineNr;	// line number in source file
+	public SSAInstruction ssaInstr;	// ssa instruction
 	
 	/**
 	 * creates a line number pair consisting of a byte code address and a SSA instruction
@@ -34,16 +34,16 @@ public class LineNrSSAInstrPair implements SSAInstructionMnemonics {
 	public LineNrSSAInstrPair(int bca, int lineNr, SSAInstruction instr){
 		this.bca = bca;
 		this.lineNr = lineNr;
-		this.instr = instr;
+		this.ssaInstr = instr;
 	}
 	
 	@Override
 	public String toString(){
-		if (instr == null)
+		if (ssaInstr == null)
 			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " has no SSAInstruction";
-		if (instr.machineCodeOffset == -1)
-			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + instr.toString();
-		return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + instr.toString() + " <=> CodeOffset " + instr.machineCodeOffset;
+		if (ssaInstr.machineCodeOffset == -1)
+			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + ssaInstr.toString();
+		return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + ssaInstr.toString() + " <=> CodeOffset " + ssaInstr.machineCodeOffset;
 	}
 
 }

@@ -664,7 +664,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				else {
 					int offset = m.offset;
 					int size = ((Method)m).getCodeSizeInBytes();
-					if (offset <= s.usedSize) reporter.error(710, "bla " + c.name + "!\n");
+					if (offset <= s.usedSize) reporter.error(712);
 					s.addToUsedSize(roundUpToNextWord(offset - s.usedSize + size));
 					c.codeSegment = s;
 					if (dbg) vrb.println("    Code-Segment: " + c.codeSegment.getFullName() + ", offset=0x" + Integer.toHexString(c.codeOffset));

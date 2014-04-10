@@ -22,6 +22,7 @@ import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.StdStreams;
+import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	private static boolean dbg = false;
@@ -29,7 +30,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public int nofLoopheaders;
 	public boolean isParam[]; // indicates which locals are passed as parameters
 	public int paramType[]; // types of those parameters
-	private LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
+	public LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
 	public int highestLineNr;
 	public int lowestLineNr;	
 	private int returnCount;
@@ -44,6 +45,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		loopHeaders = new SSANode[nofNodes];
 		sortedNodes = new SSANode[nofNodes];
 		returnNodes = new SSANode[4];
+		
+		if (dbg) StdStreams.vrb.println("generate ssa for " + cfg.method.owner.name + "." + cfg.method.name);
 
 		determineParam();	// fills parameter array
 		sortNodes((SSANode)cfg.rootNode);
@@ -323,6 +326,16 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public LineNrSSAInstrPair[] getLineNrTable() {
 		return lineNumTab;
 	}
+
+	public SSAInstruction searchBca(int bca) {
+		SSANode node = (SSANode)cfg.rootNode;
+		while (node != null) {
+			SSAInstruction instr = node.searchBca(bca);
+			if (instr != null) return instr;
+			node = (SSANode) node.next;
+		}
+		return null;
+	}
 	
 	private void setHighestLowestLineNr(int lineNr) {
 		if (highestLineNr < 1) { // no lineNr is set before
@@ -351,6 +364,5 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		return sb.toString();
 	}
-	
 
 }
