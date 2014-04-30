@@ -152,12 +152,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
 //		StdStreams.vrb.print(ssa.cfg.toString());
-		StdStreams.vrb.println(ssa.toString());
+//		StdStreams.vrb.println(ssa.toString());
 		RegAllocator.buildIntervals(ssa);
-//		if (dbg) {
-//			StdStreams.vrb.println("phi functions resolved");
-//			RegAllocator.printJoins();
-//		}
 		
 		if (dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
@@ -175,9 +171,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocator.assignRegisters(this);
+		
+//		StdStreams.vrb.print(ssa.cfg.toString());
 		if (dbg) {
-			StdStreams.vrb.println("phi functions resolved");
-			RegAllocator.printJoins();
+			StdStreams.vrb.println(RegAllocator.joinsToString());
 		}
 		if (dbg) {
 			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
@@ -204,7 +201,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			}
 		} else {
 			stackSize = calcStackSize();
-			insertProlog();
+			insertProlog();	// builds stack frame and copies parameters
 		}
 		
 		SSANode node = (SSANode)ssa.cfg.rootNode;
@@ -411,10 +408,16 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		SSAValue[] opds;
 		int stringReg = 0;
 		Item stringCharRef = null;
+
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
 			instr.machineCodeOffset = iCount;
+			if (node.isCatch && i == 0 && node.loadLocalExc > -1) {	
+				if (dbg) StdStreams.vrb.println("enter move register intruction for local 'exception' in catch clause: from R" + paramStartGPR + " to R" + node.instructions[node.loadLocalExc].result.reg);
+				createIrArSrB(ppcOr, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, paramStartGPR);
+			}
+			
 			
 			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + iCount);
 			switch (instr.ssaOpcode) { 
@@ -1938,7 +1941,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				break;}
 			case sCthrow: {
 				opds = instr.getOperands();
-				createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);
+				createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// put exception into parameter register
 				createItrap(ppcTw, TOalways, 0, 0);
 				break;}
 			case sCalength: {
@@ -2136,7 +2139,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						loadConstantAndFixup(res.regGPR1, method);	// addr of newarray
 						createIrSspr(ppcMtspr, LR, res.regGPR1);
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
-						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
+//			TODO			createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						createIrDrAsimm(ppcAddi, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
 						loadConstantAndFixup(paramStartGPR + 2, item);	// ref to type descriptor
 						createIBOBILK(ppcBclr, BOalways, 0, true);
@@ -2147,7 +2150,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						loadConstantAndFixup(res.regGPR1, method);	// addr of anewarray
 						createIrSspr(ppcMtspr, LR, res.regGPR1);
 						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
-						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
+//TODO						createItrapSimm(ppcTwi, TOifless, paramStartGPR, 0);
 						loadConstantAndFixup(paramStartGPR + 1, item);	// ref to type descriptor
 						createIBOBILK(ppcBclr, BOalways, 0, true);
 						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
@@ -2926,7 +2929,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		// fix addresses of exception information
 		if (ssa == null) return;	// compiler specific subroutines have no unwinding or exception table
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) return;	// exception methods have no unwinding or exception table
-		if (dbg) StdStreams.vrb.print("\n\tFixup of exception table for method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");		currInstr = excTabCount;
+		if (dbg) StdStreams.vrb.print("\n\tFixup of exception table for method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");		
+		currInstr = excTabCount;
 		int count = 0;
 		while (instructions[currInstr] != 0xffffffff) {
 			SSAInstruction ssaInstr = ssa.searchBca(instructions[currInstr]);	
@@ -3640,27 +3644,24 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		if (m != null) { 
 			m.machineCode = new CodeGen();
 			// exceptionHandler
-			m.machineCode.instructions = new int[16];
+			m.machineCode.instructions = new int[64];
 			m.machineCode.fixups = new Item[defaultNofFixup];
 			m.machineCode.iCount = 0;
 			// r2 contains reference to exception, r3 holds SRR0
-			// endless loop, label 1
-			int label1 = m.machineCode.iCount;
-//			handleExcLoopOffset = m.machineCode.iCount * 4;	//TODO kann ev. weg
+			// r4 to r9 are used for auxiliary purposes
 
 			// search end of method
 			m.machineCode.createIrArSrB(ppcOr, 4, 3, 3);
 			m.machineCode.createIrDrAd(ppcLwzu, 9, 4, 4);	
 			m.machineCode.createICRFrAsimm(ppcCmpli, CRF0, 9, 0xff);
 			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -2);
-			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 4);	
-//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
+			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 4);	//  R4 now points to first entry of exception table
 		
-			// search catch
-			int label2 = m.machineCode.iCount;
+			// search catch, label 1
+			int label1 = m.machineCode.iCount;
 			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 5, -1);
-			int label3 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 3
+			int label2 = m.machineCode.iCount;
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 2
 			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 0);	// start 
 			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
 			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 15);
@@ -3677,31 +3678,24 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 4);		
 			m.machineCode.createIrDrAd(ppcLwz, 0, 4, 12);	// get handler address
 			m.machineCode.createIrSspr(ppcMtspr, SRR0, 0);
-			m.machineCode.createIrfi(ppcRfi);
+			m.machineCode.createIrfi(ppcRfi);	// return to catch
 			
 			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 16);	
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 2
-			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label2);
+			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 1
+			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label1);
 			
-			
-			//catch not found, label 3
-			correctJmpAddr(m.machineCode.instructions, label3, m.machineCode.iCount);
-			// unwind
+			// catch not found, unwind, label 2
+			correctJmpAddr(m.machineCode.instructions, label2, m.machineCode.iCount);
+//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
 			m.machineCode.createIrDrAd(ppcLwz, 5, stackPtr, 0);	// get back pointer
-			m.machineCode.createIrDrArB(ppcAdd, 7, stackPtr, 5);
-			m.machineCode.createIrDrAd(ppcLwz, 3, 7, -4);	// get LR from stack
+			m.machineCode.createIrDrAd(ppcLwz, 3, 5, -4);	// get LR from stack
 			m.machineCode.loadConstantAndFixup(6, m);
-			m.machineCode.createIrSrAd(ppcStw, 6, stackPtr, -4);	// put addr of handleException
+			m.machineCode.createIrSrAd(ppcStw, 6, 5, -4);	// put addr of handleException
+			m.machineCode.createIrArS(ppcExtsb, 9, 9);
 			m.machineCode.createIrDrArB(ppcAdd, 9, 4, 9);
 			m.machineCode.createIrDrAsimm(ppcAddi, 9, 9, -4);
 			m.machineCode.createIrSspr(ppcMtspr, LR, 9);
 			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // branch to epilog
-//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);			
-//			
-//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 1
-//			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label1);
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
 		}
 	}
 
@@ -3762,6 +3756,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		int2floatConst1 = new StdConstant(HString.getRegisteredHString("int2floatConst1"), (double)(0x10000000000000L + 0x80000000L));
 		int2floatConst2 = new StdConstant(HString.getRegisteredHString("int2floatConst2"), (double)0x100000000L);
 		int2floatConst3 = new StdConstant(HString.getRegisteredHString("int2floatConst3"), (double)0x10000000000000L);
+		Linker32.globalConstantTable = null;
 		Linker32.addGlobalConstant(int2floatConst1);
 		Linker32.addGlobalConstant(int2floatConst2);
 		Linker32.addGlobalConstant(int2floatConst3);

@@ -19,6 +19,7 @@
 package ch.ntb.inf.deep.cgPPC;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
@@ -59,7 +60,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	
 	// used for resolving phi functions
 	public static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
-	private static int range;
 
 	/**
 	 * generates the live ranges of all SSAValues and assigns register to them
@@ -72,7 +72,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
 		maxNofParamGPR = 0; maxNofParamFPR = 0;
-		range = 0;
 		for (int i = 0; i < maxNofJoins; i++) {
 			rootJoins[i] = null;
 			joins[i] = rootJoins[i];
@@ -144,7 +143,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (opds != null) {
 				for (SSAValue opd : opds) {
 					SSAInstruction opdInstr = opd.owner;
-					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCPhiFunc)) {	// TODO beschrieben dass owner = null wenn catch
+					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCPhiFunc)) {
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
 						if (phi.deleted && phi != instr) {
@@ -321,7 +320,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						if (opd.join.end < currNo) opd.join.end = currNo;
 						if (opd.join.start > currNo) opd.join.start = currNo;
 					}
-					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCloadLocal)) {	//TODO dito
+					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCloadLocal)) {	
 						if (opd.join != null) opd.join.start = 0;
 						// store last use of a parameter
 						CodeGen.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
@@ -345,6 +344,22 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						val.nonVol = true;
 					}
 				}
+				//TODO
+				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
+				if (tab != null) {
+					for (int k = 0; k < tab.length; k++) {
+						ExceptionTabEntry entry = tab[k];
+						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
+						assert handlerInstr != null;
+						for (int n = val.start; n < val.end; n++) {
+							SSAInstruction instr1 = instrs[n];
+							if (instr1 == handlerInstr) {
+								val.nonVol = true;
+							}
+						}
+					}
+				}
+
 				val = val.next;
 			}			
 		}
@@ -376,6 +391,23 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) 
 						res.nonVol = true;
 				}
+				//TODO
+				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
+				if (tab != null) {
+					for (int k = 0; k < tab.length; k++) {
+						ExceptionTabEntry entry = tab[k];
+						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
+						assert handlerInstr != null;
+//						System.out.println("handler instr vorhanden" + handlerInstr.toString());
+						for (int n = currNo+1; n < endNo; n++) {
+							SSAInstruction instr1 = instrs[n];
+//							System.out.println("vergleichen mit " + instr1.toString());
+							if (instr1 == handlerInstr) {
+								res.nonVol = true;
+							}
+						}
+					}
+				}
 			}
 			
 			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
@@ -403,8 +435,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			SSAValue res = instr.result;
 			if (instr.ssaOpcode == sCloadLocal) {
 				if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
-				if (((NoOpnd)instr).firstInCatch) {res.reg = 2;
-					System.out.println("reg = 2"); continue;
+				if (((NoOpnd)instr).firstInCatch) {
+					// if the variable of type Exception in a catch clause is loaded for further use,
+					// it will be passed as a parameter in a prefixed register
+					res.reg = reserveReg(gpr, true);
+					continue;
 				}
 				int type = res.type;
 				if (type == tLong) {
@@ -607,8 +642,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (opds != null) {
 				for (SSAValue opd : opds) {
 					if (opd.join == null) {
-						if ((opd.owner != null) // TODO dito
-							&& (opd.owner.ssaOpcode == sCloadLocal)) {
+						if ((opd.owner != null) && (opd.owner.ssaOpcode == sCloadLocal)) {
 							if (CodeGen.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
 								if (opd.type == tLong) {
 									freeReg(gpr, opd.regLong);
@@ -774,31 +808,32 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 	}
 	
-	static void printJoins() {
-		StdStreams.vrb.print("joins at index: [");
+	public static String joinsToString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("joins at index: [");
 		for (int i = 0; i < 32; i++) {
-			if (joins[i] != null) StdStreams.vrb.print("x");
-			StdStreams.vrb.print(",");
+			if (joins[i] != null) sb.append("x");
+			sb.append(",");
 		}
-		StdStreams.vrb.println("]\nlive ranges of phi functions");
+		sb.append("]\nlive ranges of phi functions\n");
 		for (int i = 0; i < 32; i++) {
 			if (joins[i] != null) {
-				StdStreams.vrb.print("\tindex=" + joins[i].index);
+				sb.append("\tindex=" + joins[i].index);
 				SSAValue next = joins[i];
 				while (next != null) {
-					StdStreams.vrb.print(": start=" + next.start);
-					StdStreams.vrb.print(", end=" + next.end);
-					if (next.nonVol) StdStreams.vrb.print(", nonVol"); else StdStreams.vrb.print(", vol");
-					StdStreams.vrb.print(", type=" + next.typeName());
-					if (next.typeName() == "Long") StdStreams.vrb.print(", regLong=" + next.regLong);
-					StdStreams.vrb.print(", reg=" + next.reg);
-					if (next.regGPR1 > -1) StdStreams.vrb.print(", regAux1=" + next.regGPR1);
+					sb.append(": start=" + next.start);
+					sb.append(", end=" + next.end);
+					if (next.nonVol) sb.append(", nonVol"); else sb.append(", vol");
+					sb.append(", type=" + next.typeName());
+					if (next.typeName() == "Long") sb.append(", regLong=" + next.regLong);
+					sb.append(", reg=" + next.reg);
+					if (next.regGPR1 > -1) sb.append(", regAux1=" + next.regGPR1);
 					next = next.next;
 				}
-				StdStreams.vrb.println();
+				sb.append("\n");
 			}
 		}
-
+		return sb.toString();
 	}
 
 }

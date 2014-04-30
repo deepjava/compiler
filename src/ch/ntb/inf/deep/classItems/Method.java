@@ -40,7 +40,7 @@ public class Method extends ClassMember {
 	public SSA ssa; // ssa of this method
 	
 	public ExceptionTabEntry[] exceptionTab;
-	LocalVar[] localVars;
+	public LocalVar[] localVars;
 	public int[] lineNrTab; // entry: (startPc<<16) | lineNr
 
 	public int nofParams;
@@ -151,18 +151,18 @@ public class Method extends ClassMember {
 	}
 	
 	//--- debug primitives
-	public void printItemCategory(){
+	public void printItemCategory() {
 		vrb.print("meth");
 	}
 
-	public void printLocalVars(int indentLevel){
+	public void printLocalVars(int indentLevel) { 
 		indent(indentLevel); vrb.print("local variables:");
-		if(localVars == null) vrb.println(" none");
-		else{
+		if (localVars == null) vrb.println(" none");
+		else {
 			vrb.println();
-			for(int index=0; index < localVars.length; index++){
+			for (int index=0; index < localVars.length; index++) {
 				Item lv = localVars[index];
-				while(lv != null){
+				while (lv != null) {
 					lv.print(indentLevel+1); vrb.println();
 					lv = lv.next;
 				}
@@ -170,14 +170,14 @@ public class Method extends ClassMember {
 		}
 	}
 
-	public void printLineNumberTable(int indentLevel){
+	public void printLineNumberTable(int indentLevel) {
 		indent(indentLevel);
 		vrb.print("line numbers: ");
-		if(lineNrTab == null) vrb.println("none");
+		if (lineNrTab == null) vrb.println("none");
 		else{
 			int length = lineNrTab.length;
 			vrb.printf("%1$d pairs of (PC : line#):", length);
-			for(int index = 0; index < length; index++){
+			for(int index = 0; index < length; index++) {
 				if( (index&(8-1)) == 0) {
 					vrb.println();
 					indent(indentLevel);
@@ -240,7 +240,7 @@ public class Method extends ClassMember {
 	public static void printCompSpecificSubroutines() {
 		Method m = compSpecSubroutines;
 		while(m != null) {
-			vrb.println("Name:    " + m.name + "\tOffset:  " + m.offset + "\tAddress: " + m.address);
+			vrb.printf("Name: %1$s\tOffset: 0x%2$3x\tAddress: 0x%3$3x\n", m.name, m.offset, m.address);
 			vrb.println(m.machineCode.toString());
 			m = (Method)m.next;
 		}

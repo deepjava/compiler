@@ -46,7 +46,7 @@ import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.Triadic;
 import ch.ntb.inf.deep.strings.HString;
 
-public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstructionOpcs, ICdescAndTypeConsts, ICclassFileConsts {
+public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstructionOpcs, ICdescAndTypeConsts, ICclassFileConsts, ICjvmInstructionMnemonics {
 	private static boolean dbg = false;
 	
 	private static final HString CONSTNAME = HString.getRegisteredHString("#");
@@ -64,6 +64,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	public PhiFunction phiFunctions[];
 	public SSAInstruction instructions[];
 	public int codeStartIndex, codeEndIndex;	// start and end index of generated code array for this node
+	public int excVarIndex;//TODO
+	public int loadLocalExc = -1;	// holds the nr of the ssa instruction which loads the local exception in a catch clause
+	public boolean excVarLoaded;
 
 	public SSANode() {
 		instructions = new SSAInstruction[4];
@@ -211,8 +214,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					// eliminate redundant PhiFunctions
 					eliminateRedundantPhiFunc();
 				}
-			} else {
-				// it isn't a loop header
+			} else { // it isn't a loop header
 				for (int i = 0; i < nofPredecessors; i++) {
 					if (entrySet == null) {
 						// first predecessor --> create locals
@@ -431,20 +433,13 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 									}
 								}
 							}
-						}
+						} // for all other predecessors --> merge
 					}
 				}
 				// isn't a loop header and merge is finished.
-				// eliminate redundant phiFunctins
 				eliminateRedundantPhiFunc();
 			}
 		}
-		// fill instruction array
-//		if (!traversed) {
-//			traversed = true;
-//			this.traversCode();
-//		}
-
 	}
 
 	void traversCode() {
@@ -459,17 +454,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		if (dbg) StdStreams.vrb.println("travers node " + this.toString());
 		for (stackpointer = maxStack - 1; stackpointer >= 0	&& exitSet[stackpointer] == null; stackpointer--);
 		
-//		if (isCatch) {	// blocks at the start of catch blocks expect reference to exception on the stack //TODO
-//			SSAValue res = new SSAValue();
-//			res.type = SSAValue.tRef;
-////			res.thrown = true;
-//			System.out.println("is catch in method " + owner.cfg.method.name);
-////			pushToStack(res);
-//		}
-
 		for (int bca = this.firstBCA; bca <= this.lastBCA || wide; bca++) {
-			if (dbg) StdStreams.vrb.println("BCA: " + bca + ", nofStackItems: " + (stackpointer + 1));
 			int bci = owner.cfg.code[bca] & 0xff;
+			if (dbg) StdStreams.vrb.println("bca=" + bca + ", bci=" + bcMnemonics[bci] + ", nofStackItems=" + (stackpointer + 1));
 			switch (bci) {
 			case bCnop:
 				break;
@@ -1264,6 +1251,11 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 				addInstruction(instr);
 				break;
 			case bCpop:
+				// if a class uses values of an enum in a switch table, a static method $SWITCH_TABLE$CLASSNAME()
+				// is inserted, this method has an exception table with java/lang/NoSuchFieldError,
+				// however, in the catch clause the exception is always simple popped from the stack and thrown away
+				// as we have nothing on the stack in case of an exception, we must omit the pop
+				if (isCatch && bca == firstBCA) break;	
 				popFromStack();
 				break;
 			case bCpop2:
@@ -2523,7 +2515,6 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					exitSet[stackpointer] = null;
 					stackpointer--;
 				}
-//				pushToStack(value1);  //TODO, Ueli has deleted this
 				break;
 			case bCcheckcast:
 				bca++;
@@ -2681,14 +2672,22 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	private void load(int index, int type, int bca) {
 		SSAValue result = exitSet[index];
 
-		if (result == null) {// local isn't initialized
+		if (result == null || (isCatch && index == excVarIndex && !excVarLoaded)) { // local isn't initialized or exception parameter of catch clause must be loaded
+//		if (result == null) { // local isn't initialized or exception parameter of catch clause must be loaded
+			// exception parameter of catch clause is always at index 0 of locals and might occupy the same slot as another variable in the try block
+			// therefore, it must be loaded in any case
+			// TODO stimmt nicht
 			result = new SSAValue();
 			result.type = type;
 			result.index = index;
 			SSAInstruction instr = new NoOpnd(sCloadLocal, bca);
 			if (isCatch) {
-				System.out.println("load at bca="+bca+" in catch");
-				((NoOpnd)instr).firstInCatch = true;
+				// the variable of type Exception in a catch clause is loaded for further use
+				// however, is must be handled specifically during register allocation
+				// for this reason, the ssa instruction must be marked
+				((NoOpnd)instr).firstInCatch = true;	
+				excVarLoaded = true;
+				loadLocalExc = nofInstr;	
 			}
 			instr.result = result;
 			instr.result.owner = instr;
@@ -2698,10 +2697,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		pushToStack(result);
 	}
 	
-	protected void loadLocal(int index, int type){
+	protected void loadParameter(int index, int type){
 		SSAValue result = exitSet[index];
 
-		if (result == null) {// local isn't initialized
+		if (result == null) { // local isn't initialized
 			result = new SSAValue();
 			result.type = type;
 			result.index = index;
@@ -2710,7 +2709,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			instr.result.owner = instr;
 			exitSet[index] = result;
 			
-			//insert before return statement
+			// insert before return statement
 			int len = instructions.length;
 			if (nofInstr == len) {
 				SSAInstruction[] newArray = new SSAInstruction[2 * len];
@@ -2723,6 +2722,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		}
 	}
 
+	/**
+	 * Insert a loadLocal instruction for a parameter
+	 */
 	private SSAValue generateLoadParameter(SSANode predecessor, int index, int bca) {
 		boolean needsNewNode = false;
 		SSANode node = predecessor;
@@ -2925,8 +2927,8 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	 * if index of ssa value is already set 
 	 */
 	private void storeAndInsertRegMoves(int index, int bca) {
-		if (isCatch && bca == this.firstBCA) {	// thrown exception is handled as a parameter
-			System.out.println("first store instruction in catch at " + bca);//TODO
+		if (isCatch && bca == this.firstBCA) {	// thrown exception is handled as a parameter and not put on the stack
+			excVarIndex = index;
 			return;
 		}
 		SSAValue val = popFromStack();
@@ -2968,12 +2970,14 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		return null;
 	}
 	
-	public String toString() {	
-		if ((nofPhiFunc + nofInstr) <= 0) return super.toString();	// in case of empty SSA, invoke toString of CFGNode 
+	public String toString(boolean cfg) {	
+		if ((nofPhiFunc + nofInstr) <= 0 || cfg) return super.toString();	// in case of empty SSA, invoke toString of CFGNode 
 			
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < 3; i++) sb.append(" ");
-		sb.append("SSANode ["+ this.firstBCA + ":" + this.lastBCA + "]:\n" );
+		sb.append("SSANode ["+ firstBCA + ":" + lastBCA + "] ");
+		sb.append(isLoopHeader()? "is loop header  ":"");
+		sb.append(isCatch? "is first node of catch, loadLocalExc=" + loadLocalExc + "\n":"\n");
 		
 		for (int i = 0; i < 6; i++) sb.append(" ");
 		sb.append("EntrySet {");
@@ -3009,6 +3013,10 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 			else sb.append("]}\n");
 		} else sb.append("}\n");
 		return sb.toString();
+	}
+
+	public String toString() {
+		return toString(false);
 	}
 
 

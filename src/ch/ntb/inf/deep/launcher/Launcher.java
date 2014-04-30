@@ -314,6 +314,7 @@ public class Launcher implements ICclassFileConsts {
 			m.machineCode.doFixups();
 			m = (Method)m.next;
 		}
+//		Method.printCompSpecificSubroutines();
 
 		// Linker: update system table, determine size of code
 		if (reporter.nofErrors <= 0) {

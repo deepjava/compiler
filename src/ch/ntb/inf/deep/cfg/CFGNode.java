@@ -176,7 +176,31 @@ public class CFGNode {
 
 	@Override
 	public String toString() {
-		return "CFG-Node [" + firstBCA + ":" + lastBCA + "]";
+		StringBuilder sb = new StringBuilder();
+		sb.append("[" + firstBCA + ":" + lastBCA + "]");
+		sb.append(isLoopHeader()? " is loop header":"");
+		sb.append(nofBackwardBranches > 0? ", bckwd branches=" + nofBackwardBranches:"");
+		sb.append(isCatch? ", is first node of catch":"");
+		sb.append(", ref=" + ref);
+		sb.append(", visited:" + visited);
+		sb.append("\n");
+		for (int n = 0; n < 6; n++) sb.append(" ");
+		sb.append("predecessor: ");
+		for (int k = 0; (k < predecessors.length) && (predecessors[k] != null); k++) {
+			sb.append("[" + predecessors[k].firstBCA + ":" + predecessors[k].lastBCA + "]");
+		}
+		sb.append("\n");
+		for (int n = 0; n < 6; n++) sb.append(" ");
+		sb.append("successor: ");
+		for (int k = 0; (k < successors.length)	&& (successors[k] != null); k++) {
+			sb.append("[" + successors[k].firstBCA + ":" + successors[k].lastBCA + "]");
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
+	
+	public String toString(boolean cfg) {
+		return toString(false);
 	}
 
 }

@@ -24,7 +24,7 @@ import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class NoOpnd extends SSAInstruction {
-	public boolean firstInCatch;
+	public boolean firstInCatch;	// true, if this instruction is the first in a catch node
 	
 	public NoOpnd(int opcode, int bca) {
 		ssaOpcode = opcode;		
@@ -97,6 +97,7 @@ public class NoOpnd extends SSAInstruction {
 			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		}
 		sb.append(", bca=" + bca);
+		if (firstInCatch) sb.append(", firstInCatch");
 		return sb.toString();
 	}
 }
