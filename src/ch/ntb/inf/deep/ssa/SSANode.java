@@ -2928,7 +2928,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	 */
 	private void storeAndInsertRegMoves(int index, int bca) {
 		if (isCatch && bca == this.firstBCA) {	// thrown exception is handled as a parameter and not put on the stack
-			excVarIndex = index;
+			excVarIndex = index;	//TODO zeigt an, dass local exception in catch
 			return;
 		}
 		SSAValue val = popFromStack();
