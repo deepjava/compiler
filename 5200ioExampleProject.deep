@@ -8,7 +8,7 @@ meta {
 project ExampleProjectMpc5200B {
 	libpath = "../ch.ntb.inf.deep.trglib";
 	
-	boardtype = phyCoreMpc5200tiny;
+	boardtype = phyCoreMpc5200io;
 	ostype = ntbSTS;
 #	programmertype = bdi2000;
 	
@@ -22,7 +22,7 @@ project ExampleProjectMpc5200B {
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SPIDemo";
 
-	imgfile = "W:/phycorempc5200b/test.bin";
+	imgfile = "\\inf04-server\ftp\phycorempc5200b\test.bin";
 	imgformat = binary;
 
 #	tctfile = "tct/targetCommands.dtct";
