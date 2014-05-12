@@ -385,7 +385,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					CodeGen.enFloatsInExc = true;
 				}
 				int id = ((Method)call.item).id;
-				if (id == CodeGen.idDoubleToBits || (id == CodeGen.idBitsToDouble))  // DoubleToBits or BitsToDouble
+				if (id == CodeGen.idDoubleToBits || (id == CodeGen.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
+					id == CodeGen.idFloatToBits || (id == CodeGen.idBitsToFloat))  // FloatToBits or BitsToFloat
 					CodeGen.tempStorage = true;
 			}
 		}

@@ -50,6 +50,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	static int idGETGPR, idGETFPR, idGETSPR;
 	static int idPUTGPR, idPUTFPR, idPUTSPR;
 	static int idDoubleToBits, idBitsToDouble;
+	static int idFloatToBits, idBitsToFloat;
 	
 	private static Method stringNewstringMethod;
 	private static Method heapNewstringMethod;
@@ -1895,6 +1896,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						createIrSrAd(ppcStw, opds[0].regLong, stackPtr, tempStorageOffset);
 						createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset+4);
 						createIrDrAd(ppcLfd, res.reg, stackPtr, tempStorageOffset);
+					} else if (m.id == idFloatToBits) { // FloatToBits
+						createIrSrAd(ppcStfs, opds[0].reg, stackPtr, tempStorageOffset);
+						createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset);
+					} else if (m.id == idBitsToFloat) { // BitsToFloat
+						createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset);
+						createIrDrAd(ppcLfs, 0, stackPtr, tempStorageOffset);
+						createIrDrB(ppcFmr, res.reg, 0);
 					}
 				} else {	// real method (not synthetic)
 					if ((m.accAndPropFlags & (1<<apfStatic)) != 0 ||
@@ -3594,6 +3602,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		if(m != null) idDoubleToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "bitsToDouble"); 
 		if(m != null) idBitsToDouble = m.id; else {ErrorReporter.reporter.error(633); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "floatToBits"); 
+		if(m != null) idFloatToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "bitsToFloat"); 
+		if(m != null) idBitsToFloat = m.id; else {ErrorReporter.reporter.error(633); return;}
 		
 		objectSize = Type.wktObject.objectSize;
 		stringSize = Type.wktString.objectSize;

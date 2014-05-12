@@ -77,4 +77,35 @@ public class LowLevelTest {
 		CmdTransmitter.sendDone();
 	}
 	
+	@Test
+	public static void testFloatToBits() {
+		float f1 = 0.0f;
+		if(!CmdTransmitter.host){
+			Assert.assertEquals("Test1", 0, LL.floatToBits(f1));
+			f1 = 1.0f;
+			Assert.assertEquals("Test2", 0x3F800000, LL.floatToBits(f1));
+			f1 = 2.0f;
+			Assert.assertEquals("Test3", 0x40000000, LL.floatToBits(f1));
+			f1 = 2.5f;
+			Assert.assertEquals("Test4", 0x40200000, LL.floatToBits(f1));
+			f1 = 0.1f;
+			Assert.assertEquals("Test5", 0x3dcccccd, LL.floatToBits(f1));
+			f1 = -0.1f;
+			Assert.assertEquals("Test6", 0xbdcccccd, LL.floatToBits(f1));
+		}
+		CmdTransmitter.sendDone();
+	}
+	
+	@Test
+	public static void testBitsToFloat() {
+		int bits = 0x40200000;
+		if(!CmdTransmitter.host){
+			Assert.assertEquals("Test1", 2.5f, LL.bitsToFloat(bits), 0.0);
+			bits = 0xbdcccccd;
+			Assert.assertEquals("Test2", -0.1, LL.bitsToFloat(bits), 1e-5);
+		}
+		CmdTransmitter.sendDone();
+	}
+	
+
 }
