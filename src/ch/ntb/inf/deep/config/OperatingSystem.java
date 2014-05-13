@@ -57,7 +57,7 @@ public class OperatingSystem extends Item implements ICclassFileConsts {
 		exceptions[nofExcClasses++] = exc;
 		int index = exc.name.lastIndexOf('R');
 		if (index > 0 ) {
-			HString str = exc.name.substring(index);
+			HString str = exc.name.substring(index, index + 5);
 			if (Configuration.RESETCLASS.equals(str)) resetClass = exc;
 		}
 	}

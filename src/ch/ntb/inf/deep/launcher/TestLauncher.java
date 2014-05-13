@@ -37,9 +37,9 @@ import ch.ntb.inf.deep.classItems.Method;
  */
 public class TestLauncher {
 	public static void main(String[] args) {
-//		Launcher.buildAll("C:/Users/Urs/Checkout/JCC/ch.ntb.inf.deep/555ExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555ExampleProject.deep", "BootFromFlash");
-		Launcher.buildAll("C:/Users/Urs/Checkout/JCC/ch.ntb.inf.deep/555junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/5200tinyExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/5200ioExampleProject.deep", "BootFromRam");
 
