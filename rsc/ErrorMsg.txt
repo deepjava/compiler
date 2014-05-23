@@ -1,6 +1,10 @@
 ErrorNr;Description;Solution
+
 10;feature not yet implemented;
 11;file not found;
+
+100;no target connection (build project first)
+
 200;wrong number format;
 201;missing right parenthesis;
 202;missing right brace;

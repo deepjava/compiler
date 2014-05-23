@@ -1213,7 +1213,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 	
 	public static long writeTargetImageToBinFile(String fileName) throws IOException {
-		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
+		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":");
 		
 		long bytesWritten = 0;
 		String fileExtension = "bin";
@@ -1239,7 +1239,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 					binFile.write(0);
 					currentAddress++;
 				}
-				if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = " + Integer.toHexString(currentAddress));
+				if(dbg) vrb.println("  > TMS #" + tms.id + ": start address = 0x" + Integer.toHexString(tms.startAddress) + ", size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = 0x" + Integer.toHexString(currentAddress));
 				for(int j = 0; j < tms.data.length; j++) {
 					binFile.write(getBytes(tms.data[j]));
 					currentAddress += 4;

@@ -347,7 +347,7 @@ public class Launcher implements ICclassFileConsts {
 			if (fname != null && !fname.equals(HString.getHString(""))) 
 				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
 		}	
-
+		
 		return reporter.nofErrors;
 	}
 	
