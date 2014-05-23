@@ -6,7 +6,7 @@ meta {
 }
 
 project junitTargetTestProject {
-	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre6/lib/rt.jar";
 	
 	boardtype = ntbMpc555HB;
 	ostype = ntbSTS;
@@ -69,8 +69,8 @@ project junitTargetTestProject {
 #	rootclasses = "ch/ntb/inf/deep/trglib/targettest/UtilTest";
 
 #	Tests for all target lib tests
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTest",
-#				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest","ch/ntb/inf/deep/trglib/targettest/UtilTest";
+	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTest",
+				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest","ch/ntb/inf/deep/trglib/targettest/UtilTest";
 
 # Target command table file
 	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";

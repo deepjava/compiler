@@ -188,11 +188,13 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
-			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// TODO fertig machen
+			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {
 				iCount = 0;
-				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -48);
+				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
+//				createIrSspr(ppcMfspr, SRR0, 0);
+//				createIrSrAsimm(ppcStw, 0, stackPtr, 16);
 				createIrSspr(ppcMtspr, EID, 0);	// TODO, was passiert wenn gleich wieder eine exception? muss rein, sonst absturz wenn debugger exception
-				createIrSrAd(ppcStmw, 28, stackPtr, 0);
+				createIrSrAd(ppcStmw, 28, stackPtr, 4);
 				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
 			} else {
 				stackSize = calcStackSizeException();
@@ -254,8 +256,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				assert m != null;
 				loadConstantAndFixup(31, m);
 				createIrSspr(ppcMtspr, LR, 31);
-				createIrDrAd(ppcLmw, 28, stackPtr, 0);
-				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 48);
+				createIrDrAd(ppcLmw, 28, stackPtr, 4);
+				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
 				createIBOBILK(ppcBclr, BOalways, 0, false);
 			} else {
 				insertEpilogException(stackSize);
@@ -2964,7 +2966,8 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			assert tab != null;
 			ExceptionTabEntry entry = tab[count];
 			assert entry != null;
-			instructions[currInstr++] = entry.catchType.address;	// type
+			if (entry.catchType != null) instructions[currInstr++] = entry.catchType.address;	// type 
+			else instructions[currInstr++] = 0;	// finally 
 			
 			ssaInstr = ssa.searchBca(instructions[currInstr] + 1);	// add 1, as first store is ommitted	
 			assert ssaInstr != null;
@@ -3080,7 +3083,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 				ExceptionTabEntry entry = tab[i];
 				createIpat(entry.startPc);
 				createIpat(entry.endPc);
-				createIpat(entry.catchType.address);
+				if (entry.catchType != null) createIpat(entry.catchType.address); else createIpat(0);
 				createIpat(entry.handlerPc);
 			}
 		}
@@ -3667,13 +3670,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			m.machineCode.fixups = new Item[defaultNofFixup];
 			m.machineCode.iCount = 0;
 			// r2 contains reference to exception, r3 holds SRR0
-			// r4 to r9 are used for auxiliary purposes
+			// r4 to r10 are used for auxiliary purposes
 
 			// search end of method
 			m.machineCode.createIrArSrB(ppcOr, 4, 3, 3);
 			m.machineCode.createIrDrAd(ppcLwzu, 9, 4, 4);	
 			m.machineCode.createICRFrAsimm(ppcCmpli, CRF0, 9, 0xff);
 			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -2);
+			m.machineCode.createIrArSrB(ppcOr, 10, 4, 4);	// keep for unwinding
 			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 4);	//  R4 now points to first entry of exception table
 		
 			// search catch, label 1
@@ -3683,13 +3687,20 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 2
 			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 0);	// start 
 			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 15);
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 17);
 			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 4);	// end 
 			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 12);
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 14);
 			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 8);	// type 
+			
+			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 5, 0);	// check if type "any", caused by finally
+			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 8);
+//			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);
+//			m.machineCode.createIrDrAsimm(ppcAddi, 18, 18, 0x1000);	
+//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+EQ, 8);
+			
 			m.machineCode.createIrDrAd(ppcLwz, 6, 5, -4);	// get extension level of exception 
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 6, 6, 2, 0, 31);	// *2
+			m.machineCode.createIrArSSHMBME(ppcRlwinm, 6, 6, 2, 0, 31);	// *4
 			m.machineCode.createIrDrAsimm(ppcAddi, 6, 6, Linker32.tdBaseClass0Offset);	
 			m.machineCode.createIrDrAd(ppcLwz, 7, 2, -4);	// get tag 
 			m.machineCode.createIrDrArB(ppcLwzx, 8, 7, 6);	 
@@ -3705,15 +3716,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			
 			// catch not found, unwind, label 2
 			correctJmpAddr(m.machineCode.instructions, label2, m.machineCode.iCount);
-//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
 			m.machineCode.createIrDrAd(ppcLwz, 5, stackPtr, 0);	// get back pointer
 			m.machineCode.createIrDrAd(ppcLwz, 3, 5, -4);	// get LR from stack
 			m.machineCode.loadConstantAndFixup(6, m);
 			m.machineCode.createIrSrAd(ppcStw, 6, 5, -4);	// put addr of handleException
 			m.machineCode.createIrArS(ppcExtsb, 9, 9);
-			m.machineCode.createIrDrArB(ppcAdd, 9, 4, 9);
-			m.machineCode.createIrDrAsimm(ppcAddi, 9, 9, -4);
+			m.machineCode.createIrDrArB(ppcAdd, 9, 10, 9);
 			m.machineCode.createIrSspr(ppcMtspr, LR, 9);
+//			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
 			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // branch to epilog
 		}
 	}

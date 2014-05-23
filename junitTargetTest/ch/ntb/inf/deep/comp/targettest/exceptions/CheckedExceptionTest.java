@@ -2,7 +2,6 @@ package ch.ntb.inf.deep.comp.targettest.exceptions;
 
 import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
-import ch.ntb.inf.junitTarget.Ignore;
 import ch.ntb.inf.junitTarget.Test;
 
 public class CheckedExceptionTest {
@@ -68,6 +67,56 @@ public class CheckedExceptionTest {
 		Assert.assertEquals("test3", 20, x);		
 		
 		CmdTransmitter.sendDone();
+	}
+
+	@Test
+	public static void test4() {
+		x = 0;
+		try {
+			m4();
+		} catch (E20 e1) {
+			x += 1;
+		} catch (Exception e) {
+			x = 50;
+		}
+		Assert.assertEquals("test4", 100, x);		
+		
+		CmdTransmitter.sendDone();
+	}
+
+	private static void m4() throws E20 {
+		int a = 10;
+		try {
+			if (a == 100) throw new E20();
+			else throw new E10();
+		} catch (E10 e) {
+			x = 100;
+		}
+	}
+
+	@Test
+	public static void test5() {
+		x = 0;
+		try {
+			m5();
+		} catch (E20 e1) {
+			x += 1;
+		} catch (Exception e) {
+			x = 50;
+		}
+		Assert.assertEquals("test5", 1, x);		
+		
+		CmdTransmitter.sendDone();
+	}
+
+	private static void m5() throws E20 {
+		int a = 100;
+		try {
+			if (a == 100) throw new E20();
+			else throw new E10();
+		} catch (E10 e) {
+			x = 100;
+		}
 	}
 
 //	@Ignore
@@ -144,7 +193,6 @@ public class CheckedExceptionTest {
 	
 	static int m3() throws E1 {
 		int a = 1;
-//		throw new E1();
 		try {
 			a += 10;
 			throw new E30();
@@ -153,8 +201,6 @@ public class CheckedExceptionTest {
 		}
 	}
 
-	// geht noch nicht
-	@Ignore
 	@Test
 	public static void testCatchTry2() {
 		int a = 1;

@@ -564,8 +564,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 							entry.endPc = clfInStrm.readUnsignedShort();
 							entry.handlerPc = clfInStrm.readUnsignedShort();
 							int catchTypeInx = clfInStrm.readUnsignedShort();
-							assert catchTypeInx != 0 : "in class " + method.owner.name;	
-							entry.catchType = (Class)cpItems[catchTypeInx];
+							if (catchTypeInx != 0) entry.catchType = (Class)cpItems[catchTypeInx];
+							else entry.catchType = null;	// used for "finally"
 						}
 					}
 					
@@ -650,8 +650,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				break;
 			case atxInnerClasses: // 4.7.5, p125
 				if ((userReqAttributes & (1<<atxInnerClasses)) == 0) skipAttribute(clfInStrm, attrLength, index);
-				else{
-					// TODO Auto-generated method stub
+				else {
 					assert false: "TODO";
 				}
 				break;
