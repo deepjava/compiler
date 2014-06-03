@@ -1420,7 +1420,7 @@ public class InstructionDecoder implements InstructionOpcs {
 			res = (0x1F << 26) | (param1 << 21) | (param2 << 11) | (0x153 << 1);
 		} else if (parts[0].equals("mftb")) {
 			String[] param = parts[1].split(",");
-		
+
 			param1 = Integer.parseInt(param[0].substring(1)) & r;
 			param2 = Integer.decode(param[1]) & SPR;
 
@@ -2349,7 +2349,7 @@ public class InstructionDecoder implements InstructionOpcs {
 			assert false : "no such instruction";
 		}
 
-//		System.out.println(Integer.toBinaryString(res));
+		//		System.out.println(Integer.toBinaryString(res));
 		return res;
 	}
 
@@ -3149,8 +3149,7 @@ public class InstructionDecoder implements InstructionOpcs {
 					} else {
 						return "mtfsf.  " + FM + ", fr" + B;
 					}
-
-				}
+				} 
 			}
 			return machineInstr + "  (0x" + Integer.toHexString(machineInstr) + ")";
 	}

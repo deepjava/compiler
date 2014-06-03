@@ -21,9 +21,9 @@ package ch.ntb.inf.deep.ssa.instruction;
 import ch.ntb.inf.deep.cgPPC.RegAllocator;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
-public class StoreToArray extends SSAInstruction {
+public class Triadic extends SSAInstruction {
 
-	public StoreToArray(int opCode, SSAValue arrayref, SSAValue index, SSAValue value, int bca) {
+	public Triadic(int opCode, SSAValue arrayref, SSAValue index, SSAValue value, int bca) {
 		ssaOpcode = opCode;
 		operands = new SSAValue[]{arrayref, index, value};
 		this.bca = bca;
@@ -48,7 +48,7 @@ public class StoreToArray extends SSAInstruction {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(result.n + ": ");
-		sb.append("StoreToArray["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + ", " + operands[2].n+"}");
+		sb.append("Triadic["+ scMnemonics[ssaOpcode]+"] {"+ operands[0].n + ", " + operands[1].n + ", " + operands[2].n+"}");
 		sb.append(" (" + result.typeName() + ")");
 		if (result.index != -1) sb.append(", index=" + result.index);
 		if (result.join != null) {

@@ -48,7 +48,7 @@ public class EnumTest {
 		CmdTransmitter.sendDone();		
 	}
 	
-	@Ignore
+//	@Ignore
 	@Test
 	public static void testEnumSwitch() {
 		int res = 0;

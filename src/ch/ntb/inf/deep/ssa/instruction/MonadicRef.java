@@ -26,10 +26,6 @@ import ch.ntb.inf.deep.ssa.SSAValue;
 public class MonadicRef extends Monadic {
 	public Item item;
 	
-	public MonadicRef(int opCode, SSAValue operand, int bca){
-		super(opCode, operand, bca);
-	}
-	
 	public MonadicRef(int opCode, Item item, SSAValue operand, int bca) {
 		super(opCode, operand, bca);
 		this.item = item;

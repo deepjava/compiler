@@ -16,28 +16,15 @@
  * 
  */
 
-package ch.ntb.inf.deep.classItems;
+package ch.ntb.inf.deep.comp.targettest.exceptions;
 
-import java.io.PrintStream;
+import ch.ntb.inf.junitTarget.MaxErrors;
+import ch.ntb.inf.junitTarget.Suite;
 
-import ch.ntb.inf.deep.host.Dbg;
+@Suite({ UncheckedExceptionTest.class, CheckedExceptionTest.class, FinallyExceptionTest.class})
 
-public class ExceptionTabEntry {
-	private static PrintStream vrb = Item.vrb;
+@MaxErrors(500)
 
-	//--- instance fields
-	public Class catchType;
-	public int startPc, endPc, handlerPc;
-	
-	//--- debug primitives
-
-	public void print(int indentLevel) {
-		Item.indent(indentLevel);
-		vrb.print("try from " + startPc + " to " + endPc + " goto " + handlerPc + " when " + catchType.name);
-	}
-
-	public void println(int indentLevel) {
-		print(indentLevel); vrb.println();
-	}
+public class ExceptionsSuite {
 
 }

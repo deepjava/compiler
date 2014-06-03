@@ -52,9 +52,11 @@ ErrorNr;Description;Solution
 305;no root classes defined;
 306;+ operator for strings not supported;
 
-400;cfgNode not found;
+400;node in cfg not found;
+401;last bytecode instruction is not at end of method;
 
-500;Generation of line number table failed;
+500;generation of line number table failed;
+510;Translation of finally block in exceptions failed, use Java6 or later;
 
 600;no code generated;
 601;method has too many parameters;
@@ -73,26 +75,27 @@ ErrorNr;Description;Solution
 632;initialization failed, low level class not found;
 633;initialization failed, method in low level class not found;
 
-701;Class not loaded;
-702;Class not found;
-703;Array not found;
-710;Segment not found;
-711;Segment size error;
-720;Address not set;
-721;Offset not set;
-722;Index not set;
+701;class not loaded;
+702;class not found;
+703;array not found;
+710;segment not found;
+711;segment size error;
+712;method with fixed offset cannot be placed in segment;
+720;address not set;
+721;offset not set;
+722;index not set;
 723;ID not set;
-724;Base address not set;
-730;Method not found;
+724;base address not set;
+730;method not found;
 740;Configuration error;
 750;Machine code not generated;
 790;Runtime System error;
 
-800;Target not found! (USB connection failed);
-801;An error occurs while downloading! (Try to reopen);
-802;No target image to load;
-803;Connection to target lost;
-804;Reopen failed;
+800;target not found! (USB connection failed);
+801;an error occurs while downloading! (Try to reopen);
+802;no target image to load;
+803;connection to target lost;
+804;reopen failed;
 805;Starting of device failed;
 806;Target is not in debug mode;
 807;Memory writer is not implemented;
