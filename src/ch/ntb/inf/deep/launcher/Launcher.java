@@ -154,7 +154,7 @@ public class Launcher implements ICclassFileConsts {
 						while (method != null && reporter.nofErrors <= 0) {
 							// handle native methods differently 
 							if ((method.accAndPropFlags & (1 << apfNative)) != 0) {
-								vrb.println("No implementation for " + method);
+								vrb.println("No implementation for " + method.name);
 							} else if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 								if (dbg) {vrb.print("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: "); Dbg.printAccAndPropertyFlags(method.accAndPropFlags); vrb.println();}
 								// Create CFG

@@ -698,7 +698,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					} else result.constant = cls;
 					result.type = SSAValue.tRef;
 				} else {
-					assert false : "Wrong DataItem type";
+					assert false : "Wrong DataItem type in " + owner.cfg.method.name;
 					break;
 				}
 				instr = new NoOpnd(sCloadConst, bca - 1);

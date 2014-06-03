@@ -28,6 +28,7 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.junitTarget.Assert;
 
 /**
  * Launcher for tests only! Adapt this file to your configuration, but don't commit

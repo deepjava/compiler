@@ -207,7 +207,7 @@ public class Method extends ClassMember {
 
 	public void printHeaderX(int indentLevel){
 		indent(indentLevel);
-		vrb.printf("<%2$d> %3$s.%4$s%5$s", index, owner.name, name, methDescriptor);  
+		vrb.printf("<%1$d> %2$s.%3$s%4$s", index, owner.name, name, methDescriptor);  
 		Dbg.printAccAndPropertyFlags(accAndPropFlags, 'M');
 	}
 

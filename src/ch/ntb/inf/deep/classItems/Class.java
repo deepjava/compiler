@@ -794,7 +794,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 //		boolean verbose = true;
 		if ((accAndPropFlags & 1<<dpfClassMark) == 0 ) {	// mark not set -> class not done yet
 			if (dbg) vrb.println(">fixup of class: " + this.name);
-			accAndPropFlags |= 1<<dpfClassMark;	// set mark
+//			accAndPropFlags |= 1<<dpfClassMark;	// set mark, placing this here, was a mistake, see below
 
 			if (type == null) {objectSize = 0; extensionLevel = 0;}	// java/lang/object
 			else if ((accAndPropFlags & 1<<apfInterface) == 0 ) {	// std-class
@@ -812,6 +812,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				} else extensionLevel = 1;
 				if (extensionLevel > maxExtensionLevelInterfaces ) maxExtensionLevelInterfaces = extensionLevel;
 			}
+			accAndPropFlags |= 1<<dpfClassMark;	// set mark, must be set after recursively handling superclasses!
+			// if not, import circles are not properly resolved
 			
 			// calculate size of all instance fields (excluding fields of superclasses)
 			Item item = instFields;
