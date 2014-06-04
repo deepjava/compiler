@@ -154,7 +154,7 @@ public class Launcher implements ICclassFileConsts {
 						while (method != null && reporter.nofErrors <= 0) {
 							// handle native methods differently 
 							if ((method.accAndPropFlags & (1 << apfNative)) != 0) {
-								vrb.println("No implementation for " + method);
+								vrb.println("No implementation for " + method.name);
 							} else if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 								if (dbg) {vrb.print("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: "); Dbg.printAccAndPropertyFlags(method.accAndPropFlags); vrb.println();}
 								// Create CFG
@@ -306,6 +306,7 @@ public class Launcher implements ICclassFileConsts {
 		}
 
 		// handle compiler specific methods
+		if (dbg) vrb.println("[Launcher] (loop three) processing compiler specific subroutines:");
 		Method m = Method.compSpecSubroutines;	// Code generator: fix up
 		while (m != null) {
 			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
@@ -313,6 +314,7 @@ public class Launcher implements ICclassFileConsts {
 			m.machineCode.doFixups();
 			m = (Method)m.next;
 		}
+//		Method.printCompSpecificSubroutines();
 
 		// Linker: update system table, determine size of code
 		if (reporter.nofErrors <= 0) {
@@ -347,7 +349,7 @@ public class Launcher implements ICclassFileConsts {
 			if (fname != null && !fname.equals(HString.getHString(""))) 
 				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
 		}	
-
+		
 		return reporter.nofErrors;
 	}
 	

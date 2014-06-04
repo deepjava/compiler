@@ -132,7 +132,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			}
 			refType = refType.next;
 		}
-		if(dbg) vrb.println(">split class groups");
+		if (dbg) vrb.println("<split class groups");
 		
 		// set interface identifiers (from max. extension level to 0)
 		for (int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--) {
@@ -150,7 +150,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 				cls = cls.nextExtLevelClass;
 			}
 		}
-		
+				
 		// generate instance method tables
 		if (dbg) vrb.println(">generating instance method tables");
 		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {

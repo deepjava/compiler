@@ -44,15 +44,15 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 	@Override
 	public void run(IAction action) {
 		TargetConnection tc = Launcher.getTargetConnection();
-		if(tc == null){
-			ErrorReporter.reporter.error(800);
+		if (tc == null){
+			ErrorReporter.reporter.error(100);
 			return;
 		}
 		tc.closeConnection();
 		try {
 			Thread.sleep(500);//Give OS time 
 			tc.openConnection();
-			StdStreams.log.println("Device succesfully reopened");
+			StdStreams.log.println("Device successfully reopened");
 		} catch (TargetConnectionException e) {
 			tc.closeConnection();
 			ErrorReporter.reporter.error(804);

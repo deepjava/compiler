@@ -8,21 +8,21 @@ meta {
 project ExampleProjectMpc5200B {
 	libpath = "../ch.ntb.inf.deep.trglib";
 	
-	boardtype = phyCoreMpc5200tiny;
+	boardtype = phyCoreMpc5200io;
 	ostype = ntbSTS;
 #	programmertype = bdi2000;
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3InOutReflector";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3InOutReflector";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/DecrementerDemo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/EPOStest1";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SPIDemo";
 
-	imgfile = "W:/phycorempc5200b/test.bin";
+	imgfile = "\\inf04-server\ftp\phycorempc5200b\test.bin";
 	imgformat = binary;
 
 #	tctfile = "tct/targetCommands.dtct";

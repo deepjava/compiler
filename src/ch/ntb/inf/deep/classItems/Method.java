@@ -39,8 +39,8 @@ public class Method extends ClassMember {
 	public CFG cfg; // cfg of this method
 	public SSA ssa; // ssa of this method
 	
-	ExceptionTabEntry[] exceptionTab;
-	LocalVar[] localVars;
+	public ExceptionTabEntry[] exceptionTab;
+	public LocalVar[] localVars;
 	public int[] lineNrTab; // entry: (startPc<<16) | lineNr
 
 	public int nofParams;
@@ -84,10 +84,6 @@ public class Method extends ClassMember {
 		}
 		locVar.next = lv;
 		if (pred == null) localVars[locVar.index] = locVar; else pred.next = locVar;
-	}
-
-	public byte[] getCode(){
-		return code;
 	}
 
 	public int getCodeSizeInBytes() {
@@ -148,25 +144,25 @@ public class Method extends ClassMember {
 	public static Method getCompSpecSubroutine(String jname) {
 		HString name = HString.getRegisteredHString(jname);
 		Method m = null;
-		if(compSpecSubroutines != null) {
+		if (compSpecSubroutines != null) {
 			m = (Method)compSpecSubroutines.getItemByName(name);
 		}
 		return m;
 	}
 	
 	//--- debug primitives
-	public void printItemCategory(){
+	public void printItemCategory() {
 		vrb.print("meth");
 	}
 
-	public void printLocalVars(int indentLevel){
+	public void printLocalVars(int indentLevel) { 
 		indent(indentLevel); vrb.print("local variables:");
-		if(localVars == null) vrb.println(" none");
-		else{
+		if (localVars == null) vrb.println(" none");
+		else {
 			vrb.println();
-			for(int index=0; index < localVars.length; index++){
+			for (int index=0; index < localVars.length; index++) {
 				Item lv = localVars[index];
-				while(lv != null){
+				while (lv != null) {
 					lv.print(indentLevel+1); vrb.println();
 					lv = lv.next;
 				}
@@ -174,14 +170,14 @@ public class Method extends ClassMember {
 		}
 	}
 
-	public void printLineNumberTable(int indentLevel){
+	public void printLineNumberTable(int indentLevel) {
 		indent(indentLevel);
 		vrb.print("line numbers: ");
-		if(lineNrTab == null) vrb.println("none");
+		if (lineNrTab == null) vrb.println("none");
 		else{
 			int length = lineNrTab.length;
 			vrb.printf("%1$d pairs of (PC : line#):", length);
-			for(int index = 0; index < length; index++){
+			for(int index = 0; index < length; index++) {
 				if( (index&(8-1)) == 0) {
 					vrb.println();
 					indent(indentLevel);
@@ -190,6 +186,13 @@ public class Method extends ClassMember {
 				vrb.printf(" (%1$d : %2$d)", pair>>>16, pair&0xFFFF);
 			}
 			if( (length&(8-1)) != 0) vrb.println();
+		}
+	}
+
+	public void printExceptionTable(int indentLevel) {
+		if (exceptionTab != null) {
+			indent(indentLevel);  vrb.println("exception table");
+			for (ExceptionTabEntry e : exceptionTab) e.println(indentLevel + 1);
 		}
 	}
 
@@ -204,7 +207,7 @@ public class Method extends ClassMember {
 
 	public void printHeaderX(int indentLevel){
 		indent(indentLevel);
-		vrb.printf("<%2$d> %3$s.%4$s%5$s", index, owner.name, name, methDescriptor);  
+		vrb.printf("<%1$d> %2$s.%3$s%4$s", index, owner.name, name, methDescriptor);  
 		Dbg.printAccAndPropertyFlags(accAndPropFlags, 'M');
 	}
 
@@ -237,7 +240,8 @@ public class Method extends ClassMember {
 	public static void printCompSpecificSubroutines() {
 		Method m = compSpecSubroutines;
 		while(m != null) {
-			vrb.println("Name:    " + m.name + "\tOffset:  " + m.offset + "\tAddress: " + m.address);
+			vrb.printf("Name: %1$s\tOffset: 0x%2$3x\tAddress: 0x%3$3x\n", m.name, m.offset, m.address);
+			vrb.println(m.machineCode.toString());
 			m = (Method)m.next;
 		}
 	}
