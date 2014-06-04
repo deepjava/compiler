@@ -14,9 +14,9 @@ project ExampleProjectMpc5200B {
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/Uart3InOutReflector";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/test/Uart3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3InOutReflector";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/DecrementerDemo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/EPOStest1";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
