@@ -104,7 +104,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 					cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
 					Class.extLevelOrdInterfaces[extLevel] = cls;
 					Class.nofInterfaceClasses++;
-				} else {	// is std-class or enum
+				} else if ((propFlags & (1<<dpfSynthetic)) == 0 ) {	// is std-class or enum but no synthetic class
 					if (cls.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls.methTabLength;
 					cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
 					Class.extLevelOrdClasses[extLevel] = cls;

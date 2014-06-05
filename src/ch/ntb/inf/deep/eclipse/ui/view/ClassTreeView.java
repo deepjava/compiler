@@ -18,6 +18,9 @@
 
 package ch.ntb.inf.deep.eclipse.ui.view;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -181,30 +184,50 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			}
 			if (parent instanceof RootElement) {
 				if (RefType.nofRefTypes < 1) return new Object[]{"No Classes loaded"};
-				int nof = 0;
 				Item cls = ((RootElement)parent).children;
-				while (cls != null) {
-					if ((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) nof++;
-					cls = cls.next;
-				}
-				Item[] classes = new Item[nof];
+				Class[] stdCls = new Class[Class.nofStdClasses]; 
 				int count = 0;
-				cls = ((RootElement)parent).children;
-				while (cls != null && count < classes.length) {
-					if (((cls.accAndPropFlags & ((1<<dpfSynthetic) | (1<<apfInterface))) == 0) && (cls instanceof Class)) classes[count++] = cls;
+				while (cls != null) {	// standard classes
+					if (((cls.accAndPropFlags & ((1<<dpfSynthetic) | (1<<apfInterface))) == 0) && (cls instanceof Class)) stdCls[count++] = (Class) cls;
 					cls = cls.next;
 				}
+				// sort classes according to machine code base address
+			    Arrays.sort(stdCls, new Comparator<Class>() {
+			        public int compare(Class c1, Class c2) {
+			            return (c1.codeSegment.address + c1.codeOffset) - (c2.codeSegment.address + c2.codeOffset);
+			        }
+			    });
 				cls = ((RootElement)parent).children;
-				while (cls != null && count < classes.length) {
-					if (((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) && ((cls.accAndPropFlags & (1<<apfInterface)) != 0) && (cls instanceof Class)) classes[count++] = cls;
+				Class[] intfCls = new Class[Class.nofInterfaceClasses];
+				count = 0;
+				while (cls != null) {
+					if (((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) && ((cls.accAndPropFlags & (1<<apfInterface)) != 0)) intfCls[count++] = (Class) cls;
 					cls = cls.next;
 				}
+				// sort interfaces according to name
+			    Arrays.sort(intfCls, new Comparator<Class>() {
+			        public int compare(Class c1, Class c2) {
+			            return c1.name.toString().compareTo(c2.name.toString());
+			        }
+			    });
 				cls = ((RootElement)parent).children;
-				while (cls != null && count < classes.length) {
-					if (((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) && (cls instanceof Array)) classes[count++] = cls;
+				Array[] arrays = new Array[Class.nofArrays];
+				count = 0;
+				while (cls != null) {
+					if (((cls.accAndPropFlags & (1<<dpfSynthetic)) == 0) && (cls instanceof Array)) arrays[count++] = (Array) cls;
 					cls = cls.next;
 				}
-				
+				// sort arrays according to name
+			    Arrays.sort(arrays, new Comparator<Array>() {
+			        public int compare(Array a1, Array a2) {
+			            return a1.name.toString().compareTo(a2.name.toString());
+			        }
+			    });
+				RefType[] classes = new RefType[Class.nofStdClasses + Class.nofInterfaceClasses + Class.nofArrays];
+				System.arraycopy(stdCls, 0, classes, 0, Class.nofStdClasses);
+				System.arraycopy(intfCls, 0, classes, Class.nofStdClasses, Class.nofInterfaceClasses);
+				System.arraycopy(arrays, 0, classes, Class.nofStdClasses + Class.nofInterfaceClasses, Class.nofArrays);
+
 				return classes;
 			}
 			return item;
