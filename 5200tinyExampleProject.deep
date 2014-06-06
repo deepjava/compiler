@@ -13,7 +13,7 @@ project ExampleProjectMpc5200B {
 #	programmertype = bdi2000;
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3InOutReflector";
 	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
@@ -22,7 +22,7 @@ project ExampleProjectMpc5200B {
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SPIDemo";
 
-	imgfile = "\\inf04-server\ftp\phycorempc5200b\test.bin";
+	imgfile = "\\inf04-server\ftp\pub\graf\test.bin";
 	imgformat = binary;
 
 #	tctfile = "tct/targetCommands.dtct";
