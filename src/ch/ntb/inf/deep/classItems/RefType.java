@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.strings.HString;
 
 public class RefType extends Type {
@@ -127,7 +128,7 @@ public class RefType extends Type {
 			
 			HString methName = Class.cpStrings[sx>>>16];
 			HString methDesc  = Class.cpStrings[sx & 0xFFFF];
-			method = cls.getMethodOrStub( methName, methDesc);
+			method = cls.getMethodOrStub(methName, methDesc);
 		}
 		return method;
 	}
@@ -143,6 +144,10 @@ public class RefType extends Type {
 		Item cls = Class.cpItems[cpClassInfoIndex];
 		if (cls == null) {
 			HString registeredClassName = Class.cpStrings[Class.cpIndices[cpClassInfoIndex]];
+			if (registeredClassName.equals(wellKnownTypes[txKernel].name)) {
+//				vrb.println(registeredClassName + " in " + name);
+				registeredClassName = Configuration.getOS().kernelClass.name;
+			}
 			if (registeredClassName.charAt(0) == '[') cls = getRefTypeByNameAndUpdate(tcArray, registeredClassName, wktObject);	// is array type
 			else cls = getRefTypeByNameAndUpdate(tcRef, registeredClassName, null);	// is class type or interface type
 			Class.cpItems[cpClassInfoIndex] = cls;

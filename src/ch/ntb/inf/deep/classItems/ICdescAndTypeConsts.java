@@ -54,7 +54,8 @@ public interface ICdescAndTypeConsts {
 		txLong = 11, // long
 
 		txEnum = 12,	// java/lang/Enum
-		nofWellKnownTypes = 13;
+		txKernel = 13,	// ch/ntb/inf/deep/runtime/Kernel
+		nofWellKnownTypes = 14;
 
 	byte// field list indices
 		flxBits = 0, // < 8 Bit, e.g. boolean ('Z')

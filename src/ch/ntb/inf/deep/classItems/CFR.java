@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.PrintStream;
 
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.OperatingSystem;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;

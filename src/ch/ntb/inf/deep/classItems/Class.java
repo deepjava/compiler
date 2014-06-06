@@ -756,7 +756,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				nofItems++;
 				break;
 			case cptMethRef:
-//				printOrigConstPool("\nconstant pool \nstate: x");
 				cpItems[pEntry] = getMethodOrStub(pEntry);
 				nofItems++;
 				break;
