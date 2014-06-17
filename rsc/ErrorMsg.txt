@@ -74,6 +74,7 @@ ErrorNr;Description;Solution
 631;initialization failed, method in unsafe class not found;
 632;initialization failed, low level class not found;
 633;initialization failed, method in low level class not found;
+634;class not found;
 
 701;class not loaded;
 702;class not found;
