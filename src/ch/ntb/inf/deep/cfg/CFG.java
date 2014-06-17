@@ -346,6 +346,11 @@ public class CFG implements ICjvmInstructionMnemonics {
 		for (ExceptionTabEntry e : entries) {
 			CFGNode catchNode = getNode(e.handlerPc);
 			assert catchNode != null;
+			if (catchNode.firstBCA != e.handlerPc) {	// method could be a single node containing a return before the catch
+				split(e.handlerPc-1, -1);				// such a node has to be split here
+				catchNode = getNode(e.handlerPc);
+				assert catchNode != null;
+			}
 			catchNode.isCatch = true;
 			CFGNode tryNode = getNode(e.endPc-1);	// [startPc...[endPc
 			assert tryNode != null;

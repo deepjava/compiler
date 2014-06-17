@@ -1,5 +1,7 @@
 package ch.ntb.inf.deep.comp.targettest.exceptions;
 
+import java.io.IOException;
+
 import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
 import ch.ntb.inf.junitTarget.Test;
@@ -186,7 +188,7 @@ public class CheckedExceptionTest {
 				a += 1000;
 			}
 		}
-		Assert.assertEquals("testCatchTry1", 1111, a);		
+		Assert.assertEquals("test1", 1111, a);		
 		
 		CmdTransmitter.sendDone();
 	}
@@ -209,7 +211,38 @@ public class CheckedExceptionTest {
 		} catch (Exception e) {
 			a = -1;
 		}
-		Assert.assertEquals("testCatchTry2", -1, a);		
+		Assert.assertEquals("test1", -1, a);		
+		CmdTransmitter.sendDone();
+	}
+
+	static int a;
+	
+	public static int m60() {
+		try {
+			return m62();
+		} catch (IOException e) {}
+		return 10;
+	}
+
+	public static int m61() {
+		try {
+			return m62() + 100;
+		} catch (IOException e) {return 20;}
+	}
+
+	private static int m62() throws IOException {
+		if (a == 0) throw new IOException("IOException");
+		return a;
+	}
+
+	@Test
+	public static void testCatchReturn() {
+		a = -1;
+		Assert.assertEquals("test1", -1, m60());		
+		Assert.assertEquals("test2", 99, m61());		
+		a = 0;
+		Assert.assertEquals("test3", 10, m60());		
+		Assert.assertEquals("test4", 20, m61());		
 		
 		CmdTransmitter.sendDone();
 	}

@@ -86,4 +86,45 @@ public class VariousTest3 {
 		CmdTransmitter.sendDone();
 	}	
 
+	// tests if the inc operator in a loop works correctly
+	// there was an error with the resolving phi-function up to version 1.1
+	static int[] a = new int[4];
+	static int[] b = new int[4];
+	static int[] c = new int[4];
+	static int[] d = new int[4];
+	@Test
+	public static void arrayInc() {
+		int i = 0;
+		while (i < 3) a[i++] = 10;
+		Assert.assertEquals("test1", a[0], 10);
+		Assert.assertEquals("test2", a[1], 10);
+		Assert.assertEquals("test3", a[2], 10);
+		Assert.assertEquals("test4", a[3], 0);
+		
+		int n = 0;
+		while (n < 3) {
+			b[n] = 10;
+			n++;
+		}
+		Assert.assertEquals("test11", b[0], 10);
+		Assert.assertEquals("test12", b[1], 10);
+		Assert.assertEquals("test13", b[2], 10);
+		Assert.assertEquals("test14", b[3], 0);
+
+		for (int k = 0; k < 3; k++) c[k] = 10;
+		Assert.assertEquals("test21", c[0], 10);
+		Assert.assertEquals("test22", c[1], 10);
+		Assert.assertEquals("test23", c[2], 10);
+		Assert.assertEquals("test24", c[3], 0);
+		
+		int m = 0;
+		do d[m++] = 10; while (m < 3);
+		Assert.assertEquals("test31", d[0], 10);
+		Assert.assertEquals("test32", d[1], 10);
+		Assert.assertEquals("test33", d[2], 10);
+		Assert.assertEquals("test34", d[3], 0);
+
+		CmdTransmitter.sendDone();
+	}	
+
 }
