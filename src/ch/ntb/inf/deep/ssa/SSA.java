@@ -21,7 +21,6 @@ package ch.ntb.inf.deep.ssa;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
-import ch.ntb.inf.deep.classItems.LocalVar;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
@@ -74,16 +73,15 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		for (int i = 0; i < nofSortedNodes; i++) {
 			SSANode node = sortedNodes[i];
 			node.owner = this;
-			node.traversed = false;	// reset traversed
-			node.mergeAndDetermineStateArray();
+			node.merge();
 			node.traversCode();	// translate bytecode into ssa instructions
-			node.traversed = true;
 		}
+//		if (dbg) StdStreams.vrb.println(toString());
 
 		// visit loop headers again
 		for (int i = 0; i < nofLoopheaders; i++) {
 			SSANode node = loopHeaders[i];
-			node.mergeAndDetermineStateArray();
+			node.addOpdsToPhiFunctions();
 		}
 		
 		// clean up phi-functions
@@ -135,15 +133,19 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 //		if (true) StdStreams.vrb.println(toString());
 	}
 
+	/**
+	 * Sort ssa nodes starting with @param node.
+	 * Adds loop headers to array of loop headers 
+	 */
 	private void sortNodes(SSANode node) {
 		if (node.traversed) return;	// already processed
 		if (node.nofPredecessors > 0) {
 			if (node.isLoopHeader()) {
-				if(node.idom != null) sortNodes((SSANode) node.idom);
-				if(!node.traversed){
+				if (node.idom != null) sortNodes((SSANode) node.idom);
+				if (!node.traversed) {	// must be ckecked, as traversed might be set by recursive call
 					loopHeaders[nofLoopheaders++] = node;	// put into loop header list
 					sortedNodes[nofSortedNodes++] = node;					
-				}
+				} 
 			} else {
 				for (int i = 0; i < node.nofPredecessors; i++) {
 					sortNodes((SSANode) node.predecessors[i]);
@@ -280,17 +282,17 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		return type;
 	}
 
-	public void countAndMarkReturns(SSANode node){
-		if(returnCount >= returnNodes.length){
-			SSANode[]temp = new SSANode[2*returnNodes.length];
-			for(int i = 0; i < returnCount; i++){
-				temp[i] = returnNodes[i];
-			}
+	/**
+	 * Adds node to array containing all nodes with return instruction at the end
+	 */
+	void countAndRegisterReturnNodes(SSANode node) {	
+		if (returnCount >= returnNodes.length) {
+			SSANode[] temp = new SSANode[2*returnNodes.length];
+			for (int i = 0; i < returnCount; i++) temp[i] = returnNodes[i];
 			returnNodes = temp;
 		}
 		returnNodes[returnCount++] = node; 
 	}
-
 
 	private void createLineNrSSATable() {
 		int[] origTab = cfg.method.lineNrTab;

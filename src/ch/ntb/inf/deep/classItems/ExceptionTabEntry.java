@@ -20,8 +20,6 @@ package ch.ntb.inf.deep.classItems;
 
 import java.io.PrintStream;
 
-import ch.ntb.inf.deep.host.Dbg;
-
 public class ExceptionTabEntry {
 	private static PrintStream vrb = Item.vrb;
 

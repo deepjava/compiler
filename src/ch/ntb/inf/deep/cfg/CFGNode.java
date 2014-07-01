@@ -178,7 +178,7 @@ public class CFGNode {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("[" + firstBCA + ":" + lastBCA + "]");
-		sb.append(isLoopHeader()? " is loop header":"");
+		sb.append(isLoopHeader()? ", is loop header":"");
 		sb.append(nofBackwardBranches > 0? ", bckwd branches=" + nofBackwardBranches:"");
 		sb.append(isCatch? ", is first node of catch":"");
 		sb.append(", ref=" + ref);

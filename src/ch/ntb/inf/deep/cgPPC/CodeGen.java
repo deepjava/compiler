@@ -189,12 +189,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
-			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {
+			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
 				iCount = 0;
 				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
-//				createIrSspr(ppcMfspr, SRR0, 0);
-//				createIrSrAsimm(ppcStw, 0, stackPtr, 16);
-				createIrSspr(ppcMtspr, EID, 0);	// TODO, was passiert wenn gleich wieder eine exception? muss rein, sonst absturz wenn debugger exception
+				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
 				createIrSrAd(ppcStmw, 28, stackPtr, 4);
 				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
 			} else {
@@ -252,7 +250,7 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
-			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// TODO fertig machen
+			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
 				Method m = Method.getCompSpecSubroutine("handleException");
 				assert m != null;
 				loadConstantAndFixup(31, m);

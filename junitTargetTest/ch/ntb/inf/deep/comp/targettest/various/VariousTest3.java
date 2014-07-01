@@ -89,9 +89,7 @@ public class VariousTest3 {
 	// tests if the inc operator in a loop works correctly
 	// there was an error with the resolving phi-function up to version 1.1
 	static int[] a = new int[4];
-	static int[] b = new int[4];
-	static int[] c = new int[4];
-	static int[] d = new int[4];
+	
 	@Test
 	public static void arrayInc() {
 		int i = 0;
@@ -101,29 +99,70 @@ public class VariousTest3 {
 		Assert.assertEquals("test3", a[2], 10);
 		Assert.assertEquals("test4", a[3], 0);
 		
+		for (int k = 0; k < 4; k++) a[k] = 0;
+		
 		int n = 0;
 		while (n < 3) {
-			b[n] = 10;
+			a[n] = 10;
 			n++;
 		}
-		Assert.assertEquals("test11", b[0], 10);
-		Assert.assertEquals("test12", b[1], 10);
-		Assert.assertEquals("test13", b[2], 10);
-		Assert.assertEquals("test14", b[3], 0);
+		Assert.assertEquals("test11", a[0], 10);
+		Assert.assertEquals("test12", a[1], 10);
+		Assert.assertEquals("test13", a[2], 10);
+		Assert.assertEquals("test14", a[3], 0);
 
-		for (int k = 0; k < 3; k++) c[k] = 10;
-		Assert.assertEquals("test21", c[0], 10);
-		Assert.assertEquals("test22", c[1], 10);
-		Assert.assertEquals("test23", c[2], 10);
-		Assert.assertEquals("test24", c[3], 0);
+		for (int k = 0; k < 4; k++) a[k] = 0;
+				
+		int x = 0;
+		do a[++x] = x; while (x < 3);
+		Assert.assertEquals("test21", a[0], 0);
+		Assert.assertEquals("test22", a[1], 1);
+		Assert.assertEquals("test23", a[2], 2);
+		Assert.assertEquals("test24", a[3], 3);
 		
+		for (int k = 0; k < 4; k++) a[k] = 0;
+				
 		int m = 0;
-		do d[m++] = 10; while (m < 3);
-		Assert.assertEquals("test31", d[0], 10);
-		Assert.assertEquals("test32", d[1], 10);
-		Assert.assertEquals("test33", d[2], 10);
-		Assert.assertEquals("test34", d[3], 0);
+		do a[m++] = 10; while (m < 3);
+		Assert.assertEquals("test31", a[0], 10);
+		Assert.assertEquals("test32", a[1], 10);
+		Assert.assertEquals("test33", a[2], 10);
+		Assert.assertEquals("test34", a[3], 0);
 
+		for (int k = 0; k < 4; k++) a[k] = 0;
+		
+		int o = 0;
+		do a[o++] = o + 10; while (o < 3);
+		Assert.assertEquals("test41", a[0], 11);
+		Assert.assertEquals("test42", a[1], 12);
+		Assert.assertEquals("test43", a[2], 13);
+		Assert.assertEquals("test44", a[3], 0);
+
+		for (int k = 0; k < 4; k++) a[k] = 0;
+		
+		int p = 0;
+		do a[p] = p++ + 10; while (p < 3);
+		Assert.assertEquals("test51", a[0], 10);
+		Assert.assertEquals("test52", a[1], 11);
+		Assert.assertEquals("test53", a[2], 12);
+		Assert.assertEquals("test54", a[3], 0);
+
+		for (int k = 0; k < 4; k++) a[k] = 10;
+		
+		int q = 1;
+		do a[q-1] = a[q++] + q; while (q < 3);
+		Assert.assertEquals("test61", a[0], 12);
+		Assert.assertEquals("test62", a[1], 13);
+		Assert.assertEquals("test63", a[2], 10);
+		Assert.assertEquals("test64", a[3], 10);
+		
+		for (int k = 0; k < 4; k++) a[k] = 0;
+		
+		int y = 0;
+		int sum = 0;
+		do sum += y++ + 10; while (y < 3);
+		Assert.assertEquals("test71", sum, 33);
+		
 		CmdTransmitter.sendDone();
 	}	
 
