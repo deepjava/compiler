@@ -2037,8 +2037,14 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 						HString className = name.substring(0, last);
 						HString methName = name.substring(last + 1);
 						Class clazz = (Class)(RefType.refTypeList.getItemByName(className.toString()));
-						Item method = clazz.methods.getItemByName(methName.toString());
-						loadConstantAndFixup(res.reg, method);	// addr of method
+						if(clazz == null){
+							ErrorReporter.reporter.error(634, className.toString());
+							assert false : "class not found" + className.toString();
+						}
+						else{
+							Item method = clazz.methods.getItemByName(methName.toString());
+							loadConstantAndFixup(res.reg, method);	// addr of method
+						}
 					} else if (m.id == idREF) { // REF
 						createIrArSrB(ppcOr, res.reg, opds[0].reg, opds[0].reg);
 					} else if (m.id == idDoubleToBits) { // DoubleToBits

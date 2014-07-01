@@ -106,6 +106,46 @@ public class DeepFileChanger {
 		}
 	}
 
+	public void addContent(String key, String value){
+		int start = 0;
+		int lastOccurenceOfKey = -1;
+		int indexOfKey = -1; 
+		
+		while(fileContent.indexOf(key, start) != -1){
+			indexOfKey = fileContent.indexOf(key, start);
+			start = indexOfKey + 1;
+		}
+		lastOccurenceOfKey = indexOfKey;
+		if(lastOccurenceOfKey == -1){					//key doesn't exist -> add at end of file
+			int indexOfEnd = fileContent.lastIndexOf("}");
+			fileContent.insert(indexOfEnd - 1, "\n\t" + key + " = " + value + ";");
+		}
+		else{
+			int indexOfNewLine = fileContent.indexOf("\n", lastOccurenceOfKey);
+			fileContent.insert(indexOfNewLine, "\n\t" + key + " = " + value + ";");
+		}
+	}
+	
+	public void commentContent(String key) {
+		int start = 0;
+		int indexOfKey = 0;
+		int indexOfNewLine = 0;
+		int indexOfLastNewLine = 0;
+		
+		while(fileContent.indexOf(key, start) != -1){
+			indexOfKey = fileContent.indexOf(key, start);
+			while(indexOfNewLine < indexOfKey){
+				indexOfLastNewLine = indexOfNewLine;
+				indexOfNewLine = fileContent.indexOf("\n", indexOfNewLine + 1);
+			}
+			fileContent.replace(indexOfLastNewLine + 1, indexOfLastNewLine + 2, "#");
+			if(!fileContent.substring(indexOfLastNewLine + 1, indexOfLastNewLine + 3).equalsIgnoreCase("#\t")){
+				fileContent.insert(indexOfLastNewLine + 2, "\t");
+			}
+			start = indexOfKey + 1;
+		}
+	}
+	
 	public void save() {
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(deepFile));
@@ -116,6 +156,5 @@ public class DeepFileChanger {
 			e.printStackTrace();
 		}
 	}
-	
 }
 
