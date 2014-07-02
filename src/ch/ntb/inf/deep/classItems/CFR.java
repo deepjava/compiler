@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.PrintStream;
 
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.OperatingSystem;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -254,7 +253,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			int i = 0;
 			while (i < sysMethods.length) {
 				Method m = sysMethods[i];
-				if (m == null) {errRep.error(301, m.name + " in system class " + sysClass.name);
+				if (m == null) {errRep.error(301, "in system class " + sysClass.name);
 				} else {
 					if (dbg) vrb.printf("lsc: method=%1$s, attr=0x%2$x, id=0x%3$x\n", (sysClass.name + "." + m.name), m.accAndPropFlags, m.id);
 					int methIndex = 0;
