@@ -22,15 +22,12 @@ import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
-/**
- * @author  millischer
- */
 public abstract class SSAInstruction implements SSAInstructionMnemonics {
 	protected SSAValue[] operands;
 	public SSAValue result;
 	public int ssaOpcode;
 	public int bca = -1; // used for debugging, marks bca of associated bytecode instruction
-	public int machineCodeOffset = -1; // used for debugging, e.g. step into
+	public int machineCodeOffset = -1; // used for debugging, e.g. step into and used for fixups of catch clauses
 	
 	public abstract void setOperands(SSAValue[] operands);
 	public abstract SSAValue[] getOperands();

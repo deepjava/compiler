@@ -104,7 +104,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 					cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
 					Class.extLevelOrdInterfaces[extLevel] = cls;
 					Class.nofInterfaceClasses++;
-				} else {	// is std-class or enum
+				} else if ((propFlags & (1<<dpfSynthetic)) == 0 ) {	// is std-class or enum but no synthetic class
 					if (cls.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls.methTabLength;
 					cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
 					Class.extLevelOrdClasses[extLevel] = cls;
@@ -132,7 +132,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			}
 			refType = refType.next;
 		}
-		if(dbg) vrb.println(">split class groups");
+		if (dbg) vrb.println("<split class groups");
 		
 		// set interface identifiers (from max. extension level to 0)
 		for (int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--) {
@@ -150,7 +150,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 				cls = cls.nextExtLevelClass;
 			}
 		}
-		
+				
 		// generate instance method tables
 		if (dbg) vrb.println(">generating instance method tables");
 		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
@@ -253,7 +253,7 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			int i = 0;
 			while (i < sysMethods.length) {
 				Method m = sysMethods[i];
-				if (m == null) {errRep.error(301, m.name + " in system class " + sysClass.name);
+				if (m == null) {errRep.error(301, "in system class " + sysClass.name);
 				} else {
 					if (dbg) vrb.printf("lsc: method=%1$s, attr=0x%2$x, id=0x%3$x\n", (sysClass.name + "." + m.name), m.accAndPropFlags, m.id);
 					int methIndex = 0;

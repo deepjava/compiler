@@ -35,7 +35,10 @@ public class ItemStub extends Item {
 		super(methName, null);
 		this.owner = owner;
 		this.descriptor = methDescriptor;
-		if (owner.name.equals(HString.getRegisteredHString("java/lang/StringBuilder"))) ErrorReporter.reporter.error(306);;
+		if (owner.name.equals(HString.getRegisteredHString("java/lang/StringBuilder"))) {
+			String str = "in " + owner.name + "." + methName;
+			ErrorReporter.reporter.error(306, str);
+		}
 	}
 	
 	Item getReplacedStub() {

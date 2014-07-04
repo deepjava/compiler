@@ -19,21 +19,23 @@
 package ch.ntb.inf.deep.cfg;
 
 /**
- * Node in the CFG-Tree with first and last bytecode address (bca).
- * 
- * 
- * @author buesser, graf
+ * Node of the CFG-Tree with first and last bytecode address (bca).
  */
 public class CFGNode {
-	static final int nofLinks = 2;
+	static final int nofLinks = 2;	// default number of successors and predecessors
 
 	/**
-	 * used for finding loop headers.
+	 * Used for finding loop headers.
 	 */
 	boolean visited, active;
 
 	/**
-	 * used for calculating dominator tree.
+	 * Used to identify nodes belonging to catch clauses.
+	 */
+	public boolean isCatch;
+
+	/**
+	 * Used for calculating dominator tree.
 	 */
 	int ref;
 	boolean root = false;
@@ -142,7 +144,6 @@ public class CFGNode {
 	 *            node to add.
 	 */
 	public final void addSuccessor(CFGNode node) {
-//		if (getSuccessor(node.firstBCA) != null) return;	// node already in array
 		int len = successors.length;
 		if (nofSuccessors == len) {
 			CFGNode[] newArray = new CFGNode[2 * len];
@@ -175,7 +176,31 @@ public class CFGNode {
 
 	@Override
 	public String toString() {
-		return "CFG-Node [" + firstBCA + ":" + lastBCA + "]";
+		StringBuilder sb = new StringBuilder();
+		sb.append("[" + firstBCA + ":" + lastBCA + "]");
+		sb.append(isLoopHeader()? ", is loop header":"");
+		sb.append(nofBackwardBranches > 0? ", bckwd branches=" + nofBackwardBranches:"");
+		sb.append(isCatch? ", is first node of catch":"");
+		sb.append(", ref=" + ref);
+		sb.append(", visited:" + visited);
+		sb.append("\n");
+		for (int n = 0; n < 6; n++) sb.append(" ");
+		sb.append("predecessor: ");
+		for (int k = 0; (k < predecessors.length) && (predecessors[k] != null); k++) {
+			sb.append("[" + predecessors[k].firstBCA + ":" + predecessors[k].lastBCA + "]");
+		}
+		sb.append("\n");
+		for (int n = 0; n < 6; n++) sb.append(" ");
+		sb.append("successor: ");
+		for (int k = 0; (k < successors.length)	&& (successors[k] != null); k++) {
+			sb.append("[" + successors[k].firstBCA + ":" + successors[k].lastBCA + "]");
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
+	
+	public String toString(boolean cfg) {
+		return toString(false);
 	}
 
 }

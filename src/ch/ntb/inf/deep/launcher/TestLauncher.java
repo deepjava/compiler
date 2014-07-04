@@ -37,10 +37,11 @@ import ch.ntb.inf.deep.classItems.Method;
  */
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555ExampleProject.deep", "BootFromFlash");
-//		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/555junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("M:/EUser/JCC/ch.ntb.inf.deep/5200ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
+		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();

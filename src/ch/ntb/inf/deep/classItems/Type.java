@@ -30,6 +30,7 @@ public class Type extends Item {
 	public static RefType wktObject;
 	public static RefType wktString;
 	public static RefType wktEnum;
+	public static RefType wktKernel;
 
 	public char category;	// { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
 	public byte sizeInBits; // { 1..8, 16, 32, 64 }
@@ -86,10 +87,12 @@ public class Type extends Item {
 		registerWellKnownClasses(txObject, "java/lang/Object");
 		registerWellKnownClasses(txString, "java/lang/String");
 		registerWellKnownClasses(txEnum, "java/lang/Enum");
+		registerWellKnownClasses(txKernel, "ch/ntb/inf/deep/runtime/Kernel");
 		
 		wktObject = (RefType) wellKnownTypes[txObject];
 		wktString = (RefType) wellKnownTypes[txString];
 		wktEnum = (RefType) wellKnownTypes[txEnum];
+		wktKernel = (RefType) wellKnownTypes[txKernel];
 	}
 
 	protected static void setAttributeTable(StringTable stab) {

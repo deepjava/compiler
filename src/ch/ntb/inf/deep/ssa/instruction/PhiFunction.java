@@ -28,8 +28,9 @@ public class PhiFunction extends SSAInstruction {
 	public boolean used = false;
 	public int last;	
 
-	public PhiFunction(int opCode) {
+	public PhiFunction(int opCode, int bca) {
 		this.ssaOpcode = opCode;
+		this.bca = bca;
 		operands = new SSAValue[2];
 		nofOperands = 0;
 	}

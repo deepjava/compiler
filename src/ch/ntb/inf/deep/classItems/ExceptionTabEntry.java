@@ -18,9 +18,24 @@
 
 package ch.ntb.inf.deep.classItems;
 
+import java.io.PrintStream;
+
 public class ExceptionTabEntry {
-	
+	private static PrintStream vrb = Item.vrb;
+
 	//--- instance fields
-	Class catchType;
-	int startPc, endPc, handlerPc;
+	public Class catchType;
+	public int startPc, endPc, handlerPc;
+	
+	//--- debug primitives
+
+	public void print(int indentLevel) {
+		Item.indent(indentLevel);
+		vrb.print("try from " + startPc + " to " + endPc + " goto " + handlerPc + " when " + catchType.name);
+	}
+
+	public void println(int indentLevel) {
+		print(indentLevel); vrb.println();
+	}
+
 }

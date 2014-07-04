@@ -250,6 +250,7 @@ interface InstructionOpcs {
 		ppcMulli = (0x7 << 26),
 		ppcMullw = (0x1f << 26) | (0xeb << 1),
 		ppcNeg = (0x1f << 26) | (0x68 << 1),
+		ppcNor = (0x1f << 26) | (0x7c << 1),
 		ppcOr = (0x1f << 26) | (0x1bc << 1),
 		ppcOri = (0x18 << 26),
 		ppcOris = (0x19 << 26),

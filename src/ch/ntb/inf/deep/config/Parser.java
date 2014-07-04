@@ -1700,7 +1700,8 @@ public class Parser implements ICclassFileConsts {
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
 		if ((conditionType == sCpuArch && !Configuration.getBoard().cpu.arch.name.equals(HString.getHString(condName))) || 
-				(conditionType == sCpuType && !Configuration.getBoard().cpu.name.equals(HString.getHString(condName)))) return null;	// class does not belong to this cpu 
+				(conditionType == sCpuType && !Configuration.getBoard().cpu.name.equals(HString.getHString(condName))) || 
+				(conditionType == sBoardType && !Configuration.getBoard().name.equals(HString.getHString(condName)))) return null;	// class does not belong to this arch, cpu or board
 		HString hSysClassName = Item.stab.insertCondAndGetEntry(name);
 		Class cls = new Class(hSysClassName);		
 		RefType.appendRefType(cls);
@@ -2199,7 +2200,8 @@ public class Parser implements ICclassFileConsts {
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line " + lineNumber); return -1;}
 		next();
-		if (sym == sCpuArch) conditionType = sCpuArch;
+		if (sym == sBoardType) conditionType = sBoardType;
+		else if (sym == sCpuArch) conditionType = sCpuArch;
 		else if (sym == sCpuType) conditionType = sCpuType;
 		else {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected: cpuarch | cputype, received symbol: " + symToString()); return -1;}
 		next();

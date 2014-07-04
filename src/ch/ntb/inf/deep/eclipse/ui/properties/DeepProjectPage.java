@@ -55,14 +55,18 @@ import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyPage {
 	
 	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-	private Combo boardCombo, programmerCombo, osCombo;
-	private Button check, browse;
-	private Text path;
-	private String lastChoice = "";
+	private Combo boardCombo, programmerCombo, osCombo, imgFormatCombo;
+	private Button check, browse, checkImg, browseImg;
+	private Text path, pathImg;
+	private int indexImgFormat;
+	private final String defaultImgPath = "";
+	private String lastImgPathChoice = defaultImgPath;
+	private boolean createImgFile = false;
+	private String lastChoice = "", lastImgFormatChoice = "";
 	private IEclipsePreferences pref;
 	private Label libState;
-	private String libPath, board, programmer, os, rootclasses;
-	String[][] boards, programmers, osys;
+	private String libPath, board, programmer, os, rootclasses, imglocation, imgformat;
+	String[][] boards, programmers, osys, imgformats;
 	private DeepFileChanger dfc;
 	
 	@Override
@@ -77,12 +81,31 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		programmer = dfc.getContent("programmertype");
 		os = dfc.getContent("ostype");
 		rootclasses = dfc.getContent("rootclasses");
+		imglocation = dfc.getContent("imgfile");
+		imgformat = dfc.getContent("imgformat");
+		if(imglocation.equalsIgnoreCase("not available") && imgformat.equalsIgnoreCase("not available")){
+			createImgFile = false;
+			lastImgPathChoice = project.getLocation().toString();
+			lastImgPathChoice = lastImgPathChoice.replace('/', '\\');
+		}
+		else{
+			createImgFile = true;
+			lastImgPathChoice = imglocation.replace('/', '\\');
+			lastImgPathChoice = lastImgPathChoice.substring(1,lastImgPathChoice.length() -1 );
+			int indexOfProjectName = lastImgPathChoice.lastIndexOf("\\");
+			lastImgPathChoice = lastImgPathChoice.substring(0, indexOfProjectName);
+			lastImgFormatChoice = imgformat;
+		}
+		
 //		System.out.println(dfc.fileContent.toString());		
 //		System.out.println(libPath);
 //		System.out.println(board);
 //		System.out.println(programmer);
 //		System.out.println(os);
 //		System.out.println(rootclasses);
+//		System.out.println(lastImgPathChoice);
+//		System.out.println(lastImgFormatChoice);
+//		System.out.println("");
 
 		// read project preferences
 		pref = getPref();
@@ -95,7 +118,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		groupLib.setText("Target Library");
 		GridLayout gridLayout2 = new GridLayout(2, false);
 		groupLib.setLayout(gridLayout2);
-		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
+		GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		gridData.horizontalSpan = 2;
 		groupLib.setLayoutData(gridData);
 		Label label1 = new Label(groupLib,SWT.NONE);
@@ -129,7 +152,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		gridData2.grabExcessHorizontalSpace = true;
 		path.setLayoutData(gridData2);
 		path.setText(libPath);
-		path.setEnabled(false);
+		path.setEnabled(!libPath.equals(defaultPath));
 		path.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				libPath = path.getText();
@@ -149,7 +172,8 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		libState = new Label(groupLib,SWT.NONE);
 		libState.setLayoutData(gridData);
 
-		Group groupBoard = new Group(composite, SWT.BOTTOM);
+//		Group groupBoard = new Group(composite, SWT.BOTTOM);
+		Group groupBoard = new Group(composite, SWT.NONE);
 		groupBoard.setText("Board configuration");
 		GridLayout groupLayout1 = new GridLayout(2, false);
 		groupBoard.setLayout(groupLayout1);
@@ -167,15 +191,113 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		programmerCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		programmerCombo.addSelectionListener(listener);
 
-		Group groupOS = new Group(composite, SWT.BOTTOM);
+//		Group groupOS = new Group(composite, SWT.BOTTOM);
+		Group groupOS = new Group(composite, SWT.NONE);
 		groupOS.setText("Runtime system");
 		GridLayout groupLayout2 = new GridLayout(2, false);
 		groupOS.setLayout(groupLayout2);
+		GridData gridData4 = new GridData();
+		gridData4.horizontalAlignment = SWT.FILL;
+		gridData4.grabExcessHorizontalSpace = true;
+		gridData4.horizontalSpan = 2;
+		groupOS.setLayoutData(gridData4);
 		Label osLabel = new Label(groupOS,SWT.NONE);
 		osLabel.setText("Select a operating system");
 		osCombo = new Combo(groupOS, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		osCombo.addSelectionListener(listener);
 
+		Group groupImg = new Group(composite, SWT.NONE);
+		groupImg.setText("Image file creation");
+		GridLayout gridLayoutImg = new GridLayout(2,false);
+		groupImg.setLayout(gridLayoutImg);
+		GridData gridDataImg = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		gridDataImg.horizontalSpan = 2;		
+		checkImg = new Button(groupImg, SWT.CHECK);
+		checkImg.setText("Create image file");
+		checkImg.setSelection(false);
+		checkImg.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				if(e.widget.equals(checkImg)) {
+					if (checkLibPath()) readLib();
+					if(checkImg.getSelection()) {
+						pathImg.setEnabled(true);
+						pathImg.setText(lastImgPathChoice);
+						browseImg.setEnabled(true);
+						imgFormatCombo.setEnabled(true);
+						indexImgFormat = 0;
+						for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
+							if (lastImgFormatChoice.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
+						}
+						imgFormatCombo.select(indexImgFormat);
+						createImgFile = true;
+					} else {
+						pathImg.setEnabled(false);
+						pathImg.setText(lastImgPathChoice);
+						browseImg.setEnabled(false);
+						imgFormatCombo.setEnabled(false);
+						indexImgFormat = 0;
+						for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
+							if (lastImgFormatChoice.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
+						}
+						imgFormatCombo.select(indexImgFormat);
+						createImgFile = false;
+					}
+				}
+			}
+		});
+		checkImg.setLayoutData(gridDataImg);
+		
+		GridData gridDataImg2 = new GridData(SWT.FILL, SWT.FILL, true, false);
+		pathImg = new Text(groupImg, SWT.SINGLE | SWT.BORDER);
+		pathImg.setLayoutData(gridDataImg2);
+		pathImg.setEnabled(false);
+		pathImg.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				imglocation = pathImg.getText();
+				if (checkLibPath()) readLib();
+			}
+		});
+		browseImg = new Button(groupImg, SWT.PUSH);
+		browseImg.setText("Browse...");
+		browseImg.setEnabled(false);
+		browseImg.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e){
+				if (checkImg.getSelection()) {	
+					openImgDirectoryDialog();
+					if (checkLibPath()) readLib();
+				}
+			}
+		});	
+		GridData gridDataImg3 = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gridDataImg3.horizontalSpan = 2;
+		Label imgFormatLabel = new Label(groupImg,SWT.NONE);
+		imgFormatLabel.setText("Select image file format");
+		imgFormatCombo = new Combo(groupImg, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+		imgFormatCombo.setEnabled(false);
+		imgFormatCombo.setLayoutData(gridDataImg3);
+		imgFormatCombo.addSelectionListener(listener);
+		indexImgFormat = 0;
+		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
+			if (lastImgFormatChoice.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
+		}
+		imgFormatCombo.select(indexImgFormat);
+		
+		//initial values of Image file creation
+		if(createImgFile){
+			checkImg.setSelection(true);
+			pathImg.setEnabled(true);
+			pathImg.setText(lastImgPathChoice);
+			browseImg.setEnabled(true);
+			imgFormatCombo.setEnabled(true);
+		}
+		else{
+			checkImg.setSelection(false);
+			pathImg.setEnabled(false);
+			pathImg.setText(lastImgPathChoice);
+			browseImg.setEnabled(false);
+			imgFormatCombo.setEnabled(false);
+		}
+		
 		if (checkLibPath()) readLib(); else libPath = "not available";
 		return composite;
 	}
@@ -193,6 +315,10 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			if (e.widget.equals(programmerCombo)) {
 				if (programmerCombo.getSelectionIndex() != programmerCombo.getItemCount() - 1) programmer = programmers[programmerCombo.getSelectionIndex()][0];
 				else programmer = "";
+			}
+			if (e.widget.equals(imgFormatCombo)) {
+				if (imgFormatCombo.getSelectionIndex() != imgFormatCombo.getItemCount() - 1) lastImgFormatChoice = Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()];
+				else lastImgFormatChoice = "";
 			}
 		}
 	};
@@ -233,6 +359,21 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		str[str.length - 1] = "none";
 		osCombo.setItems(str);
 		osCombo.select(index);
+		
+		String[] strImg = new String[Configuration.formatMnemonics.length + 1];
+		int indexImg = strImg.length - 1;
+		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
+			strImg[i] = Configuration.formatMnemonics[i];
+			if (strImg[i].equalsIgnoreCase(imgFormatCombo.getText())) indexImg = i;
+		}
+		strImg[strImg.length - 1] = "none";
+		imgFormatCombo.setItems(strImg);
+		if(!lastImgFormatChoice.equalsIgnoreCase("not available")){
+			imgFormatCombo.select(indexImgFormat);
+		}
+		else{
+			imgFormatCombo.select(indexImg);
+		}
 	}
 
 	private void openDirectoryDialog() {
@@ -245,6 +386,18 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
         	path.setText(dir);
         	libPath = dir;
         	lastChoice = dir;
+        }
+	}
+	
+	private void openImgDirectoryDialog() {
+		DirectoryDialog dlg = new DirectoryDialog(getShell());        
+        dlg.setFilterPath(pathImg.getText()); // Set the initial filter path according to anything they've selected or typed in
+        dlg.setText("Image File Save Location");
+        dlg.setMessage("Select a directory");
+        String dir = dlg.open(); // Calling open() will open and run the dialog.
+        if (dir != null) {
+        	pathImg.setText(dir);
+        	lastImgPathChoice = dir;
         }
 	}
 
@@ -296,6 +449,14 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			pref.putBoolean("useDefault", false);
 			pref.put("libPath", path.getText());
 		}
+		if (checkImg.getSelection()){
+			pref.put("imgfile", "\"" + imglocation + "\"");
+			pref.put("imgformat", imgFormatCombo.getText());
+		}
+		else{
+			pref.put("imgfile", "TestSave");
+			pref.put("imgformat", "TestFormat");
+		}
 		try {
 			pref.flush();
 		} catch (BackingStoreException e) {
@@ -311,8 +472,41 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		dfc.changeContent("libpath", "\"" + libPath + "\"");
 		dfc.changeContent("boardtype", board);
 		dfc.changeContent("ostype", os);
-		dfc.changeContent("programmertype", programmer);
+		if(programmerCombo.getText().equals("none") && !dfc.getContent("programmertype").equalsIgnoreCase("not available")){
+			dfc.changeContent("programmertype", programmer);
+			dfc.commentContent("programmertype");
+		}
+		else if(programmerCombo.getText().equals("none") && dfc.getContent("programmertype").equalsIgnoreCase("not available")){
+		}
+		else if(dfc.getContent("programmertype").equalsIgnoreCase("not available")){
+			dfc.addContent("programmertype", programmer);
+		}
+		else{
+			dfc.changeContent("programmertype", programmer);
+		}
 		dfc.changeContent("rootclasses", rootclasses);
+		if(createImgFile){  //add Line for imgfile
+			if(dfc.getContent("imgfile").equalsIgnoreCase("not available")){
+				dfc.addContent("imgfile", "\"" + lastImgPathChoice + "\\" + project.getName() + "." + lastImgFormatChoice.toLowerCase() + "\"");
+			}
+			else{
+				dfc.changeContent("imgfile", "\"" + lastImgPathChoice + "\\"+ project.getName() + "." + lastImgFormatChoice.toLowerCase() + "\"");
+			}
+			if(dfc.getContent("imgformat").equalsIgnoreCase("not available")){
+				dfc.addContent("imgformat", lastImgFormatChoice);
+			}
+			else{
+				dfc.changeContent("imgformat", lastImgFormatChoice);
+			}
+		}
+		else{ //comment imgfile lines
+			if(!dfc.getContent("imgfile").equalsIgnoreCase("not available")){
+				dfc.commentContent("imgfile");
+			}
+			if(!dfc.getContent("imgformat").equalsIgnoreCase("not available")){
+				dfc.commentContent("imgformat");
+			}
+		}
 		dfc.save();
 
 		// change classpath file
@@ -321,6 +515,8 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		cfc.save();
 
 		lastChoice = path.getText();
+		lastImgPathChoice = pathImg.getText();
+		lastImgFormatChoice = imgFormatCombo.getText();
 		
 		try { // refresh the package explorer
 			ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());

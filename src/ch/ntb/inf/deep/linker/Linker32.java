@@ -106,7 +106,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	private static int lastUsedAddress = 0;
 	
 	// Global constants
-	private static ConstBlkEntry globalConstantTable;
+	public static ConstBlkEntry globalConstantTable;
 	private static int globalConstantTableOffset = -1;
 	private static Segment globalConstantTableSegment;
 	
@@ -534,7 +534,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		int offset = 0, index = 0;
 		ConstantEntry constant = (ConstantEntry)globalConstantTable;
 
-		while(constant != null) {
+		while (constant != null) {
 			constant.setIndex(index);
 			constant.setOffset(offset);
 			constant.setAddress(globalConstantTableSegment.address + globalConstantTableOffset + offset);
@@ -542,7 +542,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			offset += constant.getItemSize();
 			constant = (ConstantEntry)constant.next;
 		}
-		if(dbg) vrb.println("[LINKER] END: Creating global constant table\n");
+		if (dbg) vrb.println("[LINKER] END: Creating global constant table\n");
 	}
 	
 	public static void calculateCodeSizeAndMethodOffsets(Class clazz) {
@@ -664,7 +664,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				else {
 					int offset = m.offset;
 					int size = ((Method)m).getCodeSizeInBytes();
-					if (offset <= s.usedSize) reporter.error(710, "bla " + c.name + "!\n");
+					if (offset <= s.usedSize) reporter.error(712);
 					s.addToUsedSize(roundUpToNextWord(offset - s.usedSize + size));
 					c.codeSegment = s;
 					if (dbg) vrb.println("    Code-Segment: " + c.codeSegment.getFullName() + ", offset=0x" + Integer.toHexString(c.codeOffset));
@@ -720,11 +720,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 
 		// handle arrays
 		Array a = Class.arrayClasses;
+		s = Configuration.getDefaultConstSegment();
 		while (a != null) {
-			s = Configuration.getDefaultConstSegment();
-			
 			if (dbg) vrb.println("  Proceeding Array " + a.name);
-			
 			if (s == null) reporter.error(710, "Can't get a memory segment for the typedecriptor of array " + a.name + "!\n");
 			else {
 				a.offset = roundUpToNextWord(s.usedSize);
@@ -1213,7 +1211,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 	
 	public static long writeTargetImageToBinFile(String fileName) throws IOException {
-		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
+		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":");
 		
 		long bytesWritten = 0;
 		String fileExtension = "bin";
@@ -1239,7 +1237,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 					binFile.write(0);
 					currentAddress++;
 				}
-				if(dbg) vrb.println("  > TMS #" + tms.id + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = " + Integer.toHexString(currentAddress));
+				if(dbg) vrb.println("  > TMS #" + tms.id + ": start address = 0x" + Integer.toHexString(tms.startAddress) + ", size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = 0x" + Integer.toHexString(currentAddress));
 				for(int j = 0; j < tms.data.length; j++) {
 					binFile.write(getBytes(tms.data[j]));
 					currentAddress += 4;
@@ -1330,12 +1328,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 		
 	public static void addGlobalConstant(StdConstant gconst) {
-		if(globalConstantTable == null) {
-			globalConstantTable = new ConstantEntry(gconst);
-		}
-		else {
-			globalConstantTable.appendTail(new ConstantEntry(gconst));
-		}
+		if (globalConstantTable == null) globalConstantTable = new ConstantEntry(gconst);
+		else globalConstantTable.appendTail(new ConstantEntry(gconst));
 	}
 	
 	

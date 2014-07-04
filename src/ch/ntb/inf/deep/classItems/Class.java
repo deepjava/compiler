@@ -564,7 +564,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 							entry.endPc = clfInStrm.readUnsignedShort();
 							entry.handlerPc = clfInStrm.readUnsignedShort();
 							int catchTypeInx = clfInStrm.readUnsignedShort();
-							entry.catchType = (Class)cpItems[catchTypeInx];
+							if (catchTypeInx != 0) entry.catchType = (Class)cpItems[catchTypeInx];
+							else entry.catchType = null;	// used for "finally"
 						}
 					}
 					
@@ -649,8 +650,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				break;
 			case atxInnerClasses: // 4.7.5, p125
 				if ((userReqAttributes & (1<<atxInnerClasses)) == 0) skipAttribute(clfInStrm, attrLength, index);
-				else{
-					// TODO Auto-generated method stub
+				else {
 					assert false: "TODO";
 				}
 				break;
@@ -756,7 +756,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				nofItems++;
 				break;
 			case cptMethRef:
-//				printOrigConstPool("\nconstant pool \nstate: x");
 				cpItems[pEntry] = getMethodOrStub(pEntry);
 				nofItems++;
 				break;
@@ -794,7 +793,7 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 //		boolean verbose = true;
 		if ((accAndPropFlags & 1<<dpfClassMark) == 0 ) {	// mark not set -> class not done yet
 			if (dbg) vrb.println(">fixup of class: " + this.name);
-			accAndPropFlags |= 1<<dpfClassMark;	// set mark
+//			accAndPropFlags |= 1<<dpfClassMark;	// set mark, placing this here, was a mistake, see below
 
 			if (type == null) {objectSize = 0; extensionLevel = 0;}	// java/lang/object
 			else if ((accAndPropFlags & 1<<apfInterface) == 0 ) {	// std-class
@@ -812,6 +811,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				} else extensionLevel = 1;
 				if (extensionLevel > maxExtensionLevelInterfaces ) maxExtensionLevelInterfaces = extensionLevel;
 			}
+			accAndPropFlags |= 1<<dpfClassMark;	// set mark, must be set after recursively handling superclasses!
+			// if not, import circles are not properly resolved
 			
 			// calculate size of all instance fields (excluding fields of superclasses)
 			Item item = instFields;
