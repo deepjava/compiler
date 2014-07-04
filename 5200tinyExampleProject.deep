@@ -21,9 +21,9 @@ project ExampleProjectMpc5200B {
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/EPOStest1";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SPIDemo";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/ExceptionDemo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/ExceptionDemo";
 
-	imgfile = "\\inf04-server\ftp\pub\graf\test.bin";
+	imgfile = "\\inf04-server\ftp\phycore_mpc5200b\deep\testTiny.bin";
 	imgformat = binary;
 
 #	tctfile = "tct/targetCommands.dtct";

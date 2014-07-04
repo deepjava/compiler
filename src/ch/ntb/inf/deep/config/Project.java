@@ -37,7 +37,9 @@ public class Project extends Item {
 	
 	public Project(String deepFileName) {
 		Item.stab = StringTable.getInstance();
-		this.projectFile = new File(deepFileName);
+		File rel = new File(deepFileName);
+		String path = rel.getAbsolutePath();
+		this.projectFile = new File(path);
 		this.deepProjectFileName = HString.getRegisteredHString(deepFileName);
 	}
 	
