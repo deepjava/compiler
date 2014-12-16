@@ -592,6 +592,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		Item kernelClass = Configuration.getOS().kernelClass;
 		if (kernelClass == null) {reporter.error(740, "kernel class not set"); return;}
+		Item heapClass = Configuration.getOS().heapClass;
+		if (heapClass == null) {reporter.error(740, "heap class not set"); return;}
 		Item kernelClinit = null;
 		kernelClinit = ((Class)kernelClass).getClassConstructor();
 		if (dbg) vrb.println("  Kernel class:      " + kernelClass.name);
@@ -615,14 +617,26 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			systemTable.appendTail(new FixedValueEntry("sizeHeap" + i, Configuration.getHeapSegments()[i].size));
 		}
 		systemTable.appendTail(new FixedValueEntry("nofClasses", Class.nofInitClasses + Class.nofNonInitClasses));
-		Class clazz = Class.initClasses; int i = 0;
+		
+		// insert heap and kernel class at beginning of the list
 		if (dbg) vrb.println("  init classes");
+		int i = 0;
+		systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", (Class)heapClass));
+		if (dbg) vrb.println("    add class " + heapClass.name);
+		i++;
+		systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", (Class)kernelClass));
+		if (dbg) vrb.println("    add class " + kernelClass.name);
+		i++;
+		
+		Class clazz = Class.initClasses; 
 		while (clazz != null) { // reference to the constant block of each class with a class constructor (clinit)
-			assert clazz instanceof Class; 
-			if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {	// omit synthetic classes
-				systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", clazz));
-				if (dbg) vrb.println("    add class " + clazz.name);
-				i++;
+			if (clazz != heapClass && clazz != kernelClass) {
+				assert clazz instanceof Class; 
+				if ((clazz.accAndPropFlags & (1 << dpfSynthetic)) == 0) {	// omit synthetic classes
+					systemTable.appendTail(new SysTabEntry("constBlkBaseClass" + i + ": ", clazz));
+					if (dbg) vrb.println("    add class " + clazz.name);
+					i++;
+				}
 			}
 			clazz = clazz.nextClass;
 		}
