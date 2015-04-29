@@ -4,6 +4,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="junitTargetTest"/>
+	<classpathentry kind="src" path="junitHostTest"/>
+	<classpathentry kind="lib" path="/ch.ntb.inf.junitTarget/bin"/>
 	<classpathentry kind="lib" path="/ch.ntb.inf.deep.trglib/bin" sourcepath="/ch.ntb.inf.deep.trglib/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

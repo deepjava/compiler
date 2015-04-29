@@ -13,14 +13,14 @@ project ExampleProjectMpc5200B {
 #	programmertype = bdi2000;
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/UART3InOutReflector";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/test/UART3Demo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/DecrementerDemo";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/EPOStest1";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/CAN1Test";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/test/SPIDemo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/SimpleBlinkerDemo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/UART3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/UART3InOutReflector";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/SimpleBlinkerDemo","ch/ntb/inf/deep/runtime/mpc5200/demo/UART3Demo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/DecrementerDemo";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/EPOStest1";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/CAN1Test";
+#	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/SPIDemo";
 
 	imgfile = "\\inf04-server\ftp\phycore_mpc5200b\deep\testIo.bin";
 	imgformat = binary;
