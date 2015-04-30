@@ -50,6 +50,7 @@ import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
+import ch.ntb.inf.libusbJava.exceptions.LibusbException;
 
 public class Launcher implements ICclassFileConsts {
 	
@@ -386,7 +387,11 @@ public class Launcher implements ICclassFileConsts {
 						tms = tms.next;
 					}
 					tc.resetErasedFlag();
-				} catch (TargetConnectionException e) {
+				} 
+				catch (TargetConnectionException e) {
+					reporter.error(801);
+				}
+				catch(LibusbException e){
 					reporter.error(801);
 				}
 			} else 	reporter.error(800);

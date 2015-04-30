@@ -21,6 +21,7 @@ package ch.ntb.inf.deep.target;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
+import ch.ntb.inf.libusbJava.exceptions.LibusbException;
 
 public abstract class TargetConnection {
 		
@@ -93,7 +94,7 @@ public abstract class TargetConnection {
 	
 	public abstract void writeToAddress(int[] data, int address, int length) throws TargetConnectionException;
 	
-	public abstract void writeTMS(TargetMemorySegment tms) throws TargetConnectionException;
+	public abstract void writeTMS(TargetMemorySegment tms) throws TargetConnectionException, LibusbException;
 	
 	public abstract void setBreakPoint(int address) throws TargetConnectionException;
 	
