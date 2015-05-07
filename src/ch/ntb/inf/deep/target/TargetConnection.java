@@ -94,7 +94,7 @@ public abstract class TargetConnection {
 	
 	public abstract void writeToAddress(int[] data, int address, int length) throws TargetConnectionException;
 	
-	public abstract void writeTMS(TargetMemorySegment tms) throws TargetConnectionException, LibusbException;
+	public abstract void writeTMS(TargetMemorySegment tms) throws TargetConnectionException;
 	
 	public abstract void setBreakPoint(int address) throws TargetConnectionException;
 	
