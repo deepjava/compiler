@@ -389,7 +389,10 @@ public class Launcher implements ICclassFileConsts {
 					tc.resetErasedFlag();
 				} 
 				catch (TargetConnectionException e) {
-					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
+					if(e.getCause() == null){
+						reporter.error(801);
+					}
+					else if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
 						reporter.error(813);
 					}
 					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
