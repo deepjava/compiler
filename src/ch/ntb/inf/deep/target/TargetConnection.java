@@ -21,7 +21,6 @@ package ch.ntb.inf.deep.target;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
-import ch.ntb.inf.libusbJava.exceptions.LibusbException;
 
 public abstract class TargetConnection {
 		
