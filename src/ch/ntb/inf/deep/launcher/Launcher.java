@@ -50,7 +50,6 @@ import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
-import ch.ntb.inf.libusbJava.exceptions.LibusbException;
 
 public class Launcher implements ICclassFileConsts {
 	
@@ -389,10 +388,7 @@ public class Launcher implements ICclassFileConsts {
 					tc.resetErasedFlag();
 				} 
 				catch (TargetConnectionException e) {
-					if(e.getCause() == null){
-						reporter.error(801);
-					}
-					else if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
+					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
 						reporter.error(813);
 					}
 					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
