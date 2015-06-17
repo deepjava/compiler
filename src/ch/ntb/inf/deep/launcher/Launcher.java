@@ -386,8 +386,17 @@ public class Launcher implements ICclassFileConsts {
 						tms = tms.next;
 					}
 					tc.resetErasedFlag();
-				} catch (TargetConnectionException e) {
-					reporter.error(801);
+				} 
+				catch (TargetConnectionException e) {
+					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
+						reporter.error(813);
+					}
+					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
+						reporter.error(814);
+					}
+					else{
+						reporter.error(801);
+					}
 				}
 			} else 	reporter.error(800);
 		} else	reporter.error(238);
