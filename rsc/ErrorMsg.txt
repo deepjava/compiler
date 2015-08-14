@@ -105,5 +105,7 @@ ErrorNr;Description;Solution
 810;Programmer not found;
 811;Class to connect to programmer not found;
 812;Plugin not found;
+813;BDI packet wrong, try to reset BDI;
+814;ready bit not set, try to reset BDI;
 
 900;Connection lost;
