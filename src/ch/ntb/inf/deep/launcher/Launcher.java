@@ -35,6 +35,7 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Board;
+import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
@@ -46,6 +47,7 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
+import ch.ntb.inf.deep.runtime.mpc555.Impc555;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
@@ -498,6 +500,7 @@ public class Launcher implements ICclassFileConsts {
 		
 		Board b = Configuration.getBoard();
 		createArchInterfaceFile(b.cpu.arch, basePath);
+		createProcInterfaceFile(b.cpu, basePath);
 		createBoardInterfaceFile(b, basePath);
 	}
 		
@@ -558,6 +561,45 @@ public class Launcher implements ICclassFileConsts {
 		}
 	}
 	
+	private static void createProcInterfaceFile(CPU cpu, String basePath) {
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date date = new Date();
+		String cpuName = cpu.name.toString();
+		basePath = basePath + File.separatorChar + cpuName;
+		String fileName = "I" + cpuName + ".java";
+		try {
+			File dir = new File(basePath);
+			if(!dir.exists()) dir.mkdirs();
+			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
+			FileWriter fw = new FileWriter(f);
+			vrb.println("Creating " + f.getAbsolutePath());
+			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
+			fw.write("public interface I" + cpuName + " {\n");
+			
+			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
+			SystemConstant curr = cpu.sysConstants;
+			while (curr != null && curr != Configuration.getCompilerConstants()) {
+				fw.write("\tpublic static final int " + curr.name.toString() + " = 0x" + Integer.toHexString(curr.val) + ";\n");
+				curr = (SystemConstant) curr.next;
+			}
+			
+			fw.write("\n\t// Specific registers of CPU " + cpuName + "\n");
+			Register reg = cpu.regs;
+			while (reg != null && reg != cpu.arch.regs) {
+				fw.write("\tpublic static final int " + reg.name + " = 0x" + Integer.toHexString(reg.address) + ";\n");
+				reg = (Register) reg.next;
+			}
+			
+			fw.write("}");
+			fw.flush();
+			fw.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private static void createBoardInterfaceFile(Board b, String basePath) {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
@@ -573,27 +615,15 @@ public class Launcher implements ICclassFileConsts {
 			vrb.println("Creating " + f.getAbsolutePath());
 			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			fw.write("public interface I" + boardName + " {\n");
-			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
-			SystemConstant curr = b.cpu.sysConstants;
-			while (curr != null && curr != Configuration.getCompilerConstants()) {
-				fw.write("\tpublic static final int " + curr.name.toString() + " = 0x" + Integer.toHexString(curr.val) + ";\n");
-				curr = (SystemConstant) curr.next;
-			}
+			fw.write("public interface I" + boardName + " extends I" + cpuName + " {\n");
 			
 			fw.write("\n\t// System constants of board " + boardName + "\n");
-			curr = b.sysConstants;
+			SystemConstant curr = b.sysConstants;
 			while (curr != null && curr != b.cpu.sysConstants) {
 				fw.write("\tpublic static final int " + curr.name.toString() + " = 0x" + Integer.toHexString(curr.val) + ";\n");
 				curr = (SystemConstant) curr.next;
 			}
 			
-			fw.write("\n\t// Specific registers of CPU \" + cpuName + \"\n");
-			Register reg = b.cpu.regs;
-			while (reg != null && reg != b.cpu.arch.regs) {
-				fw.write("\tpublic static final int " + reg.name + " = 0x" + Integer.toHexString(reg.address) + ";\n");
-				reg = (Register) reg.next;
-			}
 			fw.write("}");
 			fw.flush();
 			fw.close();
