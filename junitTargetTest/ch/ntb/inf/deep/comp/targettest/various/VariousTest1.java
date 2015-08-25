@@ -18,8 +18,6 @@
 
 package ch.ntb.inf.deep.comp.targettest.various;
 
-import ch.ntb.inf.deep.runtime.mpc555.driver.SCI2;
-import ch.ntb.inf.deep.unsafe.US;
 import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
 import ch.ntb.inf.junitTarget.MaxErrors;
