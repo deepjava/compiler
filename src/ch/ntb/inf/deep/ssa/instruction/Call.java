@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocator;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.ssa.SSAValue;

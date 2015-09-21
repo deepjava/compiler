@@ -16,7 +16,7 @@
  * 
  */
 
-package ch.ntb.inf.deep.cgPPC;
+package ch.ntb.inf.deep.cg.ppc;
 
 interface Registers {
 	final int nofGPR = 32;	

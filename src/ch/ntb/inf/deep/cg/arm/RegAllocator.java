@@ -16,7 +16,7 @@
  * 
  */
 
-package ch.ntb.inf.deep.cgPPC;
+package ch.ntb.inf.deep.cg.arm;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
@@ -323,7 +323,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCloadLocal)) {	
 						if (opd.join != null) opd.join.start = 0;
 						// store last use of a parameter
-						CodeGen.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
+						CodeGenARM.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
 					}
 				}
 			}
@@ -370,7 +370,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			int endNo = res.end;
 			if (instr.ssaOpcode != sCloadLocal && res.join != null) continue;
 			else if (instr.ssaOpcode == sCloadLocal && res.join != null) {
-				if (res.join.nonVol) CodeGen.paramHasNonVolReg[res.join.index - maxStackSlots] = true;
+				if (res.join.nonVol) CodeGenARM.paramHasNonVolReg[res.join.index - maxStackSlots] = true;
 			} else if (instr.ssaOpcode == sCloadLocal) {
 				// check if call instruction between start of method and here
 				// call to inline method is omitted
@@ -379,7 +379,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 						res.nonVol = true;
-						CodeGen.paramHasNonVolReg[res.index - maxStackSlots] = true;
+						CodeGenARM.paramHasNonVolReg[res.index - maxStackSlots] = true;
 					}
 				}
 			} else {
@@ -413,13 +413,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
 				Call call = (Call)instr;
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-					if ((((Method)call.item).id) == CodeGen.idENABLE_FLOATS) {
-					CodeGen.enFloatsInExc = true;
+					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
+					CodeGenARM.enFloatsInExc = true;
 				}
 				int id = ((Method)call.item).id;
-				if (id == CodeGen.idDoubleToBits || (id == CodeGen.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-					id == CodeGen.idFloatToBits || (id == CodeGen.idBitsToFloat))  // FloatToBits or BitsToFloat
-					CodeGen.tempStorage = true;
+				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
+					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
+					CodeGenARM.tempStorage = true;
 			}
 		}
 	}
@@ -428,7 +428,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
 	 */
-	static void assignRegisters(CodeGen code) {
+	static void assignRegisters(CodeGenARM code) {
 		// handle loadLocal first, 
 		if (dbg) StdStreams.vrb.println("\thandle load local:");
 		for (int i = 0; i < nofInstructions; i++) {
@@ -444,13 +444,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 				int type = res.type;
 				if (type == tLong) {
-					res.regLong = CodeGen.paramRegNr[res.index - maxStackSlots];
-					res.reg = CodeGen.paramRegNr[res.index+1 - maxStackSlots];
+					res.regLong = CodeGenARM.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenARM.paramRegNr[res.index+1 - maxStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					res.reg = CodeGen.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenARM.paramRegNr[res.index - maxStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					res.reg = CodeGen.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenARM.paramRegNr[res.index - maxStackSlots];
 				}	
 				SSAValue joinVal = res.join;
 				if (joinVal != null) {
@@ -496,11 +496,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			// reserve temporary storage on the stack for certain fpr operations
 			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
-				CodeGen.tempStorage = true;
+				CodeGenARM.tempStorage = true;
 			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
-				CodeGen.tempStorage = true;
+				CodeGenARM.tempStorage = true;
 			if ((instr.ssaOpcode == sCdiv || instr.ssaOpcode == sCrem) && res.type == tLong)
-				CodeGen.tempStorage = true;
+				CodeGenARM.tempStorage = true;
 
 			// reserve register for result of instruction
 			if (instr.ssaOpcode == sCloadLocal) {
@@ -601,12 +601,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| (instr1.ssaOpcode == sCshr) && (res == instr1.getOperands()[1])
 							|| (instr1.ssaOpcode == sCushr) && (res == instr1.getOperands()[1])
 							// shift operators only if immediate is shift distance (and not value to be shifted)
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idGETGPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idGETFPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idGETSPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idPUTGPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idPUTFPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idPUTSPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETGPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETFPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETSPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTGPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTFPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTSPR) && (instr1.getOperands()[0] == res))
 							// calls to some unsafe methods
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
 						// branches but not switches (the second operand of a switch is already constant)
@@ -619,8 +619,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							int immVal = constant.valueH;
 							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						}
-					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idASM))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGen.idADR_OF_METHOD))) {
+					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idASM))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idADR_OF_METHOD))) {
 					} else 	// opd cannot be used as immediate opd	
 						findReg(res);	
 				} else 	// opd has index != -1 or cannot be used as immediate opd	
@@ -644,7 +644,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					if (opd.join == null) {
 						if ((opd.owner != null) && (opd.owner.ssaOpcode == sCloadLocal)) {
-							if (CodeGen.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
+							if (CodeGenARM.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
 								if (opd.type == tLong) {
 									freeReg(gpr, opd.regLong);
 									freeReg(gpr, opd.reg);
@@ -710,14 +710,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (fpr > maxNofParamFPR) maxNofParamFPR = fpr; 
 			}
 		}
-		CodeGen.nofNonVolGPR = nofNonVolGPR;
-		CodeGen.nofNonVolFPR = nofNonVolFPR;
-		CodeGen.nofVolGPR = nofVolGPR;
-		CodeGen.nofVolFPR = nofVolFPR;
+		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
+		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
+		CodeGenARM.nofVolGPR = nofVolGPR;
+		CodeGenARM.nofVolFPR = nofVolFPR;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) CodeGen.callParamSlotsOnStack = nof;
+		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
 		nof = maxNofParamFPR - (paramEndFPR - paramStartFPR + 1);
-		if (nof > 0) CodeGen.callParamSlotsOnStack += nof*2;
+		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;
 	}
 
 	public static boolean isPowerOf2(long val) {

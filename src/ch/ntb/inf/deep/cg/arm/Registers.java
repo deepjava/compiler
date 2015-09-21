@@ -16,10 +16,10 @@
  * 
  */
 
-package ch.ntb.inf.deep.cgARM;
+package ch.ntb.inf.deep.cg.arm;
 
 interface Registers {
-	final int nofGPR = 32;	
+	final int nofGPR = 13;	
 	final int nofFPR = 32;
 	
 	final int topGPR = 31;	// highest numbered GPR
@@ -42,7 +42,7 @@ interface Registers {
 	final int faux2 = 21;	// FPR which is never assigned and can be freely used 
 	final int faux3 = 22;	// FPR which is never assigned and can be freely used 
 
-	final int stackPtr = 1;	// register for stack pointer
+	final int stackPtr = 14;	// register for stack pointer
 
 	// initial mask for GPR's, '1' means register is free
 	final int regsGPRinitial = 0xfffffffc;	

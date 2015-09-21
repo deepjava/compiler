@@ -27,7 +27,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cgPPC.CodeGen;
+import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
@@ -83,7 +84,6 @@ public class Launcher implements ICclassFileConsts {
 		Project project = Configuration.readProjectFile(deepProjectFileName);
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
-//		Configuration.print();
 
 		HString[] rootClassNames = Configuration.getRootClasses();
 		if (reporter.nofErrors <= 0) {
@@ -110,7 +110,10 @@ public class Launcher implements ICclassFileConsts {
 			if (dbg) vrb.println("[Launcher] Initializing Linker");
 			Linker32.init();
 		}
+		CodeGen cg = null;
 		if (reporter.nofErrors <= 0) {
+			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) cg = new CodeGenPPC();
+			vrb.println(Configuration.getBoard().cpu.arch.name);
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
 			CodeGen.init();
 		}
@@ -169,7 +172,7 @@ public class Launcher implements ICclassFileConsts {
 								}
 								// Create machine code
 								if (reporter.nofErrors <= 0) {
-									method.machineCode = new CodeGen(method.ssa); 
+									method.machineCode = new CodeGenPPC(method.ssa); 
 								}
 							} else if (dbg) vrb.print("method " + method.name + " is synthetic or abstract");
 							method = (Method)method.next;
@@ -197,7 +200,7 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					method.cfg = new CFG(method);
 					method.ssa = new SSA(method.cfg);
-					method.machineCode = new CodeGen(method.ssa); 
+					method.machineCode = new CodeGenPPC(method.ssa); 
 				}
 				method = (Method)method.next;
 			}
@@ -209,7 +212,7 @@ public class Launcher implements ICclassFileConsts {
 
 		// handle compiler specific methods
 		if(dbg) vrb.println("[LAUNCHER] compiler specific methods");
-		CodeGen.generateCompSpecSubroutines();
+		cg.generateCompSpecSubroutines();
 		Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
 
 		if (reporter.nofErrors <= 0) {

@@ -16,9 +16,10 @@
  * 
  */
 
-package ch.ntb.inf.deep.cgPPC;
+package ch.ntb.inf.deep.cg.ppc;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -29,35 +30,33 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
-public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, InstructionOpcs, Registers, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	private static final boolean dbg = false;
+public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
+//	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
-	private static final int defaultNofInstr = 32;
-	private static final int defaultNofFixup = 8;
 	private static final int arrayLenOffset = 6;	
 	private static final int tempStorageSize = 48;	// 1 FPR(temp), 4 GPRs 
 	
-	private static int objectSize, stringSize;
-	private static StdConstant int2floatConst1 = null;	// 2^52+2^31, for int -> float conversions
-	private static StdConstant int2floatConst2 = null;	// 2^32, for long -> float conversions
-	private static StdConstant int2floatConst3 = null;	// 2^52, for long -> float conversions
+//	private static int objectSize, stringSize;
+//	private static StdConstant int2floatConst1 = null;	// 2^52+2^31, for int -> float conversions
+//	private static StdConstant int2floatConst2 = null;	// 2^32, for long -> float conversions
+//	private static StdConstant int2floatConst3 = null;	// 2^52, for long -> float conversions
 	
-	static int idGET1, idGET2, idGET4, idGET8;
-	static int idPUT1, idPUT2, idPUT4, idPUT8;
-	static int idBIT, idASM, idHALT, idADR_OF_METHOD, idREF;
-	static int idENABLE_FLOATS;
-	static int idGETGPR, idGETFPR, idGETSPR;
-	static int idPUTGPR, idPUTFPR, idPUTSPR;
-	static int idDoubleToBits, idBitsToDouble;
-	static int idFloatToBits, idBitsToFloat;
+//	static int idGET1, idGET2, idGET4, idGET8;
+//	static int idPUT1, idPUT2, idPUT4, idPUT8;
+//	static int idBIT, idASM, idHALT, idADR_OF_METHOD, idREF;
+//	static int idENABLE_FLOATS;
+//	static int idGETGPR, idGETFPR, idGETSPR;
+//	static int idPUTGPR, idPUTFPR, idPUTSPR;
+//	static int idDoubleToBits, idBitsToDouble;
+//	static int idFloatToBits, idBitsToFloat;
 	
-	private static Method stringNewstringMethod;
-	private static Method heapNewstringMethod;
-	private static Method strInitC;
-	private static Method strInitCII;
-	private static Method strAllocC;
-	private static Method strAllocCII;
+//	private static Method stringNewstringMethod;
+//	private static Method heapNewstringMethod;
+//	private static Method strInitC;
+//	private static Method strInitCII;
+//	private static Method strAllocC;
+//	private static Method strAllocCII;
 
 	private static int LRoffset;	
 	private static int XERoffset;	
@@ -109,19 +108,10 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 	private static SSAValue[] lastExitSet;
 	private static boolean newString;
 	
-	public SSA ssa;	// reference to the SSA of a method
-	public int[] instructions;	// contains machine instructions for the ssa of a method
-	public int iCount;	// nof instructions for this method
-	int excTabCount;	// start of exception information in instruction array
-	
-	Item[] fixups;	// contains all references whose address has to be fixed by the linker
-	int fCount;	//nof fixups
-	int lastFixup;	// instr number where the last fixup is found
+	public CodeGenPPC() {}
 
-	public CodeGen(SSA ssa) {
-		this.ssa = ssa;
-		instructions = new int[defaultNofInstr];
-		fixups = new Item[defaultNofFixup];
+	public CodeGenPPC(SSA ssa) {
+		super(ssa);
 		nofParamGPR = 0; nofParamFPR = 0;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
@@ -266,8 +256,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 		if (dbg) {StdStreams.vrb.print(ssa.toString()); StdStreams.vrb.print(toString());}
 	}
-
-	public CodeGen() {}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
 		nofParamGPR = 0; nofParamFPR = 0;
@@ -2988,17 +2976,6 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		}
 	}
 
-	private void incInstructionNum() {
-		iCount++;
-		int len = instructions.length;
-		if (iCount == len) {
-			int[] newInstructions = new int[2 * len];
-			for (int k = 0; k < len; k++)
-				newInstructions[k] = instructions[k];
-			instructions = newInstructions;
-		}
-	}
-
 	private void insertProlog() {
 		iCount = 0;
 		createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -stackSize);
@@ -3225,110 +3202,110 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		return sb.toString();
 	}
 
-	public static void generateCompSpecSubroutines() {
+	public void generateCompSpecSubroutines() {
 		Method m = Method.getCompSpecSubroutine("longToDouble");
 		// long is passed in r30/r31, r29 can be used for general purposes
 		// faux1 and faux2 are used as general purpose FPR's, result is passed in f0 
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			m.machineCode.instructions = new int[22];
 			m.machineCode.fixups = new Item[defaultNofFixup];
 			m.machineCode.iCount = 0;
 
 			Item item = int2floatConst1;	// ref to 2^52+2^31;					
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrArSuimm(ppcXoris, 0, 30, 0x8000);	// op0.regLong
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
-			m.machineCode.loadConstantAndFixup(29, item); // r29 as auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux1, 29, 0);	// r29 as auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux2, 0, faux1);
-			m.machineCode.createIrSrAd(ppcStw, 31, stackPtr, tempStorageOffset+4); // op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcXoris, 0, 30, 0x8000);	// op0.regLong
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(29, item); // r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux1, 29, 0);	// r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux2, 0, faux1);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 31, stackPtr, tempStorageOffset+4); // op0.reg
 			item = int2floatConst3;	// ref to 2^52;
-			m.machineCode.loadConstantAndFixup(29, item); // r29 as auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux1, 29, 0);	// r29 as auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux1, 0, faux1); 					
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(29, item); // r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux1, 29, 0);	// r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux1, 0, faux1); 					
 			item = int2floatConst2;	// ref to 2^32;
-			m.machineCode.loadConstantAndFixup(29, item); // r29 as auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, 29, 0); 	// r29 as auxGPR1
-			m.machineCode.createIrDrArCrB(ppcFmadd, 0, faux2, 0, faux1);
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(29, item); // r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, 29, 0); 	// r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrArCrB(ppcFmadd, 0, faux2, 0, faux1);
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false);
 		}
 
 		m = Method.getCompSpecSubroutine("doubleToLong");
 		// double is passed in f0, r29, r30 and r31 can be used for general purposes
 		// result is returned in r0/r28 
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			m.machineCode.instructions = new int[55];
 			m.machineCode.iCount = 0;
 
-			m.machineCode.createIrSrAd(ppcStfd, 0, stackPtr, tempStorageOffset); // op0.reg
-			m.machineCode.createIrDrAd(ppcLwz, 29, stackPtr, tempStorageOffset); // r29 as auxGPR1
-			m.machineCode.createIrDrAd(ppcLwz, 28, stackPtr, tempStorageOffset+4); // r28 as res.reg
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 30, 29, 12, 21, 31); // r29 as auxGPR1, r30 as auxGPR2	
-			m.machineCode.createIrDrAsimm(ppcSubfic, 30, 30, 1075);	// r30 as auxGPR2
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF2, 29, 0); // r29 as auxGPR1, check if negative
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
-			m.machineCode.createIrArSrB(ppcAndc, 29, 29, 0); // r29 as auxGPR1	
-			m.machineCode.createIrArSuimm(ppcOris, 29, 29, 0x10); // r29 as auxGPR1	
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 30, 52);	// r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStfd, 0, stackPtr, tempStorageOffset); // op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 29, stackPtr, tempStorageOffset); // r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 28, stackPtr, tempStorageOffset+4); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 30, 29, 12, 21, 31); // r29 as auxGPR1, r30 as auxGPR2	
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 30, 30, 1075);	// r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF2, 29, 0); // r29 as auxGPR1, check if negative
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcAndc, 29, 29, 0); // r29 as auxGPR1	
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcOris, 29, 29, 0x10); // r29 as auxGPR1	
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 30, 52);	// r30 as auxGPR2
 			int label1jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 0);	// jump to label 1
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 0);	// jump to label 1
 			// double is < 1
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 0, 0); // r0 as res.regLong
-			m.machineCode.createIrDrAsimm(ppcAddi, 28, 0, 0); // r28 as res.reg 
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 0, 0); // r0 as res.regLong
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 28, 0, 0); // r28 as res.reg 
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 			//label 1
 			correctJmpAddr(m.machineCode.instructions, label1jmp1, m.machineCode.iCount);
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 30, 0); // r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 30, 0); // r30 as auxGPR2
 			int label2jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 2
-			m.machineCode.createIrDrAsimm(ppcSubfic, 0, 30, 32);// r30 as auxGPR2
-			m.machineCode.createIrArSrB(ppcSrw, 28, 28, 30); // r28 as res.reg, r30 as auxGPR2
-			m.machineCode.createIrArSrB(ppcSlw, 0, 29, 0); // r29 as auxGPR1
-			m.machineCode.createIrArSrB(ppcOr, 28, 28, 0); // r28 as res.reg
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 30, -32);	// r30 as auxGPR2
-			m.machineCode.createIrArSrB(ppcSrw, 0, 29, 0); // r29 as auxGPR1
-			m.machineCode.createIrArSrB(ppcOr, 28, 28, 0); // r28 as res.reg
-			m.machineCode.createIrArSrB(ppcSrw, 0, 29, 30); // r0 as res.regLong, r29 as auxGPR1, r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 2
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 0, 30, 32);// r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 28, 28, 30); // r28 as res.reg, r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 0, 29, 0); // r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 28, 28, 0); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 30, -32);	// r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 29, 0); // r29 as auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 28, 28, 0); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 29, 30); // r0 as res.regLong, r29 as auxGPR1, r30 as auxGPR2
 			int label5jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 5
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 5
 			//label 2
 			correctJmpAddr(m.machineCode.instructions, label2jmp1, m.machineCode.iCount);
-			m.machineCode.createIrDrA(ppcNeg, 30, 30); // r30 as auxGPR2
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 30, 11); // r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcNeg, 30, 30); // r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 30, 11); // r30 as auxGPR2
 			int label4jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 4
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 4
 			int label3jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF2+LT, 0);	// jump to label 3
-			m.machineCode.createIrDrAsimm(ppcAddi, 28, 0, -1); // r28 as res.reg
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x7fff); // r0 as res.regLong
-			m.machineCode.createIrArSuimm(ppcOri, 0, 0, 0xffff); // r0 as res.regLong
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF2+LT, 0);	// jump to label 3
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 28, 0, -1); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x7fff); // r0 as res.regLong
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcOri, 0, 0, 0xffff); // r0 as res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 			//label 3
 			correctJmpAddr(m.machineCode.instructions, label3jmp1, m.machineCode.iCount);
-			m.machineCode.createIrDrAsimm(ppcAddi, 28, 0, 0); // r28 as res.reg
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x8000); // r0 as res.regLong
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 28, 0, 0); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x8000); // r0 as res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 			//label 4
 			correctJmpAddr(m.machineCode.instructions, label4jmp1, m.machineCode.iCount);
-			m.machineCode.createIrDrAsimm(ppcSubfic, 0, 30, 32); // r30 as auxGPR2
-			m.machineCode.createIrArSrB(ppcSlw, 31, 29, 30); // r31 as auxGPR3, r29 as auxGPR1, r30 as auxGPR2
-			m.machineCode.createIrArSrB(ppcSrw, 0, 28, 0); // r28 as res.reg
-			m.machineCode.createIrArSrB(ppcOr, 31, 31, 0); // r31 as auxGPR3
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 30, -32); // r30 as auxGPR2
-			m.machineCode.createIrArSrB(ppcSlw, 0, 28, 0); // r28 as res.reg
-			m.machineCode.createIrArSrB(ppcOr, 0, 31, 0); // r0 as res.regLong, r31 as auxGPR3
-			m.machineCode.createIrArSrB(ppcSlw, 28, 28, 30); // r28 as res.reg, r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 0, 30, 32); // r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 31, 29, 30); // r31 as auxGPR3, r29 as auxGPR1, r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 28, 0); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 31, 31, 0); // r31 as auxGPR3
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 30, -32); // r30 as auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 0, 28, 0); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 0, 31, 0); // r0 as res.regLong, r31 as auxGPR3
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 28, 28, 30); // r28 as res.reg, r30 as auxGPR2
 			//label 5
 			correctJmpAddr(m.machineCode.instructions, label5jmp1, m.machineCode.iCount);
-			m.machineCode.createIBOBILK(ppcBclr, BOfalse, 4*CRF2+LT, false); // return
-			m.machineCode.createIrDrAsimm(ppcSubfic, 28, 28, 0); // r28 as res.reg
-			m.machineCode.createIrDrA(ppcSubfze, 0, 0); // r0 as res.regLong
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOfalse, 4*CRF2+LT, false); // return
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 28, 28, 0); // r28 as res.reg
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcSubfze, 0, 0); // r0 as res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 		}
 
 		m = Method.getCompSpecSubroutine("divLong");
@@ -3337,143 +3314,143 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		// faux1, faux2, faux3 are used as general purpose FPR's 
 		// result is returned in r0/r26 
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			m.machineCode.instructions = new int[120];
 			m.machineCode.fixups = new Item[defaultNofFixup];
 			m.machineCode.iCount = 0;
 
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 28, 0);	// test if divisor < 2^32, op1.regLong
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 28, 0);	// test if divisor < 2^32, op1.regLong
 			int label1jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);	// jump to label 1
-			m.machineCode.createICRFrAsimm(ppcCmpli, CRF0, 29, 0x7fff);	// test if divisor < 2^15, op1.reg
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);	// jump to label 1
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpli, CRF0, 29, 0x7fff);	// test if divisor < 2^15, op1.reg
 			int label1jmp2 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);	// jump to label 1
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);	// jump to label 1
 			
 			// divisor is small, use GPR's, op1.regLong (r28) is 0 and can be used as aux register
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF2, 30, 0); // is dividend negative?, op0.regLong
-			m.machineCode.createIrDrArB(ppcDivw, 28, 30, 29); // auxGPR2, op0.regLong, op1.reg
-			m.machineCode.createIrDrArB(ppcMullw, 0, 29, 28); // op1.reg, auxGPR2
-			m.machineCode.createIrDrArB(ppcSubf, 0, 0, 30); // op0.regLong
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negative?
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
-			m.machineCode.createIrDrArB(ppcAdd, 0, 0, 29);	// add divisor, op1.reg
-			m.machineCode.createIrDrAsimm(ppcAddi, 28, 28, -1); // auxGPR2 	
-			m.machineCode.createIrArSrB(ppcOr, 30, 28, 28); // (r30)res.regLong, auxGPR2
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
-			m.machineCode.createIrArSSHMBME(ppcRlwimi, 27, 31, 16, 16, 31); // auxGPR1, op0.reg
-			m.machineCode.createIrDrArB(ppcDivwu, 28, 27, 29); // auxGPR2, auxGPR1, op1.reg
-			m.machineCode.createIrDrArB(ppcMullw, 0, 29, 28); // op1.reg, auxGPR2
-			m.machineCode.createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
-			m.machineCode.createIrArSSHMBME(ppcRlwimi, 27, 31, 0, 16, 31); // auxGPR1, op0.reg 
-			m.machineCode.createIrDrArB(ppcDivwu, 0, 27, 29); // auxGPR1, op1.reg
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 26, 28, 16, 0, 15); // res.reg, auxGPR2
-			m.machineCode.createIrArSSHMBME(ppcRlwimi, 26, 0, 0, 16, 31); // res.reg
-			m.machineCode.createIrDrArB(ppcMullw, 0, 29, 0); // op1.reg
-			m.machineCode.createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
-			m.machineCode.createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
-			m.machineCode.createIrDrAsimm(ppcAddi, 26, 26, 1); // res.reg	
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negative? CRF1 set before subroutine
-			m.machineCode.createIrDrAsimm(ppcSubfic, 26, 26, 0); // negate result, res.reg
-			m.machineCode.createIrDrA(ppcSubfze, 30, 30);	// res.regLong
-			m.machineCode.createIrArSrB(ppcOr, 0, 30, 30); // copy res.regLong
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF2, 30, 0); // is dividend negative?, op0.regLong
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcDivw, 28, 30, 29); // auxGPR2, op0.regLong, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 0, 29, 28); // op1.reg, auxGPR2
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, 0, 0, 30); // op0.regLong
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negative?
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcAdd, 0, 0, 29);	// add divisor, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 28, 28, -1); // auxGPR2 	
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 30, 28, 28); // (r30)res.regLong, auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwimi, 27, 31, 16, 16, 31); // auxGPR1, op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcDivwu, 28, 27, 29); // auxGPR2, auxGPR1, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 0, 29, 28); // op1.reg, auxGPR2
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwimi, 27, 31, 0, 16, 31); // auxGPR1, op0.reg 
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcDivwu, 0, 27, 29); // auxGPR1, op1.reg
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 26, 28, 16, 0, 15); // res.reg, auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwimi, 26, 0, 0, 16, 31); // res.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 0, 29, 0); // op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
+			((CodeGenPPC) m.machineCode).createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 26, 26, 1); // res.reg	
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negative? CRF1 set before subroutine
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 26, 26, 0); // negate result, res.reg
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcSubfze, 30, 30);	// res.regLong
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 0, 30, 30); // copy res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 
 			//label 1, divisor is not small, use FPR's
 			correctJmpAddr(m.machineCode.instructions, label1jmp1, m.machineCode.iCount);
 			correctJmpAddr(m.machineCode.instructions, label1jmp2, m.machineCode.iCount);
 			Item item = int2floatConst1;	// ref to 2^52+2^31;					
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrArSuimm(ppcXoris, 0, 30, 0x8000); // op0.regLong
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux2, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux2, 0, faux2);
-			m.machineCode.createIrSrAd(ppcStw, 31, stackPtr, tempStorageOffset+4); // op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcXoris, 0, 30, 0x8000); // op0.regLong
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux2, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux2, 0, faux2);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 31, stackPtr, tempStorageOffset+4); // op0.reg
 			item = int2floatConst3;	// ref to 2^52;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux1, 0, faux1);					
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux1, 0, faux1);					
 			item = int2floatConst2;	// ref to 2^32;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
-			m.machineCode.createIrDrArCrB(ppcFmadd, faux2, faux2, 0, faux1);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrArCrB(ppcFmadd, faux2, faux2, 0, faux1);
 
 			item = int2floatConst1;	// ref to 2^52+2^31;					
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrArSuimm(ppcXoris, 0, 28, 0x8000); // op1.regLong
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux3, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux3, 0, faux3);
-			m.machineCode.createIrSrAd(ppcStw, 29, stackPtr, tempStorageOffset+4); // op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcXoris, 0, 28, 0x8000); // op1.regLong
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux3, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux3, 0, faux3);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 29, stackPtr, tempStorageOffset+4); // op1.reg
 			item = int2floatConst3;	// ref to 2^52;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux1, 0, faux1);					
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux1, 0, faux1);					
 			item = int2floatConst2;	// ref to 2^32;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
-			m.machineCode.createIrDrArCrB(ppcFmadd, faux3, faux3, 0, faux1);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrArCrB(ppcFmadd, faux3, faux3, 0, faux1);
 
-			m.machineCode.createIrDrArB(ppcFdiv, faux1, faux2, faux3);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFdiv, faux1, faux2, faux3);
 
-			m.machineCode.createIrSrAd(ppcStfd, faux1, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrAd(ppcLwz, 27, stackPtr, tempStorageOffset); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLwz, 26, stackPtr, tempStorageOffset+4); // res.reg
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 28, 27, 12, 21, 31); // auxGPR2, auxGPR1	
-			m.machineCode.createIrDrAsimm(ppcSubfic, 28, 28, 1075);	
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF2, 27, 0);
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
-			m.machineCode.createIrArSrB(ppcAndc, 27, 27, 0);	
-			m.machineCode.createIrArSuimm(ppcOris, 27, 27, 0x10);	
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 28, 52);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStfd, faux1, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 27, stackPtr, tempStorageOffset); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 26, stackPtr, tempStorageOffset+4); // res.reg
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 28, 27, 12, 21, 31); // auxGPR2, auxGPR1	
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 28, 28, 1075);	
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF2, 27, 0);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcAndc, 27, 27, 0);	
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcOris, 27, 27, 0x10);	
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 28, 52);
 			// double is < 1
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 4);
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 0, 0); // res.regLong
-			m.machineCode.createIrDrAsimm(ppcAddi, 26, 0, 0); // res.reg
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 4);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 0, 0); // res.regLong
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 26, 0, 0); // res.reg
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 28, 0);
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 28, 0);
 			int label2jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 2
-			m.machineCode.createIrDrAsimm(ppcSubfic, 0, 28, 32);
-			m.machineCode.createIrArSrB(ppcSrw, 26, 26, 28);
-			m.machineCode.createIrArSrB(ppcSlw, 0, 27, 0);
-			m.machineCode.createIrArSrB(ppcOr, 26, 26, 0);
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 28, -32);
-			m.machineCode.createIrArSrB(ppcSrw, 0, 27, 0);
-			m.machineCode.createIrArSrB(ppcOr, 26, 26, 0); // res.reg
-			m.machineCode.createIrArSrB(ppcSrw, 0, 27, 28); // res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 2
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 0, 28, 32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 26, 26, 28);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 0, 27, 0);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 26, 26, 0);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 28, -32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 27, 0);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 26, 26, 0); // res.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 27, 28); // res.regLong
 			int label3jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 3
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 3
 			//label 2
 			correctJmpAddr(m.machineCode.instructions, label2jmp1, m.machineCode.iCount);
-			m.machineCode.createIrDrAsimm(ppcSubfic, 0, 28, 32);
-			m.machineCode.createIrArSrB(ppcSlw, 29, 27, 28); // (r29) res.regLong
-			m.machineCode.createIrArSrB(ppcSrw, 0, 26, 0); // res.reg
-			m.machineCode.createIrArSrB(ppcOr, 29, 29, 0);
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 28, -32);
-			m.machineCode.createIrArSrB(ppcSlw, 0, 26, 0); // res.reg
-			m.machineCode.createIrArSrB(ppcOr, 0, 29, 0); // res.regLong is now in r0
-			m.machineCode.createIrArSrB(ppcSlw, 26, 26, 28); // res.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 0, 28, 32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 29, 27, 28); // (r29) res.regLong
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 26, 0); // res.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 29, 29, 0);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 28, -32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 0, 26, 0); // res.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 0, 29, 0); // res.regLong is now in r0
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 26, 26, 28); // res.reg
 			//label 3
 			correctJmpAddr(m.machineCode.instructions, label3jmp1, m.machineCode.iCount);
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF2+LT, 3);
-			m.machineCode.createIrDrAsimm(ppcSubfic, 26, 26, 0); // res.reg
-			m.machineCode.createIrDrA(ppcSubfze, 0, 0); // res.regLong
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// jump to end
-			m.machineCode.createIrDrAsimm(ppcSubfic, 26, 26, 0); // res.reg
-			m.machineCode.createIrDrA(ppcSubfze, 0, 0); // res.regLong
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF2+LT, 3);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 26, 26, 0); // res.reg
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcSubfze, 0, 0); // res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// jump to end
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 26, 26, 0); // res.reg
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcSubfze, 0, 0); // res.regLong
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 		}
 
 
@@ -3483,153 +3460,153 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 		// faux1, faux2, faux3 are used as general purpose FPR's 
 		// result is returned in r0/r24 
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			m.machineCode.instructions = new int[130];
 			m.machineCode.fixups = new Item[defaultNofFixup];
 			m.machineCode.iCount = 0;
 
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 28, 0);	// test if divisor < 2^32, op1.regLong
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 28, 0);	// test if divisor < 2^32, op1.regLong
 			int label1jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);	// jump to label 1
-			m.machineCode.createICRFrAsimm(ppcCmpli, CRF0, 29, 0x7fff);	// test if divisor < 2^15, op1.reg
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 0);	// jump to label 1
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpli, CRF0, 29, 0x7fff);	// test if divisor < 2^15, op1.reg
 			int label1jmp2 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);	// jump to label 1
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 0);	// jump to label 1
 			
 			// divisor is small, use GPR's, op1.regLong (r28) is 0 but it must be preserved for multiplication at the end
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF2, 30, 0); // is dividend negative?, op0.regLong
-			m.machineCode.createIrDrAsimm(ppcAddi, 19, 0, 0x1234);	
-			m.machineCode.createIrDrArB(ppcDivw, 25, 30, 29); // res.regLong, op0.regLong, op1.reg
-			m.machineCode.createIrDrArB(ppcMullw, 0, 29, 25); // op1.reg, res.regLong
-			m.machineCode.createIrDrArB(ppcSubf, 0, 0, 30); // op0.regLong
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negative?
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
-			m.machineCode.createIrDrArB(ppcAdd, 0, 0, 29);	// add divisor, op1.reg
-			m.machineCode.createIrDrAsimm(ppcAddi, 25, 25, -1); // res.regLong 	
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
-			m.machineCode.createIrArSSHMBME(ppcRlwimi, 27, 31, 16, 16, 31); // auxGPR1, op0.reg
-			m.machineCode.createIrDrArB(ppcDivwu, 26, 27, 29); // auxGPR2, auxGPR1, op1.reg
-			m.machineCode.createIrDrArB(ppcMullw, 0, 29, 26); // op1.reg, auxGPR2
-			m.machineCode.createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
-			m.machineCode.createIrArSSHMBME(ppcRlwimi, 27, 31, 0, 16, 31); // auxGPR1, op0.reg 
-			m.machineCode.createIrDrArB(ppcDivwu, 0, 27, 29); // auxGPR1, op1.reg
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 24, 26, 16, 0, 15); // res.reg, auxGPR2
-			m.machineCode.createIrArSSHMBME(ppcRlwimi, 24, 0, 0, 16, 31); // res.reg
-			m.machineCode.createIrDrArB(ppcMullw, 0, 29, 0); // op1.reg
-			m.machineCode.createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
-			m.machineCode.createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
-			m.machineCode.createIrDrAsimm(ppcAddi, 24, 24, 1); // res.reg	
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negative? CRF1 set before subroutine
-			m.machineCode.createIrDrAsimm(ppcSubfic, 24, 24, 0); // negate result, div.reg
-			m.machineCode.createIrDrA(ppcSubfze, 25, 25);	// div.regLong
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF2, 30, 0); // is dividend negative?, op0.regLong
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 19, 0, 0x1234);	
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcDivw, 25, 30, 29); // res.regLong, op0.regLong, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 0, 29, 25); // op1.reg, res.regLong
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, 0, 0, 30); // op0.regLong
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder negative?
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+LT, 3);	
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcAdd, 0, 0, 29);	// add divisor, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 25, 25, -1); // res.regLong 	
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwimi, 27, 31, 16, 16, 31); // auxGPR1, op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcDivwu, 26, 27, 29); // auxGPR2, auxGPR1, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 0, 29, 26); // op1.reg, auxGPR2
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 27, 0, 16, 0, 15); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwimi, 27, 31, 0, 16, 31); // auxGPR1, op0.reg 
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcDivwu, 0, 27, 29); // auxGPR1, op1.reg
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 24, 26, 16, 0, 15); // res.reg, auxGPR2
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwimi, 24, 0, 0, 16, 31); // res.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 0, 29, 0); // op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, 0, 0, 27); // auxGPR1
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 0, 0); // is remainder > 0?
+			((CodeGenPPC) m.machineCode).createIcrbDcrbAcrbB(ppcCrand, CRF0EQ, CRF0GT, CRF2LT);
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 2);	
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 24, 24, 1); // res.reg	
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF1+GT, 3);	// was divisor negative? CRF1 set before subroutine
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 24, 24, 0); // negate result, div.reg
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcSubfze, 25, 25);	// div.regLong
 			int label4jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 4
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 4
 
 			//label 1, divisor is not small, use FPR's
 			correctJmpAddr(m.machineCode.instructions, label1jmp1, m.machineCode.iCount);
 			correctJmpAddr(m.machineCode.instructions, label1jmp2, m.machineCode.iCount);
 			Item item = int2floatConst1;	// ref to 2^52+2^31;					
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrArSuimm(ppcXoris, 0, 30, 0x8000); // op0.regLong
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux2, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux2, 0, faux2);
-			m.machineCode.createIrSrAd(ppcStw, 31, stackPtr, tempStorageOffset+4); // op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcXoris, 0, 30, 0x8000); // op0.regLong
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux2, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux2, 0, faux2);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 31, stackPtr, tempStorageOffset+4); // op0.reg
 			item = int2floatConst3;	// ref to 2^52;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux1, 0, faux1);					
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux1, 0, faux1);					
 			item = int2floatConst2;	// ref to 2^32;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
-			m.machineCode.createIrDrArCrB(ppcFmadd, faux2, faux2, 0, faux1);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrArCrB(ppcFmadd, faux2, faux2, 0, faux1);
 
 			item = int2floatConst1;	// ref to 2^52+2^31;					
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrArSuimm(ppcXoris, 0, 28, 0x8000); // op1.regLong
-			m.machineCode.createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux3, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux3, 0, faux3);
-			m.machineCode.createIrSrAd(ppcStw, 29, stackPtr, tempStorageOffset+4); // op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0x4330);	// preload 2^52
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcXoris, 0, 28, 0x8000); // op1.regLong
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 0, stackPtr, tempStorageOffset+4);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux3, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux3, 0, faux3);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 29, stackPtr, tempStorageOffset+4); // op1.reg
 			item = int2floatConst3;	// ref to 2^52;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrArB(ppcFsub, faux1, 0, faux1);					
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, faux1, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFsub, faux1, 0, faux1);					
 			item = int2floatConst2;	// ref to 2^32;
-			m.machineCode.loadConstantAndFixup(27, item); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
-			m.machineCode.createIrDrArCrB(ppcFmadd, faux3, faux3, 0, faux1);
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(27, item); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLfd, 0, 27, 0); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrArCrB(ppcFmadd, faux3, faux3, 0, faux1);
 
-			m.machineCode.createIrDrArB(ppcFdiv, faux1, faux2, faux3);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcFdiv, faux1, faux2, faux3);
 
-			m.machineCode.createIrSrAd(ppcStfd, faux1, stackPtr, tempStorageOffset);
-			m.machineCode.createIrDrAd(ppcLwz, 27, stackPtr, tempStorageOffset); // auxGPR1
-			m.machineCode.createIrDrAd(ppcLwz, 24, stackPtr, tempStorageOffset+4); // div.reg
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 26, 27, 12, 21, 31); // auxGPR2, auxGPR1	
-			m.machineCode.createIrDrAsimm(ppcSubfic, 26, 26, 1075);	
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF2, 27, 0);
-			m.machineCode.createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
-			m.machineCode.createIrArSrB(ppcAndc, 27, 27, 0);	
-			m.machineCode.createIrArSuimm(ppcOris, 27, 27, 0x10);	
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 26, 52);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStfd, faux1, stackPtr, tempStorageOffset);
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 27, stackPtr, tempStorageOffset); // auxGPR1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 24, stackPtr, tempStorageOffset+4); // div.reg
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 26, 27, 12, 21, 31); // auxGPR2, auxGPR1	
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 26, 26, 1075);	
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF2, 27, 0);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddis, 0, 0, 0xfff0);	
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcAndc, 27, 27, 0);	
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcOris, 27, 27, 0x10);	
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 26, 52);
 			// double is < 1
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 4);
-			m.machineCode.createIrDrAsimm(ppcAddi, 25, 0, 0); // div.regLong
-			m.machineCode.createIrDrAsimm(ppcAddi, 24, 0, 0); // div.reg
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+GT, 4);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 25, 0, 0); // div.regLong
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 24, 0, 0); // div.reg
 			int label4jmp2 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 4
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 4
 
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 26, 0);
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 26, 0);
 			int label2jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 2
-			m.machineCode.createIrDrAsimm(ppcSubfic, 0, 26, 32);
-			m.machineCode.createIrArSrB(ppcSrw, 24, 24, 26);
-			m.machineCode.createIrArSrB(ppcSlw, 0, 27, 0);
-			m.machineCode.createIrArSrB(ppcOr, 24, 24, 0);
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 26, -32);
-			m.machineCode.createIrArSrB(ppcSrw, 0, 27, 0);
-			m.machineCode.createIrArSrB(ppcOr, 24, 24, 0); // div.reg
-			m.machineCode.createIrArSrB(ppcSrw, 25, 27, 26); // div.regLong, aux1, aux2
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 0);	// jump to label 2
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 0, 26, 32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 24, 24, 26);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 0, 27, 0);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 24, 24, 0);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 26, -32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 27, 0);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 24, 24, 0); // div.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 25, 27, 26); // div.regLong, aux1, aux2
 			int label3jmp1 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 3
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 3
 			//label 2
 			correctJmpAddr(m.machineCode.instructions, label2jmp1, m.machineCode.iCount);
-			m.machineCode.createIrDrAsimm(ppcSubfic, 0, 26, 32);
-			m.machineCode.createIrArSrB(ppcSlw, 25, 27, 26); // div.regLong
-			m.machineCode.createIrArSrB(ppcSrw, 0, 24, 0); // div.reg
-			m.machineCode.createIrArSrB(ppcOr, 25, 25, 0);
-			m.machineCode.createIrDrAsimm(ppcAddi, 0, 26, -32);
-			m.machineCode.createIrArSrB(ppcSlw, 0, 24, 0); // div.reg
-			m.machineCode.createIrArSrB(ppcOr, 25, 25, 0); // div.regLong
-			m.machineCode.createIrArSrB(ppcSlw, 24, 24, 26); // div.reg, aux2
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 0, 26, 32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 25, 27, 26); // div.regLong
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSrw, 0, 24, 0); // div.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 25, 25, 0);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 0, 26, -32);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 0, 24, 0); // div.reg
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 25, 25, 0); // div.regLong
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcSlw, 24, 24, 26); // div.reg, aux2
 			//label 3
 			correctJmpAddr(m.machineCode.instructions, label3jmp1, m.machineCode.iCount);
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF2+LT, 3);
-			m.machineCode.createIrDrAsimm(ppcSubfic, 24, 24, 0); // div.reg
-			m.machineCode.createIrDrA(ppcSubfze, 25, 25); // div.regLong
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF2+LT, 3);
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcSubfic, 24, 24, 0); // div.reg
+			((CodeGenPPC) m.machineCode).createIrDrA(ppcSubfze, 25, 25); // div.regLong
 			//label 4
 			correctJmpAddr(m.machineCode.instructions, label4jmp1, m.machineCode.iCount);
 			correctJmpAddr(m.machineCode.instructions, label4jmp2, m.machineCode.iCount);
-			m.machineCode.createIrDrArB(ppcMullw, 27, 25, 29); // auxGPR1, div.regLong, op1.reg
-			m.machineCode.createIrDrArB(ppcMullw, 26, 24, 28); // auxGPR2, div.reg, op1.regLong
-			m.machineCode.createIrDrArB(ppcAdd, 27, 27, 26);
-			m.machineCode.createIrDrArB(ppcMulhwu, 26, 24, 29); // auxGPR2, div.reg, op1.reg
-			m.machineCode.createIrDrArB(ppcAdd, 25, 27, 26);
-			m.machineCode.createIrDrArB(ppcMullw, 24, 24, 29); // res.reg, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 27, 25, 29); // auxGPR1, div.regLong, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 26, 24, 28); // auxGPR2, div.reg, op1.regLong
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcAdd, 27, 27, 26);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMulhwu, 26, 24, 29); // auxGPR2, div.reg, op1.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcAdd, 25, 27, 26);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcMullw, 24, 24, 29); // res.reg, op1.reg
 
-			m.machineCode.createIrDrArB(ppcSubfc, 24, 24, 31); // res.reg, div.reg, op0.reg
-			m.machineCode.createIrDrArB(ppcSubfe, 0, 25, 30);	// res.regLong, div.regLong, op0.regLong
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // return
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubfc, 24, 24, 31); // res.reg, div.reg, op0.reg
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubfe, 0, 25, 30);	// res.regLong, div.regLong, op0.regLong
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // return
 		}
 
 		int regAux1 = paramEndGPR; // use parameter registers for interface delegation methods
@@ -3638,45 +3615,45 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 
 		m = Method.getCompSpecSubroutine("imDelegI1Mm");
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			// imDelegI1Mm
 			m.machineCode.instructions = new int[16];
 			m.machineCode.iCount = 0;
-			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
-			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset + 4);	// get interface
-			m.machineCode.createIrArS(ppcExtsh, 0, 0);
-			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
-			m.machineCode.createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
-			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
-			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
-			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 0, regAux2, (Class.maxExtensionLevelStdClasses + 1) * 4 + Linker32.tdBaseClass0Offset + 4);	// get interface
+			((CodeGenPPC) m.machineCode).createIrArS(ppcExtsh, 0, 0);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method number
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcSubf, regAux1, regAux1, 0);	
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
+			((CodeGenPPC) m.machineCode).createIrSspr(ppcMtspr, CTR, 0);
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
 		}
 
 		m = Method.getCompSpecSubroutine("imDelegIiMm");
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			// imDelegIiMm
 			m.machineCode.instructions = new int[16];
 			m.machineCode.iCount = 0;
-			m.machineCode.createIrArSuimm(ppcOri, regAux3, regAux1, 0xffff);	// interface id
-			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
-			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset);	// set to address before first interface 
-			m.machineCode.createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);	// set to next interface
-			m.machineCode.createIrDrAd(ppcLwz, 0, regAux2, 0);	// get interface
-			m.machineCode.createICRFrArB(ppcCmpl, CRF0, 0, regAux3);
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);
-			m.machineCode.createIrArS(ppcExtsh, 0, 0);
-			m.machineCode.createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method offset
-			m.machineCode.createIrDrArB(ppcAdd, regAux1, regAux1, 0);	
-			m.machineCode.createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// reload tag
-			m.machineCode.createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
-			m.machineCode.createIrSspr(ppcMtspr, CTR, 0);
-			m.machineCode.createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcOri, regAux3, regAux1, 0xffff);	// interface id
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// get tag
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, regAux2, regAux2, (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset);	// set to address before first interface 
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, regAux2, regAux2, 4);	// set to next interface
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 0, regAux2, 0);	// get interface
+			((CodeGenPPC) m.machineCode).createICRFrArB(ppcCmpl, CRF0, 0, regAux3);
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -3);
+			((CodeGenPPC) m.machineCode).createIrArS(ppcExtsh, 0, 0);
+			((CodeGenPPC) m.machineCode).createIrArSuimm(ppcAndi, regAux1, regAux1, 0xffff);	// mask method offset
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcAdd, regAux1, regAux1, 0);	
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, regAux2, paramStartGPR, -4);	// reload tag
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcLwzx, 0, regAux2, regAux1);
+			((CodeGenPPC) m.machineCode).createIrSspr(ppcMtspr, CTR, 0);
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBcctr, BOalways, 0, false);	// no linking
 		}
 		
 		m = Method.getCompSpecSubroutine("handleException");
 		if (m != null) { 
-			m.machineCode = new CodeGen();
+			m.machineCode = new CodeGenPPC();
 			// exceptionHandler
 			m.machineCode.instructions = new int[64];
 			m.machineCode.fixups = new Item[defaultNofFixup];
@@ -3685,168 +3662,61 @@ public class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSA
 			// r4 to r10 are used for auxiliary purposes
 
 			// search end of method
-			m.machineCode.createIrArSrB(ppcOr, 4, 3, 3);
-			m.machineCode.createIrDrAd(ppcLwzu, 9, 4, 4);	
-			m.machineCode.createICRFrAsimm(ppcCmpli, CRF0, 9, 0xff);
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -2);
-			m.machineCode.createIrArSrB(ppcOr, 10, 4, 4);	// keep for unwinding
-			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 4);	//  R4 now points to first entry of exception table
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 4, 3, 3);
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwzu, 9, 4, 4);	
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpli, CRF0, 9, 0xff);
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, -2);
+			((CodeGenPPC) m.machineCode).createIrArSrB(ppcOr, 10, 4, 4);	// keep for unwinding
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwzu, 5, 4, 4);	//  R4 now points to first entry of exception table
 		
 			// search catch, label 1
 			int label1 = m.machineCode.iCount;
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 5, -1);
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 5, -1);
 			int label2 = m.machineCode.iCount;
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 2
-			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 0);	// start 
-			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 17);
-			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 4);	// end 
-			m.machineCode.createICRFrArB(ppcCmp, CRF0, 3, 5);		
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 14);
-			m.machineCode.createIrDrAd(ppcLwz, 5, 4, 8);	// type 
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 2
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 5, 4, 0);	// start 
+			((CodeGenPPC) m.machineCode).createICRFrArB(ppcCmp, CRF0, 3, 5);		
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+LT, 17);
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 5, 4, 4);	// end 
+			((CodeGenPPC) m.machineCode).createICRFrArB(ppcCmp, CRF0, 3, 5);		
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+GT, 14);
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 5, 4, 8);	// type 
 			
-			m.machineCode.createICRFrAsimm(ppcCmpi, CRF0, 5, 0);	// check if type "any", caused by finally
-			m.machineCode.createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 8);
+			((CodeGenPPC) m.machineCode).createICRFrAsimm(ppcCmpi, CRF0, 5, 0);	// check if type "any", caused by finally
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOtrue, 4*CRF0+EQ, 8);
 //			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);
 //			m.machineCode.createIrDrAsimm(ppcAddi, 18, 18, 0x1000);	
 //			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+EQ, 8);
 			
-			m.machineCode.createIrDrAd(ppcLwz, 6, 5, -4);	// get extension level of exception 
-			m.machineCode.createIrArSSHMBME(ppcRlwinm, 6, 6, 2, 0, 31);	// *4
-			m.machineCode.createIrDrAsimm(ppcAddi, 6, 6, Linker32.tdBaseClass0Offset);	
-			m.machineCode.createIrDrAd(ppcLwz, 7, 2, -4);	// get tag 
-			m.machineCode.createIrDrArB(ppcLwzx, 8, 7, 6);	 
-			m.machineCode.createICRFrArB(ppcCmp, CRF0, 8, 5);		
-			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 4);		
-			m.machineCode.createIrDrAd(ppcLwz, 0, 4, 12);	// get handler address
-			m.machineCode.createIrSspr(ppcMtspr, SRR0, 0);
-			m.machineCode.createIrfi(ppcRfi);	// return to catch
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 6, 5, -4);	// get extension level of exception 
+			((CodeGenPPC) m.machineCode).createIrArSSHMBME(ppcRlwinm, 6, 6, 2, 0, 31);	// *4
+			((CodeGenPPC) m.machineCode).createIrDrAsimm(ppcAddi, 6, 6, Linker32.tdBaseClass0Offset);	
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 7, 2, -4);	// get tag 
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcLwzx, 8, 7, 6);	 
+			((CodeGenPPC) m.machineCode).createICRFrArB(ppcCmp, CRF0, 8, 5);		
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 4);		
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 0, 4, 12);	// get handler address
+			((CodeGenPPC) m.machineCode).createIrSspr(ppcMtspr, SRR0, 0);
+			((CodeGenPPC) m.machineCode).createIrfi(ppcRfi);	// return to catch
 			
-			m.machineCode.createIrDrAd(ppcLwzu, 5, 4, 16);	
-			m.machineCode.createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 1
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwzu, 5, 4, 16);	
+			((CodeGenPPC) m.machineCode).createIBOBIBD(ppcBc, BOalways, 0, 0);	// jump to label 1
 			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label1);
 			
 			// catch not found, unwind, label 2
 			correctJmpAddr(m.machineCode.instructions, label2, m.machineCode.iCount);
-			m.machineCode.createIrDrAd(ppcLwz, 5, stackPtr, 0);	// get back pointer
-			m.machineCode.createIrDrAd(ppcLwz, 3, 5, -4);	// get LR from stack
-			m.machineCode.loadConstantAndFixup(6, m);
-			m.machineCode.createIrSrAd(ppcStw, 6, 5, -4);	// put addr of handleException
-			m.machineCode.createIrArS(ppcExtsb, 9, 9);
-			m.machineCode.createIrDrArB(ppcAdd, 9, 10, 9);
-			m.machineCode.createIrSspr(ppcMtspr, LR, 9);
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 5, stackPtr, 0);	// get back pointer
+			((CodeGenPPC) m.machineCode).createIrDrAd(ppcLwz, 3, 5, -4);	// get LR from stack
+			((CodeGenPPC) m.machineCode).loadConstantAndFixup(6, m);
+			((CodeGenPPC) m.machineCode).createIrSrAd(ppcStw, 6, 5, -4);	// put addr of handleException
+			((CodeGenPPC) m.machineCode).createIrArS(ppcExtsb, 9, 9);
+			((CodeGenPPC) m.machineCode).createIrDrArB(ppcAdd, 9, 10, 9);
+			((CodeGenPPC) m.machineCode).createIrSspr(ppcMtspr, LR, 9);
 //			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
-			m.machineCode.createIBOBILK(ppcBclr, BOalways, 0, false); // branch to epilog
+			((CodeGenPPC) m.machineCode).createIBOBILK(ppcBclr, BOalways, 0, false); // branch to epilog
 		}
 	}
 
-	public static void init() { 
-		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
-		if (cls == null) {ErrorReporter.reporter.error(630); return;}
-		Method m = Configuration.getOS().getSystemMethodByName(cls, "PUT1");
-		if (m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUT2"); 
-		if (m != null) idPUT2 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUT4"); 
-		if (m != null) idPUT4 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUT8"); 
-		if (m != null) idPUT8 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GET1"); 
-		if (m != null) idGET1 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GET2"); 
-		if (m != null) idGET2 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GET4"); 
-		if (m != null) idGET4 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GET8"); 
-		if (m != null) idGET8 = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "BIT"); 
-		if (m != null) idBIT = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "ASM"); 
-		if (m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
-		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GETFPR"); 
-		if (m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GETSPR"); 
-		if (m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUTGPR"); 
-		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUTFPR"); 
-		if (m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUTSPR"); 
-		if (m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "ADR_OF_METHOD"); 
-		if (m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "HALT"); 
-		if (m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "ENABLE_FLOATS"); 
-		if (m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "REF"); 
-		if (m != null) idREF = m.id; else {ErrorReporter.reporter.error(631); return;}
-		
-		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/lowLevel/LL");
-		if (cls == null) {ErrorReporter.reporter.error(632); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "doubleToBits"); 
-		if(m != null) idDoubleToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "bitsToDouble"); 
-		if(m != null) idBitsToDouble = m.id; else {ErrorReporter.reporter.error(633); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "floatToBits"); 
-		if(m != null) idFloatToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "bitsToFloat"); 
-		if(m != null) idBitsToFloat = m.id; else {ErrorReporter.reporter.error(633); return;}
-		
-		objectSize = Type.wktObject.objectSize;
-		stringSize = Type.wktString.objectSize;
-		
-		int2floatConst1 = new StdConstant(HString.getRegisteredHString("int2floatConst1"), (double)(0x10000000000000L + 0x80000000L));
-		int2floatConst2 = new StdConstant(HString.getRegisteredHString("int2floatConst2"), (double)0x100000000L);
-		int2floatConst3 = new StdConstant(HString.getRegisteredHString("int2floatConst3"), (double)0x10000000000000L);
-		Linker32.globalConstantTable = null;
-		Linker32.addGlobalConstant(int2floatConst1);
-		Linker32.addGlobalConstant(int2floatConst2);
-		Linker32.addGlobalConstant(int2floatConst3);
-		
-		Method.createCompSpecSubroutine("handleException");
-		
-		final Class stringClass = (Class)Type.wktString;
-		final Class heapClass = Configuration.getOS().heapClass;	
-		if ((stringClass != null) && (stringClass.methods != null)) {	// check if string class is loaded at all
-			stringNewstringMethod = (Method)stringClass.methods.getItemByName("newstring"); 
-			if(heapClass != null) {
-				heapNewstringMethod = (Method)heapClass.methods.getItemByName("newstring"); 
-			}
-			if(dbg) {
-				if (stringNewstringMethod != null) StdStreams.vrb.println("stringNewstringMethod = " + stringNewstringMethod.name + stringNewstringMethod.methDescriptor); else StdStreams.vrb.println("stringNewstringMethod: not found");
-				if (heapNewstringMethod != null) StdStreams.vrb.println("heapNewstringMethod = " + heapNewstringMethod.name + heapNewstringMethod.methDescriptor); else StdStreams.vrb.println("heapNewstringMethod: not found");
-			}
-			
-			m = (Method)stringClass.methods;		
-			while (m != null) {
-				if (m.name.equals(HString.getRegisteredHString("<init>"))) {
-					if (m.methDescriptor.equals(HString.getRegisteredHString("([C)V"))) strInitC = m; 
-					else if (m.methDescriptor.equals(HString.getRegisteredHString("([CII)V"))) strInitCII = m;
-				}
-				m = (Method)m.next;
-			}		
-			if(dbg) {
-				if (strInitC != null) StdStreams.vrb.println("stringInitC = " + strInitC.name + strInitC.methDescriptor); else StdStreams.vrb.println("stringInitC: not found");
-				if (strInitCII != null) StdStreams.vrb.println("stringInitCII = " + strInitCII.name + strInitCII.methDescriptor); else StdStreams.vrb.println("stringInitCII: not found");
-			}
-			
-			m = (Method)stringClass.methods;		
-			while (m != null) {
-				if (m.name.equals(HString.getRegisteredHString("allocateString"))) {
-					if (m.methDescriptor.equals(HString.getRegisteredHString("(I[C)Ljava/lang/String;"))) strAllocC = m; 
-					else if (m.methDescriptor.equals(HString.getRegisteredHString("(I[CII)Ljava/lang/String;"))) strAllocCII = m;
-				}
-				m = (Method)m.next;
-			}		
-			if(dbg) {
-				if (strAllocC != null) StdStreams.vrb.println("allocateStringC = " + strAllocC.name + strAllocC.methDescriptor); else StdStreams.vrb.println("allocateStringC: not found");
-				if (strAllocCII != null) StdStreams.vrb.println("allocateStringCII = " + strAllocCII.name + strAllocCII.methDescriptor); else StdStreams.vrb.println("allocateStringCII: not found");
-			}
-		}
-	}
 }
 
 
