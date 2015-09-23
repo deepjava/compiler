@@ -19,9 +19,11 @@
 package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import static org.junit.Assert.assertNull;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+
+import ch.ntb.inf.deep.cg.ppc.RegAllocator;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;

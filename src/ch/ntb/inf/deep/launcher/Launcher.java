@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import ch.ntb.inf.deep.cfg.CFG;
+import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
 import ch.ntb.inf.deep.classItems.Array;
@@ -115,7 +116,7 @@ public class Launcher implements ICclassFileConsts {
 			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) cg = new CodeGenPPC();
 			vrb.println(Configuration.getBoard().cpu.arch.name);
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
-			CodeGen.init();
+			cg.init();
 		}
 
 		// creating type descriptors for arrays
@@ -172,7 +173,8 @@ public class Launcher implements ICclassFileConsts {
 								}
 								// Create machine code
 								if (reporter.nofErrors <= 0) {
-									method.machineCode = new CodeGenPPC(method.ssa); 
+									method.machineCode = new Code32(method.ssa);
+									cg.translateMethod(method);
 								}
 							} else if (dbg) vrb.print("method " + method.name + " is synthetic or abstract");
 							method = (Method)method.next;
@@ -200,7 +202,8 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					method.cfg = new CFG(method);
 					method.ssa = new SSA(method.cfg);
-					method.machineCode = new CodeGenPPC(method.ssa); 
+					method.machineCode = new Code32(method.ssa); 
+					cg.translateMethod(method);
 				}
 				method = (Method)method.next;
 			}
@@ -282,7 +285,7 @@ public class Launcher implements ICclassFileConsts {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract) | (1 << apfNative))) == 0) { // proceed only methods with code
 								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 								if (dbg) vrb.println("      doing fixups");
-								method.machineCode.doFixups();
+								cg.doFixups(method.machineCode);
 							}
 							method = (Method)method.next;
 						}
@@ -303,7 +306,8 @@ public class Launcher implements ICclassFileConsts {
 				if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					if (dbg) vrb.println("      doing fixups");
-					method.machineCode.doFixups();
+					cg.doFixups(method.machineCode);
+
 				}
 				method = (Method)method.next;
 			}
@@ -316,7 +320,7 @@ public class Launcher implements ICclassFileConsts {
 		while (m != null) {
 			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
 			if (dbg) vrb.println("      doing fixups");
-			m.machineCode.doFixups();
+			cg.doFixups(m.machineCode);
 			m = (Method)m.next;
 		}
 //		Method.printCompSpecificSubroutines();

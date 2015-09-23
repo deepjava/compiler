@@ -18,8 +18,8 @@
 
 package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
-import ch.ntb.inf.deep.cgPPC.CodeGen;
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.ppc.RegAllocator;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
@@ -37,7 +37,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	static final boolean nonVol = true;
 	
 	static SSA[] ssa;
-	static CodeGen[] code;
+	static CodeGenPPC[] code;
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 	static String workspace;
 	static Project project;
@@ -52,18 +52,18 @@ public class TestCgPPC implements ICclassFileConsts {
 		TestCFG.createCFG(clazz);
 		int nofMethods = TestCFG.cfg.length;
 		ssa = new SSA[nofMethods];
-		code = new CodeGen[nofMethods];
+		code = new CodeGenPPC[nofMethods];
 		for (int i = 0; i < nofMethods; i++){
 			ssa[i] = new SSA(TestCFG.cfg[i]);
 		}
 	}
 
 
-	public static CodeGen getCode(String name) {
-		CodeGen.init();
+	public static CodeGenPPC getCode(String name) {
+		CodeGenPPC.init();
 		int i = 0;
 		while (i < TestCFG.cfg.length && !TestCFG.cfg[i].method.name.equals(HString.getHString(name))) i++;
-		code[i] = new CodeGen(ssa[i]);
+		code[i] = new CodeGenPPC(ssa[i]);
 		return code[i];
 	}
 

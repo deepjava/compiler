@@ -54,165 +54,18 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	protected static Method strAllocC;
 	protected static Method strAllocCII;
 	
-	public SSA ssa;	// reference to the SSA of a method
-	public int[] instructions;	// contains machine instructions for the ssa of a method
-	public int iCount;	// nof instructions for this method
-	protected int excTabCount;	// start of exception information in instruction array
-	
-	public Item[] fixups;	// contains all references whose address has to be fixed by the linker
-	protected int fCount;	//nof fixups
-	protected int lastFixup;	// instr number where the last fixup is found
+//	public SSA ssa;	// reference to the SSA of a method
+//	public int[] instructions;	// contains machine instructions for the ssa of a method
+//	public int iCount;	// nof instructions for this method
+//	protected int excTabCount;	// start of exception information in instruction array
+//	
+//	public Item[] fixups;	// contains all references whose address has to be fixed by the linker
+//	protected int fCount;	//nof fixups
+//	protected int lastFixup;	// instr number where the last fixup is found
 
 	public CodeGen() {}
 	
-	public CodeGen(SSA ssa) {
-		this.ssa = ssa;
-		instructions = new int[defaultNofInstr];
-		fixups = new Item[defaultNofFixup];
-//		nofParamGPR = 0; nofParamFPR = 0;
-//		nofNonVolGPR = 0; nofNonVolFPR = 0;
-//		nofVolGPR = 0; nofVolFPR = 0;
-//		nofMoveGPR = 0; nofMoveFPR = 0;
-//		tempStorage = false;
-//		enFloatsInExc = false;
-//		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-//		if (dbg) StdStreams.vrb.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
-//		for (int i = 0; i < maxNofParam; i++) {
-//			paramType[i] = tVoid;
-//			paramRegNr[i] = -1;
-//			paramRegEnd[i] = -1;
-//		}
-//
-//		// make local copy
-//		int maxStackSlots = ssa.cfg.method.maxStackSlots;
-//		int i = maxStackSlots;
-//		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
-//			int type = ssa.paramType[i] & ~(1<<ssaTaFitIntoInt);
-//			paramType[i - maxStackSlots] = type;
-//			paramHasNonVolReg[i - maxStackSlots] = false;
-//			if (type == tLong || type == tDouble) i++;
-//			i++;
-//		}
-//		nofParam = i - maxStackSlots;
-//		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
-//		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
-//		
-//		if (dbg) StdStreams.vrb.println("build intervals");
-////		StdStreams.vrb.print(ssa.cfg.toString());
-////		StdStreams.vrb.println(ssa.toString());
-//		RegAllocator.buildIntervals(ssa);
-//		
-//		if (dbg) StdStreams.vrb.println("assign registers to parameters");
-//		SSANode b = (SSANode) ssa.cfg.rootNode;
-//		while (b.next != null) {
-//			b = (SSANode) b.next;
-//		}	
-//		lastExitSet = b.exitSet;
-//		// determine, which parameters go into which register
-//		parseExitSet(lastExitSet, maxStackSlots);
-//		if (dbg) {
-//			StdStreams.vrb.print("parameter go into register: ");
-//			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
-//			StdStreams.vrb.println();
-//		}
-//		
-//		if (dbg) StdStreams.vrb.println("allocate registers");
-//		RegAllocator.assignRegisters(this);
-//		
-////		StdStreams.vrb.print(ssa.cfg.toString());
-//		if (dbg) {
-//			StdStreams.vrb.println(RegAllocator.joinsToString());
-//		}
-//		if (dbg) {
-//			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
-//			StdStreams.vrb.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
-//			StdStreams.vrb.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
-//			StdStreams.vrb.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
-//			StdStreams.vrb.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
-//			StdStreams.vrb.print("parameter end at instr no: ");
-//			for (int n = 0; n < nofParam; n++) 
-//				if (paramRegEnd[n] != -1) StdStreams.vrb.print(paramRegEnd[n] + "  "); 
-//			StdStreams.vrb.println();
-//		}
-//		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-//			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
-//			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
-//				iCount = 0;
-//				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
-//				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
-//				createIrSrAd(ppcStmw, 28, stackPtr, 4);
-//				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
-//			} else {
-//				stackSize = calcStackSizeException();
-//				insertPrologException();
-//			}
-//		} else {
-//			stackSize = calcStackSize();
-//			insertProlog();	// builds stack frame and copies parameters
-//		}
-//		
-//		SSANode node = (SSANode)ssa.cfg.rootNode;
-//		while (node != null) {
-//			node.codeStartIndex = iCount;
-//			translateSSA(node);
-//			node.codeEndIndex = iCount-1;
-//			node = (SSANode) node.next;
-//		}
-//		node = (SSANode)ssa.cfg.rootNode;
-//		while (node != null) {	// resolve local branch targets
-//			if (node.nofInstr > 0) {
-//				if ((node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) || (node.instructions[node.nofInstr-1].ssaOpcode == sCswitch)) {
-//					int code = this.instructions[node.codeEndIndex];
-//					CFGNode[] successors = node.successors;
-//					switch (code & 0xfc000000) {
-//					case ppcB:			
-//						if ((code & 0xffff) != 0) {	// switch
-//							int nofCases = (code & 0xffff) >> 2;
-//							int k;
-//							for (k = 0; k < nofCases; k++) {
-//								int branchOffset = ((SSANode)successors[k]).codeStartIndex - (node.codeEndIndex+1-(nofCases-k)*2);
-//								this.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
-//							}
-//							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
-//							this.instructions[node.codeEndIndex] &= 0xfc000000;
-//							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
-//						} else {
-//							int branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
-//							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
-//						}
-//						break;
-//					case ppcBc:
-//						int branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
-//						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0xffff;
-//						break;
-//					}
-//				} else if (node.instructions[node.nofInstr-1].ssaOpcode == sCreturn) {
-//					if (node.next != null) {
-//						int branchOffset = iCount - node.codeEndIndex;
-//						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
-//					}
-//				}
-//			}
-//			node = (SSANode) node.next;
-//		}
-//		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-//			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
-//			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
-//				Method m = Method.getCompSpecSubroutine("handleException");
-//				assert m != null;
-//				loadConstantAndFixup(31, m);
-//				createIrSspr(ppcMtspr, LR, 31);
-//				createIrDrAd(ppcLmw, 28, stackPtr, 4);
-//				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
-//				createIBOBILK(ppcBclr, BOalways, 0, false);
-//			} else {
-//				insertEpilogException(stackSize);
-//			}
-//		} else {
-//			insertEpilog(stackSize);
-//		}
-//		if (dbg) {StdStreams.vrb.print(ssa.toString()); StdStreams.vrb.print(toString());}
-	}
+	public abstract void translateMethod(Method m);
 
 //	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
 //		nofParamGPR = 0; nofParamFPR = 0;
@@ -646,22 +499,11 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 //		}		
 //	}
 //	
-	public abstract void doFixups();
-
-	protected void incInstructionNum() {
-		iCount++;
-		int len = instructions.length;
-		if (iCount == len) {
-			int[] newInstructions = new int[2 * len];
-			for (int k = 0; k < len; k++)
-				newInstructions[k] = instructions[k];
-			instructions = newInstructions;
-		}
-	}
+	public abstract void doFixups(Code32 code);
 
 	public abstract void generateCompSpecSubroutines();
 
-	public static void init() { 
+	public void init() { 
 		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "PUT1");

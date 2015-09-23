@@ -19,7 +19,7 @@
 package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
@@ -35,7 +35,7 @@ public class Method extends ClassMember {
 	public byte[] code; // java byte code of this method
 	public boolean fixed; // true, if offset is given by configuration
 	
-	public CodeGen machineCode; // machine code of this method
+	public Code32 machineCode; // machine code of this method
 	public CFG cfg; // cfg of this method
 	public SSA ssa; // ssa of this method
 	
