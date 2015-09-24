@@ -32,6 +32,7 @@ import ch.ntb.inf.junitTarget.Test;
  *         Changes:
  */
 @MaxErrors(100)
+@SuppressWarnings("unused")
 public class DoubleCastTest {
 
 	@Test

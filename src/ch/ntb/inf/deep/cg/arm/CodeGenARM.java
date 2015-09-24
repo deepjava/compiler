@@ -31,6 +31,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
+@SuppressWarnings("unused")
 public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static final boolean dbg = false;
 
@@ -2999,56 +3000,38 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		createIrfi(ppcRfi);
 	}
 
-	public String toString(){
-		StringBuilder sb = new StringBuilder();
-//		if (ssa != null)	// compiler specific subroutines have no ssa
-//			sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
-//		int i;
-//		for (i = 0; i < iCount; i++) {
-//			if ((instructions[i] & 0xffffff00) == 0) break;
-//			sb.append("\t" + String.format("%08X", instructions[i]));
-//			sb.append("\t[0x");
-//			sb.append(Integer.toHexString(i * 4));
-//			sb.append("]\t");
-//			sb.append(InstructionDecoder.getMnemonic(instructions[i]));
-//			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
-//			if (opcode == 0x10) {
-//				int BD = (short) (instructions[i] & 0xFFFC);
-//				sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
-//			} else if (opcode == 0x12) {
-//				int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-//				sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
-//			}
-//			sb.append("\n");
-//		}
-//		if (ssa != null) {	// compiler specific subroutines have no ssa
-//			if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) return sb.toString();	// exception methods have no unwinding or exception table 
-//		
-//			sb.append("\t" + String.format("%08X", instructions[i]));
-//			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-//			sb.append((byte)instructions[i++]); sb.append("  (offset to unwind code)\n");
-//			while (instructions[i] != 0xffffffff) {
-//				sb.append("\t" + String.format("%08X", instructions[i]));
-//				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-//				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (start address of try)\n");
-//				sb.append("\t" + String.format("%08X", instructions[i]));
-//				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-//				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (end address of try)\n");
-//				sb.append("\t" + String.format("%08X", instructions[i]));
-//				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-//				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (address of catch type)\n");
-//				sb.append("\t" + String.format("%08X", instructions[i]));
-//				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-//				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (address of catch)\n");
-//			}
-//			sb.append("\t" + String.format("%08X", instructions[i]));
-//			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-//			sb.append("(end of method)\n");
-//		}
-		return sb.toString();
-	}
-
 	public void generateCompSpecSubroutines() {
+		Method m = Method.getCompSpecSubroutine("longToDouble");
+		// long is passed in r30/r31, r29 can be used for general purposes
+		// faux1 and faux2 are used as general purpose FPR's, result is passed in f0 
+		if (m != null) { 
+			Code32 code = new Code32(null);
+			m.machineCode = code;
+		}
+		
+		m = Method.getCompSpecSubroutine("remLong");
+		if (m != null) { 
+			Code32 code = new Code32(null);
+			m.machineCode = code;
+		}
+	
+		m = Method.getCompSpecSubroutine("doubleToLong");
+		if (m != null) { 
+			Code32 code = new Code32(null);
+			m.machineCode = code;
+		}
+	
+		m = Method.getCompSpecSubroutine("divLong");
+		if (m != null) { 
+			Code32 code = new Code32(null);
+			m.machineCode = code;
+		}
+	
+		m = Method.getCompSpecSubroutine("handleException");
+		if (m != null) { 
+			Code32 code = new Code32(null);
+			m.machineCode = code;
+		}
 	}
 
 }

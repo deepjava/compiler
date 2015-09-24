@@ -21,6 +21,7 @@ package ch.ntb.inf.deep.cg.ppc;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.InstructionDecoder;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -37,27 +38,6 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	private static final int arrayLenOffset = 6;	
 	private static final int tempStorageSize = 48;	// 1 FPR(temp), 4 GPRs 
 	
-//	private static int objectSize, stringSize;
-//	private static StdConstant int2floatConst1 = null;	// 2^52+2^31, for int -> float conversions
-//	private static StdConstant int2floatConst2 = null;	// 2^32, for long -> float conversions
-//	private static StdConstant int2floatConst3 = null;	// 2^52, for long -> float conversions
-	
-//	static int idGET1, idGET2, idGET4, idGET8;
-//	static int idPUT1, idPUT2, idPUT4, idPUT8;
-//	static int idBIT, idASM, idHALT, idADR_OF_METHOD, idREF;
-//	static int idENABLE_FLOATS;
-//	static int idGETGPR, idGETFPR, idGETSPR;
-//	static int idPUTGPR, idPUTFPR, idPUTSPR;
-//	static int idDoubleToBits, idBitsToDouble;
-//	static int idFloatToBits, idBitsToFloat;
-	
-//	private static Method stringNewstringMethod;
-//	private static Method heapNewstringMethod;
-//	private static Method strInitC;
-//	private static Method strInitCII;
-//	private static Method strAllocC;
-//	private static Method strAllocCII;
-
 	private static int LRoffset;	
 	private static int XERoffset;	
 	private static int CRoffset;	
@@ -2012,7 +1992,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					} else if (meth.id == idHALT) { // HALT	// TODO
 						createItrap(code, ppcTw, TOalways, 0, 0);
 					} else if (meth.id == idASM) { // ASM
-						code.instructions[code.iCount] = InstructionDecoder.getCode(((StringLiteral)opds[0].constant).string.toString());
+						code.instructions[code.iCount] = InstructionDecoder.dec.getCode(((StringLiteral)opds[0].constant).string.toString());
 						code.iCount++;
 						int len = code.instructions.length;
 						if (code.iCount == len) {
@@ -2089,7 +2069,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					} else {	// invokevirtual 
 						int refReg = opds[0].reg;
 						int offset = Linker32.tdMethTabOffset;
-						offset -= m.index * Linker32.slotSize; 
+						offset -= meth.index * Linker32.slotSize; 
 						createItrap(code, ppcTwi, TOifequal, refReg, 0);
 						createIrDrAd(code, ppcLwz, res.regGPR1, refReg, -4);
 						createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, offset);
@@ -2100,9 +2080,9 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
 					copyParameters(code, opds);
 					
-					if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
+					if ((meth.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						// interface info goes into last parameter register
-						loadConstant(code, paramEndGPR, m.owner.index << 16 | m.index * 4);	// interface id and method offset						// check if param = maxParam in reg -2
+						loadConstant(code, paramEndGPR, meth.owner.index << 16 | meth.index * 4);	// interface id and method offset						// check if param = maxParam in reg -2
 					}
 					
 					if (newString) {

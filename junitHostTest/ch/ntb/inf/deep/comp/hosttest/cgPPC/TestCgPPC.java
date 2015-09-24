@@ -18,11 +18,14 @@
 
 package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
+import ch.ntb.inf.deep.cg.Code32;
+import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
 import ch.ntb.inf.deep.cg.ppc.RegAllocator;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.comp.hosttest.cfg.TestCFG;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Project;
@@ -37,7 +40,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	static final boolean nonVol = true;
 	
 	static SSA[] ssa;
-	static CodeGenPPC[] code;
+	static CodeGen cg;
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 	static String workspace;
 	static Project project;
@@ -46,25 +49,29 @@ public class TestCgPPC implements ICclassFileConsts {
 		CFR.initBuildSystem();
 		workspace = System.getProperty("user.dir");
 		project = Configuration.readProjectFile(workspace + "/junitHostTest.deep");
+		if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) cg = new CodeGenPPC();
+		cg.init();
 	}
 
-	public static void createCgPPC(Class clazz) {
+	public static void createNodes(Class clazz) {
 		TestCFG.createCFG(clazz);
 		int nofMethods = TestCFG.cfg.length;
 		ssa = new SSA[nofMethods];
-		code = new CodeGenPPC[nofMethods];
-		for (int i = 0; i < nofMethods; i++){
+		for (int i = 0; i < nofMethods; i++) {
 			ssa[i] = new SSA(TestCFG.cfg[i]);
 		}
 	}
 
 
-	public static CodeGenPPC getCode(String name) {
-		CodeGenPPC.init();
+	public static Code32 getCode(String name) {
 		int i = 0;
 		while (i < TestCFG.cfg.length && !TestCFG.cfg[i].method.name.equals(HString.getHString(name))) i++;
-		code[i] = new CodeGenPPC(ssa[i]);
-		return code[i];
+		Method m = TestCFG.cfg[i].method;
+		m.ssa = ssa[i];
+		m.cfg = TestCFG.cfg[i];
+		m.machineCode = new Code32(m.ssa);
+		cg.translateMethod(m);
+		return m.machineCode;
 	}
 
 	public static SSAValue getJoin(int index) {

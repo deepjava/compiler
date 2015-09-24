@@ -29,7 +29,11 @@ import java.util.Date;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.InstructionDecoder;
+import ch.ntb.inf.deep.cg.arm.CodeGenARM;
+import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.ppc.InstructionDecoderPPC;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
@@ -49,7 +53,6 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
-import ch.ntb.inf.deep.runtime.mpc555.Impc555;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
@@ -113,8 +116,14 @@ public class Launcher implements ICclassFileConsts {
 		}
 		CodeGen cg = null;
 		if (reporter.nofErrors <= 0) {
-			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) cg = new CodeGenPPC();
-			vrb.println(Configuration.getBoard().cpu.arch.name);
+			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) {
+				cg = new CodeGenPPC();
+				InstructionDecoder.dec = new InstructionDecoderPPC();
+			}
+			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) {
+				cg = new CodeGenARM();
+				InstructionDecoder.dec = new InstructionDecoderARM();
+			}
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
 			cg.init();
 		}
@@ -367,7 +376,6 @@ public class Launcher implements ICclassFileConsts {
 		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
 		TargetMemorySegment tms = Linker32.targetImage;
 		if (b != null) {
-			int c = 0;
 			if (tc != null) {
 				try {
 					if (dbg) vrb.println("[Launcher] Initializing registers");

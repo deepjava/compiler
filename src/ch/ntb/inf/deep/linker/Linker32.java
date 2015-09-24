@@ -19,7 +19,6 @@
 package ch.ntb.inf.deep.linker;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -50,9 +49,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	
 	// Slot size:
 	public static final byte slotSize = 4; // 4 bytes
-	static{
-		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
-	}
 
 	public static final boolean dbg = false; // enable/disable debugging outputs for the linker
 
@@ -1367,6 +1363,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		return s.size + addr;
 	}
 
+	@SuppressWarnings("unused")
 	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute, int requiredSize) {
 		Segment t = s;
 		while (t != null) {

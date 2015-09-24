@@ -18,7 +18,6 @@
 
 package ch.ntb.inf.deep.cg;
 
-import ch.ntb.inf.deep.cg.ppc.InstructionDecoder;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.ssa.*;
 
@@ -53,7 +52,7 @@ public class Code32 implements ICclassFileConsts {
 		}
 	}
 
-	public String toString(){
+	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		if (ssa != null)	// compiler specific subroutines have no ssa
 			sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
@@ -64,7 +63,7 @@ public class Code32 implements ICclassFileConsts {
 			sb.append("\t[0x");
 			sb.append(Integer.toHexString(i * 4));
 			sb.append("]\t");
-			sb.append(InstructionDecoder.getMnemonic(instructions[i]));
+			sb.append(InstructionDecoder.dec.getMnemonic(instructions[i]));
 			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
 			if (opcode == 0x10) {
 				int BD = (short) (instructions[i] & 0xFFFC);

@@ -193,6 +193,7 @@ public class CheckedExceptionTest {
 		CmdTransmitter.sendDone();
 	}
 	
+	@SuppressWarnings("unused")
 	static int m3() throws E1 {
 		int a = 1;
 		try {
@@ -249,6 +250,9 @@ public class CheckedExceptionTest {
 
 }
 
+@SuppressWarnings("serial")
 class E10 extends Exception { }
+@SuppressWarnings("serial")
 class E20 extends Exception { }
+@SuppressWarnings("serial")
 class E30 extends E10 { }

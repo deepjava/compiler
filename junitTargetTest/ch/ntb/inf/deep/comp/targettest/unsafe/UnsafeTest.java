@@ -21,9 +21,6 @@ package ch.ntb.inf.deep.comp.targettest.unsafe;
 import ch.ntb.inf.deep.runtime.ppc32.Decrementer;
 import ch.ntb.inf.deep.unsafe.US;
 import ch.ntb.inf.junitTarget.*;
-import ch.ntb.inf.junitTarget.CmdTransmitter;
-import ch.ntb.inf.junitTarget.MaxErrors;
-import ch.ntb.inf.junitTarget.Test;
 
 /**
  * NTB 4.3.2011, Urs Graf
@@ -114,6 +111,7 @@ public class UnsafeTest {
 
 }
 
+@SuppressWarnings("unused")
 class DecTest extends Decrementer {
 	
 	public void action () {

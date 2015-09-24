@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
+@SuppressWarnings("unused")
 public class T01SimpleMethods {
 	static int global1, count;
 	static boolean done;
@@ -28,7 +29,7 @@ public class T01SimpleMethods {
     public void emptyMethod() {
     }
 
-    public static void assignment1() {
+	public static void assignment1() {
         int x = 1;
     }
 

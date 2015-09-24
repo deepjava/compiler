@@ -27,10 +27,6 @@ import ch.ntb.inf.junitTarget.Test;
 /**
  * NTB 10.02.2011
  * 
- * @author Mattia Pellin
- *   noch nicht vollst?ndig (mit /* auskommentiert)
- * 
- *         Changes:
  */
 @MaxErrors(100)
 public class LongTest {
@@ -198,6 +194,7 @@ public class LongTest {
 		CmdTransmitter.sendDone();
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	//Test subtraction variants
 	public static void testSub(){

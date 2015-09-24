@@ -38,7 +38,7 @@ public class cgPPC01 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T01SimpleMethods") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 	

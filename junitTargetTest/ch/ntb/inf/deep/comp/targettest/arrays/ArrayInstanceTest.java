@@ -30,6 +30,7 @@ import ch.ntb.inf.junitTarget.Test;
  * 
  */
 @MaxErrors(100)
+@SuppressWarnings("unused")
 public class ArrayInstanceTest {
 	
 	@Test

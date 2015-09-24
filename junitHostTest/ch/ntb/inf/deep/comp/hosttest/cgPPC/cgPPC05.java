@@ -37,7 +37,7 @@ public class cgPPC05 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T05Returns") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 

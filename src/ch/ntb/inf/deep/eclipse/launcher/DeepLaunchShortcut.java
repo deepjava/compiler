@@ -149,6 +149,7 @@ public class DeepLaunchShortcut implements ILaunchShortcut2 {
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	protected ILaunchConfigurationWorkingCopy createConfiguration(IFile fileToLaunch, ILaunchConfiguration[] configs) {
 		ILaunchConfigurationWorkingCopy wc = null;
 		String name = fileToLaunch.getName();

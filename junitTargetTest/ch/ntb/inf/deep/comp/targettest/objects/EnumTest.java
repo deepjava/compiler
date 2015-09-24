@@ -20,7 +20,6 @@ package ch.ntb.inf.deep.comp.targettest.objects;
 
 import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
-import ch.ntb.inf.junitTarget.Ignore;
 import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Test;
 

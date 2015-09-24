@@ -325,6 +325,7 @@ public class InterfaceTest {
 		CmdTransmitter.sendDone();		
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	// tests the class constructor of an interface
 	public static void testInterfaceConstructor1() {

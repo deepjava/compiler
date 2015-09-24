@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.ppc.RegAllocator;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
@@ -39,13 +39,13 @@ public class cgPPC02 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T02Branches") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 
 	@Test
 	public void if1() {
-		CodeGenPPC code = getCode("if1");
+		Code32 code = getCode("if1");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -57,7 +57,7 @@ public class cgPPC02 extends TestCgPPC {
 	
 	@Test
 	public void if2() {
-		CodeGenPPC code = getCode("if2");
+		Code32 code = getCode("if2");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 3, 9, vol, false));
@@ -68,7 +68,7 @@ public class cgPPC02 extends TestCgPPC {
 	
 	@Test
 	public void if3() {
-		CodeGenPPC code = getCode("if3");
+		Code32 code = getCode("if3");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 18, vol, false));
@@ -81,7 +81,7 @@ public class cgPPC02 extends TestCgPPC {
 	
 	@Test
 	public void if4() {
-		CodeGenPPC code = getCode("if4");
+		Code32 code = getCode("if4");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -94,7 +94,7 @@ public class cgPPC02 extends TestCgPPC {
 	
 	@Test
 	public void if5() {
-		CodeGenPPC code = getCode("if5");
+		Code32 code = getCode("if5");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -108,7 +108,7 @@ public class cgPPC02 extends TestCgPPC {
 	
 	@Test
 	public void if6() {
-		CodeGenPPC code = getCode("if6");
+		Code32 code = getCode("if6");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -130,7 +130,7 @@ public class cgPPC02 extends TestCgPPC {
 //@Ignore
 	@Test
 	public void if7() {
-		CodeGenPPC code = getCode("if7");
+		Code32 code = getCode("if7");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));

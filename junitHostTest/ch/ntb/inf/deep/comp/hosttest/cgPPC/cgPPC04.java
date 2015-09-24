@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.ppc.RegAllocator;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
@@ -38,13 +38,13 @@ public class cgPPC04 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T04Loops") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 
 	@Test 
 	public void doWhile1() {
-		CodeGenPPC code = getCode("doWhile1");
+		Code32 code = getCode("doWhile1");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 8, vol, false));
@@ -57,7 +57,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void doWhileIf1() {
-		CodeGenPPC code = getCode("doWhileIf1");
+		Code32 code = getCode("doWhileIf1");
 		assertTrue("wrong join", checkJoin(getJoin(0), 11, 15, vol, true));
 		assertTrue("wrong join", checkJoin(getJoin(0).next, 18, 22, vol, false));
 		assertNull("wrong join", getJoin(1));
@@ -78,7 +78,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void while1() {
-		CodeGenPPC code = getCode("while1");
+		Code32 code = getCode("while1");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
@@ -90,7 +90,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void whileTrue() {
-		CodeGenPPC code = getCode("whileTrue");
+		Code32 code = getCode("whileTrue");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
@@ -111,7 +111,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void whileMultiCond() {
-		CodeGenPPC code = getCode("whileMultiCond");
+		Code32 code = getCode("whileMultiCond");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 8, vol, false));
@@ -123,7 +123,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void for1() {
-		CodeGenPPC code = getCode("for1");
+		Code32 code = getCode("for1");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 10, vol, false));
@@ -137,7 +137,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void forWhile() {
-		CodeGenPPC code = getCode("forWhile");
+		Code32 code = getCode("forWhile");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -156,7 +156,7 @@ public class cgPPC04 extends TestCgPPC {
 //	@Ignore
 	@Test
 	public void forIfWhile() {
-		CodeGenPPC code = getCode("forIfWhile");
+		Code32 code = getCode("forIfWhile");
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 8, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 9, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 12, true, false));
@@ -185,7 +185,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void forIfFor() {
-		CodeGenPPC code = getCode("forIfFor");
+		Code32 code = getCode("forIfFor");
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 12, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 13, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 14, true, true));
@@ -228,7 +228,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest1() {
-		CodeGenPPC code = getCode("phiFunctionTest1");
+		Code32 code = getCode("phiFunctionTest1");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 0, true, false));
@@ -238,7 +238,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest2() {
-		CodeGenPPC code = getCode("phiFunctionTest2");
+		Code32 code = getCode("phiFunctionTest2");
 		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 1, true, false));
@@ -248,7 +248,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest3() {
-		CodeGenPPC code = getCode("phiFunctionTest3");
+		Code32 code = getCode("phiFunctionTest3");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
@@ -261,7 +261,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest4() {
-		CodeGenPPC code = getCode("phiFunctionTest4");
+		Code32 code = getCode("phiFunctionTest4");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
@@ -274,7 +274,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest5() {
-		CodeGenPPC code = getCode("phiFunctionTest5");
+		Code32 code = getCode("phiFunctionTest5");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 6, vol, false));
@@ -287,7 +287,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest6() {
-		CodeGenPPC code = getCode("phiFunctionTest6");
+		Code32 code = getCode("phiFunctionTest6");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 8, 18, vol, false));
@@ -304,7 +304,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest7() {
-		CodeGenPPC code = getCode("phiFunctionTest7");
+		Code32 code = getCode("phiFunctionTest7");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 18, vol, false));
@@ -321,7 +321,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest8() {
-		CodeGenPPC code = getCode("phiFunctionTest8");
+		Code32 code = getCode("phiFunctionTest8");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 22, vol, false));
@@ -340,7 +340,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test
 	public void phiFunctionTest9() {
-		CodeGenPPC code = getCode("phiFunctionTest9");
+		Code32 code = getCode("phiFunctionTest9");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -361,7 +361,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest10() {
-		CodeGenPPC code = getCode("phiFunctionTest10");
+		Code32 code = getCode("phiFunctionTest10");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 22, vol, false));
@@ -381,7 +381,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest11() {
-		CodeGenPPC code = getCode("phiFunctionTest11");
+		Code32 code = getCode("phiFunctionTest11");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 7, vol, false));
@@ -394,7 +394,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest12() {
-		CodeGenPPC code = getCode("phiFunctionTest12");
+		Code32 code = getCode("phiFunctionTest12");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
@@ -408,7 +408,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest13() {
-		CodeGenPPC code = getCode("phiFunctionTest13");
+		Code32 code = getCode("phiFunctionTest13");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 11, 23, vol, false));
@@ -426,7 +426,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest14() {
-		CodeGenPPC code = getCode("phiFunctionTest14");
+		Code32 code = getCode("phiFunctionTest14");
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 3, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 4, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 5, true, true));
@@ -452,7 +452,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest15() {
-		CodeGenPPC code = getCode("phiFunctionTest15");
+		Code32 code = getCode("phiFunctionTest15");
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 2, true, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 3, false, false));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 4, true, false));
@@ -477,7 +477,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest16() {
-		CodeGenPPC code = getCode("phiFunctionTest16");
+		Code32 code = getCode("phiFunctionTest16");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertNull("wrong join", getJoin(2));
@@ -547,7 +547,7 @@ public class cgPPC04 extends TestCgPPC {
 	//	@Ignore
 	@Test 
 	public void phiFunctionTest19() {
-		CodeGenPPC code = getCode("phiFunctionTest19");
+		Code32 code = getCode("phiFunctionTest19");
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 10, true, true));	// a
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 11, true, true));	// i
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 12, true, true));	// b

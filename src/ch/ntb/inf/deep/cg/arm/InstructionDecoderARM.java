@@ -18,7 +18,9 @@
 
 package ch.ntb.inf.deep.cg.arm;
 
-public class InstructionDecoder implements InstructionOpcs {
+import ch.ntb.inf.deep.cg.InstructionDecoder;
+
+public class InstructionDecoderARM extends InstructionDecoder implements InstructionOpcs {
 
 	/**
 	 * Encode the assembler mnemonic into the machine instruction. Does not check
@@ -28,7 +30,8 @@ public class InstructionDecoder implements InstructionOpcs {
 	 *            String
 	 * @return machine instruction
 	 */
-	public static int getCode(String mnemonic) {
+	@SuppressWarnings("unused")
+	public int getCode(String mnemonic) {
 		// masks
 		int crb = 0x1F;
 		int BD = 0xFFFC;
@@ -2392,7 +2395,8 @@ public class InstructionDecoder implements InstructionOpcs {
 		else return 0;
 	}
 
-	public static String getMnemonic(Integer machineInstr) {
+	@SuppressWarnings("unused")
+	public String getMnemonic(Integer machineInstr) {
 		int opcode = (machineInstr & 0xFC000000) >>> (31 - 5);
 
 			int S = (machineInstr & 0x3E00000) >>> (31 - 10);
@@ -3200,7 +3204,7 @@ public class InstructionDecoder implements InstructionOpcs {
 	}
 
 	static {
-		int code = InstructionDecoder.getCode("rlwinm  r3, r29, 2, 0, 29");
+		// int code = InstructionDecoder.getCode("rlwinm  r3, r29, 2, 0, 29");
 		//		System.out.println(InstructionDecoder.getMnemonic(code);
 	}
 }

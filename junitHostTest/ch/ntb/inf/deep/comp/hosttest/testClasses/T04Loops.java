@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
+@SuppressWarnings("unused")
 public class T04Loops {
     public static void doWhile1() {
         int i = 0;

@@ -1192,8 +1192,6 @@ public class Parser implements ICclassFileConsts {
 		next();
 	}
 	
-	private void programmeropts() {}
-	
 	private SystemConstant sysconst(SystemConstant sysConsts) {
 		if (sym != sSysConst) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: sysconst, received symbol: " + symToString()); return null;}
 		next();
