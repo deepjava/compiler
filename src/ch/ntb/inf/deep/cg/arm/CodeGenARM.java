@@ -31,35 +31,12 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
-@SuppressWarnings("unused")
 public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
-	private static final boolean dbg = false;
 
 	static final int maxNofParam = 32;
 	private static final int arrayLenOffset = 6;	
 	private static final int tempStorageSize = 48;	// 1 FPR(temp), 4 GPRs 
 	
-	private static int objectSize, stringSize;
-	private static StdConstant int2floatConst1 = null;	// 2^52+2^31, for int -> float conversions
-	private static StdConstant int2floatConst2 = null;	// 2^32, for long -> float conversions
-	private static StdConstant int2floatConst3 = null;	// 2^52, for long -> float conversions
-	
-	static int idGET1, idGET2, idGET4, idGET8;
-	static int idPUT1, idPUT2, idPUT4, idPUT8;
-	static int idBIT, idASM, idHALT, idADR_OF_METHOD, idREF;
-	static int idENABLE_FLOATS;
-	static int idGETGPR, idGETFPR, idGETSPR;
-	static int idPUTGPR, idPUTFPR, idPUTSPR;
-	static int idDoubleToBits, idBitsToDouble;
-	static int idFloatToBits, idBitsToFloat;
-	
-	private static Method stringNewstringMethod;
-	private static Method heapNewstringMethod;
-	private static Method strInitC;
-	private static Method strInitCII;
-	private static Method strAllocC;
-	private static Method strAllocCII;
-
 	private static int LRoffset;	
 	private static int XERoffset;	
 	private static int CRoffset;	
@@ -109,153 +86,155 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	
 	private static SSAValue[] lastExitSet;
 	private static boolean newString;
-	
+
+	public CodeGenARM() {}
+
 	public void translateMethod(Method method) {
-//		instructions = new int[defaultNofInstr];
-//		fixups = new Item[defaultNofFixup];
-//		nofParamGPR = 0; nofParamFPR = 0;
-//		nofNonVolGPR = 0; nofNonVolFPR = 0;
-//		nofVolGPR = 0; nofVolFPR = 0;
-//		nofMoveGPR = 0; nofMoveFPR = 0;
-//		tempStorage = false;
-//		enFloatsInExc = false;
-//		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-//		if (dbg) StdStreams.vrb.println("generate code for " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name);
-//		for (int i = 0; i < maxNofParam; i++) {
-//			paramType[i] = tVoid;
-//			paramRegNr[i] = -1;
-//			paramRegEnd[i] = -1;
-//		}
-//
-//		// make local copy
-//		int maxStackSlots = ssa.cfg.method.maxStackSlots;
-//		int i = maxStackSlots;
-//		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
-//			int type = ssa.paramType[i] & ~(1<<ssaTaFitIntoInt);
-//			paramType[i - maxStackSlots] = type;
-//			paramHasNonVolReg[i - maxStackSlots] = false;
-//			if (type == tLong || type == tDouble) i++;
-//			i++;
-//		}
-//		nofParam = i - maxStackSlots;
-//		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
-//		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
-//		
-//		if (dbg) StdStreams.vrb.println("build intervals");
-////		StdStreams.vrb.print(ssa.cfg.toString());
-////		StdStreams.vrb.println(ssa.toString());
-//		RegAllocator.buildIntervals(ssa);
-//		
-//		if (dbg) StdStreams.vrb.println("assign registers to parameters");
-//		SSANode b = (SSANode) ssa.cfg.rootNode;
-//		while (b.next != null) {
-//			b = (SSANode) b.next;
-//		}	
-//		lastExitSet = b.exitSet;
-//		// determine, which parameters go into which register
-//		parseExitSet(lastExitSet, maxStackSlots);
-//		if (dbg) {
-//			StdStreams.vrb.print("parameter go into register: ");
-//			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
-//			StdStreams.vrb.println();
-//		}
-//		
-//		if (dbg) StdStreams.vrb.println("allocate registers");
-//		RegAllocator.assignRegisters(this);
-//		
-////		StdStreams.vrb.print(ssa.cfg.toString());
-//		if (dbg) {
-//			StdStreams.vrb.println(RegAllocator.joinsToString());
-//		}
-//		if (dbg) {
-//			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
-//			StdStreams.vrb.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
-//			StdStreams.vrb.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
-//			StdStreams.vrb.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
-//			StdStreams.vrb.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
-//			StdStreams.vrb.print("parameter end at instr no: ");
-//			for (int n = 0; n < nofParam; n++) 
-//				if (paramRegEnd[n] != -1) StdStreams.vrb.print(paramRegEnd[n] + "  "); 
-//			StdStreams.vrb.println();
-//		}
-//		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-//			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
-//			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
-//				iCount = 0;
-////				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
-////				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
-////				createIrSrAd(ppcStmw, 28, stackPtr, 4);
-////				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
-//			} else {
-//				stackSize = calcStackSizeException();
-//				insertPrologException();
-//			}
-//		} else {
-//			stackSize = calcStackSize();
-//			insertProlog();	// builds stack frame and copies parameters
-//		}
-//		
-//		SSANode node = (SSANode)ssa.cfg.rootNode;
-//		while (node != null) {
-//			node.codeStartIndex = iCount;
-//			translateSSA(node);
-//			node.codeEndIndex = iCount-1;
-//			node = (SSANode) node.next;
-//		}
-//		node = (SSANode)ssa.cfg.rootNode;
-//		while (node != null) {	// resolve local branch targets
+		SSA ssa = method.ssa;
+		Code32 code = method.machineCode;
+		nofParamGPR = 0; nofParamFPR = 0;
+		nofNonVolGPR = 0; nofNonVolFPR = 0;
+		nofVolGPR = 0; nofVolFPR = 0;
+		nofMoveGPR = 0; nofMoveFPR = 0;
+		tempStorage = false;
+		enFloatsInExc = false;
+		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
+		if (dbg) StdStreams.vrb.println("generate code for " + method.owner.name + "." + method.name);
+		for (int i = 0; i < maxNofParam; i++) {
+			paramType[i] = tVoid;
+			paramRegNr[i] = -1;
+			paramRegEnd[i] = -1;
+		}
+
+		// make local copy
+		int maxStackSlots = method.maxStackSlots;
+		int i = maxStackSlots;
+		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
+			int type = ssa.paramType[i] & ~(1<<ssaTaFitIntoInt);
+			paramType[i - maxStackSlots] = type;
+			paramHasNonVolReg[i - maxStackSlots] = false;
+			if (type == tLong || type == tDouble) i++;
+			i++;
+		}
+		nofParam = i - maxStackSlots;
+		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
+		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
+		
+		if (dbg) StdStreams.vrb.println("build intervals");
+//		StdStreams.vrb.print(ssa.cfg.toString());
+//		StdStreams.vrb.println(ssa.toString());
+		RegAllocator.buildIntervals(ssa);
+		
+		if (dbg) StdStreams.vrb.println("assign registers to parameters");
+		SSANode b = (SSANode) ssa.cfg.rootNode;
+		while (b.next != null) {
+			b = (SSANode) b.next;
+		}	
+		lastExitSet = b.exitSet;
+		// determine, which parameters go into which register
+		parseExitSet(lastExitSet, maxStackSlots);
+		if (dbg) {
+			StdStreams.vrb.print("parameter go into register: ");
+			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
+			StdStreams.vrb.println();
+		}
+		
+		if (dbg) StdStreams.vrb.println("allocate registers");
+		RegAllocator.assignRegisters(this);
+		
+//		StdStreams.vrb.print(ssa.cfg.toString());
+		if (dbg) {
+			StdStreams.vrb.println(RegAllocator.joinsToString());
+		}
+		if (dbg) {
+			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
+			StdStreams.vrb.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
+			StdStreams.vrb.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
+			StdStreams.vrb.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
+			StdStreams.vrb.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
+			StdStreams.vrb.print("parameter end at instr no: ");
+			for (int n = 0; n < nofParam; n++) 
+				if (paramRegEnd[n] != -1) StdStreams.vrb.print(paramRegEnd[n] + "  "); 
+			StdStreams.vrb.println();
+		}
+		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
+			if (method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
+			} else if (method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
+				code.iCount = 0;
+//				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
+//				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
+//				createIrSrAd(ppcStmw, 28, stackPtr, 4);
+//				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
+			} else {
+				stackSize = calcStackSizeException();
+				insertPrologException();
+			}
+		} else {
+			stackSize = calcStackSize();
+			insertProlog();	// builds stack frame and copies parameters
+		}
+		
+		SSANode node = (SSANode)ssa.cfg.rootNode;
+		while (node != null) {
+			node.codeStartIndex = code.iCount;
+			translateSSA(node, method);
+			node.codeEndIndex = code.iCount-1;
+			node = (SSANode) node.next;
+		}
+		node = (SSANode)ssa.cfg.rootNode;
+		while (node != null) {	// resolve local branch targets
 //			if (node.nofInstr > 0) {
 //				if ((node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) || (node.instructions[node.nofInstr-1].ssaOpcode == sCswitch)) {
-//					int code = this.instructions[node.codeEndIndex];
+//					int instr = method.machineCode.instructions[node.codeEndIndex];
 //					CFGNode[] successors = node.successors;
-////					switch (code & 0xfc000000) {
-////					case ppcB:			
-////						if ((code & 0xffff) != 0) {	// switch
-////							int nofCases = (code & 0xffff) >> 2;
-////							int k;
-////							for (k = 0; k < nofCases; k++) {
-////								int branchOffset = ((SSANode)successors[k]).codeStartIndex - (node.codeEndIndex+1-(nofCases-k)*2);
-////								this.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
-////							}
-////							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
-////							this.instructions[node.codeEndIndex] &= 0xfc000000;
-////							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
-////						} else {
-////							int branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
-////							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
-////						}
-////						break;
-////					case ppcBc:
-////						int branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
-////						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0xffff;
-////						break;
-////					}
+//					switch (code & 0xfc000000) {
+//					case ppcB:			
+//						if ((code & 0xffff) != 0) {	// switch
+//							int nofCases = (code & 0xffff) >> 2;
+//							int k;
+//							for (k = 0; k < nofCases; k++) {
+//								int branchOffset = ((SSANode)successors[k]).codeStartIndex - (node.codeEndIndex+1-(nofCases-k)*2);
+//								this.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
+//							}
+//							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
+//							this.instructions[node.codeEndIndex] &= 0xfc000000;
+//							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
+//						} else {
+//							int branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
+//							this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
+//						}
+//						break;
+//					case ppcBc:
+//						int branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
+//						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0xffff;
+//						break;
+//					}
 //				} else if (node.instructions[node.nofInstr-1].ssaOpcode == sCreturn) {
 //					if (node.next != null) {
-//						int branchOffset = iCount - node.codeEndIndex;
-//						this.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
+//						int branchOffset = method.machineCode.iCount - node.codeEndIndex;
+//						method.machineCode.instructions[node.codeEndIndex] |= (branchOffset << 2) & 0x3ffffff;
 //					}
 //				}
 //			}
-//			node = (SSANode) node.next;
-//		}
-//		if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
-//			if (ssa.cfg.method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
-//			} else if (ssa.cfg.method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
-//				Method m = Method.getCompSpecSubroutine("handleException");
-//				assert m != null;
-//				loadConstantAndFixup(31, m);
-////				createIrSspr(ppcMtspr, LR, 31);
-////				createIrDrAd(ppcLmw, 28, stackPtr, 4);
-////				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
-////				createIBOBILK(ppcBclr, BOalways, 0, false);
-//			} else {
-//				insertEpilogException(stackSize);
-//			}
-//		} else {
-//			insertEpilog(stackSize);
-//		}
-//		if (dbg) {StdStreams.vrb.print(ssa.toString()); StdStreams.vrb.print(toString());}
+			node = (SSANode) node.next;
+		}
+		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
+			if (method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
+			} else if (method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
+				Method m = Method.getCompSpecSubroutine("handleException");
+				assert m != null;
+				loadConstantAndFixup(31, m);
+//				createIrSspr(ppcMtspr, LR, 31);
+//				createIrDrAd(ppcLmw, 28, stackPtr, 4);
+//				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
+//				createIBOBILK(ppcBclr, BOalways, 0, false);
+			} else {
+				insertEpilogException(stackSize);
+			}
+		} else {
+			insertEpilog(code, stackSize);
+		}
+		if (dbg) {StdStreams.vrb.print(ssa.toString()); StdStreams.vrb.print(code.toString());}
 	}
 
 	private static void parseExitSet(SSAValue[] exitSet, int maxStackSlots) {
@@ -393,10 +372,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		return size;
 	}
 
-	private void translateSSA (SSANode node) {
+	private void translateSSA (SSANode node, Method meth) {
 		SSAValue[] opds;
 		int stringReg = 0;
 		Item stringCharRef = null;
+		Code32 code = meth.machineCode;
 
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
@@ -714,13 +694,20 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger:
 					if (sReg1 < 0) {
-//						int immVal = ((StdConstant)opds[0].constant).valueH;
-//						createIrDrAsimm(ppcAddi, dReg, sReg2, immVal);
-//					} else if (sReg2 < 0) {
-//						int immVal = ((StdConstant)opds[1].constant).valueH;
-//						createIrDrAsimm(ppcAddi, dReg, sReg1, immVal);
-//					} else {
-						createDataProcReg(armAdd, condAlways, dReg, sReg1, sReg2, noShift, 0);
+						int immVal = ((StdConstant)opds[0].constant).valueH;
+						if (immVal >= 0)
+							createDataProcImm(code, armAdd, condAlways, dReg, sReg2, immVal, noShift, 0);
+						else
+							createDataProcImm(code, armRsb, condAlways, dReg, sReg2, -immVal, noShift, 0);
+						
+					} else if (sReg2 < 0) {
+						int immVal = ((StdConstant)opds[1].constant).valueH;
+						if (immVal >= 0)
+							createDataProcImm(code, armAdd, condAlways, dReg, sReg1, immVal, noShift, 0);
+						else
+							createDataProcImm(code, armSub, condAlways, dReg, sReg1, -immVal, noShift, 0);
+					} else {
+						createDataProcReg(code, armAdd, condAlways, dReg, sReg1, sReg2, noShift, 0);
 					}
 					break;
 //				case tLong:
@@ -1549,8 +1536,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //					assert false : "result of SSA instruction has wrong type";
 //					return;
 //				}
-//				break;}
-//			case sCconvDouble: {	// double -> other type
+				break;}
+			case sCconvDouble: {	// double -> other type
 //				opds = instr.getOperands();
 //				int sReg1 = opds[0].reg;
 //				int dReg = res.reg;
@@ -2464,7 +2451,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				break;}
 			default:
 				ErrorReporter.reporter.error(625);
-				assert false : "SSA instruction not implemented" + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + " function";
+				assert false : "SSA instruction not implemented: " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + " function";
 				return;
 			}
 		}
@@ -2730,9 +2717,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
 	}
 
-	private void createDataProcReg(int opCode, int cond, int Rd, int Rn, int Rm, int shiftType, int shiftAmount) {
-//		instructions[iCount] = (cond << 28) | opCode | (Rd << 12) | (Rn << 16) | Rm | (shiftType << 5) | (shiftAmount << 7);
-//		incInstructionNum();
+	private void createDataProcReg(Code32 code, int opCode, int cond, int Rd, int Rn, int Rm, int shiftType, int shiftAmount) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rn << 16) | Rm | (shiftType << 5) | (shiftAmount << 7);
+		code.incInstructionNum();
+	}
+	
+	private void createDataProcImm(Code32 code, int opCode, int cond, int Rd, int Rn, int imm, int shiftType, int shiftAmount) {
+		code.instructions[code.iCount] = (cond << 28) | (1 << 25) | opCode | (Rd << 12) | (Rn << 16) | imm;
+		code.incInstructionNum();
+	}
+
+	private void createIpat(Code32 code, int pat) {
+		code.instructions[code.iCount] = pat;
+		code.incInstructionNum();
 	}
 
 	private void loadConstant(int reg, int val) {
@@ -2887,8 +2884,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		}
 	}
 
-	private void insertEpilog(int stackSize) {
-//		int epilogStart = iCount;
+	private void insertEpilog(Code32 code, int stackSize) {
+		int epilogStart = code.iCount;
 //		int offset = GPRoffset - 8;
 //		if (enFloatsInExc) {
 //			createIrDrAd(ppcLfd, 0, stackPtr, offset);
@@ -2911,19 +2908,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		createIrSspr(ppcMtspr, LR, 0);
 ////		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
 ////		createIBOBILK(ppcBclr, BOalways, 0, false);
-//		createIpat((-(iCount-epilogStart)*4) & 0xff);
-//		excTabCount = iCount;
-//		ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
-//		if (tab != null) {
-//			for (int i = 0; i < tab.length; i++) {
-//				ExceptionTabEntry entry = tab[i];
-//				createIpat(entry.startPc);
-//				createIpat(entry.endPc);
-//				if (entry.catchType != null) createIpat(entry.catchType.address); else createIpat(0);
-//				createIpat(entry.handlerPc);
-//			}
-//		}
-//		createIpat(0xffffffff);
+		createIpat(code, (-(code.iCount-epilogStart)*4) & 0xff);
+		code.excTabCount = code.iCount;
+		ExceptionTabEntry[] tab = code.ssa.cfg.method.exceptionTab;
+		if (tab != null) {
+			for (int i = 0; i < tab.length; i++) {
+				ExceptionTabEntry entry = tab[i];
+				createIpat(code, entry.startPc);
+				createIpat(code, entry.endPc);
+				if (entry.catchType != null) createIpat(code, entry.catchType.address); else createIpat(code, 0);
+				createIpat(code, entry.handlerPc);
+			}
+		}
+		createIpat(code, 0xffffffff);
 	}
 
 	private void insertPrologException() {

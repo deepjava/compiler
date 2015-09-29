@@ -19,28 +19,28 @@
 package ch.ntb.inf.deep.cg.arm;
 
 interface Registers {
-	final int nofGPR = 13;	
+	final int nofGPR = 32;	
 	final int nofFPR = 32;
 	
 	final int topGPR = 31;	// highest numbered GPR
-	final int topFPR = 31;	// highest numbered FPR
+	final int topFPR = 15;	// highest numbered FPR
 	
 	final int paramStartGPR = 2;	// GPR with first parameter
 	final int paramStartFPR = 1;	// FPR with first parameter
 	
-	final int paramEndGPR = 10;	// GPR with last parameter, must be < nonVolStartGPR
-	final int paramEndFPR = 8;	// FPR with last parameter, must be < nonVolStartFPR
+	final int paramEndGPR = 8;	// GPR with last parameter, must be < nonVolStartGPR
+	final int paramEndFPR = 6;	// FPR with last parameter, must be < nonVolStartFPR
 	
-	final int nonVolStartGPR = 13;	// first nonvolatile GPR
-	final int nonVolStartFPR = 13;	// first nonvolatile FPR
+	final int nonVolStartGPR = 10;	// first nonvolatile GPR
+	final int nonVolStartFPR = 10;	// first nonvolatile FPR
 	
 	final int returnGPR1 = 2;	// GPR with return value
 	final int returnGPR2 = 3;	// GPR with return value used for longs
 	final int returnFPR = 1;	// FPR with return value
 	
-	final int faux1 = 20;	// FPR which is never assigned and can be freely used 
-	final int faux2 = 21;	// FPR which is never assigned and can be freely used 
-	final int faux3 = 22;	// FPR which is never assigned and can be freely used 
+	final int faux1 = 8;	// FPR which is never assigned and can be freely used 
+	final int faux2 = 9;	// FPR which is never assigned and can be freely used 
+	final int faux3 = 10;	// FPR which is never assigned and can be freely used 
 
 	final int stackPtr = 14;	// register for stack pointer
 

@@ -58,7 +58,7 @@ public class Code32 implements ICclassFileConsts {
 			sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
 		int i;
 		for (i = 0; i < iCount; i++) {
-			if ((instructions[i] & 0xffffff00) == 0) break;
+			if ((instructions[i] & 0xffffff00) == 0) break;	//TODO is this ok with ARM?????????????
 			sb.append("\t" + String.format("%08X", instructions[i]));
 			sb.append("\t[0x");
 			sb.append(Integer.toHexString(i * 4));
