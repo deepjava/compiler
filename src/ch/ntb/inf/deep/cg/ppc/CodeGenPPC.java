@@ -140,9 +140,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		}
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
-		RegAllocator.assignRegisters(this);
+		RegAllocator.assignRegisters();
 		
-//		StdStreams.vrb.print(ssa.cfg.toString());
 		if (dbg) {
 			StdStreams.vrb.println(RegAllocator.joinsToString());
 		}
@@ -388,7 +387,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 			}
 			
 			
-			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + code.iCount);
+//			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + code.iCount);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst: {
 				int dReg = res.reg;

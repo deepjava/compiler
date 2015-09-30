@@ -140,7 +140,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
-		RegAllocator.assignRegisters(this);
+		RegAllocator.assignRegisters();
 		
 //		StdStreams.vrb.print(ssa.cfg.toString());
 		if (dbg) {

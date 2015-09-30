@@ -128,6 +128,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (int i = 0; i < b.nofPhiFunc; i++) {
 					PhiFunction phi = b.phiFunctions[i];
 					phi.last = last;
+					SSAInstruction instr = ((SSANode) b.next).instructions[0];
+					SSAInstruction instr1 = instr.next;
+					instr.next = phi;
+					phi.next = instr1;
 				}
 			}
 			b = (SSANode) b.next;
@@ -147,7 +151,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						PhiFunction phi = (PhiFunction)opdInstr;
 						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
 						if (phi.deleted && phi != instr) {
-							if (dbg) StdStreams.vrb.println("\tphi-function is deleted");
+//							if (dbg) StdStreams.vrb.println("\tphi-function is deleted");
 							phi.used = true;
 							SSAValue delPhiOpd = phi.getOperands()[0];
 							opdInstr = delPhiOpd.owner;
@@ -312,7 +316,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			if (opds != null) {
 				for (SSAValue opd : opds) {
-					if (dbg) StdStreams.vrb.println("\t\topd : " + opd.n);
+//					if (dbg) StdStreams.vrb.println("\t\topd : " + opd.n);
 					SSAInstruction opdInstr = opd.owner;
 					if (opd.join == null) {	// regular operand
 						if (opd.end < currNo) opd.end = currNo; 
@@ -428,9 +432,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
 	 */
-	static void assignRegisters(CodeGenPPC code) {
-		// handle loadLocal first, 
-		if (dbg) StdStreams.vrb.println("\thandle load local:");
+	static void assignRegisters() {
+		// handle loadLocal first, then TODO
+		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
@@ -469,6 +473,29 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
+			
+			// check if phi-functions which could have been valid up to the last 
+			// SSA instruction of the last node can now release their registers 
+			if (instr.ssaOpcode != sCPhiFunc) {
+				SSAInstruction instr1 = instr.next;
+				if (dbg) {if (instr1 != null) StdStreams.vrb.println("\tfree registers for phi-functions of last node");}
+				while (instr1 != null) {
+					SSAValue val = instr1.result.join;
+					if (val != null && val.reg > -1 && val.end < i) {
+						if (dbg) StdStreams.vrb.println("\t\tfree register of phi function: " + instr1.toString());
+						if (val.type == tLong) {
+							freeReg(gpr, val.regLong);
+							freeReg(gpr, val.reg);
+						} else if ((val.type == tFloat) || (val.type == tDouble)) {
+							freeReg(fpr, val.reg);
+						} else {
+							freeReg(gpr, val.reg);
+						}
+					}
+					instr1 = instr1.next;
+				}
+			}
+			
 			if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
@@ -548,7 +575,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < maxStackSlots && res.join == null) {
-					if (dbg) StdStreams.vrb.println("\timmediate");
+					if (dbg) StdStreams.vrb.print("\timmediate");
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 
 					// and opd must have join == null
@@ -580,7 +607,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						} else if (type == tInteger) { 
 							// check if multiplication by const which is smaller than 2^15
 							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
-						} else findReg(res);
+						} else {
+							if (dbg) StdStreams.vrb.println(" not possible");
+							findReg(res);
+						}
 					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
 						// check if division by const which is a power of 2, const must be divisor and positive
 						StdConstant constant = (StdConstant)res.constant;
@@ -621,22 +651,20 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						}
 					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idASM))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idADR_OF_METHOD))) {
-					} else 	// opd cannot be used as immediate opd	
+					} else {	// opd cannot be used as immediate opd	
+						if (dbg) StdStreams.vrb.println(" not possible");
 						findReg(res);	
+					}	
 				} else 	// opd has index != -1 or cannot be used as immediate opd	
 					findReg(res);			
 			} else {	// all other instructions
 				if (res.reg < 0) 	// not yet assigned
 					findReg(res);
 			}
-			if (dbg) StdStreams.vrb.println("\t\treg = " + res.reg);
+			if (dbg) StdStreams.vrb.println("\treg = " + res.reg);
 
-			if (res.regGPR1 != -1) {
-				freeReg(gpr, res.regGPR1);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg1");
-			}
-			if (res.regGPR2 != -1) {
-				freeReg(gpr, res.regGPR2);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg2");
-			}
+			if (res.regGPR1 != -1) freeReg(gpr, res.regGPR1);
+			if (res.regGPR2 != -1) freeReg(gpr, res.regGPR2);
 
 			// free registers of operands if end of live range reached 
 			SSAValue[] opds = instr.getOperands();
@@ -738,7 +766,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	static int reserveReg(boolean isGPR, boolean isNonVolatile) {
-		if (dbg) StdStreams.vrb.println("\tbefore reserving " + Integer.toHexString(regsGPR));
+		if (dbg) StdStreams.vrb.print("\tbefore reserving " + Integer.toHexString(regsGPR));
 		if (isGPR) {
 			int i;
 			if (!isNonVolatile) {	// is volatile

@@ -428,9 +428,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
 	 */
-	static void assignRegisters(CodeGenARM code) {
-		// handle loadLocal first, 
-		if (dbg) StdStreams.vrb.println("\thandle load local:");
+	static void assignRegisters() {
+		// handle loadLocal first, then TODO
+		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
@@ -548,7 +548,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < maxStackSlots && res.join == null) {
-					if (dbg) StdStreams.vrb.println("\timmediate");
+					if (dbg) StdStreams.vrb.print("\timmediate");
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 
 					// and opd must have join == null
@@ -580,7 +580,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						} else if (type == tInteger) { 
 							// check if multiplication by const which is smaller than 2^15
 							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
-						} else findReg(res);
+						} else {
+							if (dbg) StdStreams.vrb.println(" not possible");
+							findReg(res);
+						}
 					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
 						// check if division by const which is a power of 2, const must be divisor and positive
 						StdConstant constant = (StdConstant)res.constant;
@@ -621,22 +624,20 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						}
 					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idASM))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idADR_OF_METHOD))) {
-					} else 	// opd cannot be used as immediate opd	
+					} else {	// opd cannot be used as immediate opd	
+						if (dbg) StdStreams.vrb.println(" not possible");
 						findReg(res);	
+					}	
 				} else 	// opd has index != -1 or cannot be used as immediate opd	
 					findReg(res);			
 			} else {	// all other instructions
 				if (res.reg < 0) 	// not yet assigned
 					findReg(res);
 			}
-			if (dbg) StdStreams.vrb.println("\t\treg = " + res.reg);
+			if (dbg) StdStreams.vrb.println("\treg = " + res.reg);
 
-			if (res.regGPR1 != -1) {
-				freeReg(gpr, res.regGPR1);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg1");
-			}
-			if (res.regGPR2 != -1) {
-				freeReg(gpr, res.regGPR2);	if (dbg) StdStreams.vrb.println("\tfreeing aux GPR reg2");
-			}
+			if (res.regGPR1 != -1) freeReg(gpr, res.regGPR1);
+			if (res.regGPR2 != -1) freeReg(gpr, res.regGPR2);
 
 			// free registers of operands if end of live range reached 
 			SSAValue[] opds = instr.getOperands();
@@ -738,7 +739,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	}
 
 	static int reserveReg(boolean isGPR, boolean isNonVolatile) {
-		if (dbg) StdStreams.vrb.println("\tbefore reserving " + Integer.toHexString(regsGPR));
+		if (dbg) StdStreams.vrb.print("\tbefore reserving " + Integer.toHexString(regsGPR));
 		if (isGPR) {
 			int i;
 			if (!isNonVolatile) {	// is volatile
