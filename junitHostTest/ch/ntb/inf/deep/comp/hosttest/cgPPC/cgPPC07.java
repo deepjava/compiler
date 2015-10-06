@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ntb.inf.deep.cg.ppc.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -46,7 +46,7 @@ public class cgPPC07 extends TestCgPPC {
 	@Test
 	public void emptyIntArray() {
 		getCode("emptyIntArray");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
@@ -61,7 +61,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertTrue("wrong join", checkJoin(getJoin(4), 0, 13, nonVol, false));
 		assertTrue("wrong join", checkJoin(getJoin(5), 1, 15, nonVol, false));
 		assertTrue("wrong join", checkJoin(getJoin(6), 2, 13, vol, false));
-		for (int i = 7; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 7; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 
@@ -69,7 +69,7 @@ public class cgPPC07 extends TestCgPPC {
 	@Test
 	public void clinit() {
 		getCode("<clinit>");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 
@@ -77,7 +77,7 @@ public class cgPPC07 extends TestCgPPC {
 	@Test
 	public void init() {
 		getCode("<init>");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 }

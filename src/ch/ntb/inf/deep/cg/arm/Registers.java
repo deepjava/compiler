@@ -19,20 +19,20 @@
 package ch.ntb.inf.deep.cg.arm;
 
 interface Registers {
-	final int nofGPR = 32;	
-	final int nofFPR = 32;
+	final int nofGPR = 23;	
+	final int nofFPR = 16;
 	
-	final int topGPR = 31;	// highest numbered GPR
+	final int topGPR = 22;	// highest numbered GPR
 	final int topFPR = 15;	// highest numbered FPR
 	
 	final int paramStartGPR = 2;	// GPR with first parameter
 	final int paramStartFPR = 1;	// FPR with first parameter
 	
-	final int paramEndGPR = 8;	// GPR with last parameter, must be < nonVolStartGPR
+	final int paramEndGPR = 7;	// GPR with last parameter, must be < nonVolStartGPR
 	final int paramEndFPR = 6;	// FPR with last parameter, must be < nonVolStartFPR
 	
-	final int nonVolStartGPR = 10;	// first nonvolatile GPR
-	final int nonVolStartFPR = 10;	// first nonvolatile FPR
+	final int nonVolStartGPR = 8;	// first nonvolatile GPR
+	final int nonVolStartFPR = 8;	// first nonvolatile FPR
 	
 	final int returnGPR1 = 2;	// GPR with return value
 	final int returnGPR2 = 3;	// GPR with return value used for longs

@@ -21,7 +21,7 @@ package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
-import ch.ntb.inf.deep.cg.ppc.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
@@ -75,7 +75,7 @@ public class TestCgPPC implements ICclassFileConsts {
 	}
 
 	public static SSAValue getJoin(int index) {
-		return RegAllocator.joins[index];
+		return RegAllocatorPPC.joins[index];
 	}
 	
 	public static boolean checkJoin(SSAValue join, int start, int end, boolean nonVol, boolean next) {

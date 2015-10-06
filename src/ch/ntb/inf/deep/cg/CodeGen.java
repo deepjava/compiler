@@ -28,7 +28,9 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = false;
+	protected static final boolean dbg = true;
+
+	protected static final int maxNofParam = 32;
 
 	protected static final int defaultNofInstr = 32;
 	protected static final int defaultNofFixup = 8;
@@ -54,6 +56,9 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	protected static Method strAllocC;
 	protected static Method strAllocCII;
 	
+	// last instruction where parameters is used
+	public static int[] paramRegEnd = new int[maxNofParam];
+
 	public CodeGen() {}
 	
 	public abstract void translateMethod(Method m);

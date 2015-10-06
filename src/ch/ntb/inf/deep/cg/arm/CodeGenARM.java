@@ -18,22 +18,17 @@
 
 package ch.ntb.inf.deep.cg.arm;
 
-import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.classItems.*;
-import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
-	static final int maxNofParam = 32;
 	private static final int arrayLenOffset = 6;	
 	private static final int tempStorageSize = 48;	// 1 FPR(temp), 4 GPRs 
 	
@@ -68,8 +63,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
 	// register of parameter, long and doubles count as 2 parameters
 	static int[] paramRegNr = new int[maxNofParam];
-	// last instruction where parameters is used
-	static int[] paramRegEnd = new int[maxNofParam];
 	
 	// information about into which registers parameters of this method go 
 	private static int nofMoveGPR, nofMoveFPR;
@@ -123,7 +116,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("build intervals");
 //		StdStreams.vrb.print(ssa.cfg.toString());
 //		StdStreams.vrb.println(ssa.toString());
-		RegAllocator.buildIntervals(ssa);
+		RegAllocatorARM.buildIntervals(ssa);
 		
 		if (dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
@@ -140,11 +133,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
-		RegAllocator.assignRegisters();
+		RegAllocatorARM.assignRegisters();
 		
 //		StdStreams.vrb.print(ssa.cfg.toString());
 		if (dbg) {
-			StdStreams.vrb.println(RegAllocator.joinsToString());
+			StdStreams.vrb.println(RegAllocatorARM.joinsToString());
 		}
 		if (dbg) {
 			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
@@ -248,8 +241,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocator.reserveReg(gpr, true);
-						int regLong = RegAllocator.reserveReg(gpr, true);
+						int reg = RegAllocatorARM.reserveReg(gpr, true);
+						int regLong = RegAllocatorARM.reserveReg(gpr, true);
 						moveGPRsrc[nofMoveGPR] = nofParamGPR;
 						moveGPRsrc[nofMoveGPR+1] = nofParamGPR+1;
 						moveGPRdst[nofMoveGPR++] = reg;
@@ -259,16 +252,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if(dbg) StdStreams.vrb.print(reg + ",r" + regLong);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
-						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
+						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg);
 						else {
-							reg = RegAllocator.reserveReg(gpr, false);
+							reg = RegAllocatorARM.reserveReg(gpr, false);
 							moveGPRsrc[nofMoveGPR] = nofParamGPR;
 							moveGPRdst[nofMoveGPR++] = reg;
 						}
 						int regLong = paramStartGPR + nofParamGPR + 1;
-						if (regLong <= paramEndGPR) RegAllocator.reserveReg(gpr, regLong);
+						if (regLong <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, regLong);
 						else {
-							regLong = RegAllocator.reserveReg(gpr, false);
+							regLong = RegAllocatorARM.reserveReg(gpr, false);
 							moveGPRsrc[nofMoveGPR] = nofParamGPR + 1;
 							moveGPRdst[nofMoveGPR++] = regLong;
 						}
@@ -283,16 +276,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("fr");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocator.reserveReg(fpr, true);
+						int reg = RegAllocatorARM.reserveReg(fpr, true);
 						moveFPRsrc[nofMoveFPR] = nofParamFPR;
 						moveFPRdst[nofMoveFPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
 						int reg = paramStartFPR + nofParamFPR;
-						if (reg <= paramEndFPR) RegAllocator.reserveReg(fpr, reg);
+						if (reg <= paramEndFPR) RegAllocatorARM.reserveReg(fpr, reg);
 						else {
-							reg = RegAllocator.reserveReg(fpr, false);
+							reg = RegAllocatorARM.reserveReg(fpr, false);
 							moveFPRsrc[nofMoveFPR] = nofParamFPR;
 							moveFPRdst[nofMoveFPR++] = reg;
 						}
@@ -306,16 +299,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocator.reserveReg(gpr, true);
+						int reg = RegAllocatorARM.reserveReg(gpr, true);
 						moveGPRsrc[nofMoveGPR] = nofParamGPR;
 						moveGPRdst[nofMoveGPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
-						if (reg <= paramEndGPR) RegAllocator.reserveReg(gpr, reg);
+						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg);
 						else {
-							reg = RegAllocator.reserveReg(gpr, false);
+							reg = RegAllocatorARM.reserveReg(gpr, false);
 							moveGPRsrc[nofMoveGPR] = nofParamGPR;
 							moveGPRdst[nofMoveGPR++] = reg;
 						}

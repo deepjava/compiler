@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ntb.inf.deep.cg.ppc.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -45,7 +45,7 @@ public class cgPPC01 extends TestCgPPC {
 	@Test
 	public void assignment1() {
 		getCode("assignment1");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
@@ -71,28 +71,28 @@ public class cgPPC01 extends TestCgPPC {
 	@Test
 	public void simple1() {
 		getCode("simple1");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void simple2() {
 		getCode("simple2");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void simple3() {
 		getCode("simple3");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void simple4() {
 		getCode("simple4");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 
@@ -100,7 +100,7 @@ public class cgPPC01 extends TestCgPPC {
 	@Test
 	public void simple5() {
 		getCode("simple5");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 
@@ -108,7 +108,7 @@ public class cgPPC01 extends TestCgPPC {
 	@Test
 	public void simple6() {
 		getCode("simple6");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 }

@@ -23,6 +23,8 @@ interface InstructionOpcs {
 	final int condNOTEQ = 1;
 	final int condCS = 2;
 	final int condAlways = 14;
+	
+	
 	final int TOifequal = 0x04;
 	final int TOifless = 0x10;
 	final int TOifgreater = 0x08;

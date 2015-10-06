@@ -120,7 +120,7 @@ public class Launcher implements ICclassFileConsts {
 				cg = new CodeGenPPC();
 				InstructionDecoder.dec = new InstructionDecoderPPC();
 			}
-			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) {
+			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("arm32"))) {
 				cg = new CodeGenARM();
 				InstructionDecoder.dec = new InstructionDecoderARM();
 			}
@@ -201,6 +201,8 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 
+		if (reporter.nofErrors > 0) return reporter.nofErrors;;
+		
 		// handle interfaces with class constructor, translating code, calculating code size
 		if(dbg) vrb.println("[LAUNCHER] handle interfaces with class constructor");
 		intf = Class.constBlockInterfaces;	

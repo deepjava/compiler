@@ -16,9 +16,9 @@
  * 
  */
 
-package ch.ntb.inf.deep.cg.arm;
+package ch.ntb.inf.deep.cg.ppc;
 
-import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.cg.RegAllocator;
 import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
@@ -32,40 +32,21 @@ import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.ssa.SSAValue;
 import ch.ntb.inf.deep.ssa.SSAValueType;
 import ch.ntb.inf.deep.ssa.instruction.Call;
-import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
-/**
- * register allocation
- * 
- */
-public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
-	private static final boolean dbg = false;
-
-	private static final int nofSSAInstr = 256;
-	public static final int maxNofJoins = 32;
-	
-	static SSA ssa;
-	static int maxStackSlots;
+public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
 	static int regsGPR, regsFPR;
 	static int nofNonVolGPR, nofNonVolFPR;
 	static int nofVolGPR, nofVolFPR;
 	// used to find call in this method with most parameters -> gives stack size
 	static int maxNofParamGPR, maxNofParamFPR;
-	
-	// local and linear copy of all SSA-instructions of all nodes
-	private static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
-	private static int nofInstructions;
-	
-	// used for resolving phi functions
-	public static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
 
 	/**
-	 * generates the live ranges of all SSAValues and assigns register to them
+	 * Generates the live ranges of all SSAValues of a method and assigns registers to them
 	 */
 	static void buildIntervals(SSA ssa) {
-		RegAllocator.ssa = ssa;
+		RegAllocatorPPC.ssa = ssa;
 		maxStackSlots = ssa.cfg.method.maxStackSlots;
 		regsGPR = regsGPRinitial;
 		regsFPR = regsFPRinitial;
@@ -102,232 +83,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 //		printJoins();
 //		ssa.print(2);
 		assignRegType();	// assign volatile or nonvolatile type
-	}
-
-	private static void findLastNodeOfPhi(SSA ssa) {
-		if (dbg) StdStreams.vrb.println("determine end of range for phi functions in loop headers");
-		SSANode b = (SSANode) ssa.cfg.rootNode;
-		int last;
-		while (b != null) {
-			last = 0;
-			if (b.isLoopHeader()) {
-				// set variable last to last instruction of this node
-				SSAValue val = b.instructions[b.nofInstr - 1].result;
-				if (val != null) last = val.n;
-				// check if predecessor is further down the code and has set last to a higher value
-				CFGNode[] pred = b.predecessors;
-				for (int i = 0; i < b.nofPredecessors; i++) {
-					SSANode n = (SSANode)pred[i];
-					if (n.nofInstr == 0) continue; // node could have no ssa instruction (in catch clause)
-					val = n.instructions[n.nofInstr - 1].result;
-					if (val != null) {
-						int end = val.n;
-						if (end > last) last = end;
-					}
-				}
-				for (int i = 0; i < b.nofPhiFunc; i++) {
-					PhiFunction phi = b.phiFunctions[i];
-					phi.last = last;
-				}
-			}
-			b = (SSANode) b.next;
-		}			
-	}
-
-	private static void markUsedPhiFunctions() {
-		// determine which deleted phi-functions are still used further down
-		if (dbg) StdStreams.vrb.println("determine which phi functions are used further down");
-		for (int i = 0; i < nofInstructions; i++) {
-			SSAInstruction instr = instrs[i];
-			SSAValue[] opds = instr.getOperands();
-			if (opds != null) {
-				for (SSAValue opd : opds) {
-					SSAInstruction opdInstr = opd.owner;
-					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCPhiFunc)) {
-						PhiFunction phi = (PhiFunction)opdInstr;
-						if (phi.deleted && instr.ssaOpcode == sCPhiFunc && ((PhiFunction)instr).deleted) continue;
-						if (phi.deleted && phi != instr) {
-							if (dbg) StdStreams.vrb.println("\tphi-function is deleted");
-							phi.used = true;
-							SSAValue delPhiOpd = phi.getOperands()[0];
-							opdInstr = delPhiOpd.owner;
-							if (opdInstr.ssaOpcode == sCPhiFunc) {	
-								phi = (PhiFunction)opdInstr;
-								if (phi.deleted) {
-									phi.used = true;
-								}
-							}
-							// set "used" in all del phi-functions in dominators
-							SSANode origin = getNode(opdInstr);
-							SSANode current = getNode(phi);
-							markInDominators(origin, current, phi.result.index);
-						}
-					}
-				}	
-			} 
-		}
-	}
-
-	private static SSANode getNode(SSAInstruction opdInstr) {
-		SSANode b = (SSANode) ssa.cfg.rootNode;
-		boolean found = false;
-		while (b != null) {
-			for (int i = 0; i < b.nofPhiFunc; i++) {
-				if (b.phiFunctions[i] == opdInstr) found = true;
-			}
-			for (int i = 0; i < b.nofInstr; i++) {
-				if (b.instructions[i] == opdInstr) found = true;
-			}
-			if (found) break;
-			b = (SSANode) b.next;
-		}	
-		if (found) return b; else return null;
-	}
-
-	private static void markInDominators(SSANode origin, SSANode current, int index) {
-		SSANode node = current;
-		while (node.idom != null && node != origin && node.idom != origin) {
-			node = (SSANode)node.idom;
-			SSAValue val = node.exitSet[index];
-			if (val != null) {
-				SSAInstruction instr = node.exitSet[index].owner;
-				if (instr.ssaOpcode == sCPhiFunc) {
-					PhiFunction phi = (PhiFunction)instr;
-					if (phi.deleted) phi.used = true;
-				}
-			}
-		}
-	}
-
-	private static void resolvePhiFunctions() {
-		if (dbg) StdStreams.vrb.println("resolving phi functions, set joins");
-		// first run
-		for (int i = 0; i < nofInstructions; i++) {
-			SSAInstruction instr = instrs[i];
-//				instr.print(2);
-			if (instr.ssaOpcode == sCPhiFunc) {
-//				StdStreams.vrb.print("processing: "); instr.print(0);
-				PhiFunction phi = (PhiFunction)instr;
-				if (phi.deleted && !phi.used) continue;
-				SSAValue[] opds = instr.getOperands();
-				SSAValue res = phi.result;
-				for (SSAValue opd : opds) {	// set range of phi functions
-					if (opd.owner.ssaOpcode == sCloadLocal) res.start = 0;
-					if (res.start > opd.n) res.start = opd.n;
-					if (res.start > res.n) res.start = res.n;
-					if (res.end < opd.n) res.end = opd.n;
-					if (res.end < res.n) res.end = res.n;
-				}
-				
-				SSAValue joinVal;
-				joinVal = joins[res.index];
-				while (joinVal != null && joinVal.next != null) joinVal = joinVal.next;
-				if (joinVal == null) {
-					joinVal = joins[res.index] = new SSAValue();
-					joinVal.start = res.start;
-					joinVal.end = res.end;
-					joinVal.type = res.type;
-				} else {
-//					StdStreams.vrb.println("\tjoin val exists for index: " + res.index + " res: " + res.start + " to " + res.end + " joinVal: " + joinVal.start + " to " + joinVal.end);
-					if (res.start <= joinVal.end) { // does range overlap with current join?
-//						StdStreams.vrb.println("\t\tjoinVal overlaps");
-						// it could even overlap with previous joins
-						SSAValue join = joins[res.index]; 
-						while (join.next != null) {
-							if (res.start <= join.end) { // does range overlap with previous join, then merge
-//								StdStreams.vrb.println("\t\tmerge joins: prevJoin:" + join.start + " to " + join.end);
-								res.join = join;
-								SSAValue ptr = join.next;
-								while (ptr != null) {
-									for (int k = 0; k < nofInstructions; k++) {
-										if (instrs[k].ssaOpcode == sCPhiFunc && instrs[k].result.join == ptr) 
-											instrs[k].result.join = join;
-									}						
-									ptr = ptr.next;
-								}
-								join.next = null;
-								joinVal = join;
-							}
-							if (join.next != null) join = join.next;
-						}
-						if (res.start < joinVal.start) joinVal.start = res.start;
-						if (res.end > joinVal.end) joinVal.end = res.end;
-					} else {	// does not overlap, create new join
-//						StdStreams.vrb.println("joinVal does not overlap, create new join value");
-						joinVal.next = new SSAValue();
-						joinVal = joinVal.next;
-						joinVal.start = res.start;
-						joinVal.end = res.end;
-						joinVal.type = res.type;
-					}
-				}
-
-				assert joinVal != null;
-				res.join = joinVal;	// set join of phi function
-				res.join.index = res.index;
-			} 				
-		}
-
-		// 2nd run, set joins of all operands of phi functions
-		for (int i = 0; i < nofInstructions; i++) {
-			SSAInstruction instr = instrs[i];
-			if (instr.ssaOpcode == sCPhiFunc) {
-				PhiFunction phi = (PhiFunction)instr;
-				if ((phi.deleted && !phi.used)) continue;
-				SSAValue[] opds = instr.getOperands();
-				for (SSAValue opd : opds) {
-					if (opd.owner.ssaOpcode == sCPhiFunc) continue;	// already set
-					if (phi.result.join != null) {
-						opd.join = phi.result.join;
-					}
-				}
-			} 		
-		}
-	}
-
-	// computes the live ranges of all SSAValues 
-	private static void calcLiveRange(SSA ssa) {
-		if (dbg) StdStreams.vrb.println("calculating live ranges");
-		for (int i = 0; i < nofInstructions; i++) {
-//			instr.print(2);
-			SSAInstruction instr = instrs[i];
-			SSAValue res = instr.result;
-			int currNo = res.n;
-			res.end = currNo;	// set end to current instruction
-			SSAValue[] opds = instr.getOperands();
-			
-			if (instr.ssaOpcode == sCPhiFunc) {	
-				if (res.join == null) continue;	// phi is deleted and not used
-				int last = ((PhiFunction)instr).last;
-				if (res.join.end < last) res.join.end = last;
-			}
-			
-			if (res.join != null) {	// set start of join
-				if (res.join.start > currNo) {
-//					StdStreams.vrb.println("start was: " + res.join.start);
-					res.join.start = currNo;
-//					StdStreams.vrb.println("start set to: " + currNo);
-				}
-			}
-			
-			if (opds != null) {
-				for (SSAValue opd : opds) {
-					if (dbg) StdStreams.vrb.println("\t\topd : " + opd.n);
-					SSAInstruction opdInstr = opd.owner;
-					if (opd.join == null) {	// regular operand
-						if (opd.end < currNo) opd.end = currNo; 
-					} else {	// is operand of phi function 
-						if (opd.join.end < currNo) opd.join.end = currNo;
-						if (opd.join.start > currNo) opd.join.start = currNo;
-					}
-					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCloadLocal)) {	
-						if (opd.join != null) opd.join.start = 0;
-						// store last use of a parameter
-						CodeGenARM.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
-					}
-				}
-			}
-		}
 	}
 
 	// assign volatile or nonvolatile register 
@@ -370,7 +125,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			int endNo = res.end;
 			if (instr.ssaOpcode != sCloadLocal && res.join != null) continue;
 			else if (instr.ssaOpcode == sCloadLocal && res.join != null) {
-				if (res.join.nonVol) CodeGenARM.paramHasNonVolReg[res.join.index - maxStackSlots] = true;
+				if (res.join.nonVol) CodeGenPPC.paramHasNonVolReg[res.join.index - maxStackSlots] = true;
 			} else if (instr.ssaOpcode == sCloadLocal) {
 				// check if call instruction between start of method and here
 				// call to inline method is omitted
@@ -379,7 +134,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
 							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 						res.nonVol = true;
-						CodeGenARM.paramHasNonVolReg[res.index - maxStackSlots] = true;
+						CodeGenPPC.paramHasNonVolReg[res.index - maxStackSlots] = true;
 					}
 				}
 			} else {
@@ -413,13 +168,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
 				Call call = (Call)instr;
 				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
-					CodeGenARM.enFloatsInExc = true;
+					if ((((Method)call.item).id) == CodeGenPPC.idENABLE_FLOATS) {
+					CodeGenPPC.enFloatsInExc = true;
 				}
 				int id = ((Method)call.item).id;
-				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
-					CodeGenARM.tempStorage = true;
+				if (id == CodeGenPPC.idDoubleToBits || (id == CodeGenPPC.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
+					id == CodeGenPPC.idFloatToBits || (id == CodeGenPPC.idBitsToFloat))  // FloatToBits or BitsToFloat
+					CodeGenPPC.tempStorage = true;
 			}
 		}
 	}
@@ -429,7 +184,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	 * finally, determine how many parameters are passed on the stack
 	 */
 	static void assignRegisters() {
-		// handle loadLocal first, then TODO
+		// handle loadLocal first
 		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
@@ -444,13 +199,13 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				}
 				int type = res.type;
 				if (type == tLong) {
-					res.regLong = CodeGenARM.paramRegNr[res.index - maxStackSlots];
-					res.reg = CodeGenARM.paramRegNr[res.index+1 - maxStackSlots];
+					res.regLong = CodeGenPPC.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenPPC.paramRegNr[res.index+1 - maxStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					res.reg = CodeGenARM.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenPPC.paramRegNr[res.index - maxStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					res.reg = CodeGenARM.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenPPC.paramRegNr[res.index - maxStackSlots];
 				}	
 				SSAValue joinVal = res.join;
 				if (joinVal != null) {
@@ -469,6 +224,29 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
+			
+			// check if phi-functions which could have been valid up to the last 
+			// SSA instruction of the last node can now release their registers 
+			if (instr.ssaOpcode != sCPhiFunc) {
+				SSAInstruction instr1 = instr.next;
+				if (dbg) {if (instr1 != null) StdStreams.vrb.println("\tfree registers for phi-functions of last node");}
+				while (instr1 != null) {
+					SSAValue val = instr1.result.join;
+					if (val != null && val.reg > -1 && val.end < i) {
+						if (dbg) StdStreams.vrb.println("\t\tfree register of phi function: " + instr1.toString());
+						if (val.type == tLong) {
+							freeReg(gpr, val.regLong);
+							freeReg(gpr, val.reg);
+						} else if ((val.type == tFloat) || (val.type == tDouble)) {
+							freeReg(fpr, val.reg);
+						} else {
+							freeReg(gpr, val.reg);
+						}
+					}
+					instr1 = instr1.next;
+				}
+			}
+			
 			if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
@@ -496,11 +274,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			// reserve temporary storage on the stack for certain fpr operations
 			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
-				CodeGenARM.tempStorage = true;
+				CodeGenPPC.tempStorage = true;
 			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
-				CodeGenARM.tempStorage = true;
+				CodeGenPPC.tempStorage = true;
 			if ((instr.ssaOpcode == sCdiv || instr.ssaOpcode == sCrem) && res.type == tLong)
-				CodeGenARM.tempStorage = true;
+				CodeGenPPC.tempStorage = true;
 
 			// reserve register for result of instruction
 			if (instr.ssaOpcode == sCloadLocal) {
@@ -559,10 +337,10 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
 							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-							if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
+							if ((immValLong >= -32768) && (immValLong <= 32767)) {} else findReg(res);
 						} else {	
 							int immVal = constant.valueH;
-							if ((immVal >= -255) && (immVal <= 255)) {} else findReg(res);
+							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						}
 					} else if (instr1.ssaOpcode == sCmul) {
 						StdConstant constant = (StdConstant)res.constant;
@@ -604,12 +382,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							|| (instr1.ssaOpcode == sCshr) && (res == instr1.getOperands()[1])
 							|| (instr1.ssaOpcode == sCushr) && (res == instr1.getOperands()[1])
 							// shift operators only if immediate is shift distance (and not value to be shifted)
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETGPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETFPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETSPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTGPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTFPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTSPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETGPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETFPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETSPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTGPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTFPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTSPR) && (instr1.getOperands()[0] == res))
 							// calls to some unsafe methods
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
 						// branches but not switches (the second operand of a switch is already constant)
@@ -622,8 +400,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 							int immVal = constant.valueH;
 							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						}
-					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idASM))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idADR_OF_METHOD))) {
+					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idASM))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idADR_OF_METHOD))) {
 					} else {	// opd cannot be used as immediate opd	
 						if (dbg) StdStreams.vrb.println(" not possible");
 						findReg(res);	
@@ -645,7 +423,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (SSAValue opd : opds) {
 					if (opd.join == null) {
 						if ((opd.owner != null) && (opd.owner.ssaOpcode == sCloadLocal)) {
-							if (CodeGenARM.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
+							if (CodeGenPPC.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
 								if (opd.type == tLong) {
 									freeReg(gpr, opd.regLong);
 									freeReg(gpr, opd.reg);
@@ -711,14 +489,14 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				if (fpr > maxNofParamFPR) maxNofParamFPR = fpr; 
 			}
 		}
-		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
-		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
-		CodeGenARM.nofVolGPR = nofVolGPR;
-		CodeGenARM.nofVolFPR = nofVolFPR;
+		CodeGenPPC.nofNonVolGPR = nofNonVolGPR;
+		CodeGenPPC.nofNonVolFPR = nofNonVolFPR;
+		CodeGenPPC.nofVolGPR = nofVolGPR;
+		CodeGenPPC.nofVolFPR = nofVolFPR;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
+		if (nof > 0) CodeGenPPC.callParamSlotsOnStack = nof;
 		nof = maxNofParamFPR - (paramEndFPR - paramStartFPR + 1);
-		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;
+		if (nof > 0) CodeGenPPC.callParamSlotsOnStack += nof*2;
 	}
 
 	public static boolean isPowerOf2(long val) {
@@ -810,32 +588,4 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 	}
 	
-	public static String joinsToString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("joins at index: [");
-		for (int i = 0; i < 32; i++) {
-			if (joins[i] != null) sb.append("x");
-			sb.append(",");
-		}
-		sb.append("]\nlive ranges of phi functions\n");
-		for (int i = 0; i < 32; i++) {
-			if (joins[i] != null) {
-				sb.append("\tindex=" + joins[i].index);
-				SSAValue next = joins[i];
-				while (next != null) {
-					sb.append(": start=" + next.start);
-					sb.append(", end=" + next.end);
-					if (next.nonVol) sb.append(", nonVol"); else sb.append(", vol");
-					sb.append(", type=" + next.typeName());
-					if (next.typeName() == "Long") sb.append(", regLong=" + next.regLong);
-					sb.append(", reg=" + next.reg);
-					if (next.regGPR1 > -1) sb.append(", regAux1=" + next.regGPR1);
-					next = next.next;
-				}
-				sb.append("\n");
-			}
-		}
-		return sb.toString();
-	}
-
 }

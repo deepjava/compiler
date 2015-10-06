@@ -23,7 +23,7 @@ import static org.junit.Assert.assertNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.ntb.inf.deep.cg.ppc.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -44,7 +44,7 @@ public class cgPPC00 extends TestCgPPC {
 	@Test
 	public void testConstructor() {
 		getCode("<init>");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	

@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.cg.ppc.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class Monadic extends SSAInstruction {
@@ -53,7 +53,7 @@ public class Monadic extends SSAInstruction {
 		if (result.index != -1) sb.append(", index=" + result.index);
 		if (result.join != null) {
 			sb.append(", join=[" + result.index + "(");
-			SSAValue join = RegAllocator.joins[result.index];
+			SSAValue join = RegAllocatorPPC.joins[result.index];
 			int i = 0;
 			while (join != null && join != result.join) {
 				i++;

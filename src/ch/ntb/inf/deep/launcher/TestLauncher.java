@@ -38,11 +38,12 @@ import ch.ntb.inf.deep.classItems.Method;
 @SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
 //		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("armExampleProject.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
