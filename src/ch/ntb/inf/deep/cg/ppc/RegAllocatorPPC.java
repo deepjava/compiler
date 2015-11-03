@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.cg.ppc;
 
+import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.RegAllocator;
 import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
@@ -221,14 +222,19 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 		}
 		
 		if (dbg) StdStreams.vrb.println("\thandle all other instructions:");
+		SSAInstruction currentInstr = null;
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
+			if (i == 0) CodeGen.firstSSAInstr = instr;
+			else currentInstr.next = instr; 
+			currentInstr = instr;
+			
 			SSAValue res = instr.result;
 			
 			// check if phi-functions which could have been valid up to the last 
 			// SSA instruction of the last node can now release their registers 
 			if (instr.ssaOpcode != sCPhiFunc) {
-				SSAInstruction instr1 = instr.next;
+				SSAInstruction instr1 = instr.freePhi;
 				if (dbg) {if (instr1 != null) StdStreams.vrb.println("\tfree registers for phi-functions of last node");}
 				while (instr1 != null) {
 					SSAValue val = instr1.result.join;
@@ -243,7 +249,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 							freeReg(gpr, val.reg);
 						}
 					}
-					instr1 = instr1.next;
+					instr1 = instr1.freePhi;
 				}
 			}
 			

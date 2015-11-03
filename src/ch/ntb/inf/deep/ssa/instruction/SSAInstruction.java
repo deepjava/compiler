@@ -28,7 +28,8 @@ public abstract class SSAInstruction implements SSAInstructionMnemonics {
 	public int ssaOpcode;
 	public int bca = -1; // used for debugging, marks bca of associated bytecode instruction
 	public int machineCodeOffset = -1; // used for debugging, e.g. step into and used for fixups of catch clauses
-	public SSAInstruction next; // used for freeing registers of phi-functions in loops
+	public SSAInstruction freePhi; // used for freeing registers of phi-functions in loops 
+	public SSAInstruction next; // TODO 
 	
 	public abstract void setOperands(SSAValue[] operands);
 	public abstract SSAValue[] getOperands();

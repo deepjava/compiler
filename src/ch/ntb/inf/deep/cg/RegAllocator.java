@@ -71,9 +71,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					PhiFunction phi = b.phiFunctions[i];
 					phi.last = last;
 					SSAInstruction instr = ((SSANode) b.next).instructions[0];
-					SSAInstruction instr1 = instr.next;
-					instr.next = phi;
-					phi.next = instr1;
+					SSAInstruction instr1 = instr.freePhi;
+					instr.freePhi = phi;
+					phi.freePhi = instr1;
 				}
 			}
 			b = (SSANode) b.next;
