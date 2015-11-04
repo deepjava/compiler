@@ -6,7 +6,7 @@ meta {
 }
 
 project junitTargetTestProject {
-	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre6/lib/rt.jar";
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 	
 	boardtype = ntbMpc555HB;
 	ostype = ntbSTS;
