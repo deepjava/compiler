@@ -19,10 +19,6 @@
 package ch.ntb.inf.deep.cg.arm;
 
 interface InstructionOpcs {
-	final int condEQ = 0;
-	final int condNOTEQ = 1;
-	final int condCS = 2;
-	final int condAlways = 14;
 	
 	
 	final int TOifequal = 0x04;
@@ -64,6 +60,155 @@ interface InstructionOpcs {
 	final int CRF2GT = 9;
 	final int CRF2LT = 8;
 	
+
+
+	
+	
+	
+	
+	
+	
+// ARM
+// /////////////////////////////////////
+	final int condEQ = 0;
+	final int condNOTEQ = 1;
+	final int condCS = 2;
+	final int condAlways = 14;
+	
+	
+	
+	
+	
+	
+	// Mnemonic extensions
+	public static String[] condString = {
+		" if equal",			// 0
+		" if not equal",		// 1
+		" if carry set",		// 2
+		" if carry clear",		// 3
+		" if negative",			// 4
+		" if positive",			// 5
+		" if overflow",			// 6
+		" if no overflow",		// 7
+		" if unsigned higher",	// 8
+		" if unsigned lower",	// 9
+		" if greater or equal",	// 10 0xa
+		" if less",				// 11 0xb
+		" if greater",			// 12 0xc
+		" if less or equal",	// 13 0xd
+		" always",				// 14 0xe
+		" reserved"				// 15 0xf
+		
+		// 
+//		"EQ",
+//		"NE",
+//		"CS",
+//		"CC",
+//		"MI",
+//		"PL",
+//		"VS",
+//		"VC",
+//		"HI",
+//		"LS",
+//		"GE",
+//		"LT",
+//		"GT",
+//		"LE",
+//		"",
+//		"reserved"
+	};
+	
+	// Constant shifts A8.4.1 p.291
+	public static String[] shiftType = {
+		"LSL",	// type==0
+		"LSR",	// type==1
+		"ASR",	// type==2
+		"ROR",	// type==3
+		"RRX"	// type==4
+	};
+	
+	public static String[] bankedRegR0 = {
+		"R8_usr",	// SYSm<4:3> = 0b00
+		"R9_usr",	//		SYSm<2:0> = 0b001
+		"R10_usr",
+		"R11_usr",
+		"R12_usr",
+		"SP_usr",
+		"LR_usr",
+		"UNPREDICTABLE",
+		"R8_fiq",	// SYSm<4:3> = 0b01
+		"R9_fiq",
+		"R10_fiq",
+		"R11_fiq",
+		"R12_fiq",
+		"SP_fiq",
+		"LR_fiq",
+		"UNPREDICTABLE",
+		"LR_irq",	// SYSm<4:3> = 0b10
+		"SP_irq",
+		"LR_svc",
+		"SP_svc",
+		"LR_abt",
+		"SP_abt",
+		"LR_und",
+		"SP_und",
+		"UNPREDICTABLE",	// SYSm<4:3> = 0b11
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"LR_mon",
+		"SP_mon",
+		"ELR_hyp",
+		"SP_hyp"
+	};
+	
+	public static String[] bankedRegR1 = {
+	"UNPREDICTABLE",	// SYSm<4:3> = 0b00
+	"UNPREDICTABLE",	//		SYSm<2:0> = 0b001
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",	// SYSm<4:3> = 0b01
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"SPSR_fiq",
+	"UNPREDICTABLE",
+	"SPSR_irq",			// SYSm<4:3> = 0b10
+	"UNPREDICTABLE",
+	"SPSR_svc",
+	"UNPREDICTABLE",
+	"SPSR_abt",
+	"UNPREDICTABLE",
+	"SPSR_und",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",	// SYSm<4:3> = 0b11
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"UNPREDICTABLE",
+	"SPSR_mon",
+	"UNPREDICTABLE",
+	"SPSR_hyp",
+	"UNPREDICTABLE"		
+	};
+	
+	public static String updateAPSR = "s";
+	
+	public static String spec_reg = "APSR";
+	
+	public static String[] amode = {
+		"DA",
+		"IA",
+		"DB",
+		"IB"
+	};
+	
+	
 	final int noShift = 0;
 	final int LSL = 0;
 	final int LRS = 1;
@@ -71,33 +216,14 @@ interface InstructionOpcs {
 	final int ROR = 3;
 	final int RRX = 3;
 
-	public static String[] condString = {
-		"if equal",
-		"if not equal",
-		"if carry set",
-		"if carry clear",
-		"if negative",
-		"if positive",
-		"if overflow",
-		"if no overflow",
-		"if unsigned higher",
-		"if unsigned lower",
-		"if greater or equal",
-		"if less",
-		"if greater",
-		"if less or equal",
-		"always",
-		"reserved"
-	};
-
 	final int // ARM Instructions
-		armAdc = (0x0 << 26) | (0x5 << 21),
-		armAnd = (0x0 << 26) | (0x0 << 21),
+////		armAdc = (0x0 << 26) | (0x5 << 21),
+////		armAnd = (0x0 << 26) | (0x0 << 21),
 		armAdd = (0x8 << 20),
 		armAdds = (0x9 << 20),
-		armB = (0x12 << 26),
-		armBl = (0x12 << 26) | 1,
-		armBc = (0x10 << 26),
+////		armB = (0x12 << 26),
+////		armBl = (0x12 << 26) | 1,
+////		armBc = (0x10 << 26),
 		armRsb = (0x26 << 20),
 		armRsbs = (0x27 << 20),
 		armSub = (0x24 << 20),
