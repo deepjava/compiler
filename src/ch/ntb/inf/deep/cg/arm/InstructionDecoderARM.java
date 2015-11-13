@@ -173,40 +173,37 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				
 				if ((parts[0].length()>=4) ? parts[0].substring(3, 4).equals("s") : false)	code |= (1<<20);	// S
 
-				int iOffset = 0;
-				if ( (parts[1].substring(0, 1).equals("r")) && (parts[2].substring(0, 1).equals("r"))) {	// Rd is not omitted
-					iOffset = 1;					
-					int d = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// Rd
-					code |= (d<<12);	// Rd
-				}
 
-				int n = Integer.parseInt( parts[1+iOffset].replaceAll("[^0-9]", "") );	// Rn
+				int d = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// Rd
+				code |= (d<<12);	// Rd
+				
+				int n = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// Rn
 				code |= (n<<16);	// Rn
 				
-				if (parts[2+iOffset].substring(0,1).equals("#")) {	// (immediate)
+				if (parts[3].substring(0,1).equals("#")) {	// (immediate)
 					code |= (1<<25);
-					int const32 = Integer.parseInt( parts[2+iOffset].replaceAll("[^0-9]", "") );	// const				
+					int const32 = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// const				
 					int imm12 = constToImm(const32);
 					code |= imm12;
 				}
 
-//				if (  ? parts[4+iOffset].substring(0,1).equals("r") : false ) {	// (register-shifted register)
-//					code |= (1<<4);
-//					int m = Integer.parseInt( parts[2+iOffset].replaceAll("[^0-9]", "") );	// Rm
-//					code |= m;	// Rm
-//					int typeCode = encodeShiftType(parts[3+iOffset]);	// shift type
-//					code |= (typeCode << 5);				// shift type				
-//					int s = Integer.parseInt( parts[4+iOffset].replaceAll("[^0-9]", "") );	// Rs
-//					code |= (s<<8);	// Rs		
-//				}
-
-				else if (parts[4+iOffset].substring(0,1).equals("#")) {	// (register)
-					int m = Integer.parseInt( parts[2+iOffset].replaceAll("[^0-9]", "") );	// Rm
+				if (parts.length >= 6 ? parts[5].startsWith("r") : false) {	// (register-shifted register)
+					code |= (1<<4);
+					int m = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// Rm
 					code |= m;	// Rm
-					if (parts.length >= (5+iOffset)) {	// <shift> is not omitted
-						int typeCode = encodeShiftType(parts[3+iOffset]);	// shift type
+					int typeCode = encodeShiftType(parts[4]);	// shift type
+					code |= (typeCode << 5);				// shift type				
+					int s = Integer.parseInt( parts[5].replaceAll("[^0-9]", "") );	// Rs
+					code |= (s<<8);	// Rs		
+				}
+
+				else if (	parts.length >= 4 ? parts[3].startsWith("r") : false) {	// (register)
+					int m = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// Rm
+					code |= m;	// Rm
+					if (parts.length >= (6)) {	// <shift> is not omitted
+						int typeCode = encodeShiftType(parts[4]);	// shift type
 						code |= (typeCode << 5);				// shift type
-						int imm5 = Integer.parseInt( parts[4+iOffset].replaceAll("[^0-9]", "") );	// imm5
+						int imm5 = Integer.parseInt( parts[5].replaceAll("[^0-9]", "") );	// imm5
 						code |= (imm5 << 7);	// imm5
 					}
 				}
