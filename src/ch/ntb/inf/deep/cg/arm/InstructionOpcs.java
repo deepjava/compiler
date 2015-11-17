@@ -217,15 +217,167 @@ interface InstructionOpcs {
 	final int RRX = 3;
 
 	final int // ARM Instructions
-////		armAdc = (0x0 << 26) | (0x5 << 21),
-////		armAnd = (0x0 << 26) | (0x0 << 21),
-		armAdd = (0x8 << 20),
-		armAdds = (0x9 << 20),
+	
+	// createDataProcImm / createDataProcReg / createDataProcRegShiftedReg
+	armAdc = (0x5 << 21),
+	armAdd = (0x4 << 21),
+	armAnd = (0x0 << 21),
+	armBic = (0xe << 21),
+	armEor = (0x1 << 21),
+	armOrr = (0xc << 21),
+	armRsb = (0x3 << 21),
+	armRsc = (0x7 << 21),
+	armSbc = (0x6 << 21),
+	armSub = (0x2 << 21),
+	armAdcs = armAdc | (0x1 << 20),
+	armAdds = armAdd | (0x1 << 20),
+	armAnds = armAnd | (0x1 << 20),
+	armBics = armBic | (0x1 << 20),
+	armEors = armEor | (0x1 << 20),
+	armOrrs = armOrr | (0x1 << 20),
+	armRsbs = armRsb | (0x1 << 20),
+	armRscs = armRsc | (0x1 << 20),
+	armSbcs = armSbc | (0x1 << 20),
+	armSubs = armSub | (0x1 << 20),	
+	//... Rn = 0
+	armMvn = (0xf << 21),	
+	armMvns = armMvn | (0x1 << 20),
+	// ...imm = 0
+	armMov = (0xd << 21),
+	armMovs = armMov | (1 << 20),
+	// armMovw / armMovt in different method
+	// ...Rd = 0
+	armCmn = (0x17 << 20),
+	armCmp = (0x15 << 20),
+	armTeq = (0x13 << 20),
+	armTst = (0x11 << 20),
+	
+	
+	// createRotateShiftImm / createRotateShiftReg
+	armAsr = (0xd << 21) | (0x2 << 5),
+	armLsl = (0xd << 21) | (0x0 << 5),
+	armLsr = (0xd << 21) | (0x1 << 5),
+	armRor = (0xd << 21) | (0x3 << 5),
+	armAsrs = armAsr | (1 << 20),
+	armLsls = armLsl | (1 << 20),
+	armLsrs = armLsr | (1 << 20),
+	armRors = armRor | (1 << 20),
+	// armRrx in different method
+	
+
+	// createRrx
+	armRrx = (0xd << 21) | (0x3 << 5),
+	armRrxs = armRrx | (1 << 20),
+	
+	
+	// createMovw
+	armMovw = (0x18 << 21),
+
+
+	// createMovt
+	armMovt = (0x1a << 21),
+	
+	
+	// crateSynchPrimLoad / crateSynchPrimStore
+	armLdrex  = (0x0 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
+	armLdrexb = (0x2 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
+	armLdrexd = (0x1 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
+	armLdrexh = (0x3 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
+	armStrex  = (0x0 << 21) | (3 << 23) | (0xf90 << 0),
+	armStrexb = (0x2 << 21) | (3 << 23) | (0xf90 << 0),
+	armStrexd = (0x1 << 21) | (3 << 23) | (0xf90 << 0),
+	armStrexh = (0x3 << 21) | (3 << 23) | (0xf90 << 0),
+
+	
+	// SWP / SWPB
+	armSwp  = (0x14 << 30) | (0x9 << 4),
+	armSwpb = (0x10 << 30) | (0x9 << 4),
+	
+	
+	// DBG
+	armDbg = 0x0320f0f0,
+	
+	
+	// Hints (NOP / SEV / WFE / WFI / YIELD)
+	armNop   = 0x0320f000 | 0x0,
+	armSev   = 0x0320f000 | 0x4,
+	armWfe   = 0x0320f000 | 0x2,
+	armWfi   = 0x0320f000 | 0x3,
+	armYield = 0x0320f000 | 0x1,
+	
+	
+	// Branch (immediate)
+	armB		= (0xa << 24),
+	armBl		= (0xb << 24),
+	armBlxImm	= (0xa << 24),
+	
+	
+	// Branch (register) (including BX BXJ
+	armBlxReg	= 0x012fff30,
+	armBx		= 0x012fff10,
+	armBxj		= 0x012fff20,
+	
+	
+	// Saturating addition and subtraction
+	armQadd  = (0x10 << 20) | (0x5 << 4),
+	armQdadd = (0x14 << 20) | (0x5 << 4),
+	armQdsub = (0x16 << 20) | (0x5 << 4),
+	armQsub  = (0x12 << 20) | (0x5 << 4),
+	
+	
+	// BKPT / HVC
+	armBkpt = (0x12 << 20) | (0x7 << 4),
+	armHvc  = (0x14 << 20) | (0x7 << 4),
+	
+	
+	// CLZ
+	armClz = (0x16f << 16) | (0xf1 << 4),
+	
+	
+	// ERET
+	armEret = 0x0160006e,
+	
+	
+	// SMC
+	armSmc = 0x01600070,
+	
+	
+	// Load/store word and unsigned byte
+	armLdr   = (0x41 << 20),
+	armLdrb  = (0x45 << 20),
+	armStr   = (0x40 << 20),
+	armStrb  = (0x44 << 20),
+	// ...P=0, W=1
+	armLdrt  = (0x43 << 20),
+	armLdrbt = (0x47 << 20),
+	armStrt  = (0x42 << 20),
+	armStrbt = (0x46 << 20),
+	
+	
+	// Branch, branch with link, and block data transfer
+	armLdm   = (0x89 << 20),
+	armLdmda = (0x81 << 20),
+	armLdmdb = (0x91 << 20),
+	armLdmib = (0x99 << 20),
+	armStm   = (0x88 << 20),
+	armStmda = (0x80 << 20),
+	armStmdb = (0x90 << 20),
+	armStmib = (0x98 << 20),
+	// ...Rn=0, W=0
+	armPop   = (0x8bd << 20),
+	armPush  = (0x92d << 20),
+	
+	
+	// Unconditional instructions
+	armRfe = 0x08100a00,
+	armSrs = 0x084d0500;
+	
+	
+		
+	//	armAdds = (0x9 << 20),
 ////		armB = (0x12 << 26),
 ////		armBl = (0x12 << 26) | 1,
 ////		armBc = (0x10 << 26),
-		armRsb = (0x26 << 20),
-		armRsbs = (0x27 << 20),
-		armSub = (0x24 << 20),
-		armSubs = (0x25 << 20);
+	//	armRsbs = (0x27 << 20),
+	//	armSubs = (0x25 << 20);
 }
