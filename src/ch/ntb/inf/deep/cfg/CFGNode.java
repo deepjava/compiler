@@ -180,6 +180,7 @@ public class CFGNode {
 		sb.append("[" + firstBCA + ":" + lastBCA + "]");
 		sb.append(isLoopHeader()? ", is loop header":"");
 		sb.append(nofBackwardBranches > 0? ", bckwd branches=" + nofBackwardBranches:"");
+		sb.append(idom != null? ", idom=[" + idom.firstBCA + ":" + idom.lastBCA + "]":", idom=null");
 		sb.append(isCatch? ", is first node of catch":"");
 		sb.append(", ref=" + ref);
 		sb.append(", visited:" + visited);

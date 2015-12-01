@@ -433,8 +433,9 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 
 					// check if a loadParam instruction is necessary
 					if (owner.isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)) {
-						param = generateLoadParameter((SSANode) idom, j, firstBCA);
 						if (dbg) StdStreams.vrb.println("load parameter");
+//						if (idom != null) 
+							param = generateLoadParameter((SSANode) idom, j, firstBCA);
 					}
 					if (temp != null && temp != param) {
 						phiFunctions[j].result.type = temp.type;

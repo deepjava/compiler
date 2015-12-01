@@ -29,7 +29,7 @@ import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = false;
+	protected static final boolean dbg = true;
 
 	protected static final int maxNofParam = 32;
 
@@ -60,7 +60,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	// last instruction where parameters is used
 	public static int[] paramRegEnd = new int[maxNofParam];
 	
-	public static SSAInstruction firstSSAInstr;
+//	public static SSAInstruction firstSSAInstr;
 
 	public CodeGen() {}
 	

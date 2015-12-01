@@ -168,13 +168,21 @@ public class VariousTest2 {
 	}
 
 	// method with many locals
-//	public static void m26(long p1, int p2) {
-//		short a1 = 0, a2 = 0;
-//		int a3 = 0, a4 = 0;
-//		long a5 = 0, a6 = 0, a7 = 0, a8 = 0, a9 = 0, a10 = 0, a11 = 0, a12 = 0;
-//		byte a13 = 0, a14 = 0, a15 = 0, a16 = 0, a17 = 0, a18 = 0, a19 = 0;
-//		long res = p1 + p2 + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10;
-//		res = res + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19;
-//	}
+	public static long m26(long p1, int p2) {
+		short a1 = 10, a2 = 11;
+		int a3 = 20, a4 = 21;
+		long a5 = 30, a6 = 31, a7 = 32, a8 = 33, a9 = 34, a10 = 35, a11 = 36, a12 = 37;
+		byte a13 = 40, a14 = 41, a15 = 42, a16 = 43, a17 = 44, a18 = 45, a19 = 46, a20 = 47, a21 = 48;//, a22 = 0, a23 = 0;
+		long res = p1 + p2 + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10;
+		res = res + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19 + a20 + a21;// + a22 + a23;
+		return res;
+	}
+
+	@Test
+	//Test constructor with many parameters
+	public static void testManyLocals(){
+		Assert.assertEquals("testm26", 1026, m26(100, 200));
+		CmdTransmitter.sendDone();
+	}
 
 }

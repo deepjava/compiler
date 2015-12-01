@@ -22,6 +22,7 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.InstructionDecoder;
+import ch.ntb.inf.deep.cg.RegAllocator;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -45,7 +46,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	private static int paramOffset;
 	private static int GPRoffset;	
 	private static int FPRoffset;	
-//	private static int localVarOffset;
+	private static int localVarOffset;
 	private static int tempStorageOffset;	
 	private static int stackSize;
 	static boolean tempStorage;
@@ -135,9 +136,11 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
 			StdStreams.vrb.println();
 		}
+		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorPPC.assignRegisters();
+		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) {
 			StdStreams.vrb.println(RegAllocatorPPC.joinsToString());
@@ -333,7 +336,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private static int calcStackSize() {
-		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + (tempStorage? tempStorageSize : 0);
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
 		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
@@ -341,13 +344,14 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		GPRoffset = LRoffset - nofNonVolGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
-		tempStorageOffset = FPRoffset - tempStorageSize;
+		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
+		tempStorageOffset = localVarOffset - tempStorageSize;
 		paramOffset = 4;
 		return size;
 	}
 
 	private static int calcStackSizeException() {
-		int size = 28 + nofGPR * 4 + (tempStorage? tempStorageSize : 0);
+		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
 		if (enFloatsInExc) {
 			size += nofNonVolFPR * 8;	// save used nonvolatile FPR's
 			size += nonVolStartFPR * 8 + 8;	// save all volatile FPR's and FPSCR
@@ -363,7 +367,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		GPRoffset = SRR0offset - nofGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
-		tempStorageOffset = FPRoffset - tempStorageSize;
+		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
+		tempStorageOffset = localVarOffset - tempStorageSize;
 		paramOffset = 4;
 		return size;
 	}
@@ -384,7 +389,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 			}
 			
 			
-//			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + code.iCount);
+			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + code.iCount);
 			switch (instr.ssaOpcode) { 
 			case sCloadConst: {
 				int dReg = res.reg;
@@ -2417,16 +2422,35 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				break;}
 			case sCregMove: {
 				opds = instr.getOperands();
+				int srcReg = opds[0].reg;
+				int dstReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger: case tChar: case tShort: case tByte: 
 				case tBoolean: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
-					createIrArSrB(code, ppcOr, res.reg, opds[0].reg, opds[0].reg);
+					if (dstReg >= 0x100) {
+						createIrSrAd(code, ppcStw, srcReg, stackPtr, localVarOffset + 4 * (dstReg & 0xff));
+					} else if (srcReg >= 0x100) {
+						createIrDrAd(code, ppcLwz, dstReg, stackPtr, localVarOffset + 4 * (srcReg & 0xff));
+					} else
+						createIrArSrB(code, ppcOr, dstReg, srcReg, srcReg);
 					break;
 				case tLong:
-					createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
-					createIrArSrB(code, ppcOr, res.reg, opds[0].reg, opds[0].reg);
+					int srcRegLong = opds[0].regLong;
+					int dstRegLong = res.regLong;
+					if (dstRegLong >= 0x100) {
+						createIrSrAd(code, ppcStw, srcRegLong, stackPtr, localVarOffset + 4 * (dstRegLong & 0xff));
+					} else if (srcRegLong >= 0x100) {
+						createIrDrAd(code, ppcLwz, dstRegLong, stackPtr, localVarOffset + 4 * (srcRegLong & 0xff));
+					} else
+						createIrArSrB(code, ppcOr, dstRegLong, srcRegLong, srcRegLong);
+					if (dstReg >= 0x100) {
+						createIrSrAd(code, ppcStw, srcReg, stackPtr, localVarOffset + 4 * (dstReg & 0xff));
+					} else if (srcReg >= 0x100) {
+						createIrDrAd(code, ppcLwz, dstReg, stackPtr, localVarOffset + 4 * (srcReg & 0xff));						
+					} else
+						createIrArSrB(code, ppcOr, dstReg, srcReg, srcReg);
 					break;
 				case tFloat: case tDouble:
 					createIrDrB(code, ppcFmr, res.reg, opds[0].reg);

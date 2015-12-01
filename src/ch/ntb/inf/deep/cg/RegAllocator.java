@@ -31,13 +31,19 @@ import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, ICclassFileConsts {
-	protected static final boolean dbg = false;
+	protected static final boolean dbg = true;
 
-	private static final int nofSSAInstr = 256;
+	protected static final int nofSSAInstr = 256;
 	public static final int maxNofJoins = 32;
 	
 	protected static SSA ssa;
-	protected static int maxStackSlots;
+	// maximum slots on operand stack
+	protected static int maxOpStackSlots;
+	
+	// maximum slots on stack for locals
+	public static int maxLocVarStackSlots;
+	// used to assign stack slots for spilled registers
+	protected static int stackSlotSpilledRegs;
 	
 	// local and linear copy of all SSA-instructions of all nodes
 	protected static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
@@ -45,6 +51,9 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	
 	// used for resolving phi functions
 	public static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
+	
+	// set if a method spills register to the stack  
+	protected static boolean spill;
 
 	protected static void findLastNodeOfPhi(SSA ssa) {
 		if (dbg) StdStreams.vrb.println("determine end of range for phi functions in loop headers");
@@ -114,6 +123,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		}
 	}
 
+	// returns the SSA node containing the SSA instruction given in the parameter
 	protected static SSANode getNode(SSAInstruction opdInstr) {
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		boolean found = false;
@@ -268,7 +278,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 					if ((opdInstr != null) && (opdInstr.ssaOpcode == sCloadLocal)) {	
 						if (opd.join != null) opd.join.start = 0;
 						// store last use of a parameter
-						CodeGen.paramRegEnd[opdInstr.result.index - maxStackSlots] = currNo;
+						CodeGen.paramRegEnd[opdInstr.result.index - maxOpStackSlots] = currNo;
 					}
 				}
 			}
@@ -278,12 +288,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	public static String joinsToString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("joins at index: [");
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < maxNofJoins; i++) {
 			if (joins[i] != null) sb.append("x");
 			sb.append(",");
 		}
 		sb.append("]\nlive ranges of phi functions\n");
-		for (int i = 0; i < 32; i++) {
+		for (int i = 0; i < maxNofJoins; i++) {
 			if (joins[i] != null) {
 				sb.append("\tindex=" + joins[i].index);
 				SSAValue next = joins[i];

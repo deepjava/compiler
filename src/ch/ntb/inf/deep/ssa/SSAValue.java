@@ -32,23 +32,37 @@ public class SSAValue implements SSAValueType {
 	public int regLong = -1;	// 2nd register or memory slot number for longs, contains upper 4 bytes
 	public int regGPR1 = -1;	// auxiliary general purpose register 1, used for translating complex SSA instructions
 	public int regGPR2 = -1;	// auxiliary general purpose register 2, used for translating complex SSA instructions 
-	public int volRegs;	// stores information about volatiles which are used to produce this value
-	public int memorySlot = -1;
 	public SSAValue join;	// for resolving phi functions
-	public SSAValue next;
+	public SSAValue next;	// linked list for join values
 	public boolean nonVol;	// value resides in volatile or nonvolatile register
 	public SSAInstruction owner = null; //instruction which produces this value
 	
 	
-	public SSAValue(){
+	public SSAValue() {
 	}
 	
-	public String typeName(){
+	// copy constructor
+	public SSAValue(SSAValue val) {
+		type = val.type;
+		index = val.index;
+		constant = val.constant;
+		n = val.n;
+		end = val.end;
+		start = val.start;
+		reg = val.reg;
+		regLong = val.regLong;
+		join = val.join;
+		next = val.next;
+		nonVol = val.nonVol;
+		owner = val.owner;
+	}
+	
+	public String typeName() {
 		return svNames[type & 0x7fffffff];
 	}
 	
 	@Override
-	public String toString(){
+	public String toString() {
 		String r = svNames[type & 0x7fffffff];
 		
 		switch(type & 0x7fffffff){

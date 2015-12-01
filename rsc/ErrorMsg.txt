@@ -63,6 +63,7 @@ ErrorNr;Description;Solution
 602;fixup out of range;
 603;not enough GPR's for locals;
 604;not enough FPR's for locals;
+605;not enough stack slots for spilling;
 610;result of SSA instruction has wrong type;
 611;operand of SSA instruction has wrong type;
 612;operand of SSA new instruction has wrong type;

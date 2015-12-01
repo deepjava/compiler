@@ -45,7 +45,8 @@ interface Registers {
 	final int stackPtr = 1;	// register for stack pointer
 
 	// initial mask for GPR's, '1' means register is free
-	final int regsGPRinitial = 0xfffffffc;	
+	final int regsGPRinitial = 0xfff00ffc;	
+	final int regsGPRinitialNonVol = regsGPRinitial & ~((1 << nonVolStartGPR) - 1);
 	// initial mask for FPR's, '1' means register is free
 	final int regsFPRinitial = 0xfffffffe & ~(1<<faux1 | 1<<faux2 | 1<<faux3);	
 
