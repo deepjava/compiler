@@ -45,9 +45,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		loopHeaders = new SSANode[nofNodes];
 		sortedNodes = new SSANode[nofNodes];
 		returnNodes = new SSANode[4];
-		StdStreams.vrb.println(cfg.toString());
+
 		if (dbg) StdStreams.vrb.println("generate ssa for " + cfg.method.owner.name + "." + cfg.method.name);
-		cfg.method.printLocalVars(1);
 		
 		findParameters();	// fills parameter array
 		sortNodes((SSANode)cfg.rootNode);

@@ -261,6 +261,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				for (SSAValue opd : opds) {
 					if (opd.owner.ssaOpcode == sCPhiFunc && opd.owner.result.join == null) continue;
 					if (opd.join != null) opd = opd.join;
+//					assert opd.reg >= 0 : "opd = " + opd.toString(); // kann -1 sein fuer immediate
 					if (opd.reg >= 0x100) {
 						if (dbg) {StdStreams.vrb.println("\tcopy opds on the stack to registers for instruction " + instr.toString() + "     i="+i);}
 //						int slot = opd.reg - 0x100;
@@ -843,32 +844,39 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 		if (nonVol) regs &= regsGPRinitialNonVol;
 		int i = pos;
 		boolean stop = false;
-		SSAValue val = null;
+		SSAValue opd = null;
 		while (i < nofInstructions && !stop) {	// start from actual 
 			SSAInstruction instr = instrs[i];
 			if (instr.ssaOpcode == sCPhiFunc && instr.result.join == null) {i++; continue;} // not used
 			SSAValue[] opds = instr.getOperands();
 			if (opds != null) {
 				for(int n = 0; n < opds.length; n++) {
-					val = opds[n];
-//					if (val.join != null) continue;
-					if (val.n < pos) {
+					opd = opds[n];
+					int start = opd.n;
+					SSAValue val = opd;
+					if (opd.join != null) {val = opd.join; start = val.start;} 
+					if (start < pos) {
 //						if (nonVol && !val.nonVol) continue;	// braucht es das noch???????????
 						if (val.type == tLong) {
 							regs &= ~(1 << val.regLong);
-//							System.out.println(Integer.toHexString(regs) + "  del reg=" + val.regLong + "  of instr no " + val.n);
+							if (dbg) StdStreams.vrb.println("\t\t" + Integer.toHexString(regs) + "  del long reg=" + val.regLong + "  of instr " + instr.toString());
 							if ((regs & (regs-1)) == 0) {stop = true; break;}
 						}
 						regs &= ~(1 << val.reg);
-//						System.out.println(Integer.toHexString(regs) + "  del reg=" + val.reg + "  of instr no " + val.n);
+						if (dbg) StdStreams.vrb.println("\t\t" + Integer.toHexString(regs) + "  del reg=" + val.reg + "  of instr " + instr.toString());
 						if ((regs & (regs-1)) == 0) {stop = true; break;}
 					}
 				}
 			}
 			i++;
 		}
-		if (dbg) StdStreams.vrb.println("\tspill result of instruction " + val.owner.toString() + "\tresult first used at instr " + instrs[i-1].toString());
-		return val;
+		if (dbg) {
+			// if val is joinVal -> has no owner
+			StdStreams.vrb.print("\tspill result of instruction ");
+			if (opd.owner != null) StdStreams.vrb.print(opd.owner.toString()); else StdStreams.vrb.print(" result is join value");
+			StdStreams.vrb.println("\tresult first used at instr " + instrs[i-1].toString());
+		}
+		return opd;
 	}
 
 	// reserve register, returns -1 in case no register available

@@ -468,27 +468,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 		while (node != null) {
 			for (int n = 0; n < 3; n++) sb.append(" ");
 			sb.append("CFGNode nr:" + i + " ");
-//			if (node.isLoopHeader())
-//				sb.append("is loop header");
-//			if (node.nofBackwardBranches > 0)
-//				sb.append(", bckwd branches=" + node.nofBackwardBranches);
-//			sb.append(", ref="+node.ref);
-//			sb.append(", visited:"+node.visited);
-//			sb.append("\n\t\tpredecessor: ");
-//			for (int k = 0; (k < node.predecessors.length)
-//					&& (node.predecessors[k] != null); k++) {
-//				sb.append(node.predecessors[k].toString());
-//				sb.append("\t");
-//			}
-//			sb.append("\n");
-//			sb.append("\t\tsuccessor: ");
-//			for (int k = 0; (k < node.successors.length)
-//					&& (node.successors[k] != null); k++) {
-//				sb.append(node.successors[k].toString());
-//				sb.append("\t");
-//			}
-//			sb.append("\n");
-//			if (node.idom != null) sb.append("\t\tdominator:"+node.idom.toString()+"\n");
 			sb.append(node.toString(true) + "\n");
 			node = node.next;
 			i++;
