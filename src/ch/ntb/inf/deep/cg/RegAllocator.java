@@ -19,6 +19,8 @@
 package ch.ntb.inf.deep.cg;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
+import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSA;
@@ -27,11 +29,12 @@ import ch.ntb.inf.deep.ssa.SSAInstructionOpcs;
 import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.ssa.SSAValue;
 import ch.ntb.inf.deep.ssa.SSAValueType;
+import ch.ntb.inf.deep.ssa.instruction.Call;
 import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, ICclassFileConsts {
-	protected static final boolean dbg = true;
+	protected static final boolean dbg = false;
 
 	protected static final int nofSSAInstr = 256;
 	public static final int maxNofJoins = 32;
@@ -54,6 +57,12 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	
 	// set if a method spills register to the stack  
 	protected static boolean spill;
+
+	protected static int regsGPR, regsFPR;
+	protected static int nofNonVolGPR, nofNonVolFPR;
+	protected static int nofVolGPR, nofVolFPR;
+	// used to find call in this method with most parameters -> gives stack size
+	protected static int maxNofParamGPR, maxNofParamFPR;
 
 	protected static void findLastNodeOfPhi(SSA ssa) {
 		if (dbg) StdStreams.vrb.println("determine end of range for phi functions in loop headers");
@@ -259,9 +268,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			
 			if (res.join != null) {	// set start of join
 				if (res.join.start > currNo) {
-//					StdStreams.vrb.println("start was: " + res.join.start);
 					res.join.start = currNo;
-//					StdStreams.vrb.println("start set to: " + currNo);
 				}
 			}
 			
@@ -279,6 +286,88 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 						if (opd.join != null) opd.join.start = 0;
 						// store last use of a parameter
 						CodeGen.paramRegEnd[opdInstr.result.index - maxOpStackSlots] = currNo;
+					}
+				}
+			}
+		}
+	}
+	
+	// assign volatile or nonvolatile register 
+	protected static void assignRegType() {
+		for (int i = 0; i < maxNofJoins; i++) {
+			// handle all live ranges of phi functions first
+			SSAValue val = joins[i];
+			while (val != null) {
+				for (int k = val.start; k < val.end; k++) {
+					SSAInstruction instr1 = instrs[k];
+					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
+							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
+						val.nonVol = true;
+					}
+				}
+				// exception handler receives thrown exception as a parameter in the first parameter register
+				// must be a nonvolatile register
+				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
+				if (tab != null) {
+					for (int k = 0; k < tab.length; k++) {
+						ExceptionTabEntry entry = tab[k];
+						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
+						assert handlerInstr != null;
+						for (int n = val.start; n < val.end; n++) {
+							SSAInstruction instr1 = instrs[n];
+							if (instr1 == handlerInstr) {
+								val.nonVol = true;
+							}
+						}
+					}
+				}
+				val = val.next;
+			}			
+		}
+		
+		// handle other instructions
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+			SSAValue res = instr.result;
+			int currNo = res.n;
+			int endNo = res.end;
+			if (instr.ssaOpcode != sCloadLocal && res.join != null) continue;
+			else if (instr.ssaOpcode == sCloadLocal && res.join != null) {
+				if (res.join.nonVol) CodeGenPPC.paramHasNonVolReg[res.join.index - maxOpStackSlots] = true;
+			} else if (instr.ssaOpcode == sCloadLocal) {
+				// check if call instruction between start of method and here
+				// call to inline method is omitted
+				for (int k = 0; k < endNo; k++) {
+					SSAInstruction instr1 = instrs[k];
+					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
+							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
+						res.nonVol = true;
+						CodeGenPPC.paramHasNonVolReg[res.index - maxOpStackSlots] = true;
+					}
+				}
+			} else {
+				// check if call instruction in live range
+				// call to inline method is omitted
+				for (int k = currNo+1; k < endNo; k++) {
+					SSAInstruction instr1 = instrs[k];
+					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
+							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) 
+						res.nonVol = true;
+				}
+				// exception handler receives thrown exception as a parameter in the first parameter register
+				// must be a nonvolatile register
+				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
+				if (tab != null) {
+					for (int k = 0; k < tab.length; k++) {
+						ExceptionTabEntry entry = tab[k];
+						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
+						assert handlerInstr != null;
+						for (int n = currNo+1; n < endNo; n++) {
+							SSAInstruction instr1 = instrs[n];
+							if (instr1 == handlerInstr) {
+								res.nonVol = true;
+							}
+						}
 					}
 				}
 			}

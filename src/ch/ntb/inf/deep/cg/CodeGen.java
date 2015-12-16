@@ -25,11 +25,10 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.*;
-import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = true;
+	protected static final boolean dbg = false;
 
 	protected static final int maxNofParam = 32;
 
@@ -57,12 +56,52 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	protected static Method strAllocC;
 	protected static Method strAllocCII;
 	
+	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
+	protected static int nofParam;	
+	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
+	protected static int nofParamGPR, nofParamFPR;	 
+	// maximum nof registers used by this method
+	public static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
+	// gives required stack space for parameters of this method if not enough registers
+	protected static int recParamSlotsOnStack;
+	// gives required stack space for parameters of any call in this method if not enough registers
+	public static int callParamSlotsOnStack;
+	// type of parameter, set by SSA, includes "this", long and doubles count as 2 parameters
+	protected static int[] paramType = new int[maxNofParam];
+	// register type of parameter, long and doubles count as 2 parameters
+	public static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
+	// register of parameter, long and doubles count as 2 parameters
+	public static int[] paramRegNr = new int[maxNofParam];
 	// last instruction where parameters is used
 	public static int[] paramRegEnd = new int[maxNofParam];
 	
-//	public static SSAInstruction firstSSAInstr;
+	// information about into which registers parameters of this method go 
+	protected static int nofMoveGPR, nofMoveFPR;
+	protected static int[] moveGPRsrc = new int[maxNofParam];
+	protected static int[] moveGPRdst = new int[maxNofParam];
+	protected static int[] moveFPRsrc = new int[maxNofParam];
+	protected static int[] moveFPRdst = new int[maxNofParam];
 
 	public CodeGen() {}
+	
+	void init(Method m) {
+//		SSA ssa = method.ssa;
+//		Code32 code = method.machineCode;
+//		nofParamGPR = 0; nofParamFPR = 0;
+//		nofNonVolGPR = 0; nofNonVolFPR = 0;
+//		nofVolGPR = 0; nofVolFPR = 0;
+//		nofMoveGPR = 0; nofMoveFPR = 0;
+//		tempStorage = false;
+//		enFloatsInExc = false;
+//		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
+//		if (dbg) StdStreams.vrb.println("generate code for " + method.owner.name + "." + method.name);
+//		for (int i = 0; i < maxNofParam; i++) {
+//			paramType[i] = tVoid;
+//			paramRegNr[i] = -1;
+//			paramRegEnd[i] = -1;
+//		}
+
+	}
 	
 	public abstract void translateMethod(Method m);
 

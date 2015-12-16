@@ -60,15 +60,15 @@ public class Triadic extends SSAInstruction {
 				join = join.next;
 			}
 			sb.append(i + ")]");
-		} else {
+		} else 
 			sb.append(", end=" + result.end);
-			if (result.reg != -1) {
-				if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
-			}
-			if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
-			if (result.reg != -1) sb.append(", reg=" + result.reg);
-			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
+		if (result.reg != -1) {
+			if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
 		}
+		if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
+		if (result.reg != -1) sb.append(", reg=" + result.reg);
+		if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
+		
 		sb.append(", bca=" + bca);
 		return sb.toString();
 	}

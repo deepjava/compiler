@@ -35,7 +35,8 @@ import ch.ntb.inf.deep.strings.HString;
 public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 
 	private static final int arrayLenOffset = 6;	
-	private static final int tempStorageSize = 48;	// 1 FPR(temp), 4 GPRs 
+	// used for some floating point operations and compiler specific subroutines
+	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
 	
 	private static int LRoffset;	
 	private static int XERoffset;	
@@ -52,29 +53,29 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	static boolean tempStorage;
 	static boolean enFloatsInExc;
 
-	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
-	private static int nofParam;	
-	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
-	private static int nofParamGPR, nofParamFPR;	 
-	// maximum nof registers used by this method
-	static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
-	// gives required stack space for parameters of this method if not enough registers
-	static int recParamSlotsOnStack;
-	// gives required stack space for parameters of any call in this method if not enough registers
-	static int callParamSlotsOnStack;
-	// type of parameter, set by SSA, includes "this", long and doubles count as 2 parameters
-	static int[] paramType = new int[maxNofParam];
-	// register type of parameter, long and doubles count as 2 parameters
-	static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
-	// register of parameter, long and doubles count as 2 parameters
-	static int[] paramRegNr = new int[maxNofParam];
+//	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
+//	private static int nofParam;	
+//	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
+//	private static int nofParamGPR, nofParamFPR;	 
+//	// maximum nof registers used by this method
+//	static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
+//	// gives required stack space for parameters of this method if not enough registers
+//	static int recParamSlotsOnStack;
+//	// gives required stack space for parameters of any call in this method if not enough registers
+//	static int callParamSlotsOnStack;
+//	// type of parameter, set by SSA, includes "this", long and doubles count as 2 parameters
+//	static int[] paramType = new int[maxNofParam];
+//	// register type of parameter, long and doubles count as 2 parameters
+//	public static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
+//	// register of parameter, long and doubles count as 2 parameters
+//	static int[] paramRegNr = new int[maxNofParam];
 	
-	// information about into which registers parameters of this method go 
-	private static int nofMoveGPR, nofMoveFPR;
-	private static int[] moveGPRsrc = new int[maxNofParam];
-	private static int[] moveGPRdst = new int[maxNofParam];
-	private static int[] moveFPRsrc = new int[maxNofParam];
-	private static int[] moveFPRdst = new int[maxNofParam];
+//	// information about into which registers parameters of this method go 
+//	private static int nofMoveGPR, nofMoveFPR;
+//	private static int[] moveGPRsrc = new int[maxNofParam];
+//	private static int[] moveGPRdst = new int[maxNofParam];
+//	private static int[] moveFPRsrc = new int[maxNofParam];
+//	private static int[] moveFPRdst = new int[maxNofParam];
 	
 	// information about the src registers for parameters of a call to a method within this method
 	private static int[] srcGPR = new int[nofGPR];
@@ -121,6 +122,9 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("build intervals");
 //		StdStreams.vrb.print(ssa.cfg.toString());
 //		StdStreams.vrb.println(ssa.toString());
+		tempStorage = false;
+		enFloatsInExc = false;
+
 		RegAllocatorPPC.buildIntervals(ssa);
 		
 		if (dbg) StdStreams.vrb.println("assign registers to parameters");
@@ -130,17 +134,17 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		}	
 		lastExitSet = b.exitSet;
 		// determine, which parameters go into which register
-		parseExitSet(lastExitSet, maxStackSlots);
+		parseExitSet(lastExitSet, method.maxStackSlots);
 		if (dbg) {
 			StdStreams.vrb.print("parameter go into register: ");
 			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
 			StdStreams.vrb.println();
 		}
-		StdStreams.vrb.print(ssa.toString());
+//		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorPPC.assignRegisters();
-		StdStreams.vrb.print(ssa.toString());
+//		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) {
 			StdStreams.vrb.println(RegAllocatorPPC.joinsToString());
@@ -374,9 +378,9 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private void translateSSA (SSANode node, Method meth) {
-		SSAValue[] opds;
 		int stringReg = 0;
 		Item stringCharRef = null;
+		int src1Reg = 0, src1RegLong = 0, src2Reg = 0, src2RegLong = 0, src3Reg = 0, src3RegLong = 0;
 		Code32 code = meth.machineCode;
 
 		for (int i = 0; i < node.nofInstr; i++) {
@@ -387,13 +391,77 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				if (dbg) StdStreams.vrb.println("enter move register intruction for local 'exception' in catch clause: from R" + paramStartGPR + " to R" + node.instructions[node.loadLocalExc].result.reg);
 				createIrArSrB(code, ppcOr, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, paramStartGPR);
 			}
-			
-			
-			if (dbg) StdStreams.vrb.println("ssa opcode at " + instr.result.n + ": " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + ", iCount=" + code.iCount);
+
+			if (dbg) StdStreams.vrb.println("handle instruction " + instr.toString());
+			SSAValue[] opds = instr.getOperands();
+			if (opds != null && opds.length != 0) {
+				if (opds.length == 3) {
+					src3Reg = opds[2].reg; 
+					src3RegLong = opds[2].regLong;
+					if (src3RegLong >= 0x100) {
+						System.out.println("opd regLong on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+					}
+					if (src3Reg >= 0x100) {
+						System.out.println("opd reg on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+					}			
+				}
+				if (opds.length >= 2) {
+					src2Reg = opds[1].reg; 
+					src2RegLong = opds[1].regLong;
+					if (src2RegLong >= 0x100) {
+						System.out.println("opd regLong on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+						int slot = src2RegLong & 0xff;
+						src2RegLong = volEndGPR + 5;
+						createIrDrAd(code, ppcLwz, src2RegLong, stackPtr, localVarOffset + 4 * slot);
+					}
+					if (src2Reg >= 0x100) {
+						System.out.println("opd reg on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+						int slot = src2Reg & 0xff;
+						src2Reg = volEndGPR + 6;
+						createIrDrAd(code, ppcLwz, src2Reg, stackPtr, localVarOffset + 4 * slot);
+					}			
+				}
+				src1Reg = opds[0].reg; 
+				src1RegLong = opds[0].regLong;
+				if (src1RegLong >= 0x100) {
+					System.out.println("opd regLong on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+					int slot = src1RegLong & 0xff;
+					src1RegLong = volEndGPR + 3;
+					createIrDrAd(code, ppcLwz, src1RegLong, stackPtr, localVarOffset + 4 * slot);
+				}
+				if (src1Reg >= 0x100) {
+					System.out.println("opd reg on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+					int slot = src1Reg & 0xff;
+					src1Reg = volEndGPR + 4;
+					createIrDrAd(code, ppcLwz, src1Reg, stackPtr, localVarOffset + 4 * slot);
+				}			
+			}
+			int dRegLong = res.regLong;
+			int dRegLongSlot = -1;
+			if (dRegLong >= 0x100) {
+				System.out.println("res regLong on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+				dRegLongSlot = dRegLong & 0xff;
+				dRegLong = volEndGPR + 1;
+			}
+			int dReg = res.reg;
+			int dRegSlot = -1;
+			if (dReg >= 0x100) {
+				System.out.println("res reg on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+				dRegSlot = dReg & 0xff;
+				dReg = volEndGPR + 2;
+			}
+			int gAux1 = res.regGPR1;
+			if (gAux1 >= 0x100) {
+				System.out.println("aux regGPR1 on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+			}
+			int gAux2 = res.regGPR2;
+			if (gAux2 >= 0x100) {
+				System.out.println("aux regGPR2 on stack slot for instr: " + instr.toString() + " in method:" + meth.owner.name + "." + meth.name);
+			}
+
 			switch (instr.ssaOpcode) { 
 			case sCloadConst: {
-				int dReg = res.reg;
-				if (dReg >= 0) {	// else immediate opd
+				if (dReg >= 0) {	// else immediate opd, does not have to be loaded into a register
 					switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 					case tByte: case tShort: case tInteger:
 						int immVal = ((StdConstant)res.constant).valueH;
@@ -402,44 +470,44 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					case tLong:	
 						StdConstant constant = (StdConstant)res.constant;
 						long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-						loadConstant(code, res.regLong, (int)(immValLong >> 32));
+						loadConstant(code, dRegLong, (int)(immValLong >> 32));
 						loadConstant(code, dReg, (int)immValLong);
 						break;	
 					case tFloat:	// load from const pool
 						constant = (StdConstant)res.constant;
 						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
-							createIrDrAsimm(code, ppcAddi, res.regGPR1, 0, 0);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset);
+							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
 							createIrDrAd(code, ppcLfs, res.reg, stackPtr, tempStorageOffset);
 						} else if (constant.valueH == 0x3f800000) {	// 1.0
-							createIrDrAsimm(code, ppcAddis, res.regGPR1, 0, 0x3f80);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset);
+							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0x3f80);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
 							createIrDrAd(code, ppcLfs, res.reg, stackPtr, tempStorageOffset);
 						} else if (constant.valueH == 0x40000000) {	// 2.0
-							createIrDrAsimm(code, ppcAddis, res.regGPR1, 0, 0x4000);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset);
+							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0x4000);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
 							createIrDrAd(code, ppcLfs, res.reg, stackPtr, tempStorageOffset);
 						} else {
-							loadConstantAndFixup(code, res.regGPR1, constant);
-							createIrDrAd(code, ppcLfs, res.reg, res.regGPR1, 0);
+							loadConstantAndFixup(code, gAux1, constant);
+							createIrDrAd(code, ppcLfs, res.reg, gAux1, 0);
 						}
 						break;
 					case tDouble:
 						constant = (StdConstant)res.constant;
 						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
-							createIrDrAsimm(code, ppcAddi, res.regGPR1, 0, 0);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset+4);
+							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
 							createIrDrAd(code, ppcLfd, res.reg, stackPtr, tempStorageOffset);
 						} else if (constant.valueH == 0x3ff00000) {	// 1.0{
-							createIrDrAsimm(code, ppcAddis, res.regGPR1, 0, 0x3ff0);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset);
-							createIrDrAsimm(code, ppcAddis, res.regGPR1, 0, 0);
-							createIrSrAd(code, ppcStw, res.regGPR1, stackPtr, tempStorageOffset+4);
+							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0x3ff0);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
+							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0);
+							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
 							createIrDrAd(code, ppcLfd, res.reg, stackPtr, tempStorageOffset);
 						} else {
-							loadConstantAndFixup(code, res.regGPR1, constant);
-							createIrDrAd(code, ppcLfd, res.reg, res.regGPR1, 0);
+							loadConstantAndFixup(code, gAux1, constant);
+							createIrDrAd(code, ppcLfd, res.reg, gAux1, 0);
 						}
 						break;
 					case tRef: case tAbyte: case tAshort: case tAchar: case tAinteger:
@@ -458,19 +526,18 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 						assert false : "result of SSA instruction has wrong type";
 						return;
 					}
-				} else 
+				}  
 				break;}	// sCloadConst
 			case sCloadLocal:
 				break;	// sCloadLocal
 			case sCloadFromField: {
-				opds = instr.getOperands();
 				int offset = 0, refReg;			
 				if (opds == null) {	// getstatic
-					refReg = res.regGPR1;
+					refReg = gAux1;
 					Item field = ((NoOpndRef)instr).field;
 					loadConstantAndFixup(code, refReg, field);
 				} else {	// getfield
-					refReg = opds[0].reg;
+					refReg = src1Reg;
 					if ((meth.owner == Type.wktString) &&	// string access needs special treatment
 							((MonadicRef)instr).item.name.equals(HString.getRegisteredHString("value"))) {
 						createIrArSrB(code, ppcOr, res.reg, refReg, refReg);	// result contains ref to string
@@ -498,7 +565,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					createIrDrAd(code, ppcLhz, res.reg, refReg, offset);
 					break;
 				case tLong:
-					createIrDrAd(code, ppcLwz, res.regLong, refReg, offset);
+					createIrDrAd(code, ppcLwz, dRegLong, refReg, offset);
 					createIrDrAd(code, ppcLwz, res.reg, refReg, offset + 4);
 					break;
 				case tFloat: 
@@ -514,22 +581,21 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCloadFromField
 			case sCloadFromArray: {
-				opds = instr.getOperands();
-				int refReg = opds[0].reg;	// ref to array;
-				int indexReg = opds[1].reg;	// index into array;
+				int refReg = src1Reg;	// ref to array;
+				int indexReg = src2Reg;	// index into array;
 				if (meth.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
-					createIrDrAd(code, ppcLwz, res.regGPR1, refReg, objectSize);	// read field "count", must be first field
-					createItrap(code, ppcTw, TOifgeU, indexReg, res.regGPR1);
+					createIrDrAd(code, ppcLwz, gAux1, refReg, objectSize);	// read field "count", must be first field
+					createItrap(code, ppcTw, TOifgeU, indexReg, gAux1);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, stringSize - 4);	// add index of field "value" to index
-						createIrDrArB(code, ppcLbzx, res.reg, res.regGPR2, indexReg);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, stringSize - 4);	// add index of field "value" to index
+						createIrDrArB(code, ppcLbzx, res.reg, gAux2, indexReg);
 						createIrArS(code, ppcExtsb, res.reg, res.reg);
 						break;
 					case tChar: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 1, 0, 30);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, stringSize - 4);	// add index of field "value" to index
-						createIrDrArB(code, ppcLhzx, res.reg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, stringSize - 4);	// add index of field "value" to index
+						createIrDrArB(code, ppcLhzx, res.reg, gAux1, gAux2);
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -538,45 +604,45 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					}
 				} else {
 					createItrap(code, ppcTwi, TOifequal, refReg, 0);
-					createIrDrAd(code, ppcLha, res.regGPR1, refReg, -arrayLenOffset);
-					createItrap(code, ppcTw, TOifgeU, indexReg, res.regGPR1);
+					createIrDrAd(code, ppcLha, gAux1, refReg, -arrayLenOffset);
+					createItrap(code, ppcTw, TOifgeU, indexReg, gAux1);
 					switch (res.type & ~(1<<ssaTaFitIntoInt)) {	// type to read
 					case tByte: case tBoolean:
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLbzx, res.reg, res.regGPR2, indexReg);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLbzx, res.reg, gAux2, indexReg);
 						createIrArS(code, ppcExtsb, res.reg, res.reg);
 						break;
 					case tShort: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 1, 0, 30);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLhax, res.reg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLhax, res.reg, gAux1, gAux2);
 						break;
 					case tInteger: case tRef: case tAref: case tAchar: case tAfloat: 
 					case tAdouble: case tAbyte: case tAshort: case tAinteger: case tAlong:
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 2, 0, 29);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLwzx, res.reg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLwzx, res.reg, gAux1, gAux2);
 						break;
 					case tLong: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 3, 0, 28);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLwzux, res.regLong, res.regGPR1, res.regGPR2);
-						createIrDrAd(code, ppcLwz, res.reg, res.regGPR1, 4);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLwzux, dRegLong, gAux1, gAux2);
+						createIrDrAd(code, ppcLwz, res.reg, gAux1, 4);
 						break;
 					case tFloat:
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 2, 0, 29);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLfsx, res.reg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLfsx, res.reg, gAux1, gAux2);
 						break;
 					case tDouble: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 3, 0, 28);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLfdx, res.reg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLfdx, res.reg, gAux1, gAux2);
 						break;
 					case tChar: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 1, 0, 30);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrDrArB(code, ppcLhzx, res.reg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrDrArB(code, ppcLhzx, res.reg, gAux1, gAux2);
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -586,22 +652,22 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCloadFromArray
 			case sCstoreToField: {
-				opds = instr.getOperands();
+//				opds = instr.getOperands();
 				int valReg, valRegLong, refReg, offset, type;
 				if (opds.length == 1) {	// putstatic
-					valReg = opds[0].reg;
-					valRegLong = opds[0].regLong;
-					refReg = res.regGPR1;
+					valReg = src1Reg;
+					valRegLong = src1RegLong;
+					refReg = gAux1;
 					Item item = ((MonadicRef)instr).item;
 					if(((Type)item.type).category == 'P')
 						type = Type.getPrimitiveTypeIndex(item.type.name.charAt(0));
 					else type = tRef; //is a Array or a Object 
 					offset = 0;
-					loadConstantAndFixup(code, res.regGPR1, item);
+					loadConstantAndFixup(code, refReg, item);
 				} else {	// putfield
-					refReg = opds[0].reg;
-					valReg = opds[1].reg;
-					valRegLong = opds[1].regLong;
+					refReg = src1Reg;
+					valReg = src2Reg;
+					valRegLong = src2RegLong;
 					if(((Type)((DyadicRef)instr).field.type).category == 'P')
 						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
 					else type = tRef;//is a Array or a Object 
@@ -637,48 +703,47 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCstoreToField
 			case sCstoreToArray: {
-				opds = instr.getOperands();
-				int refReg = opds[0].reg;	// ref to array
-				int indexReg = opds[1].reg;	// index into array
-				int valReg = opds[2].reg;	// value to store
+				int refReg = src1Reg;	// ref to array
+				int indexReg = src2Reg;	// index into array
+				int valReg = src3Reg;	// value to store
 				if (meth.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
-					createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 1, 0, 30);
-					createIrDrAsimm(code, ppcAddi, res.regGPR2, opds[0].reg, stringSize - 4);	// add index of field "value" to index
-					createIrSrArB(code, ppcSthx, valReg, res.regGPR1, res.regGPR2);
+					createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 1, 0, 30);
+					createIrDrAsimm(code, ppcAddi, gAux2, refReg, stringSize - 4);	// add index of field "value" to index
+					createIrSrArB(code, ppcSthx, valReg, gAux1, gAux2);
 				} else {
 					createItrap(code, ppcTwi, TOifequal, refReg, 0);
-					createIrDrAd(code, ppcLha, res.regGPR1, refReg, -arrayLenOffset);
-					createItrap(code, ppcTw, TOifgeU, indexReg, res.regGPR1);
+					createIrDrAd(code, ppcLha, gAux1, refReg, -arrayLenOffset);
+					createItrap(code, ppcTw, TOifgeU, indexReg, gAux1);
 					switch (opds[0].type & ~(1<<ssaTaFitIntoInt)) {
 					case tAbyte: case tAboolean:
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrSrArB(code, ppcStbx, valReg, indexReg, res.regGPR2);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrSrArB(code, ppcStbx, valReg, indexReg, gAux2);
 						break;
 					case tAshort: case tAchar: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 1, 0, 30);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrSrArB(code, ppcSthx, valReg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 1, 0, 30);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrSrArB(code, ppcSthx, valReg, gAux1, gAux2);
 						break;
 					case tAref: case tRef: case tAinteger:
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 2, 0, 29);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrSrArB(code, ppcStwx, valReg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrSrArB(code, ppcStwx, valReg, gAux1, gAux2);
 						break;
 					case tAlong: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 3, 0, 28);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrSrArB(code, ppcStwux, opds[2].regLong, res.regGPR1, res.regGPR2);
-						createIrSrAd(code, ppcStw, valReg, res.regGPR1, 4);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrSrArB(code, ppcStwux, src3RegLong, gAux1, gAux2);
+						createIrSrAd(code, ppcStw, valReg, gAux1, 4);
 						break;
 					case tAfloat:  
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 2, 0, 29);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrSrArB(code, ppcStfsx, valReg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 2, 0, 29);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrSrArB(code, ppcStfsx, valReg, gAux1, gAux2);
 						break;
 					case tAdouble: 
-						createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, indexReg, 3, 0, 28);
-						createIrDrAsimm(code, ppcAddi, res.regGPR2, refReg, objectSize);
-						createIrSrArB(code, ppcStfdx, valReg, res.regGPR1, res.regGPR2);
+						createIrArSSHMBME(code, ppcRlwinm, gAux1, indexReg, 3, 0, 28);
+						createIrDrAsimm(code, ppcAddi, gAux2, refReg, objectSize);
+						createIrSrArB(code, ppcStfdx, valReg, gAux1, gAux2);
 						break;
 					default:
 						ErrorReporter.reporter.error(611);
@@ -688,41 +753,37 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCstoreToArray
 			case sCadd: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger:
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrDrAsimm(code, ppcAddi, dReg, sReg2, immVal);
-					} else if (sReg2 < 0) {
+						createIrDrAsimm(code, ppcAddi, dReg, src2Reg, immVal);
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
-						createIrDrAsimm(code, ppcAddi, dReg, sReg1, immVal);
+						createIrDrAsimm(code, ppcAddi, dReg, src1Reg, immVal);
 					} else {
-						createIrDrArB(code, ppcAdd, dReg, sReg1, sReg2);
+						createIrDrArB(code, ppcAdd, dReg, src1Reg, src2Reg);
 					}
 					break;
 				case tLong:
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						long immValLong = ((long)(((StdConstant)opds[0].constant).valueH)<<32) | (((StdConstant)opds[0].constant).valueL&0xFFFFFFFFL);
-						createIrDrAsimm(code, ppcAddic, dReg, sReg2, (int)immValLong);
-						createIrDrA(code, ppcAddze, res.regLong, opds[1].regLong);
-					} else if (sReg2 < 0) {
+						createIrDrAsimm(code, ppcAddic, dReg, src2Reg, (int)immValLong);
+						createIrDrA(code, ppcAddze, dRegLong, src2RegLong);
+					} else if (src2Reg < 0) {
 						long immValLong = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
-						createIrDrAsimm(code, ppcAddic, dReg, sReg1, (int)immValLong);
-						createIrDrA(code, ppcAddze, res.regLong, opds[0].regLong);
+						createIrDrAsimm(code, ppcAddic, dReg, src1Reg, (int)immValLong);
+						createIrDrA(code, ppcAddze, dRegLong, src1RegLong);
 					} else {
-						createIrDrArB(code, ppcAddc, dReg, sReg1, sReg2);
-						createIrDrArB(code, ppcAdde, res.regLong, opds[0].regLong, opds[1].regLong);
+						createIrDrArB(code, ppcAddc, dReg, src1Reg, src2Reg);
+						createIrDrArB(code, ppcAdde, dRegLong, src1RegLong, src2RegLong);
 					}	
 					break;
 				case tFloat:
-					createIrDrArB(code, ppcFadds, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFadds, dReg, src1Reg, src2Reg);
 					break;
 				case tDouble:
-					createIrDrArB(code, ppcFadd, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFadd, dReg, src1Reg, src2Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -731,41 +792,37 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	//sCadd
 			case sCsub: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger:
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrDrAsimm(code, ppcSubfic, dReg, sReg2, immVal);
-					} else if (sReg2 < 0) {
+						createIrDrAsimm(code, ppcSubfic, dReg, src2Reg, immVal);
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
-						createIrDrAsimm(code, ppcAddi, dReg, sReg1, -immVal);
+						createIrDrAsimm(code, ppcAddi, dReg, src1Reg, -immVal);
 					} else {
-						createIrDrArB(code, ppcSubf, dReg, sReg2, sReg1);
+						createIrDrArB(code, ppcSubf, dReg, src2Reg, src1Reg);
 					}
 					break;
 				case tLong:
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						long immValLong = ((long)(((StdConstant)opds[0].constant).valueH)<<32) | (((StdConstant)opds[0].constant).valueL&0xFFFFFFFFL);
-						createIrDrAsimm(code, ppcSubfic, dReg, sReg2, (int)immValLong);
-						createIrDrA(code, ppcSubfze, res.regLong, opds[1].regLong);
-					} else if (sReg2 < 0) {
+						createIrDrAsimm(code, ppcSubfic, dReg, src2Reg, (int)immValLong);
+						createIrDrA(code, ppcSubfze, dRegLong, src2RegLong);
+					} else if (src2Reg < 0) {
 						long immValLong = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
-						createIrDrAsimm(code, ppcAddic, dReg, sReg1, -(int)immValLong);
-						createIrDrA(code, ppcAddme, res.regLong, opds[0].regLong);
+						createIrDrAsimm(code, ppcAddic, dReg, src1Reg, -(int)immValLong);
+						createIrDrA(code, ppcAddme, dRegLong, src1RegLong);
 					} else {
-						createIrDrArB(code, ppcSubfc, dReg, sReg2, sReg1);
-						createIrDrArB(code, ppcSubfe, res.regLong, opds[1].regLong, opds[0].regLong);
+						createIrDrArB(code, ppcSubfc, dReg, src2Reg, src1Reg);
+						createIrDrArB(code, ppcSubfe, dRegLong, src2RegLong, src1RegLong);
 					}
 					break;
 				case tFloat:
-					createIrDrArB(code, ppcFsubs, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFsubs, dReg, src1Reg, src2Reg);
 					break;
 				case tDouble:
-					createIrDrArB(code, ppcFsub, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFsub, dReg, src1Reg, src2Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -774,61 +831,57 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCsub
 			case sCmul: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger:
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrDrAsimm(code, ppcMulli, dReg, sReg2, immVal);
-					} else if (sReg2 < 0) {
+						createIrDrAsimm(code, ppcMulli, dReg, src2Reg, immVal);
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
-						if (sReg2 == -1) {
-							createIrDrAsimm(code, ppcMulli, dReg, sReg1, immVal);
+						if (src2Reg == -1) {
+							createIrDrAsimm(code, ppcMulli, dReg, src1Reg, immVal);
 						} else {	// is power of 2
 							int shift = 0;
 							while (immVal > 1) {shift++; immVal >>= 1;}
-							if (shift == 0) createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
-							else createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, shift, 0, 31-shift);
+							if (shift == 0) createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
+							else createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, shift, 0, 31-shift);
 						}
 					} else {
-						createIrDrArB(code, ppcMullw, dReg, sReg1, sReg2);
+						createIrDrArB(code, ppcMullw, dReg, src1Reg, src2Reg);
 					}
 					break;
 				case tLong:
-					if (sReg2 < 0) {	// is power of 2
+					if (src2Reg < 0) {	// is power of 2
 						long immValLong = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
 						int shift = 0;
 						while (immValLong > 1) {shift++; immValLong >>= 1;}
 						if (shift == 0) {
-							createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
-							createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
+							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
+							createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
 						} else {
 							if (shift < 32) {
-								createIrArSSHMBME(code, ppcRlwinm, res.regLong, sReg1, shift, 32-shift, 31);
-								createIrArSSHMBME(code, ppcRlwimi, res.regLong, opds[0].regLong, shift, 0, 31-shift);
-								createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, shift, 0, 31-shift);
+								createIrArSSHMBME(code, ppcRlwinm, dRegLong, src1Reg, shift, 32-shift, 31);
+								createIrArSSHMBME(code, ppcRlwimi, dRegLong, src1RegLong, shift, 0, 31-shift);
+								createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, shift, 0, 31-shift);
 							} else {
 								createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
-								createIrArSSHMBME(code, ppcRlwinm, res.regLong, sReg1, shift-32, 0, 63-shift);
+								createIrArSSHMBME(code, ppcRlwinm, dRegLong, src1Reg, shift-32, 0, 63-shift);
 							}
 						}
 					} else {
-						createIrDrArB(code, ppcMullw, res.regGPR1, opds[0].regLong, sReg2);
-						createIrDrArB(code, ppcMullw, res.regGPR2, sReg1, opds[1].regLong);
-						createIrDrArB(code, ppcAdd, res.regGPR1, res.regGPR1, res.regGPR2);
-						createIrDrArB(code, ppcMulhwu, res.regGPR2, sReg1, sReg2);
-						createIrDrArB(code, ppcAdd, res.regLong, res.regGPR1, res.regGPR2);
-						createIrDrArB(code, ppcMullw, res.reg, sReg1, sReg2);
+						createIrDrArB(code, ppcMullw, gAux1, src1RegLong, src2Reg);
+						createIrDrArB(code, ppcMullw, gAux2, src1Reg, src2RegLong);
+						createIrDrArB(code, ppcAdd, gAux1, gAux1, gAux2);
+						createIrDrArB(code, ppcMulhwu, gAux2, src1Reg, src2Reg);
+						createIrDrArB(code, ppcAdd, dRegLong, gAux1, gAux2);
+						createIrDrArB(code, ppcMullw, res.reg, src1Reg, src2Reg);
 					}
 					break;
 				case tFloat:
-					createIrDrArC(code, ppcFmuls, dReg, sReg1, sReg2);
+					createIrDrArC(code, ppcFmuls, dReg, src1Reg, src2Reg);
 					break;
 				case tDouble:
-					createIrDrArC(code, ppcFmul, dReg, sReg1, sReg2);
+					createIrDrArC(code, ppcFmul, dReg, src1Reg, src2Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -837,82 +890,76 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	//sCmul
 			case sCdiv: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte: case tShort: case tInteger:
-					if (sReg2 < 0) {
+					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	// is power of 2
 						int shift = 0;
 						while (immVal > 1) {shift++; immVal >>= 1;}
 						if (shift == 0) 
-							createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
+							createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
 						else {
-							createIrArSSH(code, ppcSrawi, 0, sReg1, shift-1);
+							createIrArSSH(code, ppcSrawi, 0, src1Reg, shift-1);
 							createIrArSSHMBME(code, ppcRlwinm, 0, 0, shift, 32 - shift, 31);	
-							createIrDrArB(code, ppcAdd, 0, sReg1, 0);
+							createIrDrArB(code, ppcAdd, 0, src1Reg, 0);
 							createIrArSSH(code, ppcSrawi, dReg, 0, shift);
 						}
 					} else {
-						createItrap(code, ppcTwi, TOifequal, sReg2, 0);
-						createIrDrArB(code, ppcDivw, dReg, sReg1, sReg2);
+						createItrap(code, ppcTwi, TOifequal, src2Reg, 0);
+						createIrDrArB(code, ppcDivw, dReg, src1Reg, src2Reg);
 					}
 					break;
 				case tLong:
-					int sReg1Long = opds[0].regLong;
-					int sReg2Long = opds[1].regLong;
-					if (sReg2 < 0) {	// is power of 2
+					if (src2Reg < 0) {	// is power of 2
 						long immValLong = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
 						int shift = 0;
 						while (immValLong > 1) {shift++; immValLong >>= 1;}
 						if (shift == 0) {
-							createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
-							createIrArSrB(code, ppcOr, res.regLong, sReg1Long, sReg1Long);
+							createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
+							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
 						} else if (shift < 32) {
 							int sh1 = shift - 1;																// shift right arithmetic immediate by shift-1
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, sReg1, (32-sh1)%32, sh1, 31);				// sh1 can be 0!
-							createIrArSSHMBME(code, ppcRlwimi, res.regGPR1, sReg1Long, (32-sh1)%32, 0, (sh1-1+32)%32);			
-							createIrArSSH(code, ppcSrawi, res.regGPR2, sReg1Long, sh1);																																				
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, res.regGPR2, shift, 32-shift, 31);		// shift right immediate by 64-shift	
-							createIrDrAsimm(code, ppcAddi, res.regGPR2, 0, 0);
-							createIrDrArB(code, ppcAddc, res.regGPR1, res.regGPR1, sReg1);							// add
-							createIrDrArB(code, ppcAdde, res.regGPR2, res.regGPR2, sReg1Long);					 
-							createIrArSSHMBME(code, ppcRlwinm, dReg, res.regGPR1, 32-shift, shift, 31);				// shift right arithmetic immediate by shift
-							createIrArSSHMBME(code, ppcRlwimi, dReg, res.regGPR2, 32-shift, 0, shift-1);				
-							createIrArSSH(code, ppcSrawi, res.regLong, res.regGPR2, shift);															
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, (32-sh1)%32, sh1, 31);				// sh1 can be 0!
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, src1RegLong, (32-sh1)%32, 0, (sh1-1+32)%32);			
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, sh1);																																				
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux2, shift, 32-shift, 31);		// shift right immediate by 64-shift	
+							createIrDrAsimm(code, ppcAddi, gAux2, 0, 0);
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
+							createIrArSSHMBME(code, ppcRlwinm, dReg, gAux1, 32-shift, shift, 31);				// shift right arithmetic immediate by shift
+							createIrArSSHMBME(code, ppcRlwimi, dReg, gAux2, 32-shift, 0, shift-1);				
+							createIrArSSH(code, ppcSrawi, dRegLong, gAux2, shift);															
 						} else {
 							int sh1 = shift % 32;
-							createIrArSSH(code, ppcSrawi, res.regGPR1, sReg1Long, (sh1-1+32)%32);				// shift right arithmetic immediate by shift-1
-							createIrArSSH(code, ppcSrawi, res.regGPR2, sReg1Long, 31);							// sh1 can be 0!							
+							createIrArSSH(code, ppcSrawi, gAux1, src1RegLong, (sh1-1+32)%32);				// shift right arithmetic immediate by shift-1
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);							// sh1 can be 0!							
 							sh1 = (64 - shift) % 32;															// shift right immediate by 64-shift
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, res.regGPR1, (32-sh1)%32, sh1, 31);		
-							createIrArSSHMBME(code, ppcRlwimi, res.regGPR1, res.regGPR2, (32-sh1)%32, 0, (sh1-1)&0x1f);			
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR2, res.regGPR2, (32-sh1)%32, sh1, 31);		
-							createIrDrArB(code, ppcAddc, res.regGPR1, res.regGPR1, sReg1);							// add
-							createIrDrArB(code, ppcAdde, res.regGPR2, res.regGPR2, sReg1Long);					
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, (32-sh1)%32, sh1, 31);		
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, gAux2, (32-sh1)%32, 0, (sh1-1)&0x1f);			
+							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux2, (32-sh1)%32, sh1, 31);		
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					
 							sh1 = shift % 32;
-							createIrArSSH(code, ppcSrawi, dReg, res.regGPR2, sh1);									// shift right arithmetic immediate by shift
-							createIrArSSH(code, ppcSrawi, res.regLong, res.regGPR2, 31);																
+							createIrArSSH(code, ppcSrawi, dReg, gAux2, sh1);									// shift right arithmetic immediate by shift
+							createIrArSSH(code, ppcSrawi, dRegLong, gAux2, 31);																
 						}
 					} else { // not a power of 2
-						createICRFrAsimm(code, ppcCmpi, CRF1, sReg2Long, -1); // is divisor negative?
+						createICRFrAsimm(code, ppcCmpi, CRF1, src2RegLong, -1); // is divisor negative?
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF1+GT, 4);	
-						createIrDrAsimm(code, ppcSubfic, res.regGPR2, sReg2, 0);	// negate divisor
-						createIrDrA(code, ppcSubfze, res.regGPR1, sReg2Long);
+						createIrDrAsimm(code, ppcSubfic, gAux2, src2Reg, 0);	// negate divisor
+						createIrDrA(code, ppcSubfze, gAux1, src2RegLong);
 						createIBOBIBD(code, ppcBc, BOalways, 0, 3);
-						createIrArSrB(code, ppcOr, res.regGPR2, sReg2, sReg2); // copy if not negative
-						createIrArSrB(code, ppcOr, res.regGPR1, sReg2Long, sReg2Long);
+						createIrArSrB(code, ppcOr, gAux2, src2Reg, src2Reg); // copy if not negative
+						createIrArSrB(code, ppcOr, gAux1, src2RegLong, src2RegLong);
 						// test, if divisor = 0, if so, throw exception
-						createICRFrAsimm(code, ppcCmpi, CRF3, res.regGPR2, 0);
+						createICRFrAsimm(code, ppcCmpi, CRF3, gAux2, 0);
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF3+EQ, 3);	
-						createItrap(code, ppcTwi, TOifequal, res.regGPR1, 0);
+						createItrap(code, ppcTwi, TOifequal, gAux1, 0);
 						createIrDrArB(code, ppcDivw, 0, 0, 0);	// this instruction solely serves the trap handler to
 						// identify that it's a arithmetic exception
 						
 						createIrSrAd(code, ppcStmw, 26, stackPtr, tempStorageOffset + 8);
-						copyParametersSubroutine(code, sReg1Long, sReg1, res.regGPR1, res.regGPR2);
+						copyParametersSubroutine(code, src1RegLong, src1Reg, gAux1, gAux2);
 						Method m = Method.getCompSpecSubroutine("divLong");
 						loadConstantAndFixup(code, 26, m);	// use a register which contains no operand 
 						createIrSspr(code, ppcMtspr, LR, 26);
@@ -922,14 +969,14 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 						createIrArSrB(code, ppcOr, dReg, 26, 26);
 						if (dReg != 26) // restore last register if not destination register
 							createIrDrAd(code, ppcLwz, 26, stackPtr, tempStorageOffset + 8);
-						createIrArSrB(code, ppcOr, res.regLong, 0, 0);
+						createIrArSrB(code, ppcOr, dRegLong, 0, 0);
 					}
 					break;
 				case tFloat:
-					createIrDrArB(code, ppcFdivs, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFdivs, dReg, src1Reg, src2Reg);
 					break;
 				case tDouble:
-					createIrDrArB(code, ppcFdiv, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFdiv, dReg, src1Reg, src2Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -938,99 +985,93 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCdiv
 			case sCrem: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte: case tShort: case tInteger:
-					if (sReg2 < 0) {
+					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	// is power of 2
 						int shift = 0;
 						while (immVal > 1) {shift++; immVal >>= 1;}
 						if (shift == 0) 
 							loadConstant(code, dReg, 0);
 						else {
-							createIrArSSH(code, ppcSrawi, 0, sReg1, shift-1);
+							createIrArSSH(code, ppcSrawi, 0, src1Reg, shift-1);
 							createIrArSSHMBME(code, ppcRlwinm, 0, 0, shift, 32 - shift, 31);	
-							createIrDrArB(code, ppcAdd, 0, sReg1, 0);
+							createIrDrArB(code, ppcAdd, 0, src1Reg, 0);
 							createIrArSSH(code, ppcSrawi, dReg, 0, shift);
 							createIrArSSHMBME(code, ppcRlwinm, 0, dReg, shift, 0, 31-shift);
-							createIrDrArB(code, ppcSubf, dReg, 0, sReg1);
+							createIrDrArB(code, ppcSubf, dReg, 0, src1Reg);
 						}
 					} else {
-						createItrap(code, ppcTwi, TOifequal, sReg2, 0);
-						createIrDrArB(code, ppcDivw, 0, sReg1, sReg2);
-						createIrDrArB(code, ppcMullw, 0, 0, sReg2);
-						createIrDrArB(code, ppcSubf, dReg ,0, sReg1);
+						createItrap(code, ppcTwi, TOifequal, src2Reg, 0);
+						createIrDrArB(code, ppcDivw, 0, src1Reg, src2Reg);
+						createIrDrArB(code, ppcMullw, 0, 0, src2Reg);
+						createIrDrArB(code, ppcSubf, dReg ,0, src1Reg);
 					}
 					break;
 				case tLong:
-					int sReg1Long = opds[0].regLong;
-					int sReg2Long = opds[1].regLong;
-					if (sReg2 < 0) {	// is power of 2
+					if (src2Reg < 0) {	// is power of 2
 						long immValLong = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
 						int shift = 0;
 						while (immValLong > 1) {shift++; immValLong >>= 1;}
 						if (shift == 0) {
-							loadConstant(code, res.regLong, 0);
+							loadConstant(code, dRegLong, 0);
 							loadConstant(code, dReg, 0);
 						} else if (shift < 32) {
 							int sh1 = shift - 1;																// shift right arithmetic immediate by shift-1
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, sReg1, (32-sh1)%32, sh1, 31);					
-							createIrArSSHMBME(code, ppcRlwimi, res.regGPR1, sReg1Long, (32-sh1)%32, 0, (sh1-1+32)%32);			
-							createIrArSSH(code, ppcSrawi, res.regGPR2, sReg1Long, sh1);																																				
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, res.regGPR2, shift, 32 - shift, 31);		// shift right immediate by 64-shift	
-							createIrDrAsimm(code, ppcAddi, res.regGPR2, 0, 0);
-							createIrDrArB(code, ppcAddc, res.regGPR1, res.regGPR1, sReg1);							// add
-							createIrDrArB(code, ppcAdde, res.regGPR2, res.regGPR2, sReg1Long);					 
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, res.regGPR1, 32-shift, shift, 31);		// shift right arithmetic immediate by shift
-							createIrArSSHMBME(code, ppcRlwimi, res.regGPR1, res.regGPR2, 32-shift, 0, shift-1);				
-							createIrArSSH(code, ppcSrawi, res.regGPR2, res.regGPR2, shift);															
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, (32-sh1)%32, sh1, 31);					
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, src1RegLong, (32-sh1)%32, 0, (sh1-1+32)%32);			
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, sh1);																																				
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux2, shift, 32 - shift, 31);		// shift right immediate by 64-shift	
+							createIrDrAsimm(code, ppcAddi, gAux2, 0, 0);
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, 32-shift, shift, 31);		// shift right arithmetic immediate by shift
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, gAux2, 32-shift, 0, shift-1);				
+							createIrArSSH(code, ppcSrawi, gAux2, gAux2, shift);															
 							
-							createIrArSSHMBME(code, ppcRlwinm, 0, res.regGPR1, shift, 32-shift, 31);					// multiply
-							createIrArSSHMBME(code, ppcRlwimi, 0, res.regGPR2, shift, 0, 31-shift);
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, res.regGPR1, shift, 0, 31-shift);
+							createIrArSSHMBME(code, ppcRlwinm, 0, gAux1, shift, 32-shift, 31);					// multiply
+							createIrArSSHMBME(code, ppcRlwimi, 0, gAux2, shift, 0, 31-shift);
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, shift, 0, 31-shift);
 							
-							createIrDrArB(code, ppcSubfc, dReg, res.regGPR1, sReg1);									// subtract
-							createIrDrArB(code, ppcSubfe, res.regLong, 0, sReg1Long);
+							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);									// subtract
+							createIrDrArB(code, ppcSubfe, dRegLong, 0, src1RegLong);
 						} else {
 							int sh1 = shift % 32;
-							createIrArSSH(code, ppcSrawi, res.regGPR1, sReg1Long, (sh1-1+32)%32);				// shift right arithmetic immediate by shift-1
-							createIrArSSH(code, ppcSrawi, res.regGPR2, sReg1Long, 31);															
+							createIrArSSH(code, ppcSrawi, gAux1, src1RegLong, (sh1-1+32)%32);				// shift right arithmetic immediate by shift-1
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);															
 							sh1 = (64 - shift) % 32;															// shift right immediate by 64-shift
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, res.regGPR1, (32-sh1)%32, sh1, 31);						
-							createIrArSSHMBME(code, ppcRlwimi, res.regGPR1, res.regGPR2, (32-sh1)%32, 0, (sh1-1)&0x1f);					
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR2, res.regGPR2, (32-sh1)%32, sh1, 31);		
-							createIrDrArB(code, ppcAddc, res.regGPR1, res.regGPR1, sReg1);							// add
-							createIrDrArB(code, ppcAdde, res.regGPR2, res.regGPR2, sReg1Long);					 
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, (32-sh1)%32, sh1, 31);						
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, gAux2, (32-sh1)%32, 0, (sh1-1)&0x1f);					
+							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux2, (32-sh1)%32, sh1, 31);		
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
 							sh1 = shift % 32;																	// shift right arithmetic immediate by shift
-							createIrArSSH(code, ppcSrawi, res.regGPR1, res.regGPR2, sh1);									
-							createIrArSSH(code, ppcSrawi, res.regGPR2, res.regGPR2, 31);									
+							createIrArSSH(code, ppcSrawi, gAux1, gAux2, sh1);									
+							createIrArSSH(code, ppcSrawi, gAux2, gAux2, 31);									
 							
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR2, res.regGPR1, shift-32, 0, 63-shift);		// multiply
-							createIrDrAsimm(code, ppcAddi, res.regGPR1, 0, 0);									
+							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux1, shift-32, 0, 63-shift);		// multiply
+							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);									
 							
-							createIrDrArB(code, ppcSubfc, dReg, res.regGPR1, sReg1);									// subtract
-							createIrDrArB(code, ppcSubfe, res.regLong, res.regGPR2, sReg1Long);
+							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);									// subtract
+							createIrDrArB(code, ppcSubfe, dRegLong, gAux2, src1RegLong);
 						}
 					} else { // not a power of 2
-						createICRFrAsimm(code, ppcCmpi, CRF1, sReg2Long, -1); // is divisor negative?
+						createICRFrAsimm(code, ppcCmpi, CRF1, src2RegLong, -1); // is divisor negative?
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF1+GT, 4);	
-						createIrDrAsimm(code, ppcSubfic, res.regGPR2, sReg2, 0);	// negate divisor
-						createIrDrA(code, ppcSubfze, res.regGPR1, sReg2Long);
+						createIrDrAsimm(code, ppcSubfic, gAux2, src2Reg, 0);	// negate divisor
+						createIrDrA(code, ppcSubfze, gAux1, src2RegLong);
 						createIBOBIBD(code, ppcBc, BOalways, 0, 3);
-						createIrArSrB(code, ppcOr, res.regGPR1, sReg2Long, sReg2Long); // copy if not negative
-						createIrArSrB(code, ppcOr, res.regGPR2, sReg2, sReg2);
+						createIrArSrB(code, ppcOr, gAux1, src2RegLong, src2RegLong); // copy if not negative
+						createIrArSrB(code, ppcOr, gAux2, src2Reg, src2Reg);
 						// test, if divisor = 0, if so, throw exception
-						createICRFrAsimm(code, ppcCmpi, CRF1, sReg2, 0);
+						createICRFrAsimm(code, ppcCmpi, CRF1, src2Reg, 0);
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF1+EQ, 3);	
-						createItrap(code, ppcTwi, TOifequal, sReg2Long, 0);
-						createIrDrArB(code, ppcDivw, sReg2, sReg2, sReg2);	// this instruction solely serves the trap handler to
+						createItrap(code, ppcTwi, TOifequal, src2RegLong, 0);
+						createIrDrArB(code, ppcDivw, src2Reg, src2Reg, src2Reg);	// this instruction solely serves the trap handler to
 						// identify that it's a arithmetic exception
 
 						createIrSrAd(code, ppcStmw, 24, stackPtr, tempStorageOffset + 8);
-						copyParametersSubroutine(code, sReg1Long, sReg1, res.regGPR1, res.regGPR2);
+						copyParametersSubroutine(code, src1RegLong, src1Reg, gAux1, gAux2);
 						Method m = Method.getCompSpecSubroutine("remLong");
 						loadConstantAndFixup(code, 24, m);	// use a register which contains no operand 
 						createIrSspr(code, ppcMtspr, LR, 24);
@@ -1040,42 +1081,42 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 						createIrArSrB(code, ppcOr, dReg, 24, 24);
 						if (dReg != 24) // restore last register if not destination register
 							createIrDrAd(code, ppcLwz, 24, stackPtr, tempStorageOffset + 8);
-						createIrArSrB(code, ppcOr, res.regLong, 0, 0);
+						createIrArSrB(code, ppcOr, dRegLong, 0, 0);
 					}
 					break;
 				case tFloat:	// correct if a / b < 32 bit
-					createIrDrArB(code, ppcFdiv, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFdiv, dReg, src1Reg, src2Reg);
 					createIrDrB(code, ppcFctiwz, 0, dReg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
-					createIrDrAd(code, ppcLwz, res.regGPR1, stackPtr, tempStorageOffset + 4);
+					createIrDrAd(code, ppcLwz, gAux1, stackPtr, tempStorageOffset + 4);
 					Item item = int2floatConst1;	// ref to 2^52+2^31;					
 					createIrDrAsimm(code, ppcAddis, 0, 0, 0x4330);	// preload 2^52
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset);
-					createIrArSuimm(code, ppcXoris, 0, res.regGPR1, 0x8000);
+					createIrArSuimm(code, ppcXoris, 0, gAux1, 0x8000);
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset+4);
-					loadConstantAndFixup(code, res.regGPR1, item);
-					createIrDrAd(code, ppcLfd, dReg, res.regGPR1, 0);
+					loadConstantAndFixup(code, gAux1, item);
+					createIrDrAd(code, ppcLfd, dReg, gAux1, 0);
 					createIrDrAd(code, ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(code, ppcFsub, dReg, 0, dReg);
-					createIrDrArC(code, ppcFmul, dReg, dReg, sReg2);
-					createIrDrArB(code, ppcFsub, dReg, sReg1, dReg);
+					createIrDrArC(code, ppcFmul, dReg, dReg, src2Reg);
+					createIrDrArB(code, ppcFsub, dReg, src1Reg, dReg);
 					break;
 				case tDouble:	// correct if a / b < 32 bit
-					createIrDrArB(code, ppcFdiv, dReg, sReg1, sReg2);
+					createIrDrArB(code, ppcFdiv, dReg, src1Reg, src2Reg);
 					createIrDrB(code, ppcFctiwz, 0, dReg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
-					createIrDrAd(code, ppcLwz, res.regGPR1, stackPtr, tempStorageOffset + 4);
+					createIrDrAd(code, ppcLwz, gAux1, stackPtr, tempStorageOffset + 4);
 					item = int2floatConst1;	// ref to 2^52+2^31;					
 					createIrDrAsimm(code, ppcAddis, 0, 0, 0x4330);	// preload 2^52
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset);
-					createIrArSuimm(code, ppcXoris, 0, res.regGPR1, 0x8000);
+					createIrArSuimm(code, ppcXoris, 0, gAux1, 0x8000);
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset+4);
-					loadConstantAndFixup(code, res.regGPR1, item);
-					createIrDrAd(code, ppcLfd, dReg, res.regGPR1, 0);
+					loadConstantAndFixup(code, gAux1, item);
+					createIrDrAd(code, ppcLfd, dReg, gAux1, 0);
 					createIrDrAd(code, ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(code, ppcFsub, dReg, 0, dReg);
-					createIrDrArC(code, ppcFmul, dReg, dReg, sReg2);
-					createIrDrArB(code, ppcFsub, dReg, sReg1, dReg);
+					createIrDrArC(code, ppcFmul, dReg, dReg, src2Reg);
+					createIrDrArB(code, ppcFsub, dReg, src1Reg, dReg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1084,15 +1125,14 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCrem
 			case sCneg: {
-				opds = instr.getOperands();
 				int type = res.type & ~(1<<ssaTaFitIntoInt);
 				if (type == tInteger)
-					createIrDrA(code, ppcNeg, res.reg, opds[0].reg);
+					createIrDrA(code, ppcNeg, dReg, src1Reg);
 				else if (type == tLong) {
-					createIrDrAsimm(code, ppcSubfic, res.reg, opds[0].reg, 0);
-					createIrDrA(code, ppcSubfze, res.regLong, opds[0].regLong);
+					createIrDrAsimm(code, ppcSubfic, dReg, src1Reg, 0);
+					createIrDrA(code, ppcSubfze, dRegLong, src1RegLong);
 				} else if (type == tFloat || type == tDouble)
-					createIrDrB(code, ppcFneg, res.reg, opds[0].reg);
+					createIrDrB(code, ppcFneg, dReg, src1Reg);
 				else {
 					ErrorReporter.reporter.error(610);
 					assert false : "result of SSA instruction has wrong type";
@@ -1100,40 +1140,36 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCneg
 			case sCshl: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				int type = res.type & ~(1<<ssaTaFitIntoInt);
 				if (type == tInteger) {
-					if (sReg2 < 0) {
+					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
-						createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, immVal, 0, 31-immVal);
+						createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, immVal, 0, 31-immVal);
 					} else {
-						createIrArSSHMBME(code, ppcRlwinm, 0, sReg2, 0, 27, 31);
-						createIrArSrB(code, ppcSlw, dReg, sReg1, 0);
+						createIrArSSHMBME(code, ppcRlwinm, 0, src2Reg, 0, 27, 31);
+						createIrArSrB(code, ppcSlw, dReg, src1Reg, 0);
 					}
 				} else if (type == tLong) {
-					if (sReg2 < 0) {	
+					if (src2Reg < 0) {	
 						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
 						if (immVal < 32) {
-							createIrArSSHMBME(code, ppcRlwinm, 0, sReg1, immVal, 32-immVal, 31);
-							createIrArSSHMBME(code, ppcRlwimi, 0, opds[0].regLong, immVal, 0, 31-immVal);
-							createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, immVal, 0, 31-immVal);
-							createIrArSrB(code, ppcOr, res.regLong, 0, 0);
+							createIrArSSHMBME(code, ppcRlwinm, 0, src1Reg, immVal, 32-immVal, 31);
+							createIrArSSHMBME(code, ppcRlwimi, 0, src1RegLong, immVal, 0, 31-immVal);
+							createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, immVal, 0, 31-immVal);
+							createIrArSrB(code, ppcOr, dRegLong, 0, 0);
 						} else {
-							createIrArSSHMBME(code, ppcRlwinm, res.regLong, sReg1, immVal-32, 0, 63-immVal);
+							createIrArSSHMBME(code, ppcRlwinm, dRegLong, src1Reg, immVal-32, 0, 63-immVal);
 							createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 						}
 					} else { 
-						createIrDrAsimm(code, ppcSubfic, res.regGPR1, sReg2, 32);
-						createIrArSrB(code, ppcSlw, res.regLong, opds[0].regLong, sReg2);
-						createIrArSrB(code, ppcSrw, 0, sReg1, res.regGPR1);
-						createIrArSrB(code, ppcOr, res.regLong, res.regLong, 0);
-						createIrDrAsimm(code, ppcAddi, res.regGPR1, sReg2, -32);
-						createIrArSrB(code, ppcSlw, 0, sReg1, res.regGPR1);
-						createIrArSrB(code, ppcOr, res.regLong, res.regLong, 0);
-						createIrArSrB(code, ppcSlw, dReg, sReg1, sReg2);
+						createIrDrAsimm(code, ppcSubfic, gAux1, src2Reg, 32);
+						createIrArSrB(code, ppcSlw, dRegLong, src1RegLong, src2Reg);
+						createIrArSrB(code, ppcSrw, 0, src1Reg, gAux1);
+						createIrArSrB(code, ppcOr, dRegLong, dRegLong, 0);
+						createIrDrAsimm(code, ppcAddi, gAux1, src2Reg, -32);
+						createIrArSrB(code, ppcSlw, 0, src1Reg, gAux1);
+						createIrArSrB(code, ppcOr, dRegLong, dRegLong, 0);
+						createIrArSrB(code, ppcSlw, dReg, src1Reg, src2Reg);
 					}
 				} else {
 					ErrorReporter.reporter.error(610);
@@ -1142,46 +1178,42 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCshl
 			case sCshr: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				int type = res.type & ~(1<<ssaTaFitIntoInt);
 				if (type == tInteger) {
-					if (sReg2 < 0) {
+					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
-						createIrArSSH(code, ppcSrawi, dReg, sReg1, immVal);
+						createIrArSSH(code, ppcSrawi, dReg, src1Reg, immVal);
 					} else {
-						createIrArSSHMBME(code, ppcRlwinm, 0, sReg2, 0, 27, 31);
-						createIrArSrB(code, ppcSraw, dReg, sReg1, 0);
+						createIrArSSHMBME(code, ppcRlwinm, 0, src2Reg, 0, 27, 31);
+						createIrArSrB(code, ppcSraw, dReg, src1Reg, 0);
 					}
 				} else if (type == tLong) {
-					if (sReg2 < 0) {
+					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
 						if (immVal == 0) {
-							createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
-							createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
+							createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
+							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
 						} else if (immVal < 32) {
-							createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, 32-immVal, immVal, 31);
-							createIrArSSHMBME(code, ppcRlwimi, dReg, opds[0].regLong, 32-immVal, 0, immVal-1);
-							createIrArSSH(code, ppcSrawi, res.regLong, opds[0].regLong, immVal);
+							createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, 32-immVal, immVal, 31);
+							createIrArSSHMBME(code, ppcRlwimi, dReg, src1RegLong, 32-immVal, 0, immVal-1);
+							createIrArSSH(code, ppcSrawi, dRegLong, src1RegLong, immVal);
 						} else {
 							immVal %= 32;
-							createIrArSSH(code, ppcSrawi, res.reg, opds[0].regLong, immVal);
-							createIrArSSH(code, ppcSrawi, res.regLong, opds[0].regLong, 31);
+							createIrArSSH(code, ppcSrawi, res.reg, src1RegLong, immVal);
+							createIrArSSH(code, ppcSrawi, dRegLong, src1RegLong, 31);
 						}
 					} else {
-						createIrArSSHMBME(code, ppcRlwinm, 0, sReg2, 0, 26, 31);
-						createIrDrAsimm(code, ppcSubfic, res.regGPR1, 0, 32);
-						createIrArSrB(code, ppcSrw, dReg, sReg1, sReg2);
-						createIrArSrB(code, ppcSlw, 0, opds[0].regLong, res.regGPR1);
+						createIrArSSHMBME(code, ppcRlwinm, 0, src2Reg, 0, 26, 31);
+						createIrDrAsimm(code, ppcSubfic, gAux1, 0, 32);
+						createIrArSrB(code, ppcSrw, dReg, src1Reg, src2Reg);
+						createIrArSrB(code, ppcSlw, 0, src1RegLong, gAux1);
 						createIrArSrB(code, ppcOr, dReg, dReg, 0);
-						createIrArSSHMBME(code, ppcRlwinm, 0, sReg2, 0, 26, 31);
-						createIrDrAsimm(code, ppcAddicp, res.regGPR1, 0, -32);
-						createIrArSrB(code, ppcSraw, 0, opds[0].regLong, res.regGPR1);
+						createIrArSSHMBME(code, ppcRlwinm, 0, src2Reg, 0, 26, 31);
+						createIrDrAsimm(code, ppcAddicp, gAux1, 0, -32);
+						createIrArSrB(code, ppcSraw, 0, src1RegLong, gAux1);
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+GT, 2);
 						createIrArSuimm(code, ppcOri, dReg, 0, 0);
-						createIrArSrB(code, ppcSraw, res.regLong, opds[0].regLong, sReg2);
+						createIrArSrB(code, ppcSraw, dRegLong, src1RegLong, src2Reg);
 					}
 				} else {
 					ErrorReporter.reporter.error(610);
@@ -1190,42 +1222,38 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCshr
 			case sCushr: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				int type = res.type & ~(1<<ssaTaFitIntoInt);
 				if (type == tInteger) {
-					if (sReg2 < 0) {
+					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
-						createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, (32-immVal)%32, immVal, 31);
+						createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, (32-immVal)%32, immVal, 31);
 					} else {
-						createIrArSSHMBME(code, ppcRlwinm, 0, sReg2, 0, 27, 31);
-						createIrArSrB(code, ppcSrw, dReg, sReg1, 0);
+						createIrArSSHMBME(code, ppcRlwinm, 0, src2Reg, 0, 27, 31);
+						createIrArSrB(code, ppcSrw, dReg, src1Reg, 0);
 					}
 				} else if (type == tLong) {
-					if (sReg2 < 0) {	
+					if (src2Reg < 0) {	
 						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
 						if (immVal == 0) {
-							createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
-							createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
+							createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
+							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
 						} else if (immVal < 32) {
-							createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, (32-immVal)%32, immVal, 31);
-							createIrArSSHMBME(code, ppcRlwimi, dReg, opds[0].regLong, (32-immVal)%32, 0, (immVal-1)&0x1f);
-							createIrArSSHMBME(code, ppcRlwinm, res.regLong, opds[0].regLong, (32-immVal)%32, immVal, 31);
+							createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, (32-immVal)%32, immVal, 31);
+							createIrArSSHMBME(code, ppcRlwimi, dReg, src1RegLong, (32-immVal)%32, 0, (immVal-1)&0x1f);
+							createIrArSSHMBME(code, ppcRlwinm, dRegLong, src1RegLong, (32-immVal)%32, immVal, 31);
 						} else {
-							createIrArSSHMBME(code, ppcRlwinm, dReg, opds[0].regLong, (64-immVal)%32, immVal-32, 31);
-							createIrDrAsimm(code, ppcAddi, res.regLong, 0, 0);
+							createIrArSSHMBME(code, ppcRlwinm, dReg, src1RegLong, (64-immVal)%32, immVal-32, 31);
+							createIrDrAsimm(code, ppcAddi, dRegLong, 0, 0);
 						}
 					} else {
-						createIrDrAsimm(code, ppcSubfic, res.regGPR1, sReg2, 32);
-						createIrArSrB(code, ppcSrw, dReg, sReg1, sReg2);
-						createIrArSrB(code, ppcSlw, 0, opds[0].regLong, res.regGPR1);
+						createIrDrAsimm(code, ppcSubfic, gAux1, src2Reg, 32);
+						createIrArSrB(code, ppcSrw, dReg, src1Reg, src2Reg);
+						createIrArSrB(code, ppcSlw, 0, src1RegLong, gAux1);
 						createIrArSrB(code, ppcOr, dReg, dReg, 0);
-						createIrDrAsimm(code, ppcAddi, res.regGPR1, sReg2, -32);
-						createIrArSrB(code, ppcSrw, 0, opds[0].regLong, res.regGPR1);
+						createIrDrAsimm(code, ppcAddi, gAux1, src2Reg, -32);
+						createIrArSrB(code, ppcSrw, 0, src1RegLong, gAux1);
 						createIrArSrB(code, ppcOr, dReg, dReg, 0);
-						createIrArSrB(code, ppcSrw, res.regLong, opds[0].regLong, sReg2);
+						createIrArSrB(code, ppcSrw, dRegLong, src1RegLong, src2Reg);
 					}
 				} else {
 					ErrorReporter.reporter.error(610);
@@ -1234,53 +1262,49 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCushr
 			case sCand: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
 						if (immVal >= 0)
-							createIrArSuimm(code, ppcAndi, dReg, sReg2, immVal);
+							createIrArSuimm(code, ppcAndi, dReg, src2Reg, immVal);
 						else {
 							createIrDrAsimm(code, ppcAddi, 0, 0, immVal);
-							createIrArSrB(code, ppcAnd, dReg, 0, sReg2);
+							createIrArSrB(code, ppcAnd, dReg, 0, src2Reg);
 						}
-					} else if (sReg2 < 0) {
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
 						if (immVal >= 0)
-							createIrArSuimm(code, ppcAndi, dReg, sReg1, immVal);
+							createIrArSuimm(code, ppcAndi, dReg, src1Reg, immVal);
 						else {
 							createIrDrAsimm(code, ppcAddi, 0, 0, immVal);
-							createIrArSrB(code, ppcAnd, dReg, 0, sReg1);
+							createIrArSrB(code, ppcAnd, dReg, 0, src1Reg);
 						}
 					} else
-						createIrArSrB(code, ppcAnd, dReg, sReg1, sReg2);
+						createIrArSrB(code, ppcAnd, dReg, src1Reg, src2Reg);
 				} else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueL;
 						if (immVal >= 0) {
-							createIrArSuimm(code, ppcAndi, res.regLong, opds[1].regLong, 0);
-							createIrArSuimm(code, ppcAndi, dReg, sReg2, (int)immVal);
+							createIrArSuimm(code, ppcAndi, dRegLong, src2RegLong, 0);
+							createIrArSuimm(code, ppcAndi, dReg, src2Reg, (int)immVal);
 						} else {
 							createIrDrAsimm(code, ppcAddi, 0, 0, immVal);
-							createIrArSrB(code, ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
-							createIrArSrB(code, ppcAnd, dReg, sReg2, 0);
+							createIrArSrB(code, ppcOr, dRegLong, src2RegLong, src2RegLong);
+							createIrArSrB(code, ppcAnd, dReg, src2Reg, 0);
 						}
-					} else if (sReg2 < 0) {
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueL;
 						if (immVal >= 0) {
-							createIrArSuimm(code, ppcAndi, res.regLong, opds[0].regLong, 0);
-							createIrArSuimm(code, ppcAndi, dReg, sReg1, (int)immVal);
+							createIrArSuimm(code, ppcAndi, dRegLong, src1RegLong, 0);
+							createIrArSuimm(code, ppcAndi, dReg, src1Reg, (int)immVal);
 						} else {
 							createIrDrAsimm(code, ppcAddi, 0, 0, immVal);
-							createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
-							createIrArSrB(code, ppcAnd, dReg, sReg1, 0);
+							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
+							createIrArSrB(code, ppcAnd, dReg, src1Reg, 0);
 						}
 					} else {
-						createIrArSrB(code, ppcAnd, res.regLong, opds[0].regLong, opds[1].regLong);
-						createIrArSrB(code, ppcAnd, dReg, sReg1, sReg2);
+						createIrArSrB(code, ppcAnd, dRegLong, src1RegLong, src2RegLong);
+						createIrArSrB(code, ppcAnd, dReg, src1Reg, src2Reg);
 					}
 				} else {
 					ErrorReporter.reporter.error(610);
@@ -1289,43 +1313,39 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 			break;}	// sCand
 			case sCor: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrArSuimm(code, ppcOri, dReg, sReg2, immVal);
+						createIrArSuimm(code, ppcOri, dReg, src2Reg, immVal);
 						if (immVal < 0)
 							createIrArSuimm(code, ppcOris, dReg, dReg, 0xffff);					
-					} else if (sReg2 < 0) {
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
-						createIrArSuimm(code, ppcOri, dReg, sReg1, immVal);
+						createIrArSuimm(code, ppcOri, dReg, src1Reg, immVal);
 						if (immVal < 0)
 							createIrArSuimm(code, ppcOris, dReg, dReg, 0xffff);					
 					} else
-						createIrArSrB(code, ppcOr, dReg, sReg1, sReg2);
+						createIrArSrB(code, ppcOr, dReg, src1Reg, src2Reg);
 				} else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueL;
-						createIrArSrB(code, ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
-						createIrArSuimm(code, ppcOri, dReg, sReg2, (int)immVal);
+						createIrArSrB(code, ppcOr, dRegLong, src2RegLong, src2RegLong);
+						createIrArSuimm(code, ppcOri, dReg, src2Reg, (int)immVal);
 						if (immVal < 0) {
 							createIrArSuimm(code, ppcOris, dReg, dReg, 0xffff);	
-							createIrDrAsimm(code, ppcAddi, res.regLong, 0, -1);	
+							createIrDrAsimm(code, ppcAddi, dRegLong, 0, -1);	
 						}
-					} else if (sReg2 < 0) {
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueL;
-						createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
-						createIrArSuimm(code, ppcOri, dReg, sReg1, (int)immVal);
+						createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
+						createIrArSuimm(code, ppcOri, dReg, src1Reg, (int)immVal);
 						if (immVal < 0) {
 							createIrArSuimm(code, ppcOris, dReg, dReg, 0xffff);					
-							createIrDrAsimm(code, ppcAddi, res.regLong, 0, -1);	
+							createIrDrAsimm(code, ppcAddi, dRegLong, 0, -1);	
 						}
 					} else {
-						createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[1].regLong);
-						createIrArSrB(code, ppcOr, dReg, sReg1, sReg2);
+						createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src2RegLong);
+						createIrArSrB(code, ppcOr, dReg, src1Reg, src2Reg);
 					}
 				} else {
 					ErrorReporter.reporter.error(610);
@@ -1334,53 +1354,49 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	//sCor
 			case sCxor: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
-				int dReg = res.reg;
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
-						createIrArSuimm(code, ppcXori, dReg, sReg2, immVal);
+						createIrArSuimm(code, ppcXori, dReg, src2Reg, immVal);
 						if (immVal < 0)
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0xffff);
 						else 
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0);
-					} else if (sReg2 < 0) {
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
-						createIrArSuimm(code, ppcXori, dReg, sReg1, immVal);
+						createIrArSuimm(code, ppcXori, dReg, src1Reg, immVal);
 						if (immVal < 0)
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0xffff);
 						else 
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0);
 					} else
-						createIrArSrB(code, ppcXor, dReg, sReg1, sReg2);
+						createIrArSrB(code, ppcXor, dReg, src1Reg, src2Reg);
 				} else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueL;
-						createIrArSuimm(code, ppcXori, dReg, sReg2, (int)immVal);
+						createIrArSuimm(code, ppcXori, dReg, src2Reg, (int)immVal);
 						if (immVal < 0) {
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0xffff);
-							createIrArSuimm(code, ppcXori, res.regLong, opds[1].regLong, 0xffff);
-							createIrArSuimm(code, ppcXoris, res.regLong, res.regLong, 0xffff);
+							createIrArSuimm(code, ppcXori, dRegLong, src2RegLong, 0xffff);
+							createIrArSuimm(code, ppcXoris, dRegLong, dRegLong, 0xffff);
 						} else {
-							createIrArSrB(code, ppcOr, res.regLong, opds[1].regLong, opds[1].regLong);
+							createIrArSrB(code, ppcOr, dRegLong, src2RegLong, src2RegLong);
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0);
 						}
-					} else if (sReg2 < 0) {
+					} else if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueL;
-						createIrArSuimm(code, ppcXori, dReg, sReg1, (int)immVal);
+						createIrArSuimm(code, ppcXori, dReg, src1Reg, (int)immVal);
 						if (immVal < 0) {
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0xffff);
-							createIrArSuimm(code, ppcXori, res.regLong, opds[0].regLong, 0xffff);
-							createIrArSuimm(code, ppcXoris, res.regLong, res.regLong, 0xffff);
+							createIrArSuimm(code, ppcXori, dRegLong, src1RegLong, 0xffff);
+							createIrArSuimm(code, ppcXoris, dRegLong, dRegLong, 0xffff);
 						} else {
-							createIrArSrB(code, ppcOr, res.regLong, opds[0].regLong, opds[0].regLong);
+							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
 							createIrArSuimm(code, ppcXoris, dReg, dReg, 0);
 						}
 					} else {
-						createIrArSrB(code, ppcXor, res.regLong, opds[0].regLong, opds[1].regLong);
-						createIrArSrB(code, ppcXor, dReg, sReg1, sReg2);
+						createIrArSrB(code, ppcXor, dRegLong, src1RegLong, src2RegLong);
+						createIrArSrB(code, ppcXor, dReg, src1Reg, src2Reg);
 					}
 				} else {
 					ErrorReporter.reporter.error(610);
@@ -1389,31 +1405,28 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCxor
 			case sCconvInt:	{// int -> other type
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
-					createIrArS(code, ppcExtsb, dReg, sReg1);
+					createIrArS(code, ppcExtsb, dReg, src1Reg);
 					break;
 				case tChar: 
-					createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, 0, 16, 31);
+					createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, 0, 16, 31);
 					break;
 				case tShort: 
-					createIrArS(code, ppcExtsh, dReg, sReg1);
+					createIrArS(code, ppcExtsh, dReg, src1Reg);
 					break;
 				case tLong:
-					createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
-					createIrArSSH(code, ppcSrawi, res.regLong, sReg1, 31);
+					createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
+					createIrArSSH(code, ppcSrawi, dRegLong, src1Reg, 31);
 					break;
 				case tFloat:
 					Item item = int2floatConst1;	// ref to 2^52+2^31;					
 					createIrDrAsimm(code, ppcAddis, 0, 0, 0x4330);	// preload 2^52
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset);
-					createIrArSuimm(code, ppcXoris, 0, sReg1, 0x8000);
+					createIrArSuimm(code, ppcXoris, 0, src1Reg, 0x8000);
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset+4);
-					loadConstantAndFixup(code, res.regGPR1, item);
-					createIrDrAd(code, ppcLfd, dReg, res.regGPR1, 0);
+					loadConstantAndFixup(code, gAux1, item);
+					createIrDrAd(code, ppcLfd, dReg, gAux1, 0);
 					createIrDrAd(code, ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(code, ppcFsub, dReg, 0, dReg);
 					createIrDrB(code, ppcFrsp, dReg, dReg);
@@ -1424,10 +1437,10 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					item = int2floatConst1;	// ref to 2^52+2^31;					
 					createIrDrAsimm(code, ppcAddis, 0, 0, 0x4330);	// preload 2^52
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset);
-					createIrArSuimm(code, ppcXoris, 0, sReg1, 0x8000);
+					createIrArSuimm(code, ppcXoris, 0, src1Reg, 0x8000);
 					createIrSrAd(code, ppcStw, 0, stackPtr, tempStorageOffset+4);
-					loadConstantAndFixup(code, res.regGPR1, item);
-					createIrDrAd(code, ppcLfd, dReg, res.regGPR1, 0);
+					loadConstantAndFixup(code, gAux1, item);
+					createIrDrAd(code, ppcLfd, dReg, gAux1, 0);
 					createIrDrAd(code, ppcLfd, 0, stackPtr, tempStorageOffset);
 					createIrDrArB(code, ppcFsub, dReg, 0, dReg);
 					break;
@@ -1438,26 +1451,23 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}	// sCconvInt
 			case sCconvLong: {	// long -> other type
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)){
 				case tByte:
-					createIrArS(code, ppcExtsb, dReg, sReg1);
+					createIrArS(code, ppcExtsb, dReg, src1Reg);
 					break;
 				case tChar: 
-					createIrArSSHMBME(code, ppcRlwinm, dReg, sReg1, 0, 16, 31);
+					createIrArSSHMBME(code, ppcRlwinm, dReg, src1Reg, 0, 16, 31);
 					break;
 				case tShort: 
-					createIrArS(code, ppcExtsh, dReg, sReg1);
+					createIrArS(code, ppcExtsh, dReg, src1Reg);
 					break;
 				case tInteger:
-					createIrArSrB(code, ppcOr, dReg, sReg1, sReg1);
+					createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
 					break;
 				case tFloat:
 					createIrSrAd(code, ppcStmw, 29, stackPtr, tempStorageOffset + 8);
 					Method m = Method.getCompSpecSubroutine("longToDouble");
-					copyParametersSubroutine(code, opds[0].regLong, sReg1, 0, 0);
+					copyParametersSubroutine(code, src1RegLong, src1Reg, 0, 0);
 					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
 					createIrSspr(code, ppcMtspr, LR, 29);
 					createIBOBILK(code, ppcBclr, BOalways, 0, true);
@@ -1468,7 +1478,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				case tDouble:
 					createIrSrAd(code, ppcStmw, 29, stackPtr, tempStorageOffset + 8);
 					m = Method.getCompSpecSubroutine("longToDouble");
-					copyParametersSubroutine(code, opds[0].regLong, sReg1, 0, 0);
+					copyParametersSubroutine(code, src1RegLong, src1Reg, 0, 0);
 					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
 					createIrSspr(code, ppcMtspr, LR, 29);
 					createIBOBILK(code, ppcBclr, BOalways, 0, true);
@@ -1482,37 +1492,34 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}
 			case sCconvFloat: {	// float -> other type
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
-					createIrDrB(code, ppcFctiw, 0, sReg1);
+					createIrDrB(code, ppcFctiw, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
 					createIrArS(code, ppcExtsb, dReg, 0);
 					break;
 				case tChar: 
-					createIrDrB(code, ppcFctiw, 0, sReg1);
+					createIrDrB(code, ppcFctiw, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
 					createIrArSSHMBME(code, ppcRlwinm, dReg, 0, 0, 16, 31);
 					break;
 				case tShort: 
-					createIrDrB(code, ppcFctiw, 0, sReg1);
+					createIrDrB(code, ppcFctiw, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
 					createIrArS(code, ppcExtsh, dReg, 0);
 					break;
 				case tInteger:
-					createIrDrB(code, ppcFctiwz, 0, sReg1);
+					createIrDrB(code, ppcFctiwz, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, dReg, stackPtr, tempStorageOffset + 4);
 					break;
 				case tLong:	
 					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
 					Method m = Method.getCompSpecSubroutine("doubleToLong");
-					createIrDrB(code, ppcFmr, 0, sReg1);
+					createIrDrB(code, ppcFmr, 0, src1Reg);
 					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
 					createIrSspr(code, ppcMtspr, LR, 29);
 					createIBOBILK(code, ppcBclr, BOalways, 0, true);
@@ -1520,10 +1527,10 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					createIrArSrB(code, ppcOr, dReg, 28, 28);
 					if (dReg != 28) // restore last register if not destination register
 						createIrDrAd(code, ppcLwz, 28, stackPtr, tempStorageOffset + 8);
-					createIrArSrB(code, ppcOr, res.regLong, 0, 0);
+					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
 					break;
 				case tDouble:
-					createIrDrB(code, ppcFmr, dReg, sReg1);
+					createIrDrB(code, ppcFmr, dReg, src1Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1532,37 +1539,34 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}
 			case sCconvDouble: {	// double -> other type
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int dReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
-					createIrDrB(code, ppcFctiw, 0, sReg1);
+					createIrDrB(code, ppcFctiw, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
 					createIrArS(code, ppcExtsb, dReg, 0);
 					break;
 				case tChar: 
-					createIrDrB(code, ppcFctiw, 0, sReg1);
+					createIrDrB(code, ppcFctiw, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
 					createIrArSSHMBME(code, ppcRlwinm, dReg, 0, 0, 16, 31);
 					break;
 				case tShort: 
-					createIrDrB(code, ppcFctiw, 0, sReg1);
+					createIrDrB(code, ppcFctiw, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
 					createIrArS(code, ppcExtsh, dReg, 0);
 					break;
 				case tInteger:
-					createIrDrB(code, ppcFctiwz, 0, sReg1);
+					createIrDrB(code, ppcFctiwz, 0, src1Reg);
 					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
 					createIrDrAd(code, ppcLwz, dReg, stackPtr, tempStorageOffset + 4);
 					break;
 				case tLong:	
 					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
 					Method m = Method.getCompSpecSubroutine("doubleToLong");
-					createIrDrB(code, ppcFmr, 0, sReg1);
+					createIrDrB(code, ppcFmr, 0, src1Reg);
 					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
 					createIrSspr(code, ppcMtspr, LR, 29);
 					createIBOBILK(code, ppcBclr, BOalways, 0, true);
@@ -1570,10 +1574,10 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					createIrArSrB(code, ppcOr, dReg, 28, 28);
 					if (dReg != 28) // restore last register if not destination register
 						createIrDrAd(code, ppcLwz, 28, stackPtr, tempStorageOffset + 8);
-					createIrArSrB(code, ppcOr, res.regLong, 0, 0);
+					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
 					break;
 				case tFloat:
-					createIrDrB(code, ppcFrsp, dReg, sReg1);
+					createIrDrB(code, ppcFrsp, dReg, src1Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1582,15 +1586,10 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}
 			case sCcmpl: case sCcmpg: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-				int sReg2 = opds[1].reg;
 				int type = opds[0].type & ~(1<<ssaTaFitIntoInt);
 				if (type == tLong) {
-					int sReg1L = opds[0].regLong;
-					int sReg2L = opds[1].regLong;
-					createICRFrArB(code, ppcCmp, CRF0, sReg1L, sReg2L);
-					createICRFrArB(code, ppcCmpl, CRF1, sReg1, sReg2);
+					createICRFrArB(code, ppcCmp, CRF0, src1RegLong, src2RegLong);
+					createICRFrArB(code, ppcCmpl, CRF1, src1Reg, src2Reg);
 					instr = node.instructions[i+1];
 					if (instr.ssaOpcode == sCregMove) {i++; instr = node.instructions[i+1]; assert false;}
 					assert instr.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
@@ -1623,7 +1622,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 						return;
 					}
 				} else if (type == tFloat  || type == tDouble) {
-					createICRFrArB(code, ppcFcmpu, CRF1, sReg1, sReg2);
+					createICRFrArB(code, ppcFcmpu, CRF1, src1Reg, src2Reg);
 					instr = node.instructions[i+1];
 					assert instr.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
 					int bci = meth.cfg.code[node.lastBCA] & 0xff;
@@ -1652,163 +1651,160 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				i++;
 				break;}
 			case sCinstanceof: {
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
-
 				MonadicRef ref = (MonadicRef)instr;
 				Type t = (Type)ref.item;
 				if (t.category == tcRef) {	// object (to test for) is regular class or interface
 					if ((t.accAndPropFlags & (1<<apfInterface)) != 0) {	// object is interface
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 						// label 1
-						createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+						createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 						createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 13);	// jump to end
 						// label 2
-						createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-						createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is array?
+						createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+						createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is array?
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, -4);	// jump to label 1
-						createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-						createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
-						createIrDrArB(code, ppcAdd, res.regGPR1, res.regGPR1, 0);
+						createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+						createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdIntfTypeChkTableOffset);
+						createIrDrArB(code, ppcAdd, gAux1, gAux1, 0);
 						// label 3
-						createIrDrAd(code, ppcLhzu, 0, res.regGPR1, 0);
+						createIrDrAd(code, ppcLhzu, 0, gAux1, 0);
 						createICRFrAsimm(code, ppcCmpi, CRF0, 0, ((Class)t).chkId);	// is interface chkId
-						createIrDrAsimm(code, ppcAddi, res.regGPR1, res.regGPR1, 2);
+						createIrDrAsimm(code, ppcAddi, gAux1, gAux1, 2);
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 3			
-						createIrD(code, ppcMfcr, res.reg);
-						createIrArSSHMBME(code, ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+						createIrD(code, ppcMfcr, dReg);
+						createIrArSSHMBME(code, ppcRlwinm, dReg, dReg, 3, 31, 31);
 					} else {	// regular class
 						int offset = ((Class)t).extensionLevel;
 						if (t.name.equals(HString.getHString("java/lang/Object"))) {
-							createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+							createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 							createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 1
-							createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+							createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 							createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 2);	// jump to end
 							// label 1
-							createIrDrAsimm(code, ppcAddi, res.reg, 0, 1);
+							createIrDrAsimm(code, ppcAddi, dReg, 0, 1);
 						} else { // regular class but not java/lang/Object
-							createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+							createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 							createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 							// label 1
-							createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+							createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 							createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 11);	// jump to end
 							// label 2
-							createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-							createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is array?
+							createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+							createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is array?
 							createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, -4);	// jump to label 1
-							createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-							createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-							loadConstantAndFixup(code, res.regGPR1, t);	// addr of type
-							createICRFrArB(code, ppcCmpl, CRF0, 0, res.regGPR1);
-							createIrD(code, ppcMfcr, res.reg);
-							createIrArSSHMBME(code, ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+							createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+							createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdBaseClass0Offset + offset * 4);
+							loadConstantAndFixup(code, gAux1, t);	// addr of type
+							createICRFrArB(code, ppcCmpl, CRF0, 0, gAux1);
+							createIrD(code, ppcMfcr, dReg);
+							createIrArSSHMBME(code, ppcRlwinm, dReg, dReg, 3, 31, 31);
 						}
 					}
 				} else {	// object is an array
 					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
 						// test if not null
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 						// label 1
-						createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+						createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 						createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 10);	// jump to end
 						// label 2
-						createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-						createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
+						createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+						createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is not array?
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
-						createIrDrAd(code, ppcLwz, 0, sReg1, -4);	// get tag
-						loadConstantAndFixup(code, res.regGPR1, t);	// addr of type
-						createICRFrArB(code, ppcCmpl, CRF0, 0, res.regGPR1);
-						createIrD(code, ppcMfcr, res.reg);
-						createIrArSSHMBME(code, ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+						createIrDrAd(code, ppcLwz, 0, src1Reg, -4);	// get tag
+						loadConstantAndFixup(code, gAux1, t);	// addr of type
+						createICRFrArB(code, ppcCmpl, CRF0, 0, gAux1);
+						createIrD(code, ppcMfcr, dReg);
+						createIrArSSHMBME(code, ppcRlwinm, dReg, dReg, 3, 31, 31);
 					} else {	// array of regular classes or interfaces
 						int nofDim = ((Array)t).dimension;
 						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
 						int offset = ((Class)(((Array)t).componentType)).extensionLevel;
 						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
 							// test if not null
-							createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+							createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 							createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 							// label 1
-							createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+							createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 							createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 16);	// jump to end
 							// label 2
-							createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-							createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
+							createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+							createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is not array?
 							createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
 
-							createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-							createIrDrAd(code, ppcLwz, 0, res.regGPR1, 0);	
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, 0, 16, 17, 31);	// get dim
+							createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+							createIrDrAd(code, ppcLwz, 0, gAux1, 0);	
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, 0, 16, 17, 31);	// get dim
 							createICRFrAsimm(code, ppcCmpi, CRF0, 0, 0);	// check if array of primitive type
 							createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+LT, 5);	// jump to label 3					
-							createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, nofDim);
+							createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, nofDim);
 							createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+LT, -11);	// jump to label 1	
-							createIrDrAsimm(code, ppcAddi, res.reg, 0, 1);
+							createIrDrAsimm(code, ppcAddi, dReg, 0, 1);
 							createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 4);	// jump to end
 							// label 3, is array of primitive type
-							createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, nofDim);
+							createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, nofDim);
 							createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+GT, -15);	// jump to label 1	
-							createIrDrAsimm(code, ppcAddi, res.reg, 0, 1);
+							createIrDrAsimm(code, ppcAddi, dReg, 0, 1);
 						} else {	// array of regular classes or interfaces but not java/lang/Object
 							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 								createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 								// label 1
-								createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+								createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 								createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 20);	// jump to end
 								// label 2
-								createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-								createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
+								createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+								createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is not array?
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, 0);			
+								createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+								createIrDrAd(code, ppcLwz, 0, gAux1, 0);			
 								createIrArSSHMBME(code, ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
 								createICRFrAsimm(code, ppcCmpi, CRF0, 0, nofDim);
 								createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, -9);	// jump to label 1					
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
-								createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is 0?
+								createIrDrAd(code, ppcLwz, gAux1, gAux1, 8 + nofDim * 4);	// get component type
+								createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is 0?
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, -12);	// jump to label 1					
 
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
-								createIrDrArB(code, ppcAdd, res.regGPR1, res.regGPR1, 0);
+								createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdIntfTypeChkTableOffset);
+								createIrDrArB(code, ppcAdd, gAux1, gAux1, 0);
 								// label 3
-								createIrDrAd(code, ppcLhzu, 0, res.regGPR1, 0);
+								createIrDrAd(code, ppcLhzu, 0, gAux1, 0);
 								createICRFrAsimm(code, ppcCmpi, CRF0, 0, ((Class)compType).chkId);	// is interface chkId
-								createIrDrAsimm(code, ppcAddi, res.regGPR1, res.regGPR1, 2);
+								createIrDrAsimm(code, ppcAddi, gAux1, gAux1, 2);
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 3			
-								createIrD(code, ppcMfcr, res.reg);	
-								createIrArSSHMBME(code, ppcRlwinm, res.reg, res.reg, 3, 31, 31);			
+								createIrD(code, ppcMfcr, dReg);	
+								createIrArSSHMBME(code, ppcRlwinm, dReg, dReg, 3, 31, 31);			
 							} else {	// array of regular classes
 								// test if not null
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 								createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 3);	// jump to label 2
 								// label 1
-								createIrDrAsimm(code, ppcAddi, res.reg, 0, 0);
+								createIrDrAsimm(code, ppcAddi, dReg, 0, 0);
 								createIBOBIBD(code, ppcBc, BOalways, 4*CRF0, 18);	// jump to end
 								// label 2
-								createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-								createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is not array?
+								createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+								createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is not array?
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, -4);	// jump to label 1
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, 0);	
+								createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+								createIrDrAd(code, ppcLwz, 0, gAux1, 0);	
 								createIrArSSHMBME(code, ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
 								createICRFrAsimm(code, ppcCmpi, CRF0, 0, nofDim);
 								createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, -9);	// jump to label 1					
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
-								createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, 0);	// is 0?
+								createIrDrAd(code, ppcLwz, gAux1, gAux1, 8 + nofDim * 4);	// get component type
+								createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, 0);	// is 0?
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, -12);	// jump to label 1					
 
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-								loadConstantAndFixup(code, res.regGPR1, compType);	// addr of component type
-								createICRFrArB(code, ppcCmpl, CRF0, 0, res.regGPR1);
-								createIrD(code, ppcMfcr, res.reg);
-								createIrArSSHMBME(code, ppcRlwinm, res.reg, res.reg, 3, 31, 31);
+								createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdBaseClass0Offset + offset * 4);
+								loadConstantAndFixup(code, gAux1, compType);	// addr of component type
+								createICRFrArB(code, ppcCmpl, CRF0, 0, gAux1);
+								createIrD(code, ppcMfcr, dReg);
+								createIrArSSHMBME(code, ppcRlwinm, dReg, dReg, 3, 31, 31);
 							}
 						}
 					}
@@ -1817,176 +1813,174 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 			case sCcheckcast: {
 				// this ssa instruction must be translated, so that only "twi, TOifnequal" is used
 				// this enables the trap handler to throw a ClassCastException
-				opds = instr.getOperands();
-				int sReg1 = opds[0].reg;
 				MonadicRef ref = (MonadicRef)instr;
 				Type t = (Type)ref.item;
 				if (t.category == tcRef) {	// object (to test for) is regular class or interface
 					if ((t.accAndPropFlags & (1<<apfInterface)) != 0) {	// object is interface
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 11);	// jump to end
-						createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-						createItrapSimm(code, ppcTwi, TOifnequal, res.regGPR1, 0);	// is not array?
-						createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-						createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
-						createIrDrArB(code, ppcAdd, res.regGPR1, res.regGPR1, 0);
+						createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+						createItrapSimm(code, ppcTwi, TOifnequal, gAux1, 0);	// is not array?
+						createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+						createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdIntfTypeChkTableOffset);
+						createIrDrArB(code, ppcAdd, gAux1, gAux1, 0);
 						// label 1
-						createIrDrAd(code, ppcLhzu, 0, res.regGPR1, 0);
+						createIrDrAd(code, ppcLhzu, 0, gAux1, 0);
 						createICRFrAsimm(code, ppcCmpi, CRF0, 0, ((Class)t).chkId);	// is interface chkId
-						createIrDrAsimm(code, ppcAddi, res.regGPR1, res.regGPR1, 2);
+						createIrDrAsimm(code, ppcAddi, gAux1, gAux1, 2);
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 1			
 						createItrapSimm(code, ppcTwi, TOifnequal, 0, ((Class)t).chkId);	// chkId is not equal
 					} else {	// object is regular class
 						int offset = ((Class)t).extensionLevel;
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 8);	// jump to end
-						createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-						createItrapSimm(code, ppcTwi, TOifnequal, res.regGPR1, 0);	// is not array?
-						createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-						createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-						loadConstantAndFixup(code, res.regGPR1, t);	// addr of type
-						createItrap(code, ppcTw, TOifnequal, res.regGPR1, 0);
+						createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+						createItrapSimm(code, ppcTwi, TOifnequal, gAux1, 0);	// is not array?
+						createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+						createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdBaseClass0Offset + offset * 4);
+						loadConstantAndFixup(code, gAux1, t);	// addr of type
+						createItrap(code, ppcTw, TOifnequal, gAux1, 0);
 					}
 				} else {	// object (to test for) is an array
 					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 8);	// jump to end
-						createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-						createIrArSuimm(code, ppcAndi, res.regGPR1, res.regGPR1, 0x80);
-						createItrapSimm(code, ppcTwi, TOifnequal, res.regGPR1, 0x80);	// is array?
-						createIrDrAd(code, ppcLwz, 0, sReg1, -4);	// get tag
-						loadConstantAndFixup(code, res.regGPR1, t);	// addr of type
-						createItrap(code, ppcTw, TOifnequal, res.regGPR1, 0);
+						createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+						createIrArSuimm(code, ppcAndi, gAux1, gAux1, 0x80);
+						createItrapSimm(code, ppcTwi, TOifnequal, gAux1, 0x80);	// is array?
+						createIrDrAd(code, ppcLwz, 0, src1Reg, -4);	// get tag
+						loadConstantAndFixup(code, gAux1, t);	// addr of type
+						createItrap(code, ppcTw, TOifnequal, gAux1, 0);
 					} else {	// array of regular classes or interfaces
 						int nofDim = ((Array)t).dimension;
 						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
 						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
-							createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+							createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 							createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 15);	// jump to end
-							createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-							createIrArSuimm(code, ppcAndi, res.regGPR1, res.regGPR1, 0x80);
-							createItrapSimm(code, ppcTwi, TOifnequal, res.regGPR1, 0x80);	// is array?
+							createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+							createIrArSuimm(code, ppcAndi, gAux1, gAux1, 0x80);
+							createItrapSimm(code, ppcTwi, TOifnequal, gAux1, 0x80);	// is array?
 
-							createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-							createIrDrAd(code, ppcLwz, 0, res.regGPR1, 0);	
-							createIrArSSHMBME(code, ppcRlwinm, res.regGPR1, 0, 16, 17, 31);	// get dim
+							createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+							createIrDrAd(code, ppcLwz, 0, gAux1, 0);	
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, 0, 16, 17, 31);	// get dim
 							createICRFrAsimm(code, ppcCmpi, CRF0, 0, 0);	// check if array of primitive type
 							createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+LT, 4);	// jump to label 3	
 							
-							createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, nofDim);
+							createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, nofDim);
 							createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+LT, 5);	// jump to end	
-							createItrap(code, ppcTwi, TOifnequal, res.regGPR1, -1);	// trap always
+							createItrap(code, ppcTwi, TOifnequal, gAux1, -1);	// trap always
 							// label 3, is array of primitive type
-							createICRFrAsimm(code, ppcCmpi, CRF0, res.regGPR1, nofDim);
+							createICRFrAsimm(code, ppcCmpi, CRF0, gAux1, nofDim);
 							createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, 2);	// jump to end	
-							createItrap(code, ppcTwi, TOifnequal, res.regGPR1, -1);	// trap always
+							createItrap(code, ppcTwi, TOifnequal, gAux1, -1);	// trap always
 						} else {	// array of regular classes or interfaces but not java/lang/Object
 							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 19);	// jump to end
-								createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-								createIrArSuimm(code, ppcAndi, res.regGPR1, res.regGPR1, 0x80);
-								createItrapSimm(code, ppcTwi, TOifnequal, res.regGPR1, 0x80);	// is array?
+								createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+								createIrArSuimm(code, ppcAndi, gAux1, gAux1, 0x80);
+								createItrapSimm(code, ppcTwi, TOifnequal, gAux1, 0x80);	// is array?
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, 0);	
+								createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+								createIrDrAd(code, ppcLwz, 0, gAux1, 0);	
 								createIrArSSHMBME(code, ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
 								createItrapSimm(code, ppcTwi, TOifnequal, 0, nofDim);	// check dim
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createIrDrAd(code, ppcLwz, gAux1, gAux1, 8 + nofDim * 4);	// get component type
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 								createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 2);
-								createItrapSimm(code, ppcTwi, TOifnequal, sReg1, -1);	// is 0?
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdIntfTypeChkTableOffset);
-								createIrDrArB(code, ppcAdd, res.regGPR1, res.regGPR1, 0);
+								createItrapSimm(code, ppcTwi, TOifnequal, src1Reg, -1);	// is 0?
+								createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdIntfTypeChkTableOffset);
+								createIrDrArB(code, ppcAdd, gAux1, gAux1, 0);
 								// label 1
-								createIrDrAd(code, ppcLhzu, 0, res.regGPR1, 0);
+								createIrDrAd(code, ppcLhzu, 0, gAux1, 0);
 								createICRFrAsimm(code, ppcCmpi, CRF0, 0, ((Class)compType).chkId);	// is interface chkId
-								createIrDrAsimm(code, ppcAddi, res.regGPR1, res.regGPR1, 2);
+								createIrDrAsimm(code, ppcAddi, gAux1, gAux1, 2);
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, -3);	// jump to label 1			
 								createItrapSimm(code, ppcTwi, TOifnequal, 0, ((Class)compType).chkId);	// chkId is not equal
 							} else {	// array of regular classes
 								int offset = ((Class)(((Array)t).componentType)).extensionLevel;
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 								createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 16);	// jump to end
-								createIrDrAd(code, ppcLbz, res.regGPR1, sReg1, -7);	// get array bit
-								createIrArSuimm(code, ppcAndi, res.regGPR1, res.regGPR1, 0x80);
-								createItrapSimm(code, ppcTwi, TOifnequal, res.regGPR1, 0x80);	// is array?
+								createIrDrAd(code, ppcLbz, gAux1, src1Reg, -7);	// get array bit
+								createIrArSuimm(code, ppcAndi, gAux1, gAux1, 0x80);
+								createItrapSimm(code, ppcTwi, TOifnequal, gAux1, 0x80);	// is array?
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, sReg1, -4);	// get tag
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, 0);	
+								createIrDrAd(code, ppcLwz, gAux1, src1Reg, -4);	// get tag
+								createIrDrAd(code, ppcLwz, 0, gAux1, 0);	
 								createIrArSSHMBME(code, ppcRlwinm, 0, 0, 16, 17, 31);	// get dim
 								createItrapSimm(code, ppcTwi, TOifnequal, 0, nofDim);	// check dim
 
-								createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, 8 + nofDim * 4);	// get component type
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);	// is null?
+								createIrDrAd(code, ppcLwz, gAux1, gAux1, 8 + nofDim * 4);	// get component type
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);	// is null?
 								createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 2);
-								createItrapSimm(code, ppcTwi, TOifnequal, sReg1, -1);	// is 0?
+								createItrapSimm(code, ppcTwi, TOifnequal, src1Reg, -1);	// is 0?
 
-								createIrDrAd(code, ppcLwz, 0, res.regGPR1, Linker32.tdBaseClass0Offset + offset * 4);
-								loadConstantAndFixup(code, res.regGPR1, compType);	// addr of component type
-								createItrap(code, ppcTw, TOifnequal, res.regGPR1, 0);
+								createIrDrAd(code, ppcLwz, 0, gAux1, Linker32.tdBaseClass0Offset + offset * 4);
+								loadConstantAndFixup(code, gAux1, compType);	// addr of component type
+								createItrap(code, ppcTw, TOifnequal, gAux1, 0);
 							}
 						}
 					}
 				}
 				break;}
 			case sCthrow: {
-				opds = instr.getOperands();
-				createIrArSrB(code, ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// put exception into parameter register
+//				opds = instr.getOperands();
+				createIrArSrB(code, ppcOr, paramStartGPR, src1Reg, src1Reg);	// put exception into parameter register
 				createItrap(code, ppcTw, TOalways, 0, 0);
 				break;}
 			case sCalength: {
-				opds = instr.getOperands();
-				int refReg = opds[0].reg;
+//				opds = instr.getOperands();
+				int refReg = src1Reg;
 				createItrap(code, ppcTwi, TOifequal, refReg, 0);
-				createIrDrAd(code, ppcLha , res.reg, refReg, -arrayLenOffset);
+				createIrDrAd(code, ppcLha , dReg, refReg, -arrayLenOffset);
 				break;}
 			case sCcall: {
-				opds = instr.getOperands();
+//				opds = instr.getOperands();
 				Call call = (Call)instr;
 				Method m = (Method)call.item;
 				if ((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
 					if (m.id == idGET1) {	// GET1
-						createIrDrAd(code, ppcLbz, res.reg, opds[0].reg, 0);
-						createIrArS(code, ppcExtsb, res.reg, res.reg);
+						createIrDrAd(code, ppcLbz, dReg, src1Reg, 0);
+						createIrArS(code, ppcExtsb, dReg, dReg);
 					} else if (m.id == idGET2) { // GET2
-						createIrDrAd(code, ppcLha, res.reg, opds[0].reg, 0);
+						createIrDrAd(code, ppcLha, dReg, src1Reg, 0);
 					} else if (m.id == idGET4) { // GET4
-						createIrDrAd(code, ppcLwz, res.reg, opds[0].reg, 0);
+						createIrDrAd(code, ppcLwz, dReg, src1Reg, 0);
 					} else if (m.id == idGET8) { // GET8
-						createIrDrAd(code, ppcLwz, res.regLong, opds[0].reg, 0);
-						createIrDrAd(code, ppcLwz, res.reg, opds[0].reg, 4);
+						createIrDrAd(code, ppcLwz, dRegLong, src1Reg, 0);
+						createIrDrAd(code, ppcLwz, dReg, src1Reg, 4);
 					} else if (m.id == idPUT1) { // PUT1
-						createIrSrAd(code, ppcStb, opds[1].reg, opds[0].reg, 0);
+						createIrSrAd(code, ppcStb, src2Reg, src1Reg, 0);
 					} else if (m.id == idPUT2) { // PUT2
-						createIrSrAd(code, ppcSth, opds[1].reg, opds[0].reg, 0);
+						createIrSrAd(code, ppcSth, src2Reg, src1Reg, 0);
 					} else if (m.id == idPUT4) { // PUT4
-						createIrSrAd(code, ppcStw, opds[1].reg, opds[0].reg, 0);
+						createIrSrAd(code, ppcStw, src2Reg, src1Reg, 0);
 					} else if (m.id == idPUT8) { // PUT8
-						createIrSrAd(code, ppcStw, opds[1].regLong, opds[0].reg, 0);
-						createIrSrAd(code, ppcStw, opds[1].reg, opds[0].reg, 4);
+						createIrSrAd(code, ppcStw, src2RegLong, src1Reg, 0);
+						createIrSrAd(code, ppcStw, src2Reg, src1Reg, 4);
 					} else if (m.id == idBIT) { // BIT
-						createIrDrAd(code, ppcLbz, res.reg, opds[0].reg, 0);
-						createIrDrAsimm(code, ppcSubfic, 0, opds[1].reg, 32);
-						createIrArSrBMBME(code, ppcRlwnm, res.reg, res.reg, 0, 31, 31);
+						createIrDrAd(code, ppcLbz, dReg, src1Reg, 0);
+						createIrDrAsimm(code, ppcSubfic, 0, src2Reg, 32);
+						createIrArSrBMBME(code, ppcRlwnm, dReg, dReg, 0, 31, 31);
 					} else if (m.id == idGETGPR) { // GETGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
-						createIrArSrB(code, ppcOr, res.reg, gpr, gpr);
+						createIrArSrB(code, ppcOr, dReg, gpr, gpr);
 					} else if (m.id == idGETFPR) { // GETFPR
 						int fpr = ((StdConstant)opds[0].constant).valueH;
-						createIrDrB(code, ppcFmr, res.reg, fpr);
+						createIrDrB(code, ppcFmr, dReg, fpr);
 					} else if (m.id == idGETSPR) { // GETSPR
 						int spr = ((StdConstant)opds[0].constant).valueH;
-						createIrSspr(code, ppcMfspr, spr, res.reg);
+						createIrSspr(code, ppcMfspr, spr, dReg);
 					} else if (m.id == idPUTGPR) { // PUTGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
-						createIrArSrB(code, ppcOr, gpr, opds[1].reg, opds[1].reg);
+						createIrArSrB(code, ppcOr, gpr, src2Reg, src2Reg);
 					} else if (m.id == idPUTFPR) { // PUTFPR
 						int fpr = ((StdConstant)opds[0].constant).valueH;
-						createIrDrB(code, ppcFmr, fpr, opds[1].reg);
+						createIrDrB(code, ppcFmr, fpr, src2Reg);
 					} else if (m.id == idPUTSPR) { // PUTSPR
-						createIrArSrB(code, ppcOr, 0, opds[1].reg, opds[1].reg);
+						createIrArSrB(code, ppcOr, 0, src2Reg, src2Reg);
 						int spr = ((StdConstant)opds[0].constant).valueH;
 						createIrSspr(code, ppcMtspr, spr, 0);
 					} else if (m.id == idHALT) { // HALT	// TODO
@@ -2013,25 +2007,25 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 						}
 						else{
 							Item m1 = clazz.methods.getItemByName(methName.toString());
-							loadConstantAndFixup(code, res.reg, m1);	// addr of method
+							loadConstantAndFixup(code, dReg, m1);	// addr of method
 						}
 					} else if (m.id == idREF) { // REF
-						createIrArSrB(code, ppcOr, res.reg, opds[0].reg, opds[0].reg);
+						createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
 					} else if (m.id == idDoubleToBits) { // DoubleToBits
-						createIrSrAd(code, ppcStfd, opds[0].reg, stackPtr, tempStorageOffset);
-						createIrDrAd(code, ppcLwz, res.regLong, stackPtr, tempStorageOffset);
-						createIrDrAd(code, ppcLwz, res.reg, stackPtr, tempStorageOffset + 4);
+						createIrSrAd(code, ppcStfd, src1Reg, stackPtr, tempStorageOffset);
+						createIrDrAd(code, ppcLwz, dRegLong, stackPtr, tempStorageOffset);
+						createIrDrAd(code, ppcLwz, dReg, stackPtr, tempStorageOffset + 4);
 					} else if (m.id == idBitsToDouble) { // BitsToDouble
-						createIrSrAd(code, ppcStw, opds[0].regLong, stackPtr, tempStorageOffset);
-						createIrSrAd(code, ppcStw, opds[0].reg, stackPtr, tempStorageOffset+4);
-						createIrDrAd(code, ppcLfd, res.reg, stackPtr, tempStorageOffset);
+						createIrSrAd(code, ppcStw, src1RegLong, stackPtr, tempStorageOffset);
+						createIrSrAd(code, ppcStw, src1Reg, stackPtr, tempStorageOffset+4);
+						createIrDrAd(code, ppcLfd, dReg, stackPtr, tempStorageOffset);
 					} else if (m.id == idFloatToBits) { // FloatToBits
-						createIrSrAd(code, ppcStfs, opds[0].reg, stackPtr, tempStorageOffset);
-						createIrDrAd(code, ppcLwz, res.reg, stackPtr, tempStorageOffset);
+						createIrSrAd(code, ppcStfs, src1Reg, stackPtr, tempStorageOffset);
+						createIrDrAd(code, ppcLwz, dReg, stackPtr, tempStorageOffset);
 					} else if (m.id == idBitsToFloat) { // BitsToFloat
-						createIrSrAd(code, ppcStw, opds[0].reg, stackPtr, tempStorageOffset);
+						createIrSrAd(code, ppcStw, src1Reg, stackPtr, tempStorageOffset);
 						createIrDrAd(code, ppcLfs, 0, stackPtr, tempStorageOffset);
-						createIrDrB(code, ppcFmr, res.reg, 0);
+						createIrDrB(code, ppcFmr, dReg, 0);
 					}
 				} else {	// real method (not synthetic)
 					if ((m.accAndPropFlags & (1<<apfStatic)) != 0 ||
@@ -2040,40 +2034,40 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 							) {	// invokestatic
 						if (m == stringNewstringMethod) {	// replace newstring stub with Heap.newstring
 							m = heapNewstringMethod;
-							loadConstantAndFixup(code, res.regGPR1, m);	
-							createIrSspr(code, ppcMtspr, LR, res.regGPR1); 
+							loadConstantAndFixup(code, gAux1, m);	
+							createIrSspr(code, ppcMtspr, LR, gAux1); 
 						} else {
-							loadConstantAndFixup(code, res.regGPR1, m);	// addr of method
-							createIrSspr(code, ppcMtspr, LR, res.regGPR1);
+							loadConstantAndFixup(code, gAux1, m);	// addr of method
+							createIrSspr(code, ppcMtspr, LR, gAux1);
 						}
 					} else if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
-						int refReg = opds[0].reg;
+						int refReg = src1Reg;
 						int offset = (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset;
 						createItrap(code, ppcTwi, TOifequal, refReg, 0);
-						createIrDrAd(code, ppcLwz, res.regGPR1, refReg, -4);
-						createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, offset);	// delegate method
-						createIrSspr(code, ppcMtspr, LR, res.regGPR1);
+						createIrDrAd(code, ppcLwz, gAux1, refReg, -4);
+						createIrDrAd(code, ppcLwz, gAux1, gAux1, offset);	// delegate method
+						createIrSspr(code, ppcMtspr, LR, gAux1);
 					} else if (call.invokespecial) {	// invokespecial
 						if (newString) {	// special treatment for strings
 							if (m == strInitC) m = strAllocC;
 							else if (m == strInitCII) m = strAllocCII;	// addr of corresponding allocate method
 							else if (m == strInitCII) m = strAllocCII;
-							loadConstantAndFixup(code, res.regGPR1, m);	
-							createIrSspr(code, ppcMtspr, LR, res.regGPR1);
+							loadConstantAndFixup(code, gAux1, m);	
+							createIrSspr(code, ppcMtspr, LR, gAux1);
 						} else {
-							int refReg = opds[0].reg;
+							int refReg = src1Reg;
 							createItrap(code, ppcTwi, TOifequal, refReg, 0);
-							loadConstantAndFixup(code, res.regGPR1, m);	// addr of init method
-							createIrSspr(code, ppcMtspr, LR, res.regGPR1);
+							loadConstantAndFixup(code, gAux1, m);	// addr of init method
+							createIrSspr(code, ppcMtspr, LR, gAux1);
 						}
 					} else {	// invokevirtual 
-						int refReg = opds[0].reg;
+						int refReg = src1Reg;
 						int offset = Linker32.tdMethTabOffset;
 						offset -= m.index * Linker32.slotSize; 
 						createItrap(code, ppcTwi, TOifequal, refReg, 0);
-						createIrDrAd(code, ppcLwz, res.regGPR1, refReg, -4);
-						createIrDrAd(code, ppcLwz, res.regGPR1, res.regGPR1, offset);
-						createIrSspr(code, ppcMtspr, LR, res.regGPR1);
+						createIrDrAd(code, ppcLwz, gAux1, refReg, -4);
+						createIrDrAd(code, ppcLwz, gAux1, gAux1, offset);
+						createIrSspr(code, ppcMtspr, LR, gAux1);
 					}
 					
 					// copy parameters into registers and to stack if not enough registers
@@ -2094,69 +2088,68 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					// get result
 					int type = res.type & ~(1<<ssaTaFitIntoInt);
 					if (type == tLong) {
-						if (res.regLong == returnGPR2) {
-							if (res.reg == returnGPR1) {	// returnGPR2 -> r0, returnGPR1 -> r3, r0 -> r2
+						if (dRegLong == returnGPR2) {
+							if (dReg == returnGPR1) {	// returnGPR2 -> r0, returnGPR1 -> r3, r0 -> r2
 								createIrArSrB(code, ppcOr, 0, returnGPR2, returnGPR2);
-								createIrArSrB(code, ppcOr, res.regLong, returnGPR1, returnGPR1);
-								createIrArSrB(code, ppcOr, res.reg, 0, 0);
+								createIrArSrB(code, ppcOr, dRegLong, returnGPR1, returnGPR1);
+								createIrArSrB(code, ppcOr, dReg, 0, 0);
 							} else {	// returnGPR2 -> reg, returnGPR1 -> r3
-								createIrArSrB(code, ppcOr, res.reg, returnGPR2, returnGPR2);
-								createIrArSrB(code, ppcOr, res.regLong, returnGPR1, returnGPR1);
+								createIrArSrB(code, ppcOr, dReg, returnGPR2, returnGPR2);
+								createIrArSrB(code, ppcOr, dRegLong, returnGPR1, returnGPR1);
 							}
 						} else { // returnGPR1 -> regLong, returnGPR2 -> reg
-							createIrArSrB(code, ppcOr, res.regLong, returnGPR1, returnGPR1);
-							createIrArSrB(code, ppcOr, res.reg, returnGPR2, returnGPR2);
+							createIrArSrB(code, ppcOr, dRegLong, returnGPR1, returnGPR1);
+							createIrArSrB(code, ppcOr, dReg, returnGPR2, returnGPR2);
 						}
 					} else if (type == tFloat || type == tDouble) {
-						createIrDrB(code, ppcFmr, res.reg, returnFPR);
+						createIrDrB(code, ppcFmr, dReg, returnFPR);
 					} else if (type == tVoid) {
 						if (newString) {
 							newString = false;
 							createIrArSrB(code, ppcOr, stringReg, returnGPR1, returnGPR1); // stringReg was set by preceding sCnew
 						}
 					} else
-						createIrArSrB(code, ppcOr, res.reg, returnGPR1, returnGPR1);
+						createIrArSrB(code, ppcOr, dReg, returnGPR1, returnGPR1);
 					
 				}
 				break;}	//sCcall
 			case sCnew: {
-				opds = instr.getOperands();
 				Item item = ((Call)instr).item;	// item = ref
 				Item m;
 				if (opds == null) {	// bCnew
 					if (item == Type.wktString) {
 						newString = true;	// allocation of strings is postponed
-						stringReg = res.reg;
-						loadConstantAndFixup(code, res.reg, item);	// ref to string
+						stringReg = dReg;
+						loadConstantAndFixup(code, dReg, item);	// ref to string
 					} else {
 						m = CFR.getNewMemoryMethod(bCnew);
 						loadConstantAndFixup(code, paramStartGPR, m);	// addr of new
 						createIrSspr(code, ppcMtspr, LR, paramStartGPR);
 						loadConstantAndFixup(code, paramStartGPR, item);	// ref
 						createIBOBILK(code, ppcBclr, BOalways, 0, true);
-						createIrArSrB(code, ppcOr, res.reg, returnGPR1, returnGPR1);
+						createIrArSrB(code, ppcOr, dReg, returnGPR1, returnGPR1);
 					}
 				} else if (opds.length == 1) {
 					switch (res.type  & ~(1<<ssaTaFitIntoInt)) {
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
 					case tAbyte: case tAshort: case tAinteger: case tAlong:	// bCnewarray
 						m = CFR.getNewMemoryMethod(bCnewarray);
-						loadConstantAndFixup(code, res.regGPR1, m);	// addr of newarray
-						createIrSspr(code, ppcMtspr, LR, res.regGPR1);
-						createIrArSrB(code, ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
+						loadConstantAndFixup(code, gAux1, m);	// addr of newarray
+						createIrSspr(code, ppcMtspr, LR, gAux1);
+						createIrArSrB(code, ppcOr, paramStartGPR, src1Reg, src1Reg);	// nof elems
 						createIrDrAsimm(code, ppcAddi, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
 						loadConstantAndFixup(code, paramStartGPR + 2, item);	// ref to type descriptor
 						createIBOBILK(code, ppcBclr, BOalways, 0, true);
-						createIrArSrB(code, ppcOr, res.reg, returnGPR1, returnGPR1);
+						createIrArSrB(code, ppcOr, dReg, returnGPR1, returnGPR1);
 						break;
 					case tAref:	// bCanewarray
 						m = CFR.getNewMemoryMethod(bCanewarray);
-						loadConstantAndFixup(code, res.regGPR1, m);	// addr of anewarray
-						createIrSspr(code, ppcMtspr, LR, res.regGPR1);
-						createIrArSrB(code, ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
+						loadConstantAndFixup(code, gAux1, m);	// addr of anewarray
+						createIrSspr(code, ppcMtspr, LR, gAux1);
+						createIrArSrB(code, ppcOr, paramStartGPR, src1Reg, src1Reg);	// nof elems
 						loadConstantAndFixup(code, paramStartGPR + 1, item);	// ref to type descriptor
 						createIBOBILK(code, ppcBclr, BOalways, 0, true);
-						createIrArSrB(code, ppcOr, res.reg, returnGPR1, returnGPR1);
+						createIrArSrB(code, ppcOr, dReg, returnGPR1, returnGPR1);
 						break;
 					default:
 						ErrorReporter.reporter.error(612);
@@ -2165,8 +2158,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					}
 				} else { // bCmultianewarray:
 					m = CFR.getNewMemoryMethod(bCmultianewarray);
-					loadConstantAndFixup(code, res.regGPR1, m);	// addr of multianewarray
-					createIrSspr(code, ppcMtspr, LR, res.regGPR1);
+					loadConstantAndFixup(code, gAux1, m);	// addr of multianewarray
+					createIrSspr(code, ppcMtspr, LR, gAux1);
 					// copy dimensions
 					for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
 
@@ -2246,26 +2239,25 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					loadConstantAndFixup(code, paramStartGPR, item);	// ref to type descriptor
 					createIrDrAsimm(code, ppcAddi, paramStartGPR+1, 0, opds.length);	// nofDimensions
 					createIBOBILK(code, ppcBclr, BOalways, 0, true);
-					createIrArSrB(code, ppcOr, res.reg, returnGPR1, returnGPR1);
+					createIrArSrB(code, ppcOr, dReg, returnGPR1, returnGPR1);
 				}
 				break;}
 			case sCreturn: {
-				opds = instr.getOperands();
 				int bci = meth.cfg.code[node.lastBCA] & 0xff;
 				switch (bci) {
 				case bCreturn:
 					break;
 				case bCireturn:
 				case bCareturn:
-					createIrArSrB(code, ppcOr, returnGPR1, opds[0].reg, opds[0].reg);
+					createIrArSrB(code, ppcOr, returnGPR1, src1Reg, src1Reg);
 					break;
 				case bClreturn:
-					createIrArSrB(code, ppcOr, returnGPR1, opds[0].regLong, opds[0].regLong);
-					createIrArSrB(code, ppcOr, returnGPR2, opds[0].reg, opds[0].reg);
+					createIrArSrB(code, ppcOr, returnGPR1, src1RegLong, src1RegLong);
+					createIrArSrB(code, ppcOr, returnGPR2, src1Reg, src1Reg);
 					break;
 				case bCfreturn:
 				case bCdreturn:
-					createIrDrB(code, ppcFmr, returnFPR, opds[0].reg);
+					createIrDrB(code, ppcFmr, returnFPR, src1Reg);
 					break;
 				default:
 					ErrorReporter.reporter.error(620);
@@ -2284,10 +2276,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					break;
 				case bCif_acmpeq:
 				case bCif_acmpne:
-					opds = instr.getOperands();
-					int sReg1 = opds[0].reg;
-					int sReg2 = opds[1].reg;
-					createICRFrArB(code, ppcCmp, CRF0, sReg2, sReg1);
+					createICRFrArB(code, ppcCmp, CRF0, src2Reg, src1Reg);
 					if (bci == bCif_acmpeq)
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					else
@@ -2300,30 +2289,27 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				case bCif_icmpgt:
 				case bCif_icmple:
 					boolean inverted = false;
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					sReg2 = opds[1].reg;
-					if (sReg1 < 0) {
+					if (src1Reg < 0) {
 						if (opds[0].constant != null) {
 							int immVal = ((StdConstant)opds[0].constant).valueH;
 							if ((immVal >= -32768) && (immVal <= 32767))
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg2, immVal);
+								createICRFrAsimm(code, ppcCmpi, CRF0, src2Reg, immVal);
 							else
-								createICRFrArB(code, ppcCmp, CRF0, sReg2, sReg1);
+								createICRFrArB(code, ppcCmp, CRF0, src2Reg, src1Reg);
 						} else
-								createICRFrArB(code, ppcCmp, CRF0, sReg2, sReg1);					
-					} else if (sReg2 < 0) {
+								createICRFrArB(code, ppcCmp, CRF0, src2Reg, src1Reg);					
+					} else if (src2Reg < 0) {
 						if (opds[1].constant != null) {
 							int immVal = ((StdConstant)opds[1].constant).valueH;
 							if ((immVal >= -32768) && (immVal <= 32767)) {
 								inverted = true;
-								createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, immVal);
+								createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, immVal);
 							} else
-								createICRFrArB(code, ppcCmp, CRF0, sReg2, sReg1);
+								createICRFrArB(code, ppcCmp, CRF0, src2Reg, src1Reg);
 						} else
-							createICRFrArB(code, ppcCmp, CRF0, sReg2, sReg1);					
+							createICRFrArB(code, ppcCmp, CRF0, src2Reg, src1Reg);					
 					} else {
-						createICRFrArB(code, ppcCmp, CRF0, sReg2, sReg1);
+						createICRFrArB(code, ppcCmp, CRF0, src2Reg, src1Reg);
 					}
 					if (!inverted) {
 						if (bci == bCif_icmpeq) 
@@ -2359,9 +2345,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				case bCifge:
 				case bCifgt:
 				case bCifle: 
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);
+					createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);
 					if (bci == bCifeq) 
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					else if (bci == bCifne)
@@ -2377,17 +2361,13 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					break;
 				case bCifnonnull:
 				case bCifnull: 
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
-					createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, 0);
+					createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, 0);
 					if (bci == bCifnonnull)
 						createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 0);
 					else
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					break;
 				case bCtableswitch:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
 					int addr = node.lastBCA + 1;
 					addr = (addr + 3) & -4; // round to the next multiple of 4
 					addr += 4; // skip default offset
@@ -2395,21 +2375,19 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					int high = getInt(meth.cfg.code, addr + 4);
 					int nofCases = high - low + 1;
 					for (int k = 0; k < nofCases; k++) {
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, low + k);
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, low + k);
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					}
 					createIli(code, ppcB, nofCases, false);
 					break;
 				case bClookupswitch:
-					opds = instr.getOperands();
-					sReg1 = opds[0].reg;
 					addr = node.lastBCA + 1;
 					addr = (addr + 3) & -4; // round to the next multiple of 4
 					addr += 4; // skip default offset
 					int nofPairs = getInt(meth.cfg.code, addr);
 					for (int k = 0; k < nofPairs; k++) {
 						int key = getInt(meth.cfg.code, addr + 4 + k * 8);
-						createICRFrAsimm(code, ppcCmpi, CRF0, sReg1, key);
+						createICRFrAsimm(code, ppcCmpi, CRF0, src1Reg, key);
 						createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);
 					}
 					createIli(code, ppcB, nofPairs, true);
@@ -2421,39 +2399,34 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}
 			case sCregMove: {
-				opds = instr.getOperands();
-				int srcReg = opds[0].reg;
-				int dstReg = res.reg;
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tInteger: case tChar: case tShort: case tByte: 
 				case tBoolean: case tRef: case tAref: case tAboolean:
 				case tAchar: case tAfloat: case tAdouble: case tAbyte: 
 				case tAshort: case tAinteger: case tAlong:
-					if (dstReg >= 0x100) {
-						createIrSrAd(code, ppcStw, srcReg, stackPtr, localVarOffset + 4 * (dstReg & 0xff));
-					} else if (srcReg >= 0x100) {
-						createIrDrAd(code, ppcLwz, dstReg, stackPtr, localVarOffset + 4 * (srcReg & 0xff));
+					if (dReg >= 0x100) {
+						createIrSrAd(code, ppcStw, src1Reg, stackPtr, localVarOffset + 4 * (dReg & 0xff));
+					} else if (src1Reg >= 0x100) {
+						createIrDrAd(code, ppcLwz, dReg, stackPtr, localVarOffset + 4 * (src1Reg & 0xff));
 					} else
-						createIrArSrB(code, ppcOr, dstReg, srcReg, srcReg);
+						createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
 					break;
 				case tLong:
-					int srcRegLong = opds[0].regLong;
-					int dstRegLong = res.regLong;
-					if (dstRegLong >= 0x100) {
-						createIrSrAd(code, ppcStw, srcRegLong, stackPtr, localVarOffset + 4 * (dstRegLong & 0xff));
-					} else if (srcRegLong >= 0x100) {
-						createIrDrAd(code, ppcLwz, dstRegLong, stackPtr, localVarOffset + 4 * (srcRegLong & 0xff));
+					if (dRegLong >= 0x100) {
+						createIrSrAd(code, ppcStw, src1RegLong, stackPtr, localVarOffset + 4 * (dRegLong & 0xff));
+					} else if (src1RegLong >= 0x100) {
+						createIrDrAd(code, ppcLwz, dRegLong, stackPtr, localVarOffset + 4 * (src1RegLong & 0xff));
 					} else
-						createIrArSrB(code, ppcOr, dstRegLong, srcRegLong, srcRegLong);
-					if (dstReg >= 0x100) {
-						createIrSrAd(code, ppcStw, srcReg, stackPtr, localVarOffset + 4 * (dstReg & 0xff));
-					} else if (srcReg >= 0x100) {
-						createIrDrAd(code, ppcLwz, dstReg, stackPtr, localVarOffset + 4 * (srcReg & 0xff));						
+						createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
+					if (dReg >= 0x100) {
+						createIrSrAd(code, ppcStw, src1Reg, stackPtr, localVarOffset + 4 * (dReg & 0xff));
+					} else if (src1Reg >= 0x100) {
+						createIrDrAd(code, ppcLwz, dReg, stackPtr, localVarOffset + 4 * (src1Reg & 0xff));						
 					} else
-						createIrArSrB(code, ppcOr, dstReg, srcReg, srcReg);
+						createIrArSrB(code, ppcOr, dReg, src1Reg, src1Reg);
 					break;
 				case tFloat: case tDouble:
-					createIrDrB(code, ppcFmr, res.reg, opds[0].reg);
+					createIrDrB(code, ppcFmr, dReg, src1Reg);
 					break;
 				default:
 					if (dbg) StdStreams.vrb.println("type = " + (res.type & 0x7fffffff));
@@ -2467,6 +2440,9 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				assert false : "SSA instruction not implemented: " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + " function";
 				return;
 			}
+			
+			if (dRegSlot >= 0) createIrSrAd(code, ppcStw, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
+			if (dRegLongSlot >= 0) createIrSrAd(code, ppcStw, dRegLong, stackPtr, localVarOffset + 4 * dRegLongSlot);
 		}
 	}
 

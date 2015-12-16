@@ -160,10 +160,10 @@ public class VariousTest2 {
 		Assert.assertEquals("test412", obj.f4, 400.2f, 1e-10);
 		Assert.assertEquals("test413", obj.l5, 500);
 		Assert.assertEquals("test414", obj.d5, 500.1, 1e-10);
-//		Assert.assertEquals("test415", obj.f5, 500.2f, 1e-10);
-//		Assert.assertEquals("test416", obj.l6, 600);
-//		Assert.assertEquals("test417", obj.d6, 600.1, 1e-10);
-//		Assert.assertEquals("test418", obj.f6, 600.2f, 1e-10);
+		Assert.assertEquals("test415", obj.f5, 500.2f, 1e-10);
+		Assert.assertEquals("test416", obj.l6, 600);
+		Assert.assertEquals("test417", obj.d6, 600.1, 1e-10);
+		Assert.assertEquals("test418", obj.f6, 600.2f, 1e-10);
 		CmdTransmitter.sendDone();
 	}
 
@@ -172,9 +172,9 @@ public class VariousTest2 {
 		short a1 = 10, a2 = 11;
 		int a3 = 20, a4 = 21;
 		long a5 = 30, a6 = 31, a7 = 32, a8 = 33, a9 = 34, a10 = 35, a11 = 36, a12 = 37;
-		byte a13 = 40, a14 = 41, a15 = 42, a16 = 43, a17 = 44, a18 = 45, a19 = 46, a20 = 47, a21 = 48;//, a22 = 0, a23 = 0;
+		byte a13 = 40, a14 = 41, a15 = 42, a16 = 43, a17 = 44, a18 = 45, a19 = 46, a20 = 47, a21 = 48, a22 = 49, a23 = 50;
 		long res = p1 + p2 + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10;
-		res = res + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19 + a20 + a21;// + a22 + a23;
+		res = res + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19 + a20 + a21 + a22 + a23;
 		return res;
 	}
 

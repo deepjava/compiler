@@ -87,8 +87,8 @@ public class NoOpnd extends SSAInstruction {
 				join = join.next;
 			}
 			sb.append(i + ")]");
-		} 
-		sb.append(", end=" + result.end);
+		} else 
+			sb.append(", end=" + result.end);
 		if (result.reg != -1) {
 			if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
 		}

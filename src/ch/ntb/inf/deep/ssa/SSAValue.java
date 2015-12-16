@@ -41,22 +41,6 @@ public class SSAValue implements SSAValueType {
 	public SSAValue() {
 	}
 	
-	// copy constructor
-	public SSAValue(SSAValue val) {
-		type = val.type;
-		index = val.index;
-		constant = val.constant;
-		n = val.n;
-		end = val.end;
-		start = val.start;
-		reg = val.reg;
-		regLong = val.regLong;
-		join = val.join;
-		next = val.next;
-		nonVol = val.nonVol;
-		owner = val.owner;
-	}
-	
 	public String typeName() {
 		return svNames[type & 0x7fffffff];
 	}

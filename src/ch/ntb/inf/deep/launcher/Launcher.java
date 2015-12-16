@@ -72,7 +72,7 @@ public class Launcher implements ICclassFileConsts {
 	public static int buildAll(String deepProjectFileName, String targetConfigurationName) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
-		
+
 		Class clazz;
 		Method method;
 		Array array;
@@ -591,6 +591,7 @@ public class Launcher implements ICclassFileConsts {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
 		String cpuName = cpu.name.toString();
+		String archName = cpu.arch.name.toString();
 		basePath = basePath + File.separatorChar + cpuName;
 		String fileName = "I" + cpuName + ".java";
 		try {
@@ -601,7 +602,7 @@ public class Launcher implements ICclassFileConsts {
 			vrb.println("Creating " + f.getAbsolutePath());
 			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			fw.write("public interface I" + cpuName + " {\n");
+			fw.write("public interface I" + cpuName + " extends I" + archName + " {\n");
 			
 			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
 			SystemConstant curr = cpu.sysConstants;
