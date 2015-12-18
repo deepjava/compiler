@@ -25,10 +25,8 @@ import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.SSAInstructionOpcs;
-import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.ssa.SSAValue;
 import ch.ntb.inf.deep.ssa.SSAValueType;
 import ch.ntb.inf.deep.ssa.instruction.Call;
@@ -36,148 +34,6 @@ import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
 public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
-//	static int regsGPR, regsFPR;
-//	static int nofNonVolGPR, nofNonVolFPR;
-//	static int nofVolGPR, nofVolFPR;
-//	// used to find call in this method with most parameters -> gives stack size
-//	static int maxNofParamGPR, maxNofParamFPR;
-	// used to determine operands which can be spilled to stack if running out of registers to allocate
-//	static int gprInitNotLocal;
-
-	/**
-	 * Generates the live ranges of all SSAValues of a method and assigns registers to them
-	 */
-	static void buildIntervals(SSA ssa) {
-		RegAllocatorPPC.ssa = ssa;
-		maxOpStackSlots = ssa.cfg.method.maxStackSlots;
-		regsGPR = regsGPRinitial;
-		regsFPR = regsFPRinitial;
-		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		nofVolGPR = 0; nofVolFPR = 0;
-		maxNofParamGPR = 0; maxNofParamFPR = 0;
-		stackSlotSpilledRegs = -1;
-		maxLocVarStackSlots = 0;
-		for (int i = 0; i < maxNofJoins; i++) {
-			rootJoins[i] = null;
-			joins[i] = rootJoins[i];
-		}
-
-		nofInstructions = SSA.renumberInstructions(ssa.cfg);
-		findLastNodeOfPhi(ssa);
-		
-		// copy into local array for faster access
-		if (nofInstructions > instrs.length) {
-			instrs = new SSAInstruction[nofInstructions + nofSSAInstr];
-		}
-		SSANode b = (SSANode) ssa.cfg.rootNode;
-		int count = 0;
-		while (b != null) {
-			for (int i = 0; i < b.nofPhiFunc; i++) {
-				instrs[count++] = b.phiFunctions[i];
-			}
-			for (int i = 0; i < b.nofInstr; i++) {
-				instrs[count++] = b.instructions[i];
-			}
-			b = (SSANode) b.next;
-		}	
-		
-		markUsedPhiFunctions();
-		resolvePhiFunctions();	
-		calcLiveRange(ssa);	// compute live intervals
-		assignRegType();	// assign volatile or nonvolatile type
-	}
-
-	// assign volatile or nonvolatile register 
-	// checks if user wants to use floats in exception handlers
-//	private static void assignRegType() {
-//		// handle all live ranges of phi functions first
-//		for (int i = 0; i < maxNofJoins; i++) {
-//			SSAValue val = joins[i];
-//			while (val != null) {
-//				for (int k = val.start; k < val.end; k++) {
-//					SSAInstruction instr1 = instrs[k];
-//					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-//							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
-//						val.nonVol = true;
-//					}
-//				}
-//				//TODO
-//				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
-//				if (tab != null) {
-//					for (int k = 0; k < tab.length; k++) {
-//						ExceptionTabEntry entry = tab[k];
-//						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
-//						assert handlerInstr != null;
-//						for (int n = val.start; n < val.end; n++) {
-//							SSAInstruction instr1 = instrs[n];
-//							if (instr1 == handlerInstr) {
-//								val.nonVol = true;
-//							}
-//						}
-//					}
-//				}
-//
-//				val = val.next;
-//			}			
-//		}
-//		for (int i = 0; i < nofInstructions; i++) {
-//			SSAInstruction instr = instrs[i];
-//			SSAValue res = instr.result;
-//			int currNo = res.n;
-//			int endNo = res.end;
-//			if (instr.ssaOpcode != sCloadLocal && res.join != null) continue;
-//			else if (instr.ssaOpcode == sCloadLocal && res.join != null) {
-//				if (res.join.nonVol) CodeGenPPC.paramHasNonVolReg[res.join.index - maxOpStackSlots] = true;
-//			} else if (instr.ssaOpcode == sCloadLocal) {
-//				// check if call instruction between start of method and here
-//				// call to inline method is omitted
-//				for (int k = 0; k < endNo; k++) {
-//					SSAInstruction instr1 = instrs[k];
-//					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-//							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
-//						res.nonVol = true;
-//						CodeGenPPC.paramHasNonVolReg[res.index - maxOpStackSlots] = true;
-//					}
-//				}
-//			} else {
-//				// check if call instruction in live range
-//				// call to inline method is omitted
-//				for (int k = currNo+1; k < endNo; k++) {
-//					SSAInstruction instr1 = instrs[k];
-//					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-//							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) 
-//						res.nonVol = true;
-//				}
-//				//TODO
-//				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
-//				if (tab != null) {
-//					for (int k = 0; k < tab.length; k++) {
-//						ExceptionTabEntry entry = tab[k];
-//						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
-//						assert handlerInstr != null;
-//						for (int n = currNo+1; n < endNo; n++) {
-//							SSAInstruction instr1 = instrs[n];
-//							if (instr1 == handlerInstr) {
-//								res.nonVol = true;
-//							}
-//						}
-//					}
-//				}
-//			}
-//			
-//			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
-//				Call call = (Call)instr;
-//				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-//					if ((((Method)call.item).id) == CodeGenPPC.idENABLE_FLOATS) {
-//					CodeGenPPC.enFloatsInExc = true;
-//				}
-//				int id = ((Method)call.item).id;
-//				if (id == CodeGenPPC.idDoubleToBits || (id == CodeGenPPC.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-//					id == CodeGenPPC.idFloatToBits || (id == CodeGenPPC.idBitsToFloat))  // FloatToBits or BitsToFloat
-//					CodeGenPPC.tempStorage = true;
-//			}
-//		}
-//	}
 
 	/**
 	 * Assign a register or memory location to all SSAValues
@@ -588,11 +444,17 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 
 	private static void freeReg(boolean isGPR, int reg) {
 		if (isGPR) {
+			if (reg < 0x100) {
 			regsGPR |= 1 << reg;
+			if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
+			} else {
+				releaseStackSlot(reg - 0x100);
+				if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
+			}
 		} else {
 			regsFPR |= 1 << reg;
+			if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsFPR=0x" + Integer.toHexString(regsFPR));
 		}
-		if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 	}
 	
 }

@@ -20,6 +20,7 @@ package ch.ntb.inf.deep.cg;
 
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.host.StdStreams;
@@ -34,7 +35,7 @@ import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, ICclassFileConsts {
-	protected static final boolean dbg = false;
+	protected static final boolean dbg = true;
 
 	protected static final int nofSSAInstr = 256;
 	public static final int maxNofJoins = 32;
@@ -58,11 +59,52 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	// set if a method spills register to the stack  
 	protected static boolean spill;
 
-	protected static int regsGPR, regsFPR;
+	public static int regsGPR, regsFPR;
 	protected static int nofNonVolGPR, nofNonVolFPR;
 	protected static int nofVolGPR, nofVolFPR;
 	// used to find call in this method with most parameters -> gives stack size
 	protected static int maxNofParamGPR, maxNofParamFPR;
+
+	/**
+	 * Generates the live ranges of all SSAValues of a method and assigns registers to them
+	 */
+	public static void buildIntervals(SSA ssa) {
+		RegAllocatorPPC.ssa = ssa;
+		maxOpStackSlots = ssa.cfg.method.maxStackSlots;
+		nofNonVolGPR = 0; nofNonVolFPR = 0;
+		nofVolGPR = 0; nofVolFPR = 0;
+		maxNofParamGPR = 0; maxNofParamFPR = 0;
+		stackSlotSpilledRegs = -1;
+		maxLocVarStackSlots = 0;
+		for (int i = 0; i < maxNofJoins; i++) {
+			rootJoins[i] = null;
+			joins[i] = rootJoins[i];
+		}
+
+		nofInstructions = SSA.renumberInstructions(ssa.cfg);
+		findLastNodeOfPhi(ssa);
+		
+		// copy into local array for faster access
+		if (nofInstructions > instrs.length) {
+			instrs = new SSAInstruction[nofInstructions + nofSSAInstr];
+		}
+		SSANode b = (SSANode) ssa.cfg.rootNode;
+		int count = 0;
+		while (b != null) {
+			for (int i = 0; i < b.nofPhiFunc; i++) {
+				instrs[count++] = b.phiFunctions[i];
+			}
+			for (int i = 0; i < b.nofInstr; i++) {
+				instrs[count++] = b.instructions[i];
+			}
+			b = (SSANode) b.next;
+		}	
+		
+		markUsedPhiFunctions();
+		resolvePhiFunctions();	
+		calcLiveRange(ssa);	// compute live intervals
+		assignRegType();	// assign volatile or nonvolatile type
+	}
 
 	protected static void findLastNodeOfPhi(SSA ssa) {
 		if (dbg) StdStreams.vrb.println("determine end of range for phi functions in loop headers");

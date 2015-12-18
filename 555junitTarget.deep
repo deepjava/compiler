@@ -59,6 +59,8 @@ project junitTargetTestProject {
 				  "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3",
 				  "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
 
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3";
+
 
 #	Tests for trgtlib tests  
 #	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest";

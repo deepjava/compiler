@@ -53,86 +53,36 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	static boolean tempStorage;
 	static boolean enFloatsInExc;
 
-//	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
-//	private static int nofParam;	
-//	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
-//	private static int nofParamGPR, nofParamFPR;	 
-//	// maximum nof registers used by this method
-//	static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
-//	// gives required stack space for parameters of this method if not enough registers
-//	static int recParamSlotsOnStack;
-//	// gives required stack space for parameters of any call in this method if not enough registers
-//	static int callParamSlotsOnStack;
-//	// type of parameter, set by SSA, includes "this", long and doubles count as 2 parameters
-//	static int[] paramType = new int[maxNofParam];
-//	// register type of parameter, long and doubles count as 2 parameters
-//	public static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
-//	// register of parameter, long and doubles count as 2 parameters
-//	static int[] paramRegNr = new int[maxNofParam];
-	
-//	// information about into which registers parameters of this method go 
-//	private static int nofMoveGPR, nofMoveFPR;
-//	private static int[] moveGPRsrc = new int[maxNofParam];
-//	private static int[] moveGPRdst = new int[maxNofParam];
-//	private static int[] moveFPRsrc = new int[maxNofParam];
-//	private static int[] moveFPRdst = new int[maxNofParam];
-	
 	// information about the src registers for parameters of a call to a method within this method
 	private static int[] srcGPR = new int[nofGPR];
 	private static int[] srcFPR = new int[nofFPR];
 	private static int[] srcGPRcount = new int[nofGPR];
 	private static int[] srcFPRcount = new int[nofFPR];
 	
-	private static SSAValue[] lastExitSet;
 	private static boolean newString;
 	
 	public CodeGenPPC() {}
 
 	public void translateMethod(Method method) {
+		init(method);
 		SSA ssa = method.ssa;
 		Code32 code = method.machineCode;
-		nofParamGPR = 0; nofParamFPR = 0;
-		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		nofVolGPR = 0; nofVolFPR = 0;
-		nofMoveGPR = 0; nofMoveFPR = 0;
-		tempStorage = false;
-		enFloatsInExc = false;
-		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-		if (dbg) StdStreams.vrb.println("generate code for " + method.owner.name + "." + method.name);
-		for (int i = 0; i < maxNofParam; i++) {
-			paramType[i] = tVoid;
-			paramRegNr[i] = -1;
-			paramRegEnd[i] = -1;
-		}
-
-		// make local copy
-		int maxStackSlots = method.maxStackSlots;
-		int i = maxStackSlots;
-		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
-			int type = ssa.paramType[i] & ~(1<<ssaTaFitIntoInt);
-			paramType[i - maxStackSlots] = type;
-			paramHasNonVolReg[i - maxStackSlots] = false;
-			if (type == tLong || type == tDouble) i++;
-			i++;
-		}
-		nofParam = i - maxStackSlots;
-		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
-		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
-//		StdStreams.vrb.print(ssa.cfg.toString());
-//		StdStreams.vrb.println(ssa.toString());
+
 		tempStorage = false;
 		enFloatsInExc = false;
+		RegAllocator.regsGPR = regsGPRinitial;
+		RegAllocator.regsFPR = regsFPRinitial;
 
-		RegAllocatorPPC.buildIntervals(ssa);
+		RegAllocator.buildIntervals(ssa);
 		
 		if (dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b.next != null) {
 			b = (SSANode) b.next;
 		}	
-		lastExitSet = b.exitSet;
+		SSAValue[] lastExitSet = b.exitSet;
 		// determine, which parameters go into which register
 		parseExitSet(lastExitSet, method.maxStackSlots);
 		if (dbg) {
@@ -2441,8 +2391,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				return;
 			}
 			
-			if (dRegSlot >= 0) createIrSrAd(code, ppcStw, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
 			if (dRegLongSlot >= 0) createIrSrAd(code, ppcStw, dRegLong, stackPtr, localVarOffset + 4 * dRegLongSlot);
+			if (dRegSlot >= 0) createIrSrAd(code, ppcStw, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
 		}
 	}
 

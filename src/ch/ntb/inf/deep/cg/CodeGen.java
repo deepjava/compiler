@@ -28,7 +28,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = false;
+	protected static final boolean dbg = true;
 
 	protected static final int maxNofParam = 32;
 
@@ -84,23 +84,33 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 
 	public CodeGen() {}
 	
-	void init(Method m) {
-//		SSA ssa = method.ssa;
-//		Code32 code = method.machineCode;
-//		nofParamGPR = 0; nofParamFPR = 0;
-//		nofNonVolGPR = 0; nofNonVolFPR = 0;
-//		nofVolGPR = 0; nofVolFPR = 0;
-//		nofMoveGPR = 0; nofMoveFPR = 0;
-//		tempStorage = false;
-//		enFloatsInExc = false;
-//		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-//		if (dbg) StdStreams.vrb.println("generate code for " + method.owner.name + "." + method.name);
-//		for (int i = 0; i < maxNofParam; i++) {
-//			paramType[i] = tVoid;
-//			paramRegNr[i] = -1;
-//			paramRegEnd[i] = -1;
-//		}
-
+	protected void init(Method m) {
+		SSA ssa = m.ssa;
+		nofParamGPR = 0; nofParamFPR = 0;
+		nofNonVolGPR = 0; nofNonVolFPR = 0;
+		nofVolGPR = 0; nofVolFPR = 0;
+		nofMoveGPR = 0; nofMoveFPR = 0;
+		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
+		if (dbg) StdStreams.vrb.println("generate code for " + m.owner.name + "." + m.name);
+		for (int i = 0; i < maxNofParam; i++) {
+			paramType[i] = tVoid;
+			paramRegNr[i] = -1;
+			paramRegEnd[i] = -1;
+		}
+		
+		// make local copy
+		int maxStackSlots = m.maxStackSlots;
+		int i = maxStackSlots;
+		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
+			int type = ssa.paramType[i] & ~(1<<ssaTaFitIntoInt);
+			paramType[i - maxStackSlots] = type;
+			paramHasNonVolReg[i - maxStackSlots] = false;
+			if (type == tLong || type == tDouble) i++;
+			i++;
+		}
+		nofParam = i - maxStackSlots;
+		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
+		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
 	}
 	
 	public abstract void translateMethod(Method m);

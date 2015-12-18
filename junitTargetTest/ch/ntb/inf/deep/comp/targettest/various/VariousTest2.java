@@ -181,7 +181,8 @@ public class VariousTest2 {
 	@Test
 	//Test constructor with many parameters
 	public static void testManyLocals(){
-		Assert.assertEquals("testm26", 1026, m26(100, 200));
+		Assert.assertEquals("test1_m26", 1125, m26(100, 200));
+		Assert.assertEquals("test2_m26", 10003000030825L, m26(10001000010000L, 2000020000));
 		CmdTransmitter.sendDone();
 	}
 
