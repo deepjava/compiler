@@ -689,16 +689,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (sReg1 < 0) {
 						int immVal = ((StdConstant)opds[0].constant).valueH;
 						if (immVal >= 0)
-							createDataProcImm(code, armAdd, condAlways, dReg, sReg2, immVal, noShift, 0);
+							createDataProcImm(code, armAdd, condAlways, dReg, sReg2, immVal);
 						else
-							createDataProcImm(code, armRsb, condAlways, dReg, sReg2, -immVal, noShift, 0);
+							createDataProcImm(code, armRsb, condAlways, dReg, sReg2, -immVal);
 						
 					} else if (sReg2 < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;
 						if (immVal >= 0)
-							createDataProcImm(code, armAdd, condAlways, dReg, sReg1, immVal, noShift, 0);
+							createDataProcImm(code, armAdd, condAlways, dReg, sReg1, immVal);
 						else
-							createDataProcImm(code, armSub, condAlways, dReg, sReg1, -immVal, noShift, 0);
+							createDataProcImm(code, armSub, condAlways, dReg, sReg1, -immVal);
 					} else {
 						createDataProcReg(code, armAdd, condAlways, dReg, sReg1, sReg2, noShift, 0);
 					}
@@ -2709,17 +2709,190 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static int getInt(byte[] bytes, int index){
 		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
 	}
+	
+	
+	
+	
+	// Data-processing
+	private void createDataProcImm(Code32 code, int opCode, int cond, int Rd, int Rn, int imm12) {
+		code.instructions[code.iCount] = (cond << 28)| opCode | (Rd << 12) | (Rn << 16) | (imm12 << 0) | (1 << 25) ;
+		code.incInstructionNum();
+	}
 
 	private void createDataProcReg(Code32 code, int opCode, int cond, int Rd, int Rn, int Rm, int shiftType, int shiftAmount) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rn << 16) | Rm | (shiftType << 5) | (shiftAmount << 7);
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7);
+		code.incInstructionNum();
+	}
+
+	private void createDataProcRegShiftedReg(Code32 code, int opCode, int cond, int Rd, int Rn, int Rm, int shiftType, int Rs) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (Rs << 8) | (1 << 4);
+		code.incInstructionNum();
+	}
+
+	
+	// Rotate and Shift
+	private void createRotateShiftImm(Code32 code, int opCode, int cond, int Rd, int Rm, int imm5) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rm << 0) | (imm5 << 7);
+		code.incInstructionNum();
+	}
+
+	private void createRotateShiftReg(Code32 code, int opCode, int cond, int Rd, int Rn, int Rm) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rn << 0) | (Rm << 8) | (1 << 4);
 		code.incInstructionNum();
 	}
 	
-	private void createDataProcImm(Code32 code, int opCode, int cond, int Rd, int Rn, int imm, int shiftType, int shiftAmount) {
-		code.instructions[code.iCount] = (cond << 28) | (1 << 25) | opCode | (Rd << 12) | (Rn << 16) | imm;
+
+	// RRX
+	private void createRrx(Code32 code, int opCode, int cond, int Rd, int Rm) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rm << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// MOVW
+	private void createMovw(Code32 code, int opCode, int cond, int Rd, int imm16) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | ((imm16 & 0xf000) << 4) | ((imm16 & 0xfff) << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// MOVT
+	private void createMovt(Code32 code, int opCode, int cond, int Rd, int imm16) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | ((imm16 & 0xf000) << 4) | ((imm16 & 0xfff) << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// Synchronization primitives
+	private void createSynchPrimLoad(Code32 code, int opCode, int cond, int Rt, int Rn) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16);
 		code.incInstructionNum();
 	}
 
+	private void createSynchPrimStore(Code32 code, int opCode, int cond, int Rd, int Rt, int Rn) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rt << 0) | (Rn << 16);
+		code.incInstructionNum();
+	}
+	
+	
+	// SWP / SWPB
+	private void createSwp(Code32 code, int opCode, int cond, int Rt, int Rt2, int Rn) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rt2 << 0) | (Rn << 16);
+		code.incInstructionNum();
+	}
+	
+	
+	// DBG
+	private void createDbg(Code32 code, int opCode, int cond, int option) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (option << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// Hints (NOP / SEV / WFE / WFI / YIELD)
+	private void createHint(Code32 code, int opCode, int cond) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		code.incInstructionNum();
+	}
+	
+	
+	// Branch (register) (including BX BXJ
+	private void createBranchImm(Code32 code, int opCode, int cond, int imm24, int H) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (imm24 << 0) | (H << 24);
+		code.incInstructionNum();
+	}
+	
+	
+	// Branch (register) (including BX BXJ
+	private void createBranchReg(Code32 code, int opCode, int cond, int Rm) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rm << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// Saturating addition and subtraction
+	private void createSatAddSub(Code32 code, int opCode, int cond, int Rd, int Rm, int Rn) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12)| (Rm << 0)| (Rn << 16);
+		code.incInstructionNum();
+	}
+	
+	
+	// BKPT / HVC
+	private void createBkptHvc(Code32 code, int opCode, int cond, int imm16) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | ((imm16 & 0xfff0) << 4) | (imm16 & 0x000f);
+		code.incInstructionNum();
+	}
+	
+	
+	// CLZ
+	private void createClz(Code32 code, int opCode, int cond, int Rd, int Rm) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (Rm << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// ERET
+	private void createEret(Code32 code, int opCode, int cond) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		code.incInstructionNum();
+	}
+	
+	
+	// SMC
+	private void createSmc(Code32 code, int opCode, int cond, int imm4) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (imm4 << 0);
+		code.incInstructionNum();
+	}
+	
+	
+	// Load/store word and unsigned byte	(LDR, LDRB, STR, STRB)	(LDRT / LDRBT / STRT / STRBT)
+		// (LDR, LDRB, STR, STRB	:	(immediate))		(LDRT / LDRBT / STRT / STRBT	:	A1)
+	private void createLSWordImm(Code32 code, int opCode, int cond, int Rt, int Rn, int imm12, int P, int U, int W) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
+		code.incInstructionNum();
+	}
+	// ...(LDR, LDRB	:	(literal))
+	private void createLSWordLit(Code32 code, int opCode, int cond, int Rt, int imm12, int P, int U, int W) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (0xf << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
+		code.incInstructionNum();
+	}
+	// ...(LDR, LDRB, STR, STRB	:	(register))		(LDRT / LDRBT / STRT / STRBT	:	A2)
+	private void createLSWordReg(Code32 code, int opCode, int cond, int Rt, int Rn, int Rm, int shiftType, int shiftAmount, int P, int U, int W) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21) | (1 << 25);
+		code.incInstructionNum();
+	}
+	
+	
+	// Branch, branch with link, and block data transfer	(LDMxx, STMxx, POP, PUSH)
+	private void createBranchRegList(Code32 code, int opCode, int cond, int Rn, int lowestRegister, int W) {
+//		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (registerList << 0) | (W << 21);
+		int registerList = 0;
+		for (int i=lowestRegister; i <= topGPR; i++) {
+			registerList |= (1 << i);
+		};
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (registerList << 0) | (W << 21);
+		code.incInstructionNum();
+	}
+	
+	
+	// Unconditional instructions
+	// ...RFE
+	private void createRfe(Code32 code, int opCode, int cond, int Rn, int P, int U, int W) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (P << 24) | (U << 23) | (W << 21);
+		code.incInstructionNum();
+	}
+	// ...SRS
+	private void createSrs(Code32 code, int opCode, int cond, int mode, int P, int U, int W) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (mode << 0) | (P << 24) | (U << 23) | (W << 21);
+		code.incInstructionNum();
+	}
+	
+	
+	
+	
+	
+	
+	
 	private void createIpat(Code32 code, int pat) {
 		code.instructions[code.iCount] = pat;
 		code.incInstructionNum();

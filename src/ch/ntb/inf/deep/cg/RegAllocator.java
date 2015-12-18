@@ -35,7 +35,7 @@ import ch.ntb.inf.deep.ssa.instruction.PhiFunction;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
 public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, ICclassFileConsts {
-	protected static final boolean dbg = true;
+	protected static final boolean dbg = false;
 
 	protected static final int nofSSAInstr = 256;
 	public static final int maxNofJoins = 32;
