@@ -110,18 +110,18 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 		}
 		nofParam = i - maxStackSlots;
 		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
-		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
+		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam + ", double / long count as 2");
 	}
 	
 	public abstract void translateMethod(Method m);
 
-//	private static int getInt(byte[] bytes, int index){
-//		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
-//	}
-//
 	public abstract void doFixups(Code32 code);
 
 	public abstract void generateCompSpecSubroutines();
+
+	protected static int getInt(byte[] bytes, int index){
+		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
+	}
 
 	public void init() { 
 		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");

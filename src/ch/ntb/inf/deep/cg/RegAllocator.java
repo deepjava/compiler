@@ -23,6 +23,8 @@ import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
 import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
@@ -38,7 +40,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	protected static final boolean dbg = false;
 
 	protected static final int nofSSAInstr = 256;
-	public static final int maxNofJoins = 32;
+	public static final int maxNofJoins = 64;
 	
 	protected static SSA ssa;
 	// maximum slots on operand stack
@@ -47,7 +49,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	// maximum slots on stack for locals
 	public static int maxLocVarStackSlots;
 	// used to assign stack slots for spilled registers
-	protected static int stackSlotSpilledRegs;
+	public static int stackSlotSpilledRegs;
 	
 	// local and linear copy of all SSA-instructions of all nodes
 	protected static SSAInstruction[] instrs = new SSAInstruction[nofSSAInstr];	
@@ -64,6 +66,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	protected static int nofVolGPR, nofVolFPR;
 	// used to find call in this method with most parameters -> gives stack size
 	protected static int maxNofParamGPR, maxNofParamFPR;
+	// in the first run the register allocator uses the full set of registers
+	// if spilling is necessary a reduced set has to be used in the second run
+	public static boolean fullRegSet;
+	// set to true, if longs are used in a method
+	public static boolean useLongs;
 
 	/**
 	 * Generates the live ranges of all SSAValues of a method and assigns registers to them
@@ -74,11 +81,18 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
 		maxNofParamGPR = 0; maxNofParamFPR = 0;
+		fullRegSet = true;
+		useLongs = false;
 		stackSlotSpilledRegs = -1;
 		maxLocVarStackSlots = 0;
 		for (int i = 0; i < maxNofJoins; i++) {
 			rootJoins[i] = null;
 			joins[i] = rootJoins[i];
+		}
+		Method m = ssa.cfg.method;
+		if (m.maxStackSlots + m.maxLocals > maxNofJoins) {
+			ErrorReporter.reporter.error(640);
+			assert false: "not enough stack slots for spilling";
 		}
 
 		nofInstructions = SSA.renumberInstructions(ssa.cfg);

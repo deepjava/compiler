@@ -128,11 +128,9 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false);
 			else if (nofAuxRegGPR == 2) {
 				res.regGPR1 = reserveReg(gpr, false);
+				if (dbg) if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
 				res.regGPR2 = reserveReg(gpr, false);
-			}
-			if (dbg) {
-				if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
-				if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
+				if (dbg) if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
 			}
 			
 			// reserve temporary storage on the stack for certain fpr operations
@@ -333,6 +331,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 		if (type == tLong) {
 			res.regLong = reserveReg(gpr, res.nonVol);
 			res.reg = reserveReg(gpr, res.nonVol);
+			useLongs = true;
 		} else if ((type == tFloat) || (type == tDouble)) {
 			res.reg = reserveReg(fpr, res.nonVol);
 		} else if (type == tVoid) {
@@ -365,14 +364,12 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				}
 				i--;
 			}
-//			if (dbg) StdStreams.vrb.print("\tnot enough GPR's, spilling");
-//			ErrorReporter.reporter.error(603);
-//			assert false: "not enough GPR's for locals";
 			if (dbg) StdStreams.vrb.print("\tnot enough GPR's, reserve stack slot");
-			return getEmptyStackSlot();
-		} else {
+			fullRegSet = false;
+			return getEmptyStackSlot(false);
+		} else {	// FPR
 			int i;
-			if (!isNonVolatile) {
+			if (!isNonVolatile) {	// is volatile
 				i = paramStartFPR;
 				while (i < nonVolStartFPR) {
 					if ((regsFPR & (1 << i)) != 0) {
@@ -392,42 +389,49 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				}
 				i--;
 			}
-			ErrorReporter.reporter.error(604);
-			assert false: "not enough FPR's for locals";
-			return 0;
+			if (dbg) StdStreams.vrb.print("\tnot enough FPR's, reserve stack slot");
+			fullRegSet = false;
+			return getEmptyStackSlot(true);
 		}
 	}
 
-	private static int getEmptyStackSlot() {
+	private static int getEmptyStackSlot(boolean pair) {
 		int i = 0;
-		while (i < 32) {
-			if ((stackSlotSpilledRegs & (1 << i)) != 0) {
-				stackSlotSpilledRegs &= ~(1 << i);
-				if (i > maxLocVarStackSlots - 1) maxLocVarStackSlots = i + 1;
-				return i + 0x100;
+		if (!pair) {
+			while (i < 32) {
+				if ((stackSlotSpilledRegs & (1 << i)) != 0) {
+					stackSlotSpilledRegs &= ~(1 << i);
+					if (i > maxLocVarStackSlots - 1) maxLocVarStackSlots = i + 1;
+					return i + 0x100;
+				}
+				i++;
 			}
-			i++;
+		} else {
+			while (i < 31) {
+				if (((stackSlotSpilledRegs >>> i) & 3) == 3) {
+					stackSlotSpilledRegs &= ~(3 << i);
+					if (i > maxLocVarStackSlots - 1) maxLocVarStackSlots = i + 2;
+					return i + 0x100;
+				}
+				i++;
+			}	
 		}
 		ErrorReporter.reporter.error(605);
 		assert false: "not enough stack slots for spilling";
 		return 0;
 	}
 	
-	
-	// zusammen fassen mit reserve Register
-	private static void reserveStackSlot(int slot) {
-		stackSlotSpilledRegs &= ~(1 << slot);
-	}
-
 	private static void releaseStackSlot(int slot) {
 		stackSlotSpilledRegs |= 1 << slot;
 	}
 
 	static void reserveReg(boolean isGPR, int regNr) {
 		if (isGPR) {
-			regsGPR &= ~(1 << regNr);
+			if (regNr < 0x100) regsGPR &= ~(1 << regNr);
+			else stackSlotSpilledRegs &= ~(1 << (regNr - 0x100));
 		} else {
-			regsFPR &= ~(1 << regNr);
+			if (regNr < 0x100) regsFPR &= ~(1 << regNr);
+			else stackSlotSpilledRegs &= ~(3 << (regNr - 0x100));
 		}
 	}
 
@@ -452,9 +456,31 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
 			}
 		} else {
-			regsFPR |= 1 << reg;
-			if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsFPR=0x" + Integer.toHexString(regsFPR));
+			if (reg < 0x100) {
+				regsFPR |= 1 << reg;
+				if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsFPR=0x" + Integer.toHexString(regsFPR));
+			} else {
+				releaseStackSlot(reg - 0x100);
+				releaseStackSlot(reg + 1 - 0x100);
+				if (dbg) StdStreams.vrb.println("\tfree stack slot " + (reg + 1));
+			}
 		}
 	}
-	
+
+	// reset all previously assigned registers
+	public static void resetRegisters() {
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+			SSAValue res = instr.result;
+			res.reg = -1;
+			res.regLong = -1;
+			res.regGPR1 = -1;
+			res.regGPR2 = -1;
+			SSAValue join = res.join;
+			if (join != null) {
+				join.reg = -1;
+				join.regLong = -1;
+			}
+		}
+	}
 }
