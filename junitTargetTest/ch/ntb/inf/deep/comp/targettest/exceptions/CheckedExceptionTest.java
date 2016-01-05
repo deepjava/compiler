@@ -236,6 +236,12 @@ public class CheckedExceptionTest {
 		return a;
 	}
 
+	private static int m63() {
+		try {
+			return m62();
+		} catch (IOException e) {return 100;}
+	}
+	
 	@Test
 	public static void testCatchReturn() {
 		a = -1;
@@ -244,9 +250,16 @@ public class CheckedExceptionTest {
 		a = 0;
 		Assert.assertEquals("test3", 10, m60());		
 		Assert.assertEquals("test4", 20, m61());		
+		a = 200;
+		Assert.assertEquals("test5", 200, m63());	
+		a = 0;
+		Assert.assertEquals("test6", 100, m63());	
 		
 		CmdTransmitter.sendDone();
 	}
+	
+
+
 
 }
 
