@@ -80,8 +80,8 @@ public class SSA04 extends TestSSA {
 	}
 	
 	@Test
-	public void testWhileTrue(){
-		SSANode[] nodes = getAndTestSSA("whileTrue", 2, 1);
+	public void testWhileTrue1(){
+		SSANode[] nodes = getAndTestSSA("whileTrue1", 2, 1);
 		testNode(nodes[0], 1, 0, 4);
 		testNode(nodes[1], 3, 0, 4);
 	}

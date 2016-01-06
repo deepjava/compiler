@@ -120,6 +120,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		assignRegType();	// assign volatile or nonvolatile type
 	}
 
+	// the result of each phi function in a loop header must be valid until the last instruction of this node or 
+	// a predecessor (if further down)
 	protected static void findLastNodeOfPhi(SSA ssa) {
 		if (dbg) StdStreams.vrb.println("determine end of range for phi functions in loop headers");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
@@ -144,10 +146,15 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 				for (int i = 0; i < b.nofPhiFunc; i++) {
 					PhiFunction phi = b.phiFunctions[i];
 					phi.last = last;
-					SSAInstruction instr = ((SSANode) b.next).instructions[0];
-					SSAInstruction instr1 = instr.freePhi;
-					instr.freePhi = phi;
-					phi.freePhi = instr1;
+					// phi-functions which could have been valid up to the last SSA instruction of the 
+					// last node can now be inserted into a list, this aides to free its registers later
+					SSANode node = ((SSANode) b.next);
+					if (node != null && node.nofInstr != 0) {
+						SSAInstruction instr = node.instructions[0];
+						SSAInstruction instr1 = instr.freePhi;
+						instr.freePhi = phi;
+						phi.freePhi = instr1;
+					}
 				}
 			}
 			b = (SSANode) b.next;

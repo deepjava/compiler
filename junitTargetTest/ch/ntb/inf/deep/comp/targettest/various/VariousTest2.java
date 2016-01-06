@@ -178,11 +178,23 @@ public class VariousTest2 {
 		return res;
 	}
 
+	// method with many locals (float)
+	public static double m27(float p1, double p2) {
+		double d0 = 0.1, d1 = 0.2, d2 = 0.3, d3 = 0.4, d4 = 0.5;
+		double d5 = 1.0, d6 = 1.1, d7 = 1.2, d8 = 1.3, d9 = 1.4;
+		double d10 = 2.0, d11 = 2.1, d12 = 2.2, d13 = 2.3, d14 = 2.4;
+		double res = d0 + d1 + d2 + d3 + d4 + Math.sin(p1) + d5 + d6 + d7 + d8 + d9;;
+		if (p2 < 100) res += p2 + d10 + d11 + d12 + d13 + d14;
+		return res;
+	}
+
 	@Test
 	//Test constructor with many parameters
 	public static void testManyLocals(){
 		Assert.assertEquals("test1_m26", 1125, m26(100, 200));
 		Assert.assertEquals("test2_m26", 10003000030825L, m26(10001000010000L, 2000020000));
+		Assert.assertEquals("test1_m27", 25.649216, m27(3.5f, 7.5), 1e-5);
+		Assert.assertEquals("test2_m27", 7.149216, m27(3.5f, 200.1), 1e-5);
 		CmdTransmitter.sendDone();
 	}
 

@@ -89,8 +89,8 @@ public class cgPPC04 extends TestCgPPC {
 
 //	@Ignore
 	@Test
-	public void whileTrue() {
-		Code32 code = getCode("whileTrue");
+	public void whileTrue1() {
+		Code32 code = getCode("whileTrue1");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
@@ -98,6 +98,72 @@ public class cgPPC04 extends TestCgPPC {
 			assertNull("wrong join", getJoin(i));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 1, true, true));
 		assertTrue("wrong phi function", checkPhiFunction(code.ssa, 2, true, false));
+	}
+
+//	@Ignore
+	@Test
+	public void whileTrue2() {
+		getCode("whileTrue2");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertNull("wrong join", getJoin(2));
+		assertTrue("wrong join", checkJoin(getJoin(3), 4, 11, vol, false));
+		assertNull("wrong join", getJoin(4));
+	}
+	
+	@Test
+	public void whileTrue3() {
+		getCode("whileTrue3");
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+
+	@Test
+	public void whileTrue4() {
+		getCode("whileTrue4");
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+
+	@Test
+	public void whileTrue5() {
+		getCode("whileTrue5");
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+
+	@Test
+	public void whileTrue6() {
+		getCode("whileTrue6");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 5, vol, false));
+		for (int i = 3; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+
+	@Test
+	public void whileTrue7() {
+		getCode("whileTrue7");
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+
+	@Test
+	public void whileTrue8() {
+		getCode("whileTrue8");
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
+	}
+	
+	@Test
+	public void whileTrue9() {
+		getCode("whileTrue9");
+		assertNull("wrong join", getJoin(0));
+		assertNull("wrong join", getJoin(1));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 8, vol, false));
+		for (int i = 3; i < RegAllocatorPPC.maxNofJoins; i++)
+			assertNull("wrong join", getJoin(i));
 	}
 
 //	@Ignore
@@ -171,17 +237,6 @@ public class cgPPC04 extends TestCgPPC {
 			assertNull("wrong join", getJoin(i));
 	}
 	
-	//	@Ignore
-	@Test
-	public void whileTrue2() {
-		getCode("whileTrue2");
-		assertNull("wrong join", getJoin(0));
-		assertNull("wrong join", getJoin(1));
-		assertNull("wrong join", getJoin(2));
-		assertTrue("wrong join", checkJoin(getJoin(3), 4, 11, vol, false));
-		assertNull("wrong join", getJoin(4));
-	}
-
 	//	@Ignore
 	@Test
 	public void forIfFor() {

@@ -37,11 +37,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 	 */
 	public final CFGNode rootNode;
 	
-//	/**
-//	 * List of those CFG nodes representing a the entry point of a catch clause.
-//	 */
-//	public CFGNode[] catchEntries;
-
 	/**
 	 * Method for which the CFG is build. Used in the toString-Methods, SSA and
 	 * Linker.
@@ -453,8 +448,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 		}
 		return b;
 	}
-
-
 
 	private static int getInt(byte[] bytes, int index){
 		return ((bytes[index]&0xff)<<24) | (bytes[index+1]&0xff)<<16 | (bytes[index+2]&0xff)<<8 | (bytes[index+3]&0xff);

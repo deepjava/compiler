@@ -20,14 +20,14 @@ package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
 @SuppressWarnings("unused")
 public class T04Loops {
-    public static void doWhile1() {
-        int i = 0;
-        do {
-            i++;
-        } while(i < 10);
-        int j = i + 1; 
-    }
-    
+	public static void doWhile1() {
+		int i = 0;
+		do {
+			i++;
+		} while(i < 10);
+		int j = i + 1; 
+	}
+
 	public static void doWhileIf1() {
 		int j, i;
 		boolean b, c;
@@ -52,37 +52,97 @@ public class T04Loops {
 		return i;
 	}
 
-	public static void whileTrue() {
+	public static void whileTrue1() {
 		int a = 10;
 		while(true) {
 			int b = a + 1;
 		}
 	}
 
-    public static void whileTrueBreak() {
-    	int a = 10;
-        while(true) {
-        	int b = a + 1;
-        	break;
-        }
-        int b = a;
-    }
+	public void whileTrue2() {
+		while (true) {
+			help3(65);
+			for (int i = 0; i < 1000000; i++);
+		}
+	}
+
+	static public int whileTrue3() {
+		while (true);
+	}
+
+	int x;
+	static int r;
+	// no phi function will be inserted for static variable
+	static public int whileTrue4() {
+		while (true) {
+			if (r > 20) return r;
+			r++;
+		}
+	}
+
+	public int whileTrue5() {
+		while (true);
+	}
+
+	// phi function will be inserted for 'this' reference
+	public int whileTrue6() {
+		while (true) {
+			if (x > 20) return x;
+		}
+	}
+
+	static int whileTrue7() {
+		while (true) {
+			int r = 0;
+			if (r == -1) {
+				if (r == 5)	return 20;
+				r++;
+			}
+		}
+	}
+
+	int whileTrue8() {
+		while (true) {
+			int r = 0;
+			if (r == -1) {
+				if (r == 5)	return 20;
+			}
+		}
+	}
+
+	int whileTrue9() {
+		while (true) {
+			x = 0;
+			if (x == -1) {
+				if (x == 5)	return 20;
+			}
+		}
+	}
+
+	public static void whileTrueBreak() {
+		int a = 10;
+		while(true) {
+			int b = a + 1;
+			break;
+		}
+		int b = a;
+	}
 
 	public static int whileMultiCond() {
 		int i = 0;
-		while(i < 10 && i >= 0) {
+		while (i < 10 && i >= 0) {
 			i++;
 		}
 		return i;
 	}
-	
+
 	public static void for1(){
 		int a = 0;
 		for(int i=0; i < 10; i++){
 			a++;
 		}
 	}
-	
+
 	public int forWhile(int x){
 		for(int i = 0; i < x; i++){
 			while(x > 4){
@@ -91,7 +151,7 @@ public class T04Loops {
 		}
 		return x;
 	}
-	
+
 	public void forIfWhile(){
 		for(int i = 0; i < 100; i++){
 			if(i > 50){
@@ -99,17 +159,10 @@ public class T04Loops {
 					i++;
 				}
 			}
-			
+
 		}
 	}
-	
-	public void whileTrue2() {
-		while (true) {
-			help3(65);
-			for (int i = 0; i < 1000000; i++);
-		}
-	}
-	
+
 	public static int forIfFor() {
 		int  offset, k; 
 		offset = 0; 
@@ -134,7 +187,7 @@ public class T04Loops {
 		} 
 		return offset;
 	}
-	
+
 	public static int help1() { return 0; }
 	public static void help2() {}
 	public static void help3(int a) {}
@@ -143,11 +196,11 @@ public class T04Loops {
 
 	public static void phiFunctionTest1() {
 		int a;	// a erh?lt Wert erst in der Schleife
-		int b;	// b erh?lt Wert erst in der Schleife
-		do {
-			a = 100;
-			b = a * 2;
-		} while (b < 0);
+				int b;	// b erh?lt Wert erst in der Schleife
+				do {
+					a = 100;
+					b = a * 2;
+				} while (b < 0);
 	}
 
 	public static void phiFunctionTest2() {
@@ -176,7 +229,7 @@ public class T04Loops {
 			b = a * 2;
 		} while (b < 0);
 	}
-	
+
 	public static void phiFunctionTest5() {
 		int a = 100;	// a erh?lt in der Schleife neuen Wert
 		int b;			// b erh?lt Wert erst in der Schleife
@@ -185,7 +238,7 @@ public class T04Loops {
 			b = a * 2;
 		} while (b < 0);
 	}
-	
+
 	public static int phiFunctionTest6() {
 		int a;
 		for (int i = 0; i < 10; i++);
@@ -193,14 +246,14 @@ public class T04Loops {
 		for (int i = 0; i < 20; i++);
 		return a + 3;
 	}
-	
+
 	public static int phiFunctionTest7() {
 		int a = 100;
 		for (int i = 0; i < 10; i++);
 		for (int i = 0; i < 20; i++);
 		return a + 3;
 	}
-	
+
 	public static int phiFunctionTest8() {
 		int a = 100;
 		for (int i = 0; i < 10; i++);
@@ -208,7 +261,7 @@ public class T04Loops {
 		for (int i = 0; i < 20; i++);
 		return a + 3;
 	}
-	
+
 	public static int phiFunctionTest9() {
 		int a = 100;
 		for (int i = 0; i < 10 + a; i++);
@@ -216,7 +269,7 @@ public class T04Loops {
 		for (int i = 0; i < 20; i++);
 		return a + 3;
 	}
-	
+
 	public static int phiFunctionTest10() {
 		int a = 100;
 		int b;
@@ -293,30 +346,30 @@ public class T04Loops {
 		if (a < b) a += 10;
 		int c = 2 + a;
 	}
-	
+
 	static int heapPtr;
-	
+
 	// from Heap.newMultiDimArray
 	private static int phiFunctionTest17(int ref, int nofDim, int dim0, int dim1, int dim2, int dim3, int dim4) {
 		if (nofDim > 3 || nofDim < 2) help3(20);
 		if (nofDim == 2) {
 			int elemSize = help4(ref);
 			int dim1Size = (8 + dim1 * elemSize + 3) >> 2 << 2;	
-			int size = 8 + dim0 * 4 + dim0 * dim1Size;
-			int addr = heapPtr; 
-			while (addr < heapPtr + size) {help5(addr, 0); addr += 4;}
-			help5(heapPtr + 4, ref);	// write tag
-			help5(heapPtr + 2, dim0);	// write length of dim0
-			ref = heapPtr + 8;
-			addr = ref;
-			for (int i = 0; i < dim0; i++) {
-				int elemAddr = ref + 4 * dim0 + 8 + i * dim1Size; 
-				help5(addr, elemAddr);
-				help5(elemAddr - 4, ref);	// write tag
-				help5(elemAddr - 6, dim1);	// write length of dim0
-				addr += 4;
-			}
-			heapPtr += ((size + 15) >> 4) << 4;
+		int size = 8 + dim0 * 4 + dim0 * dim1Size;
+		int addr = heapPtr; 
+		while (addr < heapPtr + size) {help5(addr, 0); addr += 4;}
+		help5(heapPtr + 4, ref);	// write tag
+		help5(heapPtr + 2, dim0);	// write length of dim0
+		ref = heapPtr + 8;
+		addr = ref;
+		for (int i = 0; i < dim0; i++) {
+			int elemAddr = ref + 4 * dim0 + 8 + i * dim1Size; 
+			help5(addr, elemAddr);
+			help5(elemAddr - 4, ref);	// write tag
+			help5(elemAddr - 6, dim1);	// write length of dim0
+			addr += 4;
+		}
+		heapPtr += ((size + 15) >> 4) << 4;
 		}
 		return ref;
 	}
@@ -357,7 +410,7 @@ public class T04Loops {
 	}
 
 	private static int helper(int var) {return 10 + var;};
-	
+
 	// problem taken from flash file System
 	public static void phiFunctionTest19() {
 		int[] a = new int[5];

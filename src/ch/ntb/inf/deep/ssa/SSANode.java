@@ -409,8 +409,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 		maxStack = owner.cfg.method.maxStackSlots;
 		
 		if (nofPredecessors == 1) {	// only one predecessor --> no merge necessary
-			// if it the predecessor is itself(loopheader) so create phiFunctions
-			// they are used by regAllocator
+			// check if node is equal to its predecessor
 			if (this.equals(predecessors[0]) || ((SSANode) predecessors[0]).exitSet == null) {// equal if it is the first node and it is from a while(...){} or do{...}while(..)
 				for (int i = 0; (i < maxStack + maxLocals) ; i++) {
 					SSAValue value = ((SSANode) predecessors[0]).exitSet[i];
@@ -434,7 +433,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					// check if a loadParam instruction is necessary
 					if (owner.isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)) {
 						if (dbg) StdStreams.vrb.println("load parameter");
-//						if (idom != null) 
+						if (idom != null) 	// dominator could be null if root is loop header
 							param = generateLoadParameter((SSANode) idom, j, firstBCA);
 					}
 					if (temp != null && temp != param) {
