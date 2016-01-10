@@ -361,6 +361,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 			}
 
 			if (dbg) StdStreams.vrb.println("handle instruction " + instr.toString());
+			if (instr.ssaOpcode == sCloadLocal) continue;	
 			SSAValue[] opds = instr.getOperands();
 			boolean dbg = true;
 			if (instr.ssaOpcode == sCstoreToArray) {
@@ -385,17 +386,17 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					src2Reg = opds[1].reg; 
 					src2RegLong = opds[1].regLong;
 					if (src2RegLong >= 0x100) {
-						if (dbg) StdStreams.vrb.println("opd regLong on stack slot for instr: " + instr.toString());
+						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						int slot = src2RegLong & 0xff;
 						src2RegLong = nonVolStartGPR + 7;
 						createIrDrAd(code, ppcLwz, src2RegLong, stackPtr, localVarOffset + 4 * slot);
 					}
 					if (src2Reg >= 0x100) {
-						if (dbg) StdStreams.vrb.println("opd reg on stack slot for instr: " + instr.toString());
+						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						int slot = src2Reg & 0xff;
-						if ((res.type == tFloat) || (res.type == tDouble)) {
+						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
 							src2Reg = nonVolStartFPR + 2;
-							createIrDrAd(code, ppcLfs, src2Reg, stackPtr, localVarOffset + 4 * slot);
+							createIrDrAd(code, ppcLfd, src2Reg, stackPtr, localVarOffset + 4 * slot);
 						} else {
 							src2Reg = nonVolStartGPR + 2;
 							createIrDrAd(code, ppcLwz, src2Reg, stackPtr, localVarOffset + 4 * slot);
@@ -405,17 +406,17 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				src1Reg = opds[0].reg; 
 				src1RegLong = opds[0].regLong;
 				if (src1RegLong >= 0x100) {
-					if (dbg) StdStreams.vrb.println("opd regLong on stack slot for instr: " + instr.toString());
+					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					int slot = src1RegLong & 0xff;
 					src1RegLong = nonVolStartGPR + 6;
 					createIrDrAd(code, ppcLwz, src1RegLong, stackPtr, localVarOffset + 4 * slot);
 				}
 				if (src1Reg >= 0x100) {
-					if (dbg) StdStreams.vrb.println("opd reg on stack slot for instr: " + instr.toString());
+					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					int slot = src1Reg & 0xff;
-					if ((res.type == tFloat) || (res.type == tDouble)) {
+					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
 						src1Reg = nonVolStartFPR + 1;
-						createIrDrAd(code, ppcLfs, src1Reg, stackPtr, localVarOffset + 4 * slot);
+						createIrDrAd(code, ppcLfd, src1Reg, stackPtr, localVarOffset + 4 * slot);
 					} else {
 						src1Reg = nonVolStartGPR + 1;
 						createIrDrAd(code, ppcLwz, src1Reg, stackPtr, localVarOffset + 4 * slot);
@@ -513,8 +514,6 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					}
 				}  
 				break;}	// sCloadConst
-			case sCloadLocal:
-				break;	// sCloadLocal
 			case sCloadFromField: {
 				int offset = 0, refReg;			
 				if (opds == null) {	// getstatic
@@ -2421,13 +2420,11 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				assert false : "SSA instruction not implemented: " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + " function";
 				return;
 			}
-			
-			if (instr.ssaOpcode != sCloadLocal) {
-				if (dRegLongSlot >= 0) createIrSrAd(code, ppcStw, dRegLong, stackPtr, localVarOffset + 4 * dRegLongSlot);
-				if (dRegSlot >= 0) {
-					if ((res.type == tFloat) || (res.type == tDouble)) createIrSrAd(code, ppcStfd, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
-					else createIrSrAd(code, ppcStw, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
-				}
+
+			if (dRegLongSlot >= 0) createIrSrAd(code, ppcStw, dRegLong, stackPtr, localVarOffset + 4 * dRegLongSlot);
+			if (dRegSlot >= 0) {
+				if ((res.type == tFloat) || (res.type == tDouble)) createIrSrAd(code, ppcStfd, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
+				else createIrSrAd(code, ppcStw, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
 			}
 		}
 	}
