@@ -1123,7 +1123,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 					if (dbg) vrb.println("    1) Code:");
 					while (m != null) {
 						if (m.machineCode != null) {
-							if (dbg) vrb.println("         > Method \"" + m.name + "\":");
+							if (dbg) vrb.println("         > Method \"" + m.name + "\":" + Integer.toHexString(m.address));
 							assert m.address != -1;
 							addTargetMemorySegment(new TargetMemorySegment(c.codeSegment, m.address, m.machineCode.instructions, m.machineCode.iCount));
 						}
@@ -1133,6 +1133,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 					// consts
 					if(dbg) vrb.println("    2) Constantblock:");
 					assert c.constSegment.address + c.constOffset != -1;
+					if (dbg) vrb.println("         > Const \"" + c.name + "\":" + Integer.toHexString(c.address));
 					addTargetMemorySegment(new TargetMemorySegment(c.constSegment, c.constSegment.address + c.constOffset, c.constantBlock));
 				}
 				c = c.nextExtLevelClass;
@@ -1144,6 +1145,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		while (a != null) {
 			if (dbg) vrb.println("  Proceeding array \"" + a.name + "\":");
 			assert a.segment.address + a.offset != -1;
+			if (dbg) vrb.println("         > Const \"" + a.name + "\":" + Integer.toHexString(a.address));
 			addTargetMemorySegment(new TargetMemorySegment(a.segment, a.segment.address + a.offset, a.typeDescriptor));
 			a = a.nextArray;
 		}
@@ -1156,7 +1158,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			Method m = (Method)intf.methods;
 			while (m != null) {
 				if (m.machineCode != null) {
-					if (dbg) vrb.println("         > Method \"" + m.name + "\":");
+					if (dbg) vrb.println("         > Method \"" + m.name + "\":" + Integer.toHexString(m.address));
 					assert m.address != -1;
 					addTargetMemorySegment(new TargetMemorySegment(intf.codeSegment, m.address, m.machineCode.instructions, m.machineCode.iCount));
 				}
@@ -1164,6 +1166,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			}		
 			// consts
 			assert intf.constSegment.address + intf.constOffset != -1;
+			if (dbg) vrb.println("         > Const \"" + intf.name + "\":" + Integer.toHexString(intf.address));
 			addTargetMemorySegment(new TargetMemorySegment(intf.constSegment, intf.constSegment.address + intf.constOffset, intf.constantBlock));
 			intf = intf.nextInterface;
 		}
@@ -1182,6 +1185,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		Method cssr = Method.compSpecSubroutines;
 		while (cssr != null) {
 			if (cssr.machineCode != null) {				
+				if (dbg) vrb.println("         > Method \"" + cssr.name + "\":" + Integer.toHexString(cssr.address));
 				addTargetMemorySegment(new TargetMemorySegment(compilerSpecSubroutinesSegment, cssr.address, cssr.machineCode.instructions, cssr.machineCode.iCount));
 			}
 			else {
