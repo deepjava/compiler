@@ -1068,14 +1068,15 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void setVariable(TargetOpObject op, String value){
 		boolean wasFreezeAsserted;
-		int lastDot = op.description.lastIndexOf(".");
+		String desc = op.description.replace('.', '/');
+		int lastDot = desc.lastIndexOf("/");
 		if(lastDot < 0){
 			op.errorMsg = "invalid descriptor";
 			return;
 		}
-		String clazzName = op.description.substring(0, lastDot);
+		String clazzName = desc.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
-		String varName = op.description.substring(lastDot + 1);
+		String varName = desc.substring(lastDot + 1);
 		if(RefType.refTypeList == null){
 			op.errorMsg = "system not built";
 		}
