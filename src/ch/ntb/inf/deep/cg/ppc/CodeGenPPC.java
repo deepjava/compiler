@@ -368,18 +368,22 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 				src3Reg = opds[2].reg; 
 				src3RegLong = opds[2].regLong;
 				if (src3RegLong >= 0x100) {
-					if (dbg) StdStreams.vrb.println("opd regLong on stack slot for instr: " + instr.toString());
+					if (dbg) StdStreams.vrb.println("opd3 regLong on stack slot for instr: " + instr.toString());
 					int slot = src3RegLong & 0xff;
 					src3RegLong = nonVolStartGPR + 5;
 					createIrDrAd(code, ppcLwz, src3RegLong, stackPtr, localVarOffset + 4 * slot);
 				}
 				if (src3Reg >= 0x100) {
-					if (dbg) StdStreams.vrb.println("opd reg on stack slot for instr: " + instr.toString());
+					if (dbg) StdStreams.vrb.println("opd3 reg on stack slot for instr: " + instr.toString());
 					int slot = src3Reg & 0xff;
-					src3Reg = nonVolStartGPR + 0;
-					createIrDrAd(code, ppcLwz, src3Reg, stackPtr, localVarOffset + 4 * slot);
+					if ((opds[2].type == tFloat) || (opds[2].type == tDouble)) {
+						src3Reg = nonVolStartFPR + 0;
+						createIrDrAd(code, ppcLfd, src3Reg, stackPtr, localVarOffset + 4 * slot);
+					} else {
+						src3Reg = nonVolStartGPR + 0;
+						createIrDrAd(code, ppcLwz, src3Reg, stackPtr, localVarOffset + 4 * slot);
+					}
 				}			
-
 			}
 			if (opds != null && opds.length != 0) {
 				if (opds.length >= 2) {

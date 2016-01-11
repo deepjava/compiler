@@ -18,18 +18,16 @@
 
 package ch.ntb.inf.deep.cg.arm;
 
+import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.RegAllocator;
-import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
-import ch.ntb.inf.deep.classItems.ExceptionTabEntry;
+import ch.ntb.inf.deep.cg.arm.CodeGenARM;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
-import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.ssa.SSAInstructionMnemonics;
 import ch.ntb.inf.deep.ssa.SSAInstructionOpcs;
-import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.ssa.SSAValue;
 import ch.ntb.inf.deep.ssa.SSAValueType;
 import ch.ntb.inf.deep.ssa.instruction.Call;
@@ -37,152 +35,13 @@ import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
 public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
-	static int regsGPR, regsFPR;
-	static int nofNonVolGPR, nofNonVolFPR;
-	static int nofVolGPR, nofVolFPR;
-	// used to find call in this method with most parameters -> gives stack size
-	static int maxNofParamGPR, maxNofParamFPR;
 
-	/**
-	 * Generates the live ranges of all SSAValues of a method and assigns registers to them
-	 */
-	static void buildIntervals(SSA ssa) {
-		RegAllocatorARM.ssa = ssa;
-		maxStackSlots = ssa.cfg.method.maxStackSlots;
-		regsGPR = regsGPRinitial;
-		regsFPR = regsFPRinitial;
-		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		nofVolGPR = 0; nofVolFPR = 0;
-		maxNofParamGPR = 0; maxNofParamFPR = 0;
-		for (int i = 0; i < maxNofJoins; i++) {
-			rootJoins[i] = null;
-			joins[i] = rootJoins[i];
-		}
-
-		nofInstructions = SSA.renumberInstructions(ssa.cfg);
-		findLastNodeOfPhi(ssa);
-		
-		// copy into local array for faster access
-		if (nofInstructions > instrs.length) {
-			instrs = new SSAInstruction[nofInstructions];
-		}
-		SSANode b = (SSANode) ssa.cfg.rootNode;
-		int count = 0;
-		while (b != null) {
-			for (int i = 0; i < b.nofPhiFunc; i++) {
-				instrs[count++] = b.phiFunctions[i];
-			}
-			for (int i = 0; i < b.nofInstr; i++) {
-				instrs[count++] = b.instructions[i];
-			}
-			b = (SSANode) b.next;
-		}	
-		
-		markUsedPhiFunctions();
-		resolvePhiFunctions();	
-		calcLiveRange(ssa);	// compute live intervals
-//		printJoins();
-//		ssa.print(2);
-		assignRegType();	// assign volatile or nonvolatile type
-	}
-
-	// assign volatile or nonvolatile register 
-	// checks if user wants to use floats in exception handlers
-	private static void assignRegType() {
-		// handle all live ranges of phi functions first
-		for (int i = 0; i < maxNofJoins; i++) {
-			SSAValue val = joins[i];
-			while (val != null) {
-				for (int k = val.start; k < val.end; k++) {
-					SSAInstruction instr1 = instrs[k];
-					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
-						val.nonVol = true;
-					}
-				}
-				//TODO
-				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
-				if (tab != null) {
-					for (int k = 0; k < tab.length; k++) {
-						ExceptionTabEntry entry = tab[k];
-						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
-						assert handlerInstr != null;
-						for (int n = val.start; n < val.end; n++) {
-							SSAInstruction instr1 = instrs[n];
-							if (instr1 == handlerInstr) {
-								val.nonVol = true;
-							}
-						}
-					}
-				}
-
-				val = val.next;
-			}			
-		}
-		for (int i = 0; i < nofInstructions; i++) {
-			SSAInstruction instr = instrs[i];
-			SSAValue res = instr.result;
-			int currNo = res.n;
-			int endNo = res.end;
-			if (instr.ssaOpcode != sCloadLocal && res.join != null) continue;
-			else if (instr.ssaOpcode == sCloadLocal && res.join != null) {
-				if (res.join.nonVol) CodeGenARM.paramHasNonVolReg[res.join.index - maxStackSlots] = true;
-			} else if (instr.ssaOpcode == sCloadLocal) {
-				// check if call instruction between start of method and here
-				// call to inline method is omitted
-				for (int k = 0; k < endNo; k++) {
-					SSAInstruction instr1 = instrs[k];
-					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
-						res.nonVol = true;
-						CodeGenARM.paramHasNonVolReg[res.index - maxStackSlots] = true;
-					}
-				}
-			} else {
-				// check if call instruction in live range
-				// call to inline method is omitted
-				for (int k = currNo+1; k < endNo; k++) {
-					SSAInstruction instr1 = instrs[k];
-					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) 
-						res.nonVol = true;
-				}
-				//TODO
-				ExceptionTabEntry[] tab = ssa.cfg.method.exceptionTab;
-				if (tab != null) {
-					for (int k = 0; k < tab.length; k++) {
-						ExceptionTabEntry entry = tab[k];
-						SSAInstruction handlerInstr = ssa.searchBca(entry.handlerPc);
-						assert handlerInstr != null;
-//						System.out.println("handler instr vorhanden" + handlerInstr.toString());
-						for (int n = currNo+1; n < endNo; n++) {
-							SSAInstruction instr1 = instrs[n];
-//							System.out.println("vergleichen mit " + instr1.toString());
-							if (instr1 == handlerInstr) {
-								res.nonVol = true;
-							}
-						}
-					}
-				}
-			}
-			
-			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
-				Call call = (Call)instr;
-				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
-					CodeGenARM.enFloatsInExc = true;
-				}
-				int id = ((Method)call.item).id;
-				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
-					CodeGenARM.tempStorage = true;
-			}
-		}
-	}
 
 	/**
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
+	 * checks if user wants to use floats in exception handlers
+	 * checks if temporary space on stack is necessary
 	 */
 	static void assignRegisters() {
 		// handle loadLocal first
@@ -200,13 +59,13 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				}
 				int type = res.type;
 				if (type == tLong) {
-					res.regLong = CodeGenARM.paramRegNr[res.index - maxStackSlots];
-					res.reg = CodeGenARM.paramRegNr[res.index+1 - maxStackSlots];
+					res.regLong = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
+					res.reg = CodeGenARM.paramRegNr[res.index+1 - maxOpStackSlots];
 				} else if ((type == tFloat) || (type == tDouble)) {
-					res.reg = CodeGenARM.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
 				} else if (type == tVoid) {
 				} else {
-					res.reg = CodeGenARM.paramRegNr[res.index - maxStackSlots];
+					res.reg = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
 				}	
 				SSAValue joinVal = res.join;
 				if (joinVal != null) {
@@ -219,6 +78,18 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				}
 				if (dbg) StdStreams.vrb.println("\treg = " + res.reg);
 			} 
+			
+			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
+				Call call = (Call)instr;
+				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
+					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
+					CodeGenARM.enFloatsInExc = true;
+				}
+				int id = ((Method)call.item).id;
+				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
+					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
+					CodeGenARM.tempStorage = true;
+			}
 		}
 		
 		if (dbg) StdStreams.vrb.println("\thandle all other instructions:");
@@ -229,22 +100,15 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			// check if phi-functions which could have been valid up to the last 
 			// SSA instruction of the last node can now release their registers 
 			if (instr.ssaOpcode != sCPhiFunc) {
-				SSAInstruction instr1 = instr.next;
+				SSAInstruction instr1 = instr.freePhi;
 				if (dbg) {if (instr1 != null) StdStreams.vrb.println("\tfree registers for phi-functions of last node");}
 				while (instr1 != null) {
 					SSAValue val = instr1.result.join;
 					if (val != null && val.reg > -1 && val.end < i) {
 						if (dbg) StdStreams.vrb.println("\t\tfree register of phi function: " + instr1.toString());
-						if (val.type == tLong) {
-							freeReg(gpr, val.regLong);
-							freeReg(gpr, val.reg);
-						} else if ((val.type == tFloat) || (val.type == tDouble)) {
-							freeReg(fpr, val.reg);
-						} else {
-							freeReg(gpr, val.reg);
-						}
+						freeReg(val);
 					}
-					instr1 = instr1.next;
+					instr1 = instr1.freePhi;
 				}
 			}
 			
@@ -266,11 +130,9 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false);
 			else if (nofAuxRegGPR == 2) {
 				res.regGPR1 = reserveReg(gpr, false);
+				if (dbg) if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
 				res.regGPR2 = reserveReg(gpr, false);
-			}
-			if (dbg) {
-				if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
-				if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
+				if (dbg) if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
 			}
 			
 			// reserve temporary storage on the stack for certain fpr operations
@@ -286,9 +148,6 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				// already done
 			} else if (res.join != null) {
 				SSAValue joinVal = res.join;
-//				instr.print(2);
-//				StdStreams.vrb.println("\tjoinVal != null");
-//				StdStreams.vrb.println("\tjoinVal.reg = " + joinVal.reg);
 				if (dbg) StdStreams.vrb.println("\tjoinVal != null");
 				if (joinVal.reg < 0) {	// join: register not assigned yet
 					if (res.type == tLong) {
@@ -326,7 +185,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				// check if operand can be used with immediate instruction format
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
-				if (imm && res.index < maxStackSlots && res.join == null) {
+				if (imm && res.index < maxOpStackSlots && res.join == null) {
 					if (dbg) StdStreams.vrb.print("\timmediate");
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 
@@ -383,12 +242,12 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							|| (instr1.ssaOpcode == sCshr) && (res == instr1.getOperands()[1])
 							|| (instr1.ssaOpcode == sCushr) && (res == instr1.getOperands()[1])
 							// shift operators only if immediate is shift distance (and not value to be shifted)
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETGPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETFPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETSPR))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTGPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTFPR) && (instr1.getOperands()[0] == res))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTSPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETGPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETFPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idGETSPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTGPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTFPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTSPR) && (instr1.getOperands()[0] == res))
 							// calls to some unsafe methods
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
 						// branches but not switches (the second operand of a switch is already constant)
@@ -401,8 +260,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							int immVal = constant.valueH;
 							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						}
-					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idASM))
-							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idADR_OF_METHOD))) {
+					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idASM))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idADR_OF_METHOD))) {
 					} else {	// opd cannot be used as immediate opd	
 						if (dbg) StdStreams.vrb.println(" not possible");
 						findReg(res);	
@@ -424,39 +283,13 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				for (SSAValue opd : opds) {
 					if (opd.join == null) {
 						if ((opd.owner != null) && (opd.owner.ssaOpcode == sCloadLocal)) {
-							if (CodeGenPPC.paramRegEnd[opd.owner.result.index - maxStackSlots] <= i)
-								if (opd.type == tLong) {
-									freeReg(gpr, opd.regLong);
-									freeReg(gpr, opd.reg);
-								} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
-									freeReg(fpr, opd.reg);
-								} else {
-									freeReg(gpr, opd.reg);
-								}
+							if (CodeGen.paramRegEnd[opd.owner.result.index - maxOpStackSlots] <= i) freeReg(opd);
 							continue;
 						}
-						if (opd.end <= i && opd.reg > -1) {
-							if (opd.type == tLong) {
-								freeReg(gpr, opd.regLong);
-								freeReg(gpr, opd.reg);
-							} else if ((opd.type == tFloat) || (opd.type == tDouble)) {
-								freeReg(fpr, opd.reg);
-							} else {
-								freeReg(gpr, opd.reg);
-							}
-						}
+						if (opd.end <= i && opd.reg > -1) freeReg(opd);
 					} else {
 						SSAValue val = opd.join;
-						if (val.end <= i && val.reg > -1) {
-							if (val.type == tLong) {
-								freeReg(gpr, val.regLong);
-								freeReg(gpr, val.reg);
-							} else if ((val.type == tFloat) || (val.type == tDouble)) {
-								freeReg(fpr, val.reg);
-							} else {
-								freeReg(gpr, val.reg);
-							}
-						}
+						if (val.end <= i && val.reg > -1) freeReg(val);
 					}
 				}
 			}
@@ -464,16 +297,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			// free registers of result if end of live range is current instruction
 			if (res != null) {
 				if (res.join != null) res = res.join;
-				if (res.end == i && res.reg > -1) {	
-					if (res.type == tLong) {
-						freeReg(gpr, res.regLong);
-						freeReg(gpr, res.reg);
-					} else if ((res.type == tFloat) || (res.type == tDouble)) {
-						freeReg(fpr, res.reg);
-					} else {
-						freeReg(gpr, res.reg);
-					}
-				}
+				if (res.end == i && res.reg > -1) freeReg(res);
 			}
 			
 			// find call which needs most registers for parameters
@@ -509,6 +333,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		if (type == tLong) {
 			res.regLong = reserveReg(gpr, res.nonVol);
 			res.reg = reserveReg(gpr, res.nonVol);
+			useLongs = true;
 		} else if ((type == tFloat) || (type == tDouble)) {
 			res.reg = reserveReg(fpr, res.nonVol);
 		} else if (type == tVoid) {
@@ -523,7 +348,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			int i;
 			if (!isNonVolatile) {	// is volatile
 				i = paramStartGPR;
-				while (i < nonVolStartGPR) {
+				while (i <= volEndGPR) {
 					if ((regsGPR & (1 << i)) != 0) {
 						regsGPR &= ~(1 << i);	
 						if (i-paramStartGPR > nofVolGPR) nofVolGPR = i+1-paramStartGPR;
@@ -541,12 +366,12 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				}
 				i--;
 			}
-			ErrorReporter.reporter.error(603);
-			assert false: "not enough GPR's for locals";
-			return 0;
-		} else {
+			if (dbg) StdStreams.vrb.print("\tnot enough GPR's, reserve stack slot");
+			fullRegSet = false;
+			return getEmptyStackSlot(false);
+		} else {	// FPR
 			int i;
-			if (!isNonVolatile) {
+			if (!isNonVolatile) {	// is volatile
 				i = paramStartFPR;
 				while (i < nonVolStartFPR) {
 					if ((regsFPR & (1 << i)) != 0) {
@@ -566,27 +391,98 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				}
 				i--;
 			}
-			ErrorReporter.reporter.error(604);
-			assert false: "not enough FPR's for locals";
-			return 0;
+			if (dbg) StdStreams.vrb.print("\tnot enough FPR's, reserve stack slot");
+			fullRegSet = false;
+			return getEmptyStackSlot(true);
 		}
+	}
+
+	private static int getEmptyStackSlot(boolean pair) {
+		int i = 0;
+		if (!pair) {
+			while (i < 32) {
+				if ((stackSlotSpilledRegs & (1 << i)) != 0) {
+					stackSlotSpilledRegs &= ~(1 << i);
+					if (i > maxLocVarStackSlots - 1) maxLocVarStackSlots = i + 1;
+					return i + 0x100;
+				}
+				i++;
+			}
+		} else {
+			while (i < 31) {
+				if (((stackSlotSpilledRegs >>> i) & 3) == 3) {
+					stackSlotSpilledRegs &= ~(3 << i);
+					if (i > maxLocVarStackSlots - 1) maxLocVarStackSlots = i + 2;
+					return i + 0x100;
+				}
+				i++;
+			}	
+		}
+		ErrorReporter.reporter.error(605);
+		assert false: "not enough stack slots for spilling";
+		return 0;
+	}
+	
+	private static void releaseStackSlot(int slot) {
+		stackSlotSpilledRegs |= 1 << slot;
 	}
 
 	static void reserveReg(boolean isGPR, int regNr) {
 		if (isGPR) {
-			regsGPR &= ~(1 << regNr);
+			if (regNr < 0x100) regsGPR &= ~(1 << regNr);
+			else stackSlotSpilledRegs &= ~(1 << (regNr - 0x100));
 		} else {
-			regsFPR &= ~(1 << regNr);
+			if (regNr < 0x100) regsFPR &= ~(1 << regNr);
+			else stackSlotSpilledRegs &= ~(3 << (regNr - 0x100));
+		}
+	}
+
+	private static void freeReg(SSAValue val) {
+		if (val.type == tLong) {
+			freeReg(gpr, val.regLong);
+			freeReg(gpr, val.reg);
+		} else if ((val.type == tFloat) || (val.type == tDouble)) {
+			freeReg(fpr, val.reg);
+		} else {
+			freeReg(gpr, val.reg);
 		}
 	}
 
 	private static void freeReg(boolean isGPR, int reg) {
 		if (isGPR) {
+			if (reg < 0x100) {
 			regsGPR |= 1 << reg;
+			if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
+			} else {
+				releaseStackSlot(reg - 0x100);
+				if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
+			}
 		} else {
-			regsFPR |= 1 << reg;
+			if (reg < 0x100) {
+				regsFPR |= 1 << reg;
+				if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsFPR=0x" + Integer.toHexString(regsFPR));
+			} else {
+				releaseStackSlot(reg - 0x100);
+				releaseStackSlot(reg + 1 - 0x100);
+				if (dbg) StdStreams.vrb.println("\tfree stack slot " + (reg + 1));
+			}
 		}
-		if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 	}
-	
+
+	// reset all previously assigned registers
+	public static void resetRegisters() {
+		for (int i = 0; i < nofInstructions; i++) {
+			SSAInstruction instr = instrs[i];
+			SSAValue res = instr.result;
+			res.reg = -1;
+			res.regLong = -1;
+			res.regGPR1 = -1;
+			res.regGPR2 = -1;
+			SSAValue join = res.join;
+			if (join != null) {
+				join.reg = -1;
+				join.regLong = -1;
+			}
+		}
+	}
 }

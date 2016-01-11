@@ -20,6 +20,8 @@ package ch.ntb.inf.deep.cg.arm;
 
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
@@ -30,7 +32,8 @@ import ch.ntb.inf.deep.strings.HString;
 public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	private static final int arrayLenOffset = 6;	
-	private static final int tempStorageSize = 48;	// 1 FPR(temp), 4 GPRs 
+	// used for some floating point operations and compiler specific subroutines
+	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
 	
 	private static int LRoffset;	
 	private static int XERoffset;	
@@ -41,101 +44,72 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static int paramOffset;
 	private static int GPRoffset;	
 	private static int FPRoffset;	
-//	private static int localVarOffset;
+	private static int localVarOffset;
 	private static int tempStorageOffset;	
 	private static int stackSize;
 	static boolean tempStorage;
 	static boolean enFloatsInExc;
 
-	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
-	private static int nofParam;	
-	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
-	private static int nofParamGPR, nofParamFPR;	 
-	// maximum nof registers used by this method
-	static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
-	// gives required stack space for parameters of this method if not enough registers
-	static int recParamSlotsOnStack;
-	// gives required stack space for parameters of any call in this method if not enough registers
-	static int callParamSlotsOnStack;
-	// type of parameter, set by SSA, includes "this", long and doubles count as 2 parameters
-	static int[] paramType = new int[maxNofParam];
-	// register type of parameter, long and doubles count as 2 parameters
-	static boolean[] paramHasNonVolReg = new boolean[maxNofParam];
-	// register of parameter, long and doubles count as 2 parameters
-	static int[] paramRegNr = new int[maxNofParam];
-	
-	// information about into which registers parameters of this method go 
-	private static int nofMoveGPR, nofMoveFPR;
-	private static int[] moveGPRsrc = new int[maxNofParam];
-	private static int[] moveGPRdst = new int[maxNofParam];
-	private static int[] moveFPRsrc = new int[maxNofParam];
-	private static int[] moveFPRdst = new int[maxNofParam];
-	
 	// information about the src registers for parameters of a call to a method within this method
 	private static int[] srcGPR = new int[nofGPR];
 	private static int[] srcFPR = new int[nofFPR];
 	private static int[] srcGPRcount = new int[nofGPR];
 	private static int[] srcFPRcount = new int[nofFPR];
-	
-	private static SSAValue[] lastExitSet;
+
 	private static boolean newString;
 
 	public CodeGenARM() {}
 
 	public void translateMethod(Method method) {
+		init(method);
 		SSA ssa = method.ssa;
 		Code32 code = method.machineCode;
-		nofParamGPR = 0; nofParamFPR = 0;
-		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		nofVolGPR = 0; nofVolFPR = 0;
-		nofMoveGPR = 0; nofMoveFPR = 0;
-		tempStorage = false;
-		enFloatsInExc = false;
-		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-		if (dbg) StdStreams.vrb.println("generate code for " + method.owner.name + "." + method.name);
-		for (int i = 0; i < maxNofParam; i++) {
-			paramType[i] = tVoid;
-			paramRegNr[i] = -1;
-			paramRegEnd[i] = -1;
-		}
-
-		// make local copy
-		int maxStackSlots = method.maxStackSlots;
-		int i = maxStackSlots;
-		while ((i < ssa.isParam.length) && ssa.isParam[i]) {
-			int type = ssa.paramType[i] & ~(1<<ssaTaFitIntoInt);
-			paramType[i - maxStackSlots] = type;
-			paramHasNonVolReg[i - maxStackSlots] = false;
-			if (type == tLong || type == tDouble) i++;
-			i++;
-		}
-		nofParam = i - maxStackSlots;
-		if (nofParam > maxNofParam) {ErrorReporter.reporter.error(601); return;}
-		if (dbg) StdStreams.vrb.println("nofParam = " + nofParam);
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
-//		StdStreams.vrb.print(ssa.cfg.toString());
-//		StdStreams.vrb.println(ssa.toString());
-		RegAllocatorARM.buildIntervals(ssa);
+
+		tempStorage = false;
+		enFloatsInExc = false;
+		RegAllocator.regsGPR = regsGPRinitial;
+		RegAllocator.regsFPR = regsFPRinitial;
+
+		RegAllocator.buildIntervals(ssa);
 		
 		if (dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
 		while (b.next != null) {
 			b = (SSANode) b.next;
 		}	
-		lastExitSet = b.exitSet;
+		SSAValue[] lastExitSet = b.exitSet;
 		// determine, which parameters go into which register
-		parseExitSet(lastExitSet, maxStackSlots);
+		parseExitSet(lastExitSet, method.maxStackSlots);
 		if (dbg) {
 			StdStreams.vrb.print("parameter go into register: ");
 			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
 			StdStreams.vrb.println();
 		}
+//		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
-		
-//		StdStreams.vrb.print(ssa.cfg.toString());
+		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
+			if (true) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0xff << nonVolStartGPR);
+			else RegAllocator.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
+			if (true) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocator.regsGPR));
+			RegAllocator.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
+			if (true) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocator.regsFPR));
+			RegAllocator.stackSlotSpilledRegs = -1;
+			parseExitSet(lastExitSet, method.maxStackSlots);
+			if (dbg) {
+				StdStreams.vrb.print("parameter go into register: ");
+				for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
+				StdStreams.vrb.println();
+			}
+			RegAllocatorARM.resetRegisters();
+			RegAllocatorARM.assignRegisters();
+		}
+//		StdStreams.vrb.print(ssa.toString());
+
 		if (dbg) {
 			StdStreams.vrb.println(RegAllocatorARM.joinsToString());
 		}
@@ -299,16 +273,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocatorARM.reserveReg(gpr, true);
+						int reg = RegAllocatorARM.reserveReg(gpr, true);	// nonvolatile or stack slot
 						moveGPRsrc[nofMoveGPR] = nofParamGPR;
 						moveGPRdst[nofMoveGPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
-						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg);
+						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg); // mark as reserved
 						else {
-							reg = RegAllocatorARM.reserveReg(gpr, false);
+							reg = RegAllocatorARM.reserveReg(gpr, false);	// volatile, nonvolatile or stack slot
 							moveGPRsrc[nofMoveGPR] = nofParamGPR;
 							moveGPRdst[nofMoveGPR++] = reg;
 						}
@@ -317,7 +291,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 				}
 				nofParamGPR++;	// even if the parameter is not used, the calling method
-				// assigns a register and we have to do here the same
+				// assigns a register and we have to account for this here
 			}
 			if (i < nofParam - 1) if(dbg) StdStreams.vrb.print(", ");
 		}
@@ -2706,13 +2680,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 	}	
 
-	private static int getInt(byte[] bytes, int index){
-		return (((bytes[index]<<8) | (bytes[index+1]&0xFF))<<8 | (bytes[index+2]&0xFF))<<8 | (bytes[index+3]&0xFF);
-	}
-	
-	
-	
-	
 	// Data-processing
 	private void createDataProcImm(Code32 code, int opCode, int cond, int Rd, int Rn, int imm12) {
 		code.instructions[code.iCount] = (cond << 28)| opCode | (Rd << 12) | (Rn << 16) | (imm12 << 0) | (1 << 25) ;
@@ -2886,12 +2853,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (mode << 0) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
-	
-	
-	
-	
-	
-	
 	
 	private void createIpat(Code32 code, int pat) {
 		code.instructions[code.iCount] = pat;

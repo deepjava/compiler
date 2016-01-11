@@ -188,6 +188,21 @@ public class VariousTest2 {
 		return res;
 	}
 
+	// method with many locals (float)
+	public static double m28(float[] r1, double p2) {
+		double d0 = 0.1, d1 = 0.2, d2 = 0.3, d3 = 0.4, d4 = 0.5;
+		float d5 = 1.0f, d6 = 1.1f, d7 = 1.2f, d8 = 1.3f, d9 = 1.4f;
+		double d10 = 2.0, d11 = 2.1, d12 = 2.2, d13 = 2.3, d14 = 2.4;
+		double[] a1 = {10.0, 10.1};
+		float[] a2 = {20.0f, 20.1f, 20.2f};
+		double res = d0 + d1 + d2 + d3 + d4 + Math.sin(a2[1] + d8);
+		for (int i = 0; i < 3; i++) a2[0] += r1[0] + d12 + d7;
+		res += p2 + a1[0] + a2[0] + d11 + d12 + d13 + d14;
+		a1[1] = d11;
+		res -= d5 + d6 - d10 - a1[1] - d9;
+		return res;
+	}
+	
 	@Test
 	//Test constructor with many parameters
 	public static void testManyLocals(){
@@ -195,6 +210,7 @@ public class VariousTest2 {
 		Assert.assertEquals("test2_m26", 10003000030825L, m26(10001000010000L, 2000020000));
 		Assert.assertEquals("test1_m27", 25.649216, m27(3.5f, 7.5), 1e-5);
 		Assert.assertEquals("test2_m27", 7.149216, m27(3.5f, 200.1), 1e-5);
+		Assert.assertEquals("test1_m28", 62.657316, m28(new float[]{3.5f, 1.5f}, -2.5), 1e-5);
 		CmdTransmitter.sendDone();
 	}
 

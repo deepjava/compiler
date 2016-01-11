@@ -28,26 +28,29 @@ interface Registers {
 	final int paramStartGPR = 2;	// GPR with first parameter
 	final int paramStartFPR = 1;	// FPR with first parameter
 	
-	final int paramEndGPR = 7;	// GPR with last parameter, must be < nonVolStartGPR
+	final int paramEndGPR = 6;	// GPR with last parameter, must be < nonVolStartGPR
 	final int paramEndFPR = 6;	// FPR with last parameter, must be < nonVolStartFPR
 	
-	final int nonVolStartGPR = 8;	// first nonvolatile GPR
-	final int nonVolStartFPR = 8;	// first nonvolatile FPR
-	
+	final int nonVolStartGPR = 7;	// first nonvolatile GPR
+	final int nonVolStartFPR = 7;	// first nonvolatile FPR
+
+	// volEndGPR must be 1 lower than nonVolStartGPR
+	final int volEndGPR = 8;	// last volatile GPR
+	// volEndFPR must be 1 lower than nonVolStartFPR
+	final int volEndFPR = 8;	// last volatile FPR
+
 	final int returnGPR1 = 2;	// GPR with return value
 	final int returnGPR2 = 3;	// GPR with return value used for longs
 	final int returnFPR = 1;	// FPR with return value
 	
-	final int faux1 = 8;	// FPR which is never assigned and can be freely used 
-	final int faux2 = 9;	// FPR which is never assigned and can be freely used 
-	final int faux3 = 10;	// FPR which is never assigned and can be freely used 
-
-	final int stackPtr = 14;	// register for stack pointer
+	final int stackPtr = 13;	// register for stack pointer
+	final int LR = 14;			// register for link register
+	final int PC = 15;			// register for program counter
 
 	// initial mask for GPR's, '1' means register is free
-	final int regsGPRinitial = 0xfffffffc;	
+	final int regsGPRinitial = -1 & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);
 	// initial mask for FPR's, '1' means register is free
-	final int regsFPRinitial = 0xfffffffe & ~(1<<faux1 | 1<<faux2 | 1<<faux3);	
+	final int regsFPRinitial = -1 & (~((1 << nonVolStartFPR) - 1) | ((1 << (volEndFPR+1)) - 1));	
 
 	final boolean gpr = true;
 	final boolean fpr = false;

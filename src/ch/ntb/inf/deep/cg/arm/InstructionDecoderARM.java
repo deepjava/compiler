@@ -30,9 +30,6 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 	 *            String
 	 * @return machine instruction
 	 */
-	@SuppressWarnings("unused")
-	
-	
 
 	private static int constToImm(int const32) {	// A5.2.4 p.200
 		int rot = 0;

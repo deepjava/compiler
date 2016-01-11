@@ -30,6 +30,8 @@ import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.InstructionDecoder;
+import ch.ntb.inf.deep.cg.arm.CodeGenARM;
+import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
 //import ch.ntb.inf.deep.cg.arm.CodeGenARM;
 //import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
@@ -121,8 +123,8 @@ public class Launcher implements ICclassFileConsts {
 				InstructionDecoder.dec = new InstructionDecoderPPC();
 			}
 			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("arm32"))) {
-//				cg = new CodeGenARM();
-//				InstructionDecoder.dec = new InstructionDecoderARM();
+				cg = new CodeGenARM();
+				InstructionDecoder.dec = new InstructionDecoderARM();
 			}
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
 			cg.init();
