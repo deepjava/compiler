@@ -152,7 +152,8 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			
 			// create classpath file
 			IFile file = project.getFile(".classpath");
-			String libpath = model.getLibrary().getAbsolutePath();
+			String libpath1 = model.getLibrary().getAbsolutePath();
+			String libpath = libpath1.replace('\\', '/'); 
 			StringBuffer sb = new StringBuffer();
 			File srcFolder = new File(libpath + "/src");
 			sb.append("<?xml version=\"1.0\" encoding =\"UTF-8\"?>\n");
@@ -160,7 +161,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			sb.append("\t<classpathentry kind=\"src\" path=\"src\"/>\n");
 			if (srcFolder.exists()) sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\" sourcepath=\"" + libpath + "/src\"/>\n");
 			else sb.append("\t<classpathentry kind=\"lib\" path=\"" + libpath + "/bin\"/>\n");
-//			sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
+			sb.append("\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n");
 			sb.append("\t<classpathentry kind=\"output\" path=\"bin\"/>\n");
 			sb.append("</classpath>\n");
 			InputStream in = new ByteArrayInputStream(sb.toString().getBytes());
