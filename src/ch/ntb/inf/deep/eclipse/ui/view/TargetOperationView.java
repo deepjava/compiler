@@ -62,11 +62,13 @@ import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
+import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.TargetOpObject;
 import ch.ntb.inf.deep.launcher.Launcher;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.target.BDI3000;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
@@ -79,6 +81,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private Action toDez;
 	private Action toDouble;
 	private IEclipsePreferences prefs;
+	
+	private BDI3000 bdi3000 = null;
 	
 	private static String cmdAddrName = "cmdAddr";
 
@@ -801,27 +805,52 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			if (meth != null) {
 				//Save address for display
 				op.addr = meth.address;
-				TargetConnection bdi = Launcher.getTargetConnection();
-				if(bdi == null){
-					op.errorMsg = "target not connected";
-					return;
-				}
-				try {
-					if(!bdi.isConnected()){
-						bdi.openConnection();
+				
+				Programmer programmer = Configuration.getProgrammer();
+				if (programmer.getPluginId().equals(HString.getHString("ch.ntb.inf.bdi2000"))) {
+					if (bdi3000 == null) bdi3000 = new BDI3000("bdi3000inf01");
+					if (!bdi3000.isConnected()) {
+						try {
+							bdi3000.connect();
+						}
+						catch (Exception ex) {
+							op.errorMsg = "cannot connet to '" + bdi3000.getHostname() + ":" +
+								Integer.toString(bdi3000.getPort()) + "'" + ex.getMessage();
+							return;
+						}
 					}
-					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-					if (!wasFreezeAsserted) {
-						bdi.stopTarget();
-					}
-					bdi.writeWord(cmdAddr, meth.address);
-					op.cmdSend = true;
 					
-					if (!wasFreezeAsserted) {
-						bdi.startTarget();
+					try {
+						bdi3000.targetCommand(cmdAddr, meth.address);
 					}
-				} catch (TargetConnectionException e) {
-					op.errorMsg = "target not initialized";
+					catch (Exception ex) {
+						op.errorMsg = "cannot write target command: " + ex.getMessage();
+						return;
+					}
+				}
+				else {
+					TargetConnection bdi = Launcher.getTargetConnection();
+					if(bdi == null){
+						op.errorMsg = "target not connected";
+						return;
+					}
+					try {
+						if(!bdi.isConnected()){
+							bdi.openConnection();
+						}
+						boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
+						if (!wasFreezeAsserted) {
+							bdi.stopTarget();
+						}
+						bdi.writeWord(cmdAddr, meth.address);
+						op.cmdSend = true;
+						
+						if (!wasFreezeAsserted) {
+							bdi.startTarget();
+						}
+					} catch (TargetConnectionException e) {
+						op.errorMsg = "target not initialized";
+					}
 				}
 			}else{
 				op.errorMsg = "method not found";
