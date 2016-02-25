@@ -1253,7 +1253,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				}
 				if(dbg) vrb.println("  > TMS #" + tms.id + ": start address = 0x" + Integer.toHexString(tms.startAddress) + ", size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = 0x" + Integer.toHexString(currentAddress));
 				for(int j = 0; j < tms.data.length; j++) {
-					binFile.write(getBytes(tms.data[j]));
+//					binFile.write(getBytes(tms.data[j]));
+					binFile.write(getBytesLittle(tms.data[j]));
 					currentAddress += 4;
 				}
 				
@@ -1355,6 +1356,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		    int shift = i << 3;
 		    barray[3-i] = (byte)((number & (0xff << shift)) >>> shift);
 		}
+		return barray;
+	}
+	private static byte[] getBytesLittle(int val) {
+		byte[] barray = new byte[4];
+		barray[0] = (byte)(val & 0xff);
+		barray[1] = (byte)((val >> 8) & 0xff);
+		barray[2] = (byte)((val >> 16) & 0xff);
+		barray[3] = (byte)((val >> 24) & 0xff);
 		return barray;
 	}
 	

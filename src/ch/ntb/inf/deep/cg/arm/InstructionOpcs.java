@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.cg.arm;
 
-interface InstructionOpcs {
+public interface InstructionOpcs {
 	
 	
 	final int TOifequal = 0x04;
@@ -27,14 +27,6 @@ interface InstructionOpcs {
 	final int TOifgeU = 0x05;
 	final int TOifnequal = 0x18;
 	final int TOalways = 0x1f;
-	final int CRF0 = 0;
-	final int CRF1 = 1;
-	final int CRF2 = 2;
-	final int CRF3 = 3;
-	final int CRF4 = 4;
-	final int CRF5 = 5;
-	final int CRF6 = 6;
-	final int CRF7 = 7;
 	final int LT = 0;
 	final int GT = 1;
 	final int EQ = 2;
@@ -73,6 +65,17 @@ interface InstructionOpcs {
 	final int condEQ = 0;
 	final int condNOTEQ = 1;
 	final int condCS = 2;
+	final int condCC = 3;
+	final int condMI = 4;
+	final int condPL = 5;
+	final int condVS = 6;
+	final int condVC = 7;
+	final int condHI = 8;
+	final int condLS = 9;
+	final int condGE = 10;
+	final int condLT = 11;
+	final int condGT = 12;
+	final int condLE = 13;
 	final int condAlways = 14;
 	
 	
@@ -252,6 +255,12 @@ interface InstructionOpcs {
 	armTeq = (0x13 << 20),
 	armTst = (0x11 << 20),
 	
+	// multiply
+	armMul = 9 << 4,
+	armMuls = (1 << 20) | (9 << 4),
+	armMla = (2 << 20) | (9 << 4),
+	armMlas = (3 << 20) | (9 << 4),
+	armSdiv = (0x71 << 20) | (0xf << 12) | (1 << 4),
 	
 	// createRotateShiftImm / createRotateShiftReg
 	armAsr = (0xd << 21) | (0x2 << 5),
@@ -305,12 +314,10 @@ interface InstructionOpcs {
 	armWfi   = 0x0320f000 | 0x3,
 	armYield = 0x0320f000 | 0x1,
 	
-	
 	// Branch (immediate)
 	armB		= (0xa << 24),
 	armBl		= (0xb << 24),
 	armBlxImm	= (0xa << 24),
-	
 	
 	// Branch (register) (including BX BXJ
 	armBlxReg	= 0x012fff30,
@@ -342,12 +349,16 @@ interface InstructionOpcs {
 	armSmc = 0x01600070,
 	
 	
-	// Load/store word and unsigned byte
+	// Load/store word and unsigned/signed byte
 	armLdr   = (0x41 << 20),
 	armLdrb  = (0x45 << 20),
+	armLdrsb  = (0x05 << 20) | (0xd << 4),
+	armLdrh  = (0x05 << 20) | (0xb << 4),
+	armLdrsh  = (0x05 << 20) | (0xf << 4),
 	armStr   = (0x40 << 20),
 	armStrb  = (0x44 << 20),
-	// ...P=0, W=1
+	armStrh  = (0x4 << 20) | (0xb << 4),
+	// ...P=0, W=1 (unprivileged)
 	armLdrt  = (0x43 << 20),
 	armLdrbt = (0x47 << 20),
 	armStrt  = (0x42 << 20),
@@ -371,13 +382,4 @@ interface InstructionOpcs {
 	// Unconditional instructions
 	armRfe = 0x08100a00,
 	armSrs = 0x084d0500;
-	
-	
-		
-	//	armAdds = (0x9 << 20),
-////		armB = (0x12 << 26),
-////		armBl = (0x12 << 26) | 1,
-////		armBc = (0x10 << 26),
-	//	armRsbs = (0x27 << 20),
-	//	armSubs = (0x25 << 20);
 }

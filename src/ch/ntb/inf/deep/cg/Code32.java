@@ -18,14 +18,19 @@
 
 package ch.ntb.inf.deep.cg;
 
+import ch.ntb.inf.deep.cg.arm.InstructionOpcs;
 import ch.ntb.inf.deep.classItems.*;
+import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.ssa.*;
+import ch.ntb.inf.deep.strings.HString;
 
-public class Code32 implements ICclassFileConsts {
+public class Code32 implements ICclassFileConsts, InstructionOpcs {
 
 	protected static final int defaultNofInstr = 32;
 	protected static final int defaultNofFixup = 8;
-
+	
+	public static Arch arch;
+	
 	public SSA ssa;	// reference to the SSA of a method
 	public int[] instructions;	// contains machine instructions for the ssa of a method
 	public int iCount;	// nof instructions for this method
@@ -58,19 +63,27 @@ public class Code32 implements ICclassFileConsts {
 			sb.append("Code for Method: " + ssa.cfg.method.owner.name + "." + ssa.cfg.method.name +  ssa.cfg.method.methDescriptor + "\n");
 		int i;
 		for (i = 0; i < iCount; i++) {
-			if ((instructions[i] & 0xffffff00) == 0) break;	//TODO is this ok with ARM?????????????
+			if ((instructions[i] & 0xffffff00) == 0) break;	
 			sb.append("\t" + String.format("%08X", instructions[i]));
 			sb.append("\t[0x");
 			sb.append(Integer.toHexString(i * 4));
 			sb.append("]\t");
 			sb.append(InstructionDecoder.dec.getMnemonic(instructions[i]));
-			int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
-			if (opcode == 0x10) {
-				int BD = (short) (instructions[i] & 0xFFFC);
-				sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
-			} else if (opcode == 0x12) {
-				int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
-				sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+			if (arch.name.equals(HString.getHString("ppc32"))) {
+				int opcode = (instructions[i] & 0xFC000000) >>> (31 - 5);
+				if (opcode == 0x10) {
+					int BD = (short) (instructions[i] & 0xFFFC);
+					sb.append(", [0x" + Integer.toHexString(BD + 4 * i) + "]\t");
+				} else if (opcode == 0x12) {
+					int li = (instructions[i] & 0x3FFFFFC) << 6 >> 6;
+					sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
+				}
+			} else {	// arm
+				int opcode = (instructions[i] & 0x0e000000);
+				if (opcode == armB) {
+					int jump = ((instructions[i] & 0xFFFFFF) << 8 >> 6) + 8;
+					sb.append(", [0x" + Integer.toHexString(jump + 4 * i) + "]\t");
+				}		
 			}
 			sb.append("\n");
 		}

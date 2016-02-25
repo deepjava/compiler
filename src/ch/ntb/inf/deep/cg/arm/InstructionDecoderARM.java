@@ -146,7 +146,8 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		String[] parts =  mnemonic.split(" ");	// Split mnemonic by spaces
 //		System.out.print("Number of parts:   ");
 //		System.out.println(parts.length);
-		
+//		System.out.println(parts[0]);
+//		System.out.println(parts[1]);
 		
 		// Instructions
 		// ///////////////
@@ -676,7 +677,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				
 				// (register) / (literal) / (immediate)
 				// /////////////////////////////////////
-				if (parts[3].contains("r")) {	// (register) / xxxT A2	/ xxxBT A2	
+				if (parts.length > 3 && parts[3].contains("r")) {	// (register) / xxxT A2	/ xxxBT A2	
 					int n = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// Rn
 					code |= (n << 16);
 					
@@ -902,6 +903,13 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			code |= 0xf84d0500;
 		}
 		
+		//  SETEND	p.604
+		if (parts[0].startsWith("setend")) {
+			code |= 0xf1010000;
+			boolean big = parts[1].equals("be");
+			if (big) code |= 1 << 9;
+		}
+
 		return code;
 	}
 
@@ -911,7 +919,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 	
 	private static String decodeShift(int type, int imm5) {	// A8.4.1 p.291
 		switch(type) {
-		case 0: return imm5==0?"":(shiftType[type] + " #" + imm5);
+		case 0: return imm5==0?"0":(shiftType[type] + " #" + imm5);
 		case 1: return shiftType[type] + " #" + (imm5==0?32:imm5);
 		case 2: return shiftType[type] + " #" + (imm5==0?32:imm5);
 		case 3: return imm5==0?(shiftType[type+1]):(shiftType[type] + " #" + imm5);
@@ -1045,9 +1053,9 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		int n = op16_4;
 		int d = op12_4;
 		int op2 = op4_4;
-		
+	
 		if (cond != 0xf)  {	// conditional instructions 
-			switch (op) {	// p.194
+		switch (op) {	// p.194
 			case 0: {	// Data-processing and miscellaneous instructions 1/2 p.196 (Bit 25)
 				if ((op1 & 0x19) != 0x10) {	// !=(10XX0)
 					if ((op2 & 0x1) == 0) {	// Data-processing (register) p.197
@@ -2127,11 +2135,11 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					return "ldm	" + amode[op23_2] + (cond!=condAlways?condString[cond]:"") + " R" + n + (op21_1==1?"!":"") + ", " + registerlist(op0_15) + "^";	// WITH PC
 				}
 				if ((op20_6 & 0x30) == 0x20) {	// Branch p.334
-					return "b" + (cond!=condAlways?condString[cond]:"") + " " + ((op0_24<<8)>>6);	// SignExtend(imm24:'00', 32); Multiplyed by 4
+					return "b" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
 				}
 				if ((op20_6 & 0x30) == 0x30) {	// Branch with Link p.348
 					// Endocding A1 (cond != 0xf)
-					return "bl" + (cond!=condAlways?condString[cond]:"") + " " + ((op0_24<<8)>>6);	// SignExtend(imm24:'00', 32); Multiplyed by 4
+					return "bl" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
 				}				
 			}// End of (op=4/5): Branch, branch with link, and block data transfer p.214
 
@@ -2590,12 +2598,8 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			default: break;
 			}	// End of: switch (op)	(p.194)
 		}	// End of: (cond != 0xf)	(p.194)
-
-
-
 		else if (cond == 0xf) {	// unconditional instructions p.216
 			Boolean add = (op23_1 == 0x1);
-			
 			if ((op20_8 & 0x80)==0x00) {	//	Memory hints, Advanced SIMD instructions, and miscellaneous instructions p.217/218
 				if ( (op20_7==0x10) && ((op4_4 & 0x2)==0x0) && ((op16_4 & 0x1)==0x0) ) {	// Change Processor State p.1980
 					String effect = "";
@@ -2605,7 +2609,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				}	// End of: Change Processor State p.1980
 				
 				if ( (op20_7==0x10) && (op4_4==0x0) && ((op16_4 & 0x1)==0x1) ) {	// Set Endianness p.604
-					return "setend" + (op9_1==1?"BE":"LE");
+					return "setend " + (op9_1==1?"BE":"LE");
 				}	// End of: Set Endianness p.604
 
 				if ( (op20_7==0x12) && (op4_4==0x7) ) {	// UNPREDICTABLE

@@ -244,6 +244,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETFPR))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idGETSPR))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTGPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTGPR) && (instr1.getOperands()[1] == res))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTFPR) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenPPC.idPUTSPR) && (instr1.getOperands()[0] == res))
 							// calls to some unsafe methods

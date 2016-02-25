@@ -363,8 +363,8 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 			while (val != null) {
 				for (int k = val.start; k < val.end; k++) {
 					SSAInstruction instr1 = instrs[k];
-					if (instr1.ssaOpcode == sCnew || (instr1.ssaOpcode == sCcall && 
-							(((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
+					if (((scAttrTab[instr1.ssaOpcode] & (1<<ssaApCall)) != 0) && 
+							((((Call)instr1).item.accAndPropFlags & (1 << dpfSynthetic)) == 0)) {
 						val.nonVol = true;
 					}
 				}

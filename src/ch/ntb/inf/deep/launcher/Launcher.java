@@ -118,11 +118,13 @@ public class Launcher implements ICclassFileConsts {
 		}
 		CodeGen cg = null;
 		if (reporter.nofErrors <= 0) {
-			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) {
+			Arch arch = Configuration.getBoard().cpu.arch;
+			Code32.arch = arch;
+			if (arch.name.equals(HString.getHString("ppc32"))) {
 				cg = new CodeGenPPC();
 				InstructionDecoder.dec = new InstructionDecoderPPC();
 			}
-			if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("arm32"))) {
+			if (arch.name.equals(HString.getHString("arm32"))) {
 				cg = new CodeGenARM();
 				InstructionDecoder.dec = new InstructionDecoderARM();
 			}
@@ -603,6 +605,7 @@ public class Launcher implements ICclassFileConsts {
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
 			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+			fw.write("import ch.ntb.inf.deep.runtime." + archName + ".I" + archName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface I" + cpuName + " extends I" + archName + " {\n");
 			

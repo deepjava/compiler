@@ -36,7 +36,6 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
 public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
 
-
 	/**
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
@@ -191,17 +190,24 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					// and opd must not be already in a register 
 					// and opd must have join == null
 					int type = res.type & 0x7fffffff;
-					if (((instr1.ssaOpcode == sCadd) && ((type == tInteger) || (type == tLong)))	
-							|| ((instr1.ssaOpcode == sCsub) && ((type == tInteger) || (type == tLong)))) {
-							// add, sub only with integer and long
+					if ((instr1.ssaOpcode == sCadd) && ((type == tInteger) || (type == tLong))) {
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
 							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-							if ((immValLong >= -32768) && (immValLong <= 32767)) {} else findReg(res);
+							if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
 						} else {	
 							int immVal = constant.valueH;
-							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
+							if ((immVal >= -255) && (immVal <= 255)) {} else findReg(res);
 						}
+					} else if ((instr1.ssaOpcode == sCsub) && ((type == tInteger) || (type == tLong))) {
+							StdConstant constant = (StdConstant)res.constant;
+							if (res.type == tLong) {
+								long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+								if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
+							} else {	
+								int immVal = constant.valueH;
+								if (((immVal >= 0) && (immVal <= 255)) || ((immVal >= -255) && (immVal < 0) && instr1.getOperands()[1] == res)) {} else findReg(res);
+							}
 					} else if (instr1.ssaOpcode == sCmul) {
 						StdConstant constant = (StdConstant)res.constant;
 						boolean isPowerOf2; int immVal = 0;
@@ -214,12 +220,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						}
 						if (((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1]) && isPowerOf2) {							
 							// check if multiplication by const which is a power of 2, const must be multiplicator and positive
-							res.reg = -2;
-						} else if (type == tInteger) { 
-							// check if multiplication by const which is smaller than 2^15
-							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
 						} else {
-							if (dbg) StdStreams.vrb.println(" not possible");
 							findReg(res);
 						}
 					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
@@ -258,7 +259,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							if ((immValLong >= -32768) && (immValLong <= 32767)) {} else findReg(res);
 						} else {	
 							int immVal = constant.valueH;
-							if ((immVal >= -32768) && (immVal <= 32767)) {} else findReg(res);
+							if ((immVal >= 0) && (immVal <= 255)) {} else findReg(res);
 						}
 					} else if (((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idASM))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idADR_OF_METHOD))) {
