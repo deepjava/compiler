@@ -21,9 +21,6 @@ package ch.ntb.inf.deep.comp.targettest.unsafe;
 import ch.ntb.inf.deep.runtime.ppc32.Decrementer;
 import ch.ntb.inf.deep.unsafe.US;
 import ch.ntb.inf.junitTarget.*;
-import ch.ntb.inf.junitTarget.CmdTransmitter;
-import ch.ntb.inf.junitTarget.MaxErrors;
-import ch.ntb.inf.junitTarget.Test;
 
 /**
  * NTB 4.3.2011, Urs Graf
@@ -36,7 +33,7 @@ public class UnsafeTest {
 	
 	@Test
 	public static void testGetPut() {
-		if(!CmdTransmitter.host){
+		if (CmdTransmitter.plattform != CmdTransmitter.host) {
 			US.PUT1(addr, 0x11);
 			US.PUT1(addr + 1, 0x22);
 			US.PUT2(addr + 2, 0x3344);
@@ -52,7 +49,7 @@ public class UnsafeTest {
 	
 	@Test
 	public static void testBit() {
-		if(!CmdTransmitter.host){
+		if (CmdTransmitter.plattform != CmdTransmitter.host) {
 			US.PUT1(addr, 0xf0);
 			Assert.assertFalse("Test1", US.BIT(addr, 0));
 			Assert.assertTrue("Test2", US.BIT(addr, 7));
@@ -64,7 +61,7 @@ public class UnsafeTest {
 
 	@Test
 	public static void testRegisters() {
-		if(!CmdTransmitter.host){
+		if (CmdTransmitter.plattform != CmdTransmitter.host) {
 			// make sure register is not used by this method
 			US.PUTGPR(6, 0x3456789a);
 			Assert.assertEquals("Test1", 0x3456789a, US.GETGPR(6));
@@ -82,7 +79,7 @@ public class UnsafeTest {
 	@Test
 	// tests use of floats in exceptions 
 	public static void testFloatsInExc() {
-		if(!CmdTransmitter.host){
+		if (CmdTransmitter.plattform != CmdTransmitter.host) {
 			US.PUTFPR(0, 200.0);
 			US.PUTFPR(2, 201.0);
 			US.PUTFPR(12, 212.0);
@@ -130,6 +127,7 @@ class DecTest extends Decrementer {
 		UnsafeTest.res++;
 		double a = 57.4, b = 10.9;
 		double c = a + b + 3;
+		@SuppressWarnings("unused")
 		double d = 1.0;
 		d += Math.sin(0.1);
 		UnsafeTest.l1 = (long)c + n + m;

@@ -30,6 +30,7 @@ public class InstructionDecoder implements InstructionOpcs {
 	 *            String
 	 * @return machine instruction
 	 */
+	@SuppressWarnings("unused")
 	public static int getCode(String mnemonic) {
 		// masks
 		int crb = 0x1F;
@@ -3196,13 +3197,17 @@ public class InstructionDecoder implements InstructionOpcs {
 		if (SPR == 562) return "ICDAT";
 		if (SPR == 630) return "DPDR";
 		if (SPR == 638) return "IMMR";
+		if (SPR == 1008) return "HID0";
+		if (SPR == 1009) return "HID1";
+		if (SPR == 1011) return "HID2";
 		if (SPR == 1022) return "FPECR";
+		System.out.println(SPR);
 		assert false : "wrong SPR number";
 		return null;
 	}
 
 	static {
-		int code = InstructionDecoder.getCode("rlwinm  r3, r29, 2, 0, 29");
+		//		int code = InstructionDecoder.getCode("rlwinm  r3, r29, 2, 0, 29");
 		//		System.out.println(InstructionDecoder.getMnemonic(code);
 	}
 }
