@@ -167,4 +167,57 @@ public class WhileTest {
 
 		CmdTransmitter.sendDone();
 	}
+	
+	public static int whileTrue1() {
+		int a = 5;
+		int i = 0;
+		while (true) {
+			int b = a + i++;
+			if (b > 10) return i;
+		}
+	}
+
+	static short r = -10;
+	static public int whileTrue2() {
+		while (true) {
+			if (r == -5) return r;
+			r++;
+		}
+	}
+
+	short x = 5;
+	public int whileTrue3() {
+		while (true) {
+			if (x == 25) return x;
+			x++;
+		}
+	}
+	
+	static byte s = 10;
+	public static int whileTrue4(byte b1) {
+		while (true) {
+			if (b1 > s) return 1;
+			s--;
+		}
+	}
+	
+	byte y = 10;
+	int whileTrue5(byte b1) {
+		while (true) {
+			if (b1 > s) return 1;
+			y--;
+		}
+	}
+	
+	@Test
+	public static void testWhileTrue() {
+		Assert.assertEquals("whileTrue1", 7, whileTrue1());
+		Assert.assertEquals("whileTrue2", -5, whileTrue2());
+		Assert.assertEquals("whileTrue3", 25, new WhileTest().whileTrue3());
+		Assert.assertEquals("whileTrue4", 1, whileTrue4((byte) 5));
+		Assert.assertEquals("whileTrue4", 1, new WhileTest().whileTrue5((byte) 5));
+
+		CmdTransmitter.sendDone();
+	}
+
 }

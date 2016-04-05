@@ -8,7 +8,7 @@ meta {
 project junitTargetTestProject {
 	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
-	
+
 	boardtype = ntbMpc555HB;
 	ostype = ntbSTS;
 	programmertype = ntbMpc555UsbBdi;
@@ -58,6 +58,8 @@ project junitTargetTestProject {
 #				  "ch/ntb/inf/deep/comp/targettest/objects/EnumTest",
 #				  "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3",
 #				  "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
+
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3";
 
 
 #	Tests for trgtlib tests  

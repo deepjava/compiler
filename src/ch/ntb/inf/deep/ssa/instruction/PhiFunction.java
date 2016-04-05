@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.ssa.SSAValue;
 
 public class PhiFunction extends SSAInstruction {
@@ -36,6 +36,7 @@ public class PhiFunction extends SSAInstruction {
 	}
 
 	@Override
+	/** returns a copy */
 	public SSAValue[] getOperands() {
 		SSAValue[] opnd = new SSAValue[nofOperands];
 		for(int i = 0; i < nofOperands; i++){
@@ -94,7 +95,7 @@ public class PhiFunction extends SSAInstruction {
 		SSAValue res = result;
 		if (res.join != null) {
 			sb.append(", join=[" + result.index + "(");
-			SSAValue join = RegAllocator.joins[result.index];
+			SSAValue join = RegAllocatorPPC.joins[result.index];
 			int i = 0;
 			while (join != null && join != result.join) {
 				i++;
@@ -102,15 +103,15 @@ public class PhiFunction extends SSAInstruction {
 			}
 			sb.append(i + ")]");
 			res = result.join;
-		} else {
+		} else 
 			sb.append(", end=" + res.end);
-			if (res.reg != -1) {
-				if (res.nonVol) sb.append(", nonVol"); else sb.append(", vol");
-			}
-			if (res.regLong != -1) sb.append(", regLong=" + res.regLong);
-			if (res.reg != -1) sb.append(", reg=" + res.reg);
-			if (res.regGPR1 != -1) sb.append(", regAux1=" + res.regGPR1);
+		if (res.reg != -1) {
+			if (res.nonVol) sb.append(", nonVol"); else sb.append(", vol");
 		}
+		if (res.regLong != -1) sb.append(", regLong=" + res.regLong);
+		if (res.reg != -1) sb.append(", reg=" + res.reg);
+		if (res.regGPR1 != -1) sb.append(", regAux1=" + res.regGPR1);
+
 		if (last != 0) sb.append(", last=" + last);
 		if (deleted) sb.append(" del");
 		if (used) sb.append(" u");

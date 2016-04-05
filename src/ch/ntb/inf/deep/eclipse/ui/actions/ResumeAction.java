@@ -30,6 +30,7 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class ResumeAction implements IWorkbenchWindowActionDelegate {
 
+	@SuppressWarnings("unused")
 	private IWorkbenchWindow window;
     public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction";
 	

@@ -37,6 +37,7 @@ import ch.ntb.inf.deep.comp.targettest.objects.helper.exampleB.*;
 @MaxErrors(100)
 public class InheritanceTest {	
 	
+	@SuppressWarnings("static-access")
 	@Test
 	//Test class Variables
 	public static void testClassVar(){

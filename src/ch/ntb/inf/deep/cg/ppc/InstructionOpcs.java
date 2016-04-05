@@ -16,7 +16,7 @@
  * 
  */
 
-package ch.ntb.inf.deep.cgPPC;
+package ch.ntb.inf.deep.cg.ppc;
 
 interface InstructionOpcs {
 	final int BOtrue = 0x0c;

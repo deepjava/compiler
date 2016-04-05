@@ -27,7 +27,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cgPPC.CodeGen;
+import ch.ntb.inf.deep.cg.Code32;
+import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.InstructionDecoder;
+import ch.ntb.inf.deep.cg.arm.CodeGenARM;
+import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
+//import ch.ntb.inf.deep.cg.arm.CodeGenARM;
+//import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
+import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.ppc.InstructionDecoderPPC;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
@@ -68,7 +76,7 @@ public class Launcher implements ICclassFileConsts {
 	public static int buildAll(String deepProjectFileName, String targetConfigurationName) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
-		
+
 		Class clazz;
 		Method method;
 		Array array;
@@ -84,7 +92,6 @@ public class Launcher implements ICclassFileConsts {
 		Project project = Configuration.readProjectFile(deepProjectFileName);
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
-//		Configuration.print();
 
 		HString[] rootClassNames = Configuration.getRootClasses();
 		if (reporter.nofErrors <= 0) {
@@ -111,9 +118,20 @@ public class Launcher implements ICclassFileConsts {
 			if (dbg) vrb.println("[Launcher] Initializing Linker");
 			Linker32.init();
 		}
+		CodeGen cg = null;
 		if (reporter.nofErrors <= 0) {
+			Arch arch = Configuration.getBoard().cpu.arch;
+			Code32.arch = arch;
+			if (arch.name.equals(HString.getHString("ppc32"))) {
+				cg = new CodeGenPPC();
+				InstructionDecoder.dec = new InstructionDecoderPPC();
+			}
+			if (arch.name.equals(HString.getHString("arm32"))) {
+				cg = new CodeGenARM();
+				InstructionDecoder.dec = new InstructionDecoderARM();
+			}
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
-			CodeGen.init();
+			cg.init();
 		}
 
 		// creating type descriptors for arrays
@@ -170,7 +188,8 @@ public class Launcher implements ICclassFileConsts {
 								}
 								// Create machine code
 								if (reporter.nofErrors <= 0) {
-									method.machineCode = new CodeGen(method.ssa); 
+									method.machineCode = new Code32(method.ssa);
+									cg.translateMethod(method);
 								}
 							} else if (dbg) vrb.print("method " + method.name + " is synthetic or abstract");
 							method = (Method)method.next;
@@ -188,6 +207,8 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 
+		if (reporter.nofErrors > 0) return reporter.nofErrors;;
+		
 		// handle interfaces with class constructor, translating code, calculating code size
 		if(dbg) vrb.println("[LAUNCHER] handle interfaces with class constructor");
 		intf = Class.constBlockInterfaces;	
@@ -198,7 +219,8 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					method.cfg = new CFG(method);
 					method.ssa = new SSA(method.cfg);
-					method.machineCode = new CodeGen(method.ssa); 
+					method.machineCode = new Code32(method.ssa); 
+					cg.translateMethod(method);
 				}
 				method = (Method)method.next;
 			}
@@ -210,7 +232,7 @@ public class Launcher implements ICclassFileConsts {
 
 		// handle compiler specific methods
 		if(dbg) vrb.println("[LAUNCHER] compiler specific methods");
-		CodeGen.generateCompSpecSubroutines();
+		cg.generateCompSpecSubroutines();
 		Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
 
 		if (reporter.nofErrors <= 0) {
@@ -280,7 +302,7 @@ public class Launcher implements ICclassFileConsts {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract) | (1 << apfNative))) == 0) { // proceed only methods with code
 								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 								if (dbg) vrb.println("      doing fixups");
-								method.machineCode.doFixups();
+								cg.doFixups(method.machineCode);
 							}
 							method = (Method)method.next;
 						}
@@ -301,7 +323,8 @@ public class Launcher implements ICclassFileConsts {
 				if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					if (dbg) vrb.println("      doing fixups");
-					method.machineCode.doFixups();
+					cg.doFixups(method.machineCode);
+
 				}
 				method = (Method)method.next;
 			}
@@ -314,7 +337,7 @@ public class Launcher implements ICclassFileConsts {
 		while (m != null) {
 			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
 			if (dbg) vrb.println("      doing fixups");
-			m.machineCode.doFixups();
+			cg.doFixups(m.machineCode);
 			m = (Method)m.next;
 		}
 //		Method.printCompSpecificSubroutines();
@@ -673,6 +696,7 @@ public class Launcher implements ICclassFileConsts {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
 		String cpuName = cpu.name.toString();
+		String archName = cpu.arch.name.toString();
 		basePath = basePath + File.separatorChar + cpuName;
 		String fileName = "I" + cpuName + ".java";
 		try {
@@ -682,8 +706,9 @@ public class Launcher implements ICclassFileConsts {
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
 			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+			fw.write("import ch.ntb.inf.deep.runtime." + archName + ".I" + archName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			fw.write("public interface I" + cpuName + " {\n");
+			fw.write("public interface I" + cpuName + " extends I" + archName + " {\n");
 			
 			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
 			SystemConstant curr = cpu.sysConstants;

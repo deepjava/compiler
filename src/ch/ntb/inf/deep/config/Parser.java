@@ -1367,7 +1367,7 @@ public class Parser implements ICclassFileConsts {
 			String rName = strBuffer;
 			int val = varAssignment();
 			Register r = (Register) Configuration.getBoard().cpu.regs.getItemByName(rName);
-			if (r == null) assert false;
+			if (r == null) {reporter.error(230, "definition missing for " + rName); return null;};
 			RegisterInit r1 = new RegisterInit(r, val);
 			if (regInit == null) regInit = r1;
 			else regInit = (RegisterInit) regInit.insertHead(r1);

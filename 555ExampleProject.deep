@@ -17,7 +17,7 @@ project ExampleProjectMpc555 {
 #	rootclasses = "java/lang/Object";
 #	rootclasses = "test/Test1";
 	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest1";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/demo/SystemOutDemo1";
+	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/demo/SystemOutDemo1";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/OutTest1";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ActionableTest2";	

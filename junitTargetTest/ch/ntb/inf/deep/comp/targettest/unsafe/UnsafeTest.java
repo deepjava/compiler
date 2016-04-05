@@ -111,6 +111,7 @@ public class UnsafeTest {
 
 }
 
+@SuppressWarnings("unused")
 class DecTest extends Decrementer {
 	
 	public void action () {

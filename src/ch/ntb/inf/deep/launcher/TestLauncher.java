@@ -35,6 +35,7 @@ import ch.ntb.inf.deep.classItems.Method;
  * the deep-Project. You can find an example project "ExampleProject.deep" in
  * this folder which you may use as base for your own test project.
  */
+@SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
@@ -43,6 +44,7 @@ public class TestLauncher {
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
 		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("armExampleProject.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();

@@ -48,7 +48,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cgPPC.CodeGen;
+import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ClassMember;
@@ -89,7 +89,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				if(element instanceof RootElement)return ((RootElement)element).name.toString();
 				if(element instanceof CFG)return "CFG";
 				if(element instanceof SSA)return "SSA";
-				if(element instanceof CodeGen)return "MachineCode";
+				if(element instanceof Code32)return "MachineCode";
 				if(element instanceof String)return (String) element;
 				return "";
 			}
@@ -613,8 +613,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			textViewer.refresh();
 			return;
 		}
-		if(obj instanceof CodeGen){
-			CodeGen machineCode = (CodeGen)obj;
+		if(obj instanceof Code32){
+			Code32 machineCode = (Code32)obj;
 			textViewer.getDocument().set(machineCode.toString());
 			textViewer.refresh();
 			return;

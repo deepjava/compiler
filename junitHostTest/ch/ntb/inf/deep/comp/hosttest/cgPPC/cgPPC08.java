@@ -20,9 +20,11 @@ package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -36,7 +38,7 @@ public class cgPPC08 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T08Calls") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 
@@ -48,7 +50,7 @@ public class cgPPC08 extends TestCgPPC {
 		assertTrue("wrong join", checkJoin(getJoin(2), 0, 11, vol, false));
 		assertTrue("wrong join", checkJoin(getJoin(3), 0, 12, vol, false));
 		assertTrue("wrong join", checkJoin(getJoin(4), 1, 11, vol, false));
-		for (int i = 5; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 5; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 

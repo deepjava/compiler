@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.ssa.SSAValue;
@@ -80,22 +80,21 @@ public class NoOpnd extends SSAInstruction {
 		if (result.index != -1) sb.append(", index=" + result.index);
 		if (result.join != null) {
 			sb.append(", join=[" + result.index + "(");
-			SSAValue join = RegAllocator.joins[result.index];
+			SSAValue join = RegAllocatorPPC.joins[result.index];
 			int i = 0;
 			while (join != null && join != result.join) {
 				i++;
 				join = join.next;
 			}
 			sb.append(i + ")]");
-		} else {
+		} else 
 			sb.append(", end=" + result.end);
-			if (result.reg != -1) {
-				if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
-			}
-			if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
-			if (result.reg != -1) sb.append(", reg=" + result.reg);
-			if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
+		if (result.reg != -1) {
+			if (result.nonVol) sb.append(", nonVol"); else sb.append(", vol");
 		}
+		if (result.regLong != -1) sb.append(", regLong=" + result.regLong);
+		if (result.reg != -1) sb.append(", reg=" + result.reg);
+		if (result.regGPR1 != -1) sb.append(", regAux1=" + result.regGPR1);
 		sb.append(", bca=" + bca);
 		if (firstInCatch) sb.append(", firstInCatch");
 		return sb.toString();

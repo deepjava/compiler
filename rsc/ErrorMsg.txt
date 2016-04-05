@@ -63,6 +63,7 @@ ErrorNr;Description;Solution
 602;fixup out of range;
 603;not enough GPR's for locals;
 604;not enough FPR's for locals;
+605;not enough stack slots for spilling;
 610;result of SSA instruction has wrong type;
 611;operand of SSA instruction has wrong type;
 612;operand of SSA new instruction has wrong type;
@@ -75,6 +76,7 @@ ErrorNr;Description;Solution
 632;initialization failed, low level class not found;
 633;initialization failed, method in low level class not found;
 634;class not found;
+640;SSA has exit set with more entries than maximum number of join values;
 
 701;class not loaded;
 702;class not found;

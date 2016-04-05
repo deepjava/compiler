@@ -140,6 +140,7 @@ public class VariousTest1 {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public void replConstNonsense(int col, int l, int b, int w, int h, int mode){ 
 		int x, y;
 		int addr = 0;

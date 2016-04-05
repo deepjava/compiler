@@ -18,7 +18,6 @@
 
 package ch.ntb.inf.deep.comp.hosttest.cfg;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import ch.ntb.inf.deep.cfg.CFGNode;

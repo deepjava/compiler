@@ -19,7 +19,6 @@
 package ch.ntb.inf.deep.linker;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -50,9 +49,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	
 	// Slot size:
 	public static final byte slotSize = 4; // 4 bytes
-	static{
-		assert (slotSize & (slotSize-1)) == 0; // assert:  slotSize == power of 2
-	}
 
 	public static final boolean dbg = false; // enable/disable debugging outputs for the linker
 
@@ -1257,7 +1253,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				}
 				if(dbg) vrb.println("  > TMS #" + tms.id + ": start address = 0x" + Integer.toHexString(tms.startAddress) + ", size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = 0x" + Integer.toHexString(currentAddress));
 				for(int j = 0; j < tms.data.length; j++) {
-					binFile.write(getBytes(tms.data[j]));
+//					binFile.write(getBytes(tms.data[j]));
+					binFile.write(getBytesLittle(tms.data[j]));
 					currentAddress += 4;
 				}
 				
@@ -1361,6 +1358,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		}
 		return barray;
 	}
+	private static byte[] getBytesLittle(int val) {
+		byte[] barray = new byte[4];
+		barray[0] = (byte)(val & 0xff);
+		barray[1] = (byte)((val >> 8) & 0xff);
+		barray[2] = (byte)((val >> 16) & 0xff);
+		barray[3] = (byte)((val >> 24) & 0xff);
+		return barray;
+	}
 	
 	private static int setBaseAddress(Segment s, int addr) {
 //		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
@@ -1371,6 +1376,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		return s.size + addr;
 	}
 
+	@SuppressWarnings("unused")
 	private static Segment getFirstFittingSegment(Segment s, byte contentAttribute, int requiredSize) {
 		Segment t = s;
 		while (t != null) {

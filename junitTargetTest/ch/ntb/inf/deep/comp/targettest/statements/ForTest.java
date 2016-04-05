@@ -76,8 +76,7 @@ public class ForTest {
 
 	public static int noStatement(byte c) {
 		int res = -1;
-		for (int i = 0; c > 0; i++)
-			;
+		for (int i = 0; i > 0; i++);
 		return res;
 	}
 
