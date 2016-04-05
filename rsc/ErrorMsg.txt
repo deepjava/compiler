@@ -107,5 +107,6 @@ ErrorNr;Description;Solution
 812;Plugin not found;
 813;BDI packet wrong, try to reset BDI;
 814;ready bit not set, try to reset BDI;
+815;Connection to target not possible! (port seems to be busy);
 
 900;Connection lost;

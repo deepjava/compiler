@@ -99,7 +99,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 				regs = model.getMod(5);
 			}
 			if(model == null || model.getMod(5) == null) {
-				// Defaul all is Zero
+				// Default for all is zero
 				regs = new Register[16];
 				regs[0] = new Register("CMPA",0,0);
 				regs[1] = new Register("CMPB",0,0);

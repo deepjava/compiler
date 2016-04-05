@@ -26,6 +26,7 @@ public class Programmer extends Item {
 	private HString description;
 	private HString pluginId;
 	private HString className;
+	private HString opts;
 	
 	public Programmer(String jname) {
 		this.name = HString.getRegisteredHString(jname);
@@ -55,4 +56,11 @@ public class Programmer extends Item {
 		return this.pluginId;
 	}
 	
+	public void setOpts(String id) {
+		this.opts = HString.getRegisteredHString(id);
+	}
+	
+	public HString getOpts() {
+		return this.opts;
+	}
 }

@@ -128,7 +128,7 @@ public class Parser implements ICclassFileConsts {
 			sRepr = g9 + 16,
 			sLibPath = g9 + 17,
 			sBoardType = g9 + 18,
-			sCpuArch = g9 +19,
+			sCpuArch = g9 + 19,
 			sLowlevel = g9 + 20,
 			sClass = g9 + 21,
 			sId = g9 + 22,
@@ -1192,8 +1192,6 @@ public class Parser implements ICclassFileConsts {
 		next();
 	}
 	
-	private void programmeropts() {}
-	
 	private SystemConstant sysconst(SystemConstant sysConsts) {
 		if (sym != sSysConst) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: sysconst, received symbol: " + symToString()); return null;}
 		next();
@@ -1609,8 +1607,10 @@ public class Parser implements ICclassFileConsts {
 				Configuration.setProgrammer(programmerTypeAssignment());
 				if (dbg) if(Configuration.getProgrammer() != null) StdStreams.vrb.println(Configuration.getProgrammer().name);
 			} else if (sym == sProgrammerOpts) {
-				// TODO
-				next();
+				String opts = programmerOptsAssignment();
+				Programmer prog = Configuration.getProgrammer();
+				if (prog != null) prog.setOpts(opts);
+				if (dbg) if(opts != null) StdStreams.vrb.println(opts);
 			} else if (sym == sImgFile) {
 				currentProject.setImgFileName(imgFileAssignment());
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + currentProject.getImgFileName());
@@ -1900,6 +1900,20 @@ public class Parser implements ICclassFileConsts {
 	private String programmerTypeAssignment() {
 		String s;
 		if (sym != sProgrammerType) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmertype, received symbol: " + symToString()); return "";}
+		next();
+		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
+		next();
+		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return "";}
+		s = strBuffer;
+		next();
+		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
+		next();
+		return s;
+	}
+	
+	private String programmerOptsAssignment() {
+		String s;
+		if (sym != sProgrammerOpts) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: programmeropts, received symbol: " + symToString()); return "";}
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();

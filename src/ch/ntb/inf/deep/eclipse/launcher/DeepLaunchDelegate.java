@@ -39,7 +39,6 @@ import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.view.ConsoleDisplayMgr;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.launcher.Launcher;
-import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 
 
@@ -84,50 +83,42 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		else {
 			Launcher.buildAll(location + IPath.SEPARATOR + program, targetConfig);
 		}
-		
+
 		monitor.worked(50);
 		if(monitor.isCanceled()) {
 			monitor.done();
 			return;
 		}
-		
+
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
 			monitor.worked(60);
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {
-				if (programmer.getPluginId().equals(HString.getHString("ch.ntb.inf.bdi2000"))) {
-					// ignore
-				}
-				else {
-					java.lang.Class<?> cls;
-					try {
-						Bundle bundle = Platform.getBundle(programmer.getPluginId().toString());
-						if (bundle != null) {
-	//						System.out.println(bundle.getSymbolicName() + " 1");
-							cls = bundle.loadClass(programmer.getClassName().toString());
-	//						System.out.println(cls.getName() + " 2");
-							//					cls = java.lang.Class.forName(programmer.getClassName().toString());
-							java.lang.reflect.Method m;
-							m = cls.getDeclaredMethod("getInstance");
-							TargetConnection tc = (TargetConnection) m.invoke(cls);
-							Launcher.setTargetConnection(tc);
-							Launcher.openTargetConnection();
-							Launcher.downloadTargetImage();
-							Launcher.startTarget();
-						} else ErrorReporter.reporter.error(812, programmer.getClassName().toString());
-					} catch (ClassNotFoundException e) {
-						ErrorReporter.reporter.error(811, programmer.getClassName().toString());
-					} catch (SecurityException e) {
-						e.printStackTrace();
-					} catch (NoSuchMethodException e) {
-						e.printStackTrace();
-					} catch (IllegalArgumentException e) {
-						e.printStackTrace();
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-					}
+				java.lang.Class<?> cls;
+				try {
+					Bundle bundle = Platform.getBundle(programmer.getPluginId().toString());
+					if (bundle != null) {
+						cls = bundle.loadClass(programmer.getClassName().toString());
+						java.lang.reflect.Method m;
+						m = cls.getDeclaredMethod("getInstance");
+						TargetConnection tc = (TargetConnection) m.invoke(cls);
+						Launcher.setTargetConnection(tc);
+						Launcher.openTargetConnection();
+						Launcher.downloadTargetImage();
+						Launcher.startTarget();
+					} else ErrorReporter.reporter.error(812, programmer.getClassName().toString());
+				} catch (ClassNotFoundException e) {
+					ErrorReporter.reporter.error(811, programmer.getClassName().toString());
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
 				}
 			}
 		}

@@ -37,6 +37,7 @@ import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
@@ -49,6 +50,7 @@ import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.target.Am29LV160dFlashWriter;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
@@ -354,48 +356,140 @@ public class Launcher implements ICclassFileConsts {
 		return reporter.nofErrors;
 	}
 	
+//	public static void downloadTargetImage() {
+//		Board b = Configuration.getBoard();
+//		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
+//		if (b != null) {
+//			if (tc != null) {
+//				try {
+//					if (dbg) vrb.println("[Launcher] Reseting target");
+//					tc.resetTarget();
+//					if (dbg) vrb.println("[Launcher] Initializing registers");
+//					RegisterInit r = b.regInits;
+//					while (r != null) {
+//						tc.setRegisterValue(r.reg, r.initValue);
+//						r = (RegisterInit) r.next;
+//					}
+//					r = targetConfig.regInits;
+//					while (r != null) {
+//						tc.setRegisterValue(r.reg, r.initValue);
+//						r = (RegisterInit) r.next;
+//					}
+//					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R"+i, 0);
+//
+//					log.println("Downloading target image:");
+//					Programmer programmer = Configuration.getProgrammer();
+//					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
+//						tc.writeTMS(null);
+//					} else {
+//						TargetMemorySegment tms = Linker32.targetImage;
+//						while (tms != null && reporter.nofErrors <= 0) {
+//							if (dbg) vrb.print("  processing TMS #" + tms.id);
+//							if (tms.segment == null) { // this should never happen
+//								if (dbg) vrb.println(" -> skipping (segment not defined)");
+//							} else {
+//								if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
+//								tc.writeTMS(tms);
+//							}
+//							tms = tms.next;
+//						}
+//						tc.resetErasedFlag();
+//					}
+//
+//				} 
+//				catch (TargetConnectionException e) {
+//					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
+//						reporter.error(813);
+//					}
+//					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
+//						reporter.error(814);
+//					}
+//					else{
+//						reporter.error(801);
+//					}
+//				}
+//			} else 	reporter.error(800);
+//		} else	reporter.error(238);
+//	}
+
 	public static void downloadTargetImage() {
+		boolean flashErased = false;
 		Board b = Configuration.getBoard();
 		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
-		TargetMemorySegment tms = Linker32.targetImage;
 		if (b != null) {
-			int c = 0;
 			if (tc != null) {
 				try {
+					if (dbg) vrb.println("[Launcher] Reseting target");
+					tc.resetTarget();
 					if (dbg) vrb.println("[Launcher] Initializing registers");
 					RegisterInit r = b.regInits;
 					while (r != null) {
-						tc.initRegister(r);
+						tc.setRegisterValue(r.reg, r.initValue);
 						r = (RegisterInit) r.next;
 					}
 					r = targetConfig.regInits;
 					while (r != null) {
-						tc.initRegister(r);
+						tc.setRegisterValue(r.reg, r.initValue);
 						r = (RegisterInit) r.next;
 					}
-					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setGprValue(i, 0);
+					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R"+i, 0);
+
 					log.println("Downloading target image:");
-					while (tms != null && reporter.nofErrors <= 0) {
-						if (dbg) vrb.print("  processing TMS #" + tms.id);
-						if (tms.segment == null) { // this should never happen
-							// TODO add error message here
-							if (dbg) vrb.println(" -> skipping (segment not defined)");
-						} else {
-							if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
-							tc.writeTMS(tms);
+					Programmer programmer = Configuration.getProgrammer();
+					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
+						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+					} else {
+						TargetMemorySegment tms = Linker32.targetImage;
+						while (tms != null && reporter.nofErrors <= 0) {
+							if (tms.segment.owner.technology == 1) { // Flash device
+								if (tms.segment.owner.memorytype == Configuration.AM29LV160D) {
+									Am29LV160dFlashWriter flashWriter = new Am29LV160dFlashWriter(tc);
+									if (!flashErased) { // erase all used sectors
+										TargetMemorySegment current = tms;
+										// first mark all used sectors
+										while (current != null && current.segment.owner.memorytype == Configuration.AM29LV160D) {
+											current.segment.owner.markUsedSectors(current);
+											current = current.next;
+										}
+										// second erase all marked sectors
+										ch.ntb.inf.deep.config.Device[] devs = Configuration.getDevicesByType(Configuration.AM29LV160D);
+										for (int i = 0; i < devs.length; i++) {
+											if(devs[i] == null) System.out.println("ERROR: devs[" + i + "] == null");
+											else flashWriter.eraseMarkedSectors(devs[i]);
+										}
+										flashErased = true;
+										log.println("Programming flash");
+									}
+
+									if (!flashWriter.unlocked) flashWriter.unlockBypass(tms.segment.owner, true);
+									flashWriter.writeSequence(tms);
+									if (tms.next == null || tms.next.segment.owner != tms.segment.owner && flashWriter.unlocked) {
+										flashWriter.unlockBypass(tms.segment.owner, false);
+										StdStreams.log.println();						
+									}
+								} else { // other memory type
+									ErrorReporter.reporter.error(807, "for Device " + tms.segment.owner.name.toString());
+									return;
+								}
+							} else {
+								if (dbg) vrb.print("  processing TMS #" + tms.id);
+								if (tms.segment == null) { // this should never happen
+									if (dbg) vrb.println(" -> skipping (segment not defined)");
+								} else {
+									if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
+									tc.writeTMS(tms);
+								}
+							}
+							tms = tms.next;
 						}
-						tms = tms.next;
 					}
-					tc.resetErasedFlag();
 				} 
 				catch (TargetConnectionException e) {
-					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
+					if (e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException") {
 						reporter.error(813);
-					}
-					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
+					} else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException") {
 						reporter.error(814);
-					}
-					else{
+					} else {
 						reporter.error(801);
 					}
 				}
@@ -421,19 +515,17 @@ public class Launcher implements ICclassFileConsts {
 		try {
 			if(tc != null) tc.stopTarget();
 		} catch (TargetConnectionException e) {
-			e.printStackTrace();
+			reporter.error(803);
 		}
 	}
 
 	public static void openTargetConnection() {
 		if (dbg) vrb.println("[Launcher] Opening target connection");
 		if (tc != null) {
-			if (dbg) vrb.println(" -> ok");
 			try {
-				if(dbg) vrb.println("  Initializing target connection");
-				tc.init();
+				if (!tc.isConnected()) tc.openConnection();
 			} catch (TargetConnectionException e) {
-				e.printStackTrace();
+				reporter.error(815);
 			}
 		} else reporter.error(803);
 	}
@@ -450,16 +542,24 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void closeTargetConnection() {
-		if(dbg) vrb.println("[Launcher] Closing target connection");
-		if(tc != null) tc.closeConnection();
+		if (dbg) vrb.println("[Launcher] Closing target connection");
+		if (tc != null) tc.closeConnection();
 	}
 
 	public static TargetConnection getTargetConnection() {
 		return tc;
 	}
 
-	public static void setTargetConnection(TargetConnection tc2) {
-		tc = tc2;
+	public static void setTargetConnection(TargetConnection targConn) {
+		tc = targConn;
+		Programmer programmer = Configuration.getProgrammer();
+		if (programmer != null) {
+			HString opts = programmer.getOpts();
+			if (opts != null) {
+				tc.setOptions(opts);
+				if (dbg) vrb.println("[Launcher] Setting target connection options to " + opts.toString());
+			}
+		}
 	}
 
 	protected static long saveTargetImageToFile(String fileName, int format) {
@@ -488,7 +588,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	protected static void saveCommandTableToFile(String fileName) {
-		if (reporter.nofErrors <= 0){
+		if (reporter.nofErrors <= 0) {
 			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));
 			path.mkdirs(); // create directories if not existing
 			try {

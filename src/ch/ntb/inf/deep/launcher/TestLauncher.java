@@ -39,9 +39,10 @@ public class TestLauncher {
 	public static void main(String[] args) {
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
-		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
@@ -72,7 +73,7 @@ public class TestLauncher {
 				}
 			} else System.out.println("no programmer defined");
 		} 
-		
+
 //		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 
 		/* DEBUG OUTPRINTS */

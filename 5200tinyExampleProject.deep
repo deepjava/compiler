@@ -11,6 +11,7 @@ project ExampleProjectMpc5200B {
 	boardtype = phyCoreMpc5200tiny;
 	ostype = ntbSTS;
 #	programmertype = bdi2000;
+#	programmeropts = bdi3000inf01;
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
 	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/SimpleBlinkerDemo";
