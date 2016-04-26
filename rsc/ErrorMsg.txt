@@ -77,6 +77,8 @@ ErrorNr;Description;Solution
 633;initialization failed, method in low level class not found;
 634;class not found;
 640;SSA has exit set with more entries than maximum number of join values;
+650;branch offset out of range;
+651;immediate offset out of range;
 
 701;class not loaded;
 702;class not found;

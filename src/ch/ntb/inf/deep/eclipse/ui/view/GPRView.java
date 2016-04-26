@@ -137,14 +137,14 @@ public class GPRView extends ViewPart implements ISelectionListener {
 					String value = Integer.toBinaryString(((Register)obj).value);
 					String temp = "";
 					
-					// complete to 32 Bit
+					// complete to 32 bit
 					int length = 32 - value.length();
 					for (int y = 0; y < length; y++) {
 						temp = temp + "0";
 					}
 					value = temp + value;
 
-					// insert Spaces
+					// insert spaces
 					int z = 4;
 					temp = value.substring(0, 4);
 					for (int x = 0; x < 7; x++) {
@@ -319,7 +319,7 @@ public class GPRView extends ViewPart implements ISelectionListener {
 				if (tc == null)return;
 				try {
 					if (!tc.isConnected()) tc.openConnection();
-					if (tc.getTargetState() == TargetConnection.stateDebug) tc.startTarget();
+					if (tc.getTargetState() == TargetConnection.stateDebug) tc.startTarget(-1);
 				} catch (TargetConnectionException e) {
 					e.printStackTrace();
 				}
@@ -341,12 +341,9 @@ public class GPRView extends ViewPart implements ISelectionListener {
 	}
 	
 	private synchronized void update(){
-		if (model == null){
-			model = RegModel.getInstance();
-		}else{
-			model.updateGPRModel();
-		}
-		if(model.getMod(0) != null){
+		if (model == null) model = RegModel.getInstance();
+		else model.updateGPRModel();
+		if (model.getMod(0) != null) {
 			viewer.setInput(model);
 			viewer.getControl().setEnabled(true);
 			viewer.refresh();

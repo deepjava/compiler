@@ -125,10 +125,12 @@ public class Launcher implements ICclassFileConsts {
 			if (arch.name.equals(HString.getHString("ppc32"))) {
 				cg = new CodeGenPPC();
 				InstructionDecoder.dec = new InstructionDecoderPPC();
+				Linker32.bigEndian = true;
 			}
 			if (arch.name.equals(HString.getHString("arm32"))) {
 				cg = new CodeGenARM();
 				InstructionDecoder.dec = new InstructionDecoderARM();
+				Linker32.bigEndian = false;
 			}
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
 			cg.init();
@@ -340,7 +342,6 @@ public class Launcher implements ICclassFileConsts {
 			cg.doFixups(m.machineCode);
 			m = (Method)m.next;
 		}
-//		Method.printCompSpecificSubroutines();
 
 		// Linker: update system table, determine size of code
 		if (reporter.nofErrors <= 0) {
@@ -375,65 +376,9 @@ public class Launcher implements ICclassFileConsts {
 			if (fname != null && !fname.equals(HString.getHString(""))) 
 				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
 		}	
-		
+
 		return reporter.nofErrors;
 	}
-	
-//	public static void downloadTargetImage() {
-//		Board b = Configuration.getBoard();
-//		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
-//		if (b != null) {
-//			if (tc != null) {
-//				try {
-//					if (dbg) vrb.println("[Launcher] Reseting target");
-//					tc.resetTarget();
-//					if (dbg) vrb.println("[Launcher] Initializing registers");
-//					RegisterInit r = b.regInits;
-//					while (r != null) {
-//						tc.setRegisterValue(r.reg, r.initValue);
-//						r = (RegisterInit) r.next;
-//					}
-//					r = targetConfig.regInits;
-//					while (r != null) {
-//						tc.setRegisterValue(r.reg, r.initValue);
-//						r = (RegisterInit) r.next;
-//					}
-//					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R"+i, 0);
-//
-//					log.println("Downloading target image:");
-//					Programmer programmer = Configuration.getProgrammer();
-//					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
-//						tc.writeTMS(null);
-//					} else {
-//						TargetMemorySegment tms = Linker32.targetImage;
-//						while (tms != null && reporter.nofErrors <= 0) {
-//							if (dbg) vrb.print("  processing TMS #" + tms.id);
-//							if (tms.segment == null) { // this should never happen
-//								if (dbg) vrb.println(" -> skipping (segment not defined)");
-//							} else {
-//								if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
-//								tc.writeTMS(tms);
-//							}
-//							tms = tms.next;
-//						}
-//						tc.resetErasedFlag();
-//					}
-//
-//				} 
-//				catch (TargetConnectionException e) {
-//					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
-//						reporter.error(813);
-//					}
-//					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
-//						reporter.error(814);
-//					}
-//					else{
-//						reporter.error(801);
-//					}
-//				}
-//			} else 	reporter.error(800);
-//		} else	reporter.error(238);
-//	}
 
 	public static void downloadTargetImage() {
 		boolean flashErased = false;
@@ -520,12 +465,12 @@ public class Launcher implements ICclassFileConsts {
 		} else	reporter.error(238);
 	}
 
-	public static void startTarget() {
+	public static void startTarget(int address) {
 		if (reporter.nofErrors <= 0) {
 			if (tc != null) {
 				log.println("Starting target");
 				try {
-					tc.startTarget();
+					tc.startTarget(address);
 				} catch (TargetConnectionException e) {
 					reporter.error(805);
 					reporter.nofErrors++;

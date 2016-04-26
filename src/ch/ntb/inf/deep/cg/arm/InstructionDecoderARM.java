@@ -1515,13 +1515,13 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 						}
 						if (((op1 & 0x5) == 0x5) && (n != 0xf)){	// Load Signed Halfword p.458
 							if (index && !wback) {	// Offset
-								return "strd" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", #" + (add?"+":"-") + imm8 + "]";
+								return "ldrsh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", #" + (add?"+":"-") + imm8 + "]";
 							}
 							if (index && wback) {	// Pre-index
-								return "strd" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", #" + (add?"+":"-") + imm8 + "]!";
+								return "ldrsh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", #" + (add?"+":"-") + imm8 + "]!";
 							}
 							if (!index && wback) {	// Post-index
-								return "strd" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + "], #" + (add?"+":"-") + imm8;
+								return "ldrsh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + "], #" + (add?"+":"-") + imm8;
 							}
 						}
 						if (((op1 & 0x5) == 0x5) && (n == 0xf)){	// Load Signed Halfword p.460

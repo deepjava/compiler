@@ -33,7 +33,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 	
 	public SSA ssa;	// reference to the SSA of a method
 	public int[] instructions;	// contains machine instructions for the ssa of a method
-	public int iCount;	// nof instructions for this method
+	public int iCount;	// nof instructions for this method, including exception information
 	public int excTabCount;	// start of exception information in instruction array
 	
 	public Item[] fixups;	// contains all references whose address has to be fixed by the linker
@@ -51,8 +51,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 		int len = instructions.length;
 		if (iCount == len) {
 			int[] newInstructions = new int[2 * len];
-			for (int k = 0; k < len; k++)
-				newInstructions[k] = instructions[k];
+			System.arraycopy(instructions, 0, newInstructions, 0, len);
 			instructions = newInstructions;
 		}
 	}
@@ -79,7 +78,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 					sb.append(", [0x" + Integer.toHexString(li + 4 * i) + "]\t");
 				}
 			} else {	// arm
-				int opcode = (instructions[i] & 0x0e000000);
+				int opcode = (instructions[i] & 0x0f000000);
 				if (opcode == armB) {
 					int jump = ((instructions[i] & 0xFFFFFF) << 8 >> 6) + 8;
 					sb.append(", [0x" + Integer.toHexString(jump + 4 * i) + "]\t");
@@ -109,7 +108,10 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 			}
 			sb.append("\t" + String.format("%08X", instructions[i]));
 			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-			sb.append("(end of method)\n");
+			sb.append("(end of method)\n"); i++;
+			sb.append("\t" + String.format("%08X", instructions[i]));
+			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+			sb.append(instructions[i++]); sb.append("  (address of class variables)\n");
 		}
 		return sb.toString();
 	}

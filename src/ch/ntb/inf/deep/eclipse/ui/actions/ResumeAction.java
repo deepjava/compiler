@@ -51,7 +51,7 @@ public class ResumeAction implements IWorkbenchWindowActionDelegate {
 		}
 		try {
 			if(!bdi.isConnected()) bdi.openConnection();
-			bdi.startTarget();
+			bdi.startTarget(-1);
 		} catch (TargetConnectionException e) {	}
 	}
 

@@ -75,18 +75,15 @@ public class StringTable {
 	}
 
 	public HString getEntry(HString hstring) {
-//			int hash = hashCode(key, length);
 		int hash = hstring.hash;
 		int lvArrayLength = hstring.arrayLen;
 		int lvLength = hstring.length;
 		
-//out.println(">getString: hstring="+hstring +", hstring.hash="+hash +", hstring.length="+(int)hstring.length +", hstring.arrLenth="+arrLenth);
 		HString entry = tab[hash & hashCodeMask];
 		while (entry != null && lvLength > entry.length)  entry = entry.next;	
 
 		HString foundStr = null;
 		while (entry != null && lvLength == entry.length) {
-//out.println(" getString10: entry="+entry +", entry.hash="+entry.hash +", entry.length="+(int)entry.length +", entry.arrLenth="+entry.arrayLen);
 			if (lvArrayLength == entry.arrayLen && hash == entry.hash) {
 				char[] eHchars = entry.chars;
 				char[] hHchars = hstring.chars;
@@ -106,7 +103,6 @@ public class StringTable {
 		int hashCode = hashCode(jchars, length);
 		int index = hashCode  & hashCodeMask;
 		HString entry = tab[index];
-//vrb.println(">insChars10: lenght="+length +", jchar.length="+jchars.length); HString.printChars(jchars, length);
 		HString pred = null;
 		while (entry != null && length > entry.length)  { pred = entry;   entry = entry.next; }
 
@@ -114,14 +110,12 @@ public class StringTable {
 		while (entry != null && length == entry.length) {
 			if (hashCode == entry.hash) {
 				if (entry.equals(jchars, length)) {
-//vrb.println("entry.equals(jchars, length), entry: "+entry);
 					foundStr = entry;
 					break;
 				}
 			}
 			entry = entry.next;
 		}
-//vrb.println("insChars20: lenght="+length +", entry: "+entry);
 
 		if (foundStr == null) {
 			nofEntries++;
@@ -184,21 +178,12 @@ public class StringTable {
 
 
 	public HString insertCondAndGetEntry(String jstring) {
-//		return insertCondAndGetString(HString.getHString(string));
 		int jlength = jstring.length();
 		char[] jchars = new char[jlength];
 		jstring.getChars(0, jlength, jchars, 0);
 		return insertCondAndGetEntry(jchars, jlength);
 	}
-	
-	
-
-//	public String insertCondAndGetString(String newString) {
-//		StringTabEntry entry = insertCondAndGetEntry(newString);
-//		return entry.string;
-//	}
-//
-	
+		
 	//--- debug primitives:
 	
 	public void printHeadLine() {

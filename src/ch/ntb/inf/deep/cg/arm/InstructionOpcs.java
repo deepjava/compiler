@@ -21,36 +21,36 @@ package ch.ntb.inf.deep.cg.arm;
 public interface InstructionOpcs {
 	
 	
-	final int TOifequal = 0x04;
-	final int TOifless = 0x10;
-	final int TOifgreater = 0x08;
-	final int TOifgeU = 0x05;
-	final int TOifnequal = 0x18;
-	final int TOalways = 0x1f;
-	final int LT = 0;
-	final int GT = 1;
-	final int EQ = 2;
-	final int XER = 1;
-	final int LR = 8;
-	final int CTR = 9;
-	final int SRR0 = 26;
-	final int SRR1 = 27;
-	final int EIE = 80;
-	final int EID = 81;
-	final int NRI = 82;
+//	final int TOifequal = 0x04;
+//	final int TOifless = 0x10;
+//	final int TOifgreater = 0x08;
+//	final int TOifgeU = 0x05;
+//	final int TOifnequal = 0x18;
+//	final int TOalways = 0x1f;
+//	final int LT = 0;
+//	final int GT = 1;
+//	final int EQ = 2;
+//	final int XER = 1;
+//	final int LR = 8;
+//	final int CTR = 9;
+//	final int SRR0 = 26;
+//	final int SRR1 = 27;
+//	final int EIE = 80;
+//	final int EID = 81;
+//	final int NRI = 82;
 	
-	final int CRF0SO = 3;
-	final int CRF0EQ = 2;
-	final int CRF0GT = 1;
-	final int CRF0LT = 0;
-	final int CRF1SO = 7;
-	final int CRF1EQ = 6;
-	final int CRF1GT = 5;
-	final int CRF1LT = 4;
-	final int CRF2SO = 11;
-	final int CRF2EQ = 10;
-	final int CRF2GT = 9;
-	final int CRF2LT = 8;
+//	final int CRF0SO = 3;
+//	final int CRF0EQ = 2;
+//	final int CRF0GT = 1;
+//	final int CRF0LT = 0;
+//	final int CRF1SO = 7;
+//	final int CRF1EQ = 6;
+//	final int CRF1GT = 5;
+//	final int CRF1LT = 4;
+//	final int CRF2SO = 11;
+//	final int CRF2EQ = 10;
+//	final int CRF2GT = 9;
+//	final int CRF2LT = 8;
 	
 
 
@@ -279,15 +279,10 @@ public interface InstructionOpcs {
 	armRrxs = armRrx | (1 << 20),
 	
 	
-	// createMovw
 	armMovw = (0x18 << 21),
-
-
-	// createMovt
 	armMovt = (0x1a << 21),
 	
-	
-	// crateSynchPrimLoad / crateSynchPrimStore
+	// createSynchPrimLoad / crateSynchPrimStore
 	armLdrex  = (0x0 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
 	armLdrexb = (0x2 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
 	armLdrexd = (0x1 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
@@ -352,20 +347,20 @@ public interface InstructionOpcs {
 	// Load/store word and unsigned/signed byte
 	armLdr   = (0x41 << 20),
 	armLdrb  = (0x45 << 20),
-	armLdrsb  = (0x05 << 20) | (0xd << 4),
-	armLdrh  = (0x05 << 20) | (0xb << 4),
-	armLdrsh  = (0x05 << 20) | (0xf << 4),
+	armLdrsb  = (0x01 << 20) | (0xd << 4),
+	armLdrh  = (0x01 << 20) | (0xb << 4),
+	armLdrsh  = (0x01 << 20) | (0xf << 4),
 	armStr   = (0x40 << 20),
 	armStrb  = (0x44 << 20),
-	armStrh  = (0x4 << 20) | (0xb << 4),
-	// ...P=0, W=1 (unprivileged)
+	armStrh  = (0xb << 4),
+
 	armLdrt  = (0x43 << 20),
 	armLdrbt = (0x47 << 20),
 	armStrt  = (0x42 << 20),
 	armStrbt = (0x46 << 20),
 	
 	
-	// Branch, branch with link, and block data transfer
+	// Block data transfer
 	armLdm   = (0x89 << 20),
 	armLdmda = (0x81 << 20),
 	armLdmdb = (0x91 << 20),
@@ -375,8 +370,8 @@ public interface InstructionOpcs {
 	armStmdb = (0x90 << 20),
 	armStmib = (0x98 << 20),
 	// ...Rn=0, W=0
-	armPop   = (0x8bd << 20),
-	armPush  = (0x92d << 20),
+	armPop   = (0x8bd << 16),
+	armPush  = (0x92d << 16),
 	
 	
 	// Unconditional instructions

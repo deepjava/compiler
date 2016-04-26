@@ -2261,7 +2261,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					assert false : "return instruction not implemented";
 					return;
 				}
-				if (node.next != null)	// last node needs no branch
+				if (node.next != null)	// last node needs no branch, other nodes branch to epilogue 
 					createIli(code, ppcB, 0, false);
 				break;}
 			case sCbranch:
@@ -2889,6 +2889,10 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		}
 	}
 	
+	/* 
+	 * Loads a 32 bit constant into a register
+	 * the value of the constant will later be fixed
+	 */
 	private void loadConstantAndFixup(Code32 code, int reg, Item item) {
 		assert(reg != 0);
 		if (code.lastFixup < 0 || code.lastFixup > 32768) {ErrorReporter.reporter.error(602); return;}

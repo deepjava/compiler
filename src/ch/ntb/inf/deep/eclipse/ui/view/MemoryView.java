@@ -246,8 +246,7 @@ public class MemoryView extends ViewPart implements Listener {
 			int size = 0;
 			String addrStr = addr.getText();
 			String countStr = count.getText();
-			//work around for problem when in hex-int-number the most significant bit is set;
-			//once for the start addres
+			// work around for problem when the most significant bit is set;
 			if(addrStr.charAt(0) == '0' && addrStr.length() > 9 && addrStr.charAt(2) > '7'){
 				String most = addrStr.substring(2, 3);
 				addrStr = "0x0" + addrStr.substring(3);
@@ -255,7 +254,7 @@ public class MemoryView extends ViewPart implements Listener {
 			}else{
 				startAddr = Integer.decode(addr.getText());
 			}
-			//once for the size
+			// do the same for the size
 			if(countStr.charAt(0) == '0' && countStr.length() > 9 && countStr.charAt(2) > '7'){
 				String most = countStr.substring(2, 3);
 				countStr = "0x0" + countStr.substring(3);
@@ -263,15 +262,15 @@ public class MemoryView extends ViewPart implements Listener {
 			}else{
 				size = Integer.decode(count.getText());
 			}
-			TargetConnection bdi = Launcher.getTargetConnection();
-			if (bdi == null) {
+			TargetConnection tc = Launcher.getTargetConnection();
+			if (tc == null) {
 				viewer.setInput(new String[]{"target not connected"});
 				viewer.refresh();
 				return;
 			}
-			if(!bdi.isConnected()){//reopen
+			if (!tc.isConnected()) {//reopen
 				try {
-					bdi.openConnection();
+					tc.openConnection();
 				} catch (TargetConnectionException e) {
 					viewer.setInput(new String[]{"target not initialized"});
 					viewer.refresh();
@@ -281,28 +280,26 @@ public class MemoryView extends ViewPart implements Listener {
 			if (size > 0) {
 				segs = new MemoryEntry[size];
 				try {
-					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-					if (!wasFreezeAsserted) {
-						bdi.stopTarget();
-					}
+					boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+					if (!wasFreezeAsserted) tc.stopTarget();
+			
 					for (int i = 0; i < size; i++) {
 						switch (width) {
 						case 1:
-							segs[i] = new MemoryEntry(startAddr + i, bdi.readByte(startAddr + i));
+							int val = tc.readByte(startAddr + i);
+							segs[i] = new MemoryEntry(startAddr + i, val);
 							break;
 						case 2: 
-							segs[i] = new MemoryEntry(startAddr + i * 2, bdi.readHalfWord(startAddr + i * 2));
+							segs[i] = new MemoryEntry(startAddr + i * 2, tc.readHalfWord(startAddr + i * 2));
 							break;
 						case 4: 
-							segs[i] = new MemoryEntry(startAddr + i * 4, bdi.readWord(startAddr + i * 4));
+							segs[i] = new MemoryEntry(startAddr + i * 4, tc.readWord(startAddr + i * 4));
 							break;
 						default: 
-							segs[i] = new MemoryEntry(startAddr + i * 4, bdi.readWord(startAddr + i * 4));
+							segs[i] = new MemoryEntry(startAddr + i * 4, tc.readWord(startAddr + i * 4));
 						}
 					}
-					if (!wasFreezeAsserted) {
-						bdi.startTarget();
-					}
+					if (!wasFreezeAsserted) tc.startTarget(-1);
 				} catch (TargetConnectionException e1) {
 					viewer.setInput(new String[]{"target not initialized"});
 					viewer.refresh();
@@ -387,33 +384,30 @@ public class MemoryView extends ViewPart implements Listener {
 			if ("Value".equals(property)){
 				try{
 					p.value =Integer.decode((String) value);
-					TargetConnection bdi = Launcher.getTargetConnection();
-					if(bdi == null){
+					TargetConnection tc = Launcher.getTargetConnection();
+					if(tc == null){
 						viewer.setInput(new String[]{"target not connected"});
 						viewer.refresh();
 						return;
 					}
 					
-					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-					if(!wasFreezeAsserted){
-						bdi.stopTarget();
-					}
+					boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+					if (!wasFreezeAsserted)	tc.stopTarget();
+				
 					switch (width) {
 					case 1:
-						bdi.writeByte(p.addr, (byte)p.value);
+						tc.writeByte(p.addr, (byte)p.value);
 						break;
 					case 2:
-						bdi.writeHalfWord(p.addr, (short)p.value);
+						tc.writeHalfWord(p.addr, (short)p.value);
 						break;
 					case 4:
-						bdi.writeWord(p.addr, p.value);
+						tc.writeWord(p.addr, p.value);
 						break;
 					default:
-						bdi.writeWord(p.addr, p.value);
+						tc.writeWord(p.addr, p.value);
 					}
-					if(!wasFreezeAsserted){
-						bdi.startTarget();
-					}
+					if (!wasFreezeAsserted)	tc.startTarget(-1);
 				}catch (NumberFormatException e) {
 				}catch (TargetConnectionException e1){
 					viewer.setInput(new String[]{"target not initialized"});

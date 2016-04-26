@@ -1826,7 +1826,9 @@ public class Parser implements ICclassFileConsts {
 			else reporter.error(201, "in " + currentFileName + " at Line " + lineNumber);
 		} else if (sym == sDesignator) {
 			assert currentConsts != null;
-			value = ((SystemConstant)currentConsts.getItemByName(strBuffer)).val;
+			Item item = currentConsts.getItemByName(strBuffer);
+			if (item != null) value = ((SystemConstant)item).val;
+			else reporter.error(241, "in " + currentFileName + " at Line " + lineNumber);
 			next();
 		} else reporter.error(200, "in " + currentFileName + " at Line " + lineNumber);
 		if (isNeg) return -value;

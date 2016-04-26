@@ -343,7 +343,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 						bdi.openConnection();
 					}
 					if(bdi.getTargetState() != TargetConnection.stateDebug){
-						bdi.startTarget();
+						bdi.startTarget(-1);
 					}
 				} catch (TargetConnectionException e) {
 					e.printStackTrace();

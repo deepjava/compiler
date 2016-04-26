@@ -25,7 +25,7 @@ interface Registers {
 	final int topGPR = 15;	// highest numbered GPR
 	final int topFPR = 15;	// highest numbered FPR
 	
-	final int paramStartGPR = 2;	// GPR with first parameter
+	final int paramStartGPR = 0;	// GPR with first parameter
 	final int paramStartFPR = 1;	// FPR with first parameter
 	
 	final int paramEndGPR = 6;	// GPR with last parameter, must be < nonVolStartGPR
@@ -39,8 +39,8 @@ interface Registers {
 	// volEndFPR must be 1 lower than nonVolStartFPR
 	final int volEndFPR = 8;	// last volatile FPR
 
-	final int returnGPR1 = 2;	// GPR with return value
-	final int returnGPR2 = 3;	// GPR with return value used for longs
+	final int returnGPR1 = 0;	// GPR with return value
+	final int returnGPR2 = 1;	// GPR with return value used for longs
 	final int returnFPR = 1;	// FPR with return value
 	
 	final int stackPtr = 13;	// register for stack pointer

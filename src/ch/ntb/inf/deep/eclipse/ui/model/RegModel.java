@@ -20,7 +20,9 @@ package ch.ntb.inf.deep.eclipse.ui.model;
 
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
@@ -79,7 +81,7 @@ public class RegModel  {
 			/*the mcdp-lib dosent support access to Development Port Data Register
 			deSuSPR[16] = new Register("DPDR",bdi.getSPR(630),0);*/
 
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			devSupportLevelSPR = null;
@@ -117,7 +119,7 @@ public class RegModel  {
 			supervisorLevelSPR[9]= new Register("PVR", (int)tc.getRegisterValue("PVR"), 1);
 			supervisorLevelSPR[10]= new Register("FPECR", (int)tc.getRegisterValue("FPECR"), 1);
 
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			supervisorLevelSPR = null;
@@ -138,7 +140,7 @@ public class RegModel  {
 			if(!wasFreezeAsserted) tc.stopTarget();
 			
 			msr[0] = new Register("MSR", (int)tc.getRegisterValue("MSR"), 1);
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			msr = null;
@@ -165,7 +167,7 @@ public class RegModel  {
 			userLevelSPR[4] = new Register("TBU", (int)tc.getRegisterValue("TBUread"), 1);
 			userLevelSPR[5] = new Register("CR", (int)tc.getRegisterValue("CR"), 1);
 
-			if(!wasFreezeAsserted) tc.startTarget();
+			if(!wasFreezeAsserted) tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			userLevelSPR = null;
@@ -191,7 +193,7 @@ public class RegModel  {
 			}
 			FPSCR[0] = new Register("FPSCR", (int)tc.getRegisterValue("FPSCR"),1);
 			
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			fprs = null;
@@ -215,12 +217,16 @@ public class RegModel  {
 			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted) tc.stopTarget();
 			
-			
-			for (int i = 0; i < nof; i++) {
-				gprs[i] = new Register("GPR"+i, (int) tc.getRegisterValue("R" + i), 1);
+			ch.ntb.inf.deep.config.Register regs = b.cpu.arch.regs;
+			int i = 0;
+			while (regs != null) {
+				String name = regs.name.toString();
+				if (regs != null && regs.regType == Parser.sGPR) 
+					gprs[i++] = new Register(name, (int) tc.getRegisterValue(name), 1);
+				regs = (ch.ntb.inf.deep.config.Register) regs.next;
 			}
 			
-			if (!wasFreezeAsserted) tc.startTarget();
+			if (!wasFreezeAsserted) tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			gprs = null;
@@ -262,7 +268,7 @@ public class RegModel  {
 			
 			/*the mcdp-lib doesn't support access to the Development Port Data Register
 			deSuSPR[16].value = bdi.getSPR(630);*/
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			devSupportLevelSPR = null;
@@ -303,7 +309,7 @@ public class RegModel  {
 			supervisorLevelSPR[9].value  = (int)tc.getRegisterValue("PVR");
 			supervisorLevelSPR[10].value  = (int)tc.getRegisterValue("FPECR");
 
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			supervisorLevelSPR = null;
@@ -328,7 +334,7 @@ public class RegModel  {
 			
 			msr[0].value  = (int)tc.getRegisterValue("MSR");
 
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			msr = null;
@@ -358,7 +364,7 @@ public class RegModel  {
 			userLevelSPR[4].value  = (int)tc.getRegisterValue("TBUread");
 			userLevelSPR[5].value  = (int)tc.getRegisterValue("CR");
 
-			if (!wasFreezeAsserted) tc.startTarget();
+			if (!wasFreezeAsserted) tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			userLevelSPR = null;
@@ -386,7 +392,7 @@ public class RegModel  {
 			}
 			FPSCR[0].value = (int)tc.getRegisterValue("FPSCR");
 			
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			fprs = null;
@@ -414,10 +420,10 @@ public class RegModel  {
 			if (!wasFreezeAsserted)	tc.stopTarget();
 			
 			for (int i = 0; i < nof; i++) {
-				gprs[i].value = (int) tc.getRegisterValue("R" + i);
+				gprs[i].value = (int) tc.getRegisterValue(gprs[i].name);
 			}
 
-			if (!wasFreezeAsserted)	tc.startTarget();
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
 			gprs = null;

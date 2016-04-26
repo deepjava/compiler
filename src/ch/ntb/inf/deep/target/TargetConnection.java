@@ -37,7 +37,7 @@ public abstract class TargetConnection {
 	public abstract boolean isConnected();
 
 	public abstract int getTargetState() throws TargetConnectionException;
-	public abstract void startTarget() throws TargetConnectionException;
+	public abstract void startTarget(int adddress) throws TargetConnectionException;
 	public abstract void stopTarget() throws TargetConnectionException;
 	public abstract void resetTarget() throws TargetConnectionException;
 	
