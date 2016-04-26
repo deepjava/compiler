@@ -18,7 +18,9 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -110,6 +112,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	private static int compilerSpecificMethodsCodeSize = 0;
 	private static int compilerSpecificMethodsOffset = -1;
 	private static Segment compilerSpecSubroutinesSegment;
+
+	// Endianess of target
+	public static boolean bigEndian;
 	
 	
 	public static void init() {
@@ -1175,7 +1180,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		Segment[] s = Configuration.getSysTabSegments();
 		if (dbg) vrb.println("  > Address: 0x" + Integer.toHexString(s[0].address));
 		for (int i = 0; i < sysTabSegments.length; i++) {
-			addTargetMemorySegment(new TargetMemorySegment(s[i], s[i].address, systemTable)); // TODO@Martin: Implement additive system table for ram/flash boot
+			addTargetMemorySegment(new TargetMemorySegment(s[i], s[i].address, systemTable)); 
 		}
 		
 		if (dbg) vrb.println("  Proceeding global constant table:");
@@ -1201,79 +1206,78 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	public static long writeTargetImageToDtimFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");
 		
-		FileOutputStream timFile = new FileOutputStream(fileName); // TODO @Martin: use DataOutputStream!
+		DataOutputStream timFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fileName)));
 			
 		timFile.write("#dtim-0\n".getBytes()); // Header (8 Byte)
 		
 		TargetMemorySegment tms = targetImage;
 		int i = 0;
-		while(tms != null) {
+		while (tms != null) {
 			if(dbg) vrb.println("TMS #" + i + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4));
-			timFile.write(getBytes(tms.startAddress));
-			timFile.write(getBytes(tms.data.length*4));
-			for(int j = 0; j < tms.data.length; j++) {
-				timFile.write(getBytes(tms.data[j]));
+			timFile.writeInt(tms.startAddress);
+			timFile.writeInt(tms.data.length * 4);
+			for (int j = 0; j < tms.data.length; j++) {
+				timFile.writeInt(tms.data[j]);
 			}
 			i++;
 			tms = tms.next;
 		}
 		
-		long bytesWritten = timFile.getChannel().position();
-		if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+		long bytesWritten = timFile.size();
+		if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
 		timFile.close();
 		return bytesWritten;
 	}
 	
 	public static long writeTargetImageToBinFile(String fileName) throws IOException {
-		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":");
-		
+		if (dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":");
 		long bytesWritten = 0;
 		String fileExtension = "bin";
 		String pathAndFileName = fileName;
-		if(fileName.lastIndexOf('.') > 0) {
+		if (fileName.lastIndexOf('.') > 0) {
 			fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
 			pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
 		}
 		
 		String currentFileName;
-		FileOutputStream binFile = null; // TODO @Martin: use DataOutputStream!
 		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
 		currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
-		try{
-			binFile = new FileOutputStream(currentFileName);
+		try {
+			DataOutputStream binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));
 		
-			if(dbg) vrb.println("  Writing to file: " + currentFileName);
-			int currentAddress = dev.address;
-			while(tms != null) {
-				while(currentAddress < tms.startAddress) {
+			if (dbg) vrb.println("  Writing to file: " + currentFileName);
+			int currentAddress = dev.address;	// start with device start address
+			while (tms != null) {
+				while (currentAddress < tms.startAddress) { // fill with 0 from end of last tms to address of actual tms
 					binFile.write(0);
 					currentAddress++;
 				}
-				if(dbg) vrb.println("  > TMS #" + tms.id + ": start address = 0x" + Integer.toHexString(tms.startAddress) + ", size = 0x" + Integer.toHexString(tms.data.length * 4) + ", current address = 0x" + Integer.toHexString(currentAddress));
+				if (dbg) vrb.print("  > TMS #" + tms.id + ": start address = 0x" + Integer.toHexString(tms.startAddress) + ", size = 0x" + Integer.toHexString(tms.data.length * 4));
 				for(int j = 0; j < tms.data.length; j++) {
-//					binFile.write(getBytes(tms.data[j]));
-					binFile.write(getBytesLittle(tms.data[j]));
+					if (bigEndian) binFile.writeInt(tms.data[j]);
+					else binFile.writeInt(Integer.reverseBytes(tms.data[j]));
 					currentAddress += 4;
 				}
+				if (dbg) vrb.println(" end address = 0x" + Integer.toHexString(currentAddress));
 				
-				if(tms.next != null && tms.next.segment.owner != dev) {
+				if (tms.next != null && tms.next.segment.owner != dev) {
 					binFile.close();
 					dev = tms.next.segment.owner;
 					currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
-					binFile = new FileOutputStream(currentFileName);
+					binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));
 					currentAddress = dev.address;
-					if(dbg) vrb.println("  Writing to file: " + currentFileName);
+					if (dbg) vrb.println("  Writing to file: " + currentFileName);
 				}
 				tms = tms.next;
 			}
-			bytesWritten =  binFile.getChannel().position();
-			if(dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+			bytesWritten =  binFile.size();
+			if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
 			binFile.close();
 			log.println("Image file generated");
 		}
-		catch(Exception e){
+		catch (Exception e) {
 			reporter.error(11, "Writing image file");
 		}
 		return bytesWritten;
@@ -1350,23 +1354,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	
 	/* ---------- private helper methods ---------- */
 	
-	private static byte[] getBytes(int number) {
-		byte[] barray = new byte[4];
-		for (int i = 0; i < 4; ++i) {
-		    int shift = i << 3;
-		    barray[3-i] = (byte)((number & (0xff << shift)) >>> shift);
-		}
-		return barray;
-	}
-	private static byte[] getBytesLittle(int val) {
-		byte[] barray = new byte[4];
-		barray[0] = (byte)(val & 0xff);
-		barray[1] = (byte)((val >> 8) & 0xff);
-		barray[2] = (byte)((val >> 16) & 0xff);
-		barray[3] = (byte)((val >> 24) & 0xff);
-		return barray;
-	}
-	
 	private static int setBaseAddress(Segment s, int addr) {
 //		if(s.subSegments != null) setBaseAddress(s.subSegments, baseAddress);
 		if ((s.size > 0 && s.usedSize > 0) || ((s.attributes & ((1 << dpfSegStack) | (1 << dpfSegHeap) | (1 << dpfSegSysTab))) != 0)) { 
@@ -1425,7 +1412,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 
 	private static boolean checkConstantPoolType(Item item) {
-		// TODO @Martin: Make this configurable...
 		return item instanceof StdConstant && ((item.type == Type.wellKnownTypes[txFloat] || item.type == Type.wellKnownTypes[txDouble]));
 	}
 
