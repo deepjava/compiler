@@ -20,48 +20,6 @@ package ch.ntb.inf.deep.cg.arm;
 
 public interface InstructionOpcs {
 	
-	
-//	final int TOifequal = 0x04;
-//	final int TOifless = 0x10;
-//	final int TOifgreater = 0x08;
-//	final int TOifgeU = 0x05;
-//	final int TOifnequal = 0x18;
-//	final int TOalways = 0x1f;
-//	final int LT = 0;
-//	final int GT = 1;
-//	final int EQ = 2;
-//	final int XER = 1;
-//	final int LR = 8;
-//	final int CTR = 9;
-//	final int SRR0 = 26;
-//	final int SRR1 = 27;
-//	final int EIE = 80;
-//	final int EID = 81;
-//	final int NRI = 82;
-	
-//	final int CRF0SO = 3;
-//	final int CRF0EQ = 2;
-//	final int CRF0GT = 1;
-//	final int CRF0LT = 0;
-//	final int CRF1SO = 7;
-//	final int CRF1EQ = 6;
-//	final int CRF1GT = 5;
-//	final int CRF1LT = 4;
-//	final int CRF2SO = 11;
-//	final int CRF2EQ = 10;
-//	final int CRF2GT = 9;
-//	final int CRF2LT = 8;
-	
-
-
-	
-	
-	
-	
-	
-	
-// ARM
-// /////////////////////////////////////
 	final int condEQ = 0;
 	final int condNOTEQ = 1;
 	final int condCS = 2;
@@ -77,11 +35,6 @@ public interface InstructionOpcs {
 	final int condGT = 12;
 	final int condLE = 13;
 	final int condAlways = 14;
-	
-	
-	
-	
-	
 	
 	// Mnemonic extensions
 	public static String[] condString = {
@@ -373,6 +326,9 @@ public interface InstructionOpcs {
 	armPop   = (0x8bd << 16),
 	armPush  = (0x92d << 16),
 	
+	// Sign extension
+	armSxtb = (0x6af << 16) | (0x7 << 4),
+	armSxth = (0x6bf << 16) | (0x7 << 4), 
 	
 	// Unconditional instructions
 	armRfe = 0x08100a00,

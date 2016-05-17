@@ -71,6 +71,7 @@ ErrorNr;Description;Solution
 621;SSA branch instruction not implemented;
 623;sCcompl or sCcompg is not followed by branch instruction;
 625;SSA instruction not implemented;
+626;synthetic instruction not implemented;
 630;initialization failed, unsafe class not found;
 631;initialization failed, method in unsafe class not found;
 632;initialization failed, low level class not found;

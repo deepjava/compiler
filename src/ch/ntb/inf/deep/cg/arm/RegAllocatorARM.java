@@ -352,7 +352,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				while (i <= volEndGPR) {
 					if ((regsGPR & (1 << i)) != 0) {
 						regsGPR &= ~(1 << i);	
-						if (i-paramStartGPR > nofVolGPR) nofVolGPR = i+1-paramStartGPR;
+						if (i + 1 > nofVolGPR) nofVolGPR = i + 1;
 						return i;
 					}
 					i++;
@@ -362,7 +362,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			while (i >= nonVolStartGPR) {
 				if ((regsGPR & (1 << i)) != 0) {
 					regsGPR &= ~(1 << i);
-					if (nofGPR - i > nofNonVolGPR) nofNonVolGPR = nofGPR - i;
+					if (topGPR + 1 - i > nofNonVolGPR) nofNonVolGPR = topGPR + 1 - i;
 					return i;
 				}
 				i--;

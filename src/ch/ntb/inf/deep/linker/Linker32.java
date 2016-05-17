@@ -603,7 +603,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		systemTable = new FixedValueEntry("classConstOffset", stNofStacks + ( 2 * nofStacks + 2 * nofHeaps) * 4 + 12);
 		systemTable.appendTail(new FixedValueEntry("stackOffset", stNofStacks));
 		systemTable.appendTail(new FixedValueEntry("heapOffset", stNofStacks + 2 * nofStacks * 4 + 4));
-		systemTable.appendTail(new AddressEntry("kernelClinitAddr: " + kernelClass.name + ".",kernelClinit));
+		systemTable.appendTail(new AddressEntry("kernelClinitAddr: " + kernelClass.name + ".", kernelClinit));
 		systemTable.appendTail(new FixedValueEntry("resetOffset", Configuration.getResetOffset()));
 		sysTabSizeToCopy = new FixedValueEntry("sizeToCopy", -1);
 		systemTable.appendTail(sysTabSizeToCopy);
@@ -1450,8 +1450,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		}
 		int fcs = (int)checksum.getValue();
 		if (Linker32.dbg) vrb.println("    fsc = 0x" + Integer.toHexString(fcs));
-		// change endianess and complement
-		fcs = ((((byte)fcs)<<24) | ((((byte)(fcs>>8))<<16)&0xff0000) | ((((byte)(fcs>>16))<<8)&0xff00) | (((byte)(fcs>>24))&0xff)) ^ 0xffffffff;
+		if (bigEndian) {		// change endianess and complement
+			fcs = Integer.reverseBytes(fcs) ^ 0xffffffff;
+		} else {	// complement
+			fcs ^= 0xffffffff;		
+		}
 		((FixedValueEntry)fcsItem).setValue(fcs);
 		return fcs;
 	}

@@ -2023,6 +2023,9 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 						createIrSrAd(code, ppcStw, src1Reg, stackPtr, tempStorageOffset);
 						createIrDrAd(code, ppcLfs, 0, stackPtr, tempStorageOffset);
 						createIrDrB(code, ppcFmr, dReg, 0);
+					} else {
+						ErrorReporter.reporter.error(626, m.name.toString());
+						assert false : "not implemented " + m.name.toString();
 					}
 				} else {	// real method (not synthetic)
 					if ((m.accAndPropFlags & (1<<apfStatic)) != 0 ||

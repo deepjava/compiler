@@ -22,8 +22,8 @@ interface Registers {
 	final int nofGPR = 16;	
 	final int nofFPR = 16;
 	
-	final int topGPR = 15;	// highest numbered GPR
-	final int topFPR = 15;	// highest numbered FPR
+	final int topGPR = 12;	// highest numbered GPR except PC, LR, SP
+	final int topFPR = 12;	// highest numbered FPR
 	
 	final int paramStartGPR = 0;	// GPR with first parameter
 	final int paramStartFPR = 1;	// FPR with first parameter
@@ -35,9 +35,9 @@ interface Registers {
 	final int nonVolStartFPR = 7;	// first nonvolatile FPR
 
 	// volEndGPR must be 1 lower than nonVolStartGPR
-	final int volEndGPR = 8;	// last volatile GPR
+	final int volEndGPR = 6;	// last volatile GPR
 	// volEndFPR must be 1 lower than nonVolStartFPR
-	final int volEndFPR = 8;	// last volatile FPR
+	final int volEndFPR = 6;	// last volatile FPR
 
 	final int returnGPR1 = 0;	// GPR with return value
 	final int returnGPR2 = 1;	// GPR with return value used for longs
@@ -48,9 +48,9 @@ interface Registers {
 	final int PC = 15;			// register for program counter
 
 	// initial mask for GPR's, '1' means register is free
-	final int regsGPRinitial = -1 & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);
+	final int regsGPRinitial = 0xffff & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);
 	// initial mask for FPR's, '1' means register is free
-	final int regsFPRinitial = -1 & (~((1 << nonVolStartFPR) - 1) | ((1 << (volEndFPR+1)) - 1));	
+	final int regsFPRinitial = 0xffff & (~((1 << nonVolStartFPR) - 1) | ((1 << (volEndFPR+1)) - 1));	
 
 	final boolean gpr = true;
 	final boolean fpr = false;
