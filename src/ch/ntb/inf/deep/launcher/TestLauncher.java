@@ -26,6 +26,7 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 
@@ -38,13 +39,14 @@ import ch.ntb.inf.deep.classItems.Method;
 @SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
-		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
 //		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("armExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();

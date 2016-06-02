@@ -1796,7 +1796,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 								return "strb" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + "], #" + (add?"+":"-") + imm12;
 							}
 						}	// End of: Store Register Byte (immediate) p.680
-						if ((A==0)  &&  (((op1 & 0x5)==0x4) && ((op1 & 0x17)!=0x6))  &&  (B==0)) {	// Store Register Byte (register) p.682
+						if ((A==1)  &&  (((op1 & 0x5)==0x4) && ((op1 & 0x17)!=0x6))  &&  (B==0)) {	// Store Register Byte (register) p.682
 							if (index && !wback) {	// Offset
 								return "strb" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", " + "R" + m + ", " + decodeShift(type, imm5) + "]";
 							}
@@ -2090,6 +2090,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					}	// -a
 					
 				}	// End of: Media instructions p.209
+				break;
 			}// End of (op=2/3):
 				
 				
@@ -2140,7 +2141,8 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				if ((op20_6 & 0x30) == 0x30) {	// Branch with Link p.348
 					// Endocding A1 (cond != 0xf)
 					return "bl" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
-				}				
+				}	
+				break;
 			}// End of (op=4/5): Branch, branch with link, and block data transfer p.214
 
 			

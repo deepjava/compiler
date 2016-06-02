@@ -35,7 +35,7 @@ public class LowLevelTest {
 	@Test
 	public static void testDoubleToBits() {
 		double d1 = 0.0;
-		if (CmdTransmitter.plattform != CmdTransmitter.host) {
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			Assert.assertEquals("Test1", 0x0000000000000000L, LL.doubleToBits(d1));
 			d1 = 1.0;
 			Assert.assertEquals("Test2", 0x3FF0000000000000L, LL.doubleToBits(d1));
@@ -69,7 +69,7 @@ public class LowLevelTest {
 	@Test
 	public static void testBitsToDouble() {
 		long bits = 0x4004000000000000L;
-		if (CmdTransmitter.plattform != CmdTransmitter.host) {
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			Assert.assertEquals("Test1", 2.5, LL.bitsToDouble(bits), 0.0);
 			bits = 0xBFB999999999999AL;
 			Assert.assertEquals("Test2", -0.1, LL.bitsToDouble(bits), 0.0);
@@ -80,7 +80,7 @@ public class LowLevelTest {
 	@Test
 	public static void testFloatToBits() {
 		float f1 = 0.0f;
-		if (CmdTransmitter.plattform != CmdTransmitter.host) {
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			Assert.assertEquals("Test1", 0, LL.floatToBits(f1));
 			f1 = 1.0f;
 			Assert.assertEquals("Test2", 0x3F800000, LL.floatToBits(f1));
@@ -99,7 +99,7 @@ public class LowLevelTest {
 	@Test
 	public static void testBitsToFloat() {
 		int bits = 0x40200000;
-		if (CmdTransmitter.plattform != CmdTransmitter.host) {
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			Assert.assertEquals("Test1", 2.5f, LL.bitsToFloat(bits), 0.0);
 			bits = 0xbdcccccd;
 			Assert.assertEquals("Test2", -0.1, LL.bitsToFloat(bits), 1e-5);

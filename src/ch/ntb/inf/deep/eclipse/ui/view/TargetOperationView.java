@@ -576,7 +576,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					return String.format("%d", op.value);
 				}
 			case 3:
-				return String.format("0x%08X", op.value);
+				if (op.representation == 1) // Hex
+					return String.format("0x%08X", op.value);
+				return String.format("%d", op.value);
 			case 4:
 			case 5:
 				return "";

@@ -213,6 +213,8 @@ public interface InstructionOpcs {
 	armMuls = (1 << 20) | (9 << 4),
 	armMla = (2 << 20) | (9 << 4),
 	armMlas = (3 << 20) | (9 << 4),
+	armUmull = (8 << 20) | (9 << 4),
+	armUmulls = (9 << 20) | (9 << 4),
 	armSdiv = (0x71 << 20) | (0xf << 12) | (1 << 4),
 	
 	// createRotateShiftImm / createRotateShiftReg

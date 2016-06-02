@@ -114,7 +114,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (dbg) {StdStreams.vrb.print("\tassign reg for instr "); instr.print(0);}
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
-			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 16) & 0xF;
+			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 20) & 0xF;
 			if (nofAuxRegGPR == 4 && res.type == tLong) nofAuxRegGPR = 2; // long multiplication 
 			else if ((nofAuxRegGPR == 5 && res.type == tLong)	// long shift
 					|| ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble)))) // float loading, int -> float conversion
@@ -224,17 +224,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							findReg(res);
 						}
 					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
-						// check if division by const which is a power of 2, const must be divisor and positive
-						StdConstant constant = (StdConstant)res.constant;
-						boolean isPowerOf2;
-						if (type == tLong) {
-							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-							isPowerOf2 = isPowerOf2(immValLong);
-						} else {	
-							int immVal = constant.valueH;
-							isPowerOf2 = isPowerOf2(immVal);
-						}
-						if (!isPowerOf2) findReg(res);	
+						// division by const
 					} else if ((instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)

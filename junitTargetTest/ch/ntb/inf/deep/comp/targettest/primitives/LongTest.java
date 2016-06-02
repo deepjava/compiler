@@ -477,7 +477,7 @@ public class LongTest {
 		Assert.assertEquals("imm33", -4131218151L, v1 / 128);
 		Assert.assertEquals("imm34", -492, v1 / (1L<<30)); 
 		Assert.assertEquals("imm35", -246, v1 / (1L<<31)); 
-		if (CmdTransmitter.plattform != CmdTransmitter.host) {
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			// this test gives lower result on host, as it is done without shift operations on the host
 			Assert.assertEquals("imm36", -124, v1 / (1L<<32)); 
 		}
@@ -568,7 +568,7 @@ public class LongTest {
 		Assert.assertEquals("imm43", -83, v1 % 128);
 		Assert.assertEquals("imm44", -514946003, v1 % (1L<<30)); 
 		Assert.assertEquals("imm45", -514946003, v1 % (1L<<31)); 
-		if (CmdTransmitter.plattform != CmdTransmitter.host) {
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			// this test gives lower result on host, as it is done without shift operations on the host
 			Assert.assertEquals("imm46", 3780021293L, v1 % (1L<<32)); 
 		}
