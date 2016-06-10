@@ -232,29 +232,4 @@ public class VariousTest1 {
 		CmdTransmitter.sendDone();
 	}	
 
-	// tests the start method of the SCI driver
-	// error was found in register allocator
-//	static final int SCC2R0 = 0x305020;
-//	static final int SCC2R1 = 0x305022;
-//	@Test
-//	public static void startSCI2() {
-//		if(!CmdTransmitter.host){
-//			SCI2.start(9600, SCI2.NO_PARITY, (short)8);
-//			Assert.assertEquals("Test1", 130, US.GET2(SCC2R0));
-//			Assert.assertEquals("Test2", 0x2c, US.GET2(SCC2R1));
-//			SCI2.start(9600, SCI2.NO_PARITY, (short)8);
-//			Assert.assertEquals("Test1", 130, US.GET2(SCC2R0));
-//			Assert.assertEquals("Test2", 0x2c, US.GET2(SCC2R1));
-//			SCI2.start(9600, SCI2.NO_PARITY, (short)9);
-//			Assert.assertEquals("Test1", 130, US.GET2(SCC2R0));
-//			Assert.assertEquals("Test2", 0x22c, US.GET2(SCC2R1));
-//		}
-//
-//		CmdTransmitter.sendDone();
-//	}	
-	// attention!!!!
-	// this test cannot work, as it configures SCI2, which itself 
-	// initializes the QSMCM, which depending on the class order 
-	// switches of the SCI1, which is used for junitTarget
-
 }

@@ -26,7 +26,6 @@ import ch.ntb.inf.junitTarget.Test;
 /**
  * NTB 25.3.2011, Urs Graf
  * 
- * not yet working
  */
 @MaxErrors(100)
 public class VariousTest2 {

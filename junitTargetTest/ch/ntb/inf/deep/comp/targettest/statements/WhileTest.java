@@ -26,9 +26,6 @@ import ch.ntb.inf.junitTarget.Test;
 /**
  * NTB 02.12.2009
  * 
- * @author ??
- *
- *          Changes: 02.12.2009, Roger Millischer, add continue1(int), continue2(int), testContinue()
  */
 @MaxErrors(100)
 public class WhileTest {
