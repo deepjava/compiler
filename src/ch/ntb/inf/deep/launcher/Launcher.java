@@ -422,7 +422,7 @@ public class Launcher implements ICclassFileConsts {
 										// second erase all marked sectors
 										ch.ntb.inf.deep.config.Device[] devs = Configuration.getDevicesByType(Configuration.AM29LV160D);
 										for (int i = 0; i < devs.length; i++) {
-											if(devs[i] == null) System.out.println("ERROR: devs[" + i + "] == null");
+											if(devs[i] == null) StdStreams.err.println("ERROR: devs[" + i + "] == null");
 											else flashWriter.eraseMarkedSectors(devs[i]);
 										}
 										flashErased = true;

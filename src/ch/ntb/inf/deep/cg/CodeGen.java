@@ -28,7 +28,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = true;
+	protected static final boolean dbg = false;
 
 	protected static final int maxNofParam = 32;
 

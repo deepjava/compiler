@@ -215,6 +215,8 @@ public interface InstructionOpcs {
 	armMlas = (3 << 20) | (9 << 4),
 	armUmull = (8 << 20) | (9 << 4),
 	armUmulls = (9 << 20) | (9 << 4),
+	
+	// divide
 	armSdiv = (0x71 << 20) | (0xf << 12) | (1 << 4),
 	
 	// createRotateShiftImm / createRotateShiftReg
@@ -226,8 +228,6 @@ public interface InstructionOpcs {
 	armLsls = armLsl | (1 << 20),
 	armLsrs = armLsr | (1 << 20),
 	armRors = armRor | (1 << 20),
-	// armRrx in different method
-	
 
 	// createRrx
 	armRrx = (0xd << 21) | (0x3 << 5),
@@ -328,9 +328,9 @@ public interface InstructionOpcs {
 	armPop   = (0x8bd << 16),
 	armPush  = (0x92d << 16),
 	
-	// Sign extension
-	armSxtb = (0x6af << 16) | (0x7 << 4),
-	armSxth = (0x6bf << 16) | (0x7 << 4), 
+	// packing, unpacking, saturation, reversal
+	armSxtb = (0x2 << 20) | (0xf << 16) | (0x3 << 5),
+	armSxth = (0x3 << 20) | (0xf << 16) | (0x3 << 5), 
 	
 	// Unconditional instructions
 	armRfe = 0x08100a00,

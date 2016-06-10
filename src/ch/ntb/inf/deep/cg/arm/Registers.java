@@ -28,14 +28,14 @@ interface Registers {
 	final int paramStartGPR = 0;	// GPR with first parameter
 	final int paramStartFPR = 1;	// FPR with first parameter
 	
-	final int paramEndGPR = 6;	// GPR with last parameter, must be < nonVolStartGPR
+	final int paramEndGPR = 5;	// GPR with last parameter, must be < nonVolStartGPR
 	final int paramEndFPR = 6;	// FPR with last parameter, must be < nonVolStartFPR
 	
-	final int nonVolStartGPR = 7;	// first nonvolatile GPR
+	final int nonVolStartGPR = 6;	// first nonvolatile GPR
 	final int nonVolStartFPR = 7;	// first nonvolatile FPR
 
 	// volEndGPR must be 1 lower than nonVolStartGPR
-	final int volEndGPR = 6;	// last volatile GPR
+	final int volEndGPR = 5;	// last volatile GPR
 	// volEndFPR must be 1 lower than nonVolStartFPR
 	final int volEndFPR = 6;	// last volatile FPR
 
