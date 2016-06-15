@@ -31,7 +31,7 @@ public class ExceptionTabEntry {
 
 	public void print(int indentLevel) {
 		Item.indent(indentLevel);
-		vrb.print("try from " + startPc + " to " + endPc + " goto " + handlerPc + " when " + catchType.name);
+		vrb.print("try from " + startPc + " to " + endPc + " goto " + handlerPc + " when " + (catchType!=null?catchType.name:"any"));
 	}
 
 	public void println(int indentLevel) {
