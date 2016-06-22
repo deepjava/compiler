@@ -53,6 +53,7 @@ import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Field;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
@@ -70,7 +71,7 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
-public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts {
+public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts, ICclassFileConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
 	private TableViewer viewer;
 	private TargetOpObject[] elements;
@@ -462,11 +463,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				} catch (Exception e) {	}				
 
 			} else if (choice[op.operation].equals("TargetCMD")) sendCMD(op, param);
-			else if (param.equals("stirb!!!")){
-				MessageDialog dialog = new MessageDialog( viewer.getControl().getShell(), "bye bye", null, "aaaaaaaaaaahhhhhhhh",  MessageDialog.ERROR, new String[] { "tot" }, 0);
-		        dialog.open();
-				System.exit(0);
-			}
 			saveView();
 			viewer.refresh();
 		}
@@ -789,22 +785,24 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			int cmdAddr = ((Field) kernel.classFields.getItemByName(cmdAddrName)).address;
 			Method meth = (Method) clazz.methods.getItemByName(cmdName);
 			if (meth != null) {	
-				op.addr = meth.address;	// save address for display
-				TargetConnection tc = Launcher.getTargetConnection();
-				if (tc == null) {
-					op.errorMsg = "target not connected";
-					return;
-				}
-				try {
-					if (!tc.isConnected()) tc.openConnection();
-					boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-					if (!wasFreezeAsserted) tc.stopTarget();
-					tc.writeWord(cmdAddr, meth.address);
-					op.cmdSend = true;
-					if (!wasFreezeAsserted) tc.startTarget(-1);
-				} catch (TargetConnectionException e) {
-					op.errorMsg = "target not initialized";
-				}
+				if ((meth.accAndPropFlags & (1 << dpfCommand)) != 0) {
+					op.addr = meth.address;	// save address for display
+					TargetConnection tc = Launcher.getTargetConnection();
+					if (tc == null) {
+						op.errorMsg = "target not connected";
+						return;
+					}
+					try {
+						if (!tc.isConnected()) tc.openConnection();
+						boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+						if (!wasFreezeAsserted) tc.stopTarget();
+						tc.writeWord(cmdAddr, meth.address);
+						op.cmdSend = true;
+						if (!wasFreezeAsserted) tc.startTarget(-1);
+					} catch (TargetConnectionException e) {
+						op.errorMsg = "target not initialized";
+					}
+				} else op.errorMsg = "method is not a command";
 			} else op.errorMsg = "method not found";
 		} else op.errorMsg = "class not found";
 	}
