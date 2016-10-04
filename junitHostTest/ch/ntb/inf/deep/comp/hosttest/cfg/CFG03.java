@@ -78,27 +78,30 @@ public class CFG03 extends TestCFG implements ICclassFileConsts {
 
 	@Test
 	public void switchFar2() {
-		CFGNode[] nodes = getAndTestNodes("switchFar2", 10);
+		CFGNode[] nodes = getAndTestNodes("switchFar2", 12);
 		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {36,39,89,139});
 		testNode(nodes[1], 36, 38, false, nodes[0], new int[] {0}, new int[] {});
 		testNode(nodes[2], 39, 40, false, nodes[0], new int[] {0}, new int[] {89,79,81,89,87,89});
 		testNode(nodes[3], 79, 80, false, nodes[2], new int[] {39}, new int[] {});
-		testNode(nodes[4], 81, 84, false, nodes[2], new int[] {39}, new int[] {89});
-		testNode(nodes[5], 87, 88, false, nodes[2], new int[] {39}, new int[] {});
-		testNode(nodes[6], 89, 90, false, nodes[0], new int[] {0,39,81}, new int[] {139,137,131,137,137,139,137});
-		testNode(nodes[7], 131, 134, false, nodes[6], new int[] {89}, new int[] {139});
-		testNode(nodes[8], 137, 138, false, nodes[6], new int[] {89}, new int[] {});
-		testNode(nodes[9], 139, 140, false, nodes[0], new int[] {0,89,131}, new int[] {});
+		testNode(nodes[4], 81, 81, false, nodes[2], new int[] {39}, new int[] {84});
+		testNode(nodes[5], 84, 84, false, nodes[4], new int[] {81}, new int[] {89});
+		testNode(nodes[6], 87, 88, false, nodes[2], new int[] {39}, new int[] {});
+		testNode(nodes[7], 89, 90, false, nodes[0], new int[] {0,39,84}, new int[] {139,137,131,137,137,139,137});
+		testNode(nodes[8], 131, 131, false, nodes[7], new int[] {89}, new int[] {134});
+		testNode(nodes[9], 134, 134, false, nodes[8], new int[] {131}, new int[] {139});
+		testNode(nodes[10], 137, 138, false, nodes[7], new int[] {89}, new int[] {});
+		testNode(nodes[11], 139, 140, false, nodes[0], new int[] {0,89,134}, new int[] {});
 	}
 
 	@Test
 	public void testSwitchWhile(){
-		CFGNode[] nodes = getAndTestNodes("switchWhile", 5);
-		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {28,38});
-		testNode(nodes[1], 23, 25, false, nodes[2], new int[] {28}, new int[] {28});
-		testNode(nodes[2], 28, 32, true, nodes[0], new int[] {0,23}, new int[] {23,35});
-		testNode(nodes[3], 35, 35, false, nodes[2], new int[] {28}, new int[] {38});
-		testNode(nodes[4], 38, 38, false, nodes[0], new int[] {0,35}, new int[] {});
+		CFGNode[] nodes = getAndTestNodes("switchWhile", 6);
+		testNode(nodes[0], 0, 1, false, null, new int[] {}, new int[] {20,38});
+		testNode(nodes[1], 20, 20, false, nodes[0], new int[] {0}, new int[] {28});
+		testNode(nodes[2], 23, 25, false, nodes[3], new int[] {28}, new int[] {28});
+		testNode(nodes[3], 28, 32, true, nodes[1], new int[] {20,23}, new int[] {23,35});
+		testNode(nodes[4], 35, 35, false, nodes[3], new int[] {28}, new int[] {38});
+		testNode(nodes[5], 38, 38, false, nodes[0], new int[] {0,35}, new int[] {});
 	}
 
 }

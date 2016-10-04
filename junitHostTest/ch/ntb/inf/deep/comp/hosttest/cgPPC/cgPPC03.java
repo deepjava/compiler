@@ -92,7 +92,7 @@ public class cgPPC03 extends TestCgPPC {
 		getCode("switchWhile");
 		assertNull("wrong join", getJoin(0));
 		assertNull("wrong join", getJoin(1));
-		assertTrue("wrong join", checkJoin(getJoin(2), 0, 10, vol, false));
+		assertTrue("wrong join", checkJoin(getJoin(2), 0, 11, vol, false));
 		for (int i = 3; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}

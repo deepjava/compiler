@@ -20,13 +20,16 @@ package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.InstructionDecoder;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.ppc.InstructionDecoderPPC;
 import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.comp.hosttest.cfg.TestCFG;
+import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.ssa.SSA;
@@ -50,6 +53,8 @@ public class TestCgPPC implements ICclassFileConsts {
 		workspace = System.getProperty("user.dir");
 		project = Configuration.readProjectFile(workspace + "/junitHostTest.deep");
 		if (Configuration.getBoard().cpu.arch.name.equals(HString.getHString("ppc32"))) cg = new CodeGenPPC();
+		Code32.arch = Configuration.getBoard().cpu.arch;
+		InstructionDecoder.dec = new InstructionDecoderPPC();
 		cg.init();
 	}
 
@@ -71,6 +76,9 @@ public class TestCgPPC implements ICclassFileConsts {
 		m.cfg = TestCFG.cfg[i];
 		m.machineCode = new Code32(m.ssa);
 		cg.translateMethod(m);
+//		System.out.println(m.ssa.toString());
+//		System.out.println(RegAllocatorPPC.joinsToString());
+//		System.out.println(m.machineCode.toString());
 		return m.machineCode;
 	}
 
