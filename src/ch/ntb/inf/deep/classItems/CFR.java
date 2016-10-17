@@ -229,13 +229,17 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		if (dbg) vrb.println(">loadRootClass: " + rootClassName);
 
 		HString hRootClassName = Item.stab.insertCondAndGetEntry(rootClassName);
-		Class root = new Class(hRootClassName);
-		Class.appendRootClass(root);
-		root.accAndPropFlags |= (1<<dpfRootClass);
-		assert root.next == null;
-		root.loadClass(userReqAttributes);
+		Item cls = RefType.refTypeList;
+		while (cls != null && !hRootClassName.equals(cls.name)) cls = cls.next;
+		if (cls == null) {	// not found yet
+			Class root = new Class(hRootClassName);
+			Class.appendRootClass(root);
+			root.accAndPropFlags |= (1<<dpfRootClass);
+			assert root.next == null;
+			root.loadClass(userReqAttributes);
+		}
 
-		if(dbg) vrb.println("<loadRootClass");
+		if (dbg) vrb.println("<loadRootClass");
 	}
 
 	private static void loadSystemClass(Class sysClass, int userReqAttributes) {

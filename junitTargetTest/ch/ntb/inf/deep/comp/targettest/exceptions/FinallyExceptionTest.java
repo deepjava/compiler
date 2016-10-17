@@ -68,4 +68,5 @@ public class FinallyExceptionTest {
 
 }
 
+@SuppressWarnings("serial")
 class E100 extends Exception { }

@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
-
+@SuppressWarnings({ "unused", "null" })
 public class T07Arrays {
 	static short[] s1 = new short[3];
 	byte[] b1 = new byte[12];

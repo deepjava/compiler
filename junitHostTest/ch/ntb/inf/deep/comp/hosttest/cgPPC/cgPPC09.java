@@ -20,9 +20,11 @@ package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -36,7 +38,7 @@ public class cgPPC09 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T09Types") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 
@@ -44,21 +46,21 @@ public class cgPPC09 extends TestCgPPC {
 	public void m1() {
 		getCode("m1");
 		assertTrue("wrong join", checkJoin(getJoin(0), 14, 18, vol, false));
-		for (int i = 1; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 1; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void m2() {
 		getCode("m2");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
 	@Test
 	public void callm2() {
 		getCode("callm2");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
@@ -70,7 +72,7 @@ public class cgPPC09 extends TestCgPPC {
 		assertNull("wrong join", getJoin(2));
 		assertNull("wrong join", getJoin(3));
 		assertTrue("wrong join", checkJoin(getJoin(4), 0, 6, vol, false));
-		for (int i = 5; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 5; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 }

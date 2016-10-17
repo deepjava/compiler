@@ -26,6 +26,7 @@ import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
+import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 
@@ -35,6 +36,7 @@ import ch.ntb.inf.deep.classItems.Method;
  * the deep-Project. You can find an example project "ExampleProject.deep" in
  * this folder which you may use as base for your own test project.
  */
+@SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
@@ -42,6 +44,9 @@ public class TestLauncher {
 		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
@@ -55,7 +60,7 @@ public class TestLauncher {
 					Launcher.setTargetConnection(tc);
 					Launcher.openTargetConnection();
 					Launcher.downloadTargetImage();
-					Launcher.startTarget();
+					Launcher.startTarget(0x100);
 					Launcher.closeTargetConnection();
 				} catch (ClassNotFoundException e) {
 					ErrorReporter.reporter.error(811, programmer.getClassName().toString());
@@ -72,8 +77,8 @@ public class TestLauncher {
 				}
 			} else System.out.println("no programmer defined");
 		} 
-		
-//		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
+
+//		if (ErrorReporter.reporter.nofErrors == 0) Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 
 		/* DEBUG OUTPRINTS */
 //		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);

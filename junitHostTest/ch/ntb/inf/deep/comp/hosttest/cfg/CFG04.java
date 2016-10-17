@@ -77,7 +77,7 @@ public class CFG04 extends TestCFG implements ICclassFileConsts {
 
     @Test
 	public void whileTrue() {
-		CFGNode[] nodes = getAndTestNodes("whileTrue", 2);	
+		CFGNode[] nodes = getAndTestNodes("whileTrue1", 2);	
 		testNode(nodes[0], 0, 2, false, null, new int[] {}, new int[] {3});
 		testNode(nodes[1], 3, 7, true, nodes[0], new int[] {0,3}, new int[] {3});
     }

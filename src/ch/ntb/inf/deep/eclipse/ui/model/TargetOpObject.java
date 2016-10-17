@@ -19,19 +19,24 @@
 package ch.ntb.inf.deep.eclipse.ui.model;
 
 public class TargetOpObject {
+	
 	public long value;
+	
 	/**
 	 * type of the value
 	 */
 	public int valueType;
+	
 	/**
 	 * Name of the variable or the register, or the full qualified name of a TargetCMD
 	 */
 	public String description;
+	
 	/** 
 	 * Kind of Representations:	Binary = 0, Hexadecimal = 1, Decimal = 2, Double = 3
 	 */
 	public int representation;
+	
 	/**
 	 * Register size in bytes
 	 */
@@ -45,11 +50,11 @@ public class TargetOpObject {
 	/**
 	 * Type of the Register	 
 	 */
-	
 	public int registerType;
 	
 	/**
 	 * operation opcode
+	 * No operation: 0; Register: 1; Variable: 2; Address: 3; TargetCmd: 4
 	 */
 	public int operation;
 	
@@ -74,6 +79,7 @@ public class TargetOpObject {
 		this.operation = operation;
 		this.description = description;
 		this.errorMsg = "";
+		representation = 1;
 	}
 	
 	public TargetOpObject(int operation, String description, long value, int type, int representation, int registerSize){

@@ -27,7 +27,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import ch.ntb.inf.deep.cfg.CFG;
-import ch.ntb.inf.deep.cgPPC.CodeGen;
+import ch.ntb.inf.deep.cg.Code32;
+import ch.ntb.inf.deep.cg.CodeGen;
+import ch.ntb.inf.deep.cg.InstructionDecoder;
+import ch.ntb.inf.deep.cg.arm.CodeGenARM;
+import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
+//import ch.ntb.inf.deep.cg.arm.CodeGenARM;
+//import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
+import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
+import ch.ntb.inf.deep.cg.ppc.InstructionDecoderPPC;
 import ch.ntb.inf.deep.classItems.Array;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
@@ -37,6 +45,7 @@ import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
@@ -49,6 +58,7 @@ import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.target.Am29LV160dFlashWriter;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
@@ -66,7 +76,7 @@ public class Launcher implements ICclassFileConsts {
 	public static int buildAll(String deepProjectFileName, String targetConfigurationName) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
-		
+
 		Class clazz;
 		Method method;
 		Array array;
@@ -82,7 +92,6 @@ public class Launcher implements ICclassFileConsts {
 		Project project = Configuration.readProjectFile(deepProjectFileName);
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
-//		Configuration.print();
 
 		HString[] rootClassNames = Configuration.getRootClasses();
 		if (reporter.nofErrors <= 0) {
@@ -109,9 +118,22 @@ public class Launcher implements ICclassFileConsts {
 			if (dbg) vrb.println("[Launcher] Initializing Linker");
 			Linker32.init();
 		}
+		CodeGen cg = null;
 		if (reporter.nofErrors <= 0) {
+			Arch arch = Configuration.getBoard().cpu.arch;
+			Code32.arch = arch;
+			if (arch.name.equals(HString.getHString("ppc32"))) {
+				cg = new CodeGenPPC();
+				InstructionDecoder.dec = new InstructionDecoderPPC();
+				Linker32.bigEndian = true;
+			}
+			if (arch.name.equals(HString.getHString("arm32"))) {
+				cg = new CodeGenARM();
+				InstructionDecoder.dec = new InstructionDecoderARM();
+				Linker32.bigEndian = false;
+			}
 			if (dbg) vrb.println("[Launcher] Initializing Code Generator");
-			CodeGen.init();
+			cg.init();
 		}
 
 		// creating type descriptors for arrays
@@ -168,7 +190,8 @@ public class Launcher implements ICclassFileConsts {
 								}
 								// Create machine code
 								if (reporter.nofErrors <= 0) {
-									method.machineCode = new CodeGen(method.ssa); 
+									method.machineCode = new Code32(method.ssa);
+									cg.translateMethod(method);
 								}
 							} else if (dbg) vrb.print("method " + method.name + " is synthetic or abstract");
 							method = (Method)method.next;
@@ -186,6 +209,8 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 
+		if (reporter.nofErrors > 0) return reporter.nofErrors;;
+		
 		// handle interfaces with class constructor, translating code, calculating code size
 		if(dbg) vrb.println("[LAUNCHER] handle interfaces with class constructor");
 		intf = Class.constBlockInterfaces;	
@@ -196,7 +221,8 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					method.cfg = new CFG(method);
 					method.ssa = new SSA(method.cfg);
-					method.machineCode = new CodeGen(method.ssa); 
+					method.machineCode = new Code32(method.ssa); 
+					cg.translateMethod(method);
 				}
 				method = (Method)method.next;
 			}
@@ -208,7 +234,7 @@ public class Launcher implements ICclassFileConsts {
 
 		// handle compiler specific methods
 		if(dbg) vrb.println("[LAUNCHER] compiler specific methods");
-		CodeGen.generateCompSpecSubroutines();
+		cg.generateCompSpecSubroutines();
 		Linker32.calculateCodeSizeAndOffsetsForCompilerSpecSubroutines();
 
 		if (reporter.nofErrors <= 0) {
@@ -278,7 +304,7 @@ public class Launcher implements ICclassFileConsts {
 							if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract) | (1 << apfNative))) == 0) { // proceed only methods with code
 								if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 								if (dbg) vrb.println("      doing fixups");
-								method.machineCode.doFixups();
+								cg.doFixups(method.machineCode);
 							}
 							method = (Method)method.next;
 						}
@@ -299,7 +325,8 @@ public class Launcher implements ICclassFileConsts {
 				if ((method.accAndPropFlags & ((1 << dpfSynthetic) | (1 << apfAbstract))) == 0) { // proceed only methods with code
 					if (dbg) vrb.println("    > Method: " + method.name + method.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(method.accAndPropFlags));
 					if (dbg) vrb.println("      doing fixups");
-					method.machineCode.doFixups();
+					cg.doFixups(method.machineCode);
+
 				}
 				method = (Method)method.next;
 			}
@@ -312,10 +339,9 @@ public class Launcher implements ICclassFileConsts {
 		while (m != null) {
 			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
 			if (dbg) vrb.println("      doing fixups");
-			m.machineCode.doFixups();
+			cg.doFixups(m.machineCode);
 			m = (Method)m.next;
 		}
-//		Method.printCompSpecificSubroutines();
 
 		// Linker: update system table, determine size of code
 		if (reporter.nofErrors <= 0) {
@@ -350,52 +376,88 @@ public class Launcher implements ICclassFileConsts {
 			if (fname != null && !fname.equals(HString.getHString(""))) 
 				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
 		}	
-		
+
 		return reporter.nofErrors;
 	}
-	
+
 	public static void downloadTargetImage() {
+		boolean flashErased = false;
 		Board b = Configuration.getBoard();
 		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
-		TargetMemorySegment tms = Linker32.targetImage;
 		if (b != null) {
-			int c = 0;
 			if (tc != null) {
 				try {
+					if (dbg) vrb.println("[Launcher] Reseting target");
+					tc.resetTarget();
 					if (dbg) vrb.println("[Launcher] Initializing registers");
 					RegisterInit r = b.regInits;
 					while (r != null) {
-						tc.initRegister(r);
+						tc.setRegisterValue(r.reg, r.initValue);
 						r = (RegisterInit) r.next;
 					}
 					r = targetConfig.regInits;
 					while (r != null) {
-						tc.initRegister(r);
+						tc.setRegisterValue(r.reg, r.initValue);
 						r = (RegisterInit) r.next;
 					}
-					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setGprValue(i, 0);
+					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R"+i, 0);
+
 					log.println("Downloading target image:");
-					while (tms != null && reporter.nofErrors <= 0) {
-						if (dbg) vrb.print("  processing TMS #" + tms.id);
-						if (tms.segment == null) { // this should never happen
-							// TODO add error message here
-							if (dbg) vrb.println(" -> skipping (segment not defined)");
-						} else {
-							if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
-							tc.writeTMS(tms);
+					Programmer programmer = Configuration.getProgrammer();
+					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
+						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+					} else {
+						TargetMemorySegment tms = Linker32.targetImage;
+						while (tms != null && reporter.nofErrors <= 0) {
+							if (tms.segment.owner.technology == 1) { // Flash device
+								if (tms.segment.owner.memorytype == Configuration.AM29LV160D) {
+									Am29LV160dFlashWriter flashWriter = new Am29LV160dFlashWriter(tc);
+									if (!flashErased) { // erase all used sectors
+										TargetMemorySegment current = tms;
+										// first mark all used sectors
+										while (current != null && current.segment.owner.memorytype == Configuration.AM29LV160D) {
+											current.segment.owner.markUsedSectors(current);
+											current = current.next;
+										}
+										// second erase all marked sectors
+										ch.ntb.inf.deep.config.Device[] devs = Configuration.getDevicesByType(Configuration.AM29LV160D);
+										for (int i = 0; i < devs.length; i++) {
+											if(devs[i] == null) StdStreams.err.println("ERROR: devs[" + i + "] == null");
+											else flashWriter.eraseMarkedSectors(devs[i]);
+										}
+										flashErased = true;
+										log.println("Programming flash");
+									}
+
+									if (!flashWriter.unlocked) flashWriter.unlockBypass(tms.segment.owner, true);
+									flashWriter.writeSequence(tms);
+									if (tms.next == null || tms.next.segment.owner != tms.segment.owner && flashWriter.unlocked) {
+										flashWriter.unlockBypass(tms.segment.owner, false);
+										StdStreams.log.println();						
+									}
+								} else { // other memory type
+									ErrorReporter.reporter.error(807, "for Device " + tms.segment.owner.name.toString());
+									return;
+								}
+							} else {
+								if (dbg) vrb.print("  processing TMS #" + tms.id);
+								if (tms.segment == null) { // this should never happen
+									if (dbg) vrb.println(" -> skipping (segment not defined)");
+								} else {
+									if (dbg) vrb.println(" -> writing " + tms.data.length * 4 + " bytes to address 0x" + Integer.toHexString(tms.startAddress) + " on device " + tms.segment.owner.name);
+									tc.writeTMS(tms);
+								}
+							}
+							tms = tms.next;
 						}
-						tms = tms.next;
 					}
-					tc.resetErasedFlag();
 				} 
 				catch (TargetConnectionException e) {
-					if(e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException"){
+					if (e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException") {
 						reporter.error(813);
-					}
-					else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException"){
+					} else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException") {
 						reporter.error(814);
-					}
-					else{
+					} else {
 						reporter.error(801);
 					}
 				}
@@ -403,12 +465,12 @@ public class Launcher implements ICclassFileConsts {
 		} else	reporter.error(238);
 	}
 
-	public static void startTarget() {
+	public static void startTarget(int address) {
 		if (reporter.nofErrors <= 0) {
 			if (tc != null) {
 				log.println("Starting target");
 				try {
-					tc.startTarget();
+					tc.startTarget(address);
 				} catch (TargetConnectionException e) {
 					reporter.error(805);
 					reporter.nofErrors++;
@@ -421,19 +483,17 @@ public class Launcher implements ICclassFileConsts {
 		try {
 			if(tc != null) tc.stopTarget();
 		} catch (TargetConnectionException e) {
-			e.printStackTrace();
+			reporter.error(803);
 		}
 	}
 
 	public static void openTargetConnection() {
 		if (dbg) vrb.println("[Launcher] Opening target connection");
 		if (tc != null) {
-			if (dbg) vrb.println(" -> ok");
 			try {
-				if(dbg) vrb.println("  Initializing target connection");
-				tc.init();
+				if (!tc.isConnected()) tc.openConnection();
 			} catch (TargetConnectionException e) {
-				e.printStackTrace();
+				reporter.error(815);
 			}
 		} else reporter.error(803);
 	}
@@ -450,16 +510,24 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	public static void closeTargetConnection() {
-		if(dbg) vrb.println("[Launcher] Closing target connection");
-		if(tc != null) tc.closeConnection();
+		if (dbg) vrb.println("[Launcher] Closing target connection");
+		if (tc != null) tc.closeConnection();
 	}
 
 	public static TargetConnection getTargetConnection() {
 		return tc;
 	}
 
-	public static void setTargetConnection(TargetConnection tc2) {
-		tc = tc2;
+	public static void setTargetConnection(TargetConnection targConn) {
+		tc = targConn;
+		Programmer programmer = Configuration.getProgrammer();
+		if (programmer != null) {
+			HString opts = programmer.getOpts();
+			if (opts != null) {
+				tc.setOptions(opts);
+				if (dbg) vrb.println("[Launcher] Setting target connection options to " + opts.toString());
+			}
+		}
 	}
 
 	protected static long saveTargetImageToFile(String fileName, int format) {
@@ -488,7 +556,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 	
 	protected static void saveCommandTableToFile(String fileName) {
-		if (reporter.nofErrors <= 0){
+		if (reporter.nofErrors <= 0) {
 			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));
 			path.mkdirs(); // create directories if not existing
 			try {
@@ -573,6 +641,7 @@ public class Launcher implements ICclassFileConsts {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Date date = new Date();
 		String cpuName = cpu.name.toString();
+		String archName = cpu.arch.name.toString();
 		basePath = basePath + File.separatorChar + cpuName;
 		String fileName = "I" + cpuName + ".java";
 		try {
@@ -582,8 +651,9 @@ public class Launcher implements ICclassFileConsts {
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
 			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+			fw.write("import ch.ntb.inf.deep.runtime." + archName + ".I" + archName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
-			fw.write("public interface I" + cpuName + " {\n");
+			fw.write("public interface I" + cpuName + " extends I" + archName + " {\n");
 			
 			fw.write("\n\t// System constants of CPU " + cpuName + "\n");
 			SystemConstant curr = cpu.sysConstants;

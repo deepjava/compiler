@@ -26,7 +26,6 @@ import ch.ntb.inf.junitTarget.Test;
 /**
  * NTB 25.3.2011, Urs Graf
  * 
- * not yet working
  */
 @MaxErrors(100)
 public class VariousTest2 {
@@ -160,21 +159,58 @@ public class VariousTest2 {
 		Assert.assertEquals("test412", obj.f4, 400.2f, 1e-10);
 		Assert.assertEquals("test413", obj.l5, 500);
 		Assert.assertEquals("test414", obj.d5, 500.1, 1e-10);
-//		Assert.assertEquals("test415", obj.f5, 500.2f, 1e-10);
-//		Assert.assertEquals("test416", obj.l6, 600);
-//		Assert.assertEquals("test417", obj.d6, 600.1, 1e-10);
-//		Assert.assertEquals("test418", obj.f6, 600.2f, 1e-10);
+		Assert.assertEquals("test415", obj.f5, 500.2f, 1e-10);
+		Assert.assertEquals("test416", obj.l6, 600);
+		Assert.assertEquals("test417", obj.d6, 600.1, 1e-10);
+		Assert.assertEquals("test418", obj.f6, 600.2f, 1e-10);
 		CmdTransmitter.sendDone();
 	}
 
 	// method with many locals
-//	public static void m26(long p1, int p2) {
-//		short a1 = 0, a2 = 0;
-//		int a3 = 0, a4 = 0;
-//		long a5 = 0, a6 = 0, a7 = 0, a8 = 0, a9 = 0, a10 = 0, a11 = 0, a12 = 0;
-//		byte a13 = 0, a14 = 0, a15 = 0, a16 = 0, a17 = 0, a18 = 0, a19 = 0;
-//		long res = p1 + p2 + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10;
-//		res = res + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19;
-//	}
+	public static long m26(long p1, int p2) {
+		short a1 = 10, a2 = 11;
+		int a3 = 20, a4 = 21;
+		long a5 = 30, a6 = 31, a7 = 32, a8 = 33, a9 = 34, a10 = 35, a11 = 36, a12 = 37;
+		byte a13 = 40, a14 = 41, a15 = 42, a16 = 43, a17 = 44, a18 = 45, a19 = 46, a20 = 47, a21 = 48, a22 = 49, a23 = 50;
+		long res = p1 + p2 + a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8 + a9 + a10;
+		res = res + a11 + a12 + a13 + a14 + a15 + a16 + a17 + a18 + a19 + a20 + a21 + a22 + a23;
+		return res;
+	}
+
+	// method with many locals (float)
+	public static double m27(float p1, double p2) {
+		double d0 = 0.1, d1 = 0.2, d2 = 0.3, d3 = 0.4, d4 = 0.5;
+		double d5 = 1.0, d6 = 1.1, d7 = 1.2, d8 = 1.3, d9 = 1.4;
+		double d10 = 2.0, d11 = 2.1, d12 = 2.2, d13 = 2.3, d14 = 2.4;
+		double res = d0 + d1 + d2 + d3 + d4 + Math.sin(p1) + d5 + d6 + d7 + d8 + d9;;
+		if (p2 < 100) res += p2 + d10 + d11 + d12 + d13 + d14;
+		return res;
+	}
+
+	// method with many locals (float)
+	public static double m28(float[] r1, double p2) {
+		double d0 = 0.1, d1 = 0.2, d2 = 0.3, d3 = 0.4, d4 = 0.5;
+		float d5 = 1.0f, d6 = 1.1f, d7 = 1.2f, d8 = 1.3f, d9 = 1.4f;
+		double d10 = 2.0, d11 = 2.1, d12 = 2.2, d13 = 2.3, d14 = 2.4;
+		double[] a1 = {10.0, 10.1};
+		float[] a2 = {20.0f, 20.1f, 20.2f};
+		double res = d0 + d1 + d2 + d3 + d4 + Math.sin(a2[1] + d8);
+		for (int i = 0; i < 3; i++) a2[0] += r1[0] + d12 + d7;
+		res += p2 + a1[0] + a2[0] + d11 + d12 + d13 + d14;
+		a1[1] = d11;
+		res -= d5 + d6 - d10 - a1[1] - d9;
+		return res;
+	}
+	
+	@Test
+	//Test constructor with many parameters
+	public static void testManyLocals(){
+		Assert.assertEquals("test1_m26", 1125, m26(100, 200));
+		Assert.assertEquals("test2_m26", 10003000030825L, m26(10001000010000L, 2000020000));
+		Assert.assertEquals("test1_m27", 25.649216, m27(3.5f, 7.5), 1e-5);
+		Assert.assertEquals("test2_m27", 7.149216, m27(3.5f, 200.1), 1e-5);
+		Assert.assertEquals("test1_m28", 62.657316, m28(new float[]{3.5f, 1.5f}, -2.5), 1e-5);
+		CmdTransmitter.sendDone();
+	}
 
 }

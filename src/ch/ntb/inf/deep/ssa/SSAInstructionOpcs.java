@@ -37,13 +37,14 @@ public interface SSAInstructionOpcs {
 	ssaApTempStore = ssaApBase+4;
 
 	int[] scAttrTab = {
-			/*Format:	0xuuuN'aacc,
+			/*Format:	0xuuMN'aacc,
 					u	unused
-					N	Nof auxiliary registers for this instruction
+					M	nof auxiliary registers for this instruction (ARM)
+					N	nof auxiliary registers for this instruction (PPC)
 					aa	attributes
 					cc	operation code (opc)
 			*/
-			0x00060000 + sCloadConst,	//load 
+			0x00660000 + sCloadConst,	//load 
 			0x00000000 | (1<<ssaApLoadLocal) + sCloadLocal,
 			0x00010000 + sCloadFromField,
 			0x00020000 + sCloadFromArray,
@@ -53,19 +54,19 @@ public interface SSAInstructionOpcs {
 			
 			0x00000000 | (1<<ssaApImmOpd) + sCadd, 		//arithmetic 
 			0x00000000 | (1<<ssaApImmOpd) + sCsub,
-			0x00040000 | (1<<ssaApImmOpd) + sCmul,
-			0x00070000 | (1<<ssaApImmOpd) + sCdiv,
-			0x00080000 | (1<<ssaApImmOpd) + sCrem,
+			0x00440000 | (1<<ssaApImmOpd) + sCmul,
+			0x00770000 | (1<<ssaApImmOpd) + sCdiv,
+			0x00880000 | (1<<ssaApImmOpd) + sCrem,
 			0x00000000 + sCneg,		 	
 			
-			0x00050000 | (1<<ssaApImmOpd) + sCshl,		//shift and logical 
-			0x00050000 | (1<<ssaApImmOpd) + sCshr,
-			0x00050000 | (1<<ssaApImmOpd) + sCushr,
+			0x00550000 | (1<<ssaApImmOpd) + sCshl,		//shift and logical 
+			0x00550000 | (1<<ssaApImmOpd) + sCshr,
+			0x00550000 | (1<<ssaApImmOpd) + sCushr,
 			0x00000000 | (1<<ssaApImmOpd) + sCand,
 			0x00000000 | (1<<ssaApImmOpd) + sCor,
 			0x00000000 | (1<<ssaApImmOpd) + sCxor,
 			
-			0x00060000 | (1<<ssaApTempStore) + sCconvInt, 	//convert from
+			0x00660000 | (1<<ssaApTempStore) + sCconvInt, 	//convert from
 			0x00000000 | (1<<ssaApTempStore) + sCconvLong,
 			0x00000000 | (1<<ssaApTempStore) + sCconvFloat,
 			0x00000000 | (1<<ssaApTempStore) + sCconvDouble,

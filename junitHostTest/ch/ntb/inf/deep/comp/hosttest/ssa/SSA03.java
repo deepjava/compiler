@@ -94,27 +94,30 @@ public class SSA03 extends TestSSA {
 //	@Ignore
 	@Test
 	public void testSwitchFar2(){
-		SSANode[] nodes = getAndTestSSA("switchFar2", 10, 0);
+		SSANode[] nodes = getAndTestSSA("switchFar2", 12, 0);
 		testNode(nodes[0], 2, 0, 2);
 		testNode(nodes[1], 2, 0, 2);
 		testNode(nodes[2], 1, 0, 2);
 		testNode(nodes[3], 2, 0, 2);
-		testNode(nodes[4], 3, 0, 2);
-		testNode(nodes[5], 2, 0, 2);
-		testNode(nodes[6], 1, 1, 2);
-		testNode(nodes[7], 3, 0, 2);
+		testNode(nodes[4], 2, 0, 2);
+		testNode(nodes[5], 1, 0, 2);
+		testNode(nodes[6], 2, 0, 2);
+		testNode(nodes[7], 1, 1, 2);
 		testNode(nodes[8], 2, 0, 2);
-		testNode(nodes[9], 1, 1, 2);
+		testNode(nodes[9], 1, 0, 2);
+		testNode(nodes[10], 2, 0, 2);
+		testNode(nodes[11], 1, 1, 2);
 	}
 
 	@Test
 	public void testSwitchWhile(){
-		SSANode[] nodes = getAndTestSSA("switchWhile", 6, 1);
-		testNode(nodes[0], 3, 0, 3);
+		SSANode[] nodes = getAndTestSSA("switchWhile", 7, 1);
+		testNode(nodes[0], 2, 0, 3);
 		testNode(nodes[1], 2, 0, 3);
 		testNode(nodes[2], 2, 0, 3);
-		testNode(nodes[3], 1, 0, 3);
+		testNode(nodes[3], 2, 0, 3);
 		testNode(nodes[4], 1, 0, 3);
-		testNode(nodes[5], 1, 1, 3);
+		testNode(nodes[5], 1, 0, 3);
+		testNode(nodes[6], 1, 1, 3);
 	}
 }

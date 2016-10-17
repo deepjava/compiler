@@ -20,9 +20,11 @@ package ch.ntb.inf.deep.comp.hosttest.cgPPC;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.CFR;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.config.Configuration;
@@ -36,7 +38,7 @@ public class cgPPC07 extends TestCgPPC {
 		HString[] rootClassNames = new HString[] { HString.getHString("ch/ntb/inf/deep/comp/hosttest/testClasses/T07Arrays") };
 		CFR.buildSystem(rootClassNames, Configuration.getSearchPaths(), Configuration.getSystemClasses(), attributes);
 		if (Class.nofRootClasses > 0) {
-			createCgPPC(Class.rootClasses[0]);
+			createNodes(Class.rootClasses[0]);
 		}
 	}
 
@@ -44,7 +46,7 @@ public class cgPPC07 extends TestCgPPC {
 	@Test
 	public void emptyIntArray() {
 		getCode("emptyIntArray");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 	
@@ -59,7 +61,7 @@ public class cgPPC07 extends TestCgPPC {
 		assertTrue("wrong join", checkJoin(getJoin(4), 0, 13, nonVol, false));
 		assertTrue("wrong join", checkJoin(getJoin(5), 1, 15, nonVol, false));
 		assertTrue("wrong join", checkJoin(getJoin(6), 2, 13, vol, false));
-		for (int i = 7; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 7; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 
@@ -67,7 +69,7 @@ public class cgPPC07 extends TestCgPPC {
 	@Test
 	public void clinit() {
 		getCode("<clinit>");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 
@@ -75,7 +77,7 @@ public class cgPPC07 extends TestCgPPC {
 	@Test
 	public void init() {
 		getCode("<init>");
-		for (int i = 0; i < RegAllocator.maxNofJoins; i++)
+		for (int i = 0; i < RegAllocatorPPC.maxNofJoins; i++)
 			assertNull("wrong join", getJoin(i));
 	}
 }

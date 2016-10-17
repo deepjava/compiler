@@ -27,10 +27,6 @@ import ch.ntb.inf.junitTarget.Test;
 /**
  * NTB 10.02.2011
  * 
- * @author Mattia Pellin
- *   noch nicht vollst?ndig (mit /* auskommentiert)
- * 
- *         Changes:
  */
 @MaxErrors(100)
 public class LongTest {
@@ -171,7 +167,7 @@ public class LongTest {
 		Assert.assertEquals("imm1",14768900001L,res);
 		res = (1 + v1);
 		Assert.assertEquals("imm2",14768900001L,res);
-      //Positive overflow test
+		//Positive overflow test
 		v1 = 9223372036854775807L; v2 = 9223372036854775806L; v3 = 9223372036854775805L;
 		res = (v1 + v2 + v3);
 		Assert.assertEquals("posOverflow", 9223372036854775802L, res);
@@ -198,10 +194,11 @@ public class LongTest {
 		CmdTransmitter.sendDone();
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	//Test subtraction variants
 	public static void testSub(){
-		long res,v1, v2, v3;
+		long res,v1, v2;
 		//Normal subtraction test
 		v1 = 145023; v2 = 2398100000L;
 		res = (v2 - v1);
@@ -480,7 +477,7 @@ public class LongTest {
 		Assert.assertEquals("imm33", -4131218151L, v1 / 128);
 		Assert.assertEquals("imm34", -492, v1 / (1L<<30)); 
 		Assert.assertEquals("imm35", -246, v1 / (1L<<31)); 
-		if(!CmdTransmitter.host){
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			// this test gives lower result on host, as it is done without shift operations on the host
 			Assert.assertEquals("imm36", -124, v1 / (1L<<32)); 
 		}
@@ -571,7 +568,7 @@ public class LongTest {
 		Assert.assertEquals("imm43", -83, v1 % 128);
 		Assert.assertEquals("imm44", -514946003, v1 % (1L<<30)); 
 		Assert.assertEquals("imm45", -514946003, v1 % (1L<<31)); 
-		if(!CmdTransmitter.host){
+		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
 			// this test gives lower result on host, as it is done without shift operations on the host
 			Assert.assertEquals("imm46", 3780021293L, v1 % (1L<<32)); 
 		}

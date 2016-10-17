@@ -22,6 +22,7 @@ import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.strings.HString;
 
 public class StdConstant extends Constant {
+	// for constants with values <= 32 bit the value is placed into valueH 
 	public int valueH, valueL;
 
 	StdConstant(HString name, Type type, int valueHigh, int valueLow){

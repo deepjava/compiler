@@ -35,9 +35,6 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	private static final Item[] instFieldLists = new Item[fieldListArrayLength]; // instance field lists, used by method readFields
 	private static final Item[] classFieldLists = new Item[fieldListArrayLength]; // class field lists, used by method readFields
 	private static final Item[] constFieldLists = new Item[fieldListArrayLength]; // class constants lists, used by method readFields
-	static {
-		assert fieldSizeUnit >= 4 && (fieldSizeUnit & (fieldSizeUnit-1)) == 0;
-	}
 
 	public static Class initClasses, initClassesTail;	// classes with class constructor (StdClasses and Interfaces)
 	public static Class nonInitClasses, nonInitClassesTail;	// classes without class constructor (only StdClasses)

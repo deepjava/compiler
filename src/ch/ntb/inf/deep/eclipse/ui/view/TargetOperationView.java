@@ -53,6 +53,7 @@ import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Field;
+import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
@@ -70,7 +71,7 @@ import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
-public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts {
+public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts, ICclassFileConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
 	private TableViewer viewer;
 	private TargetOpObject[] elements;
@@ -79,14 +80,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private Action toDez;
 	private Action toDouble;
 	private IEclipsePreferences prefs;
-	
+
 	private static String cmdAddrName = "cmdAddr";
-
 	private String[] choice = new String[]{"", "Register", "Variable","Address", "TargetCMD"};
-
 	private static Image UP = DeepPlugin.createImage("full/obj32/up.gif");
 	private static Image DOWN = DeepPlugin.createImage("full/obj32/down.gif");
-	
 	
 	public static final int tVoid = 0, tRef = 3, tBoolean = 4, tChar = 5, tFloat = 6,
 	tDouble = 7, tByte = 8, tShort = 9, tInteger = 10, tLong = 11;
@@ -220,13 +218,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					default :
 						return "";
 					}
-				}else if(index == 4){
-					return null;
-				}else if(index == 5){
-					return null;
-				}else if(index == 6){
-					return op.errorMsg;
-				}
+				} else if (index == 4) return null;
+				else if (index == 5) return null;
+				else if (index == 6) return op.errorMsg;
 			}
 			return "";
 		}
@@ -321,7 +315,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
 		elements = new TargetOpObject[32];
-		if(vars.length > 1){
+		if (vars.length > 1) {
 			for(int i = 0; i < vars.length && i < elements.length; i++){
 				String[] obj = vars[i].split(",");
 				if(obj.length > 1){
@@ -330,7 +324,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					elements[i] = new TargetOpObject();
 				}
 			}
-		}else{
+		} else {
 			for (int i = 0; i < 32; i++) {
 				elements[i] = new TargetOpObject();
 			}
@@ -437,7 +431,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		@Override
 		protected Object getValue(Object element) {
 			return ((TargetOpObject)element).description;
-
 		}
 
 		@Override
@@ -448,37 +441,28 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 			op.errorMsg = "";
 			String param = String.valueOf(value);
-			if(choice[op.operation].equals("Register")){
+			if (choice[op.operation].equals("Register")) {
 				HString register = HString.getRegisteredHString(param.toUpperCase());
 				readFromRegister(op, register);				
-			}else if(choice[op.operation].equals("Variable")){
-				if(!param.equals("")){
-					readVariable(op, param);
-				}
-			}else if(choice[op.operation].equals("Address")){
-				try{
-					if(param.length() > 0){
-						//work around for problem when in hex-int-number the most significant bit is set;
+			} else if (choice[op.operation].equals("Variable")) {
+				if (!param.equals("")) readVariable(op, param);
+			} else if (choice[op.operation].equals("Address")) {
+				try {
+					if (param.length() > 0) {
+						// work around for problem when the most significant bit is set in hex number 
 						if(param.charAt(0) == '0' && param.length() > 9 && param.charAt(2) > '7'){
 							String most = param.substring(2, 3);
 							param = "0x0" + param.substring(3);
-							op.addr = (Integer.parseInt(most,16) << 28) |Integer.decode(param);
+							op.addr = (Integer.parseInt(most,16) << 28) | Integer.decode(param);
 						}else{
 							op.addr  = Integer.decode(param);
 						}
 					}
-				op.description = param;// do it first, so we need only one parameter for the functions
-				readFromAddress(op);
-				}catch (Exception e) {
-				}				
-				
-			}else if(choice[op.operation].equals("TargetCMD")){
-				sendCMD(op, param);
-			}else if(param.equals("stirb!!!")){
-				MessageDialog dialog = new MessageDialog( viewer.getControl().getShell(), "bye bye", null, "aaaaaaaaaaahhhhhhhh",  MessageDialog.ERROR, new String[] { "tot" }, 0);
-		        dialog.open();
-				System.exit(0);
-			}
+					op.description = param;// do it first, so we need only one parameter for the functions
+					readFromAddress(op, op.description);
+				} catch (Exception e) {	}				
+
+			} else if (choice[op.operation].equals("TargetCMD")) sendCMD(op, param);
 			saveView();
 			viewer.refresh();
 		}
@@ -588,7 +572,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					return String.format("%d", op.value);
 				}
 			case 3:
-				return String.format("0x%08X", op.value);
+				if (op.representation == 1) // Hex
+					return String.format("0x%08X", op.value);
+				return String.format("%d", op.value);
 			case 4:
 			case 5:
 				return "";
@@ -706,14 +692,14 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		protected Object getValue(Object element) {
 			TargetOpObject op = (TargetOpObject)element;
 			op.errorMsg = "";
-			if(choice[op.operation].equals("Register")){
-				if(((TargetOpObject)element).registerType != -1){
+			if (choice[op.operation].equals("Register")) {
+				if (((TargetOpObject)element).registerType != -1) {
 					readFromRegister(op, HString.getRegisteredHString(op.description));						
 				}
-			}else if(choice[op.operation].equals("Variable")){
-				readVariable(op,op.description);
-			}else if(choice[op.operation].equals("Address")){
-				readFromAddress(op);
+			} else if (choice[op.operation].equals("Variable")) {
+				readVariable(op, op.description);
+			} else if (choice[op.operation].equals("Address")) {
+				readFromAddress(op, op.description);
 			}
 			viewer.refresh();
 			return false;//TODO check this
@@ -798,62 +784,48 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		if (clazz != null && kernel != null) {
 			int cmdAddr = ((Field) kernel.classFields.getItemByName(cmdAddrName)).address;
 			Method meth = (Method) clazz.methods.getItemByName(cmdName);
-			if (meth != null) {
-				//Save address for display
-				op.addr = meth.address;
-				TargetConnection bdi = Launcher.getTargetConnection();
-				if(bdi == null){
-					op.errorMsg = "target not connected";
-					return;
-				}
-				try {
-					if(!bdi.isConnected()){
-						bdi.openConnection();
+			if (meth != null) {	
+				if ((meth.accAndPropFlags & (1 << dpfCommand)) != 0) {
+					op.addr = meth.address;	// save address for display
+					TargetConnection tc = Launcher.getTargetConnection();
+					if (tc == null) {
+						op.errorMsg = "target not connected";
+						return;
 					}
-					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-					if (!wasFreezeAsserted) {
-						bdi.stopTarget();
+					try {
+						if (!tc.isConnected()) tc.openConnection();
+						boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+						if (!wasFreezeAsserted) tc.stopTarget();
+						tc.writeWord(cmdAddr, meth.address);
+						op.cmdSend = true;
+						if (!wasFreezeAsserted) tc.startTarget(-1);
+					} catch (TargetConnectionException e) {
+						op.errorMsg = "target not initialized";
 					}
-					bdi.writeWord(cmdAddr, meth.address);
-					op.cmdSend = true;
-					
-					if (!wasFreezeAsserted) {
-						bdi.startTarget();
-					}
-				} catch (TargetConnectionException e) {
-					op.errorMsg = "target not initialized";
-				}
-			}else{
-				op.errorMsg = "method not found";
-			}
-		}else{
-			op.errorMsg = "class not found";
-		}
+				} else op.errorMsg = "method is not a command";
+			} else op.errorMsg = "method not found";
+		} else op.errorMsg = "class not found";
 	}
 	
-	private void readFromAddress(TargetOpObject op){
+	private void readFromAddress(TargetOpObject op, String desc) {
 		boolean wasFreezeAsserted;
-		TargetConnection bdi = Launcher.getTargetConnection();
-		if(bdi == null){
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null) {
 			op.errorMsg = "target not connected";
 			return;
 		}
 		try {
-			if(!bdi.isConnected()){
-				bdi.openConnection();
-			}
+			if (!tc.isConnected()) tc.openConnection();
+			wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+			if (!wasFreezeAsserted) tc.stopTarget();
 			
-			wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) {
-				bdi.stopTarget();
-			}
-			
-			op.value = bdi.readWord(op.addr);
+			op.addr = Integer.decode(desc);
+			op.value = tc.readWord(op.addr);
 			op.isRead = true;
 			
-			if (!wasFreezeAsserted) {
-				bdi.startTarget();
-			}
+			if (!wasFreezeAsserted) tc.startTarget(-1);
+		} catch (NumberFormatException e) {
+			op.errorMsg = "wrong number format";
 		} catch (TargetConnectionException e) {
 			op.errorMsg = "target not initialized";
 		}
@@ -871,7 +843,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		String varName = fullQualName.substring(lastDot + 1);
 		op.description = fullQualName;
 		if(RefType.refTypeList == null){
-			op.errorMsg = "system not builded";
+			op.errorMsg = "system not built";
 			return;
 		}
 		Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
@@ -897,58 +869,39 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					}
 				}
 				
-				TargetConnection bdi = Launcher.getTargetConnection();
-				if(bdi == null){
+				TargetConnection tc = Launcher.getTargetConnection();
+				if(tc == null){
 					op.errorMsg = "target not connected";
 					return;
 				}
 				try{
-					if(!bdi.isConnected()){
-						bdi.openConnection();
+					if (!tc.isConnected()) tc.openConnection();
+					boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+					if (!wasFreezeAsserted)	tc.stopTarget();
+				
+					if (((Type)var.type).sizeInBits <= 9) { // 1 or 8 bit
+						op.value = tc.readByte(var.address);
+						if (((Type)var.type).sizeInBits == 1) op.valueType = tBoolean;
+						else op.valueType = tByte;										
+					} else if (((Type)var.type).sizeInBits == 16) { // 16 bit
+						op.value = tc.readHalfWord(var.address);
+						if (var.type == Type.wellKnownTypes[txChar]) op.valueType = tChar;
+						else op.valueType = tShort;										
+					} else if (((Type)var.type).sizeInBits == 32) { // 32 bit
+						op.value = tc.readWord(var.address);
+						if (var.type == Type.wellKnownTypes[txInt]) op.valueType = tInteger;
+						else if (var.type == Type.wellKnownTypes[txFloat]) op.valueType = tFloat;										
+						else op.valueType = tRef;
+					} else if (((Type)var.type).sizeInBits > 64) { // 64 bit
+						op.value = tc.readWord(var.address);
+						op.value = op.value << (8 * slotSize) | (tc.readWord(var.address + slotSize) & 0xffffffffL);
+						if (var.type == Type.wellKnownTypes[txLong]) op.valueType = tLong;
+						else op.valueType = tDouble;										
 					}
-					
-					boolean wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-					if(!wasFreezeAsserted){
-						bdi.stopTarget();
-					}
-					if(((Type)var.type).sizeInBits <= 2 * slotSize ) { // 1 or 8 bit
-						op.value = bdi.readByte(var.address);
-						if(((Type)var.type).sizeInBits == 1 ){
-							op.valueType = tBoolean;
-						}else{
-							op.valueType = tByte;										
-						}
-					}else if(((Type)var.type).sizeInBits == 4 * slotSize){ // 16 bit
-						op.value = bdi.readWord(var.address); // TDOO mask?
-						if(var.type == Type.wellKnownTypes[txChar]){
-							op.valueType = tChar;
-						}else{
-							op.valueType = tShort;										
-						}
-					}else if(((Type)var.type).sizeInBits == 8 * slotSize){ // 32 bit
-						op.value = bdi.readWord(var.address);
-						if(var.type == Type.wellKnownTypes[txInt]){
-							op.valueType = tInteger;
-						}else if(var.type == Type.wellKnownTypes[txFloat]){
-							op.valueType = tFloat;										
-						}else{
-							op.valueType = tRef;
-						}
-					}else if(((Type)var.type).sizeInBits > 8 * slotSize) { // 64 bit
-						op.value = bdi.readWord(var.address);
-						op.value = op.value << (8 * slotSize) | (bdi.readWord(var.address + slotSize) & 0xffffffffL);
-						if(var.type == Type.wellKnownTypes[txLong]){
-							op.valueType = tLong;
-						}else{
-							op.valueType = tDouble;										
-						}
-					}
-					if(!wasFreezeAsserted){
-						bdi.startTarget();
-					}
+					if (!wasFreezeAsserted)	tc.startTarget(-1);
 					op.isRead = true;
 					op.description = fullQualName;
-				}catch(TargetConnectionException e){
+				} catch (TargetConnectionException e) {
 					op.errorMsg = "target not initialized";
 				}
 			}else{
@@ -961,7 +914,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void readFromRegister(TargetOpObject op, HString registerName) {
 		boolean found = false;
-		if (Configuration.getBoard() == null){
+		if (Configuration.getBoard() == null) {
 			op.errorMsg = "no configuration loaded";
 			return;
 		}
@@ -978,61 +931,55 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 		if (found) {
 			boolean wasFreezeAsserted;
-			TargetConnection bdi = Launcher.getTargetConnection();
-			if (bdi == null){
+			TargetConnection tc = Launcher.getTargetConnection();
+			if (tc == null) {
 				op.errorMsg = "target not connected";
 				return;
 			}
 			try {
-				if(!bdi.isConnected()){
-					bdi.openConnection();
-				}				
-				wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-				if (!wasFreezeAsserted) {
-					bdi.stopTarget();
-				}
+				if (!tc.isConnected()) tc.openConnection();			
+				wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+				if (!wasFreezeAsserted) tc.stopTarget();
 				switch (op.registerType) {
 				case Parser.sCR:
-					op.value = bdi.getRegisterValue("CR");
+					op.value = tc.getRegisterValue("CR");
 					break;
 				case Parser.sMSR:
-					op.value = bdi.getRegisterValue("MSR");
+					op.value = tc.getRegisterValue("MSR");
 					break;
 				case Parser.sFPSCR:
-					op.value = bdi.getRegisterValue("FPSCR");
+					op.value = tc.getRegisterValue("FPSCR");
 					break;
 				case Parser.sGPR:
-					op.value = bdi.getGprValue(op.addr);
+					op.value = tc.getRegisterValue(op.description);
 					break;
 				case Parser.sFPR:
-					op.value = bdi.getFprValue(op.addr);
+					op.value = tc.getRegisterValue(op.description);
 					break;
 				case Parser.sSPR:
-					op.value = bdi.getSprValue(op.addr);
+					op.value = tc.getRegisterValue(op.description);
 					break;
 				case Parser.sIOR:
 					switch (op.registerSize) {
 					case 1:
-						op.value = bdi.readByte(op.addr);
+						op.value = tc.readByte(op.addr);
 						break;
 					case 2:
-						op.value = bdi.readHalfWord(op.addr);
+						op.value = tc.readHalfWord(op.addr);
 						break;
 					default:
-						op.value = bdi.readWord(op.addr);
+						op.value = tc.readWord(op.addr);
 						break;
 					}
 					break;
 				default:
 				}
 				op.isRead = true;
-				if (!wasFreezeAsserted) {
-					bdi.startTarget();
-				}
+				if (!wasFreezeAsserted) tc.startTarget(-1);
 			} catch (TargetConnectionException e) {
-				op.errorMsg = "target not initialized";
+				op.errorMsg = e.getMessage();
 			}
-		}else{
+		} else {
 			op.description = registerName.toString();
 			op.errorMsg = "register not found";
 		}
@@ -1040,26 +987,19 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void setToAddress(TargetOpObject op){
 		boolean wasFreezeAsserted;
-		TargetConnection bdi = Launcher.getTargetConnection();
-		if(bdi == null){
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null){
 			op.errorMsg = "target not connected";
 			return;
 		}
 		try {
-			if(!bdi.isConnected()){
-				bdi.openConnection();
-			}
+			if (!tc.isConnected()) tc.openConnection();			
+			wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+			if (!wasFreezeAsserted) tc.stopTarget();
 			
-			wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) {
-				bdi.stopTarget();
-			}
+			tc.writeWord(op.addr, (int)op.value);
 			
-			bdi.writeWord(op.addr, (int)op.value);
-			
-			if (!wasFreezeAsserted) {
-				bdi.startTarget();
-			}
+			if (!wasFreezeAsserted) tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
 			op.errorMsg = "target not initialized";
 		}
@@ -1094,84 +1034,70 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					return;
 				}
 				
-				TargetConnection bdi = Launcher.getTargetConnection();
-				if(bdi == null){
+				TargetConnection tc = Launcher.getTargetConnection();
+				if(tc == null){
 					op.errorMsg = "target not connected";
 					return;
 				}
 				try{
 					long val = Long.decode(value);
-					if(!bdi.isConnected()){
-						bdi.openConnection();
-					}
-					wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-					if(!wasFreezeAsserted){
-						bdi.stopTarget();
-					}
-					if(((Type)var.type).sizeInBits <= 2 * slotSize ) {
-						bdi.writeByte(var.address,(byte)(val & 0xFF));
-					}else if(((Type)var.type).sizeInBits == 4 * slotSize){
-						bdi.writeHalfWord(var.address,(short)(val & 0xFFFF));
-					}else if(((Type)var.type).sizeInBits == 8 * slotSize){
-						bdi.writeWord(var.address,(int)(val & 0xFFFFFFFF));
-					}else if(((Type)var.type).sizeInBits > 8 * slotSize) {
-						bdi.writeWord(var.address,(int)((val >> 32) & 0xFFFFFFFF));
-						bdi.writeWord(var.address + slotSize,(int)(val & 0xFFFFFFFF));
+					if (!tc.isConnected()) tc.openConnection();
+					wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+					if (!wasFreezeAsserted)	tc.stopTarget();
+					if (((Type)var.type).sizeInBits <= 8) tc.writeByte(var.address,(byte)(val & 0xFF));
+					else if (((Type)var.type).sizeInBits == 16)	tc.writeHalfWord(var.address,(short)(val & 0xFFFF));
+					else if (((Type)var.type).sizeInBits == 32)	tc.writeWord(var.address,(int)(val & 0xFFFFFFFF));
+					else if (((Type)var.type).sizeInBits > 32) {
+						tc.writeWord(var.address,(int)((val >> 32) & 0xFFFFFFFF));
+						tc.writeWord(var.address + slotSize,(int)(val & 0xFFFFFFFF));
 					}
 					op.value = val;
-					if(!wasFreezeAsserted){
-						bdi.startTarget();
-					}
-				}catch(TargetConnectionException e){
+					if (!wasFreezeAsserted)	tc.startTarget(-1);
+				} catch(TargetConnectionException e) {
 					op.errorMsg = "target not initialized";
 				}
-			}else{
+			} else {
 				op.errorMsg = "field not found";
 			}
-		}else{
+		} else {
 			op.errorMsg = "class not found";
 		}
 	}
 	
-	private void setToRegister(TargetOpObject op){
-
+	private void setToRegister(TargetOpObject op) {
 		boolean wasFreezeAsserted;
-		TargetConnection bdi = Launcher.getTargetConnection();
-		if(bdi == null){
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null) {
 			op.errorMsg = "target not connected";
 			return;
 		}
 		try {
-			if(!bdi.isConnected()){
-				bdi.openConnection();
-			}
-			wasFreezeAsserted = bdi.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) {
-				bdi.stopTarget();
-			}
+			if (!tc.isConnected()) tc.openConnection();
+			wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+			if (!wasFreezeAsserted) tc.stopTarget();
 			switch (op.registerType) {
 			case Parser.sCR:
-				bdi.setRegisterValue("CR", (int)op.value);
+				tc.setRegisterValue("CR", (int)op.value);
 				break;
 			case Parser.sGPR:
-				bdi.setGprValue(op.addr, (int)op.value);
+				tc.setRegisterValue(op.description, (int)op.value);
 				break;
 			case Parser.sFPR:
-				bdi.setFprValue(op.addr,op.value);
+				tc.setRegisterValue(op.description, op.value);
 				break;
 			case Parser.sSPR:
-				bdi.setSprValue(op.addr, (int)op.value);
+				tc.setRegisterValue(op.description, (int)op.value);
 				break;
 			case Parser.sIOR:
 				switch (op.registerSize) {
 				case 1:
-					bdi.writeByte(op.addr, (byte)op.value);
+					tc.writeByte(op.addr, (byte)op.value);
 					break;
 				case 2:
-					bdi.writeHalfWord(op.addr, (short)op.value);
+					tc.writeHalfWord(op.addr, (short)op.value);
 					break;
 				default:
-					bdi.writeWord(op.addr, (int)op.value);
+					tc.writeWord(op.addr, (int)op.value);
 					break;
 				}
 				break;
@@ -1179,7 +1105,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 
 			if (!wasFreezeAsserted) {
-				bdi.startTarget();
+				tc.startTarget(-1);
 			}
 		} catch (TargetConnectionException e) {
 			op.errorMsg = "target not initialized";

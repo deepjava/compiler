@@ -20,6 +20,7 @@ package ch.ntb.inf.deep.linker;
 
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.config.Segment;
+import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
 public class AddressEntry extends ConstBlkEntry {
@@ -37,8 +38,12 @@ public class AddressEntry extends ConstBlkEntry {
 	}
 	
 	public AddressEntry(String prefix, Item ref) {
+		if (ref == null) {
+			ErrorReporter.reporter.error(730);
+			assert false : "reference is null";
+		}
 		this.itemRef = ref;
-		if(ref.name != null) this.name = HString.getRegisteredHString(prefix + ref.name);
+		if (ref.name != null) this.name = HString.getRegisteredHString(prefix + ref.name);
 		else name = UNDEF;
 	}
 	

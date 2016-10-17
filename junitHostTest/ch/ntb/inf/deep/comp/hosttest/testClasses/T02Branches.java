@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
+@SuppressWarnings("unused")
 public class T02Branches {
     public static int if1(int a) {
         int i;

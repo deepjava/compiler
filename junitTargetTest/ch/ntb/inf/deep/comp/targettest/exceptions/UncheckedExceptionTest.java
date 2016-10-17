@@ -4,6 +4,7 @@ import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
 import ch.ntb.inf.junitTarget.Test;
 
+@SuppressWarnings("unused")
 public class UncheckedExceptionTest {
 	
 	static int x;
@@ -72,6 +73,7 @@ public class UncheckedExceptionTest {
 		CmdTransmitter.sendDone();
 	}
 
+	@SuppressWarnings("null")
 	@Test
 	public static void testNullPointer() {
 		try {
@@ -299,5 +301,7 @@ public class UncheckedExceptionTest {
 
 }
 
+@SuppressWarnings("serial")
 class E1 extends Exception { }
+@SuppressWarnings("serial")
 class E2 extends Exception { }

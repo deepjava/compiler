@@ -20,7 +20,6 @@ package ch.ntb.inf.deep.comp.targettest.statements;
 
 import ch.ntb.inf.junitTarget.Assert;
 import ch.ntb.inf.junitTarget.CmdTransmitter;
-import ch.ntb.inf.junitTarget.Ignore;
 import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Test;
 
@@ -3427,7 +3426,6 @@ public class SwitchTest {
 		}
 	}
 	
-//	@Ignore
 	@Test
 	// test if switch condition is constant
 	public static void testConst() {
@@ -3440,5 +3438,54 @@ public class SwitchTest {
 		Assert.assertTrue("test2", t.terminated);
 		CmdTransmitter.sendDone();
 	}
+	
+	// tests if dead blocks are correctly removed
+	public static int switchDeadBlocks1(int a) {
+		switch (a) {
+		case 0: 
+			return 10;
+		case 1: 
+			break;
+		case 2: 
+			break;
+		case 3: 
+			return 20;
+		}
+		return 1;
+	}
+	
+	// tests if dead blocks are correctly removed
+	public static int switchDeadBlocks2(int a) {
+		int b = 1;
+		switch (a) {
+		case 0: 
+			return 10;
+		case 1: 
+			b += 1;
+		case 2: 
+			break;
+		case 3: 
+			return 20;
+		}
+		return b;
+	}
+	
+	@Test
+	// test if switch condition is constant
+	public static void testDeadBlocks() {
+		Assert.assertEquals("test1", 10, switchDeadBlocks1(0));
+		Assert.assertEquals("test2", 1, switchDeadBlocks1(1));
+		Assert.assertEquals("test3", 1, switchDeadBlocks1(2));
+		Assert.assertEquals("test4", 20, switchDeadBlocks1(3));
+		Assert.assertEquals("test5", 1, switchDeadBlocks1(10));
+		Assert.assertEquals("test10", 10, switchDeadBlocks2(0));
+		Assert.assertEquals("test11", 2, switchDeadBlocks2(1));
+		Assert.assertEquals("test12", 1, switchDeadBlocks2(2));
+		Assert.assertEquals("test13", 20, switchDeadBlocks2(3));
+		Assert.assertEquals("test14", 1, switchDeadBlocks2(10));
+		CmdTransmitter.sendDone();
+	}
+	
+	
 
 }

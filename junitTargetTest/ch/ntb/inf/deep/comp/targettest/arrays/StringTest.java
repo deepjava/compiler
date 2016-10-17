@@ -28,6 +28,7 @@ import ch.ntb.inf.junitTarget.Test;
  * 
  *         Changes:
  */
+@SuppressWarnings("unused")
 @MaxErrors(100)
 public class StringTest {
 	

@@ -22,6 +22,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.launcher.Launcher;
 import ch.ntb.inf.deep.target.TargetConnection;
@@ -29,6 +30,7 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class SuspendAction implements IWorkbenchWindowActionDelegate {
 
+	@SuppressWarnings("unused")
 	private IWorkbenchWindow window;
     public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction";
 	

@@ -37,11 +37,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 	 */
 	public final CFGNode rootNode;
 	
-//	/**
-//	 * List of those CFG nodes representing a the entry point of a catch clause.
-//	 */
-//	public CFGNode[] catchEntries;
-
 	/**
 	 * Method for which the CFG is build. Used in the toString-Methods, SSA and
 	 * Linker.
@@ -122,7 +117,7 @@ public class CFG implements ICjvmInstructionMnemonics {
 			if (dbg) StdStreams.vrb.println("   " + bca + " " + bcMnemonics[bci]);
 			int entry = bcAttrTab[bci];
 			int instrLen = (entry >> 8) & 0xF;
-			if (instrLen == 0) {
+			if (instrLen == 0) {	// bCtableswitch or bClookupswitch
 				int addr = bca + 1;
 				addr = (addr + 3) & -4; // round to the next multiple of 4
 				int defaultOffset = getInt(code, addr);
@@ -133,21 +128,24 @@ public class CFG implements ICjvmInstructionMnemonics {
 					int nofCases = high - low + 1;
 					for (int i = 0; i < nofCases; i++) {
 						int branchOffset = getInt(code, addr + 8 + i * 4);
-						if (dbg) StdStreams.vrb.println("\t\tbranchOffset = " + branchOffset);
+						if (dbg) StdStreams.vrb.println("\tbranchOffset = " + branchOffset);
 						split(bca, bca + branchOffset);
 					}
-					if (dbg) StdStreams.vrb.println("\t\tdefaultOffset = " + defaultOffset);
+					if (dbg) StdStreams.vrb.println("\tdefaultOffset = " + defaultOffset);
 					split(bca, bca + defaultOffset);
 					instrLen = ((high-low) + 1) * 4 + addr + 8 - bca;
 				} else {	// bClookupswitch
 					int nofPairs = getInt(code, addr);
 					for (int i = 0; i < nofPairs; i++) {
 						int branchOffset = getInt(code, addr + 8 + i * 8);
+						if (dbg) StdStreams.vrb.println("\tbranchOffset = " + branchOffset);
 						split(bca, bca + branchOffset);
 					}
+					if (dbg) StdStreams.vrb.println("\tdefaultOffset = " + defaultOffset);
 					split(bca, bca + defaultOffset);
 					instrLen = nofPairs * 8 + 4 + addr - bca;
 				}
+				eliminateGoto(bca, 0);
 			} else if (bci == bCwide) {	// wide instruction
 				entry = bcAttrTab[code[bca+1] & 0xff];
 				instrLen = ((entry >> 8) & 0xF) + ((entry >> 12) & 0x3) + 1;	// add wide to len
@@ -193,6 +191,7 @@ public class CFG implements ICjvmInstructionMnemonics {
 	 * 			if -1 -> no branch address, hence no splitting
 	 */
 	private void split(int bca, int branchAddr) {
+		if (dbg) StdStreams.vrb.println("\tsplit node after address " + bca + " and before branch target at " + branchAddr);
 		int entry;
 		CFGNode srcNode = getNode(bca);
 		if (srcNode == null) {
@@ -226,16 +225,10 @@ public class CFG implements ICjvmInstructionMnemonics {
 			if ((entry & (1 << bcapCondBranch)) != 0) { // no link if unconditional branch
 				srcNode.addSuccessor(newNode);
 			}
+			if (dbg) StdStreams.vrb.println("\t\tnew node: from bca=" + newNode.firstBCA + " to bca=" + newNode.lastBCA);
 		}
 		
 		if (branchAddr == -1) return;	// no branch target in case of athrow
-		entry = bcAttrTab[code[branchAddr] & 0xff];
-		if ((entry & (1 << bcapUncondBranch)) != 0) {
-			if (dbg) StdStreams.vrb.println("      eliminate goto node at bca = " + branchAddr);
-			// branch target is a goto, jump to new target node
-			branchAddr += (short) (((code[branchAddr + 1]&0xff) << 8) | (code[branchAddr + 2]&0xff));
-			if (dbg) StdStreams.vrb.println("      new branch address = " + branchAddr);
-		}
 		CFGNode targNode = getNode(branchAddr);
 		if (targNode == null) {
 			ErrorReporter.reporter.error(400);
@@ -271,6 +264,31 @@ public class CFG implements ICjvmInstructionMnemonics {
 				return;
 			}
 			srcNode.addSuccessor(targNode);
+		}
+	}
+
+	/**
+	 * Eliminates unnecessary goto blocks in switch statements.
+	 * 
+	 * @param bca
+	 *			address to split before.
+	 * @param branchAddress
+	 * 			if -1 -> no branch address, hence no splitting
+	 */
+	private void eliminateGoto(int bca, int branchAddr) {
+		if (dbg) StdStreams.vrb.println("\teliminates unnecessary goto blocks in switch statement at bca=" + bca);
+		CFGNode switchNode = getNode(bca);
+		for (int i = 0; i < switchNode.nofSuccessors; i++) {
+			CFGNode node = switchNode.successors[i];
+			int addr = node.firstBCA;
+			int entry = bcAttrTab[code[addr] & 0xff];
+			if ((entry & (1 << bcapUncondBranch)) != 0) {	// node is a goto
+				if (dbg) StdStreams.vrb.println("\t\teliminate goto node at bca = " + addr);
+				int offset = (short) (((code[addr + 1]&0xff) << 8) | (code[addr + 2]&0xff));
+				CFGNode dest = getNode(addr+offset);
+				assert dest != null;
+				switchNode.successors[i] = dest;
+			}
 		}
 	}
 
@@ -454,8 +472,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 		return b;
 	}
 
-
-
 	private static int getInt(byte[] bytes, int index){
 		return ((bytes[index]&0xff)<<24) | (bytes[index+1]&0xff)<<16 | (bytes[index+2]&0xff)<<8 | (bytes[index+3]&0xff);
 	}
@@ -468,27 +484,6 @@ public class CFG implements ICjvmInstructionMnemonics {
 		while (node != null) {
 			for (int n = 0; n < 3; n++) sb.append(" ");
 			sb.append("CFGNode nr:" + i + " ");
-//			if (node.isLoopHeader())
-//				sb.append("is loop header");
-//			if (node.nofBackwardBranches > 0)
-//				sb.append(", bckwd branches=" + node.nofBackwardBranches);
-//			sb.append(", ref="+node.ref);
-//			sb.append(", visited:"+node.visited);
-//			sb.append("\n\t\tpredecessor: ");
-//			for (int k = 0; (k < node.predecessors.length)
-//					&& (node.predecessors[k] != null); k++) {
-//				sb.append(node.predecessors[k].toString());
-//				sb.append("\t");
-//			}
-//			sb.append("\n");
-//			sb.append("\t\tsuccessor: ");
-//			for (int k = 0; (k < node.successors.length)
-//					&& (node.successors[k] != null); k++) {
-//				sb.append(node.successors[k].toString());
-//				sb.append("\t");
-//			}
-//			sb.append("\n");
-//			if (node.idom != null) sb.append("\t\tdominator:"+node.idom.toString()+"\n");
 			sb.append(node.toString(true) + "\n");
 			node = node.next;
 			i++;

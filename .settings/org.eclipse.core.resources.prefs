@@ -1,10 +1,6 @@
 eclipse.preferences.version=1
 encoding//src/ch/ntb/inf/deep/cfg/CFG.java=US-ASCII
 encoding//src/ch/ntb/inf/deep/cfg/CFGNode.java=US-ASCII
-encoding//src/ch/ntb/inf/deep/cgPPC/InstructionDecoder.java=US-ASCII
-encoding//src/ch/ntb/inf/deep/cgPPC/InstructionOpcs.java=US-ASCII
-encoding//src/ch/ntb/inf/deep/cgPPC/RegAllocator.java=US-ASCII
-encoding//src/ch/ntb/inf/deep/cgPPC/Registers.java=US-ASCII
 encoding//src/ch/ntb/inf/deep/classItems/Array.java=US-ASCII
 encoding//src/ch/ntb/inf/deep/classItems/ByteCodePreProc.java=US-ASCII
 encoding//src/ch/ntb/inf/deep/classItems/Class.java=US-ASCII

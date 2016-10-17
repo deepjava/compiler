@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
+@SuppressWarnings("unused")
 public class T03Switch {
 	public static int switchNear1(int i) {
 		switch(i) {

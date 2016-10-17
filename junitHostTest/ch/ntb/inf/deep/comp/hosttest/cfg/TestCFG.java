@@ -21,10 +21,6 @@ package ch.ntb.inf.deep.comp.hosttest.cfg;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
-
-import org.junit.BeforeClass;
-
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.CFR;
@@ -72,7 +68,7 @@ public class TestCFG implements ICclassFileConsts {
 		for (int i = 0; i < count; i++) {
 			cfg[i] = new CFG(m1);
 			m1 = (Method)m1.next;
-//			cfg[i].printToLog();
+//			System.out.println(cfg[i].toString());
 		}
 	}
 

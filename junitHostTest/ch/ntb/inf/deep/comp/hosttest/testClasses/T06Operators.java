@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
-
+@SuppressWarnings("unused")
 public class T06Operators {
 
 	public static boolean conditionalOperator1() {

@@ -49,16 +49,21 @@ public class StringEntry extends ConstBlkEntry {
 		if(offset + size <= a.length * 4) {
 			a[index++] = tag;
 			a[index++] = getStringClassAddr();
+			written += 8;
 			for(int i = 0; i < objectSize / 4; i ++) {
 				a[index++] = 0; // TODO @Martin: insert fields of object here...
+				written += 4;
 			}
 			a[index++] = getNumberOfChars();
+			written += 4;
 			for(int j = 0; j < getNumberOfChars(); j++) {
 				word = (word << 16) + s.charAt(j);
 				c++;
 				if(c > 1 || j == s.length() - 1) {
 					if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
-					a[index++] = word;
+					if (!Linker32.bigEndian) word = Integer.rotateLeft(word, 16); 
+					a[index++] = word; 
+					written += 4;
 					c = 0;
 					word = 0;
 				}

@@ -45,9 +45,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		loopHeaders = new SSANode[nofNodes];
 		sortedNodes = new SSANode[nofNodes];
 		returnNodes = new SSANode[4];
-		
+
 		if (dbg) StdStreams.vrb.println("generate ssa for " + cfg.method.owner.name + "." + cfg.method.name);
-//		cfg.method.printLocalVars(1);
 		
 		findParameters();	// fills parameter array
 		sortNodes((SSANode)cfg.rootNode);
@@ -76,7 +75,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			node.merge();
 			node.traversCode();	// translate bytecode into ssa instructions
 		}
-//		if (dbg) StdStreams.vrb.println(toString());
+		if (dbg) StdStreams.vrb.println(toString());
 
 		// visit loop headers again
 		for (int i = 0; i < nofLoopheaders; i++) {
@@ -199,6 +198,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 				b.phiFunctions[i].result.n = counter++;
 			}
 			for (int i = 0; i < b.nofInstr; i++) {
+				assert b.instructions[i] != null;
 				b.instructions[i].result.n = counter++;	
 			}
 			b = (SSANode) b.next;

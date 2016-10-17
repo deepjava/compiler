@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.comp.hosttest.testClasses;
 
+@SuppressWarnings("unused")
 public class T09Types {
 	static void m1() {
 		boolean res;

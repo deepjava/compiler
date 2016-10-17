@@ -33,11 +33,11 @@ public class SegmentAssignment extends Item {
 		segmentDesignator = desig;
 		String[] jname = desig.toString().split("\\.");
 		Board b = Configuration.getBoard();
-		if (b == null) {ErrorReporter.reporter.error(238, ", must be defined before target configuration"); return;}
+		if (b == null) {ErrorReporter.reporter.error(238, "must be defined before target configuration"); return;}
 		dev = b.getDeviceByName(HString.getRegisteredHString(jname[0]));
-		if (dev == null) {ErrorReporter.reporter.error(220, ", device required in target configuration is not found in memory map"); return;}
+		if (dev == null) {ErrorReporter.reporter.error(220, "device required in target configuration is not found in memory map"); return;}
 		seg = dev.getSegmentByName(jname[1]);
-		if (seg == null) {ErrorReporter.reporter.error(254, ", segment required in target configuration is not found in memory map"); return;}
+		if (seg == null) {ErrorReporter.reporter.error(254, "segment " + jname[1] + " required in target configuration is not found in memory map"); return;}
 	}
 	
 	public String toString() {

@@ -193,6 +193,7 @@ public class CheckedExceptionTest {
 		CmdTransmitter.sendDone();
 	}
 	
+	@SuppressWarnings("unused")
 	static int m3() throws E1 {
 		int a = 1;
 		try {
@@ -235,6 +236,12 @@ public class CheckedExceptionTest {
 		return a;
 	}
 
+	private static int m63() {
+		try {
+			return m62();
+		} catch (IOException e) {return 100;}
+	}
+	
 	@Test
 	public static void testCatchReturn() {
 		a = -1;
@@ -243,12 +250,22 @@ public class CheckedExceptionTest {
 		a = 0;
 		Assert.assertEquals("test3", 10, m60());		
 		Assert.assertEquals("test4", 20, m61());		
+		a = 200;
+		Assert.assertEquals("test5", 200, m63());	
+		a = 0;
+		Assert.assertEquals("test6", 100, m63());	
 		
 		CmdTransmitter.sendDone();
 	}
+	
+
+
 
 }
 
+@SuppressWarnings("serial")
 class E10 extends Exception { }
+@SuppressWarnings("serial")
 class E20 extends Exception { }
+@SuppressWarnings("serial")
 class E30 extends E10 { }

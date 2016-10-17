@@ -108,32 +108,13 @@ public class GPRView extends ViewPart implements ISelectionListener {
 		}
 
 		public Object[] getElements(Object parent) {
-			Register dummy = new Register();
 			Register[] regs = null;
 			if (model != null){
 				regs = model.getMod(0);
 			}
-			if(model == null || model.getMod(0) == null){
-				regs = new Register[32];
-				for(int i = 0; i < 32; i++){
-					regs[i] = new Register("GPR"+i,0,0);
-				}
-			}
-			if(regs.length < 32){
-				return regs;
-			}
-			//Group in blocks of 4 elements
-			int regCount = 0;
-			Register[] gpr = new Register[39];
-			for(int i = 0;i < gpr.length;i++){
-				if(i == 4 || i == 9 || i == 14 || i == 19 || i == 24 || i == 29 || i == 34){
-					gpr[i] = dummy;
-				}else{
-					gpr[i]=regs[regCount];
-					regCount++;
-				}
-			}
-			return gpr;
+			assert (regs != null);
+	
+			return regs;
 		}
 
 	}
@@ -156,14 +137,14 @@ public class GPRView extends ViewPart implements ISelectionListener {
 					String value = Integer.toBinaryString(((Register)obj).value);
 					String temp = "";
 					
-					// complete to 32 Bit
+					// complete to 32 bit
 					int length = 32 - value.length();
 					for (int y = 0; y < length; y++) {
 						temp = temp + "0";
 					}
 					value = temp + value;
 
-					// insert Spaces
+					// insert spaces
 					int z = 4;
 					temp = value.substring(0, 4);
 					for (int x = 0; x < 7; x++) {
@@ -317,15 +298,11 @@ public class GPRView extends ViewPart implements ISelectionListener {
 		refresh.setImageDescriptor(img);
 		suspend = new Action(){
 			public void run(){
-				TargetConnection bdi = Launcher.getTargetConnection();
-				if (bdi == null)return;
+				TargetConnection tc = Launcher.getTargetConnection();
+				if (tc == null) return;
 				try {
-					if(!bdi.isConnected()){//reopen
-						bdi.openConnection();
-					}
-					if(bdi.getTargetState() != TargetConnection.stateDebug){
-						bdi.stopTarget();
-					}
+					if (!tc.isConnected()) tc.openConnection();
+					if (tc.getTargetState() != TargetConnection.stateDebug) tc.stopTarget();
 				} catch (TargetConnectionException e) {
 					e.printStackTrace();
 				}
@@ -338,15 +315,11 @@ public class GPRView extends ViewPart implements ISelectionListener {
 		suspend.setImageDescriptor(img);
 		resume = new Action(){
 			public void run(){
-				TargetConnection bdi = Launcher.getTargetConnection();
-				if (bdi == null)return;
+				TargetConnection tc = Launcher.getTargetConnection();
+				if (tc == null)return;
 				try {
-					if(!bdi.isConnected()){//reopen
-						bdi.openConnection();
-					}
-					if(bdi.getTargetState() == TargetConnection.stateDebug){
-						bdi.startTarget();
-					}
+					if (!tc.isConnected()) tc.openConnection();
+					if (tc.getTargetState() == TargetConnection.stateDebug) tc.startTarget(-1);
 				} catch (TargetConnectionException e) {
 					e.printStackTrace();
 				}
@@ -368,12 +341,9 @@ public class GPRView extends ViewPart implements ISelectionListener {
 	}
 	
 	private synchronized void update(){
-		if (model == null){
-			model = RegModel.getInstance();
-		}else{
-			model.updateGPRModel();
-		}
-		if(model.getMod(0) != null){
+		if (model == null) model = RegModel.getInstance();
+		else model.updateGPRModel();
+		if (model.getMod(0) != null) {
 			viewer.setInput(model);
 			viewer.getControl().setEnabled(true);
 			viewer.refresh();

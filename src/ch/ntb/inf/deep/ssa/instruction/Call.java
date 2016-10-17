@@ -18,7 +18,7 @@
 
 package ch.ntb.inf.deep.ssa.instruction;
 
-import ch.ntb.inf.deep.cgPPC.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.ssa.SSAValue;
@@ -77,7 +77,7 @@ public class Call extends SSAInstruction {
 		if (result.index != -1) sb.append(", index=" + result.index);
 		if (result.join != null) {
 			sb.append(", join=[" + result.index + "(");
-			SSAValue join = RegAllocator.joins[result.index];
+			SSAValue join = RegAllocatorPPC.joins[result.index];
 			int i = 0;
 			while (join != null && join != result.join) {
 				i++;

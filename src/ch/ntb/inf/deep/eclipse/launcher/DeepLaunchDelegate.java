@@ -83,13 +83,13 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		else {
 			Launcher.buildAll(location + IPath.SEPARATOR + program, targetConfig);
 		}
-		
+
 		monitor.worked(50);
 		if(monitor.isCanceled()) {
 			monitor.done();
 			return;
 		}
-		
+
 		if(ErrorReporter.reporter.nofErrors == 0 ) {
 			monitor.worked(60);
 			Programmer programmer = Configuration.getProgrammer();
@@ -98,17 +98,14 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 				try {
 					Bundle bundle = Platform.getBundle(programmer.getPluginId().toString());
 					if (bundle != null) {
-//						System.out.println(bundle.getSymbolicName() + " 1");
 						cls = bundle.loadClass(programmer.getClassName().toString());
-//						System.out.println(cls.getName() + " 2");
-						//					cls = java.lang.Class.forName(programmer.getClassName().toString());
 						java.lang.reflect.Method m;
 						m = cls.getDeclaredMethod("getInstance");
 						TargetConnection tc = (TargetConnection) m.invoke(cls);
 						Launcher.setTargetConnection(tc);
 						Launcher.openTargetConnection();
 						Launcher.downloadTargetImage();
-						Launcher.startTarget();
+						Launcher.startTarget(0x100);
 					} else ErrorReporter.reporter.error(812, programmer.getClassName().toString());
 				} catch (ClassNotFoundException e) {
 					ErrorReporter.reporter.error(811, programmer.getClassName().toString());

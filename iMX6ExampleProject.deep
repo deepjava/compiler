@@ -1,0 +1,25 @@
+#deep-1
+
+meta {
+	version = "2016-03-20";
+	description = "Example project file";
+}
+
+project ExampleProjectMpc555 {
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
+#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+	
+	boardtype = colibri_iMX6;
+	ostype = ntbSTS_arm;
+	
+#	rootclasses = "java/lang/Object";
+#	rootclasses = "test/Test1";
+	rootclasses = "ch/ntb/inf/deep/runtime/iMX6/Reset";
+
+#	imgfile = "out/exampleProject.bin"
+#	imgformat = binary;
+
+#	tctfile = "tct/targetCommands.dtct";
+
+}
