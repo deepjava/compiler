@@ -71,9 +71,9 @@ project junitTargetTestProject {
 #	rootclasses = "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
 
 #	Tests for all target lib tests
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555",
-#				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest","ch/ntb/inf/deep/trglib/targettest/UtilTest",
-#				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
+	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555",
+				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest","ch/ntb/inf/deep/trglib/targettest/UtilTest",
+				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
 
 # Target command table file
 	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";

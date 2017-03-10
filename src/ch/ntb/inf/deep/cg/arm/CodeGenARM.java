@@ -529,12 +529,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				int indexReg = src2Reg;	// index into array;
 				if (meth.ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
 //					createIrDrAd(ppcLwz, res.regGPR1, refReg, objectSize);	// read field "count", must be first field
+					createDataProcReg(code, armLsl, condAlways, dReg, refReg, noShift, objectSize);	// read field "count", must be first field
 //					createItrap(ppcTw, TOifgeU, indexReg, res.regGPR1);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
-//						createIrDrAsimm(ppcAddi, res.regGPR2, refReg, stringSize - 4);	// add index of field "value" to index
-//						createIrDrArB(ppcLbzx, res.reg, res.regGPR2, indexReg);
-//						createIrArS(ppcExtsb, res.reg, res.reg);
+						createDataProcReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
+						createDataProcImm(code, armAdd, condAlways, dReg, refReg, stringSize - 4);	// add index of field "value" to index
+						createLSWordRegA(code, armLdrsb, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
 						break;
 					case tChar:
 						createDataProcReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
@@ -626,10 +627,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				int indexReg = src2Reg;	// index into array
 				int valReg = src3Reg;	// value to store
 				if (meth.ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
-//					assert false;
-//					createIrArSSHMBME(ppcRlwinm, res.regGPR1, indexReg, 1, 0, 30);
-//					createIrDrAsimm(ppcAddi, res.regGPR2, opds[0].reg, stringSize - 4);	// add index of field "value" to index
-//					createIrSrArB(ppcSthx, valReg, res.regGPR1, res.regGPR2);
+					createDataProcImm(code, armAdd, condAlways, LR, refReg, stringSize - 4);	// add index of field "value" to index
+					createDataProcReg(code, armAdd, condAlways, LR, LR, indexReg, LSL, 1);
+					createLSWordImm(code, armStrh, condAlways, valReg, LR, 0, 1, 1, 0);
 				} else {
 //					createItrap(ppcTwi, TOifequal, refReg, 0);
 //					createIrDrAd(ppcLha, res.regGPR1, refReg, -arrayLenOffset);
@@ -979,23 +979,23 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				Method m = (Method)call.item;
 				if ((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
 					if (m.id == idGET1) {	// GET1
-						createLSWordImm(code,armLdrsb, condAlways, dReg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armLdrsb, condAlways, dReg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idGET2) { // GET2
-						createLSWordImm(code,armLdrsh, condAlways, dReg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armLdrsh, condAlways, dReg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idGET4) { // GET4
-						createLSWordImm(code,armLdr, condAlways, dReg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armLdr, condAlways, dReg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idGET8) { // GET8
-						createLSWordImm(code,armLdr, condAlways, dRegLong, src1Reg, 0, 0, 0, 0);
-						createLSWordImm(code,armLdr, condAlways, dReg, src1Reg, 4, 1, 1, 0);
+						createLSWordImm(code, armLdr, condAlways, dRegLong, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armLdr, condAlways, dReg, src1Reg, 4, 1, 1, 0);
 					} else if (m.id == idPUT1) { // PUT1
-						createLSWordImm(code,armStrb, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armStrb, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idPUT2) { // PUT2
-						createLSWordImm(code,armStrh, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armStrh, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idPUT4) { // PUT4
-						createLSWordImm(code,armStr, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armStr, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idPUT8) { // PUT8
-						createLSWordImm(code,armStr, condAlways, src2RegLong, src1Reg, 0, 0, 0, 0);
-						createLSWordImm(code,armStr, condAlways, src2Reg, src1Reg, 4, 1, 1, 0);
+						createLSWordImm(code, armStr, condAlways, src2RegLong, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armStr, condAlways, src2Reg, src1Reg, 4, 1, 1, 0);
 //					} else if (m.id == idBIT) { // BIT
 //						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
 //						createIrDrAsimm(ppcSubfic, 0, opds[1].reg, 32);
@@ -1113,11 +1113,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //						// interface info goes into last parameter register
 //						loadConstant(paramEndGPR, m.owner.index << 16 | m.index * 4);	// interface id and method offset						// check if param = maxParam in reg -2
 //					}
-//					
-//					if (newString) {
-//						int sizeOfObject = Type.wktObject.objectSize;
-//						createIrDrAsimm(ppcAddi, paramStartGPR+opds.length, 0, sizeOfObject); // reg after last parameter
-//					}
+					
+					if (newString) {
+						int sizeOfObject = Type.wktObject.objectSize;
+						createDataProcImm(code, armMov, condAlways, paramStartGPR + opds.length, 0, sizeOfObject); // reg after last parameter
+					}
 			
 					// get result
 					int type = res.type & ~(1<<ssaTaFitIntoInt);
@@ -1140,10 +1140,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //						assert false;
 //						createIrDrB(ppcFmr, res.reg, returnFPR);
 					} else if (type == tVoid) {
-//						if (newString) {
-//							newString = false;
-//							createIrArSrB(ppcOr, stringReg, returnGPR1, returnGPR1); // stringReg was set by preceding sCnew
-//						}
+						if (newString) {
+							newString = false;
+							createDataProcReg(code, armMov, condAlways, stringReg, returnGPR1, noShift, 0); // stringReg was set by preceding sCnew
+						}
 					} else
 						createDataProcReg(code, armMov, condAlways, dReg, returnGPR1, noShift, 0);
 				}
@@ -1153,9 +1153,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				Item method;
 				if (opds == null) {	// bCnew
 					if (item == Type.wktString) {
-//						newString = true;	// allocation of strings is postponed
-//						stringReg = res.reg;
-//						loadConstantAndFixup(res.reg, item);	// ref to string
+						newString = true;	// allocation of strings is postponed
+						stringReg = dReg;
+						loadConstantAndFixup(code, dReg, item);	// ref to string
 					} else {
 						method = CFR.getNewMemoryMethod(bCnew);
 						loadConstantAndFixup(code, paramStartGPR, item);	// ref
@@ -1167,21 +1167,18 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					case tAboolean: case tAchar: case tAfloat: case tAdouble:
 					case tAbyte: case tAshort: case tAinteger: case tAlong:	// bCnewarray
 						method = CFR.getNewMemoryMethod(bCnewarray);
-						createDataProcReg(code, armMov, condAlways, paramStartGPR, src1Reg, noShift, 0);
+						createDataProcReg(code, armMov, condAlways, paramStartGPR, src1Reg, noShift, 0);	// nof elems
 						createDataProcImm(code, armMov, condAlways, paramStartGPR + 1, 0, (instr.result.type & 0x7fffffff) - 10);	// type
 						loadConstantAndFixup(code, paramStartGPR + 2, item);	// ref to type descriptor
 						insertBLAndFixup(code, method);	// addr of newarray
 						createDataProcReg(code, armMov, condAlways, dReg, returnGPR1, noShift, 0);
 						break;
 					case tAref:	// bCanewarray
-						assert false;
-//						method = CFR.getNewMemoryMethod(bCanewarray);
-//						loadConstantAndFixup(res.regGPR1, method);	// addr of anewarray
-//						createIrSspr(ppcMtspr, LR, res.regGPR1);
-//						createIrArSrB(ppcOr, paramStartGPR, opds[0].reg, opds[0].reg);	// nof elems
-//						loadConstantAndFixup(paramStartGPR + 1, item);	// ref to type descriptor
-//						createIBOBILK(ppcBclr, BOalways, 0, true);
-//						createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
+						method = CFR.getNewMemoryMethod(bCanewarray);
+						createDataProcReg(code, armMov, condAlways, paramStartGPR, src1Reg, noShift, 0);	// nof elems
+						loadConstantAndFixup(code, paramStartGPR + 1, item);	// ref to type descriptor
+						insertBLAndFixup(code, method);	// addr of anewarray
+						createDataProcReg(code, armMov, condAlways, dReg, returnGPR1, noShift, 0);
 						break;
 					default:
 						ErrorReporter.reporter.error(612);

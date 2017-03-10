@@ -94,15 +94,15 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 	public void addPages() {
 		libPathPage = new LibPathPage("First Page");
 		libPathPage.setTitle("Target Library");
-		libPathPage.setDescription("Please choose the target library to use for this project");
+		libPathPage.setDescription("Choose the target library to use for this project");
 		addPage(libPathPage);
 		targetConfigPage = new TargetConfigPage("Second Page");
-		targetConfigPage.setTitle("Target configuration");
-		targetConfigPage.setDescription("Please choose the board and operating system for this project");
+		targetConfigPage.setTitle("Target Configuration");
+		targetConfigPage.setDescription("Choose the board and operating system for this project");
 		addPage(targetConfigPage);
 		projectConfigPage = new ProjectConfigPage("Third Page");
-		projectConfigPage.setTitle("Projectname");
-		projectConfigPage.setDescription("Please define your projectname");
+		projectConfigPage.setTitle("Project Name");
+		projectConfigPage.setDescription("Define a name for your project");
 		addPage(projectConfigPage);
 	}
 

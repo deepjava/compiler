@@ -15,7 +15,7 @@ project junitTargetTestProject {
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf02;
 
-	imgfile = "W:\pub\graf\ArmTest1.bin";
+	imgfile = "\\inf004\ftp\pub\graf\ArmTest1.bin";
 	imgformat = BIN;
 
 #	Tests for compiler test classes 
