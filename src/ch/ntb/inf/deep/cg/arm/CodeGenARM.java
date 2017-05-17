@@ -441,10 +441,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				else dReg = nonVolStartGPR + 0;
 			}
 
-//			int gAux1 = res.regGPR1;
-//			if (gAux1 >= 0x100) gAux1 = nonVolStartGPR + 3;
-//			int gAux2 = res.regGPR2;
-//			if (gAux2 >= 0x100) gAux2 = nonVolStartGPR + 4;
+			int gAux1 = res.regGPR1;
+			if (gAux1 >= 0x100) gAux1 = nonVolStartGPR + 3;
+			int gAux2 = res.regGPR2;
+			if (gAux2 >= 0x100) gAux2 = nonVolStartGPR + 4;
 			
 			switch (instr.ssaOpcode) { 
 			case sCloadConst: {
@@ -756,6 +756,24 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createDataProcReg(code, armAsr, condAlways, dReg, dReg, noShift, Integer.numberOfTrailingZeros(val));
 						}
 					} else {
+//						 CMP             src2Reg, #0	//TODO
+//						 BEQ divide_end
+//						 ;check for divide by zero!
+
+						loadConstant(code, dReg, 0);	// clear dReg to accumulate result
+						loadConstant(code, gAux1, 1); // set bit 0 in aux register, which will be shifted left then right
+						// loop 1, shift denominator until it is bigger than nominator
+						createCompReg(code, armCmp, condAlways, src2Reg, src1Reg, noShift, 0);
+						createDataProcReg(code, armMov, condLS, src2Reg, src2Reg, LSL, 1);
+						createDataProcReg(code, armMov, condLS, gAux1, gAux1, LSL, 1);
+						createBranchImm(code, armB, condLS, -5);
+						// loop 2
+						createCompReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
+						createDataProcReg(code, armSub, condCS, src1Reg, src1Reg, src2Reg, noShift, 0);
+						createDataProcReg(code, armAdd, condCS, dReg, dReg, gAux1, noShift, 0);
+						createDataProcReg(code, armMovs, condAlways, gAux1, gAux1, LSR, 1);
+						createDataProcReg(code, armMov, condCC, src2Reg, src2Reg, LSR, 1);
+						createBranchImm(code, armB, condCC, -7);
 					}
 					break;
 				case tLong: case tFloat: case tDouble:
@@ -931,7 +949,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					break;
 				case tChar: 
 					createDataProcReg(code, armMov, condAlways, dReg, 0, src1Reg, LSL, 16);
-					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LRS, 16);
+					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
 					createPacking(code, armSxth, condAlways, dReg, src1Reg);
@@ -1741,7 +1759,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	// data processing with a single operand in register, use with MOV, MVN
 	private void createDataProcReg(Code32 code, int opCode, int cond, int Rd, int Rm, int shiftType, int shiftAmount) {
-		if ((Rd == Rm) && (shiftType == noShift)) return;	// mov Rx, Rx makes no sense	
+		if ((Rd == Rm) && (shiftAmount == 0)) return;	// mov Rx, Rx makes no sense	
 		if (shiftAmount == 0) code.instructions[code.iCount] = (cond << 28) | armMov | (Rd << 12) | Rm;	// shifting with imm=0 is not valid
 		else code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | (shiftAmount << 7) | (shiftType << 5) | Rm;
 		code.incInstructionNum();

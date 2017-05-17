@@ -167,7 +167,7 @@ public interface InstructionOpcs {
 	
 	final int noShift = 0;
 	final int LSL = 0;
-	final int LRS = 1;
+	final int LSR = 1;
 	final int ASR = 1;
 	final int ROR = 3;
 	final int RRX = 3;
