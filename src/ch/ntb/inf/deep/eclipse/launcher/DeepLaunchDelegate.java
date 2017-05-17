@@ -19,7 +19,12 @@
 package ch.ntb.inf.deep.eclipse.launcher;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.Properties;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -63,8 +68,11 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		ConsoleDisplayMgr cdm = ConsoleDisplayMgr.getDefault();
 
 		String targetConfig = configuration.getAttribute(DeepPlugin.ATTR_TARGET_CONFIG, "");
-		String location = configuration.getAttribute(DeepPlugin.ATTR_DEEP_LOCATION, "");
-		String program = configuration.getAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, "");
+		String projectName = configuration.getAttribute(DeepPlugin.ATTR_DEEP_LOCATION, "");	
+		String launchFileName = configuration.getAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, "");
+
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		IPath path = project.getRawLocation();
 
 		monitor.beginTask("Download Target Image", 100);
 
@@ -77,12 +85,13 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 			return;
 		}
 		
-		if(location.charAt(0) == IPath.SEPARATOR ){			
-			Launcher.buildAll(ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + /*IPath.SEPARATOR +*/ location + IPath.SEPARATOR + program, targetConfig);			
-		}
-		else {
-			Launcher.buildAll(location + IPath.SEPARATOR + program, targetConfig);
-		}
+		String deepProjectFile;
+		if(path == null) // default project location (in workspace)
+			deepProjectFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + projectName + IPath.SEPARATOR + launchFileName;
+		else 	// in other location
+			deepProjectFile = path.toString() + IPath.SEPARATOR + launchFileName;
+
+		Launcher.buildAll(deepProjectFile, targetConfig);			
 
 		monitor.worked(50);
 		if(monitor.isCanceled()) {
