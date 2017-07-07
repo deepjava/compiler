@@ -315,7 +315,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-		tempStorageOffset = FPRoffset - tempStorageSize;
+		tempStorageOffset = FPRoffset - tempStorageSize;	//TODO change as in ppc
 		paramOffset = 4;
 		return size;
 	}

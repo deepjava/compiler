@@ -50,7 +50,6 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	private static int localVarOffset;
 	private static int tempStorageOffset;	
 	private static int stackSize;
-	static boolean tempStorage;
 	static boolean enFloatsInExc;
 
 	// information about the src registers for parameters of a call to a method within this method
@@ -70,7 +69,6 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
 
-		tempStorage = false;
 		enFloatsInExc = false;
 		RegAllocator.regsGPR = regsGPRinitial;
 		RegAllocator.regsFPR = regsFPRinitial;
@@ -308,7 +306,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private static int calcStackSize() {
-		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4 + tempStorageSize;
 		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
@@ -317,13 +315,13 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-		tempStorageOffset = localVarOffset - tempStorageSize;
-		paramOffset = 4;
+		tempStorageOffset = 4;
+		paramOffset = tempStorageOffset + tempStorageSize;
 		return size;
 	}
 
 	private static int calcStackSizeException() {
-		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
+		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4 + tempStorageSize;
 		if (enFloatsInExc) {
 			size += nofNonVolFPR * 8;	// save used nonvolatile FPR's
 			size += nonVolStartFPR * 8 + 8;	// save all volatile FPR's and FPSCR
@@ -340,8 +338,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-		tempStorageOffset = localVarOffset - tempStorageSize;
-		paramOffset = 4;
+		tempStorageOffset = 4;
+		paramOffset = tempStorageOffset + tempStorageSize;
 		return size;
 	}
 

@@ -83,10 +83,6 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 					if ((((Method)call.item).id) == CodeGenPPC.idENABLE_FLOATS) {
 					CodeGenPPC.enFloatsInExc = true;
 				}
-				int id = ((Method)call.item).id;
-				if (id == CodeGenPPC.idDoubleToBits || (id == CodeGenPPC.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-					id == CodeGenPPC.idFloatToBits || (id == CodeGenPPC.idBitsToFloat))  // FloatToBits or BitsToFloat
-					CodeGenPPC.tempStorage = true;
 			}
 		}
 		
@@ -134,12 +130,12 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 			}
 			
 			// reserve temporary storage on the stack for certain fpr operations
-			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
-				CodeGenPPC.tempStorage = true;
-			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
-				CodeGenPPC.tempStorage = true;
-			if ((instr.ssaOpcode == sCdiv || instr.ssaOpcode == sCrem) && res.type == tLong)
-				CodeGenPPC.tempStorage = true;
+//			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
+//				CodeGenPPC.tempStorage = true;
+//			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
+//				CodeGenPPC.tempStorage = true;
+//			if ((instr.ssaOpcode == sCdiv || instr.ssaOpcode == sCrem) && res.type == tLong)
+//				CodeGenPPC.tempStorage = true;
 
 			// reserve register for result of instruction
 			if (instr.ssaOpcode == sCloadLocal) {
