@@ -47,7 +47,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	 */
 	public static final String LIB_PATH = "I:\\deep\\lib";
 	public static final String BOARD = "ntbMpc555HB";
-	public static final String OS = "ntbSTS";
+	public static final String OS = "ntbSTS_ppc";
 	public static final String PROGRAMMER = "ntbMpc555UsbBdi";
 	
 	/**

@@ -82,7 +82,7 @@ class TargetConfigPage extends WizardPage {
 		groupOS.setText("Runtime system");
 		groupOS.setLayout(layout);
 		Label osLabel = new Label(groupOS,SWT.NONE);
-		osLabel.setText("Select a operating system");
+		osLabel.setText("Select an operating system");
 		osCombo = new Combo(groupOS, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		setControl(composite);
 		
