@@ -246,6 +246,21 @@ public class MemoryView extends ViewPart implements Listener {
 			int size = 0;
 			String addrStr = addr.getText();
 			String countStr = count.getText();
+			System.out.println(addr.getText());
+			
+			if(count.getText() == "") {
+				viewer.setInput(new String[] {"please insert number of elements"});
+				viewer.refresh();
+			}
+			if(addr.getText() == "") {
+				if(count.getText() == "") {
+					viewer.setInput(new String[] {"please insert start address and number of elements"});
+				}else {
+					viewer.setInput(new String[] {"please insert start address"});
+				}
+				viewer.refresh();
+			}
+
 			// work around for problem when the most significant bit is set;
 			if(addrStr.charAt(0) == '0' && addrStr.length() > 9 && addrStr.charAt(2) > '7'){
 				String most = addrStr.substring(2, 3);

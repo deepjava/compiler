@@ -81,10 +81,11 @@ public class DeepLaunchShortcut implements ILaunchShortcut2 {
 	 * @see org.eclipse.debug.ui.ILaunchShortcut#launch(org.eclipse.jface.viewers.ISelection, java.lang.String)
 	 */
 	public void launch(ISelection selection, String mode) {
-		if (selection instanceof IStructuredSelection) {
+		if (selection instanceof IStructuredSelection) {			
 			performLaunch(((IStructuredSelection) selection).toArray(), mode);
 		}
 	}
+	
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.debug.ui.ILaunchShortcut#launch(org.eclipse.ui.IEditorPart, java.lang.String)
@@ -103,7 +104,9 @@ public class DeepLaunchShortcut implements ILaunchShortcut2 {
 		// first try to find a candidate
 		Object candidate = null;
 		boolean found = false;
+		
 		if (search != null) {
+			
 			for (int i = 0; i < search.length && !found; i++) {
 				candidate = search[i];
 				if (!(candidate instanceof IFile)

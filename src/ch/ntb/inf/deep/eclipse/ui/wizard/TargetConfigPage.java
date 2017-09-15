@@ -29,6 +29,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -65,31 +66,41 @@ class TargetConfigPage extends WizardPage {
 	@Override
 	public void createControl(Composite parent) {		
 		Composite composite = new Composite(parent, SWT.NONE);
-		FillLayout layout = new FillLayout(SWT.VERTICAL);
+		//FillLayout layout = new FillLayout(SWT.VERTICAL);
+		GridLayout layout = new GridLayout(1, true);
 		composite.setLayout(layout);
+		composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+		
+		GridLayout gLayout = new GridLayout(1,false);
 		
 		Group groupBoard = new Group(composite, SWT.NONE);
 		groupBoard.setText("Board configuration");
-		groupBoard.setLayout(layout);
+		groupBoard.setLayout(gLayout);
+		groupBoard.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		Label boardLabel = new Label(groupBoard, SWT.NONE);
 		boardLabel.setText("Select a board");
 		boardCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+		boardCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		Label progLabel = new Label(groupBoard, SWT.NONE);
 		progLabel.setText("Select a programmer");
 		programmerCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+		programmerCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
 		Group groupOS = new Group(composite, SWT.NONE);
 		groupOS.setText("Runtime system");
-		groupOS.setLayout(layout);
+		groupOS.setLayout(gLayout);
+		groupOS.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		Label osLabel = new Label(groupOS,SWT.NONE);
 		osLabel.setText("Select an operating system");
 		osCombo = new Combo(groupOS, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
+		osCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		setControl(composite);
 		
 		Group groupImg = new Group(composite, SWT.NONE);
 		groupImg.setText("Image file creation");
 		GridLayout gridLayout = new GridLayout(2,false);
 		groupImg.setLayout(gridLayout);
+		groupImg.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		GridData gridData = new GridData(GridData.FILL, GridData.CENTER, true, false);
 		gridData.horizontalSpan = 2;		
 		check = new Button(groupImg, SWT.CHECK);

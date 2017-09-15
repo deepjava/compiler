@@ -214,7 +214,7 @@ read and modify registers
             name="ClassTreeView"
             restorable="true">
          <description>
-            Display all loaded classes with their CFG, SSA and machincode, shows memory devices and their segments
+            Display all loaded classes with their CFG, SSA and machinecode, shows memory devices and their segments
          </description>
       </view>
    </extension>

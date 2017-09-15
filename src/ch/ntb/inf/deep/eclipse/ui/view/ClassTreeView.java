@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.eclipse.ui.view;
 
+import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -375,9 +376,9 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		GridLayout layout = new GridLayout(5, true);
+		GridLayout layout = new GridLayout(6, true);
 		parent.setLayout(layout);
-		
+				
 		classTreeViewer = new TreeViewer(parent, SWT.SINGLE);
 		GridData classTreeViewerData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		classTreeViewerData.horizontalSpan = 2;
@@ -386,23 +387,23 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		classTreeViewer.setContentProvider(new ClassTreeContentProvider());
 		classTreeViewer.setAutoExpandLevel(2);
 		classTreeViewer.addSelectionChangedListener(this);
-
-		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
-		GridData textViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
-		textViewerData.horizontalSpan = 3;
-		textViewerData.verticalSpan = 2;
-		textViewer.getControl().setLayoutData(textViewerData);
-		Document doc = new Document();
-		textViewer.setDocument(doc);
 		
 		deviceTreeViewer = new TreeViewer(parent, SWT.SINGLE);
 		GridData deviceTreeViewerData = new GridData(SWT.FILL, SWT.FILL,true, true);
-		deviceTreeViewerData.horizontalSpan = 2;
+		deviceTreeViewerData.horizontalSpan = 1;
 		deviceTreeViewer.getControl().setLayoutData(deviceTreeViewerData);
 		deviceTreeViewer.setLabelProvider(new DeviceTreeLabelProvider());
 		deviceTreeViewer.setContentProvider(new DeviceTreeContentProvider());
 		deviceTreeViewer.setAutoExpandLevel(2);
 		deviceTreeViewer.addSelectionChangedListener(this);
+
+		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
+		GridData textViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
+		textViewerData.horizontalSpan = 3;
+		textViewerData.verticalSpan = 1;
+		textViewer.getControl().setLayoutData(textViewerData);
+		Document doc = new Document();
+		textViewer.setDocument(doc);
 		
 		
 		//get Display needs to set the font

@@ -75,10 +75,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
 	private TableViewer viewer;
 	private TargetOpObject[] elements;
-	private Action toChar;
+	//private Action toChar;
 	private Action toHex;
 	private Action toDez;
 	private Action toDouble;
+	private Action toBin;
 	private IEclipsePreferences prefs;
 
 	private static String cmdAddrName = "cmdAddr";
@@ -144,6 +145,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										if(op.representation == 1){//Hex
 											return String.format("0x%02X",(byte)op.value);
 										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 8);
+										}
 										return Byte.toString((byte)op.value);
 									case tChar:
 										if(op.representation == 1){//Hex
@@ -152,36 +156,54 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										if(op.representation == 2){//Dez{
 											return String.format("%d",(int)op.value);
 										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 16);
+										}
 										return String.format("%c",((char)op.value));
 									case tShort:
 										if(op.representation == 1){//Hex
 											return String.format("0x%04X",(short)op.value);
+										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 16);
 										}
 										return String.format("%d",((short)op.value));
 									case tInteger:
 										if(op.representation == 1){//Hex
 											return String.format("0x%08X",(int)op.value);
 										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 32);
+										}
 										return String.format("%d",(int)op.value);
 									case tFloat:
 										if(op.representation == 1){//Hex
 											return String.format("0x%08X",(int)op.value);
+										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 32);
 										}
 										return String.format("%f",Float.intBitsToFloat((int)op.value));
 									case tLong:
 										if(op.representation == 1){//Hex
 											return String.format("0x%016X",op.value);
 										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 64);
+										}
 										return String.format("%d",op.value);
 									case tDouble:
 										if(op.representation == 1){//Hex
 											return String.format("0x%016X",op.value);
 										}
+										if(op.representation == 5) {//Bin
+											return createBinary((int)op.value, 64);
+										}
 										return String.format("%f",Double.longBitsToDouble(op.value));
 									case tRef:
 										return String.format("0x%08X",(int)op.value);
 									default:
-										throw new RuntimeException("Should not happen");
+										throw new RuntimeException("Should not happen, number 1"); //XXX number 1
 								}
 							case 3:
 								return String.format("0x%08X",(int)op.value);
@@ -189,7 +211,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 							case 5:
 								return "";
 							default:
-								throw new RuntimeException("Should not happen");
+								throw new RuntimeException("Should not happen, number 2"); //XXX number 2
 						}
 					}
 				
@@ -239,6 +261,18 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			return null;
 		}
 	}
+	
+	public String createBinary(int value, int length) {
+		String retString = "0b ";
+		int temp = 0;
+		for(int i = 0; i < length; i++) {
+			temp = value >> (length-1-i);
+			retString += temp;
+			value -= temp << (length-1-i);
+			if(i%4 == 3)retString += " ";
+		}
+		return retString;
+	}
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -277,6 +311,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		column.getColumn().setWidth(bounds[3]);
 		column.getColumn().setResizable(false);
 		column.getColumn().setMoveable(false);
+		column.setEditingSupport(new AddressEditingSupport(viewer));
 
 		column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[4]);
@@ -357,13 +392,26 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		menu.add(toHex);
 		menu.add(toDez);
 		menu.add(toDouble);
-		menu.add(toChar);
+		//menu.add(toChar);
+		menu.add(toBin);
+
 		// Other plug-ins can contribute there actions here
 		menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	protected void createActions() {
-		toChar =  new Action(){
+		toBin = new Action() {
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection).getFirstElement();
+				if(obj instanceof TargetOpObject){
+					((TargetOpObject)obj).representation = 5;
+				}
+				viewer.refresh();
+			}
+		};
+		toBin.setText("ToBin");
+		/*toChar =  new Action(){
 			public void run() {
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection) selection).getFirstElement();
@@ -373,7 +421,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				viewer.refresh();
 			}
 		};
-		toChar.setText("ToChar");
+		toChar.setText("ToChar");*/
 		toHex =  new Action(){
 					public void run() {
 						ISelection selection = viewer.getSelection();
@@ -407,65 +455,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 		};
 		toDouble.setText("ToDouble");		
-	}
-	
-	public class DescriptorEditingSupport extends EditingSupport {
-
-		private final TableViewer viewer;
-
-		public DescriptorEditingSupport(TableViewer viewer) {
-			super(viewer);
-			this.viewer = viewer;
-		}
-
-		@Override
-		protected CellEditor getCellEditor(Object element) {
-			return new TextCellEditor(viewer.getTable());
-		}
-
-		@Override
-		protected boolean canEdit(Object element) {
-			return true;
-		}
-
-		@Override
-		protected Object getValue(Object element) {
-			return ((TargetOpObject)element).description;
-		}
-
-		@Override
-		protected void setValue(Object element, Object value) {
-			TargetOpObject op = (TargetOpObject)element;
-			if(value == null){
-				return;
-			}
-			op.errorMsg = "";
-			String param = String.valueOf(value);
-			if (choice[op.operation].equals("Register")) {
-				HString register = HString.getRegisteredHString(param.toUpperCase());
-				readFromRegister(op, register);				
-			} else if (choice[op.operation].equals("Variable")) {
-				if (!param.equals("")) readVariable(op, param);
-			} else if (choice[op.operation].equals("Address")) {
-				try {
-					if (param.length() > 0) {
-						// work around for problem when the most significant bit is set in hex number 
-						if(param.charAt(0) == '0' && param.length() > 9 && param.charAt(2) > '7'){
-							String most = param.substring(2, 3);
-							param = "0x0" + param.substring(3);
-							op.addr = (Integer.parseInt(most,16) << 28) | Integer.decode(param);
-						}else{
-							op.addr  = Integer.decode(param);
-						}
-					}
-					op.description = param;// do it first, so we need only one parameter for the functions
-					readFromAddress(op, op.description);
-				} catch (Exception e) {	}				
-
-			} else if (choice[op.operation].equals("TargetCMD")) sendCMD(op, param);
-			saveView();
-			viewer.refresh();
-		}
 	}
 	
 	public class ValueEditingSupport extends EditingSupport {
@@ -532,6 +521,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if (op.representation == 1) {// Hex
 						return String.format("0x%02X", op.value);
 					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 8);
+					}
 					return Byte.toString((byte) op.value);
 				case tChar:
 					if (op.representation == 1) {// Hex
@@ -540,30 +532,48 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if (op.representation == 2) {// Dez{
 						return String.format("%d", (int) op.value);
 					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 16);
+					}
 					return String.format("%c", ((char) op.value));
 				case tShort:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%04X", op.value);
+					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 16);
 					}
 					return String.format("%d", ((short) op.value));
 				case tInteger:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%08X", op.value);
 					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 32);
+					}
 					return String.format("%d", (int) op.value);
 				case tFloat:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%08X", op.value);
+					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 32);
 					}
 					return String.format("%f", Float.intBitsToFloat((int) op.value));
 				case tLong:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%016X", op.value);
 					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 64);
+					}
 					return String.format("%d", op.value);
 				case tDouble:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%016X", op.value);
+					}
+					if(op.representation == 5) {// Bin
+						return createBinary((int)op.value, 64);
 					}
 					return String.format("%f", Double.longBitsToDouble(op.value));
 				case tRef:
@@ -579,7 +589,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			case 5:
 				return "";
 			default:
-				throw new RuntimeException("Should not happen");
+				throw new RuntimeException("Should not happen, number 3"); //XXX number 3
 			}
 	}
 		
@@ -613,6 +623,98 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 			viewer.refresh();
 		}
+	}
+	
+	public class DescriptorEditingSupport extends EditingSupport {
+
+		private final TableViewer viewer;
+
+		public DescriptorEditingSupport(TableViewer viewer) {
+			super(viewer);
+			this.viewer = viewer;
+		}
+
+		@Override
+		protected CellEditor getCellEditor(Object element) {
+			return new TextCellEditor(viewer.getTable());
+		}
+
+		@Override
+		protected boolean canEdit(Object element) {
+			return true;
+		}
+
+		@Override
+		protected Object getValue(Object element) {
+			return ((TargetOpObject)element).description;
+		}
+
+		@Override
+		protected void setValue(Object element, Object value) {
+			TargetOpObject op = (TargetOpObject)element;
+			if(value == null){
+				return;
+			}
+			op.errorMsg = "";
+			String param = String.valueOf(value);
+			if (choice[op.operation].equals("Register")) {
+				HString register = HString.getRegisteredHString(param.toUpperCase());
+				readFromRegister(op, register);				
+			} else if (choice[op.operation].equals("Variable")) {
+				if (!param.equals("")) readVariable(op, param);
+			} else if (choice[op.operation].equals("Address")) {
+				try {
+					if (param.length() > 0) {
+						// work around for problem when the most significant bit is set in hex number 
+						if(param.charAt(0) == '0' && param.length() > 9 && param.charAt(2) > '7'){
+							String most = param.substring(2, 3);
+							param = "0x0" + param.substring(3);
+							op.addr = (Integer.parseInt(most,16) << 28) | Integer.decode(param);
+						}else{
+							op.addr  = Integer.decode(param);
+						}
+					}
+					op.description = param;// do it first, so we need only one parameter for the functions
+					readFromAddress(op, op.description);
+				} catch (Exception e) {	}				
+
+			} else if (choice[op.operation].equals("TargetCMD")) sendCMD(op, param);
+			saveView();
+			viewer.refresh();
+		}
+	}
+	
+	public class AddressEditingSupport extends EditingSupport {
+		
+		private final TableViewer viewer;
+		
+		public AddressEditingSupport(TableViewer viewer) {
+			super(viewer);
+			this.viewer = viewer;
+		}
+		
+		@Override
+		protected CellEditor getCellEditor(Object element) {
+			return new TextCellEditor(viewer.getTable());
+		}
+		
+		@Override
+		protected boolean canEdit(Object element) {
+			return true;
+		}
+		
+		@Override
+		protected Object getValue(Object element) {
+			TargetOpObject op = (TargetOpObject) element;
+			return String.format("0x%08X", op.addr);
+		}
+
+		@Override
+		protected void setValue(Object arg0, Object arg1) {
+			// TODO Auto-generated method stub
+			
+		}
+		
 	}
 		
 	public class OperationEditingSupport extends EditingSupport {
