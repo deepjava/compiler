@@ -994,7 +994,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						if (var.type == Type.wellKnownTypes[txInt]) op.valueType = tInteger;
 						else if (var.type == Type.wellKnownTypes[txFloat]) op.valueType = tFloat;										
 						else op.valueType = tRef;
-					} else if (((Type)var.type).sizeInBits > 64) { // 64 bit
+					} else if (((Type)var.type).sizeInBits > 63) { // 64 bit
 						op.value = tc.readWord(var.address);
 						op.value = op.value << (8 * slotSize) | (tc.readWord(var.address + slotSize) & 0xffffffffL);
 						if (var.type == Type.wellKnownTypes[txLong]) op.valueType = tLong;
