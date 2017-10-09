@@ -75,6 +75,8 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		}
 		if (dbg) vrb.println("<replace constant pool stubs");
 
+		RefType.refTypeList = (RefType)RefType.refTypeList.next;	// delete front stub
+		
 		// iterates through all classes and fixup loaded classes  
 		if (dbg) vrb.println(">fixup loaded classes:");
 		type = RefType.refTypeList;
@@ -84,8 +86,15 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 		}
 		if (dbg) vrb.println("<fixup loaded classes");
 
-		RefType.refTypeList = (RefType)RefType.refTypeList.next;	// delete front stub
-		
+		// iterates through all classes assemble noninit class list  
+		if (dbg) vrb.println(">add loaded classes to noninit class list:");
+		type = RefType.refTypeList;
+		while (type != null) {	// handle stdClasses and interfaces (no arrays)
+			if (type instanceof Class) ((Class)type).assembleInitList();
+			type = type.next;
+		}
+		if (dbg) vrb.println("<add loaded classes to noninit class list");
+
 		// split class groups into std classes, interfaces and arrays
 		if (dbg) vrb.println(">split class groups");
 		Item refType = RefType.refTypeList;
