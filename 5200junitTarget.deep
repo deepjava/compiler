@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2016-03-07";
+	version = "2017-10-10";
 	description = "Project file for junit target tests on the mpc5200";
 }
 
@@ -10,7 +10,7 @@ project junitTargetTestProject {
 	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
 	
 	boardtype = phyCoreMpc5200io;
-	ostype = ntbSTS;
+	ostype = ntbSTS_ppc;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf01;
 	

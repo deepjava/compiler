@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2013-09-25";
+	version = "2017-10-10";
 	description = "Example project file";
 }
 
@@ -9,7 +9,7 @@ project ExampleProjectMpc5200B {
 	libpath = "../ch.ntb.inf.deep.trglib";
 	
 	boardtype = phyCoreMpc5200tiny;
-	ostype = ntbSTS;
+	ostype = ntbSTS_ppc;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf01;
 	

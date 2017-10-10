@@ -1,15 +1,14 @@
 #deep-1
 
 meta {
-	version = "2013-01-24";
+	version = "2017-10-10";
 	description = "Project File for junit tests on host for CFG, SSA, cgPPC";
 }
 
 project junitTestProject {
 	libpath = "../ch.ntb.inf.deep.trglib";
 	boardtype = ntbMpc555HB;
-	ostype = ntbSTS;
-	programmertype = ntbMpc555UsbBdi;
+	ostype = ntbSTS_ppc;
 
 	rootclasses = "";
 }

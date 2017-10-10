@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2016-06-01";
+	version = "2017-10-10";
 	description = "Project file for junit target tests";
 }
 
