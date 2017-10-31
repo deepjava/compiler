@@ -873,8 +873,8 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 				for(int index = imports.length-1; index >= 0; index--) imports[index].fixupLoadedClasses();
 			}
 
-			// add classes or interfaces with class constructor to list "initClasses"
-			// add classes without class constructor and which are not interfaces to "nonInitClasses"
+			// add classes or interfaces with class constructor to list "initClasses" 
+			// this list must be sorted exactly in the same order as classes are fixed up
 			if (methods != null) {
 				ClassMember clsInit = (Method)methods.getItemByName(CFR.hsClassConstrName);
 				if (clsInit != null) {	// std-class or interface with class constructor
@@ -885,14 +885,26 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 						nextInterface = Class.constBlockInterfaces; 
 						Class.constBlockInterfaces = this;
 					}
-				} else if ((accAndPropFlags & 1<<apfInterface) == 0) {
-					if( nonInitClassesTail == null ) nonInitClasses = this; else nonInitClassesTail.nextClass = this;
-					nonInitClassesTail = this;
-					nofNonInitClasses++;
 				}
 			}
 			if (dbg) vrb.println("<fixup of class: " + this.name);
 		}
+	}
+
+	/**
+	 * add classes without class constructor and which are not interfaces to "nonInitClasses"
+	 */
+	protected void assembleInitList() {
+		if ((accAndPropFlags & (1<<dpfSynthetic)) == 0) {	
+			if (methods != null) {
+				ClassMember clsInit = (Method)methods.getItemByName(CFR.hsClassConstrName);
+				if ((clsInit == null) && ((accAndPropFlags & 1<<apfInterface) == 0)) {	// classes without interfaces which have no class constructor
+					if( nonInitClassesTail == null ) nonInitClasses = this; else nonInitClassesTail.nextClass = this;
+					nonInitClassesTail = this;
+					nofNonInitClasses++;
+				}
+			} else if (dbg) vrb.println(name + " has no methods");
+		} else if (dbg) vrb.println(name + " is synthetic");
 	}
 
 	/**

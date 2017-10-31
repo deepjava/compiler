@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2013-09-25";
+	version = "2017-10-10";
 	description = "Project file for junit target tests";
 }
 
@@ -10,7 +10,7 @@ project junitTargetTestProject {
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 
 	boardtype = ntbMpc555HB;
-	ostype = ntbSTS;
+	ostype = ntbSTS_ppc;
 	programmertype = ntbMpc555UsbBdi;
 
 #	Tests for compiler test classes 

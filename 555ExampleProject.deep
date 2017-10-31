@@ -1,7 +1,7 @@
 #deep-1
 
 meta {
-	version = "2013-09-25";
+	version = "2017-10-10";
 	description = "Example project file";
 }
 
@@ -11,7 +11,7 @@ project ExampleProjectMpc555 {
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	
 	boardtype = ntbMpc555HB;
-	ostype = ntbSTS;
+	ostype = ntbSTS_ppc;
 	programmertype = ntbMpc555UsbBdi;
 	
 #	rootclasses = "java/lang/Object";
@@ -25,7 +25,6 @@ project ExampleProjectMpc555 {
 #	rootclasses = "ch.ntb.inf.deep.comp.targettest.various.VariousTest1";
 #	rootclasses = "ch.ntb.inf.deep.trglib.targettest.SystemTest";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/HeapTest3";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/demo/SystemOutDemo1";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/driver/ffs/FileTransfer";
 
 #	imgfile = "out/exampleProject.bin"
