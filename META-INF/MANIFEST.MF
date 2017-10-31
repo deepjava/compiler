@@ -39,6 +39,5 @@ Export-Package: ch.ntb.inf.deep.cg,
 Bundle-ClassPath: .
 Bundle-Vendor: www.ntb.ch/inf
 Import-Package: 
- ch.ntb.inf.usbbdi.mpc555,
  org.eclipse.ltk.core.refactoring,
  org.eclipse.ltk.core.refactoring.participants
