@@ -70,6 +70,10 @@ public class TargetOpObject {
 	 * Error message
 	 */
 	public String errorMsg;
+	/**
+	 * Note
+	 */
+	public String note;
 	
 	public TargetOpObject(){
 		description = "";
@@ -80,6 +84,7 @@ public class TargetOpObject {
 		this.description = description;
 		this.errorMsg = "";
 		representation = 1;
+		this.note = "";
 	}
 	
 	public TargetOpObject(int operation, String description, long value, int type, int representation, int registerSize){
@@ -90,5 +95,6 @@ public class TargetOpObject {
 		this.representation = representation;
 		this.registerSize = registerSize;
 		this.errorMsg = "";
+		this.note = "";
 	}
 }

@@ -97,7 +97,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	public static int stSizeToCopy;
 	public static int stNofStacks;
 	
-	private static ConstBlkEntry systemTable;
+	public static ConstBlkEntry systemTable;
 	private static Segment[] sysTabSegments;
 	private static FixedValueEntry sysTabSizeToCopy;
 	private static int firstUsedAddress = Integer.MAX_VALUE;

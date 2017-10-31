@@ -245,5 +245,16 @@ public class Method extends ClassMember {
 			m = (Method)m.next;
 		}
 	}
+	
+	public static String getCompSpecificSubroutines() {
+		Method m = compSpecSubroutines;
+		String retString = "";
+		while(m != null) {
+			retString += "Name: "+m.name + "\tOffset: "+m.offset+"\tAddress: "+m.address+"\r\n";
+			retString += m.machineCode.toString() + "\r\n";
+			m = (Method)m.next;
+		}
+		return retString;
+	}
 
 }

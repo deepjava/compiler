@@ -43,4 +43,15 @@ public class ConstBlkEntry extends Item {
 		}
 	}
 	
+	public String getList() {
+		String retString = "";
+		ConstBlkEntry i = this;
+		while (i != null) {
+			retString += i.toString() + "\r\n";
+			i = (ConstBlkEntry) i.next;
+		}
+		
+		return retString;
+	}
+	
 }

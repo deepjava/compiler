@@ -64,7 +64,9 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.MemMap;
 import ch.ntb.inf.deep.config.Segment;
+import ch.ntb.inf.deep.linker.ConstBlkEntry;
 import ch.ntb.inf.deep.linker.FixedValueEntry;
+import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.strings.HString;
 
@@ -74,6 +76,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	private TreeViewer deviceTreeViewer;
 	private TextViewer textViewer;
 	private Action refresh;
+	
+	private Board b;
 	
 	class ClassTreeLabelProvider extends LabelProvider {
 		public Image getImage(Object element) {
@@ -85,6 +89,10 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				if(element instanceof Method){
 					return ((Method)element).name.toString() + ((Method)element).methDescriptor.toString();
 				}
+				if (element instanceof Board) return "Memory Map";					
+				if (element instanceof MemMap) return ((MemMap)element).name.toString();					
+				if (element instanceof Device) return ((Device)element).name.toString();
+				if (element instanceof Segment) return ((Segment)element).name.toString();
 				return ((Item)element).name.toString();
 			}else{
 				if(element instanceof RootElement)return ((RootElement)element).name.toString();
@@ -92,14 +100,70 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				if(element instanceof SSA)return "SSA";
 				if(element instanceof Code32)return "MachineCode";
 				if(element instanceof String)return (String) element;
-				return "";
+				if(element instanceof SystemTableElement)return "System Table";
+				if(element instanceof SubroutineElement)return "Subroutines";
 			}
+			
+			if(element instanceof String)return (String) element;
+
+			return "not listed";
 		}
 	}
 
 	class ClassTreeContentProvider implements ITreeContentProvider {
 
 		public Object[] getChildren(Object parent) {
+			if (parent instanceof TreeInput) {
+				System.out.println("treeinput");
+			}
+			if (parent instanceof Board) {
+				Board b = (Board)parent;
+				if (b.memorymap == null || b.cpu.memorymap == null) return new Object[]{"No memory map loaded"};
+				MemMap[] maps = new MemMap[2];
+				maps[0] = b.memorymap;
+				maps[1] = b.cpu.memorymap;
+				return maps;
+			}			
+			if (parent instanceof MemMap) {
+				MemMap memMap = (MemMap)parent;
+				if (memMap.devs == null) return new Object[]{"No devices loaded"};
+				Device[] devices = new Device[memMap.getNofDevices()];
+				Device dev = memMap.devs;
+				for (int i = 0; i < devices.length && dev != null; i++) {
+					devices[i] = dev;
+					dev = (Device)dev.next;
+				}			
+				return devices;
+			}			
+			if (parent instanceof Device){
+				Segment segs =((Device)parent).segments;
+				Segment current = segs;
+				int count;
+				for (count = 0; current != null; count++)current = (Segment)current.next;
+				if (count > 0){
+					Segment seg[] = new Segment[count];
+					for (int i = 0; i < seg.length && segs != null; i++){
+						seg[i] = segs;
+						segs = (Segment)segs.next;
+					}
+					return seg;
+				}				
+			}
+			if(parent instanceof Segment){
+				Segment segs =((Device)parent).segments;
+				Segment current = segs;
+				int count;
+				for(count = 0; current != null; count++)current = (Segment)current.next;
+				if(count > 0){
+					Segment seg[] = new Segment[count];
+					for(int i = 0; i < seg.length && segs != null; i++){
+						seg[i] = segs;
+						segs = (Segment)segs.next;
+					}
+					return seg;
+				}				
+			}
+			
 			Object[] item = null;
 			if (parent instanceof Class) {
 				Class clazz = (Class)parent;
@@ -238,6 +302,10 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			if(element instanceof ClassMember){
 				return ((ClassMember)element).owner;
 			}
+			if (element instanceof Segment){
+				Segment seg = (Segment)element;
+				return seg.owner;
+			}
 			return null;
 		}
 
@@ -248,17 +316,29 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				if(((Class)element).nofClassFields > 0)return true;
 				if(((Class)element).nofConstFields > 0)return true;
 			}
-			if(element instanceof Method)return true;
-			if(element instanceof ClassChild)return true;
-			if(element instanceof RootElement)return true;
+			if (element instanceof Method)return true;
+			if (element instanceof ClassChild)return true;
+			if (element instanceof RootElement)return true;
+			if (element instanceof Board) return true;
+			if (element instanceof MemMap) return true;
+			if (element instanceof Device) {
+				if(((Device)element).segments != null) return true;
+			}
 			return false;
 			
 		}
 
 		@Override
 		public Object[] getElements(Object inputElement) {
-			if(!(inputElement instanceof TreeInput))return new Object[]{""};
-			return new Object[]{((TreeInput)inputElement).obj};
+			//if(!(inputElement instanceof TreeInput))return new Object[]{""};
+			Object[] retObject = new Object[4];
+			retObject[0] = new RootElement(HString.getHString("Classes, Interfaces and Arrays"), RefType.refTypeList); 
+			if(b!=null)retObject[1] = b;
+			else retObject[1] = new TreeInput("not connected");
+			retObject[2] = new SystemTableElement("System Table"); 
+			retObject[3] = new SubroutineElement("Subroutines"); 
+
+			return retObject;
 		}
 
 		@Override
@@ -269,114 +349,10 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {		
 		}
 	}
-	
-	class DeviceTreeLabelProvider extends LabelProvider {
-		public Image getImage(Object element) {
-			return null;
-		}
-		public String getText(Object element) {
-			if (element instanceof Board) return "Memory Map";					
-			if (element instanceof MemMap) return ((MemMap)element).name.toString();					
-			if (element instanceof Device) return ((Device)element).name.toString();
-			if (element instanceof Segment) return ((Segment)element).name.toString();
-			if (element instanceof String) return (String)element;
-			return "";
-		}
-	}
-	
-	class DeviceTreeContentProvider implements ITreeContentProvider {
-
-		@Override
-		public Object[] getChildren(Object parentElement) {
-			if (parentElement instanceof Board) {
-				Board b = (Board)parentElement;
-				if (b.memorymap == null || b.cpu.memorymap == null) return new Object[]{"No memory map loaded"};
-				MemMap[] maps = new MemMap[2];
-				maps[0] = b.memorymap;
-				maps[1] = b.cpu.memorymap;
-				return maps;
-			}			
-			if (parentElement instanceof MemMap) {
-				MemMap memMap = (MemMap)parentElement;
-				if (memMap.devs == null) return new Object[]{"No devices loaded"};
-				Device[] devices = new Device[memMap.getNofDevices()];
-				Device dev = memMap.devs;
-				for (int i = 0; i < devices.length && dev != null; i++) {
-					devices[i] = dev;
-					dev = (Device)dev.next;
-				}			
-				return devices;
-			}			
-			if (parentElement instanceof Device){
-				Segment segs =((Device)parentElement).segments;
-				Segment current = segs;
-				int count;
-				for (count = 0; current != null; count++)current = (Segment)current.next;
-				if (count > 0){
-					Segment seg[] = new Segment[count];
-					for (int i = 0; i < seg.length && segs != null; i++){
-						seg[i] = segs;
-						segs = (Segment)segs.next;
-					}
-					return seg;
-				}				
-			}
-			if(parentElement instanceof Segment){
-				Segment segs =((Device)parentElement).segments;
-				Segment current = segs;
-				int count;
-				for(count = 0; current != null; count++)current = (Segment)current.next;
-				if(count > 0){
-					Segment seg[] = new Segment[count];
-					for(int i = 0; i < seg.length && segs != null; i++){
-						seg[i] = segs;
-						segs = (Segment)segs.next;
-					}
-					return seg;
-				}				
-			}
-			return null;
-		}
-
-		@Override
-		public Object getParent(Object element) {
-			if (element instanceof Segment){
-				Segment seg = (Segment)element;
-				return seg.owner;
-			}
-			return null;
-		}
-
-		@Override
-		public boolean hasChildren(Object element) {
-			if (element instanceof Board) return true;
-			if (element instanceof MemMap) return true;
-			if (element instanceof Device) {
-				if(((Device)element).segments != null) return true;
-			}
-			return false;
-		}
-
-		@Override
-		public Object[] getElements(Object inputElement) {
-			if(!(inputElement instanceof TreeInput))return new Object[]{""};
-			return new Object[]{((TreeInput)inputElement).obj};
-		}
-
-		@Override
-		public void dispose() {
-		}
-
-		@Override
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		}
 		
-	}
-	
-	
 	@Override
 	public void createPartControl(Composite parent) {
-		GridLayout layout = new GridLayout(6, true);
+		GridLayout layout = new GridLayout(5, true);
 		parent.setLayout(layout);
 				
 		classTreeViewer = new TreeViewer(parent, SWT.SINGLE);
@@ -385,17 +361,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 		classTreeViewer.getControl().setLayoutData(classTreeViewerData);
 		classTreeViewer.setLabelProvider(new ClassTreeLabelProvider());
 		classTreeViewer.setContentProvider(new ClassTreeContentProvider());
-		classTreeViewer.setAutoExpandLevel(2);
+		classTreeViewer.setAutoExpandLevel(1);
 		classTreeViewer.addSelectionChangedListener(this);
-		
-		deviceTreeViewer = new TreeViewer(parent, SWT.SINGLE);
-		GridData deviceTreeViewerData = new GridData(SWT.FILL, SWT.FILL,true, true);
-		deviceTreeViewerData.horizontalSpan = 1;
-		deviceTreeViewer.getControl().setLayoutData(deviceTreeViewerData);
-		deviceTreeViewer.setLabelProvider(new DeviceTreeLabelProvider());
-		deviceTreeViewer.setContentProvider(new DeviceTreeContentProvider());
-		deviceTreeViewer.setAutoExpandLevel(2);
-		deviceTreeViewer.addSelectionChangedListener(this);
 
 		textViewer = new TextViewer(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.SCROLL_PAGE);
 		GridData textViewerData = new GridData(GridData.FILL, GridData.FILL, true, true);
@@ -427,13 +394,11 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	private void createActions() {
 		refresh = new Action() {
 			public void run() {
-				classTreeViewer.setInput(new TreeInput(new RootElement(HString.getHString("Classes, Interfaces and Arrays:"), RefType.refTypeList)));
+				b = Configuration.getBoard();
+				String root = "Class Tree Viewer";
+				classTreeViewer.setInput(root);
 				classTreeViewer.getControl().setEnabled(true);
 				classTreeViewer.refresh();
-				Board b = Configuration.getBoard();
-				if (b != null) deviceTreeViewer.setInput(new TreeInput(b)); else deviceTreeViewer.setInput(new TreeInput("not loaded"));
-				deviceTreeViewer.getControl().setEnabled(true);
-				deviceTreeViewer.refresh();
 			}
 		};
 		refresh.setText("Refresh");
@@ -482,6 +447,29 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			this.obj = obj;
 		}
 	}
+	
+	class SubroutineElement{
+		String name;
+		SubroutineElement(String name){
+			this.name = name;
+		}
+	}
+	class SystemTableElement{
+		String name;
+		SystemTableElement(String name){
+			this.name = name;
+		}
+	}
+	class MemoryMapElement{
+		String name;
+		Object obj;
+		MemoryMapElement(String name, Object obj){
+			this.name = name;
+			this.obj = obj;
+		}
+	}
+
+
 
 	@Override
 	public void selectionChanged(SelectionChangedEvent event) {
@@ -620,6 +608,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			textViewer.refresh();
 			return;
 		}
+
 		if (obj instanceof Device) {
 			Device dev = (Device)obj;
 			sb.append("device = " + dev.name.toString() + " {\n");
@@ -644,6 +633,18 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			sb.append("   base = 0x" + Integer.toHexString(seg.address) + "\n");
 			sb.append("   size = 0x" + Integer.toHexString(seg.size) + "\n");
 			sb.append("}\n");
+			textViewer.getDocument().set(sb.toString());
+			textViewer.refresh();
+			return;
+		}
+		if (obj instanceof SystemTableElement) {
+			sb.append(Linker32.systemTable.getList());
+			textViewer.getDocument().set(sb.toString());
+			textViewer.refresh();
+			return;
+		}
+		if(obj instanceof SubroutineElement) {
+			sb.append(Method.getCompSpecificSubroutines());
 			textViewer.getDocument().set(sb.toString());
 			textViewer.refresh();
 			return;

@@ -106,7 +106,9 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 	 */
 	public Item getItemByName(HString name) {
 		Item item = this;
-		while (item != null && name != item.name)  item = item.next;
+		while (item != null && name != item.name) {
+			item = item.next;
+		}
 		return item;
 	}
 

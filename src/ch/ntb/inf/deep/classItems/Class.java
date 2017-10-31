@@ -264,9 +264,11 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * searches fieldName in die list of all fields
 	 * beginning with instance fields
 	 */
-	Item getField(HString fieldName){
+	public Item getField(HString fieldName){
 		Item item = instFields;
-		while(item != null && item.name != fieldName) item = item.next;
+		while(item != null && item.name != fieldName) {
+			item = item.next;
+		}
 		if(item == null && type != null) item = ((Class)type).getField(fieldName);
 		return item;
 	}

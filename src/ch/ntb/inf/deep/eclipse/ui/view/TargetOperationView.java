@@ -243,6 +243,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				} else if (index == 4) return null;
 				else if (index == 5) return null;
 				else if (index == 6) return op.errorMsg;
+				else if (index == 7) return op.note;
 			}
 			return "";
 		}
@@ -282,8 +283,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		viewer = new TableViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		
-		String[] titels = { "Operation", "Descriptor", "Value","MemAddr" , "", "", "Error Message" };
-		int[] bounds = { 100, 100, 100, 100, 18, 18, 250 };
+		String[] titels = { "Operation", "Descriptor", "Value","MemAddr" , "", "", "Error Message", "Note" };
+		int[] bounds = { 100, 200, 100, 100, 18, 18, 200, 300 };
 
 		TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[0]);
@@ -332,6 +333,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		column.getColumn().setWidth(bounds[6]);
 		column.getColumn().setResizable(false);
 		column.getColumn().setMoveable(false);
+		
+		column = new TableViewerColumn(viewer, SWT.NONE);
+		column.getColumn().setText(titels[7]);
+		column.getColumn().setWidth(bounds[7]);
+		column.getColumn().setResizable(true);
+		column.getColumn().setMoveable(false);
+		column.setEditingSupport(new NoteEditingSupport(viewer));
 
 		final Table table = viewer.getTable();
 		table.setHeaderVisible(true);
@@ -389,8 +397,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	}
 
 	protected void fillContextMenu(IMenuManager menu) {
-		menu.add(toHex);
 		menu.add(toDez);
+		menu.add(toHex);
 		menu.add(toDouble);
 		//menu.add(toChar);
 		menu.add(toBin);
@@ -411,17 +419,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			}
 		};
 		toBin.setText("ToBin");
-		/*toChar =  new Action(){
-			public void run() {
-				ISelection selection = viewer.getSelection();
-				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				if(obj instanceof TargetOpObject){
-					((TargetOpObject)obj).representation = 4;
-				}
-				viewer.refresh();
-			}
-		};
-		toChar.setText("ToChar");*/
 		toHex =  new Action(){
 					public void run() {
 						ISelection selection = viewer.getSelection();
@@ -456,6 +453,49 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		};
 		toDouble.setText("ToDouble");		
 	}
+	
+public class NoteEditingSupport extends EditingSupport {
+		
+		private final TableViewer viewer;
+		
+		public NoteEditingSupport(TableViewer viewer) {
+			super(viewer);
+			this.viewer = viewer;
+		}
+		
+		@Override
+		protected CellEditor getCellEditor(Object element) {
+			return new TextCellEditor(viewer.getTable());
+		}
+		
+		@Override
+		protected boolean canEdit(Object element) {
+			return true;
+		}
+		
+		@Override
+		protected Object getValue(Object element) {
+			TargetOpObject op = (TargetOpObject)element;
+			if(op.operation != 0 && op.description != "" && op.addr != 0) {
+				return op.note;
+			}
+			
+			return "";
+		}
+		
+
+		@Override
+		protected void setValue(Object element, Object value) {
+			TargetOpObject op = (TargetOpObject) element;
+			if(op.operation != 0 && op.description != "") {
+				op.note = (String) value;
+				viewer.refresh();
+			}else {
+				
+			}
+		}
+	}
+	
 	
 	public class ValueEditingSupport extends EditingSupport {
 		
@@ -587,9 +627,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				return String.format("%d", op.value);
 			case 4:
 			case 5:
-				return "";
 			default:
-				throw new RuntimeException("Should not happen, number 3"); //XXX number 3
+				return "";
 			}
 	}
 		
@@ -597,29 +636,31 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		@Override
 		protected void setValue(Object element, Object value) {
 			TargetOpObject op = (TargetOpObject)element;
-			try{
-				if(choice[op.operation].equals("Register")){
-					if(((TargetOpObject)element).registerType != -1){
-						if(((TargetOpObject)element).registerType == Parser.sFPR){
-							op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
-						}else{
-							op.value = Long.decode(String.valueOf(value));
+			if(op.operation != 0 && op.description != "") {
+				try{
+					if(choice[op.operation].equals("Register")){
+						if(((TargetOpObject)element).registerType != -1){
+							if(((TargetOpObject)element).registerType == Parser.sFPR){
+								op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
+							}else{
+								op.value = Long.decode(String.valueOf(value));
+							}
+							setToRegister(op);
 						}
-						setToRegister(op);
-					}
-				}else if(choice[op.operation].equals("Variable")){
-					setVariable(op,String.valueOf(value));
-				}else if(choice[op.operation].equals("Address")){
-					try{
+					}else if(choice[op.operation].equals("Variable")){
+						setVariable(op,String.valueOf(value));
+					}else if(choice[op.operation].equals("Address")){
+						try{
+							op.value = Long.decode(String.valueOf(value));
+							setToAddress(op);
+						}catch (Exception e) {
+						}
+					}else if(choice[op.operation].equals("TargetCMD")){
 						op.value = Long.decode(String.valueOf(value));
-						setToAddress(op);
-					}catch (Exception e) {
-					}
-				}else if(choice[op.operation].equals("TargetCMD")){
-					op.value = Long.decode(String.valueOf(value));
-					
-				}				
-			}catch(Exception e){
+						
+					}				
+				}catch(Exception e){
+				}
 			}
 			viewer.refresh();
 		}
@@ -803,7 +844,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			} else if (choice[op.operation].equals("Address")) {
 				readFromAddress(op, op.description);
 			}
-			viewer.refresh();
+			//viewer.refresh();
 			return false;//TODO check this
 		}
 

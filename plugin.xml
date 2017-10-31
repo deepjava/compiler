@@ -202,6 +202,17 @@ target command, read from address, write to address, read and modify static vari
 read and modify registers
          </description>
       </view>
+      <view
+            category="ch.ntb.inf.deep.targetManipulation"
+            class="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
+            name="TaskView"
+            restorable="true">
+         <description>
+            Display the number of tasks
+         </description>
+      </view>
       <category
             id="ch.ntb.inf.deep.ui.Log"
             name="Deep Logs">
