@@ -709,8 +709,8 @@ public class NoteEditingSupport extends EditingSupport {
 						// work around for problem when the most significant bit is set in hex number 
 						if(param.charAt(0) == '0' && param.length() > 9 && param.charAt(2) > '7'){
 							String most = param.substring(2, 3);
-							param = "0x0" + param.substring(3);
-							op.addr = (Integer.parseInt(most,16) << 28) | Integer.decode(param);
+							String param1 = "0x0" + param.substring(3);
+							op.addr = (Integer.parseInt(most,16) << 28) | Integer.decode(param1);
 						}else{
 							op.addr  = Integer.decode(param);
 						}
@@ -962,7 +962,7 @@ public class NoteEditingSupport extends EditingSupport {
 			wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted) tc.stopTarget();
 			
-			op.addr = Integer.decode(desc);
+			op.addr = (int)(long)Long.decode(desc);
 			op.value = tc.readWord(op.addr);
 			op.isRead = true;
 			
