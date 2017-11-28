@@ -102,10 +102,12 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				if(element instanceof String)return (String) element;
 				if(element instanceof SystemTableElement)return "System Table";
 				if(element instanceof SubroutineElement)return "Subroutines";
+				if(element instanceof SubroutineEntry)return ((SubroutineEntry)element).name.toString();
 			}
 			
 			if(element instanceof String)return (String) element;
 
+			if(Configuration.getBoard() == null) return "Memory Map";
 			return "not listed";
 		}
 	}
@@ -116,6 +118,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			if (parent instanceof TreeInput) {
 				System.out.println("treeinput");
 			}
+			
 			if (parent instanceof Board) {
 				Board b = (Board)parent;
 				if (b.memorymap == null || b.cpu.memorymap == null) return new Object[]{"No memory map loaded"};
@@ -202,6 +205,31 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				}
 				return item;
 			}
+			
+			if (parent instanceof SubroutineElement) {
+				int index = 0;
+				Method m = Method.compSpecSubroutines;
+				SubroutineEntry[] arrSE = new SubroutineEntry[32];
+				while(m != null) {
+					SubroutineEntry se;
+					String data = "";
+					data += "Name: "+m.name + "\tOffset: "+m.offset+"\tAddress: "+m.address+"\r\n";
+					data += m.machineCode.toString() + "\r\n";
+					se = new SubroutineEntry(m.name.toString(), data);
+					arrSE[index] = se;
+					m = (Method)m.next;
+					index++;
+				}
+				item = new Object[index];
+				index = 0;
+				while(arrSE[index] != null) {
+					item[index] = arrSE[index];
+					index++;
+				}
+
+				return item;
+			}
+			
 			if (parent instanceof Method && (((Item)parent).accAndPropFlags & (1<<dpfSynthetic)) == 0) {
 				Method meth = (Method)parent;
 				//every method have 3 children: cfg, ssa and machineCode
@@ -321,6 +349,10 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			if (element instanceof RootElement)return true;
 			if (element instanceof Board) return true;
 			if (element instanceof MemMap) return true;
+			if (element instanceof SubroutineElement) {
+				if(b != null) return true;
+				else return false;
+			}
 			if (element instanceof Device) {
 				if(((Device)element).segments != null) return true;
 			}
@@ -335,8 +367,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			retObject[0] = new RootElement(HString.getHString("Classes, Interfaces and Arrays"), RefType.refTypeList); 
 			if(b!=null)retObject[1] = b;
 			else retObject[1] = new TreeInput("not connected");
-			retObject[2] = new SystemTableElement("System Table"); 
-			retObject[3] = new SubroutineElement("Subroutines"); 
+			retObject[2] = new SubroutineElement("Subroutines"); 
+			retObject[3] = new SystemTableElement("System Table"); 
 
 			return retObject;
 		}
@@ -394,6 +426,8 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	private void createActions() {
 		refresh = new Action() {
 			public void run() {
+				textViewer.getDocument().set(" ");
+				textViewer.refresh();
 				b = Configuration.getBoard();
 				String root = "Class Tree Viewer";
 				classTreeViewer.setInput(root);
@@ -454,6 +488,14 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			this.name = name;
 		}
 	}
+	class SubroutineEntry{
+		String name;
+		Object data;
+		SubroutineEntry(String name, Object data){
+			this.name = name;
+			this.data = data;
+		}
+	}
 	class SystemTableElement{
 		String name;
 		SystemTableElement(String name){
@@ -475,6 +517,12 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	public void selectionChanged(SelectionChangedEvent event) {
 		Object obj = ((IStructuredSelection)event.getSelection()).getFirstElement();
 		StringBuilder sb = new StringBuilder();
+		if(Configuration.getBoard() == null) {
+			sb.append("not connected");
+			textViewer.getDocument().set(sb.toString());
+			textViewer.refresh();
+			return;
+		}
 		if (obj instanceof Class) {
 			Class c = (Class)obj;
 			sb.append("Name:                        " + c.name + "\n");
@@ -637,18 +685,26 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 			textViewer.refresh();
 			return;
 		}
+		
 		if (obj instanceof SystemTableElement) {
-			sb.append(Linker32.systemTable.getList());
+			if(Configuration.getBoard() != null) {
+				sb.append(Linker32.systemTable.getList());
+				textViewer.getDocument().set(sb.toString());
+				textViewer.refresh();
+				return;
+			}
+		}
+
+		if(obj instanceof SubroutineEntry) {
+			sb.append(((SubroutineEntry) obj).data).toString();
 			textViewer.getDocument().set(sb.toString());
 			textViewer.refresh();
 			return;
 		}
-		if(obj instanceof SubroutineElement) {
-			sb.append(Method.getCompSpecificSubroutines());
-			textViewer.getDocument().set(sb.toString());
-			textViewer.refresh();
-			return;
-		}
+		
+		sb.append("");
+		textViewer.getDocument().set(sb.toString());
+		textViewer.refresh();
 	}
 	
 	private String decodeFieldType(HString type){
