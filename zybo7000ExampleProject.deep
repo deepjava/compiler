@@ -1,0 +1,29 @@
+#deep-1
+
+meta {
+	version = "2017-10-10";
+	description = "Example project file for zybo 7000 board";
+}
+
+project ExampleProjectZybo7000 {
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
+#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+	
+	boardtype = zybo7000;
+	ostype = ntbSTS_arm;
+
+	programmertype = abatronBDI;
+	programmeropts = bdi3000inf02;
+	
+	imgfile = "\\inf004\ftp\pub\graf\ArmTest1.bin";
+	imgformat = BIN;
+	
+#	rootclasses = "java/lang/Object";
+#	rootclasses = "test/Test1";
+	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/Reset";
+#	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/test/UART3Test";
+
+#	tctfile = "tct/targetCommands.dtct";
+
+}

@@ -332,6 +332,10 @@ public interface InstructionOpcs {
 	armSxtb = (0x2 << 20) | (0xf << 16) | (0x3 << 5),
 	armSxth = (0x3 << 20) | (0xf << 16) | (0x3 << 5), 
 	
+	// miscellaneous data processing
+	armSbfx = (0x3d << 21) | (0x5 << 4), 
+	armUbfx = (0x3f << 21) | (0x5 << 4), 
+	
 	// Unconditional instructions
 	armRfe = 0x08100a00,
 	armSrs = 0x084d0500;
