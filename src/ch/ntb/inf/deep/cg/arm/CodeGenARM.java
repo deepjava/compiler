@@ -468,8 +468,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					case tLong:	
 						StdConstant constant = (StdConstant)res.constant;
 						long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-//						loadConstant(code, dRegLong, (int)(immValLong >> 32));
-//						loadConstant(code, dReg, (int)immValLong);
+						loadConstant(code, dRegLong, (int)(immValLong >> 32));
+						loadConstant(code, dReg, (int)immValLong);
 						break;	
 					case tFloat: case tDouble:
 						break;
@@ -614,7 +614,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tAshort: case tAinteger: case tAlong:
 					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: 
+					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset, 1, 1, 0);
+					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset + 4, 1, 1, 0);
+					break;
+				case tFloat: case tDouble:
 					break;
 				default:
 					ErrorReporter.reporter.error(611);
@@ -954,7 +958,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tShort: 
 					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong:
+					createDataProcReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+//					createDataProcReg(code, armMov, condAlways, dRegLong, src1Reg, noShift, 0);
+					createDataProcMisc(code, armSbfx, condAlways, dRegLong, src1Reg, 31, 1);
+					break;
+				case tFloat: case tDouble:
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1296,11 +1305,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case bCreturn:
 					break;
 				case bCireturn:
-				case bClreturn:
 				case bCareturn:
 					createDataProcReg(code, armMov, condAlways, returnGPR1, src1Reg, noShift, 0);
 					break;
-				case bCfreturn: case bCdreturn:
+				case bClreturn:
+					createDataProcReg(code, armMov, condAlways, returnGPR1, src1RegLong, noShift, 0);
+					createDataProcReg(code, armMov, condAlways, returnGPR2, src1Reg, noShift, 0);
+					break;
+				case bCfreturn: 
+				case bCdreturn:
 					break;
 				default:
 					ErrorReporter.reporter.error(620);
@@ -1810,6 +1823,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	// packing, unpacking (sign extension), reversal
 	private void createPacking(Code32 code, int opCode, int cond, int Rd, int Rm) {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (0xd << 23) | (Rd << 12) | (1 << 4) | (Rm << 0);
+		code.incInstructionNum();
+	}
+	
+	// miscellaneous data processing instructions, SBFX
+	private void createDataProcMisc(Code32 code, int opCode, int cond, int Rd, int Rn, int lsb, int width) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | ((width-1) << 16) | (Rd << 12) | (lsb << 7) | (Rn << 0);
 		code.incInstructionNum();
 	}
 	
