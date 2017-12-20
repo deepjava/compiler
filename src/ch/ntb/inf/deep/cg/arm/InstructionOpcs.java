@@ -234,8 +234,8 @@ public interface InstructionOpcs {
 	armRrxs = armRrx | (1 << 20),
 	
 	
-	armMovw = (0x18 << 21),
-	armMovt = (0x1a << 21),
+	armMovw = (0x10 << 20),
+	armMovt = (0x14 << 20),
 	
 	// createSynchPrimLoad / crateSynchPrimStore
 	armLdrex  = (0x0 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),

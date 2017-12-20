@@ -1,0 +1,87 @@
+#deep-1
+
+meta {
+	version = "2017-10-10";
+	description = "Project file for junit target tests";
+}
+
+project junitTargetTestProject {
+	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
+
+	boardtype = zybo7000;
+	ostype = ntbSTS_arm;
+	
+	programmertype = abatronBDI;
+	programmeropts = bdi3000inf02;
+
+	imgfile = "\\inf004\ftp\pub\graf\ArmTest1.bin";
+	imgformat = BIN;
+
+#	Tests for compiler test classes 
+ 
+#	Tests for all primitives
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/ByteTest","ch/ntb/inf/deep/comp/targettest/primitives/ShortTest","ch/ntb/inf/deep/comp/targettest/primitives/CharTest", "ch/ntb/inf/deep/comp/targettest/primitives/IntTest",
+#				  "ch/ntb/inf/deep/comp/targettest/primitives/LongTest","ch/ntb/inf/deep/comp/targettest/primitives/FloatTest","ch/ntb/inf/deep/comp/targettest/primitives/DoubleTest";
+				  
+#	Tests for all statements 
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest";
+
+#	Tests for all conditions  
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest";
+
+#	Tests for all arrays   
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest";
+
+#	Tests for all unsafes  
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTest","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest";
+
+#	Tests for all casts  
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest";
+
+#	Tests for all objects  
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest","ch/ntb/inf/deep/comp/targettest/objects/EnumTest";
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest";
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest";
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest";
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/EnumTest";
+
+#	Tests for all various  
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3";
+
+#	Tests for all exceptions  
+	rootclasses = "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
+
+#	Tests for all compiler tests  
+	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/ByteTest","ch/ntb/inf/deep/comp/targettest/primitives/ShortTest","ch/ntb/inf/deep/comp/targettest/primitives/CharTest", "ch/ntb/inf/deep/comp/targettest/primitives/IntTest", "ch/ntb/inf/deep/comp/targettest/primitives/LongTest", "ch/ntb/inf/deep/comp/targettest/primitives/FloatTest","ch/ntb/inf/deep/comp/targettest/primitives/DoubleTest",
+				  "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest",
+				  "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest",
+				  "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest",
+				  "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTest","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest",
+				  "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest",
+				  "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest",
+				  "ch/ntb/inf/deep/comp/targettest/objects/EnumTest",
+				  "ch/ntb/inf/deep/comp/targettest/various/VariousTest1","ch/ntb/inf/deep/comp/targettest/various/VariousTest2","ch/ntb/inf/deep/comp/targettest/various/VariousTest3",
+				  "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
+
+	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/IntTest", "ch/ntb/inf/deep/comp/targettest/primitives/LongTest";
+	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/IntTest";
+
+
+#	Tests for trgtlib tests  
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/GenericsTest";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/SystemTest";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/UtilTest";
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
+
+#	Tests for all target lib tests
+#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555",
+#				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest","ch/ntb/inf/deep/trglib/targettest/UtilTest",
+#				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
+
+# Target command table file
+	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
+
+}
