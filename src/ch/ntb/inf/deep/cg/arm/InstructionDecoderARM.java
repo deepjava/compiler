@@ -1229,14 +1229,16 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							default: break;
 							}
 						case 1:
-							if (op21_2 == 1) {	// Branch an Exchange p.352
+							if (op21_2 == 1) {	// Branch and Exchange p.352
 								return "bx" + (cond!=condAlways?condString[cond]:"") + " R" + m;
 							}
 							if (op21_2 == 3) {	// Count Leading Zeros p.362
 								return "clz" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + m;
 							}
 						case 2: return "bxj" + (cond!=condAlways?condString[cond]:"") + " R" + m;
-						case 3: return "blx" + (cond!=condAlways?condString[cond]:"") + " R" + m;
+						case 3:
+							if (cond == 0xf) return "blx" + " R" + m;
+							else return "bl" + (cond!=condAlways?condString[cond]:"") + " R" + m;
 						case 4: return "undefined";
 						case 5:	// Saturating addition and subtraction p.202
 							switch(op21_2) {
@@ -2139,7 +2141,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					return "b" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
 				}
 				if ((op20_6 & 0x30) == 0x30) {	// Branch with Link p.348
-					// Endocding A1 (cond != 0xf)
+					// Encoxding A1 (cond != 0xf)
 					return "bl" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
 				}	
 				break;

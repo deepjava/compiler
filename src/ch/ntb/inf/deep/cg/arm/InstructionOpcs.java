@@ -20,6 +20,7 @@ package ch.ntb.inf.deep.cg.arm;
 
 public interface InstructionOpcs {
 	
+	// Condition codes
 	final int condEQ = 0;
 	final int condNOTEQ = 1;
 	final int condCS = 2;
@@ -36,7 +37,7 @@ public interface InstructionOpcs {
 	final int condLE = 13;
 	final int condAlways = 14;
 	
-	// Mnemonic extensions
+	// Conditions mnemonics
 	public static String[] condString = {
 		" if equal",			// 0
 		" if not equal",		// 1
@@ -54,27 +55,17 @@ public interface InstructionOpcs {
 		" if less or equal",	// 13 0xd
 		" always",				// 14 0xe
 		" reserved"				// 15 0xf
-		
-		// 
-//		"EQ",
-//		"NE",
-//		"CS",
-//		"CC",
-//		"MI",
-//		"PL",
-//		"VS",
-//		"VC",
-//		"HI",
-//		"LS",
-//		"GE",
-//		"LT",
-//		"GT",
-//		"LE",
-//		"",
-//		"reserved"
 	};
 	
-	// Constant shifts A8.4.1 p.291
+	// Constant shift codes
+	final int noShift = 0;
+	final int LSL = 0;
+	final int LSR = 1;
+	final int ASR = 1;
+	final int ROR = 3;
+	final int RRX = 3;
+
+	// Constant shift mnemonics
 	public static String[] shiftType = {
 		"LSL",	// type==0
 		"LSR",	// type==1
@@ -164,22 +155,16 @@ public interface InstructionOpcs {
 		"IB"
 	};
 	
-	
-	final int noShift = 0;
-	final int LSL = 0;
-	final int LSR = 1;
-	final int ASR = 1;
-	final int ROR = 3;
-	final int RRX = 3;
-
-	final int // ARM Instructions
-	
+	// opcodes
+	final int 	
 	// createDataProcImm / createDataProcReg / createDataProcRegShiftedReg
 	armAdc = (0x5 << 21),
 	armAdd = (0x4 << 21),
 	armAnd = (0x0 << 21),
 	armBic = (0xe << 21),
 	armEor = (0x1 << 21),
+	armMov = (0xd << 21),
+	armMvn = (0xf << 21),	
 	armOrr = (0xc << 21),
 	armRsb = (0x3 << 21),
 	armRsc = (0x7 << 21),
@@ -190,54 +175,63 @@ public interface InstructionOpcs {
 	armAnds = armAnd | (0x1 << 20),
 	armBics = armBic | (0x1 << 20),
 	armEors = armEor | (0x1 << 20),
+	armMovs = armMov | (1 << 20),
+	armMvns = armMvn | (0x1 << 20),
 	armOrrs = armOrr | (0x1 << 20),
 	armRsbs = armRsb | (0x1 << 20),
 	armRscs = armRsc | (0x1 << 20),
 	armSbcs = armSbc | (0x1 << 20),
 	armSubs = armSub | (0x1 << 20),	
-	//... Rn = 0
-	armMvn = (0xf << 21),	
-	armMvns = armMvn | (0x1 << 20),
-	// ...imm = 0
-	armMov = (0xd << 21),
-	armMovs = armMov | (1 << 20),
-	// armMovw / armMovt in different method
-	// ...Rd = 0
+
 	armCmn = (0x17 << 20),
 	armCmp = (0x15 << 20),
 	armTeq = (0x13 << 20),
 	armTst = (0x11 << 20),
 	
-	// multiply
-	armMul = 9 << 4,
-	armMuls = (1 << 20) | (9 << 4),
-	armMla = (2 << 20) | (9 << 4),
-	armMlas = (3 << 20) | (9 << 4),
-	armUmull = (8 << 20) | (9 << 4),
-	armUmulls = (9 << 20) | (9 << 4),
-	
-	// divide
-	armSdiv = (0x71 << 20) | (0xf << 12) | (1 << 4),
-	
-	// createRotateShiftImm / createRotateShiftReg
 	armAsr = (0xd << 21) | (0x2 << 5),
 	armLsl = (0xd << 21) | (0x0 << 5),
 	armLsr = (0xd << 21) | (0x1 << 5),
 	armRor = (0xd << 21) | (0x3 << 5),
+	armRrx = armRor,
 	armAsrs = armAsr | (1 << 20),
 	armLsls = armLsl | (1 << 20),
 	armLsrs = armLsr | (1 << 20),
 	armRors = armRor | (1 << 20),
-
-	// createRrx
-	armRrx = (0xd << 21) | (0x3 << 5),
-	armRrxs = armRrx | (1 << 20),
+	armRrxs = armRors,
 	
-	
+	// 16 bit moves
 	armMovw = (0x10 << 20),
 	armMovt = (0x14 << 20),
 	
-	// createSynchPrimLoad / crateSynchPrimStore
+	// multiply
+	armMul = (0 << 21),
+	armMla = (1 << 21),
+	armMls = (3 << 21),
+	armSmull = (6 << 21),
+	armUmull = (4 << 21),
+	armMuls = armMul | (1 << 20),
+	armMlas = armMla | (1 << 20),
+	armSmulls = armSmull | (1 << 20),
+	armUmulls = armUmull | (1 << 20),
+
+	// verified till here
+	// miscellaneous data processing
+	armSbfx = (0x3d << 21) | (0x5 << 4), 
+	armUbfx = (0x3f << 21) | (0x5 << 4), 
+
+	// Branch (immediate)
+	armB = (0xa << 24),
+	armBl = (0xb << 24),
+
+	// Branch (register) (including BX BXJ
+	armBlxReg	= 0x012fff30,
+	armBx		= 0x012fff10,
+	armBxj		= 0x012fff20,
+
+	//	// divide
+	//	armSdiv = (0x71 << 20) | (0xf << 12) | (1 << 4),
+	//	
+	// createSynchPrimLoad / createSynchPrimStore
 	armLdrex  = (0x0 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
 	armLdrexb = (0x2 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
 	armLdrexd = (0x1 << 21) | (3 << 23) | (1 << 20) | (0xf9f << 0),
@@ -264,17 +258,6 @@ public interface InstructionOpcs {
 	armWfi   = 0x0320f000 | 0x3,
 	armYield = 0x0320f000 | 0x1,
 	
-	// Branch (immediate)
-	armB		= (0xa << 24),
-	armBl		= (0xb << 24),
-	armBlxImm	= (0xa << 24),
-	
-	// Branch (register) (including BX BXJ
-	armBlxReg	= 0x012fff30,
-	armBx		= 0x012fff10,
-	armBxj		= 0x012fff20,
-	
-	
 	// Saturating addition and subtraction
 	armQadd  = (0x10 << 20) | (0x5 << 4),
 	armQdadd = (0x14 << 20) | (0x5 << 4),
@@ -286,18 +269,14 @@ public interface InstructionOpcs {
 	armBkpt = (0x12 << 20) | (0x7 << 4),
 	armHvc  = (0x14 << 20) | (0x7 << 4),
 	
-	
 	// CLZ
 	armClz = (0x16f << 16) | (0xf1 << 4),
-	
 	
 	// ERET
 	armEret = 0x0160006e,
 	
-	
 	// SMC
 	armSmc = 0x01600070,
-	
 	
 	// Load/store word and unsigned/signed byte
 	armLdr   = (0x41 << 20),
@@ -313,7 +292,6 @@ public interface InstructionOpcs {
 	armLdrbt = (0x47 << 20),
 	armStrt  = (0x42 << 20),
 	armStrbt = (0x46 << 20),
-	
 	
 	// Block data transfer
 	armLdm   = (0x89 << 20),
@@ -331,10 +309,6 @@ public interface InstructionOpcs {
 	// packing, unpacking, saturation, reversal
 	armSxtb = (0x2 << 20) | (0xf << 16) | (0x3 << 5),
 	armSxth = (0x3 << 20) | (0xf << 16) | (0x3 << 5), 
-	
-	// miscellaneous data processing
-	armSbfx = (0x3d << 21) | (0x5 << 4), 
-	armUbfx = (0x3f << 21) | (0x5 << 4), 
 	
 	// Unconditional instructions
 	armRfe = 0x08100a00,
