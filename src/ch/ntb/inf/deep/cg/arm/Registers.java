@@ -31,7 +31,7 @@ interface Registers {
 	final int paramEndGPR = 5;	// GPR with last parameter, must be < nonVolStartGPR
 	final int paramEndFPR = 6;	// FPR with last parameter, must be < nonVolStartFPR
 	
-	final int nonVolStartGPR = 6;	// first nonvolatile GPR
+	final int nonVolStartGPR = 7;	// first nonvolatile GPR
 	final int nonVolStartFPR = 7;	// first nonvolatile FPR
 
 	// volEndGPR must be 1 lower than nonVolStartGPR
@@ -43,6 +43,7 @@ interface Registers {
 	final int returnGPR2 = 1;	// GPR with return value used for longs
 	final int returnFPR = 1;	// FPR with return value
 	
+	final int scratchReg = 6;		// scratch register
 	final int stackPtr = 13;	// register for stack pointer
 	final int LR = 14;			// register for link register
 	final int PC = 15;			// register for program counter

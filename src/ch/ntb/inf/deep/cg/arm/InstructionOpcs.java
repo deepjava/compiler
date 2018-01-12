@@ -214,19 +214,19 @@ public interface InstructionOpcs {
 	armSmulls = armSmull | (1 << 20),
 	armUmulls = armUmull | (1 << 20),
 
+	// branch (immediate)
+	armB = (0xa << 24),
+	armBl = (0xb << 24),
+	
+	// branch (register)
+	armBlxReg	= 0x012fff30,
+	armBx		= 0x012fff10,
+	armBxj		= 0x012fff20,
+	
 	// verified till here
 	// miscellaneous data processing
 	armSbfx = (0x3d << 21) | (0x5 << 4), 
 	armUbfx = (0x3f << 21) | (0x5 << 4), 
-
-	// Branch (immediate)
-	armB = (0xa << 24),
-	armBl = (0xb << 24),
-
-	// Branch (register) (including BX BXJ
-	armBlxReg	= 0x012fff30,
-	armBx		= 0x012fff10,
-	armBxj		= 0x012fff20,
 
 	//	// divide
 	//	armSdiv = (0x71 << 20) | (0xf << 12) | (1 << 4),

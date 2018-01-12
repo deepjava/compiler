@@ -197,7 +197,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
 						} else {	
 							int immVal = constant.valueH;
-							if ((immVal >= -255) && (immVal <= 255)) {} else findReg(res);
+							if (immVal < 0) immVal = -immVal;
+							int lead = Integer.numberOfLeadingZeros(immVal);
+							lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
+							if (lead + Integer.numberOfTrailingZeros(immVal) < 24) findReg(res);	
 						}
 					} else if ((instr1.ssaOpcode == sCsub) && ((type == tInteger) || (type == tLong))) {
 							StdConstant constant = (StdConstant)res.constant;
@@ -206,7 +209,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 								if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
 							} else {	
 								int immVal = constant.valueH;
-								if (((immVal >= 0) && (immVal <= 255)) || ((immVal >= -255) && (immVal < 0) && instr1.getOperands()[1] == res)) {} else findReg(res);
+								if (immVal < 0) immVal = -immVal;
+								int lead = Integer.numberOfLeadingZeros(immVal);
+								lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
+								if (lead + Integer.numberOfTrailingZeros(immVal) < 24) findReg(res);
 							}
 					} else if (instr1.ssaOpcode == sCmul) {
 						StdConstant constant = (StdConstant)res.constant;
@@ -245,8 +251,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					{
 						StdConstant constant = (StdConstant)res.constant;
 						if (res.type == tLong) {
-							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-							if ((immValLong >= -32768) && (immValLong <= 32767)) {} else findReg(res);
+							long immVal = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+							if ((immVal >= 0) && (immVal <= 255)) {} else findReg(res);
 						} else {	
 							int immVal = constant.valueH;
 							if ((immVal >= 0) && (immVal <= 255)) {} else findReg(res);
