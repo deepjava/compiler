@@ -63,8 +63,9 @@ import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
 public class Launcher implements ICclassFileConsts {
-	
-	private static final boolean dbg = false;
+
+//	private static final boolean dbg = false;
+	private static final boolean dbg = true;	// MGE
 	private static final boolean dbgProflg = false;
 	
 	private static ErrorReporter reporter = ErrorReporter.reporter;
@@ -404,8 +405,12 @@ public class Launcher implements ICclassFileConsts {
 
 					log.println("Downloading target image:");
 					Programmer programmer = Configuration.getProgrammer();
+					
 					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
 						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+					} else if (programmer.name.equals(HString.getHString("openOCD"))) {
+//						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());		// MGE
+						tc.downloadImageFile("D:\\runtime-EclipseApplication_ARM\\Test1\\Test1.InternalRam.bin");		// MGE
 					} else {
 						TargetMemorySegment tms = Linker32.targetImage;
 						while (tms != null && reporter.nofErrors <= 0) {
@@ -491,7 +496,9 @@ public class Launcher implements ICclassFileConsts {
 		if (dbg) vrb.println("[Launcher] Opening target connection");
 		if (tc != null) {
 			try {
-				if (!tc.isConnected()) tc.openConnection();
+				if (!tc.isConnected()) {
+					tc.openConnection();
+				}
 			} catch (TargetConnectionException e) {
 				reporter.error(815);
 			}

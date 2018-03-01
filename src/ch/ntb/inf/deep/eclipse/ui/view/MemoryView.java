@@ -295,8 +295,8 @@ public class MemoryView extends ViewPart implements Listener {
 			if (size > 0) {
 				segs = new MemoryEntry[size];
 				try {
-					boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-					if (!wasFreezeAsserted) tc.stopTarget();
+//					boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+//					if (!wasFreezeAsserted) tc.stopTarget();
 			
 					for (int i = 0; i < size; i++) {
 						switch (width) {
@@ -314,7 +314,7 @@ public class MemoryView extends ViewPart implements Listener {
 							segs[i] = new MemoryEntry(startAddr + i * 4, tc.readWord(startAddr + i * 4));
 						}
 					}
-					if (!wasFreezeAsserted) tc.startTarget(-1);
+//					if (!wasFreezeAsserted) tc.startTarget(-1);
 				} catch (TargetConnectionException e1) {
 					viewer.setInput(new String[]{"target not initialized"});
 					viewer.refresh();
