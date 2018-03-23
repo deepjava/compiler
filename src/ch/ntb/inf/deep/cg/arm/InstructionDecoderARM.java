@@ -33,7 +33,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 
 	private static int constToImm(int const32) {	// A5.2.4 p.200
 		int rot = 0;
-		while ((const32 & 0xffffff00) >= 0x1) {
+		while ((const32 & 0xffffff00) != 0) {
 			const32 = Integer.rotateLeft(const32, 2);
 			rot++;
 		}
@@ -180,8 +180,14 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				
 				if (parts[3].substring(0,1).equals("#")) {	// (immediate)
 					code |= (1<<25);
-					int const32 = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// const				
+					int const32;
+					if (parts[3].substring(1,3).equals("0x"))
+						const32 = Integer.parseInt( parts[3].substring(3), 16 );	// const
+					else
+						const32 = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// const				
 					int imm12 = constToImm(const32);
+//					System.out.println(Integer.toHexString(const32));
+//					System.out.println(Integer.toHexString(imm12));
 					code |= imm12;
 				}
 
@@ -909,6 +915,91 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			boolean big = parts[1].equals("be");
 			if (big) code |= 1 << 9;
 		}
+		
+		// MRC  p.492
+		if (parts[0].startsWith("mrc")) {
+			code |= 0xe100010;
+			int val = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// cp
+			code |= val<<8;	// cp
+			val = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// opc1
+			code |= val<<21;	// opc1
+			val = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// Rt
+			code |= val<<12;	// Rt
+			val = Integer.parseInt( parts[4].replaceAll("[^0-9]", "") );	// CRn
+			code |= val<<16;	// CRn
+			val = Integer.parseInt( parts[5].replaceAll("[^0-9]", "") );	// CRm
+			code |= val;	// CRm
+			val = Integer.parseInt( parts[6].replaceAll("[^0-9]", "") );	// opc2
+			code |= val<<5;	// opc2
+		}
+
+		// MCR  p.476
+		if (parts[0].startsWith("mcr")) {
+			code |= 0xe000010;
+			int val = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// cp
+			code |= val<<8;	// cp
+			val = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// opc1
+			code |= val<<21;	// opc1
+			val = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// Rt
+			code |= val<<12;	// Rt
+			val = Integer.parseInt( parts[4].replaceAll("[^0-9]", "") );	// CRn
+			code |= val<<16;	// CRn
+			val = Integer.parseInt( parts[5].replaceAll("[^0-9]", "") );	// CRm
+			code |= val;	// CRm
+			val = Integer.parseInt( parts[6].replaceAll("[^0-9]", "") );	// opc2
+			code |= val<<5;	// opc2
+		}
+
+		//  extension system register
+		String[] extSysRegs = {
+			"fpsid",
+			"fpscr",
+			"mvfr1",
+			"mvfr0",
+			"fpexc"	
+		};	
+		// vmrs  p.2014
+		if (parts[0].startsWith("vmrs")) {
+			code |= 0xef00a10;
+			int val = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// Rt
+			code |= val<<12;	// Rt
+			if (parts[2].equals(extSysRegs[0]));	// spezReg
+			else if (parts[2].equals(extSysRegs[1])) code |= 1<<16;	// spezReg
+			else if (parts[2].equals(extSysRegs[2])) code |= 6<<16;	// spezReg
+			else if (parts[2].equals(extSysRegs[3])) code |= 7<<16;	// spezReg
+			else if (parts[2].equals(extSysRegs[4])) code |= 8<<16;	// spezReg
+		}
+		// vmrs  p.2016
+		if (parts[0].startsWith("vmsr")) {
+			code |= 0xee00a10;
+			if (parts[1].replaceAll(",", "").equals(extSysRegs[0]));	// spezReg
+			else if (parts[1].replaceAll(",", "").equals(extSysRegs[1])) code |= 1<<16;	// spezReg
+			else if (parts[1].replaceAll(",", "").equals(extSysRegs[2])) code |= 6<<16;	// spezReg
+			else if (parts[1].replaceAll(",", "").equals(extSysRegs[3])) code |= 7<<16;	// spezReg
+			else if (parts[1].replaceAll(",", "").equals(extSysRegs[4])) code |= 8<<16;	// spezReg
+			int val = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// Rt
+			code |= val<<12;	// Rt
+		}
+
+		// vmov  p.948
+		if (parts[0].startsWith("vmov")) {
+			code |= 0xc400b10;
+			if (parts[1].contains("d")) { // move to floating point register
+				int val = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// Dm
+				code |= (val&0xf) | ((val>>4)<<5);
+				val = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// Rt	
+				code |= val<<12;	// Rt
+				val = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// Rt2	
+				code |= val<<16;	// Rt2
+			} else {	 // move from floating point register
+				int val = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// Rt
+				code |= val<<12;	// Rt
+				val = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// Rt2	
+				code |= val<<16;	// Rt2
+				val = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// Dm	
+				code |= (val&0xf) | ((val>>4)<<5);
+			}
+		}
 
 		return code;
 	}
@@ -1016,9 +1107,9 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		int op20_4 = (instr >>> 20) & 0xf;
 		int op20_3 = (instr >>> 20) & 0x7;
 		int op20_2 = (instr >>> 20) & 0x3;
-//		int op20_1 = (instr >>> 20) & 0x1;
+		int op20_1 = (instr >>> 20) & 0x1;
 //		int op18_2 = (instr >>> 18) & 0x3;
-//		int op18_1 = (instr >>> 18) & 0x1;
+		int op18_1 = (instr >>> 18) & 0x1;
 		int op16_5 = (instr >>> 16) & 0x1f;
 		int op16_4 = (instr >>> 16) & 0xf;
 //		int op16_3 = (instr >>> 16) & 0x7;
@@ -1638,7 +1729,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					case 19: return "teq" + (cond!=condAlways?condString[cond]:"") + " R" + n + ", #" + const32;
 					case 21: return "cmp" + (cond!=condAlways?condString[cond]:"") + " R" + n + ", #" + const32;
 					case 23: return "cmn" + (cond!=condAlways?condString[cond]:"") + " R" + n + ", #" + const32;
-					case 24: return "orr" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
+					case 24: return "orr" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #0x" + Integer.toHexString(const32);
 					case 25: return "orr" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 26: return "mov" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", #" + const32;
 					case 27: return "mov" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", #" + const32;
@@ -2216,10 +2307,8 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				}	// End of: ((op8_4 & 0xe) != 0xa)
 				
 				if ((op8_4 & 0xe) == 0xa) {
-					return "SIMD not implemented";
-					
-					/*	// SIMD not implemented
-					 * ************************
+				
+					// SIMD not implemented
 					String mode = "";
 					if ((op24_1==0) && (op23_1==1)) mode = "ia";	// Increment After. Encoded as P = 0, U = 1.
 					if ((op24_1==1) && (op23_1==0)) mode = "db";	// Decrement Before. Encoded as P = 1; U = 0.
@@ -2250,54 +2339,54 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 								}
 							}
 						}
-						if ( ((op20_5 & 0x19)==0x08) || (((op20_5 & 0x1b)==0x12)&&(n!=0xd)) ){	// Vector Store Multiple p.1080
-							if (op8_1 == 0x1) {	// Encoding A1
-								return "vstm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + op16_4 + (op21_1==0x1?"!":"") + list(DVd);
-							}
-							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vstm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + op16_4 + (op21_1==0x1?"!":"") + list(VdD);
-							}
-						}
-						if ((op20_5 & 0x13)==0x10) {	// Vector Store Register p.1082
-							if (op8_1 == 0x1) {	// Encoding A1
-								return "vstr" + (cond!=condAlways?condString[cond]:"") + ".64 D" + DVd + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
-							}
-							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vstr" + (cond!=condAlways?condString[cond]:"") + ".32 S" + VdD + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
-							}
-						}
-						if (((op20_5 & 0x1b)==0x12)&&(n==0xd)) {	// Vector Push Registers p.992
-							if (op8_1 == 0x1) {	// Encoding A1
-								return "vpush" + (cond!=condAlways?condString[cond]:"") + list(DVd);
-							}
-							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vpush" + (cond!=condAlways?condString[cond]:"") + list(VdD);
-							}
-						}
-						if ( ((op20_5 & 0x1b)==0x09) || (((op20_5 & 0x1b)==0x0b)&&(n!=0xd)) || ((op20_5 & 0x1b)==0x13) ){	// Vector Load Multiple p.922
-							if (op8_1 == 0x1) {	// Encoding A1
-								return "vldm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + n + (op21_1==0x1?"!":"") + ", " + list(DVd);
-							}
-							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vldm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + n + (op21_1==0x1?"!":"") + ", " + list(VdD);
-							}							
-						}
-						if (((op20_5 & 0x1b)==0x0b)&&(n==0xd)) {	// Vector Pop Registers p.990
-							if (op8_1 == 0x1) {	// Encoding A1
-								return "vpop" + (cond!=condAlways?condString[cond]:"") + list(DVd);
-							}
-							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vpop" + (cond!=condAlways?condString[cond]:"") + list(DVd);
-							}							
-						}
-						if ((op20_5 & 0x13)==0x11) {	// Vector Load Register p.924
-							if (op8_1 == 0x1) {	// Encoding A1
-								return "vldr" + (cond!=condAlways?condString[cond]:"") + ".64 D" + DVd + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
-							}
-							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vldr" + (cond!=condAlways?condString[cond]:"") + ".32 S" + VdD + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
-							}								
-						}
+//						if ( ((op20_5 & 0x19)==0x08) || (((op20_5 & 0x1b)==0x12)&&(n!=0xd)) ){	// Vector Store Multiple p.1080
+//							if (op8_1 == 0x1) {	// Encoding A1
+//								return "vstm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + op16_4 + (op21_1==0x1?"!":"") + list(DVd);
+//							}
+//							else if (op8_1 == 0x0) {	// Encoding A2
+//								return "vstm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + op16_4 + (op21_1==0x1?"!":"") + list(VdD);
+//							}
+//						}
+//						if ((op20_5 & 0x13)==0x10) {	// Vector Store Register p.1082
+//							if (op8_1 == 0x1) {	// Encoding A1
+//								return "vstr" + (cond!=condAlways?condString[cond]:"") + ".64 D" + DVd + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
+//							}
+//							else if (op8_1 == 0x0) {	// Encoding A2
+//								return "vstr" + (cond!=condAlways?condString[cond]:"") + ".32 S" + VdD + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
+//							}
+//						}
+//						if (((op20_5 & 0x1b)==0x12)&&(n==0xd)) {	// Vector Push Registers p.992
+//							if (op8_1 == 0x1) {	// Encoding A1
+//								return "vpush" + (cond!=condAlways?condString[cond]:"") + list(DVd);
+//							}
+//							else if (op8_1 == 0x0) {	// Encoding A2
+//								return "vpush" + (cond!=condAlways?condString[cond]:"") + list(VdD);
+//							}
+//						}
+//						if ( ((op20_5 & 0x1b)==0x09) || (((op20_5 & 0x1b)==0x0b)&&(n!=0xd)) || ((op20_5 & 0x1b)==0x13) ){	// Vector Load Multiple p.922
+//							if (op8_1 == 0x1) {	// Encoding A1
+//								return "vldm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + n + (op21_1==0x1?"!":"") + ", " + list(DVd);
+//							}
+//							else if (op8_1 == 0x0) {	// Encoding A2
+//								return "vldm" + mode + (cond!=condAlways?condString[cond]:"") + " R" + n + (op21_1==0x1?"!":"") + ", " + list(VdD);
+//							}							
+//						}
+//						if (((op20_5 & 0x1b)==0x0b)&&(n==0xd)) {	// Vector Pop Registers p.990
+//							if (op8_1 == 0x1) {	// Encoding A1
+//								return "vpop" + (cond!=condAlways?condString[cond]:"") + list(DVd);
+//							}
+//							else if (op8_1 == 0x0) {	// Encoding A2
+//								return "vpop" + (cond!=condAlways?condString[cond]:"") + list(DVd);
+//							}							
+//						}
+//						if ((op20_5 & 0x13)==0x11) {	// Vector Load Register p.924
+//							if (op8_1 == 0x1) {	// Encoding A1
+//								return "vldr" + (cond!=condAlways?condString[cond]:"") + ".64 D" + DVd + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
+//							}
+//							else if (op8_1 == 0x0) {	// Encoding A2
+//								return "vldr" + (cond!=condAlways?condString[cond]:"") + ".32 S" + VdD + ", [R" + n + ", #" + (add?"+":"-") + (op0_8<<2);
+//							}								
+//						}
 					}	// End of: Advanced SIMD, Floating-point p.274
 
 					if ((op20_6 & 0x3e)==0x04) {	// Advanced SIMD, Floating-point p.279
@@ -2319,189 +2408,189 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 						}						
 					}	// End of: Advanced SIMD, Floating-point p.279
 
-					if ( ((op20_6 & 0x30)==0x20) && (op4_1==0x0) ) {	// Floating-point data processing p.272
-						if ((op20_4 & 0xb)==0x0) {	// Vector Multiply Accumulate or Subtract p.932	Encoding = A2
-							if (op8_1==0x1) {	// sz=1
-								return "v" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "v" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ((op20_4 & 0xb) == 0x1) {	// Vector Negate Multiply Accumulate or Subtract p.970	Encoding = A1
-							if (op8_1==0x1) {	// sz=1
-								return "vn" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vn" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if (((op20_4 & 0xb)==0x2) && (op6_1==0x1)) {	// Vector Negate Multiply Accumulate or Subtract p.970	Encoding = A2
-							if (op8_1==0x1) {	// sz=1
-								return "vnmul" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vnmul" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ( ((op20_4 & 0xb)==0x2) && (op6_1==0x0) ) {	// Vector Multiply p.960	Encoding = A2
-							if (op8_1==0x1) {	// sz=1
-								return "vmul" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vmul" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ( ((op20_4 & 0xb)==0x3) && (op6_1==0x0) ) {	// Vector Add p.830	Encoding = A2
-							if (op8_1==0x1) {	// sz=1
-								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ( ((op20_4 & 0xb)==0x3) && (op6_1==0x1) ) {	// Vector Subtract p.1086	Encoding = A2
-							if (op8_1==0x1) {	// sz=1
-								return "vsub" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vsub" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ( ((op20_4 & 0xb)==0x8) && (op6_1==0x0) ) {	// Vector Divide p.882
-							if (op8_1==0x1) {	// sz=1
-								return "vdiv" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vdiv" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ((op20_4 & 0xb)==0x9) {	// Vector Fused Negate Multiply Accumulate or Subtract p.894
-							if (op8_1==0x1) {	// sz=1
-								return "vfnm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vfnm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-						if ((op20_4 & 0xb)==0xa) {	// Vector Fused Multiply Accumulate or Subtract p.892	Encoding = A2
-							if (op8_1==0x1) {	// sz=1
-								return "vfm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
-							}
-							else if (op8_1==0x0) {	// sz=0
-								return "vfm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
-							}
-						}
-
-						if ((op20_4 & 0xb)==0xb) {	// Other Floating-point data-processing instructions A7-17 p.272/273
-							int imm8 = (op16_4 << 4) + op0_4;
-
-							if (op6_1 == 0x0) {	// Vector Move (immediate) p.936	Encoding = A2
-								if (op8_1==0x1) {	// sz=1
-									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", #" + imm8;
-								}
-								else if (op8_1==0x0) {	// sz=0
-									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", #" + imm8;
-								}
-							}
-							if ( (op16_4==0x0) && (op6_2==0x1)) {	// Vector Move (register) p.938	Encoding = A2
-								if (op8_1==0x1) {	// sz=1
-									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
-								}
-								else if (op8_1==0x0) {	// sz=0
-									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
-								}
-							}
-							if ( (op16_4==0x0) && (op6_2==0x3)) {	// Vector Absolute p.824	Encoding = A2
-								if (op8_1==0x1) {	// sz=1
-									return "vabs" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
-								}
-								else if (op8_1==0x0) {	// sz=0
-									return "vabs" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
-								}
-							}
-							if ( (op16_4==0x1) && (op6_2==0x1)) {	// Vector Negate p.968	Encoding = A2
-								if (op8_1==0x1) {	// sz=1
-									return "vneg" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
-								}
-								else if (op8_1==0x0) {	// sz=0
-									return "vneg" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
-								}
-							}
-							if ( (op16_4==0x1) && (op6_2==0x3)) {	// Vector Square Root p.1058
-								if (op8_1==0x1) {	// sz=1
-									return "vsqrt" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
-								}
-								else if (op8_1==0x0) {	// sz=0
-									return "vsqrt" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
-								}
-							}
-							if ( ((op16_4 & 0xe)==0x2) && (op6_1==0x1)) {	// Vector Convert p.880
-								return "vcvt" + (op7_1==0?"b":"t") + (cond!=condAlways?condString[cond]:"") + (op16_1==0?".f32.f16":".f16.f32") +" S" + VdD + ", S" + VmM;
-							}
-							if ( ((op16_4 & 0xe)==0x4) && (op6_1==0x1)) {	// Vector Compare p.864
-								if (op16_1 == 0x0) {	// Encoding = A1
-									if (op8_1==0x1) {	// sz=1
-										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
-									}
-									else if (op8_1==0x0) {	// sz=0
-										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
-									}
-								}
-								else if (op16_1 == 0x1) {	// Encoding = A2
-									if (op8_1==0x1) {	// sz=1
-										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", #0.0";
-									}
-									else if (op8_1==0x0) {	// sz=0
-										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", #0.0";
-									}
-								}
-							}
-							if ( (op16_4==0x7) && (op6_2==0x3)) {	// Vector Convert p.876
-								if (op8_1==0x1) {	// sz=1
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32.f64 S" + VdD + ", D" + MVm;
-								}
-								else if (op8_1==0x0) {	// sz=0
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64.f32 D" + VdD + ", S" + MVm;
-								}
-							}
-							if ( ((op16_4 == 0x8) && (op6_1==0x1)) || (((op16_4 & 0xe)==0xc) && (op6_1==0x1)) ) {	// Vector Convert p.870
-								if ((op16_3 == 0x5) && (op8_1 == 0x1)) {	// Encoded as opc2 = 0b101, sz = 1
-									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".s32.f64 S" + VdD + ", D" + MVm;
-								}
-								if ((op16_3 == 0x5) && (op8_1 == 0x0)) {	// Encoded as opc2 = 0b101, sz = 0
-									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".s32.f32 S" + VdD + ", S" + VmM;
-								}
-								if ((op16_3 == 0x4) && (op8_1 == 0x1)) {	// Encoded as opc2 = 0b100, sz = 1
-									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".u32.f64 S" + VdD + ", D" + MVm;
-								}
-								if ((op16_3 == 0x4) && (op8_1 == 0x0)) {	// Encoded as opc2 = 0b100, sz = 0
-									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".u32.f32 S" + VdD + ", S" + VmM;
-								}
-								if ((op16_3 == 0x0) && (op8_1 == 0x1)) {	// Encoded as opc2 = 0b000, sz = 1
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64." + (op7_1==1?"s32":"u32") + " D" + DVd + ", S" + VmM;
-								}
-								if ((op16_3 == 0x0) && (op8_1 == 0x0)) {	// Encoded as opc2 = 0b000, sz = 0
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32." + (op7_1==1?"s32":"u32") + " S" + VdD + ", S" + VmM;
-								}
-							}
-							if ( (((op16_4 & 0xe)==0xa) && (op6_1==0x1)) || (((op16_4 & 0xe)==0xe) && (op6_1==0x1)) ) {	// Vector Convert p.874
-								String Td = (op16_1==0x1?"u":"s") + (op7_1==0x1?"32":"16");
-								if ((op18_1 == 0x1) && (op8_1 == 0x1)) {	// Encoded as op = 1, sf = 1
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + "." + Td + ".f64 D" + DVd + ", D" + DVd + ", #" + "XXXX";
-								}
-								if ((op18_1 == 0x1) && (op8_1 == 0x0)) {	// Encoded as op = 1, sf = 0
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + "." + Td + ".f32 S" + VdD + ", S" + VdD + ", #" + "XXXX";
-								}
-								if ((op18_1 == 0x0) && (op8_1 == 0x1)) {	// Encoded as op = 0, sf = 1
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64." + Td + " D" + DVd + ", D" + DVd + ", #" + "XXXX";
-								}
-								if ((op18_1 == 0x0) && (op8_1 == 0x0)) {	// Encoded as op = 0, sf = 0
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32." + Td + " S" + VdD + ", S" + VdD + ", #" + "XXXX";
-								}
-							}						
-						}	// End of: Other Floating-point data-processing instructions A7-17 p.272/273						
-					}	// End of: Floating-point data processing p.272
+//					if ( ((op20_6 & 0x30)==0x20) && (op4_1==0x0) ) {	// Floating-point data processing p.272
+//						if ((op20_4 & 0xb)==0x0) {	// Vector Multiply Accumulate or Subtract p.932	Encoding = A2
+//							if (op8_1==0x1) {	// sz=1
+//								return "v" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "v" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ((op20_4 & 0xb) == 0x1) {	// Vector Negate Multiply Accumulate or Subtract p.970	Encoding = A1
+//							if (op8_1==0x1) {	// sz=1
+//								return "vn" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vn" + (op6_1==0?"mla":"mls") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if (((op20_4 & 0xb)==0x2) && (op6_1==0x1)) {	// Vector Negate Multiply Accumulate or Subtract p.970	Encoding = A2
+//							if (op8_1==0x1) {	// sz=1
+//								return "vnmul" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vnmul" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ( ((op20_4 & 0xb)==0x2) && (op6_1==0x0) ) {	// Vector Multiply p.960	Encoding = A2
+//							if (op8_1==0x1) {	// sz=1
+//								return "vmul" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vmul" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ( ((op20_4 & 0xb)==0x3) && (op6_1==0x0) ) {	// Vector Add p.830	Encoding = A2
+//							if (op8_1==0x1) {	// sz=1
+//								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ( ((op20_4 & 0xb)==0x3) && (op6_1==0x1) ) {	// Vector Subtract p.1086	Encoding = A2
+//							if (op8_1==0x1) {	// sz=1
+//								return "vsub" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vsub" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ( ((op20_4 & 0xb)==0x8) && (op6_1==0x0) ) {	// Vector Divide p.882
+//							if (op8_1==0x1) {	// sz=1
+//								return "vdiv" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vdiv" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ((op20_4 & 0xb)==0x9) {	// Vector Fused Negate Multiply Accumulate or Subtract p.894
+//							if (op8_1==0x1) {	// sz=1
+//								return "vfnm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vfnm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//						if ((op20_4 & 0xb)==0xa) {	// Vector Fused Multiply Accumulate or Subtract p.892	Encoding = A2
+//							if (op8_1==0x1) {	// sz=1
+//								return "vfm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+//							}
+//							else if (op8_1==0x0) {	// sz=0
+//								return "vfm" + (op6_1==1?"a":"s") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+//							}
+//						}
+//
+//						if ((op20_4 & 0xb)==0xb) {	// Other Floating-point data-processing instructions A7-17 p.272/273
+//							int imm8 = (op16_4 << 4) + op0_4;
+//
+//							if (op6_1 == 0x0) {	// Vector Move (immediate) p.936	Encoding = A2
+//								if (op8_1==0x1) {	// sz=1
+//									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", #" + imm8;
+//								}
+//								else if (op8_1==0x0) {	// sz=0
+//									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", #" + imm8;
+//								}
+//							}
+//							if ( (op16_4==0x0) && (op6_2==0x1)) {	// Vector Move (register) p.938	Encoding = A2
+//								if (op8_1==0x1) {	// sz=1
+//									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
+//								}
+//								else if (op8_1==0x0) {	// sz=0
+//									return "vmov" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
+//								}
+//							}
+//							if ( (op16_4==0x0) && (op6_2==0x3)) {	// Vector Absolute p.824	Encoding = A2
+//								if (op8_1==0x1) {	// sz=1
+//									return "vabs" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
+//								}
+//								else if (op8_1==0x0) {	// sz=0
+//									return "vabs" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
+//								}
+//							}
+//							if ( (op16_4==0x1) && (op6_2==0x1)) {	// Vector Negate p.968	Encoding = A2
+//								if (op8_1==0x1) {	// sz=1
+//									return "vneg" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
+//								}
+//								else if (op8_1==0x0) {	// sz=0
+//									return "vneg" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
+//								}
+//							}
+//							if ( (op16_4==0x1) && (op6_2==0x3)) {	// Vector Square Root p.1058
+//								if (op8_1==0x1) {	// sz=1
+//									return "vsqrt" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
+//								}
+//								else if (op8_1==0x0) {	// sz=0
+//									return "vsqrt" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
+//								}
+//							}
+//							if ( ((op16_4 & 0xe)==0x2) && (op6_1==0x1)) {	// Vector Convert p.880
+//								return "vcvt" + (op7_1==0?"b":"t") + (cond!=condAlways?condString[cond]:"") + (op16_1==0?".f32.f16":".f16.f32") +" S" + VdD + ", S" + VmM;
+//							}
+//							if ( ((op16_4 & 0xe)==0x4) && (op6_1==0x1)) {	// Vector Compare p.864
+//								if (op16_1 == 0x0) {	// Encoding = A1
+//									if (op8_1==0x1) {	// sz=1
+//										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + MVm;
+//									}
+//									else if (op8_1==0x0) {	// sz=0
+//										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VmM;
+//									}
+//								}
+//								else if (op16_1 == 0x1) {	// Encoding = A2
+//									if (op8_1==0x1) {	// sz=1
+//										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", #0.0";
+//									}
+//									else if (op8_1==0x0) {	// sz=0
+//										return "vcmp" + (op7_1==1?"e":"") + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", #0.0";
+//									}
+//								}
+//							}
+//							if ( (op16_4==0x7) && (op6_2==0x3)) {	// Vector Convert p.876
+//								if (op8_1==0x1) {	// sz=1
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32.f64 S" + VdD + ", D" + MVm;
+//								}
+//								else if (op8_1==0x0) {	// sz=0
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64.f32 D" + VdD + ", S" + MVm;
+//								}
+//							}
+//							if ( ((op16_4 == 0x8) && (op6_1==0x1)) || (((op16_4 & 0xe)==0xc) && (op6_1==0x1)) ) {	// Vector Convert p.870
+//								if ((op16_3 == 0x5) && (op8_1 == 0x1)) {	// Encoded as opc2 = 0b101, sz = 1
+//									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".s32.f64 S" + VdD + ", D" + MVm;
+//								}
+//								if ((op16_3 == 0x5) && (op8_1 == 0x0)) {	// Encoded as opc2 = 0b101, sz = 0
+//									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".s32.f32 S" + VdD + ", S" + VmM;
+//								}
+//								if ((op16_3 == 0x4) && (op8_1 == 0x1)) {	// Encoded as opc2 = 0b100, sz = 1
+//									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".u32.f64 S" + VdD + ", D" + MVm;
+//								}
+//								if ((op16_3 == 0x4) && (op8_1 == 0x0)) {	// Encoded as opc2 = 0b100, sz = 0
+//									return "vcvt" + (op7_1==0?"r":"") + (cond!=condAlways?condString[cond]:"") + ".u32.f32 S" + VdD + ", S" + VmM;
+//								}
+//								if ((op16_3 == 0x0) && (op8_1 == 0x1)) {	// Encoded as opc2 = 0b000, sz = 1
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64." + (op7_1==1?"s32":"u32") + " D" + DVd + ", S" + VmM;
+//								}
+//								if ((op16_3 == 0x0) && (op8_1 == 0x0)) {	// Encoded as opc2 = 0b000, sz = 0
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32." + (op7_1==1?"s32":"u32") + " S" + VdD + ", S" + VmM;
+//								}
+//							}
+//							if ( (((op16_4 & 0xe)==0xa) && (op6_1==0x1)) || (((op16_4 & 0xe)==0xe) && (op6_1==0x1)) ) {	// Vector Convert p.874
+//								String Td = (op16_1==0x1?"u":"s") + (op7_1==0x1?"32":"16");
+//								if ((op18_1 == 0x1) && (op8_1 == 0x1)) {	// Encoded as op = 1, sf = 1
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + "." + Td + ".f64 D" + DVd + ", D" + DVd + ", #" + "XXXX";
+//								}
+//								if ((op18_1 == 0x1) && (op8_1 == 0x0)) {	// Encoded as op = 1, sf = 0
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + "." + Td + ".f32 S" + VdD + ", S" + VdD + ", #" + "XXXX";
+//								}
+//								if ((op18_1 == 0x0) && (op8_1 == 0x1)) {	// Encoded as op = 0, sf = 1
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64." + Td + " D" + DVd + ", D" + DVd + ", #" + "XXXX";
+//								}
+//								if ((op18_1 == 0x0) && (op8_1 == 0x0)) {	// Encoded as op = 0, sf = 0
+//									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32." + Td + " S" + VdD + ", S" + VdD + ", #" + "XXXX";
+//								}
+//							}						
+//						}	// End of: Other Floating-point data-processing instructions A7-17 p.272/273						
+//					}	// End of: Floating-point data processing p.272
 
 					if ( ((op20_6 & 0x30)==0x20) && (op4_1==0x1) ) {	// Advanced SIMD, Floating-point p.278
 						int VnN = (op16_4<<1) + op7_1;
@@ -2518,10 +2607,12 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							switch (op16_4) {
 							case 0: specReg = "FPSID";	break;
 							case 1: specReg = "FPSCR";	break;
+							case 6: specReg = "MVFR1";	break;
+							case 7: specReg = "MVFR0";	break;
 							case 8: specReg = "FPEXC";	break;
 							default: break;
 							}
-							return "vmsr" + (cond!=condAlways?condString[cond]:"") + specReg + ", R" + op12_4;
+							return "vmsr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", R" + op12_4;
 						}
 						if ( (op20_1==0x0) && (op8_1==0x1) && ((op21_3 & 0x4)==0x0) ) {	// Vector Move p.940
 							int DVdx = 0;
@@ -2568,35 +2659,41 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							}
 						}
 						if ( (op20_1==0x1) && (op8_1==0x0) && (op21_3==0x7) ) {	// Move to ARM core register from Floating-point Special register p.954
-							return "vmrs" + (cond!=condAlways?condString[cond]:"") + " R" + op12_4 + ", FPSCR";
+							String specReg = "";
+							switch (op16_4) {
+							case 0: specReg = "FPSID";	break;
+							case 1: specReg = "FPSCR";	break;
+							case 6: specReg = "MVFR1";	break;
+							case 7: specReg = "MVFR0";	break;
+							case 8: specReg = "FPEXC";	break;
+							default: break;
+							}
+							return "vmrs" + (cond!=condAlways?condString[cond]:"") + " R" + op12_4 + ", " + specReg;
 						}
-						if ( (op20_1==0x1) && (op8_1==0x1) ) {	// Vector Move p.942
-							int NVnx;
-							if ((op23_1 == 0x0) && (op22_1 == 0x1)) {	// Encoded as U = 0, opc1<1> = 1
-								NVnx = (op7_1<<7) + (op16_4<<3) + (op21_1<<2) + op5_2;
-								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
-							}
-							if ((op18_1 == 0x0) && (op8_1 == 0x0) && (op5_1 == 0x1)) {	// Encoded as U = 0, opc1<1> = 0, opc2<0> = 1
-								NVnx = (op7_1<<6) + (op16_4<<2) + (op21_1<<1) + op6_1;
-								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
-							}
-							if ((op18_1 == 0x1) && (op8_1 == 0x1)) {	// Encoded as U = 1, opc1<1> = 1
-								NVnx = (op7_1<<7) + (op16_4<<3) + (op21_1<<2) + op5_2;
-								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
-							}
-							if ((op18_1 == 0x1) && (op8_1 == 0x0) && (op5_1 == 0x1)) {	// Encoded as U = 1, opc1<1> = 0, opc2<0> = 1
-								NVnx = (op7_1<<6) + (op16_4<<2) + (op21_1<<1) + op6_1;
-								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
-							}
-							if ((op18_1 == 0x0) && (op8_1 == 0x0) && (op5_2 == 0x0)) {	// Encoded as U = 0, opc1<1> = 0, opc2 = 0b00
-								NVnx = (op7_1<<5) + (op16_4<<1) + op21_1;
-								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
-							}
-						}
+//						if ( (op20_1==0x1) && (op8_1==0x1) ) {	// Vector Move p.942
+//							int NVnx;
+//							if ((op23_1 == 0x0) && (op22_1 == 0x1)) {	// Encoded as U = 0, opc1<1> = 1
+//								NVnx = (op7_1<<7) + (op16_4<<3) + (op21_1<<2) + op5_2;
+//								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
+//							}
+//							if ((op18_1 == 0x0) && (op8_1 == 0x0) && (op5_1 == 0x1)) {	// Encoded as U = 0, opc1<1> = 0, opc2<0> = 1
+//								NVnx = (op7_1<<6) + (op16_4<<2) + (op21_1<<1) + op6_1;
+//								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
+//							}
+//							if ((op18_1 == 0x1) && (op8_1 == 0x1)) {	// Encoded as U = 1, opc1<1> = 1
+//								NVnx = (op7_1<<7) + (op16_4<<3) + (op21_1<<2) + op5_2;
+//								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
+//							}
+//							if ((op18_1 == 0x1) && (op8_1 == 0x0) && (op5_1 == 0x1)) {	// Encoded as U = 1, opc1<1> = 0, opc2<0> = 1
+//								NVnx = (op7_1<<6) + (op16_4<<2) + (op21_1<<1) + op6_1;
+//								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
+//							}
+//							if ((op18_1 == 0x0) && (op8_1 == 0x0) && (op5_2 == 0x0)) {	// Encoded as U = 0, opc1<1> = 0, opc2 = 0b00
+//								NVnx = (op7_1<<5) + (op16_4<<1) + op21_1;
+//								return "vmov" + (cond!=condAlways?condString[cond]:"") + ".s8 R" + op12_4 + ", D" + NVnx;
+//							}
+//						}
 					}	// End of: Advanced SIMD, Floating-point p.278
-					*/	// SIMD not implemented
-					
-					
 				}	// End of: ((op8_4 & 0xe)==0xa)
 			}// End of (op=6/7): Coprocessor instructions, and Supervisor Call p.215
 			default: break;
