@@ -114,7 +114,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 						Launcher.setTargetConnection(tc);
 						Launcher.openTargetConnection();
 						Launcher.downloadTargetImage();
-//						Launcher.startTarget(0x100);	// MGE
+						Launcher.startTarget(0x100);
 					} else ErrorReporter.reporter.error(812, programmer.getClassName().toString());
 				} catch (ClassNotFoundException e) {
 					ErrorReporter.reporter.error(811, programmer.getClassName().toString());
