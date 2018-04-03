@@ -312,5 +312,13 @@ public interface InstructionOpcs {
 	
 	// Unconditional instructions
 	armRfe = 0x08100a00,
-	armSrs = 0x084d0500;
+	armSrs = 0x084d0500,
+	
+	// Extension register load / store
+	armVldr = (0xd1 << 20) | (0xa << 8),
+	armVstr = (0xd0 << 20) | (0xa << 8),
+	
+	// Floating point data processing
+	armVadd = (0xe3 << 20) | (0xa0 << 4);
+
 }

@@ -471,7 +471,25 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						loadConstant(code, dRegLong, (int)(immValLong >> 32));
 						loadConstant(code, dReg, (int)immValLong);
 						break;	
-					case tFloat: case tDouble:
+					case tFloat: 
+						break;
+					case tDouble:
+						constant = (StdConstant)res.constant;
+						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
+//							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);
+//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
+//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
+//							createIrDrAd(code, ppcLfd, dReg, stackPtr, tempStorageOffset);
+						} else if (constant.valueH == 0x3ff00000) {	// 1.0
+//							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0x3ff0);
+//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
+//							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0);
+//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
+//							createIrDrAd(code, ppcLfd, dReg, stackPtr, tempStorageOffset);
+						} else {
+							loadConstantAndFixup(code, gAux1, constant);	// address of constant (in the const area) is loaded
+							createLSExtReg(code, armVldr, condAlways, dReg, gAux1, 0, false);
+						}
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -686,7 +704,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armAdd, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
 					}
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: case tFloat:
+					break;
+				case tDouble:
+					createFPdataProc(code, armVadd, condAlways, dReg, src1Reg, src2Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -2115,6 +2136,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
+	
 	// block data transfer	(LDMxx, STMxx)
 	private void createBlockDataTransfer(Code32 code, int opCode, int cond, int Rn, int regList, int W) {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | regList | (W << 21);
@@ -2126,6 +2148,22 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		createBlockDataTransfer(code, opCode, cond, stackPtr, regList, 1);
 	}
 	
+	// load/store extension registers (VLDR, VSTR)
+	private void createLSExtReg(Code32 code, int opCode, int cond, int Vd, int Rn, int imm, boolean single) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (imm & 0xff) | ((imm>0)?(1<<23):0);
+		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22);
+		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22);
+		code.incInstructionNum();
+	}
+
+	// floating point data processing (VADD)
+	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vn, int Vm, boolean single) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (((Vn>>1)&0xf) << 16) | ((Vn&1) << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
+		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((Vn&0xf) << 16) | ((Vn>>4) << 7) | (Vm&0xf) | ((Vm>>4) << 5);
+		code.incInstructionNum();
+	}
+
 	private void createIpat(Code32 code, int pat) {
 		code.instructions[code.iCount] = pat;
 		code.incInstructionNum();
