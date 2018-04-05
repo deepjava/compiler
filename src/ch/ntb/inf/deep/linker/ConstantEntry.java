@@ -43,8 +43,13 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 		if(offset + size <= a.length * 4) {
 			switch(size) {
 			case 8: // long/double 
-				a[index] = ((StdConstant)ref).valueH;
-				a[index + 1] = ((StdConstant)ref).valueL;
+				if (Linker32.bigEndian) {
+					a[index] = ((StdConstant)ref).valueH;
+					a[index + 1] = ((StdConstant)ref).valueL;
+				} else {
+					a[index] = ((StdConstant)ref).valueL;
+					a[index + 1] = ((StdConstant)ref).valueH;
+				}
 				written = size;
 				break;
 			case 4: // int/float 
@@ -52,10 +57,8 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 				written = size;
 				break;
 			case 2: // short/char
-				// TODO @Martin implement this
 				break;
 			case 1:	// byte/boolean 
-				// TODO @Martin implement this
 				break;
 			default: // error
 				break;
@@ -70,13 +73,24 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 		
 		switch(size) {
 		case 8: // long/double
-			for (int i = 0; i < 4; ++i) {
-			    int shift = i << 3; // i * 8
-			    bytes[7 - i] = (byte)((((StdConstant)ref).valueL & (0xff << shift)) >>> shift);
-			}
-			for (int i = 0; i < 4; ++i) {
-			    int shift = i << 3; // i * 8
-			    bytes[3 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
+			if (Linker32.bigEndian) {
+				for (int i = 0; i < 4; ++i) {
+				    int shift = i << 3; // i * 8
+				    bytes[7 - i] = (byte)((((StdConstant)ref).valueL & (0xff << shift)) >>> shift);
+				}
+				for (int i = 0; i < 4; ++i) {
+				    int shift = i << 3; // i * 8
+				    bytes[3 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
+				}
+			} else {
+				for (int i = 0; i < 4; ++i) {
+				    int shift = i << 3; // i * 8
+				    bytes[7 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
+				}
+				for (int i = 0; i < 4; ++i) {
+				    int shift = i << 3; // i * 8
+				    bytes[3 - i] = (byte)((((StdConstant)ref).valueL & (0xff << shift)) >>> shift);
+				}
 			}
 			break;
 		case 4: // int/float
@@ -86,10 +100,8 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 			}
 			break;
 		case 2: // short/char
-			// TODO @Martin implement this
 			break;
 		case 1:	// byte/boolean 
-			// TODO @Martin implement this
 			break;
 		default: // error
 			break;
@@ -102,11 +114,19 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 		StringBuilder sb = new StringBuilder();
 		switch(size) {
 		case 8: // long/double
-			sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
-			sb.append(' ');
-			sb.append(((StdConstant)ref));
-			sb.append('\n');
-			sb.append(String.format("[%08X]", ((StdConstant)ref).valueL));
+			if (Linker32.bigEndian) {
+				sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
+				sb.append(' ');
+				sb.append(((StdConstant)ref));
+				sb.append('\n');
+				sb.append(String.format("[%08X]", ((StdConstant)ref).valueL));
+			} else {
+				sb.append(String.format("[%08X]", ((StdConstant)ref).valueL));
+				sb.append(' ');
+				sb.append(((StdConstant)ref));
+				sb.append('\n');
+				sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
+			}
 			break;
 		case 4: // int/float 
 			sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
@@ -114,10 +134,8 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 			sb.append(((StdConstant)ref));
 			break;
 		case 2: // short/char
-			// TODO @Martin implement this
 			break;
 		case 1:	// byte/boolean 
-			// TODO @Martin implement this
 			break;
 		default: // error
 			break;
