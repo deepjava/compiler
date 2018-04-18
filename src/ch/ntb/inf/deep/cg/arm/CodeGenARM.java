@@ -472,23 +472,34 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						loadConstant(code, dReg, (int)immValLong);
 						break;	
 					case tFloat: 
+						constant = (StdConstant)res.constant;
+						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
+							loadConstant(code, scratchReg, 0);
+							createFPregMove(code, armVmovSingle, condAlways, dReg, scratchReg, 0, false, true);
+						} else if (constant.valueH == 0x3f800000) {	// 1.0
+							loadConstant(code, scratchReg, 0x3f800000);
+							createFPregMove(code, armVmovSingle, condAlways, dReg, scratchReg, 0, false, true);
+						} else if (constant.valueH == 0x40000000) {	// 2.0
+							loadConstant(code, scratchReg, 0x40000000);
+							createFPregMove(code, armVmovSingle, condAlways, dReg, scratchReg, 0, false, true);
+						} else {
+							loadConstantAndFixup(code, scratchReg, constant);	// address of constant (in the const area) is loaded
+							createLSExtReg(code, armVldr, condAlways, dReg, scratchReg, 0, true);
+						}
 						break;
 					case tDouble:
 						constant = (StdConstant)res.constant;
 						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
-//							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);
-//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
-//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
-//							createIrDrAd(code, ppcLfd, dReg, stackPtr, tempStorageOffset);
+							loadConstant(code, gAux1, 0);
+							loadConstant(code, scratchReg, 0);
+							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, gAux1, false, false);
 						} else if (constant.valueH == 0x3ff00000) {	// 1.0
-//							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0x3ff0);
-//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
-//							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0);
-//							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
-//							createIrDrAd(code, ppcLfd, dReg, stackPtr, tempStorageOffset);
+							loadConstant(code, gAux1, 0x3ff00000);
+							loadConstant(code, scratchReg, 0);
+							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, gAux1, false, false);
 						} else {
-							loadConstantAndFixup(code, gAux1, constant);	// address of constant (in the const area) is loaded
-							createLSExtReg(code, armVldr, condAlways, dReg, gAux1, 0, false);
+							loadConstantAndFixup(code, scratchReg, constant);	// address of constant (in the const area) is loaded
+							createLSExtReg(code, armVldr, condAlways, dReg, scratchReg, 0, false);
 						}
 						break;
 					default:
@@ -704,7 +715,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armAdd, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
 					}
 					break;
-				case tLong: case tFloat:
+				case tLong: 
+					break;
+				case tFloat:
+					createFPdataProc(code, armVadd, condAlways, dReg, src1Reg, src2Reg, true);
 					break;
 				case tDouble:
 					createFPdataProc(code, armVadd, condAlways, dReg, src1Reg, src2Reg, false);
@@ -2161,6 +2175,23 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (((Vn>>1)&0xf) << 16) | ((Vn&1) << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((Vn&0xf) << 16) | ((Vn>>4) << 7) | (Vm&0xf) | ((Vm>>4) << 5);
+		code.incInstructionNum();
+	}
+
+	// floating point register moving (VMOV)
+	private void createFPregMove(Code32 code, int opCode, int cond, int Vm, int Rt, int Rt2, boolean toArm, boolean single) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		if (single) code.instructions[code.iCount] |= (((Vm>>1)&0xf) << 16) | ((Vm&1) << 7) | (Rt << 12);
+		else code.instructions[code.iCount] |= (Vm&0xf) | ((Vm>>4) << 5) | (Rt << 12) | (Rt2 << 16);
+		if (toArm) code.instructions[code.iCount] |= (1 << 20);
+		code.incInstructionNum();
+	}
+
+	// floating point data processing, immediate (VMOV), could not make it work, gave strange constants
+	private void createFPdataProcImm(Code32 code, int opCode, int cond, int Vd, int imm, boolean single) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | ((imm&0xf0) << 12) | (imm&0xf);
+		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((imm&0xf0) << 12) | (imm&0xf);
 		code.incInstructionNum();
 	}
 

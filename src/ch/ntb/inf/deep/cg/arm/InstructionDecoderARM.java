@@ -2334,6 +2334,8 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					if ((op24_1==1) && (op23_1==0)) mode = "db";	// Decrement Before. Encoded as P = 1; U = 0.
 					int VmM = (op0_4<<1) + op5_1;
 					int MVm = (op5_1<<4) + op0_4;
+					int VnN = (op16_4<<1) + op7_1;
+					int NVn = (op7_1<<4) + op16_4;
 					int VdD = (op12_4<<1) + op22_1;
 					int DVd = (op22_1<<4) + op12_4;
 
@@ -2343,18 +2345,18 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 						
 						if ((op20_5 & 0x1e)==0x04) {	// 64-bit transfers between ARM core and extension registers p.279
 							if ( (op8_1==0x0) && ((op4_4 & 0xd)==0x1) ) {	// VMOV (between two ARM core registers and two single-precision registers) p.946
-								if (op20_1 == 0x0) {	// Encoded as op = 0
-									return "vmov" + (cond!=condAlways?condString[cond]:"") + " S" + VmM + ", S" + (VmM) + ", R" + op12_4 + ", R" + op16_4;
+								if (op20_1 == 0x0) {	// Encoded as op = 0, to FPU
+									return "vmov" + (cond!=condAlways?condString[cond]:"") + " S" + (VmM+1) + ", S" + (VmM) + ", R" + op12_4 + ", R" + op16_4;
 								}
-								else if (op20_1 == 0x1) {	// Encoded as op = 1
+								else if (op20_1 == 0x1) {	// Encoded as op = 1, to ARM
 									return "vmov" + (cond!=condAlways?condString[cond]:"") + " R" + op12_4 + ", R" + op16_4 + ", S" + VmM + ", S" + (VmM+1);
 								}
 							}
 							if ( (op8_1==0x1) && ((op4_4 & 0xd)==0x1) ) {	// VMOV (between two ARM core registers and a doubleword extension register) p.948
-								if (op20_1 == 0x0) {	// Encoded as op = 0
+								if (op20_1 == 0x0) {	// Encoded as op = 0, to FPU
 									return "vmov" + (cond!=condAlways?condString[cond]:"") + " D" + MVm + ", R" + op12_4 + ", R" + op16_4;
 								}
-								else if (op20_1 == 0x1) {	// Encoded as op = 1
+								else if (op20_1 == 0x1) {	// Encoded as op = 1, to ARM
 									return "vmov" + (cond!=condAlways?condString[cond]:"") + " R" + op12_4 + ", R" + op16_4 + ", D" + MVm;
 								}
 							}
@@ -2412,7 +2414,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					if ((op20_6 & 0x3e)==0x04) {	// Advanced SIMD, Floating-point p.279
 						if ( (op8_1==0x0) && ((op4_4 & 0xb)==0x1) ) {	// VMOV (between two ARM core registers and two single-precision registers) p.946
 							if (op20_1 == 0x0) {	// Encoded as op = 0
-								return "vmov" + (cond!=condAlways?condString[cond]:"") + " S" + VmM + ", S" + (VmM) + ", R" + op12_4 + ", R" + op16_4;
+								return "vmov" + (cond!=condAlways?condString[cond]:"") + " S" + (VmM+1) + ", S" + (VmM) + ", R" + op12_4 + ", R" + op16_4;
 							}
 							else if (op20_1 == 0x1) {	// Encoded as op = 1
 								return "vmov" + (cond!=condAlways?condString[cond]:"") + " R" + op12_4 + ", R" + op16_4 + ", S" + VmM + ", S" + (VmM+1);
@@ -2463,10 +2465,10 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 						}
 						if ( ((op20_4 & 0xb)==0x3) && (op6_1==0x0) ) {	// Vector Add p.830	Encoding = A2
 							if (op8_1==0x1) {	// sz=1
-								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + n + ", D" + op0_4;
+								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f64 D" + DVd + ", D" + NVn + ", D" + MVm;
 							}
 							else if (op8_1==0x0) {	// sz=0
-								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + n + ", S" + op0_4;
+								return "vadd" + (cond!=condAlways?condString[cond]:"") + ".f32 S" + VdD + ", S" + VnN + ", S" + VmM;
 							}
 						}
 						if ( ((op20_4 & 0xb)==0x3) && (op6_1==0x1) ) {	// Vector Subtract p.1086	Encoding = A2
@@ -2613,7 +2615,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					}	// End of: Floating-point data processing p.272
 
 					if ( ((op20_6 & 0x30)==0x20) && (op4_1==0x1) ) {	// Advanced SIMD, Floating-point p.278
-						int VnN = (op16_4<<1) + op7_1;
+						VnN = (op16_4<<1) + op7_1;
 						if ( (op20_1==0x0) && (op8_1==0x0) && (op21_3==0x0) ) {	// Vector Move p.944
 							if (op20_1==0x0) {	// op=0
 								return "vmov" + (cond!=condAlways?condString[cond]:"") + " S" + VnN + ", R" + op12_4;
