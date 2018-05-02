@@ -22,7 +22,7 @@ public class Register {
 	public int value;
 	public String name;
 	/** 
-	 * Kind of Representations:	Binary = 0, Hexadecimal = 1, Decimal = 2, Double = 3
+	 * Kind of Representations:	Hexadecimal = 1, Decimal = 2, Double = 3, Float = 4
 	 */
 	public int representation;
 	

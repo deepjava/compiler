@@ -46,6 +46,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+
 import ch.ntb.inf.deep.eclipse.ui.model.RegModel;
 import ch.ntb.inf.deep.eclipse.ui.model.Register;
 import ch.ntb.inf.deep.launcher.Launcher;
@@ -55,17 +56,15 @@ import ch.ntb.inf.deep.target.TargetConnectionException;
 /**
  * The view is connected to the model using a content provider.
  * <p>
- * It displays the contents of the Development Support SPRs
+ * It displays the contents of the SPRs
  * <p>
  */
-
-public class DeSuSPRView extends ViewPart implements ISelectionListener {
+public class SPRView extends ViewPart implements ISelectionListener {
 
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.ui.DeSuSPRView";
-
+	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.SPRView";
 
 	private TableViewer viewer;
 	private Action toHex;
@@ -74,7 +73,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 	private Action refresh;
 	private Action suspend;
 	private Action resume;
-	private RegModel model;
+	private ch.ntb.inf.deep.eclipse.ui.model.RegModel model;
 	private final String helpContextId = "ch.ntb.inf.deep.ui.register.viewer";
 
 	/*
@@ -93,66 +92,34 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		}
 
 		public Object[] getElements(Object parent) {
-			Register dummy = new Register();
 			Register[] regs = null;
 			if (model != null) {
-				regs = model.getMod(5);
-			}
-			if(model == null || model.getMod(5) == null) {
-				// Default for all is zero
-				regs = new Register[16];
-				regs[0] = new Register("CMPA",0,0);
-				regs[1] = new Register("CMPB",0,0);
-				regs[2] = new Register("CMPC",0,0);
-				regs[3] = new Register("CMPD",0,0);
-				regs[4] = new Register("ECR",0,0);
-				regs[5] = new Register("DER",0,0);
-				regs[6] = new Register("COUNTA",0,0);
-				regs[7] = new Register("COUNTB",0,0);
-				regs[8] = new Register("CMPE",0,0);
-				regs[9] = new Register("CMPF",0,0);
-				regs[10] = new Register("CMPG",0,0);
-				regs[11] = new Register("CMPH",0,0);
-				regs[12] = new Register("LCTRL1",0,0);
-				regs[13] = new Register("LCTRL2",0,0);
-				regs[14] = new Register("ICTRL",0,0);
-				regs[15] = new Register("BAR",0,0);
-			}
-			if(regs.length < 16){
-				return regs;
-			}
-			//Group in blocks of 4 elements
-			int regCount = 0;
-			Register[] deSuSPR = new Register[19];
-			for(int i = 0; i < deSuSPR.length; i++){
-				if(i == 4 || i == 9 || i == 14){
-					deSuSPR[i] = dummy;
-				}else{
-					deSuSPR[i] = regs[regCount];
-					regCount++;
-				}				
-			}
-			return deSuSPR;
+				regs = model.getMod(2);
+			} 
+			assert (regs != null);
+			return regs;
 		}
+
 	}
 
 	class ViewLabelProvider extends LabelProvider implements
 			ITableLabelProvider {
 		public String getColumnText(Object obj, int index) {
-			if(obj instanceof Register){
-				switch(index){
+			if (obj instanceof Register) {
+				switch (index) {
 				case 0:
-					if(((Register)obj).name == null){
+					if (((Register) obj).name == null) {
 						return "";
 					}
-					return ((Register)obj).name;
+					return ((Register) obj).name;
 				case 1:
-					if(((Register)obj).name == null){
+					if (((Register) obj).name == null) {
 						return "";
-					}if (((Register)obj).representation == 0){//BIN
-						String value = Integer.toBinaryString(((Register)obj).value);
+					}
+					if (((Register) obj).representation == 0) { // BIN
+						String value = Integer.toBinaryString(((Register) obj).value);
 						String temp = "";
-						
+
 						// complete to 32 Bit
 						int length = 32 - value.length();
 						for (int y = 0; y < length; y++) {
@@ -169,12 +136,13 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 						}
 						return temp;
 					}
-					if (((Register)obj).representation == 1){//HEX
-						return "0x"+Integer.toHexString(((Register)obj).value);
+					if (((Register) obj).representation == 1) {	// HEX
+						return "0x"
+								+ Integer.toHexString(((Register) obj).value);
 					}
-					if (((Register)obj).representation == 2){//DEZ
-						return Integer.toString(((Register)obj).value);
-					}					
+					if (((Register) obj).representation == 2) {	// DEZ
+						return Integer.toString(((Register) obj).value);
+					}
 				default:
 					throw new RuntimeException("Should not happen");
 				}
@@ -187,18 +155,14 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		}
 	}
 
-	/**
-	 * This is a callback that will allow us to create the viewer and initialize
-	 * it.
-	 */
 	public void createPartControl(Composite parent) {
 		// Create Viewer
 		viewer = new TableViewer(parent, SWT.V_SCROLL | SWT.FULL_SELECTION);
-		//Create Columns
-		String[] titels ={"Register","Value"};
-		int[] bounds = { 60, 230};
-		for(int i = 0;i < titels.length; i++){
-			TableViewerColumn column = new TableViewerColumn(viewer,SWT.NONE);
+		// Create Columns
+		String[] titels = { "Register", "Value" };
+		int[] bounds = { 60, 230 };
+		for (int i = 0; i < titels.length; i++) {
+			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
 			column.getColumn().setText(titels[i]);
 			column.getColumn().setWidth(bounds[i]);
 			column.getColumn().setResizable(true);
@@ -207,16 +171,17 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		Table table = viewer.getTable();
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
-		//Set Providers after table init
+		// Set Providers after table init
 		viewer.setLabelProvider(new ViewLabelProvider());
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setSorter(null);
-		//set input after init Providers
-		update();//needs to init model
+		// set input after init Providers
+		update();// needs to init model
 		viewer.setInput(getViewSite());
 
 		// Create the help context id for the viewer's control
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), helpContextId);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(),
+				helpContextId);
 		createActions();
 		hookContextMenu();
 		contributeToActionBars();
@@ -227,7 +192,7 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
-				DeSuSPRView.this.fillContextMenu(manager);
+				SPRView.this.fillContextMenu(manager);
 			}
 		});
 		Menu menu = menuMgr.createContextMenu(viewer.getControl());
@@ -259,6 +224,14 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		manager.add(resume);
 	}
 
+	public RegModel getModel() {
+		return model;
+	}
+
+	public Viewer getViewer() {
+		return viewer;
+	}
+
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
@@ -266,62 +239,64 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 		viewer.getControl().setFocus();
 	}
 
-	public RegModel getModel() {
-		return model;
-	}
-
 	protected void createActions() {
-		toHex =  new Action(){
-					public void run() {
-						ISelection selection = viewer.getSelection();
-						Object obj = ((IStructuredSelection) selection).getFirstElement();
-						if(obj instanceof Register){
-							((Register)obj).representation = 1;
-						}
-						viewer.refresh();
-					}
-		};
-		toHex.setText("ToHex");
-		toDez = new Action(){
-					public void run() {
-						ISelection selection = viewer.getSelection();
-						Object obj = ((IStructuredSelection) selection).getFirstElement();
-						if(obj instanceof Register){
-							((Register)obj).representation = 2;
-						}
-						viewer.refresh();
-					}
-		};
-		toDez.setText("ToDez");
-		toBin = new Action(){
+		toHex = new Action() {
 			public void run() {
 				ISelection selection = viewer.getSelection();
-				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				if(obj instanceof Register){
-					((Register)obj).representation = 0;
+				Object obj = ((IStructuredSelection) selection)
+						.getFirstElement();
+				if (obj instanceof Register) {
+					((Register) obj).representation = 1;
+				}
+				viewer.refresh();
+			}
+		};
+		toHex.setText("ToHex");
+		toDez = new Action() {
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection)
+						.getFirstElement();
+				if (obj instanceof Register) {
+					((Register) obj).representation = 2;
+				}
+				viewer.refresh();
+			}
+		};
+		toDez.setText("ToDez");
+		toBin = new Action() {
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection)
+						.getFirstElement();
+				if (obj instanceof Register) {
+					((Register) obj).representation = 0;
 				}
 				viewer.refresh();
 			}
 		};
 		toBin.setText("ToBin");
-		refresh = new Action(){
-			public void run(){
+		refresh = new Action() {
+			public void run() {
 				update();
 				viewer.refresh();
 			}
 		};
 		refresh.setText("Refresh");
-		ImageDescriptor img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_TOOL_REDO));
+		ImageDescriptor img = ImageDescriptor.createFromImage(PlatformUI
+				.getWorkbench().getSharedImages().getImage(
+						ISharedImages.IMG_TOOL_REDO));
 		refresh.setImageDescriptor(img);
-		suspend = new Action(){
-			public void run(){
+		suspend = new Action() {
+			public void run() {
 				TargetConnection bdi = Launcher.getTargetConnection();
 				if (bdi == null)return;
+
 				try {
 					if(!bdi.isConnected()){//reopen
 						bdi.openConnection();
 					}
-					if(bdi.getTargetState() != TargetConnection.stateDebug){
+					if (bdi.getTargetState() != TargetConnection.stateDebug) {
 						bdi.stopTarget();
 					}
 				} catch (TargetConnectionException e) {
@@ -332,17 +307,19 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 			}
 		};
 		suspend.setText("Suspend");
-		img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_ELCL_STOP));
+		img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench()
+				.getSharedImages().getImage(ISharedImages.IMG_ELCL_STOP));
 		suspend.setImageDescriptor(img);
-		resume = new Action(){
-			public void run(){
+		resume = new Action() {
+			public void run() {
 				TargetConnection bdi = Launcher.getTargetConnection();
 				if (bdi == null)return;
+
 				try {
 					if(!bdi.isConnected()){//reopen
 						bdi.openConnection();
 					}
-					if(bdi.getTargetState() != TargetConnection.stateDebug){
+					if (bdi.getTargetState() == TargetConnection.stateDebug) {
 						bdi.startTarget(-1);
 					}
 				} catch (TargetConnectionException e) {
@@ -351,36 +328,30 @@ public class DeSuSPRView extends ViewPart implements ISelectionListener {
 			}
 		};
 		resume.setText("Resume");
-		img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_ADD));
+		img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench()
+				.getSharedImages().getImage(ISharedImages.IMG_OBJ_ADD));
 		resume.setImageDescriptor(img);
 	}
 
+	@Override
+	public void dispose() {
+		model.clearMod(2);
+		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(IDebugUIConstants.ID_DEBUG_VIEW, this);
+		super.dispose();
+	}
+	
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 	}
 
 	private synchronized void update() {
-		if (model == null) {
-			model = RegModel.getInstance();
-		}else{
-			model.updateDeSuSPRMod();
-		}
-		if(model.getMod(5) != null){
+		if (model == null) model = RegModel.getInstance();
+		else model.updateSPRModel();
+		if(model.getMod(2) != null){
 			viewer.setInput(model);
 			viewer.getControl().setEnabled(true);
 			viewer.refresh();
 		}
 	}
 
-	public Viewer getViewer() {
-		return viewer;
-	}
-
-	@Override
-	public void dispose() {
-		model.clearMod(5);
-		getSite().getWorkbenchWindow().getSelectionService()
-				.removeSelectionListener(IDebugUIConstants.ID_DEBUG_VIEW, this);
-		super.dispose();
-	}
 }

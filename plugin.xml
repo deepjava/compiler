@@ -105,128 +105,87 @@
    <extension
          point="org.eclipse.ui.views">
       <category
-            id="ch.ntb.inf.deep.ui.registerview"
-            name="Deep Register Views">
+            id="deep"
+            name="deep">
       </category>
       <view
-            category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.UsLeSPRView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.UsLeSPRView"
-            name="User Level SPR View"
-            restorable="true">
-         <description>
-            Display the content of the user level SPR's
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.DeSuSPRView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.DeSuSPRView"
-            name="Development Support SPR View"
-            restorable="true">
-         <description>
-            Display the content of the development support SPR's
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.GPRView"
-            name="General Purpose Register View"
-            restorable="true">
-         <description>
-            Display the content of the general purpose registers
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.FPRView"
-            name="Floating Point Register View"
-            restorable="true">
-         <description>
-            Display the content of the floating point registers
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.MSRView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.MSRView"
-            name="Machine State Register View"
-            restorable="true">
-         <description>
-            Display the content of the machine state register
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.ui.registerview"
-            class="ch.ntb.inf.deep.eclipse.ui.view.SuLeSPRView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.SuLeSPRView"
-            name="Support Level SPR View"
-            restorable="true">
-         <description>
-            Display the content of the support level SPR's
-         </description>
-      </view>
-      <category
-            id="ch.ntb.inf.deep.targetManipulation"
-            name="Deep Target Actions">
-      </category>
-      <view
-            category="ch.ntb.inf.deep.targetManipulation"
-            class="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
-            name="Selected Memory View"
-            restorable="true">
-         <description>
-            Displays the content of the chosen memory space
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.targetManipulation"
-            class="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
-            name="TargetOperation"
-            restorable="true">
-         <description>
-            View to interact with the target. Possible actions are:
-target command, read from address, write to address, read and modify static variables, 
-read and modify registers
-         </description>
-      </view>
-      <view
-            category="ch.ntb.inf.deep.targetManipulation"
-            class="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
-            icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
-            name="TaskView"
-            restorable="true">
-         <description>
-            Display the number of tasks
-         </description>
-      </view>
-      <category
-            id="ch.ntb.inf.deep.ui.Log"
-            name="Deep Logs">
-      </category>
-      <view
-            category="ch.ntb.inf.deep.ui.Log"
+            category="deep"
             class="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
             icon="icons/full/obj16/deep.gif"
             id="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
-            name="ClassTreeView"
+            name="Class Tree View"
             restorable="true">
-         <description>
-            Display all loaded classes with their CFG, SSA and machinecode, shows memory devices and their segments
-         </description>
+         	<description>
+            	Display all loaded classes with their CFG, SSA and machinecode, shows memory devices and their segments
+         	</description>
+      </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
+            name="Task View"
+            restorable="true">
+         	<description>
+           		Display the number of tasks
+         	</description>
+      </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
+            name="Target Operation"
+            restorable="true">
+         	<description>
+            	View to interact with the target. Possible actions are:
+				target command, read from address, write to address, read and modify static variables, 
+				read and modify registers
+         	</description>
+      </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
+            name="Memory View"
+            restorable="true">
+         	<description>
+            	Displays the content of the chosen memory space
+         	</description>
+      </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
+            name="General Purpose Register View"
+            restorable="true">
+         	<description>
+            	Display the content of the general purpose registers
+         	</description>
+      </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
+            name="Floating Point Register View"
+            restorable="true">
+         	<description>
+            	Display the content of the floating point registers
+         	</description>
+      </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.SPRView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.SPRView"
+            name="Special Purpose Register View (on PPC)"
+            restorable="true">
+         	<description>
+            	Display the content of the all SPR's and the MSR
+         	</description>
       </view>
    </extension>
    <extension

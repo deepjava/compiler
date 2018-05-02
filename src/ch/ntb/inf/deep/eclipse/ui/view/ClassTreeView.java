@@ -18,7 +18,6 @@
 
 package ch.ntb.inf.deep.eclipse.ui.view;
 
-import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -64,7 +63,6 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.MemMap;
 import ch.ntb.inf.deep.config.Segment;
-import ch.ntb.inf.deep.linker.ConstBlkEntry;
 import ch.ntb.inf.deep.linker.FixedValueEntry;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.ssa.SSA;
@@ -73,7 +71,6 @@ import ch.ntb.inf.deep.strings.HString;
 public class ClassTreeView extends ViewPart implements ISelectionChangedListener, ICclassFileConsts {
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView";
 	private TreeViewer classTreeViewer;
-	private TreeViewer deviceTreeViewer;
 	private TextViewer textViewer;
 	private Action refresh;
 	

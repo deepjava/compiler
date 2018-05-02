@@ -21,13 +21,12 @@ package ch.ntb.inf.deep.eclipse.ui.model;
 public class FPRegister extends Register {
 	public long floatValue;
 	
-	public FPRegister() {	
-	}
+	public FPRegister() {}
 
 	public FPRegister(String name, long value, int representation) {
 		this.name = name;
 		this.floatValue = value;
-		this.representation =representation;		
+		this.representation = representation;		
 	}
 
 }

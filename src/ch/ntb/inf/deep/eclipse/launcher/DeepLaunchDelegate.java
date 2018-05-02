@@ -19,12 +19,7 @@
 package ch.ntb.inf.deep.eclipse.launcher;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.Properties;
-
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;

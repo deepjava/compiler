@@ -66,12 +66,10 @@ public class FPRView extends ViewPart implements ISelectionListener {
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.ui.FPRView";
+	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.FPRView";
 
 	private TableViewer viewer;
-	private Action toHex;
-	private Action toDouble;
-	private Action toBin;
+	private Action toHex, toDouble, toFloat, toBin;
 	private Action refresh;
 	private Action suspend;
 	private Action resume;
@@ -94,38 +92,12 @@ public class FPRView extends ViewPart implements ISelectionListener {
 		}
 
 		public Object[] getElements(Object parent) {
-			FPRegister dummy = new FPRegister();
 			Register[] regs = null;
-			if (model != null) {
+			if (model != null){
 				regs = model.getMod(1);
-			} 
-			if(model == null || model.getMod(1) == null) {
-				// Defaul all is Zero
-				regs = new Register[33];
-				for (int i = 0; i < regs.length - 1; i++) {
-					regs[i] = new FPRegister("FPR" + i, 0, 3);
-				}
-				regs[32] = new Register("FPSCR", 0, 0);
-
 			}
-			if(regs.length < 33){
-				return regs;
-			}
-			// Group in blocks of 4 elements and separate FPSCR
-			int regCount = 0;
-			Register[] fpr = new Register[41];
-			fpr[0] = regs[32];// FPSCR
-			for (int i = 1; i < fpr.length; i++) {
-				if (i == 1 || i == 6 || i == 11 || i == 16 || i == 21
-						|| i == 26 || i == 31 || i == 36) {
-					fpr[i] = dummy;
-				} else {
-					fpr[i] = regs[regCount];
-					regCount++;
-				}
-			}
-			return fpr;
-
+			assert (regs != null);
+			return regs;
 		}
 	}
 
@@ -177,19 +149,17 @@ public class FPRView extends ViewPart implements ISelectionListener {
 					}
 					if (((Register) obj).representation == 1) {// HEX
 						if (obj instanceof FPRegister) {
-							return "0x"
-									+ Long
-											.toHexString(((FPRegister) obj).floatValue);
+							return "0x" + Long.toHexString(((FPRegister) obj).floatValue);
 						} else {
-							return "0x"
-									+ Integer
-											.toHexString(((Register) obj).value);
+							return "0x"	+ Integer.toHexString(((Register) obj).value);
 						}
 					}
-					if (((Register) obj).representation == 3
-							&& obj instanceof FPRegister) {// DOUBLE
-						Double dTemp = Double
-								.longBitsToDouble(((FPRegister) obj).floatValue);
+					if (((Register) obj).representation == 3 && obj instanceof FPRegister) {// DOUBLE
+						Double dTemp = Double.longBitsToDouble(((FPRegister) obj).floatValue);
+						return dTemp.toString();
+					}
+					if (((Register) obj).representation == 4 && obj instanceof FPRegister) {// FLOAT
+						Float dTemp = Float.intBitsToFloat((int) ((FPRegister) obj).floatValue);
 						return dTemp.toString();
 					}
 				default:
@@ -264,6 +234,7 @@ public class FPRView extends ViewPart implements ISelectionListener {
 
 	protected void fillContextMenu(IMenuManager manager) {
 		manager.add(toDouble);
+		manager.add(toFloat);
 		manager.add(toBin);
 		manager.add(toHex);
 
@@ -314,6 +285,18 @@ public class FPRView extends ViewPart implements ISelectionListener {
 			}
 		};
 		toDouble.setText("ToDouble");
+		toFloat = new Action() {
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection)
+						.getFirstElement();
+				if (obj instanceof Register) {
+					((Register) obj).representation = 4;
+				}
+				viewer.refresh();
+			}
+		};
+		toFloat.setText("ToFloat");
 		toBin = new Action() {
 			public void run() {
 				ISelection selection = viewer.getSelection();
@@ -388,12 +371,9 @@ public class FPRView extends ViewPart implements ISelectionListener {
 	}
 
 	private synchronized void update() {
-		if (model == null){
-			model = RegModel.getInstance();
-		}else{
-			model.updateFprMod();
-		}
-		if(model.getMod(1) != null){
+		if (model == null) model = RegModel.getInstance();
+		else model.updateFPRModel();
+		if (model.getMod(1) != null) {
 			viewer.setInput(model);
 			viewer.getControl().setEnabled(true);
 			viewer.refresh();

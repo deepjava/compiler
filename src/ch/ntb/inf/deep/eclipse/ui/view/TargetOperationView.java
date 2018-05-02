@@ -27,7 +27,6 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.CheckboxCellEditor;
@@ -67,6 +66,7 @@ import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.eclipse.DeepPlugin;
 import ch.ntb.inf.deep.eclipse.ui.model.TargetOpObject;
 import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
@@ -76,10 +76,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	private TableViewer viewer;
 	private TargetOpObject[] elements;
 	//private Action toChar;
-	private Action toHex;
-	private Action toDez;
-	private Action toDouble;
-	private Action toBin;
+	private Action toHex, toDez, toDouble, toFloat;
 	private IEclipsePreferences prefs;
 
 	private static String cmdAddrName = "cmdAddr";
@@ -97,30 +94,40 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		public String getColumnText(Object obj, int index) {
 			if ((obj instanceof TargetOpObject)) {
 				TargetOpObject op = (TargetOpObject)obj;
-				if(index == 0){
+				if (index == 0) {
 					return choice[op.operation];
-				}else if(index == 1){
+				} else if (index == 1) {
 					return op.description;
-				}else if(index == 2){
-					if(op.isRead && !choice[op.operation].equals("")){
-						switch(op.operation){
-							case 1:
+				} else if (index == 2) {
+					if (op.isRead && !choice[op.operation].equals("")) {
+						switch(op.operation) {
+							case 1:	// register
 								switch(op.registerType){
 								case Parser.sCR:
 								case Parser.sFPSCR:
 								case Parser.sMSR:
 									return String.format("0x%04X",(short)op.value);
 								case Parser.sGPR:
-									if(op.representation == 1){//Hex
-										return String.format("0x%08X",(int)op.value);
-									}else{
-										return String.format("%d",(int)op.value);
+									if (op.representation == 1) {	// Hex
+										return String.format("0x%08X", (int)op.value);
+									} else {
+										return String.format("%d", (int)op.value);
 									}
 								case Parser.sFPR:
-									if(op.representation == 1){//Hex
-										return String.format("0x%016X",op.value);
-									}else{
-										return String.format("%f",Double.longBitsToDouble(op.value));
+									if (op.representation == 1) {	// Hex
+										if (op.registerSize == 4) {
+											int num = Integer.parseInt(op.description.substring(1));
+											if (num % 2 == 0) return String.format("0x%08X", (int)op.value);	// S0, S2, S4 ...
+											else return String.format("0x%08X", (int)(op.value >> 32));	// S1, S3, S5 ...
+										}
+										else return String.format("0x%016X", op.value);
+									} else {
+										if (op.registerSize == 4) {
+											int num = Integer.parseInt(op.description.substring(1));
+											if (num % 2 == 0) return String.format("%f", Float.intBitsToFloat((int)op.value));	// S0, S2, S4 ...
+											else return String.format("%f", Float.intBitsToFloat((int)(op.value >> 32)));	// S1, S3, S5 ...
+										}
+										else return String.format("%f", Double.longBitsToDouble(op.value));
 									}
 								case Parser.sSPR:
 								case Parser.sIOR:
@@ -137,16 +144,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										return String.format("0x%08X",(int)op.value);
 									}
 								}
-							case 2:
+							case 2:	// variable
 								switch (op.valueType){
 									case tBoolean:
 										return String.valueOf(op.value > 0);
 									case tByte:
 										if(op.representation == 1){//Hex
 											return String.format("0x%02X",(byte)op.value);
-										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 8);
 										}
 										return Byte.toString((byte)op.value);
 									case tChar:
@@ -156,48 +160,30 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										if(op.representation == 2){//Dez{
 											return String.format("%d",(int)op.value);
 										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 16);
-										}
 										return String.format("%c",((char)op.value));
 									case tShort:
 										if(op.representation == 1){//Hex
 											return String.format("0x%04X",(short)op.value);
-										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 16);
 										}
 										return String.format("%d",((short)op.value));
 									case tInteger:
 										if(op.representation == 1){//Hex
 											return String.format("0x%08X",(int)op.value);
 										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 32);
-										}
 										return String.format("%d",(int)op.value);
 									case tFloat:
 										if(op.representation == 1){//Hex
 											return String.format("0x%08X",(int)op.value);
-										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 32);
 										}
 										return String.format("%f",Float.intBitsToFloat((int)op.value));
 									case tLong:
 										if(op.representation == 1){//Hex
 											return String.format("0x%016X",op.value);
 										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 64);
-										}
 										return String.format("%d",op.value);
 									case tDouble:
 										if(op.representation == 1){//Hex
 											return String.format("0x%016X",op.value);
-										}
-										if(op.representation == 5) {//Bin
-											return createBinary((int)op.value, 64);
 										}
 										return String.format("%f",Double.longBitsToDouble(op.value));
 									case tRef:
@@ -215,7 +201,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						}
 					}
 				
-				}else if(index == 3){
+				} else if (index == 3) {	// 3rd colon
 					switch(op.operation){
 					case 1:
 						if(op.isRead && op.registerType == Parser.sIOR){
@@ -263,17 +249,17 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		}
 	}
 	
-	public String createBinary(int value, int length) {
-		String retString = "0b ";
-		int temp = 0;
-		for(int i = 0; i < length; i++) {
-			temp = value >> (length-1-i);
-			retString += temp;
-			value -= temp << (length-1-i);
-			if(i%4 == 3)retString += " ";
-		}
-		return retString;
-	}
+//	public String createBinary(int value, int length) {
+//		String retString = "0b ";
+//		int temp = 0;
+//		for(int i = 0; i < length; i++) {
+//			temp = value >> (length-1-i);
+//			retString += temp;
+//			value -= temp << (length-1-i);
+//			if(i%4 == 3)retString += " ";
+//		}
+//		return retString;
+//	}
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -400,61 +386,52 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		menu.add(toDez);
 		menu.add(toHex);
 		menu.add(toDouble);
-		//menu.add(toChar);
-		menu.add(toBin);
+		menu.add(toFloat);
 
 		// Other plug-ins can contribute there actions here
 		menu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	protected void createActions() {
-		toBin = new Action() {
-			public void run() {
-				ISelection selection = viewer.getSelection();
-				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				if(obj instanceof TargetOpObject){
-					((TargetOpObject)obj).representation = 5;
-				}
-				viewer.refresh();
-			}
-		};
-		toBin.setText("ToBin");
-		toHex =  new Action(){
+		toHex =  new Action() {
 					public void run() {
 						ISelection selection = viewer.getSelection();
 						Object obj = ((IStructuredSelection) selection).getFirstElement();
-						if(obj instanceof TargetOpObject){
-							((TargetOpObject)obj).representation = 1;
-						}
+						if(obj instanceof TargetOpObject) ((TargetOpObject)obj).representation = 1;
 						viewer.refresh();
 					}
 		};
 		toHex.setText("ToHex");
-		toDez = new Action(){
+		toDez = new Action() {
 					public void run() {
 						ISelection selection = viewer.getSelection();
 						Object obj = ((IStructuredSelection) selection).getFirstElement();
-						if(obj instanceof TargetOpObject){
-							((TargetOpObject)obj).representation = 2;
-						}
+						if(obj instanceof TargetOpObject) ((TargetOpObject)obj).representation = 2;
 						viewer.refresh();
 					}
 		};
 		toDez.setText("ToDez");
-		toDouble = new Action(){
+		toDouble = new Action() {
 			public void run() {
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection) selection).getFirstElement();
-				if(obj instanceof TargetOpObject){
-					((TargetOpObject)obj).representation = 3;
-				}
+				if(obj instanceof TargetOpObject) ((TargetOpObject)obj).representation = 3;
 				viewer.refresh();
 			}
 		};
 		toDouble.setText("ToDouble");		
+		toFloat = new Action() {
+			public void run() {
+				ISelection selection = viewer.getSelection();
+				Object obj = ((IStructuredSelection) selection).getFirstElement();
+				if(obj instanceof TargetOpObject) ((TargetOpObject)obj).representation = 4;
+				viewer.refresh();
+			}
+		};
+		toFloat.setText("ToFloat");		
 	}
 	
-public class NoteEditingSupport extends EditingSupport {
+	public class NoteEditingSupport extends EditingSupport {
 		
 		private final TableViewer viewer;
 		
@@ -496,7 +473,6 @@ public class NoteEditingSupport extends EditingSupport {
 		}
 	}
 	
-	
 	public class ValueEditingSupport extends EditingSupport {
 		
 		private final TableViewer viewer;
@@ -520,7 +496,7 @@ public class NoteEditingSupport extends EditingSupport {
 		protected Object getValue(Object element) {
 			TargetOpObject op = (TargetOpObject) element;
 			switch (op.operation) {
-			case 1:
+			case 1:	// register
 				switch (op.registerType) {
 				case Parser.sCR:
 				case Parser.sFPSCR:
@@ -534,7 +510,11 @@ public class NoteEditingSupport extends EditingSupport {
 					}
 				case Parser.sFPR:
 					if (op.representation == 1) {// Hex
-						return String.format("0x%016X", op.value);
+						if (op.registerSize == 4) {
+							int num = Integer.parseInt(op.description.substring(1));
+							if (num % 2 == 0) return String.format("0x%08X", (int)op.value);	// S0, S2, S4 ...
+							else return String.format("0x%08X", (int)(op.value >> 32));	// S1, S3, S5 ...
+						} else return String.format("0x%016X", op.value);
 					} else {
 						return String.format("%f", Double.longBitsToDouble(op.value));
 					}
@@ -553,16 +533,13 @@ public class NoteEditingSupport extends EditingSupport {
 						return String.format("0x%08X", op.value);
 					}
 				}
-			case 2:
+			case 2:	// variable
 				switch (op.valueType) {
 				case tBoolean:
 					return String.valueOf(op.value > 0);
 				case tByte:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%02X", op.value);
-					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 8);
 					}
 					return Byte.toString((byte) op.value);
 				case tChar:
@@ -572,48 +549,30 @@ public class NoteEditingSupport extends EditingSupport {
 					if (op.representation == 2) {// Dez{
 						return String.format("%d", (int) op.value);
 					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 16);
-					}
 					return String.format("%c", ((char) op.value));
 				case tShort:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%04X", op.value);
-					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 16);
 					}
 					return String.format("%d", ((short) op.value));
 				case tInteger:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%08X", op.value);
 					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 32);
-					}
 					return String.format("%d", (int) op.value);
 				case tFloat:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%08X", op.value);
-					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 32);
 					}
 					return String.format("%f", Float.intBitsToFloat((int) op.value));
 				case tLong:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%016X", op.value);
 					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 64);
-					}
 					return String.format("%d", op.value);
 				case tDouble:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%016X", op.value);
-					}
-					if(op.representation == 5) {// Bin
-						return createBinary((int)op.value, 64);
 					}
 					return String.format("%f", Double.longBitsToDouble(op.value));
 				case tRef:
@@ -630,36 +589,37 @@ public class NoteEditingSupport extends EditingSupport {
 			default:
 				return "";
 			}
-	}
+		}
 		
-
 		@Override
 		protected void setValue(Object element, Object value) {
 			TargetOpObject op = (TargetOpObject)element;
-			if(op.operation != 0 && op.description != "") {
-				try{
-					if(choice[op.operation].equals("Register")){
-						if(((TargetOpObject)element).registerType != -1){
-							if(((TargetOpObject)element).registerType == Parser.sFPR){
-								op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
-							}else{
-								op.value = Long.decode(String.valueOf(value));
-							}
-							setToRegister(op);
+			if (op.operation != 0 && op.description != "") {
+				try {
+					if (choice[op.operation].equals("Register")) {
+						if (((TargetOpObject)element).registerType != -1) {
+//							if(((TargetOpObject)element).registerType == Parser.sFPR){
+//								System.out.println(value);
+//								op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
+//							}else{
+//								op.value = Long.decode(String.valueOf(value));
+//							}
+//							setToRegister(op);
+//						}
+							setToRegister(op, String.valueOf(value));
 						}
-					}else if(choice[op.operation].equals("Variable")){
-						setVariable(op,String.valueOf(value));
-					}else if(choice[op.operation].equals("Address")){
+					} else if (choice[op.operation].equals("Variable")) {
+						setVariable(op, String.valueOf(value));
+					} else if (choice[op.operation].equals("Address")) {
 						try{
 							op.value = Long.decode(String.valueOf(value));
 							setToAddress(op);
-						}catch (Exception e) {
-						}
-					}else if(choice[op.operation].equals("TargetCMD")){
+						}catch (Exception e) { }
+					} else if (choice[op.operation].equals("TargetCMD")) {
 						op.value = Long.decode(String.valueOf(value));
-						
 					}				
-				}catch(Exception e){
+				} catch(Exception e) {
+					e.printStackTrace();
 				}
 			}
 			viewer.refresh();
@@ -880,13 +840,13 @@ public class NoteEditingSupport extends EditingSupport {
 			op.errorMsg = "";
 				if(choice[op.operation].equals("Register")){
 					if(((TargetOpObject)element).registerType != -1){
-						setToRegister(op);						
+						setToRegister(op, String.valueOf(op.value));						
 					}
-				}else if(choice[op.operation].equals("Variable")){
-					setVariable(op,String.valueOf(op.value));
-				}else if(choice[op.operation].equals("Address")){
+				} else if (choice[op.operation].equals("Variable")){
+					setVariable(op, String.valueOf(op.value));
+				} else if (choice[op.operation].equals("Address")){
 					setToAddress(op);
-				}else if(choice[op.operation].equals("TargetCMD")){
+				} else if (choice[op.operation].equals("TargetCMD")){
 					sendCMD(op, op.description);					
 				}				
 			return false;
@@ -992,7 +952,7 @@ public class NoteEditingSupport extends EditingSupport {
 		Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
 		if(clazz != null){
 			if((Field)clazz.classFields == null){
-				op.errorMsg = "no fields";
+				op.errorMsg = "no class field with this name";
 				return;
 			}
 			Item var = clazz.classFields.getItemByName(varName);
@@ -1036,8 +996,13 @@ public class NoteEditingSupport extends EditingSupport {
 						else if (var.type == Type.wellKnownTypes[txFloat]) op.valueType = tFloat;										
 						else op.valueType = tRef;
 					} else if (((Type)var.type).sizeInBits > 63) { // 64 bit
-						op.value = tc.readWord(var.address);
-						op.value = op.value << (8 * slotSize) | (tc.readWord(var.address + slotSize) & 0xffffffffL);
+						if (Linker32.bigEndian) {
+							op.value = tc.readWord(var.address);
+							op.value = op.value << (8 * slotSize) | (tc.readWord(var.address + slotSize) & 0xffffffffL);
+						} else {
+							op.value = tc.readWord(var.address + slotSize);
+							op.value = op.value << (8 * slotSize) | (tc.readWord(var.address) & 0xffffffffL);
+						}
 						if (var.type == Type.wellKnownTypes[txLong]) op.valueType = tLong;
 						else op.valueType = tDouble;										
 					}
@@ -1128,7 +1093,7 @@ public class NoteEditingSupport extends EditingSupport {
 		}
 	}
 	
-	private void setToAddress(TargetOpObject op){
+	private void setToAddress(TargetOpObject op) {
 		boolean wasFreezeAsserted;
 		TargetConnection tc = Launcher.getTargetConnection();
 		if (tc == null){
@@ -1149,50 +1114,62 @@ public class NoteEditingSupport extends EditingSupport {
 		
 	}
 	
-	private void setVariable(TargetOpObject op, String value){
+	private void setVariable(TargetOpObject op, String value) {
 		boolean wasFreezeAsserted;
 		String desc = op.description.replace('.', '/');
 		int lastDot = desc.lastIndexOf("/");
-		if(lastDot < 0){
+		if (lastDot < 0) {
 			op.errorMsg = "invalid descriptor";
 			return;
 		}
 		String clazzName = desc.substring(0, lastDot);
 		clazzName = clazzName.replace('.', '/');
 		String varName = desc.substring(lastDot + 1);
-		if(RefType.refTypeList == null){
+		if (RefType.refTypeList == null) {
 			op.errorMsg = "system not built";
 		}
 		Class clazz = (Class)RefType.refTypeList.getItemByName(clazzName);
-		if(clazz != null){
+		if (clazz != null) {
 			if(clazz.classFields == null){
-				op.errorMsg = "no fields";
+				op.errorMsg = "no class field with this name";
 				return;
 			}
 			Item var = clazz.classFields.getItemByName(varName);
-			if(var != null){
-				
-				if(var instanceof ConstField) {
+			if (var != null) {
+				if (var instanceof ConstField) {
 					op.errorMsg = "Constant field, value can't be changed!";
 					return;
 				}
-				
 				TargetConnection tc = Launcher.getTargetConnection();
-				if(tc == null){
+				if (tc == null) {
 					op.errorMsg = "target not connected";
 					return;
 				}
-				try{
-					long val = Long.decode(value);
+				try {
 					if (!tc.isConnected()) tc.openConnection();
 					wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 					if (!wasFreezeAsserted)	tc.stopTarget();
+					long val;
+					if (op.valueType == tFloat) {
+						if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+						else val = Float.floatToIntBits((float)Double.parseDouble(value));
+					}
+					else if (op.valueType == tDouble) {
+						if (value.startsWith("0x")) val = Long.parseUnsignedLong(value.substring(2), 16);
+						else val = Double.doubleToLongBits(Double.parseDouble(value));
+					}
+					else val = Long.decode(value);
 					if (((Type)var.type).sizeInBits <= 8) tc.writeByte(var.address,(byte)(val & 0xFF));
 					else if (((Type)var.type).sizeInBits == 16)	tc.writeHalfWord(var.address,(short)(val & 0xFFFF));
 					else if (((Type)var.type).sizeInBits == 32)	tc.writeWord(var.address,(int)(val & 0xFFFFFFFF));
 					else if (((Type)var.type).sizeInBits > 32) {
-						tc.writeWord(var.address,(int)((val >> 32) & 0xFFFFFFFF));
-						tc.writeWord(var.address + slotSize,(int)(val & 0xFFFFFFFF));
+						if (Linker32.bigEndian) {
+							tc.writeWord(var.address, (int)((val >> 32) & 0xFFFFFFFF));
+							tc.writeWord(var.address + slotSize,(int)(val & 0xFFFFFFFF));
+						} else {
+							tc.writeWord(var.address + slotSize, (int)((val >> 32) & 0xFFFFFFFF));
+							tc.writeWord(var.address,(int)(val & 0xFFFFFFFF));
+						}
 					}
 					op.value = val;
 					if (!wasFreezeAsserted)	tc.startTarget(-1);
@@ -1207,7 +1184,8 @@ public class NoteEditingSupport extends EditingSupport {
 		}
 	}
 	
-	private void setToRegister(TargetOpObject op) {
+	private void setToRegister(TargetOpObject op, String value) {
+		System.out.println("set register");
 		boolean wasFreezeAsserted;
 		TargetConnection tc = Launcher.getTargetConnection();
 		if (tc == null) {
@@ -1226,6 +1204,19 @@ public class NoteEditingSupport extends EditingSupport {
 				tc.setRegisterValue(op.description, (int)op.value);
 				break;
 			case Parser.sFPR:
+				System.out.println("set fpr");
+				long val;
+				if (op.registerSize == 4) {
+					System.out.println("set single fpr");
+					if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+					else val = Float.floatToIntBits((float)Double.parseDouble(value));
+				} else {
+					if (value.startsWith("0x")) val = Long.parseUnsignedLong(value.substring(2), 16);
+					else val = Double.doubleToLongBits(Double.parseDouble(value));
+				}
+				op.value = val;
+				System.out.println("to value " + val);
+				System.out.println("description " + op.description);
 				tc.setRegisterValue(op.description, op.value);
 				break;
 			case Parser.sSPR:

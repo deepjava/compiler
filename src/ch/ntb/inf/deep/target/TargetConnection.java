@@ -45,6 +45,7 @@ public abstract class TargetConnection {
 	public abstract void setRegisterValue(Register reg, long value) throws TargetConnectionException;
 	public abstract long getRegisterValue(String regName) throws TargetConnectionException;
 	public abstract long getRegisterValue(Register reg) throws TargetConnectionException;
+	public abstract long[] getRegisterBlock(String block) throws TargetConnectionException;
 	
 	public abstract byte readByte(int address) throws TargetConnectionException;
 	public abstract short readHalfWord(int address) throws TargetConnectionException;

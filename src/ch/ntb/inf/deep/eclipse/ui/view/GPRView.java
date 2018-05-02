@@ -53,31 +53,18 @@ import ch.ntb.inf.deep.launcher.Launcher;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 
-
 /**
- * This sample class demonstrates how to plug-in a new
- * workbench view. The view shows data obtained from the
- * model. The sample creates a dummy model on the fly,
- * but a real implementation would connect to the model
- * available either in this or another plug-in (e.g. the workspace).
  * The view is connected to the model using a content provider.
  * <p>
- * The view uses a label provider to define how model
- * objects should be presented in the view. Each
- * view can present the same model objects using
- * different labels and icons, if needed. Alternatively,
- * a single label provider can be shared between views
- * in order to ensure that objects of the same type are
- * presented in the same way everywhere.
+ * It displays the contents of the GPRs
  * <p>
  */
-
 public class GPRView extends ViewPart implements ISelectionListener {
 
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.ui.GPRView";
+	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.GPRView";
 	
 	private TableViewer viewer;
 	private Action toHex;
@@ -89,8 +76,6 @@ public class GPRView extends ViewPart implements ISelectionListener {
 	private ch.ntb.inf.deep.eclipse.ui.model.RegModel model;
 	private final String helpContextId = "ch.ntb.inf.deep.ui.register.viewer";
 	
-	
-
 	/*
 	 * The content provider class is responsible for providing objects to the
 	 * view. It can wrap existing objects in adapters or simply return objects
@@ -113,7 +98,6 @@ public class GPRView extends ViewPart implements ISelectionListener {
 				regs = model.getMod(0);
 			}
 			assert (regs != null);
-	
 			return regs;
 		}
 
@@ -133,7 +117,7 @@ public class GPRView extends ViewPart implements ISelectionListener {
 				if(((Register)obj).name == null){
 					return "";
 				}
-				if (((Register)obj).representation == 0){//BIN
+				if (((Register)obj).representation == 0) { //BIN
 					String value = Integer.toBinaryString(((Register)obj).value);
 					String temp = "";
 					
@@ -200,7 +184,6 @@ public class GPRView extends ViewPart implements ISelectionListener {
 		contributeToActionBars();		
 	}
 	
-
 	private void hookContextMenu() {
 		MenuManager menuMgr = new MenuManager("#PopupMenu");
 		menuMgr.setRemoveAllWhenShown(true);

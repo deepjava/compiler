@@ -39,4 +39,14 @@ public class Arch extends Item {
 		return nof;
 	}
 		
+	public int getNofFPRs() {
+		int nof = 0;
+		Register reg = regs;
+		while (reg != null) {
+			if (reg.regType == Parser.sFPR) nof++;
+			reg = (Register) reg.next;
+		}
+		return nof;
+	}
+		
 }

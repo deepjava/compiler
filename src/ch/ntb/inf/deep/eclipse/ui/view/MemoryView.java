@@ -246,7 +246,6 @@ public class MemoryView extends ViewPart implements Listener {
 			int size = 0;
 			String addrStr = addr.getText();
 			String countStr = count.getText();
-			System.out.println(addr.getText());
 			
 			if(count.getText() == "") {
 				viewer.setInput(new String[] {"please insert number of elements"});

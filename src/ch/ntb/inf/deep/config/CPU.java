@@ -34,4 +34,14 @@ public class CPU extends Item {
 		this.name = HString.getRegisteredHString(jname);
 	}
 	
+	public int getNofSPRs() {
+		int nof = 0;
+		Register reg = regs;
+		while (reg != null) {
+			if (reg.regType == Parser.sSPR) nof++;
+			reg = (Register) reg.next;
+		}
+		return nof;
+	}
+		
 }

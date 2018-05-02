@@ -648,10 +648,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
 					break;
 				case tLong: 
-					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset, 1, 1, 0);
-					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset + 4, 1, 1, 0);
+					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset + 4, 1, 1, 0);
+					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
 					break;
-				case tFloat: case tDouble:
+				case tFloat: 
+					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, true);
+					break;
+				case tDouble:
+					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(611);
@@ -2164,7 +2168,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	
 	// load/store extension registers (VLDR, VSTR)
 	private void createLSExtReg(Code32 code, int opCode, int cond, int Vd, int Rn, int imm, boolean single) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (imm & 0xff) | ((imm>0)?(1<<23):0);
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (imm & 0xff) | ((imm>=0)?(1<<23):0);
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22);
 		code.incInstructionNum();

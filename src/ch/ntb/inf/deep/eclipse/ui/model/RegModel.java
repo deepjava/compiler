@@ -19,6 +19,7 @@
 package ch.ntb.inf.deep.eclipse.ui.model;
 
 import ch.ntb.inf.deep.config.Board;
+import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.launcher.Launcher;
@@ -30,11 +31,10 @@ public class RegModel  {
 
 	private Register[] gprs; 
 	private FPRegister[] fprs;
-	private Register[] FPSCR;
-	private Register[] userLevelSPR;
+	private int nofSinglePrecRegs, nofDoublePrecRegs;
+	private Register[] fpscr;
 	private Register[] msr;
-	private Register[] supervisorLevelSPR;
-	private Register[] devSupportLevelSPR;
+	private Register[] sprs;
 	private Register[] errorReg;
 	
 	private static RegModel model;
@@ -48,158 +48,9 @@ public class RegModel  {
 		return model;
 	}
 	
-	public void creatDeSuSPRMod() {
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			devSupportLevelSPR = null;
-			return;
-		}
-		devSupportLevelSPR = new Register[16];
-		try {
-			if (!tc.isConnected())	tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) tc.stopTarget();
-			
-			devSupportLevelSPR[0] = new Register("CMPA", (int)tc.getRegisterValue("CMPA"), 1);
-			devSupportLevelSPR[1] = new Register("CMPB", (int)tc.getRegisterValue("CMPB"), 1);
-			devSupportLevelSPR[2] = new Register("CMPC", (int)tc.getRegisterValue("CMPC"), 1);
-			devSupportLevelSPR[3] = new Register("CMPD", (int)tc.getRegisterValue("CMPD"), 1);
-			devSupportLevelSPR[4] = new Register("ECR", (int)tc.getRegisterValue("ECR"), 1);
-			devSupportLevelSPR[5] = new Register("DER", (int)tc.getRegisterValue("DER"), 1);
-			devSupportLevelSPR[6] = new Register("COUNTA", (int)tc.getRegisterValue("COUNTA"), 1);
-			devSupportLevelSPR[7] = new Register("COUNTB", (int)tc.getRegisterValue("COUNTB"), 1);
-			devSupportLevelSPR[8] = new Register("CMPE", (int)tc.getRegisterValue("CMPE"), 1);
-			devSupportLevelSPR[9] = new Register("CMPF", (int)tc.getRegisterValue("CMPF"), 1);
-			devSupportLevelSPR[10] = new Register("CMPG", (int)tc.getRegisterValue("CMPG"), 1);
-			devSupportLevelSPR[11] = new Register("CMPH", (int)tc.getRegisterValue("CMPH"), 1);
-			devSupportLevelSPR[12] = new Register("LCTRL1", (int)tc.getRegisterValue("LCTRL1"), 1);
-			devSupportLevelSPR[13] = new Register("LCTRL2", (int)tc.getRegisterValue("LCTRL2"), 1);
-			devSupportLevelSPR[14] = new Register("ICTRL", (int)tc.getRegisterValue("ICTRL"), 1);
-			devSupportLevelSPR[15] = new Register("BAR", (int)tc.getRegisterValue("BAR"), 1);
-
-			/*the mcdp-lib dosent support access to Development Port Data Register
-			deSuSPR[16] = new Register("DPDR",bdi.getSPR(630),0);*/
-
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			devSupportLevelSPR = null;
-		} 
-	}
-
-	public void creatSuLeSPRMod() {
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			supervisorLevelSPR = null;
-			return;
-		}
-		supervisorLevelSPR = new Register[11];
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) tc.stopTarget();
-
-			supervisorLevelSPR[0] = new Register("DSISR", (int)tc.getRegisterValue("DSISR"), 1);
-			supervisorLevelSPR[1]= new Register("DAR", (int)tc.getRegisterValue("DAR"), 1);
-			supervisorLevelSPR[2]= new Register("DEC", (int)tc.getRegisterValue("DEC"), 1);
-			supervisorLevelSPR[3]= new Register("SSR0", (int)tc.getRegisterValue("SSR0"), 1);
-			supervisorLevelSPR[4]= new Register("SSR1", (int)tc.getRegisterValue("SSR1"), 1);
-			
-			/*results in a software emulation exception, see Users Manuel p.3-26
-			suLeSPR[]= new Register("EIE",bdi.getSPR(80),0);
-			suLeSPR[]= new Register("EID",bdi.getSPR(81),0);
-			suLeSPR[]= new Register("NRI",bdi.getSPR(82),0);*/
-			
-			supervisorLevelSPR[5]= new Register("SPRG0", (int)tc.getRegisterValue("SPRG0"), 1);
-			supervisorLevelSPR[6]= new Register("SPRG1", (int)tc.getRegisterValue("SPRG1"), 1);
-			supervisorLevelSPR[7]= new Register("SPRG2", (int)tc.getRegisterValue("SPRG2"), 1);
-			supervisorLevelSPR[8]= new Register("SPRG3", (int)tc.getRegisterValue("SPRG3"), 1);
-			supervisorLevelSPR[9]= new Register("PVR", (int)tc.getRegisterValue("PVR"), 1);
-			supervisorLevelSPR[10]= new Register("FPECR", (int)tc.getRegisterValue("FPECR"), 1);
-
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			supervisorLevelSPR = null;
-		} 
-	}
-
-	public void createMSRModel() {
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			msr = null;
-			return;
-		}
-		msr = new Register[1];
-		try {
-			if (!tc.isConnected())	tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if(!wasFreezeAsserted) tc.stopTarget();
-			
-			msr[0] = new Register("MSR", (int)tc.getRegisterValue("MSR"), 1);
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			msr = null;
-		}  
-	}
-
-	public void creatUsLeSPRMod() {
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			userLevelSPR = null;
-			return;
-		}
-		userLevelSPR = new Register[6];
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if(!wasFreezeAsserted) tc.stopTarget();
-
-			userLevelSPR[0] = new Register("XER", (int)tc.getRegisterValue("XER"),1);
-			userLevelSPR[1] = new Register("LR", (int)tc.getRegisterValue("LR"), 1);
-			userLevelSPR[2] = new Register("CTR", (int)tc.getRegisterValue("CTR"), 1);
-			userLevelSPR[3] = new Register("TBL", (int)tc.getRegisterValue("TBLread"), 1);
-			userLevelSPR[4] = new Register("TBU", (int)tc.getRegisterValue("TBUread"), 1);
-			userLevelSPR[5] = new Register("CR", (int)tc.getRegisterValue("CR"), 1);
-
-			if(!wasFreezeAsserted) tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			userLevelSPR = null;
-		} 
-
-	}
-
-	public void createFPRModel() {
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null){
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			fprs = null;
-			return;
-		}
-		fprs = new FPRegister[32];
-		FPSCR = new Register[1];
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) tc.stopTarget();
-			for (int i = 0; i < 32; i++) {
-				fprs[i] = new FPRegister("FPR"+i, tc.getRegisterValue("FPR" + i), 3);
-			}
-			FPSCR[0] = new Register("FPSCR", (int)tc.getRegisterValue("FPSCR"),1);
-			
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			fprs = null;
-		} 
-	}
-
+	/**
+	 * Create instances for all defined GPRs and get their values from the target
+	 */
 	public void createGPRModel() {
 		TargetConnection tc = Launcher.getTargetConnection();
 		if (tc == null) {
@@ -211,215 +62,93 @@ public class RegModel  {
 		if (b == null) return;
 		int nof = b.cpu.arch.getNofGPRs();
 		gprs = new Register[nof];
-
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) tc.stopTarget();
-			
-			ch.ntb.inf.deep.config.Register regs = b.cpu.arch.regs;
-			int i = 0;
-			while (regs != null) {
+		ch.ntb.inf.deep.config.Register regs = b.cpu.arch.regs;
+		int i = 0;
+		while (regs != null) {
+			if (regs != null && regs.regType == Parser.sGPR) {
 				String name = regs.name.toString();
-				if (regs != null && regs.regType == Parser.sGPR) 
-					gprs[i++] = new Register(name, (int) tc.getRegisterValue(name), 1);
-				regs = (ch.ntb.inf.deep.config.Register) regs.next;
+				gprs[i++] = new Register(name, 0, 2);
 			}
-			
-			if (!wasFreezeAsserted) tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			gprs = null;
-		} 
+			regs = (ch.ntb.inf.deep.config.Register) regs.next;
+		}
+		updateGPRModel();
 	}
 
-	public void updateDeSuSPRMod() {
-		if (devSupportLevelSPR == null){
-			creatDeSuSPRMod();
-			devSupportLevelSPR = null;
-			return;
-		}
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			return;
-		}
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted)	tc.stopTarget();
-
-			devSupportLevelSPR[0].value = (int)tc.getRegisterValue("CMPA");
-			devSupportLevelSPR[1].value = (int)tc.getRegisterValue("CMPB");
-			devSupportLevelSPR[2].value = (int)tc.getRegisterValue("CMPC");
-			devSupportLevelSPR[3].value = (int)tc.getRegisterValue("CMPD");
-			devSupportLevelSPR[4].value = (int)tc.getRegisterValue("ECR");
-			devSupportLevelSPR[5].value = (int)tc.getRegisterValue("DER");
-			devSupportLevelSPR[6].value = (int)tc.getRegisterValue("COUNTA");
-			devSupportLevelSPR[7].value = (int)tc.getRegisterValue("COUNTB");
-			devSupportLevelSPR[8].value = (int)tc.getRegisterValue("CMPE");
-			devSupportLevelSPR[9].value = (int)tc.getRegisterValue("CMPF");
-			devSupportLevelSPR[10].value = (int)tc.getRegisterValue("CMPG");
-			devSupportLevelSPR[11].value = (int)tc.getRegisterValue("CMPH");
-			devSupportLevelSPR[12].value = (int)tc.getRegisterValue("LCTRL1");
-			devSupportLevelSPR[13].value = (int)tc.getRegisterValue("LCTRL2");
-			devSupportLevelSPR[14].value = (int)tc.getRegisterValue("ICTRL");
-			devSupportLevelSPR[15].value = (int)tc.getRegisterValue("BAR");
-			
-			/*the mcdp-lib doesn't support access to the Development Port Data Register
-			deSuSPR[16].value = bdi.getSPR(630);*/
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			devSupportLevelSPR = null;
-		} 
-	}
-
-	public void updateSuLeSPRMod() {
-		if (supervisorLevelSPR == null) {
-			creatSuLeSPRMod();
-			return;
-		}
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			supervisorLevelSPR = null;
-			return;
-		}
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted)	tc.stopTarget();
-			
-			supervisorLevelSPR[0].value = (int)tc.getRegisterValue("DSISR");
-			supervisorLevelSPR[1].value = (int)tc.getRegisterValue("DAR");
-			supervisorLevelSPR[2].value = (int)tc.getRegisterValue("DEC");
-			supervisorLevelSPR[3].value = (int)tc.getRegisterValue("SSR0");
-			supervisorLevelSPR[4].value = (int)tc.getRegisterValue("SSR1");
-			
-			/*results in a software emulation exception, see Users Manuel p.3-26
-			suLeSPR[].value = bdi.getSPR(80);
-			suLeSPR[].value = bdi.getSPR(81);
-			suLeSPR[].value = bdi.getSPR(82);*/
-			
-			supervisorLevelSPR[5].value  = (int)tc.getRegisterValue("SPRG0");
-			supervisorLevelSPR[6].value  = (int)tc.getRegisterValue("SPRG1");
-			supervisorLevelSPR[7].value  = (int)tc.getRegisterValue("SPRG2");
-			supervisorLevelSPR[8].value  = (int)tc.getRegisterValue("SPRG3");
-			supervisorLevelSPR[9].value  = (int)tc.getRegisterValue("PVR");
-			supervisorLevelSPR[10].value  = (int)tc.getRegisterValue("FPECR");
-
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			supervisorLevelSPR = null;
-		} 
-	}
-
-	public void updateMSRModel() {
-		if (msr == null){
-			createMSRModel();
-			return;
-		}
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			msr = null;
-			return;
-		}
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) tc.stopTarget();
-			
-			msr[0].value  = (int)tc.getRegisterValue("MSR");
-
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			msr = null;
-		} 
-	}
-
-	public void updateUsLeSPRMod() {
-		if (userLevelSPR == null) {
-			creatUsLeSPRMod();
-			return;
-		}
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null){
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			userLevelSPR = null;
-			return;
-		}
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted) tc.stopTarget();
-			
-			userLevelSPR[0].value  = (int)tc.getRegisterValue("XER");
-			userLevelSPR[1].value  = (int)tc.getRegisterValue("LR");
-			userLevelSPR[2].value  = (int)tc.getRegisterValue("CTR");
-			userLevelSPR[3].value  = (int)tc.getRegisterValue("TBLread");
-			userLevelSPR[4].value  = (int)tc.getRegisterValue("TBUread");
-			userLevelSPR[5].value  = (int)tc.getRegisterValue("CR");
-
-			if (!wasFreezeAsserted) tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			userLevelSPR = null;
-		} 
-	}
-
-	public void updateFprMod() {
-		if (fprs == null){
-			createFPRModel();
-			return;
-		}
+	public void createFPRModel() {
 		TargetConnection tc = Launcher.getTargetConnection();
 		if (tc == null) {
 			errorReg = new Register[]{new Register("target not connected",-1,1)};
 			fprs = null;
-			return;
-		}
-		try {
-			if (!tc.isConnected()) tc.openConnection();
-			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
-			if (!wasFreezeAsserted)	tc.stopTarget();
-			
-			for (int i = 0; i < 32; i++) {
-				fprs[i].floatValue = tc.getRegisterValue("FPR" + i);
-			}
-			FPSCR[0].value = (int)tc.getRegisterValue("FPSCR");
-			
-			if (!wasFreezeAsserted)	tc.startTarget(-1);
-		} catch (TargetConnectionException e) {
-			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
-			fprs = null;
-		} 
-	}
-
-	public void updateGPRModel() {
-		if (gprs == null){
-			createGPRModel();
-			return;
-		}
-		TargetConnection tc = Launcher.getTargetConnection();
-		if (tc == null) {
-			errorReg = new Register[]{new Register("target not connected",-1,1)};
-			gprs = null;
 			return;
 		}
 		Board b = Configuration.getBoard();
 		if (b == null) return;
-		int nof = b.cpu.arch.getNofGPRs();
+		int nof = b.cpu.arch.getNofFPRs();
+		boolean arm = b.cpu.arch.name.equals(HString.getHString("arm32"));
+		fprs = new FPRegister[nof];
+		nofSinglePrecRegs = 0;
+		nofDoublePrecRegs = 0;
+		fpscr = new Register[1];
+		ch.ntb.inf.deep.config.Register regs = b.cpu.arch.regs;
+		int i = 0;
+		while (regs != null) {
+			if (regs != null && regs.regType == Parser.sFPR) {
+				String name = regs.name.toString();
+				fprs[i++] = new FPRegister(name, 0, 3);
+				if (arm && (regs.name.charAt(0) == 'S')) nofSinglePrecRegs++;
+				else nofDoublePrecRegs++;
+			}
+			regs = (ch.ntb.inf.deep.config.Register) regs.next;
+		}
+		if (arm) assert(nofSinglePrecRegs == 2 * nofDoublePrecRegs);
+		fpscr[0] = new Register("FPSCR", 0, 1);
+		updateFPRModel();
+	}
 
+	public void createSPRModel() {
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null) {
+			errorReg = new Register[]{new Register("target not connected",-1,1)};
+			sprs = null;
+			return;
+		}
+		Board b = Configuration.getBoard();
+		if (b == null) return;
+		CPU cpu = b.cpu;
+		int nof = cpu.getNofSPRs();
+		sprs = new Register[nof];
+		msr = new Register[1];
+		ch.ntb.inf.deep.config.Register reg = b.cpu.regs;
+		int i = 0;
+		while (reg != null) {
+			if (reg != null && reg.regType == Parser.sSPR) {
+				String name = reg.name.toString();
+				sprs[i++] = new Register(name, 0, 1);
+			}
+			reg = (ch.ntb.inf.deep.config.Register) reg.next;
+		}
+		msr[0] = new Register("MSR", 0, 1);
+		updateSPRModel();
+	}
+
+	/**
+	 * Get the values of all GPRs from the target
+	 */
+	public void updateGPRModel() {
+		if (gprs == null) createGPRModel();
+		
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null) {
+			errorReg = new Register[]{new Register("target not connected",-1,1)};
+			gprs = null;
+			return;
+		}
 		try {
 			if (!tc.isConnected()) tc.openConnection();
 			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted)	tc.stopTarget();
 			
-			for (int i = 0; i < nof; i++) {
+			for (int i = 0; i < gprs.length; i++) {
 				gprs[i].value = (int) tc.getRegisterValue(gprs[i].name);
 			}
 
@@ -431,14 +160,79 @@ public class RegModel  {
 	}
 
 	/**
-	 * Returns the chosen Registermodel
-	 * 
-	 * @param RegType  GPR = 0, FPR = 1, UsLeSPR = 2, MaStReg = 3, SuLeSPR = 4, DeSuSPR = 5
-	 * @return The Registers
+	 * Get the values of all FPRs and the FPSCR from the target
 	 */
-	public Register[] getMod(int RegType) {
-		// Check if Model exist, if not create
-		switch (RegType) {
+	public void updateFPRModel() {
+		if (fprs == null) createFPRModel();
+		
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null) {
+			errorReg = new Register[]{new Register("target not connected",-1,1)};
+			fprs = null;
+			return;
+		}
+		Board b = Configuration.getBoard();
+		if (b == null) return;
+		boolean arm = b.cpu.arch.name.equals(HString.getHString("arm32"));
+		try {
+			if (!tc.isConnected()) tc.openConnection();
+			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+			if (!wasFreezeAsserted)	tc.stopTarget();
+			for (int i = 0; i < nofDoublePrecRegs; i++) {
+				long val = tc.getRegisterValue(fprs[i].name); 
+				fprs[i].floatValue = val;
+				if (arm) {
+					fprs[nofDoublePrecRegs+2*i].floatValue = val & 0xffffffffL;
+					fprs[nofDoublePrecRegs+2*i+1].floatValue = (val >> 32) & 0xffffffffL;
+				}
+			}
+			fpscr[0].value = (int)tc.getRegisterValue(fpscr[0].name);
+			
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
+		} catch (TargetConnectionException e) {
+			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
+			fprs = null;
+		} 
+	}
+
+	/**
+	 * Get the values of all GPRs from the target
+	 */
+	public void updateSPRModel() {
+		if (sprs == null) createSPRModel();
+		
+		TargetConnection tc = Launcher.getTargetConnection();
+		if (tc == null) {
+			errorReg = new Register[]{new Register("target not connected",-1,1)};
+			sprs = null;
+			return;
+		}
+		try {
+			if (!tc.isConnected()) tc.openConnection();
+			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
+			if (!wasFreezeAsserted)	tc.stopTarget();
+			
+			if (sprs == null) System.out.println("sprs is null");
+			for (int i = 0; i < sprs.length; i++) {
+				sprs[i].value = (int) tc.getRegisterValue(sprs[i].name);
+			}
+			msr[0].value = (int)tc.getRegisterValue(msr[0].name);
+
+			if (!wasFreezeAsserted)	tc.startTarget(-1);
+		} catch (TargetConnectionException e) {
+			errorReg = new Register[]{new Register("target is not initialized",-1,1)};
+			sprs = null;
+		}
+	}
+
+	/**
+	 * Returns the chosen register model, if model does not yet exist -> create
+	 * 
+	 * @param type  GPR = 0, FPR+FPSCR = 1, SPR+MSR = 2
+	 * @return The registers
+	 */
+	public Register[] getMod(int type) {
+		switch (type) {
 		case 0:
 			if (gprs == null) {
 				createGPRModel();
@@ -450,80 +244,54 @@ public class RegModel  {
 				createFPRModel();
 				if(fprs == null) return errorReg;
 			}
-			Register[] floReg = new Register[33];
-			for(int i = 0;i < 32; i++){
-				floReg[i]=fprs[i];
+			Register[] regs = new Register[fprs.length + fpscr.length];
+			for(int i = 0; i < fprs.length; i++){
+				regs[i] = fprs[i];
 			}
-			floReg[32] = FPSCR[0];
-			return floReg;
+			for(int i = 0; i < fpscr.length; i++){
+				regs[fprs.length + i] = fpscr[i];
+			}
+			return regs;
 		case 2:
-			if (userLevelSPR == null) {
-				creatUsLeSPRMod();
-				if(userLevelSPR == null) return errorReg;
+			if (sprs == null) {
+				createSPRModel();
+				if(sprs == null) return errorReg;
 			}
-			return userLevelSPR;
-		case 3:
-			if (msr == null) {
-				createMSRModel();
-				if(msr == null) return errorReg;
+			regs = new Register[sprs.length + msr.length];
+			for(int i = 0; i < msr.length; i++){
+				regs[i] = msr[i];
 			}
-			return msr;
-		case 4:
-			if (supervisorLevelSPR == null) {
-				creatSuLeSPRMod();
-				if(supervisorLevelSPR == null) return errorReg;
+			for(int i = 0; i < sprs.length; i++){
+				regs[msr.length + i] = sprs[i];
 			}
-			return supervisorLevelSPR;
-		case 5:
-			if (devSupportLevelSPR == null) {
-				creatDeSuSPRMod();
-				if(devSupportLevelSPR == null) return errorReg;
-			}
-			return devSupportLevelSPR;
+			return regs;
 		default:
 			return null;
 		}
 	}
 	
 	/**
-	 * Returns the chosen register model
+	 * Clears the chosen register model
 	 * 
-	 * @param RegType  GPR = 0, FPR = 1, UsLeSPR = 2, MaStReg = 3, SuLeSPR = 4, DeSuSPR = 5
-	 * @return The Registers
+	 * @param type  GPR = 0, FPR = 1, SPR = 2
 	 */
-	public void clearMod(int RegType) {
-		// Check if Model exist, if not create
-		switch (RegType) {
+	public void clearMod(int type) {
+		switch (type) {
 		case 0:
 			gprs = null;
 			break;
 		case 1:
 			fprs = null;
-			FPSCR = null;
+			fpscr = null;
 			break;
 		case 2:
-			userLevelSPR = null;
-			break;
-		case 3:
+			System.out.println("clear model");
+			sprs = null;
 			msr = null;
-			break;
-		case 4:
-			supervisorLevelSPR = null;
-			break;
-		case 5:
-			devSupportLevelSPR = null;
 			break;
 		default:
 			return;
 		}
 	}
-	
-//	private int[] readGPRs(TargetConnection tc) throws TargetConnectionException {
-//		int nofGprs = 32;
-//		int gprs[] = new int[nofGprs];
-//		for(int i = 0; i < nofGprs; i++) {
-//			gprs[i] = (int)tc.getRegisterValue("R" + i);
-//		}
-//		return gprs;
-//	}
+
 }

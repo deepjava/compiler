@@ -10,24 +10,13 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.RefType;
-import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.config.Board;
-import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.Parser;
-import ch.ntb.inf.deep.eclipse.DeepPlugin;
-import ch.ntb.inf.deep.eclipse.ui.model.TargetOpObject;
 import ch.ntb.inf.deep.eclipse.ui.model.TaskObject;
-import ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView.RootElement;
-import ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView.TreeInput;
 import ch.ntb.inf.deep.launcher.Launcher;
-import ch.ntb.inf.deep.runtime.ppc32.Task;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
 import ch.ntb.inf.deep.classItems.Class;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -51,7 +40,6 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 
 	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TaskView";
 	private TableViewer viewer;
-	private IEclipsePreferences prefs;
 	private Action refresh;
 	
 	private TaskObject[] taskObj;
@@ -91,7 +79,6 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		prefs = InstanceScope.INSTANCE.getNode(DeepPlugin.PLUGIN_ID);
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout(1, false));
 
