@@ -25,6 +25,7 @@ import ch.ntb.inf.deep.cg.RegAllocator;
 import ch.ntb.inf.deep.cg.InstructionDecoder;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
@@ -37,7 +38,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static final int arrayLenOffset = 8;	
 	// used for some floating point operations and compiler specific subroutines
 	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
-	
+
+	public static int idENABLE_FLOATS;
+	public static int idGETGPR, idGETEXTR;
+	public static int idPUTGPR, idPUTEXTR;
+
 	private static int LRoffset;	
 	private static int XERoffset;	
 	private static int CRoffset;	
@@ -62,6 +67,21 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static boolean newString;
 
 	public CodeGenARM() {}
+
+	public void init() { 
+		Class cls = Configuration.getOS().usClass;
+		if (cls == null) {ErrorReporter.reporter.error(630); return;}
+		Method m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
+		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(1631); return;}
+//		m = Configuration.getOS().getSystemMethodByName(cls, "GETEXTR"); 
+//		if (m != null) idGETEXTR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTGPR"); 
+		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(2631); return;}
+//		m = Configuration.getOS().getSystemMethodByName(cls, "PUTEXTR"); 
+//		if (m != null) idPUTEXTR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		
+		super.init();
+	}
 
 	public void translateMethod(Method method) {
 		init(method);
@@ -371,7 +391,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armLdr, condAlways, src3RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
 				}
 				if (src3Reg >= 0x100) {
-					assert false;
+//					assert false;
 					if (dbg) StdStreams.vrb.println("opd3 reg on stack slot for instr: " + instr.toString());
 					int slot = src3Reg & 0xff;
 					if ((opds[2].type == tFloat) || (opds[2].type == tDouble)) {

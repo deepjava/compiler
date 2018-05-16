@@ -88,6 +88,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	tDouble = 7, tByte = 8, tShort = 9, tInteger = 10, tLong = 11;
 
 	static final byte slotSize = 4; // 4 bytes
+	static final int maxEntries = 32;
 		
 	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
 
@@ -124,10 +125,10 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 									} else {
 										if (op.registerSize == 4) {
 											int num = Integer.parseInt(op.description.substring(1));
-											if (num % 2 == 0) return String.format("%f", Float.intBitsToFloat((int)op.value));	// S0, S2, S4 ...
-											else return String.format("%f", Float.intBitsToFloat((int)(op.value >> 32)));	// S1, S3, S5 ...
+											if (num % 2 == 0) return String.format("%e", Float.intBitsToFloat((int)op.value));	// S0, S2, S4 ...
+											else return String.format("%e", Float.intBitsToFloat((int)(op.value >> 32)));	// S1, S3, S5 ...
 										}
-										else return String.format("%f", Double.longBitsToDouble(op.value));
+										else return String.format("%e", Double.longBitsToDouble(op.value));
 									}
 								case Parser.sSPR:
 								case Parser.sIOR:
@@ -175,7 +176,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										if(op.representation == 1){//Hex
 											return String.format("0x%08X",(int)op.value);
 										}
-										return String.format("%f",Float.intBitsToFloat((int)op.value));
+										return String.format("%e",Float.intBitsToFloat((int)op.value));
 									case tLong:
 										if(op.representation == 1){//Hex
 											return String.format("0x%016X",op.value);
@@ -185,7 +186,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 										if(op.representation == 1){//Hex
 											return String.format("0x%016X",op.value);
 										}
-										return String.format("%f",Double.longBitsToDouble(op.value));
+										return String.format("%e",Double.longBitsToDouble(op.value));
 									case tRef:
 										return String.format("0x%08X",(int)op.value);
 									default:
@@ -343,18 +344,18 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 
 		// Get the content for the viewer, setInput will call getElements in the
 		// contentProvider
-		elements = new TargetOpObject[32];
+		elements = new TargetOpObject[maxEntries];
 		if (vars.length > 1) {
 			for(int i = 0; i < vars.length && i < elements.length; i++){
 				String[] obj = vars[i].split(",");
-				if(obj.length > 1){
+				if (obj.length > 1) {
 					elements[i] = new TargetOpObject(Integer.decode(obj[0]),obj[1]);
-				}else{
+				} else {
 					elements[i] = new TargetOpObject();
 				}
 			}
 		} else {
-			for (int i = 0; i < 32; i++) {
+			for (int i = 0; i < maxEntries; i++) {
 				elements[i] = new TargetOpObject();
 			}
 		}
@@ -516,7 +517,11 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 							else return String.format("0x%08X", (int)(op.value >> 32));	// S1, S3, S5 ...
 						} else return String.format("0x%016X", op.value);
 					} else {
-						return String.format("%f", Double.longBitsToDouble(op.value));
+						if (op.registerSize == 4) {
+							int num = Integer.parseInt(op.description.substring(1));
+							if (num % 2 == 0) return String.format("%e", Float.intBitsToFloat((int)op.value));	// S0, S2, S4 ...
+							else return String.format("%e", Float.intBitsToFloat((int)(op.value >> 32)));	// S1, S3, S5 ...
+						} else return String.format("%e", Double.longBitsToDouble(op.value));
 					}
 				case Parser.sSPR:
 				case Parser.sIOR:
@@ -564,7 +569,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if (op.representation == 1) {// Hex
 						return String.format("0x%08X", op.value);
 					}
-					return String.format("%f", Float.intBitsToFloat((int) op.value));
+					return String.format("%e", Float.intBitsToFloat((int) op.value));
 				case tLong:
 					if (op.representation == 1) {// Hex
 						return String.format("0x%016X", op.value);
@@ -574,7 +579,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					if (op.representation == 1) {// Hex
 						return String.format("0x%016X", op.value);
 					}
-					return String.format("%f", Double.longBitsToDouble(op.value));
+					return String.format("%e", Double.longBitsToDouble(op.value));
 				case tRef:
 					return String.format("0x%08X", op.value);
 				default:
@@ -598,14 +603,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				try {
 					if (choice[op.operation].equals("Register")) {
 						if (((TargetOpObject)element).registerType != -1) {
-//							if(((TargetOpObject)element).registerType == Parser.sFPR){
-//								System.out.println(value);
-//								op.value = Double.doubleToLongBits(Double.parseDouble(String.valueOf(value)));
-//							}else{
-//								op.value = Long.decode(String.valueOf(value));
-//							}
-//							setToRegister(op);
-//						}
 							setToRegister(op, String.valueOf(value));
 						}
 					} else if (choice[op.operation].equals("Variable")) {
@@ -1185,7 +1182,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	}
 	
 	private void setToRegister(TargetOpObject op, String value) {
-		System.out.println("set register");
 		boolean wasFreezeAsserted;
 		TargetConnection tc = Launcher.getTargetConnection();
 		if (tc == null) {
@@ -1204,10 +1200,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				tc.setRegisterValue(op.description, (int)op.value);
 				break;
 			case Parser.sFPR:
-				System.out.println("set fpr");
 				long val;
 				if (op.registerSize == 4) {
-					System.out.println("set single fpr");
 					if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
 					else val = Float.floatToIntBits((float)Double.parseDouble(value));
 				} else {
@@ -1215,8 +1209,6 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					else val = Double.doubleToLongBits(Double.parseDouble(value));
 				}
 				op.value = val;
-				System.out.println("to value " + val);
-				System.out.println("description " + op.description);
 				tc.setRegisterValue(op.description, op.value);
 				break;
 			case Parser.sSPR:

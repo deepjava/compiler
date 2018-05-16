@@ -19,7 +19,7 @@
 package ch.ntb.inf.deep.comp.targettest.unsafe;
 
 import ch.ntb.inf.deep.runtime.ppc32.Decrementer;
-import ch.ntb.inf.deep.unsafe.US;
+import ch.ntb.inf.deep.unsafe.ppc.US;
 import ch.ntb.inf.junitTarget.*;
 
 /**

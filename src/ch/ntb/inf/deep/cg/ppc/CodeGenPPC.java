@@ -25,6 +25,7 @@ import ch.ntb.inf.deep.cg.InstructionDecoder;
 import ch.ntb.inf.deep.cg.RegAllocator;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
@@ -38,6 +39,11 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	// used for some floating point operations and compiler specific subroutines
 	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
 	
+	public static int idHALT;
+	public static int idENABLE_FLOATS;
+	public static int idGETGPR, idGETFPR, idGETSPR;
+	public static int idPUTGPR, idPUTFPR, idPUTSPR;
+
 	private static int LRoffset;	
 	private static int XERoffset;	
 	private static int CRoffset;	
@@ -62,6 +68,29 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	
 	public CodeGenPPC() {}
 
+	public void init() { 
+		Class cls = Configuration.getOS().usClass;
+		if (cls == null) {ErrorReporter.reporter.error(630); return;}
+		Method m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
+		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETFPR"); 
+		if (m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETSPR"); 
+		if (m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTGPR"); 
+		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTFPR"); 
+		if (m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTSPR"); 
+		if (m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "HALT"); 
+		if (m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "ENABLE_FLOATS"); 
+		if (m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
+		
+		super.init();
+	}
+	
 	public void translateMethod(Method method) {
 		init(method);
 		SSA ssa = method.ssa;

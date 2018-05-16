@@ -28,7 +28,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = false;
+	protected static final boolean dbg = true;
 
 	protected static final int maxNofParam = 32;
 
@@ -42,10 +42,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 
 	public static int idGET1, idGET2, idGET4, idGET8;
 	public static int idPUT1, idPUT2, idPUT4, idPUT8;
-	public static int idBIT, idASM, idHALT, idADR_OF_METHOD, idREF;
-	public static int idENABLE_FLOATS;
-	public static int idGETGPR, idGETFPR, idGETSPR;
-	public static int idPUTGPR, idPUTFPR, idPUTSPR;
+	public static int idBIT, idASM, idADR_OF_METHOD, idREF;
 	public static int idDoubleToBits, idBitsToDouble;
 	public static int idFloatToBits, idBitsToFloat;
 
@@ -124,7 +121,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	}
 
 	public void init() { 
-		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
+		Class cls = Configuration.getOS().usClass;
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "PUT1");
 		if (m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
@@ -146,28 +143,12 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 		if (m != null) idBIT = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "ASM"); 
 		if (m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
-		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GETFPR"); 
-		if (m != null) idGETFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "GETSPR"); 
-		if (m != null) idGETSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUTGPR"); 
-		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUTFPR"); 
-		if (m != null) idPUTFPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "PUTSPR"); 
-		if (m != null) idPUTSPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "ADR_OF_METHOD"); 
 		if (m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "HALT"); 
-		if (m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
-		m = Configuration.getOS().getSystemMethodByName(cls, "ENABLE_FLOATS"); 
-		if (m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "REF"); 
 		if (m != null) idREF = m.id; else {ErrorReporter.reporter.error(631); return;}
 		
-		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/lowLevel/LL");
+		cls = Configuration.getOS().llClass;
 		if (cls == null) {ErrorReporter.reporter.error(632); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "doubleToBits"); 
 		if(m != null) idDoubleToBits = m.id; else {ErrorReporter.reporter.error(633); return;}
