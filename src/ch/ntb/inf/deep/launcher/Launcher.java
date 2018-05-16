@@ -408,8 +408,8 @@ public class Launcher implements ICclassFileConsts {
 					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
 						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
 					} else if (programmer.name.equals(HString.getHString("openOCD"))) {
-						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
-//						tc.downloadImageFile("D:\\runtime-EclipseApplication_ARM\\Test1\\Test1.InternalRam.bin");		// MGE
+//						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+						tc.downloadImageFile("D:\\Test1.InternalRam.bin");		// MGE
 					} else {
 						TargetMemorySegment tms = Linker32.targetImage;
 						while (tms != null && reporter.nofErrors <= 0) {
