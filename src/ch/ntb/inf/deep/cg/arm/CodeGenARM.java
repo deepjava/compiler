@@ -39,9 +39,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	// used for some floating point operations and compiler specific subroutines
 	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
 
-	public static int idENABLE_FLOATS;
-	public static int idGETGPR, idGETEXTR;
-	public static int idPUTGPR, idPUTEXTR;
+	public static int idHALT, idENABLE_FLOATS;
+	public static int idGETGPR, idGETEXTRD, idGETEXTRS, idGETCPR;
+	public static int idPUTGPR, idPUTEXTRD, idPUTEXTRS, idPUTCPR;
 
 	private static int LRoffset;	
 	private static int XERoffset;	
@@ -69,16 +69,24 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public CodeGenARM() {}
 
 	public void init() { 
-		Class cls = Configuration.getOS().usClass;
+//		Class cls = Configuration.getOS().usClass;
+		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/arm/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
-		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(1631); return;}
-//		m = Configuration.getOS().getSystemMethodByName(cls, "GETEXTR"); 
-//		if (m != null) idGETEXTR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETEXTRD"); 
+		if (m != null) idGETEXTRD = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETEXTRS"); 
+		if (m != null) idGETEXTRS = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "GETCPR"); 
+		if (m != null) idGETCPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		
 		m = Configuration.getOS().getSystemMethodByName(cls, "PUTGPR"); 
-		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(2631); return;}
-//		m = Configuration.getOS().getSystemMethodByName(cls, "PUTEXTR"); 
-//		if (m != null) idPUTEXTR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idPUTGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTEXTRD"); 
+		if (m != null) idPUTEXTRD = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTEXTRS"); 
+		if (m != null) idPUTEXTRS = m.id; else {ErrorReporter.reporter.error(631); return;}
 		
 		super.init();
 	}
@@ -115,7 +123,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
 		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
-			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+			if (true) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
 			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR); // change later to 0xff
 			else RegAllocator.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
 			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocator.regsGPR));
@@ -1280,24 +1288,34 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //						createIrArSrBMBME(ppcRlwnm, res.reg, res.reg, 0, 31, 31);
 					} else if (m.id == idGETGPR) { // GETGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
-//						createIrArSrB(ppcOr, res.reg, gpr, gpr);
 						createDataProcMovReg(code, armMov, condAlways, dReg, gpr, noShift, 0);
-//					} else if (m.id == idGETFPR) { // GETFPR
-//						int fpr = ((StdConstant)opds[0].constant).valueH;
-//						createIrDrB(ppcFmr, res.reg, fpr);
-//					} else if (m.id == idGETSPR) { // GETSPR
-//						int spr = ((StdConstant)opds[0].constant).valueH;
-//						createIrSspr(ppcMfspr, spr, res.reg);
+					} else if (m.id == idGETEXTRD) { // GETEXTRD
+						int fpr = ((StdConstant)opds[0].constant).valueH;
+						createFPdataProc(code, armVmov, condAlways, dReg, 0, fpr, false);
+					} else if (m.id == idGETEXTRS) { // GETEXTRS
+						int fpr = ((StdConstant)opds[0].constant).valueH;
+						createFPdataProc(code, armVmov, condAlways, dReg, 0, fpr, true);
+					} else if (m.id == idGETCPR) { // GETCPR
+						int coproc = ((StdConstant)opds[0].constant).valueH;
+						int CRn = ((StdConstant)opds[1].constant).valueH;
+						int opc1 = ((StdConstant)opds[2].constant).valueH;
+						int CRm = ((StdConstant)opds[3].constant).valueH;
+						int opc2 = ((StdConstant)opds[4].constant).valueH;
+						createCoProc(code, armMrc, condAlways, coproc, opc1, dReg, CRn, CRm, opc2);
 					} else if (m.id == idPUTGPR) { // PUTGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
-//						if (src2Reg < 0) {
-//							int immVal = ((StdConstant)opds[1].constant).valueH;
+						if (src2Reg < 0) {
+							int immVal = ((StdConstant)opds[1].constant).valueH;
+							assert false; // when could this happen????
 //							createIrDrAsimm(code, ppcAddi, gpr, 0, immVal);
-//						} else 
+						} else 
 						createDataProcMovReg(code, armMov, condAlways, gpr, src2Reg, noShift, 0);
-//					} else if (m.id == idPUTFPR) { // PUTFPR
-//						int fpr = ((StdConstant)opds[0].constant).valueH;
-//						createIrDrB(ppcFmr, fpr, opds[1].reg);
+					} else if (m.id == idPUTEXTRD) { // PUTEXTRD
+						int fpr = ((StdConstant)opds[0].constant).valueH;
+						createFPdataProc(code, armVmov, condAlways, fpr, 0, src2Reg, false);
+					} else if (m.id == idPUTEXTRS) { // PUTEXTRS
+						int fpr = ((StdConstant)opds[0].constant).valueH;
+						createFPdataProc(code, armVmov, condAlways, fpr, 0, src2Reg, true);
 //					} else if (m.id == idPUTSPR) { // PUTSPR
 //						createIrArSrB(ppcOr, 0, opds[1].reg, opds[1].reg);
 //						int spr = ((StdConstant)opds[0].constant).valueH;
@@ -2194,7 +2212,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
-	// floating point data processing (VADD)
+	// floating point data processing (VADD, VMOV)
 	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vn, int Vm, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (((Vn>>1)&0xf) << 16) | ((Vn&1) << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
@@ -2202,12 +2220,18 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
-	// floating point register moving (VMOV)
+	// floating point register moving between arm and fp registers (VMOV)
 	private void createFPregMove(Code32 code, int opCode, int cond, int Vm, int Rt, int Rt2, boolean toArm, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vm>>1)&0xf) << 16) | ((Vm&1) << 7) | (Rt << 12);
 		else code.instructions[code.iCount] |= (Vm&0xf) | ((Vm>>4) << 5) | (Rt << 12) | (Rt2 << 16);
 		if (toArm) code.instructions[code.iCount] |= (1 << 20);
+		code.incInstructionNum();
+	}
+
+	// coprocessor (MCR, MRC)
+	private void createCoProc(Code32 code, int opCode, int cond, int coproc, int opc1, int Rt, int CRn, int CRm, int opc2) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (coproc << 8) | (opc1 << 21) | (Rt << 12) | (CRn << 16) | CRm | (opc2 << 5);
 		code.incInstructionNum();
 	}
 

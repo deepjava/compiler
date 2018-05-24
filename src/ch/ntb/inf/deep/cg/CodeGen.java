@@ -28,7 +28,7 @@ import ch.ntb.inf.deep.ssa.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemonics, SSAValueType, ICjvmInstructionOpcs, ICclassFileConsts, ICdescAndTypeConsts {
-	protected static final boolean dbg = true;
+	protected static final boolean dbg = false;
 
 	protected static final int maxNofParam = 32;
 
@@ -121,7 +121,10 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	}
 
 	public void init() { 
-		Class cls = Configuration.getOS().usClass;
+		// it would be desirable to read usClass, however common methods are found in a base class
+		// while platform specific classes are located in a subclass. usClass does not account for this fact yet.
+//		Class cls = Configuration.getOS().usClass;
+		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "PUT1");
 		if (m != null) idPUT1 = m.id; else {ErrorReporter.reporter.error(631); return;}
@@ -144,7 +147,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 		m = Configuration.getOS().getSystemMethodByName(cls, "ASM"); 
 		if (m != null) idASM = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "ADR_OF_METHOD"); 
-		if (m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(631); return;}
+		if (m != null) idADR_OF_METHOD = m.id; else {ErrorReporter.reporter.error(63112); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "REF"); 
 		if (m != null) idREF = m.id; else {ErrorReporter.reporter.error(631); return;}
 		

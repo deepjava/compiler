@@ -222,8 +222,25 @@ public interface InstructionOpcs {
 	armBlxReg	= 0x012fff30,
 	armBx		= 0x012fff10,
 	armBxj		= 0x012fff20,
+
+	// extension register load / store
+	armVldr = (0xd1 << 20) | (0xa << 8),
+	armVstr = (0xd0 << 20) | (0xa << 8),
+
+	// floating point data processing
+	armVadd = (0xe3 << 20) | (0xa0 << 4),
+	armVmov = (0xeb << 20) | (0xa4 << 4),
+
+	// floating point move between registers
+	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),
+	armVmovSingle = (0xe0 << 20) | (0xa1 << 4),
 	
+	// coprocessor
+	armMrc = (0xe1 << 20) | (0x1 << 4),
+	armMcr = (0xe0 << 20) | (0x1 << 4),
+
 	// verified till here
+	
 	// miscellaneous data processing
 	armSbfx = (0x3d << 21) | (0x5 << 4), 
 	armUbfx = (0x3f << 21) | (0x5 << 4), 
@@ -312,17 +329,6 @@ public interface InstructionOpcs {
 	
 	// Unconditional instructions
 	armRfe = 0x08100a00,
-	armSrs = 0x084d0500,
+	armSrs = 0x084d0500;
 	
-	// Extension register load / store
-	armVldr = (0xd1 << 20) | (0xa << 8),
-	armVstr = (0xd0 << 20) | (0xa << 8),
-	
-	// Floating point data processing
-	armVadd = (0xe3 << 20) | (0xa0 << 4),
-	
-	// Floating point move between registers
-	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),
-	armVmovSingle = (0xe0 << 20) | (0xa1 << 4);
-
 }

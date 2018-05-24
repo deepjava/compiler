@@ -29,7 +29,7 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class OperatingSystem extends Item implements ICclassFileConsts {
 	private static final int maxNofExceptionClasses = 16;
-	private HString description;
+	private HString description;	// description string as given in the configuration
 	public Class usClass;
 	public Class llClass;
 	public Class kernelClass;
@@ -50,6 +50,12 @@ public class OperatingSystem extends Item implements ICclassFileConsts {
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting description to " + description);
 	}
 		
+	/**
+	 * Adds a class which is specified in the configuration as "exception" to the array 
+	 * containing all exception classes
+	 * 
+	 * @param exc The exception class to insert
+	 */
 	public void addExceptionClass(Class exc) {
 		if (exc == null) return;
 		if (Configuration.dbg) vrb.println("[CONF] OperatingSystem: adding exception " + exc.name);
@@ -67,7 +73,7 @@ public class OperatingSystem extends Item implements ICclassFileConsts {
 	}
 	
 	/** 
-	 * returns all methods defined in system classes with a fixed offset 
+	 * Returns all methods defined in system classes with a fixed offset 
 	 * the returned array is sorted with ascending offsets
 	 */
 	public Method[] getSystemMethodsWithOffsets() {
@@ -103,8 +109,9 @@ public class OperatingSystem extends Item implements ICclassFileConsts {
 	}
 	
 	/**
-	 * goes through the refTypeList and inserts all classes which are defined as system classes into array
-	 * for each class all the methods defined in the configuration are inserted in an array as well
+	 * Goes through the refTypeList and inserts all classes which are defined as system classes into an array.
+	 * For each class all the methods defined in the configuration are inserted in an array as well.
+	 * The method must be called after the configuration is read
 	 */
 	void addSysClassesAndMethods() {
 		int nof = 0;
