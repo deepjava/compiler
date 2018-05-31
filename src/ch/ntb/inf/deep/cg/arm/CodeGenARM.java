@@ -574,8 +574,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset, 1, 1, 0);
 					break;
 				case tLong: 
-					createLSWordImm(code, armLdr, condAlways, dRegLong, refReg, offset, 1, 1, 0);
-					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset + 4, 1, 1, 0);
+					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset, 1, 1, 0);
+					createLSWordImm(code, armLdr, condAlways, dRegLong, refReg, offset + 4, 1, 1, 0);
 					break;
 				case tFloat: case tDouble:
 					break;
@@ -596,12 +596,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					case tByte:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
 						createDataProcImm(code, armAdd, condAlways, dReg, refReg, stringSize - 4);	// add index of field "value" to index
-						createLSWordRegA(code, armLdrsb, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
+						createLSWordReg(code, armLdrsb, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
 						break;
 					case tChar:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
 						createDataProcImm(code, armAdd, condAlways, dReg, refReg, stringSize - 4);	// add index of field "value" to index
-						createLSWordRegA(code, armLdrh, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
+						createLSWordReg(code, armLdrh, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -615,7 +615,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					switch (res.type & ~(1<<ssaTaFitIntoInt)) {	// type to read
 					case tByte: case tBoolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
-						createLSWordRegA(code, armLdrsb, condAlways, dReg, LR, indexReg, noShift, 0, 1, 1, 0);
+						createLSWordReg(code, armLdrsb, condAlways, dReg, LR, indexReg, noShift, 0, 1, 1, 0);
 						break;
 					case tShort: 
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -632,7 +632,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
 						createLSWordReg(code, armLdr, condAlways, dReg, LR, indexReg, LSL, 2, 1, 1, 0);
 						break;
-					case tLong: case tFloat: case tDouble:
+					case tLong: 
+						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
+						createLSWordReg(code, armLdr, condAlways, dReg, LR, indexReg, LSL, 3, 1, 1, 1);
+						createLSWordImm(code, armLdr, condAlways, dRegLong, LR, 4, 1, 1, 0);
+						break;
+					case tFloat: case tDouble:
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -676,8 +681,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
 					break;
 				case tLong: 
-					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset + 4, 1, 1, 0);
 					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
+					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset + 4, 1, 1, 0);
 					break;
 				case tFloat: 
 					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, true);
@@ -717,7 +722,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
 						createLSWordReg(code, armStr, condAlways, valReg, LR, indexReg, LSL, 2, 1, 1, 0);
 						break;
-					case tAlong: case tAfloat: case tAdouble:
+					case tAlong: 
+						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
+						createLSWordReg(code, armStr, condAlways, valReg, LR, indexReg, LSL, 3, 1, 1, 1);
+						createLSWordImm(code, armStr, condAlways, src3RegLong, LR, 4, 1, 1, 0);
+						break;
+					case tAfloat: case tAdouble:
 						break;
 					default:
 						ErrorReporter.reporter.error(611);
@@ -2166,13 +2176,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 	
-	// Load/store word and unsigned byte	(LDR, LDRB, STR, STRB)	(LDRT / LDRBT / STRT / STRBT)
-		// (LDR, LDRB, STR, STRB	:	(immediate))		(LDRT / LDRBT / STRT / STRBT	:	A1)
+	// Load/store word and unsigned byte (immediate)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
+	// U = 1 -> add offset, W = 1 -> write back, P = 1 -> preindexed
 	private void createLSWordImm(Code32 code, int opCode, int cond, int Rt, int Rn, int imm12, int P, int U, int W) {
 		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
 			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
 		else	// extra load / store
-			code.instructions[code.iCount] = (cond << 28) | opCode | (1 << 22) | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);	
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21) | (1 << 22) ;	
 		code.incInstructionNum();
 	}
 
@@ -2181,15 +2191,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (0xf << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
-	// ...(LDR, LDRB, STR, STRB	:	(register))		(LDRT / LDRBT / STRT / STRBT	:	A2)
+	// Load/store word and unsigned byte (register)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
+	// LDRH, LDRSH, LDRSB, STRH do not allow register shifts 
+	// U = 1 -> add offset, W = 1 -> write back, P = 1 -> preindexed
 	private void createLSWordReg(Code32 code, int opCode, int cond, int Rt, int Rn, int Rm, int shiftType, int shiftAmount, int P, int U, int W) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21) | (1 << 25);
-		code.incInstructionNum();
-	}
-	
-	// ...(LDR, LDRB, STR, STRB	:	(register))		(LDRT / LDRBT / STRT / STRBT	:	A2)
-	private void createLSWordRegA(Code32 code, int opCode, int cond, int Rt, int Rn, int Rm, int shiftType, int shiftAmount, int P, int U, int W) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21);
+		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21) | (1 << 25);
+		else	// extra load / store
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
 	
