@@ -229,6 +229,7 @@ public interface InstructionOpcs {
 
 	// floating point data processing
 	armVadd = (0xe3 << 20) | (0xa0 << 4),
+	armVsub = (0xe3 << 20) | (0xa4 << 4),
 	armVmov = (0xeb << 20) | (0xa4 << 4),
 
 	// floating point move between registers

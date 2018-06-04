@@ -577,7 +577,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset, 1, 1, 0);
 					createLSWordImm(code, armLdr, condAlways, dRegLong, refReg, offset + 4, 1, 1, 0);
 					break;
-				case tFloat: case tDouble:
+				case tFloat: 
+					createLSExtReg(code, armVldr, condAlways, dReg, refReg, offset, true);
+					break;
+				case tDouble:
+					createLSExtReg(code, armVldr, condAlways, dReg, refReg, offset, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -685,10 +689,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset + 4, 1, 1, 0);
 					break;
 				case tFloat: 
-					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, true);
+					createLSExtReg(code, armVstr, condAlways, valReg, refReg, offset, true);
 					break;
 				case tDouble:
-					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, false);
+					createLSExtReg(code, armVstr, condAlways, valReg, refReg, offset, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(611);
@@ -758,6 +762,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 					break;
 				case tLong: 
+					createDataProcReg(code, armAdds, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
+					createDataProcReg(code, armAdc, condAlways, dRegLong, src1RegLong, src2RegLong, noShift, 0);
 					break;
 				case tFloat:
 					createFPdataProc(code, armVadd, condAlways, dReg, src1Reg, src2Reg, true);
@@ -792,7 +798,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armSub, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
 					}
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: 
+					createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
+					createDataProcReg(code, armSbc, condAlways, dRegLong, src1RegLong, src2RegLong, noShift, 0);
+					break;
+				case tFloat: 
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, src2Reg, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, src2Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -2182,7 +2196,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
 			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
 		else	// extra load / store
-			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21) | (1 << 22) ;	
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | ((imm12 & 0xf0) << 4) | (imm12 & 0xf) | (P << 24) | (U << 23) | (W << 21) | (1 << 22);
 		code.incInstructionNum();
 	}
 
@@ -2215,6 +2229,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	
 	// load/store extension registers (VLDR, VSTR)
 	private void createLSExtReg(Code32 code, int opCode, int cond, int Vd, int Rn, int imm, boolean single) {
+		imm >>= 2;	// immediates are multiples of 4
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (imm & 0xff) | ((imm>=0)?(1<<23):0);
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22);
