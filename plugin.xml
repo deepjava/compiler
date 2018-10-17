@@ -187,6 +187,17 @@
             	Display the content of the all SPR's and the MSR
          	</description>
       </view>
+      <view
+            category="deep"
+            class="ch.ntb.inf.deep.eclipse.ui.view.ElfFileView"
+            icon="icons/full/obj16/deep.gif"
+            id="ch.ntb.inf.deep.eclipse.ui.view.ElfFileView"
+            name="ELF File View"
+            restorable="true">
+         	<description>
+            	Experimental View of Elf File
+         	</description>
+      </view>
    </extension>
    <extension
          point="org.eclipse.debug.ui.launchShortcuts">
