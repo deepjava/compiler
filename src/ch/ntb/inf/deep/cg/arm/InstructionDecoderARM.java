@@ -659,8 +659,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		if (parts[0].startsWith("eret")) {
 			code |= 0x160006e;
 		}
-		
-		
+				
 		// SMC	p.2002
 		if (parts[0].startsWith("smc")) {
 			int imm4 = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// #imm4
@@ -668,7 +667,13 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			code |= 0x01600070;
 		}
 		
-		
+		// SVC	p.720
+		if (parts[0].startsWith("svc")) {
+			int imm24 = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// #imm24
+			code |= imm24;	// imm24
+			code |= 0x0f000000;
+		}
+
 		//  Load/store word and unsigned byte	p.208
 		String[] LSMnemonics = {
 				"ldr",	// p.408...422 LDR including LDRB, LDRBT and LDRT

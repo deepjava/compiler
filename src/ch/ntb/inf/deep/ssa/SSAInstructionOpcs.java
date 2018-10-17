@@ -54,14 +54,14 @@ public interface SSAInstructionOpcs {
 			
 			0x00000000 | (1<<ssaApImmOpd) + sCadd, 		//arithmetic 
 			0x00000000 | (1<<ssaApImmOpd) + sCsub,
-			0x00440000 | (1<<ssaApImmOpd) + sCmul,
+			0x00040000 | (1<<ssaApImmOpd) + sCmul,
 			0x00170000 | (1<<ssaApImmOpd) + sCdiv,
 			0x00180000 | (1<<ssaApImmOpd) + sCrem,
 			0x00000000 + sCneg,		 	
 			
 			0x00550000 | (1<<ssaApImmOpd) + sCshl,		//shift and logical 
-			0x00550000 | (1<<ssaApImmOpd) + sCshr,
-			0x00550000 | (1<<ssaApImmOpd) + sCushr,
+			0x00050000 | (1<<ssaApImmOpd) + sCshr,
+			0x00050000 | (1<<ssaApImmOpd) + sCushr,
 			0x00000000 | (1<<ssaApImmOpd) + sCand,
 			0x00000000 | (1<<ssaApImmOpd) + sCor,
 			0x00000000 | (1<<ssaApImmOpd) + sCxor,

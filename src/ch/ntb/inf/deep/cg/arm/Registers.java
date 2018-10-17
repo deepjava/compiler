@@ -47,9 +47,11 @@ interface Registers {
 	final int stackPtr = 13;	// register for stack pointer
 	final int LR = 14;			// register for link register
 	final int PC = 15;			// register for program counter
+	
+	final int scratchRegFpr = 0;		// scratch register
 
 	// initial mask for GPR's, '1' means register is free
-	final int regsGPRinitial = 0xffff & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);
+	final int regsGPRinitial = 0xffff & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);	// scratch reg muss noch weg
 	// initial mask for FPR's, '1' means register is free
 	final int regsFPRinitial = 0xffff & (~((1 << nonVolStartFPR) - 1) | ((1 << (volEndFPR+1)) - 1));	
 

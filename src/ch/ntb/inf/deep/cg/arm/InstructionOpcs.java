@@ -230,7 +230,10 @@ public interface InstructionOpcs {
 	// floating point data processing
 	armVadd = (0xe3 << 20) | (0xa0 << 4),
 	armVsub = (0xe3 << 20) | (0xa4 << 4),
+	armVmul = (0xe2 << 20) | (0xa0 << 4),
+	armVdiv = (0xe8 << 20) | (0xa0 << 4),
 	armVmov = (0xeb << 20) | (0xa4 << 4),
+	armVcvt = (0xeb << 20) | (0xac << 4),
 
 	// floating point move between registers
 	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),
@@ -250,6 +253,9 @@ public interface InstructionOpcs {
 	armLdrh  = (0x01 << 20) | (0xb << 4),
 	armLdrsh = (0x01 << 20) | (0xf << 4),
 	armStrh  = (0xb << 4),
+
+	// various
+	armSvc = 0x0f000000,
 
 	// verified till here
 	
