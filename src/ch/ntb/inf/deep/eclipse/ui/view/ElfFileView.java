@@ -9,12 +9,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
 
-import org.eclipse.debug.internal.ui.views.memory.renderings.TableRenderingContentDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Layout;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Table;
@@ -27,7 +33,6 @@ import nl.lxtreme.binutils.elf.DynamicEntry;
 import nl.lxtreme.binutils.elf.Elf;
 import nl.lxtreme.binutils.elf.ProgramHeader;
 import nl.lxtreme.binutils.elf.SectionHeader;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class ElfFileView extends ViewPart {
 	private final String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\a.out";
@@ -39,6 +44,37 @@ public class ElfFileView extends ViewPart {
 	private TabItem DebugTab;
 
 	private Elf elf;
+
+	public static void main(String[] args) {
+		Display display = new Display();
+		Shell shell = new Shell(display);
+		shell.setSize(1000, 1000);
+		Layout layout = new GridLayout(1,false);
+		shell.setLayout(layout);
+		
+		Button button = new Button(shell, SWT.NONE);
+		button.setText("Refresh");
+		ElfFileView dut = new ElfFileView();
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				dut.setFocus();
+			}
+		});
+		
+		
+
+		dut.createPartControl(shell);
+		dut.setFocus();
+		shell.open();
+
+		while (!shell.isDisposed()) {
+			if (!display.readAndDispatch()) {
+				display.sleep();
+			}
+		}
+		display.dispose();
+	}
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -246,12 +282,13 @@ public class ElfFileView extends ViewPart {
 
 		TabItem debugLineTab = new TabItem(debugTabFolder, SWT.NULL);
 		debugLineTab.setText(".debug_line");
-		text = new Text(debugTabFolder, SWT.WRAP | SWT.V_SCROLL);
-		debugLineTab.setControl(text);
-		StringJoiner sj = new StringJoiner("\n");
+		SashForm sashForm = new SashForm(debugTabFolder, SWT.HORIZONTAL);
+		debugLineTab.setControl(sashForm);
 		try {
 			ByteBuffer buf = getSectionByName(".debug_line");
 			while (buf.position() < buf.capacity()) {
+				text = new Text(sashForm, SWT.WRAP | SWT.V_SCROLL);
+				StringJoiner sj = new StringJoiner("\n");
 				int offset = buf.position();
 				sj.add("Offset: " + offset);
 				int length = buf.getInt(); // uword
@@ -329,16 +366,16 @@ public class ElfFileView extends ViewPart {
 				sj.add(String.format("%s\t\t\t%s\t\t%s\t\t%s", "File", "Line", "Column", "Address"));
 				for (LineMatrixEntry entry : stateMaschine.matrix) {
 					String name = files.stream().filter(x -> x.No == entry.fileIndex).findFirst().orElse(null).filename;
-					sj.add(String.format("%s\t\t%s\t\t\t%s\t\t\t\t0x%X", name , entry.line, entry.column,
+					sj.add(String.format("%s\t\t%s\t\t\t%s\t\t\t\t0x%X", name, entry.line, entry.column,
 							entry.address));
 				}
-				sj.add("------------------------END---------------------------\n");
+				text.setText(sj.toString());
 			}
 
 		} catch (Exception e) {
-			sj.add(e.getMessage());
+			text = new Text(sashForm, SWT.WRAP | SWT.V_SCROLL);
+			text.setText(e.getMessage());
 		}
-		text.setText(sj.toString());
 	}
 
 	private List<String> parseStringTable(ByteBuffer buf) {
