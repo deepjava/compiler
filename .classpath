@@ -10,7 +10,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="/ch.ntb.inf.deep.trglib/bin" sourcepath="/ch.ntb.inf.deep.trglib/src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java-binutils"/>
-	<classpathentry kind="lib" path="tempLibs/java-binutils-0.1.0.jar"/>
-	<classpathentry kind="lib" path="tempLibs/bicirikdwarf.jar"/>
+	<classpathentry kind="lib" path="tempLibs/java-binutils-0.1.0.jar" sourcepath="/java-binutils/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

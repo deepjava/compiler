@@ -25,6 +25,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.zip.CRC32;
@@ -46,6 +48,14 @@ import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.Segment;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
+import nl.lxtreme.binutils.elf.AbiType;
+import nl.lxtreme.binutils.elf.Elf;
+import nl.lxtreme.binutils.elf.ElfClass;
+import nl.lxtreme.binutils.elf.MachineType;
+import nl.lxtreme.binutils.elf.ObjectFileType;
+import nl.lxtreme.binutils.elf.SectionHeader;
+import nl.lxtreme.binutils.elf.SectionType;
+import nl.lxtreme.binutils.elf.SegmentType;
 
 public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	
@@ -1283,6 +1293,34 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		return bytesWritten;
 	}
 	
+	public static long writeTargetImageToElfFile(String fileName) throws IOException {
+		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");	
+		ByteBuffer buf = ByteBuffer.allocate(0xFFFFF);
+		buf.order(ByteOrder.LITTLE_ENDIAN);
+		
+		TargetMemorySegment tms = targetImage;
+		for(int i = 0; tms != null; i++) {
+			if(dbg) vrb.println("TMS #" + i + ": Startaddress = 0x" + Integer.toHexString(tms.startAddress) + ", Size = 0x" + Integer.toHexString(tms.data.length * 4));
+			buf.limit(tms.startAddress + tms.data.length * 4);
+			buf.position(tms.startAddress);
+			for(int d : tms.data) {
+				buf.putInt(d);
+			}
+			tms = tms.next;
+		}
+		int size = buf.position();
+		buf.flip();
+		
+		Elf elf = new Elf(ElfClass.CLASS_32, ByteOrder.LITTLE_ENDIAN, AbiType.ARM, ObjectFileType.EXEC, MachineType.ARM, 0);
+		elf.AddSection(buf, ".text", SectionType.PROGBITS, 7, 0, 0, 0, 0);
+		SectionHeader section = elf.sectionHeaders.get(elf.sectionHeaders.size() - 1);
+		elf.addProgramHeader(SegmentType.LOAD, 7, section.fileOffset, 0, 0, size, size, 0);
+		elf.saveToFile(fileName);
+		elf.close();
+		if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+		return 0;
+	}
+	
 	public static void writeCommandTableToFile(String fileName) throws IOException {
 		if(dbg) vrb.println("[LINKER] START: Writing command table to file: \"" + fileName +"\":");
 		
@@ -1624,6 +1662,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	public static void printGlobalConstantTable() {	
 		vrb.println("Size: " + getBlockSize(globalConstantTable) + " byte");
 		globalConstantTable.printList();
-	}
+	}	
 	
 }

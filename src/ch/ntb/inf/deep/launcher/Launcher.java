@@ -408,8 +408,8 @@ public class Launcher implements ICclassFileConsts {
 					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
 						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
 					} else if (programmer.name.equals(HString.getHString("openOCD"))) {
-//						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
-						tc.downloadImageFile("D:\\Test1.InternalRam.bin");		// MGE
+						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+//						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString().replace(".", ".InternalRam.")); // MM
 					} else {
 						TargetMemorySegment tms = Linker32.targetImage;
 						while (tms != null && reporter.nofErrors <= 0) {
@@ -551,6 +551,12 @@ public class Launcher implements ICclassFileConsts {
 			case Configuration.DTIM:
 				bytesWritten = Linker32.writeTargetImageToDtimFile(fileName);
 				break;
+			case Configuration.ELF:
+				log.println("Writing target image in ELF format to " + fileName);
+				bytesWritten = Linker32.writeTargetImageToElfFile(fileName);
+				break;
+			default: 
+				reporter.error(10, "Writing " + Configuration.formatMnemonics[format] + " image");
 			}
 		} catch(IOException e) {
 			e.printStackTrace();

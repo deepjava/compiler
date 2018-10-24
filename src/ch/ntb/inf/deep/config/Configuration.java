@@ -52,11 +52,13 @@ public class Configuration implements ICclassFileConsts {
 	public static final int HEX = 1;
 	public static final int SREC = 2;
 	public static final int DTIM = 3;
+	public static final int ELF = 4;
 	public static String[] formatMnemonics = {
 		"BIN",
 		"HEX",
 		"sREC",
-		"dtim"
+		"dtim",
+		"ELF"
 	};	
 	
 	public static final HString CODE = HString.getRegisteredHString("code");

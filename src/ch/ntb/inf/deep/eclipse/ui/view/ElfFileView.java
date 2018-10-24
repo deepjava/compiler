@@ -35,7 +35,7 @@ import nl.lxtreme.binutils.elf.ProgramHeader;
 import nl.lxtreme.binutils.elf.SectionHeader;
 
 public class ElfFileView extends ViewPart {
-	private final String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\a.out";
+	private final String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\elf_64bit";
 	private TabFolder tabFolder;
 	private TabItem headerTab;
 	private TabItem ProgHeaderTab;
@@ -49,9 +49,9 @@ public class ElfFileView extends ViewPart {
 		Display display = new Display();
 		Shell shell = new Shell(display);
 		shell.setSize(1000, 1000);
-		Layout layout = new GridLayout(1,false);
+		Layout layout = new GridLayout(1, false);
 		shell.setLayout(layout);
-		
+
 		Button button = new Button(shell, SWT.NONE);
 		button.setText("Refresh");
 		ElfFileView dut = new ElfFileView();
@@ -61,8 +61,6 @@ public class ElfFileView extends ViewPart {
 				dut.setFocus();
 			}
 		});
-		
-		
 
 		dut.createPartControl(shell);
 		dut.setFocus();
@@ -210,13 +208,16 @@ public class ElfFileView extends ViewPart {
 		// Table Content
 		for (SectionHeader sectionHeader : elf.sectionHeaders) {
 			TableItem item = new TableItem(table, SWT.NONE);
-			item.setText(0, sectionHeader.getName());
+			String name = sectionHeader.getName();
+			if (name != null) {
+				item.setText(0, sectionHeader.getName());
+			}
 			item.setText(1, sectionHeader.type.name());
 			item.setText(2, String.format("%08X", sectionHeader.size));
 			item.setText(3, String.format("%08X", sectionHeader.entrySize));
 			item.setText(4, String.format("%016X", sectionHeader.virtualAddress));
 			item.setText(5, String.format("%08X", sectionHeader.fileOffset));
-			item.setText(6, alignmentString(sectionHeader.sectionAlignment));
+			item.setText(6, alignmentString(sectionHeader.alignment));
 			item.setText(7, sectionHeaderFlagString(sectionHeader.flags));
 			item.setText(8, "" + sectionHeader.link);
 			item.setText(9, "" + sectionHeader.info);
@@ -403,12 +404,12 @@ public class ElfFileView extends ViewPart {
 	}
 
 	private ByteBuffer getSectionByName(String SectionName) throws IOException {
-		SectionHeader sectionHeader = Arrays.stream(elf.sectionHeaders).filter(x -> x.getName().equals(SectionName))
+		SectionHeader sectionHeader = elf.sectionHeaders.stream().filter(x -> SectionName.equals(x.getName()))
 				.findFirst().orElse(null);
 		if (sectionHeader == null) {
 			throw new IOException("Section " + SectionName + " not found");
 		}
-		return elf.getSection(sectionHeader);
+		return sectionHeader.section;
 	}
 }
 

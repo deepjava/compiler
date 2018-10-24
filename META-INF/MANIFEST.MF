@@ -37,8 +37,7 @@ Export-Package: ch.ntb.inf.deep.cg,
  ch.ntb.inf.deep.ssa.instruction,
  ch.ntb.inf.deep.strings
 Bundle-ClassPath: .,
- tempLibs/java-binutils-0.1.0.jar,
- tempLibs/bicirikdwarf.jar
+ tempLibs/java-binutils-0.1.0.jar
 Bundle-Vendor: www.ntb.ch/inf
 Import-Package: 
  org.eclipse.ltk.core.refactoring,
