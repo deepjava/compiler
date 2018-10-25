@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -29,13 +28,14 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
+import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Project;
 import nl.lxtreme.binutils.elf.DynamicEntry;
 import nl.lxtreme.binutils.elf.Elf;
 import nl.lxtreme.binutils.elf.ProgramHeader;
 import nl.lxtreme.binutils.elf.SectionHeader;
 
 public class ElfFileView extends ViewPart {
-	private final String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\elf_64bit";
 	private TabFolder tabFolder;
 	private TabItem headerTab;
 	private TabItem ProgHeaderTab;
@@ -91,6 +91,11 @@ public class ElfFileView extends ViewPart {
 
 	@Override
 	public void setFocus() {
+		Project activeProject = Configuration.getActiveProject();
+		String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\elf_64bit";
+		if (activeProject != null) {
+			filePath = activeProject.getImgFileName().toString();
+		}
 		try {
 			elf = new Elf(new File(filePath));
 			loadHeader();
@@ -274,7 +279,7 @@ public class ElfFileView extends ViewPart {
 		try {
 			debugStrTab.setControl(text);
 
-			ByteBuffer buf = getSectionByName(".debug_str");
+			ByteBuffer buf = elf.getSectionByName(".debug_str");
 			String[] strings = new String(buf.array(), StandardCharsets.UTF_8).split("\0");
 			text.setText(String.join("\n", strings));
 		} catch (IOException e) {
@@ -286,7 +291,7 @@ public class ElfFileView extends ViewPart {
 		SashForm sashForm = new SashForm(debugTabFolder, SWT.HORIZONTAL);
 		debugLineTab.setControl(sashForm);
 		try {
-			ByteBuffer buf = getSectionByName(".debug_line");
+			ByteBuffer buf = elf.getSectionByName(".debug_line");
 			while (buf.position() < buf.capacity()) {
 				text = new Text(sashForm, SWT.WRAP | SWT.V_SCROLL);
 				StringJoiner sj = new StringJoiner("\n");
@@ -401,15 +406,6 @@ public class ElfFileView extends ViewPart {
 			val = buf.get();
 		}
 		return str;
-	}
-
-	private ByteBuffer getSectionByName(String SectionName) throws IOException {
-		SectionHeader sectionHeader = elf.sectionHeaders.stream().filter(x -> SectionName.equals(x.getName()))
-				.findFirst().orElse(null);
-		if (sectionHeader == null) {
-			throw new IOException("Section " + SectionName + " not found");
-		}
-		return sectionHeader.section;
 	}
 }
 
