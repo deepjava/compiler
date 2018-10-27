@@ -363,11 +363,14 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		
 		sb.append("SSA for Method: " + cfg.method.owner.name + "." + cfg.method.name + cfg.method.methDescriptor + "\n");
 		SSA.renumberInstructions(cfg);
-		
 		while (node != null) {
 			sb.append(node.toString() + "\n");
 			node = (SSANode) node.next;
 		}
+		sb.append("\nLine Number Table\n");
+		for (int i = 0; i < lineNumTab.length && lineNumTab[i] != null; i++) sb.append(lineNumTab[i].toString() + "\n");
+		sb.append("\n");
+		
 		return sb.toString();
 	}
 

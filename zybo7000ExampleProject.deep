@@ -2,7 +2,7 @@
 
 meta {
 	version = "2017-10-10";
-	description = "Example project file for zybo 7000 board";
+	description = "deep project file for zybo 7000 board";
 }
 
 project ExampleProjectZybo7000 {
@@ -13,16 +13,15 @@ project ExampleProjectZybo7000 {
 	boardtype = zybo7000;
 	ostype = ntbSTS_arm;
 
-	programmertype = abatronBDI;
-	programmeropts = bdi3000inf02;
+	programmertype = openOCD;
+	programmeropts = localhost_4444;
 	
-	imgfile = "\\inf004\ftp\pub\graf\ArmTest1.bin";
+	imgfile = "D:\Test1.bin";
 	imgformat = BIN;
 	
 #	rootclasses = "java/lang/Object";
-#	rootclasses = "test/Test1";
-	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/Reset";
-	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/test/UART3Test";
+#	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/Reset";
+	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/SystemOutDemo";
 
 #	tctfile = "tct/targetCommands.dtct";
 

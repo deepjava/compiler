@@ -229,7 +229,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							findReg(res);
 						}
 					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
-						// division by const
+						// division by const, use immediate
 					} else if ((instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)

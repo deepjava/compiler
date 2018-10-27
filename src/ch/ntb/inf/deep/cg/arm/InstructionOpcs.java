@@ -256,6 +256,7 @@ public interface InstructionOpcs {
 
 	// various
 	armSvc = 0x0f000000,
+	armClz = (0x16f << 16) | (0xf1 << 4),
 
 	// verified till here
 	
@@ -297,9 +298,7 @@ public interface InstructionOpcs {
 	armBkpt = (0x12 << 20) | (0x7 << 4),
 	armHvc  = (0x14 << 20) | (0x7 << 4),
 	
-	// CLZ
-	armClz = (0x16f << 16) | (0xf1 << 4),
-	
+
 	// ERET
 	armEret = 0x0160006e,
 	
