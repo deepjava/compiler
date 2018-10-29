@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -26,6 +29,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.config.Configuration;
@@ -44,6 +50,7 @@ public class ElfFileView extends ViewPart {
 	private TabItem DebugTab;
 
 	private Elf elf;
+	private Action refresh;
 
 	public static void main(String[] args) {
 		Display display = new Display();
@@ -62,8 +69,8 @@ public class ElfFileView extends ViewPart {
 			}
 		});
 
-		dut.createPartControl(shell);
-		dut.setFocus();
+		dut.createView(shell);
+		dut.updateView();
 		shell.open();
 
 		while (!shell.isDisposed()) {
@@ -76,6 +83,11 @@ public class ElfFileView extends ViewPart {
 
 	@Override
 	public void createPartControl(Composite parent) {
+		createView(parent);
+		addActionBar();
+	}
+	
+	private void createView(Composite parent) {
 		tabFolder = new TabFolder(parent, SWT.NULL);
 		headerTab = new TabItem(tabFolder, SWT.NULL);
 		headerTab.setText("Header");
@@ -88,11 +100,33 @@ public class ElfFileView extends ViewPart {
 		DebugTab = new TabItem(tabFolder, SWT.NULL);
 		DebugTab.setText("Debug Information");
 	}
+	
+	private void addActionBar() {
+		IActionBars bars = getViewSite().getActionBars();
+		//fillLocalPullDown(bars.getMenuManager());
+		fillLocalToolBar(bars.getToolBarManager());
+	}
+	
+	private void fillLocalToolBar(IToolBarManager manager) {
+		refresh = new Action(){
+			public void run(){
+				updateView();
+			}
+		};
+		refresh.setText("Refresh");
+		ImageDescriptor img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_TOOL_REDO));
+		refresh.setImageDescriptor(img);
+		manager.add(refresh);
+	}
 
 	@Override
 	public void setFocus() {
+		updateView();
+	}
+	
+	private void updateView() {
 		Project activeProject = Configuration.getActiveProject();
-		String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\elf_64bit";
+		String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\a.out";
 		if (activeProject != null) {
 			filePath = activeProject.getImgFileName().toString();
 		}
