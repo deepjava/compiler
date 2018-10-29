@@ -12,10 +12,10 @@ project junitTargetTestProject {
 	boardtype = zybo7000;
 	ostype = ntbSTS_arm;
 	
-	programmertype = abatronBDI;
-	programmeropts = bdi3000inf02;
+	programmertype = openOCD;
+	programmeropts = localhost_4444;
 
-	imgfile = "\\inf004\ftp\pub\graf\ArmTest1.bin";
+	imgfile = "D:\Test1.bin";
 	imgformat = BIN;
 
 #	Tests for compiler test classes 

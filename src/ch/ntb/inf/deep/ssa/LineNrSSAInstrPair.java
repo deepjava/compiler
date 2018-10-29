@@ -40,10 +40,10 @@ public class LineNrSSAInstrPair implements SSAInstructionMnemonics {
 	@Override
 	public String toString(){
 		if (ssaInstr == null)
-			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " has no SSAInstruction";
+			return "bytecode line: " + bca + " <=> " + "source line: " + lineNr + " has no SSAInstruction";
 		if (ssaInstr.machineCodeOffset == -1)
-			return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + ssaInstr.toString();
-		return "Pc: " + bca + " <=> " + "Line: " + lineNr + " <=> " + ssaInstr.toString() + " <=> CodeOffset " + ssaInstr.machineCodeOffset;
+			return "bytecode line: " + bca + " <=> " + "source line: " + lineNr + " <=> ssa instruction: " + ssaInstr.result.n;
+		return "bytecode line: " + bca + " <=> source line: " + lineNr + " <=> ssa instruction:" + ssaInstr.result.n + " <=> code " + ssaInstr.machineCodeOffset;
 	}
 
 }

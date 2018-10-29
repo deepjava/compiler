@@ -1196,9 +1196,14 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			case Parser.sCR:
 				tc.setRegisterValue("CR", (int)op.value);
 				break;
-			case Parser.sGPR:
-				tc.setRegisterValue(op.description, (int)op.value);
+			case Parser.sGPR: {
+				long val;
+				if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+				else val = Integer.parseInt(value);
+				op.value = val;
+				tc.setRegisterValue(op.description, op.value);
 				break;
+			}
 			case Parser.sFPR:
 				long val;
 				if (op.registerSize == 4) {

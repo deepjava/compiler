@@ -659,8 +659,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		if (parts[0].startsWith("eret")) {
 			code |= 0x160006e;
 		}
-		
-		
+				
 		// SMC	p.2002
 		if (parts[0].startsWith("smc")) {
 			int imm4 = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// #imm4
@@ -668,7 +667,13 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			code |= 0x01600070;
 		}
 		
-		
+		// SVC	p.720
+		if (parts[0].startsWith("svc")) {
+			int imm24 = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// #imm24
+			code |= imm24;	// imm24
+			code |= 0x0f000000;
+		}
+
 		//  Load/store word and unsigned byte	p.208
 		String[] LSMnemonics = {
 				"ldr",	// p.408...422 LDR including LDRB, LDRBT and LDRT
@@ -1493,8 +1498,11 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					Boolean index = P == 0x1;
 					Boolean add = U == 0x1;
 					switch((instr>>>5) & 0x3) {
-					case 01:	// op2
+					case 1:	// op2
 						if ((op1 & 0x5) == 0x0) {	// Store Halfword p.702
+							if (index && !wback) {	// Offset
+								return "strh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", " + (add?"+":"-") + "R" + m + "]";
+							}
 							if (index && wback) {	// Pre-indexed
 								return "strh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [R" + n + ", " + (add?"+":"-") + "R" + m + "]!";
 							}
@@ -1539,6 +1547,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "ldrh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", " + (add?"+":"-") + imm8;
 							//return "ldrh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [PC, #" + (add?"+":"-") + imm8 +"]";	// Alternative form
 						}
+						break;
 					case 2:	// op2
 						if ((op1 & 0x5) == 0x0) {	// Load Dual p.430
 							if (index && !wback) {	// Offset
@@ -1592,8 +1601,9 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "ldrsb" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", " + (add?"+":"-") + imm8;
 							//return "ldrsb" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [PC, #" + (add?"+":"-") + imm8 +"]";	// Alternative form
 						}
+						break;
 					case 3:	// op2
-						if ((op1 & 0x5) == 0x0) {	// Stor Dual p.688
+						if ((op1 & 0x5) == 0x0) {	// Store Dual p.688
 							if (index && !wback) {	// Offset
 								return "strd" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", R" + (t+1) + ", [R" + n + ", " + (add?"+":"-") + "R" + m + "]";
 							}
@@ -1641,6 +1651,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "ldrsh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", " + (add?"+":"-") + imm8;
 //							return "ldrsh" + (cond!=condAlways?condString[cond]:"") + " R" + t + ", [PC, #" + (add?"+":"-") + imm8 +"]";	// Alternative form
 						}
+						break;
 					default: break;
 					}
 				}	// End of: Extra load/store instructions p.203/4

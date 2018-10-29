@@ -34,9 +34,7 @@ interface Registers {
 	final int nonVolStartGPR = 7;	// first nonvolatile GPR
 	final int nonVolStartFPR = 7;	// first nonvolatile FPR
 
-	// volEndGPR must be 1 lower than nonVolStartGPR
 	final int volEndGPR = 5;	// last volatile GPR
-	// volEndFPR must be 1 lower than nonVolStartFPR
 	final int volEndFPR = 6;	// last volatile FPR
 
 	final int returnGPR1 = 0;	// GPR with return value
@@ -47,6 +45,8 @@ interface Registers {
 	final int stackPtr = 13;	// register for stack pointer
 	final int LR = 14;			// register for link register
 	final int PC = 15;			// register for program counter
+	
+	final int scratchRegFpr = 0;		// scratch register
 
 	// initial mask for GPR's, '1' means register is free
 	final int regsGPRinitial = 0xffff & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);

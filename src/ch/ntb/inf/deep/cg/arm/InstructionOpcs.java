@@ -229,7 +229,11 @@ public interface InstructionOpcs {
 
 	// floating point data processing
 	armVadd = (0xe3 << 20) | (0xa0 << 4),
+	armVsub = (0xe3 << 20) | (0xa4 << 4),
+	armVmul = (0xe2 << 20) | (0xa0 << 4),
+	armVdiv = (0xe8 << 20) | (0xa0 << 4),
 	armVmov = (0xeb << 20) | (0xa4 << 4),
+	armVcvt = (0xeb << 20) | (0xac << 4),
 
 	// floating point move between registers
 	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),
@@ -238,6 +242,21 @@ public interface InstructionOpcs {
 	// coprocessor
 	armMrc = (0xe1 << 20) | (0x1 << 4),
 	armMcr = (0xe0 << 20) | (0x1 << 4),
+
+	// Load/store word and unsigned byte
+	armLdr   = (0x41 << 20),
+	armStr   = (0x40 << 20),
+	armLdrb  = (0x45 << 20),
+	armStrb  = (0x44 << 20),
+	// Extra load/store halfword, double word and signed byte
+	armLdrsb = (0x01 << 20) | (0xd << 4),
+	armLdrh  = (0x01 << 20) | (0xb << 4),
+	armLdrsh = (0x01 << 20) | (0xf << 4),
+	armStrh  = (0xb << 4),
+
+	// various
+	armSvc = 0x0f000000,
+	armClz = (0x16f << 16) | (0xf1 << 4),
 
 	// verified till here
 	
@@ -275,40 +294,16 @@ public interface InstructionOpcs {
 	armWfi   = 0x0320f000 | 0x3,
 	armYield = 0x0320f000 | 0x1,
 	
-	// Saturating addition and subtraction
-	armQadd  = (0x10 << 20) | (0x5 << 4),
-	armQdadd = (0x14 << 20) | (0x5 << 4),
-	armQdsub = (0x16 << 20) | (0x5 << 4),
-	armQsub  = (0x12 << 20) | (0x5 << 4),
-	
-	
 	// BKPT / HVC
 	armBkpt = (0x12 << 20) | (0x7 << 4),
 	armHvc  = (0x14 << 20) | (0x7 << 4),
 	
-	// CLZ
-	armClz = (0x16f << 16) | (0xf1 << 4),
-	
+
 	// ERET
 	armEret = 0x0160006e,
 	
 	// SMC
 	armSmc = 0x01600070,
-	
-	// Load/store word and unsigned/signed byte
-	armLdr   = (0x41 << 20),
-	armLdrb  = (0x45 << 20),
-	armLdrsb  = (0x01 << 20) | (0xd << 4),
-	armLdrh  = (0x01 << 20) | (0xb << 4),
-	armLdrsh  = (0x01 << 20) | (0xf << 4),
-	armStr   = (0x40 << 20),
-	armStrb  = (0x44 << 20),
-	armStrh  = (0xb << 4),
-
-	armLdrt  = (0x43 << 20),
-	armLdrbt = (0x47 << 20),
-	armStrt  = (0x42 << 20),
-	armStrbt = (0x46 << 20),
 	
 	// Block data transfer
 	armLdm   = (0x89 << 20),

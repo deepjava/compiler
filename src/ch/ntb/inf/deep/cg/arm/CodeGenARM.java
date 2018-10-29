@@ -157,6 +157,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
+			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table has no prolog
 			} else if (method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
 				code.iCount = 0;
 //				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
@@ -216,6 +217,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
+			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table needs no epilog
 			} else if (method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
 				Method m = Method.getCompSpecSubroutine("handleException");
 				assert m != null;
@@ -380,7 +382,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		for (int i = 0; i < node.nofInstr; i++) {
 			SSAInstruction instr = node.instructions[i];
 			SSAValue res = instr.result;
-//			instr.machineCodeOffset = iCount;
+			instr.machineCodeOffset = code.iCount;
 			if (node.isCatch && i == 0 && node.loadLocalExc > -1) {	
 				if (dbg) StdStreams.vrb.println("enter move register intruction for local 'exception' in catch clause: from R" + paramStartGPR + " to R" + node.instructions[node.loadLocalExc].result.reg);
 //				createIrArSrB(ppcOr, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, paramStartGPR);
@@ -554,7 +556,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						break;	
 					} else {
 						offset = ((MonadicRef)instr).item.offset;
-//						createItrap(ppcTwi, TOifequal, refReg, 0);
+						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+						createSvc(code, armSvc, condEQ, 7);
 					}
 				}
 				
@@ -574,10 +577,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset, 1, 1, 0);
 					break;
 				case tLong: 
-					createLSWordImm(code, armLdr, condAlways, dRegLong, refReg, offset, 1, 1, 0);
-					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset + 4, 1, 1, 0);
+					createLSWordImm(code, armLdr, condAlways, dReg, refReg, offset, 1, 1, 0);
+					createLSWordImm(code, armLdr, condAlways, dRegLong, refReg, offset + 4, 1, 1, 0);
 					break;
-				case tFloat: case tDouble:
+				case tFloat: 
+					createLSExtReg(code, armVldr, condAlways, dReg, refReg, offset, true);
+					break;
+				case tDouble:
+					createLSExtReg(code, armVldr, condAlways, dReg, refReg, offset, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -596,12 +603,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					case tByte:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
 						createDataProcImm(code, armAdd, condAlways, dReg, refReg, stringSize - 4);	// add index of field "value" to index
-						createLSWordRegA(code, armLdrsb, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
+						createLSWordReg(code, armLdrsb, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
 						break;
 					case tChar:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
 						createDataProcImm(code, armAdd, condAlways, dReg, refReg, stringSize - 4);	// add index of field "value" to index
-						createLSWordRegA(code, armLdrh, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
+						createLSWordReg(code, armLdrh, condAlways, dReg, LR, dReg, noShift, 0, 1, 1, 0);
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -609,13 +616,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						return;
 					}
 				} else {
-//					createItrap(ppcTwi, TOifequal, refReg, 0);
-//					createIrDrAd(ppcLha, res.regGPR1, refReg, -arrayLenOffset);
-//					createItrap(ppcTw, TOifgeU, indexReg, res.regGPR1);
+					createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+					createSvc(code, armSvc, condEQ, 7);
+					createLSWordImm(code, armLdrh, condAlways, scratchReg, refReg, arrayLenOffset, 1, 0, 0);
+					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
+					createSvc(code, armSvc, condCS, 7);
 					switch (res.type & ~(1<<ssaTaFitIntoInt)) {	// type to read
 					case tByte: case tBoolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
-						createLSWordRegA(code, armLdrsb, condAlways, dReg, LR, indexReg, noShift, 0, 1, 1, 0);
+						createLSWordReg(code, armLdrsb, condAlways, dReg, LR, indexReg, noShift, 0, 1, 1, 0);
 						break;
 					case tShort: 
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -632,7 +641,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
 						createLSWordReg(code, armLdr, condAlways, dReg, LR, indexReg, LSL, 2, 1, 1, 0);
 						break;
-					case tLong: case tFloat: case tDouble:
+					case tLong: 
+						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
+						createLSWordReg(code, armLdr, condAlways, dReg, LR, indexReg, LSL, 3, 1, 1, 1);
+						createLSWordImm(code, armLdr, condAlways, dRegLong, LR, 4, 1, 1, 0);
+						break;
+					case tFloat: case tDouble:
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -661,7 +675,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						type = Type.getPrimitiveTypeIndex(((DyadicRef)instr).field.type.name.charAt(0));
 					else type = tRef;//is a Array or a Object 
 					offset = ((DyadicRef)instr).field.offset;
-//					createItrap(ppcTwi, TOifequal, refReg, 0);
+					createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+					createSvc(code, armSvc, condEQ, 7);
 				}
 				switch (type) {
 				case tBoolean: case tByte: 
@@ -676,14 +691,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
 					break;
 				case tLong: 
-					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset + 4, 1, 1, 0);
 					createLSWordImm(code, armStr, condAlways, valReg, refReg, offset, 1, 1, 0);
+					createLSWordImm(code, armStr, condAlways, valRegLong, refReg, offset + 4, 1, 1, 0);
 					break;
 				case tFloat: 
-					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, true);
+					createLSExtReg(code, armVstr, condAlways, valReg, refReg, offset, true);
 					break;
 				case tDouble:
-					createLSExtReg(code, armVstr, condAlways, valReg, refReg, 0, false);
+					createLSExtReg(code, armVstr, condAlways, valReg, refReg, offset, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(611);
@@ -700,9 +715,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcReg(code, armAdd, condAlways, LR, LR, indexReg, LSL, 1);
 					createLSWordImm(code, armStrh, condAlways, valReg, LR, 0, 1, 1, 0);
 				} else {
-//					createItrap(ppcTwi, TOifequal, refReg, 0);
-//					createIrDrAd(ppcLha, res.regGPR1, refReg, -arrayLenOffset);
-//					createItrap(ppcTw, TOifgeU, indexReg, res.regGPR1);
+					createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+					createSvc(code, armSvc, condEQ, 7);
+					createLSWordImm(code, armLdrh, condAlways, scratchReg, refReg, arrayLenOffset, 1, 0, 0);
+					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
+					createSvc(code, armSvc, condCS, 7);
 					switch (opds[0].type & ~(1<<ssaTaFitIntoInt)) {
 					case tAbyte: case tAboolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -717,7 +734,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
 						createLSWordReg(code, armStr, condAlways, valReg, LR, indexReg, LSL, 2, 1, 1, 0);
 						break;
-					case tAlong: case tAfloat: case tAdouble:
+					case tAlong: 
+						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
+						createLSWordReg(code, armStr, condAlways, valReg, LR, indexReg, LSL, 3, 1, 1, 1);
+						createLSWordImm(code, armStr, condAlways, src3RegLong, LR, 4, 1, 1, 0);
+						break;
+					case tAfloat: case tAdouble:
 						break;
 					default:
 						ErrorReporter.reporter.error(611);
@@ -748,6 +770,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 					break;
 				case tLong: 
+					createDataProcReg(code, armAdds, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
+					createDataProcReg(code, armAdc, condAlways, dRegLong, src1RegLong, src2RegLong, noShift, 0);
 					break;
 				case tFloat:
 					createFPdataProc(code, armVadd, condAlways, dReg, src1Reg, src2Reg, true);
@@ -782,7 +806,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armSub, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
 					}
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: 
+					createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, src2Reg, noShift, 0);
+					createDataProcReg(code, armSbc, condAlways, dRegLong, src1RegLong, src2RegLong, noShift, 0);
+					break;
+				case tFloat: 
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, src2Reg, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, src2Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -803,7 +835,40 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createMul(code, armMul, condAlways, dReg, src1Reg, src2Reg);
 					}
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: 
+					if (src2Reg < 0) {	// is power of 2
+						long immValLong = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
+						int shift = 0;
+						while (immValLong > 1) {shift++; immValLong >>= 1;}
+						if (shift == 0) {
+							createDataProcMovReg(code, armMov, condAlways, dRegLong, src1RegLong, noShift, 0);
+							createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+						} else {
+							if (shift < 32) {
+								createDataProcShiftImm(code, armLsr, condAlways, scratchReg, src1Reg, 32 - shift);
+								createDataProcReg(code, armOrr, condAlways, dRegLong, scratchReg, src1RegLong, LSL, shift);
+								createDataProcShiftImm(code, armLsl, condAlways, dReg, src1Reg, shift);
+							} else if (shift == 32) {
+								createDataProcMovReg(code, armMov, condAlways, dRegLong, src1Reg, noShift, 0);
+								createMovw(code, armMovw, condAlways, dReg, 0);							
+							} else {
+								createDataProcShiftImm(code, armLsl, condAlways, dRegLong, src1Reg, shift - 32);
+								createMovw(code, armMovw, condAlways, dReg, 0);
+							}
+						}
+					} else {
+						createMul(code, armMul, condAlways, scratchReg, src1RegLong, src2Reg);
+						createMul(code, armMul, condAlways, LR, src1Reg, src2RegLong);
+						createDataProcReg(code, armAdd, condAlways, scratchReg, scratchReg, LR, noShift, 0);
+						createMulLong(code, armUmull, condAlways, LR, dReg, src1Reg, src2Reg);
+						createDataProcReg(code, armAdd, condAlways, dRegLong, scratchReg, LR, noShift, 0);
+					}
+					break;
+				case tFloat: 
+					createFPdataProc(code, armVmul, condAlways, dReg, src1Reg, src2Reg, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVmul, condAlways, dReg, src1Reg, src2Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -816,42 +881,56 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tByte: case tShort: case tInteger:
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	
-						if (RegAllocatorARM.isPowerOf2(immVal)) {	// is power of 2
-							int shift = 0;
-							while (immVal > 1) {shift++; immVal >>= 1;}
-							if (shift == 0) 
-								createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
-							else {
+						if (immVal == 0) createSvc(code, armSvc, condEQ, 7);
+						else if (RegAllocatorARM.isPowerOf2(Math.abs(immVal))) {	// is power of 2
+							int shift = Integer.numberOfTrailingZeros(Math.abs(immVal));
+							if (shift == 0) {
+								if (immVal < 0) createDataProcImm(code, armRsb, condAlways, dReg, src1Reg, 0);
+								else createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+							} else {
+								// works for positive and negative dividend
 								createDataProcMovReg(code, armAsr, condAlways, LR, src1Reg, noShift, shift - 1);
 								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 32 - shift);
 								createDataProcReg(code, armAdd, condAlways, LR, src1Reg, LR, noShift, 0);
 								createDataProcMovReg(code, armAsr, condAlways, dReg, LR, noShift, shift);
+								if (immVal < 0) createDataProcImm(code, armRsb, condAlways, dReg, dReg, 0);	// negate for negative divisor
 							}
-						} else {	// A = 2^(32+n) / immVal
-							int val = Integer.highestOneBit(immVal);
-							loadConstant(code, LR, (int) (0x100000001L * val / immVal));
+						} else {	// A = 2^(32+n) / immVal			// only positive values && not power of 2
+							int imm = Math.abs(immVal);
+							createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is dividend negative?
+							createDataProcImm(code, armRsb, condLT, src1Reg, src1Reg, 0);	// negate 
+							int val = Integer.highestOneBit(imm);
+							loadConstant(code, LR, (int) (0x100000001L * val / imm));
 							createMulLong(code, armUmull, condAlways, dReg, LR, src1Reg, LR);
 							createDataProcMovReg(code, armAsr, condAlways, dReg, dReg, noShift, Integer.numberOfTrailingZeros(val));
+							createDataProcImm(code, armRsb, condLT, dReg, dReg, 0);	// if dividend was negative, negate result
+							createDataProcImm(code, armRsb, condLT, src1Reg, src1Reg, 0);	// restore dividend 
+							if (immVal < 0) createDataProcImm(code, armRsb, condAlways, dReg, dReg, 0);
 						}
 					} else {
-//						 CMP             src2Reg, #0	//TODO
-//						 BEQ divide_end
-//						 ;check for divide by zero!
-
+						createDataProcMovReg(code, armMovs, condAlways, gAux1, src2Reg, noShift, 0);
+						createSvc(code, armSvc, condEQ, 7);	// check for divide by zero
+						createDataProcImm(code, armRsb, condLT, gAux1, gAux1, 0);	// negate divisor
+						createDataProcMovReg(code, armMovs, condAlways, scratchReg, src1Reg, noShift, 0);
+						createDataProcImm(code, armRsb, condLT, scratchReg, scratchReg, 0);	// negate dividend
+						// shift divisor until it is bigger than dividend
+						createClz(code, armClz, condAlways, LR, scratchReg);
+						createDataProcMovReg(code, armMov, condAlways, 9, LR, noShift, 0);
+						createClz(code, armClz, condAlways, dReg, gAux1);
+						createDataProcReg(code, armSubs, condAlways, dReg, dReg, LR, noShift, 0);
+						createDataProcShiftReg(code, armLsl, condGT, gAux1, gAux1, dReg);
+						loadConstant(code, LR, 1); // set bit 0 in aux register, which will be shifted left then right
+						createDataProcShiftReg(code, armLsl, condGT, LR, LR, dReg);
 						loadConstant(code, dReg, 0);	// clear dReg to accumulate result
-						loadConstant(code, gAux1, 1); // set bit 0 in aux register, which will be shifted left then right
-						// loop 1, shift denominator until it is bigger than nominator
-						createDataProcCmpReg(code, armCmp, condAlways, src2Reg, src1Reg, noShift, 0);
-						createDataProcMovReg(code, armMov, condLS, src2Reg, src2Reg, LSL, 1);
-						createDataProcMovReg(code, armMov, condLS, gAux1, gAux1, LSL, 1);
-						createBranchImm(code, armB, condLS, -5);
-						// loop 2
-						createDataProcCmpReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
-						createDataProcReg(code, armSub, condCS, src1Reg, src1Reg, src2Reg, noShift, 0);
-						createDataProcReg(code, armAdd, condCS, dReg, dReg, gAux1, noShift, 0);
-						createDataProcMovReg(code, armMovs, condAlways, gAux1, gAux1, LSR, 1);
-						createDataProcMovReg(code, armMov, condCC, src2Reg, src2Reg, LSR, 1);
+						// loop
+						createDataProcCmpReg(code, armCmp, condAlways, scratchReg, gAux1, noShift, 0);
+						createDataProcReg(code, armSub, condCS, scratchReg, scratchReg, gAux1, noShift, 0);
+						createDataProcReg(code, armAdd, condCS, dReg, dReg, LR, noShift, 0);
+						createDataProcMovReg(code, armMovs, condAlways, LR, LR, LSR, 1);
+						createDataProcMovReg(code, armMov, condCC, gAux1, gAux1, LSR, 1);
 						createBranchImm(code, armB, condCC, -7);
+						createDataProcReg(code, armEors, condAlways, scratchReg, src1Reg, src2Reg, noShift, 0);
+						createDataProcImm(code, armRsb, condLT, dReg, dReg, 0);	// negate if dividend and divisor have opposite sign
 					}
 					break;
 				case tLong: case tFloat: case tDouble:
@@ -867,16 +946,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tByte: case tShort: case tInteger:
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	
-						if (RegAllocatorARM.isPowerOf2(immVal)) {	// is power of 2
-							int shift = 0;
-							while (immVal > 1) {shift++; immVal >>= 1;}
-							if (shift == 0) 
-								createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
-							else {
-								createDataProcMovReg(code, armAsr, condAlways, LR, src1Reg, noShift, shift - 1);
-								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 32 - shift);
-								createDataProcReg(code, armAdd, condAlways, LR, src1Reg, LR, noShift, 0);
-								createDataProcMovReg(code, armAsr, condAlways, dReg, LR, noShift, shift);
+						if (immVal == 0) createSvc(code, armSvc, condEQ, 7);
+						else if (RegAllocatorARM.isPowerOf2(Math.abs(immVal))) {	// is power of 2
+//						int immVal = ((StdConstant)opds[1].constant).valueH;	
+//						if (RegAllocatorARM.isPowerOf2(immVal)) {	// is power of 2
+							int shift = Integer.numberOfTrailingZeros(Math.abs(immVal));
+							if (shift == 0) {
+								loadConstant(code, dReg, 0);
+//								createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+							} else {
+								loadConstant(code, scratchReg, immVal - 1);
+								createDataProcReg(code, armAnd, condAlways, dReg, src1Reg, scratchReg, noShift, 0);
 							}
 						} else {	// A = 2^(32+n) / immVal
 							int val = Integer.highestOneBit(immVal);
@@ -1157,7 +1237,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 					createMedia(code, armSbfx, condAlways, dRegLong, src1Reg, 31, 1);
 					break;
-				case tFloat: case tDouble:
+				case tFloat: 
+				case tDouble:
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1192,8 +1273,50 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}
 			case sCconvFloat: {	// float -> other type
-//				ErrorReporter.reporter.error(610);
-//				assert false : "result of SSA instruction has wrong type";
+				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
+				case tByte:
+//					createIrDrB(code, ppcFctiw, 0, src1Reg);
+//					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
+//					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
+//					createIrArS(code, ppcExtsb, dReg, 0);
+					break;
+				case tChar: 
+//					createIrDrB(code, ppcFctiw, 0, src1Reg);
+//					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
+//					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
+//					createIrArSSHMBME(code, ppcRlwinm, dReg, 0, 0, 16, 31);
+					break;
+				case tShort: 
+//					createIrDrB(code, ppcFctiw, 0, src1Reg);
+//					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
+//					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
+//					createIrArS(code, ppcExtsh, dReg, 0);
+					break;
+				case tInteger:
+					createFPdataConv(code, armVcvt, condAlways, scratchRegFpr, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegFpr, 0, true, true);
+					break;
+				case tLong:	
+//					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
+//					Method m = Method.getCompSpecSubroutine("doubleToLong");
+//					createIrDrB(code, ppcFmr, 0, src1Reg);
+//					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
+//					createIrSspr(code, ppcMtspr, LR, 29);
+//					createIBOBILK(code, ppcBclr, BOalways, 0, true);
+//					createIrDrAd(code, ppcLmw, 29, stackPtr, tempStorageOffset + 8 + 4); // restore
+//					createIrArSrB(code, ppcOr, dReg, 28, 28);
+//					if (dReg != 28) // restore last register if not destination register
+//						createIrDrAd(code, ppcLwz, 28, stackPtr, tempStorageOffset + 8);
+//					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
+					break;
+				case tDouble:
+//					createIrDrB(code, ppcFmr, dReg, src1Reg);
+					break;
+				default:
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;}
 			case sCconvDouble: {	// double -> other type
 //				ErrorReporter.reporter.error(610);
@@ -1257,7 +1380,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				break;}
 			case sCalength: {
 				int refReg = src1Reg;
-//				createItrap(ppcTwi, TOifequal, refReg, 0);
+				createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+				createSvc(code, armSvc, condEQ, 7);
 				createLSWordImm(code, armLdrsh, condAlways, dReg, refReg, arrayLenOffset, 1, 0, 0);
 				break;}
 			case sCcall: {
@@ -2083,12 +2207,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	// MOV must be used with shiftType == noShift and shiftAmount == 0
 	private void createDataProcMovReg(Code32 code, int op, int cond, int Rd, int Rm, int shiftType, int shiftAmount) {
 		if ((Rd == Rm) && (shiftAmount == 0)) return;	// mov Rx, Rx makes no sense	
-		if (shiftAmount == 0) code.instructions[code.iCount] = (cond << 28) | armMov | (Rd << 12) | Rm;	// shifting with imm=0 is not valid
+		if (shiftAmount == 0) code.instructions[code.iCount] = (cond << 28) | op | (Rd << 12) | Rm;	// shifting with imm=0 is not valid
 		else code.instructions[code.iCount] = (cond << 28) | op | (Rd << 12) | (shiftAmount << 7) | (shiftType << 5) | Rm;
 		code.incInstructionNum();
 	}
 
 	// data processing with second operand in register, no result (Rd = 0), Rn = 1st op, Rm = 2nd op, op in bits 24 to 20, use for TST, TEQ, CMP, CMN
+	// calculates Rn - Rm
 	private void createDataProcCmpReg(Code32 code, int op, int cond, int Rn, int Rm, int shiftType, int shiftAmount) {
 		code.instructions[code.iCount] = (cond << 28) | op | (Rn << 16) | (shiftAmount << 7) | (shiftType << 5) | Rm;
 		code.incInstructionNum();
@@ -2166,13 +2291,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 	
-	// Load/store word and unsigned byte	(LDR, LDRB, STR, STRB)	(LDRT / LDRBT / STRT / STRBT)
-		// (LDR, LDRB, STR, STRB	:	(immediate))		(LDRT / LDRBT / STRT / STRBT	:	A1)
+	// Load/store word and unsigned byte (immediate)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
+	// P = 1 -> preindexed, U = 1 -> add offset, W = 1 -> write back
 	private void createLSWordImm(Code32 code, int opCode, int cond, int Rt, int Rn, int imm12, int P, int U, int W) {
 		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
 			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
 		else	// extra load / store
-			code.instructions[code.iCount] = (cond << 28) | opCode | (1 << 22) | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);	
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | ((imm12 & 0xf0) << 4) | (imm12 & 0xf) | (P << 24) | (U << 23) | (W << 21) | (1 << 22);
 		code.incInstructionNum();
 	}
 
@@ -2181,15 +2306,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (0xf << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
-	// ...(LDR, LDRB, STR, STRB	:	(register))		(LDRT / LDRBT / STRT / STRBT	:	A2)
+	// Load/store word and unsigned byte (register)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
+	// LDRH, LDRSH, LDRSB, STRH do not allow register shifts 
+	// P = 1 -> preindexed, U = 1 -> add offset, W = 1 -> write back
 	private void createLSWordReg(Code32 code, int opCode, int cond, int Rt, int Rn, int Rm, int shiftType, int shiftAmount, int P, int U, int W) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21) | (1 << 25);
-		code.incInstructionNum();
-	}
-	
-	// ...(LDR, LDRB, STR, STRB	:	(register))		(LDRT / LDRBT / STRT / STRBT	:	A2)
-	private void createLSWordRegA(Code32 code, int opCode, int cond, int Rt, int Rn, int Rm, int shiftType, int shiftAmount, int P, int U, int W) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21);
+		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (shiftType << 5) | (shiftAmount << 7) | (P << 24) | (U << 23) | (W << 21) | (1 << 25);
+		else	// extra load / store
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (Rm << 0) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
 	
@@ -2206,17 +2330,26 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	
 	// load/store extension registers (VLDR, VSTR)
 	private void createLSExtReg(Code32 code, int opCode, int cond, int Vd, int Rn, int imm, boolean single) {
+		imm >>= 2;	// immediates are multiples of 4
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rn << 16) | (imm & 0xff) | ((imm>=0)?(1<<23):0);
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22);
 		code.incInstructionNum();
 	}
 
-	// floating point data processing (VADD, VMOV)
+	// floating point data processing (VADD, VSUB, VMUL, VMOV (moving between ext. regs))
 	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vn, int Vm, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (((Vn>>1)&0xf) << 16) | ((Vn&1) << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((Vn&0xf) << 16) | ((Vn>>4) << 7) | (Vm&0xf) | ((Vm>>4) << 5);
+		code.incInstructionNum();
+	}
+
+	// floating point data processing (VCVT)
+	private void createFPdataConv(Code32 code, int opCode, int cond, int Vd, int Vm, int opc, boolean single) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (opc << 16) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
+		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | (opc << 16) | (Vm&0xf) | ((Vm>>4) << 5);
 		code.incInstructionNum();
 	}
 
@@ -2232,6 +2365,18 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	// coprocessor (MCR, MRC)
 	private void createCoProc(Code32 code, int opCode, int cond, int coproc, int opc1, int Rt, int CRn, int CRm, int opc2) {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (coproc << 8) | (opc1 << 21) | (Rt << 12) | (CRn << 16) | CRm | (opc2 << 5);
+		code.incInstructionNum();
+	}
+
+	// count leading zeroes (CLZ)
+	private void createClz(Code32 code, int opCode, int cond, int Rd, int Rm) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rd << 12) | Rm;
+		code.incInstructionNum();
+	}
+	
+	// supervisor call (SVC)
+	private void createSvc(Code32 code, int opCode, int cond, int val) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | val;
 		code.incInstructionNum();
 	}
 
