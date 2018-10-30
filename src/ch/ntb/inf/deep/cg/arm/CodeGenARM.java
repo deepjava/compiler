@@ -948,27 +948,61 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	
 						if (immVal == 0) createSvc(code, armSvc, condEQ, 7);
 						else if (RegAllocatorARM.isPowerOf2(Math.abs(immVal))) {	// is power of 2
-//						int immVal = ((StdConstant)opds[1].constant).valueH;	
-//						if (RegAllocatorARM.isPowerOf2(immVal)) {	// is power of 2
 							int shift = Integer.numberOfTrailingZeros(Math.abs(immVal));
 							if (shift == 0) {
 								loadConstant(code, dReg, 0);
-//								createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 							} else {
-								loadConstant(code, scratchReg, immVal - 1);
-								createDataProcReg(code, armAnd, condAlways, dReg, src1Reg, scratchReg, noShift, 0);
+								// works for positive and negative dividend
+								createDataProcMovReg(code, armAsr, condAlways, LR, src1Reg, noShift, shift - 1);
+								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 32 - shift);
+								createDataProcReg(code, armAdd, condAlways, LR, src1Reg, LR, noShift, 0);
+								createDataProcMovReg(code, armAsr, condAlways, dReg, LR, noShift, shift);
+								if (immVal < 0) createDataProcImm(code, armRsb, condAlways, dReg, dReg, 0);	// negate for negative divisor
+								loadConstant(code, LR, immVal);
+								createMul(code, armMul, condAlways, LR, LR, dReg);
+								createDataProcReg(code, armSub, condAlways, dReg, src1Reg, LR, noShift, 0);								
 							}
-						} else {	// A = 2^(32+n) / immVal
-							int val = Integer.highestOneBit(immVal);
-							loadConstant(code, LR, (int) (0x100000001L * val / immVal));
+						} else {	// A = 2^(32+n) / immVal			// only positive values && not power of 2
+							int imm = Math.abs(immVal);
+							createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is dividend negative?
+							createDataProcImm(code, armRsb, condLT, src1Reg, src1Reg, 0);	// negate 
+							int val = Integer.highestOneBit(imm);
+							loadConstant(code, LR, (int) (0x100000001L * val / imm));
 							createMulLong(code, armUmull, condAlways, dReg, LR, src1Reg, LR);
 							createDataProcMovReg(code, armAsr, condAlways, dReg, dReg, noShift, Integer.numberOfTrailingZeros(val));
+							createDataProcImm(code, armRsb, condLT, dReg, dReg, 0);	// if dividend was negative, negate result
+							createDataProcImm(code, armRsb, condLT, src1Reg, src1Reg, 0);	// restore dividend 
+							if (immVal < 0) createDataProcImm(code, armRsb, condAlways, dReg, dReg, 0);
 							loadConstant(code, LR, immVal);
 							createMul(code, armMul, condAlways, LR, LR, dReg);
 							createDataProcReg(code, armSub, condAlways, dReg, src1Reg, LR, noShift, 0);
 						}
 					} else {
-//						assert false;
+						createDataProcMovReg(code, armMovs, condAlways, gAux1, src2Reg, noShift, 0);
+						createSvc(code, armSvc, condEQ, 7);	// check for divide by zero
+						createDataProcImm(code, armRsb, condLT, gAux1, gAux1, 0);	// negate divisor
+						createDataProcMovReg(code, armMovs, condAlways, scratchReg, src1Reg, noShift, 0);
+						createDataProcImm(code, armRsb, condLT, scratchReg, scratchReg, 0);	// negate dividend
+						// shift divisor until it is bigger than dividend
+						createClz(code, armClz, condAlways, LR, scratchReg);
+						createDataProcMovReg(code, armMov, condAlways, 9, LR, noShift, 0);
+						createClz(code, armClz, condAlways, dReg, gAux1);
+						createDataProcReg(code, armSubs, condAlways, dReg, dReg, LR, noShift, 0);
+						createDataProcShiftReg(code, armLsl, condGT, gAux1, gAux1, dReg);
+						loadConstant(code, LR, 1); // set bit 0 in aux register, which will be shifted left then right
+						createDataProcShiftReg(code, armLsl, condGT, LR, LR, dReg);
+						loadConstant(code, dReg, 0);	// clear dReg to accumulate result
+						// loop
+						createDataProcCmpReg(code, armCmp, condAlways, scratchReg, gAux1, noShift, 0);
+						createDataProcReg(code, armSub, condCS, scratchReg, scratchReg, gAux1, noShift, 0);
+						createDataProcReg(code, armAdd, condCS, dReg, dReg, LR, noShift, 0);
+						createDataProcMovReg(code, armMovs, condAlways, LR, LR, LSR, 1);
+						createDataProcMovReg(code, armMov, condCC, gAux1, gAux1, LSR, 1);
+						createBranchImm(code, armB, condCC, -7);
+						createDataProcReg(code, armEors, condAlways, scratchReg, src1Reg, src2Reg, noShift, 0);
+						createDataProcImm(code, armRsb, condLT, dReg, dReg, 0);	// negate if dividend and divisor have opposite sign
+						createMul(code, armMul, condAlways, scratchReg, src2Reg, dReg);
+						createDataProcReg(code, armSub, condAlways, dReg, src1Reg, scratchReg, noShift, 0);
 					}
 					break;
 				case tLong: case tFloat: case tDouble:
