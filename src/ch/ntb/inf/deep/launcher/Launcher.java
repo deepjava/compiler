@@ -51,12 +51,15 @@ import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.config.RunConfiguration;
 import ch.ntb.inf.deep.config.SystemConstant;
+import ch.ntb.inf.deep.dwarf.DebugSymbols;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.linker.TargetMemorySegment;
+import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
 import ch.ntb.inf.deep.ssa.SSA;
+import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.Am29LV160dFlashWriter;
 import ch.ntb.inf.deep.target.TargetConnection;
@@ -370,13 +373,38 @@ public class Launcher implements ICclassFileConsts {
 			log.println();
 		}
 		
+		// Prepare Debug Information. Line Number Table
+		DebugSymbols debugSymbols = new DebugSymbols();
+		for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
+			clazz = Class.extLevelOrdClasses[extLevel];
+			while (clazz != null) {
+				System.out.println("************** Class " + clazz.name + "*******************");
+				debugSymbols.setNextCompilationUnit(clazz.name.toString());
+				method = (Method)clazz.methods;
+				while(method != null) {
+					System.out.println("Method " + method.name + " " + method.address + " " + method.offset);
+					if (method.ssa != null) {
+						for (LineNrSSAInstrPair line:  method.ssa.getLineNrTable()) {
+							int address = method.address + line.ssaInstr.machineCodeOffset * 4;
+							System.out.println("Line: " + line.lineNr + " Address: 0x" + Integer.toHexString(address));
+							debugSymbols.getActualCompilationUnit().addLineNumberEntry(line.lineNr, address);
+						}				
+					}
+					method = (Method)method.next;
+				}		
+				clazz = clazz.nextClass;
+			}
+		}
+		Linker32.debugSymbols = debugSymbols;
+
+		
 		// Create target image file if file name defined in the configuration
 		if (reporter.nofErrors <= 0) {
 			HString fname = Configuration.getActiveProject().getImgFileName();
 			if (fname != null && !fname.equals(HString.getHString(""))) 
 				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
 		}	
-
+		
 		return reporter.nofErrors;
 	}
 

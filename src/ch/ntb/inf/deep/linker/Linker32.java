@@ -46,6 +46,7 @@ import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.Segment;
+import ch.ntb.inf.deep.dwarf.DebugSymbols;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import nl.lxtreme.binutils.elf.AbiType;
@@ -88,6 +89,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	// Target image
 	public static TargetMemorySegment targetImage;
 
+	// Debug Symbols
+	public static DebugSymbols debugSymbols;
+	
 	// Constant block: set by the configuration
 	public static int cblkConstBlockSizeOffset;
 	public static int cblkCodeBaseOffset;
@@ -1316,6 +1320,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		elf.AddSection(buf, ".text", SectionType.PROGBITS, 7, 0, 0, 0, 0);
 		SectionHeader section = elf.sectionHeaders.get(elf.sectionHeaders.size() - 1);
 		elf.addProgramHeader(SegmentType.LOAD, 7, section.fileOffset, 0, 0, size, size, 0);
+		
+		buf = debugSymbols.saveLineNumberTable(ByteOrder.LITTLE_ENDIAN);	
+		elf.AddSection(buf, ".debug_line", SectionType.PROGBITS, 0, 0, 0, 0, 0);
 		elf.saveToFile(fileName);
 		elf.close();
 		if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
