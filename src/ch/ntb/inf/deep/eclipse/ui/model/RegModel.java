@@ -100,7 +100,6 @@ public class RegModel  {
 			}
 			regs = (ch.ntb.inf.deep.config.Register) regs.next;
 		}
-		if (arm) assert(nofSinglePrecRegs == 2 * nofDoublePrecRegs);
 		fpscr[0] = new Register("FPSCR", 0, 1);
 		updateFPRModel();
 	}
@@ -178,13 +177,17 @@ public class RegModel  {
 			if (!tc.isConnected()) tc.openConnection();
 			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted)	tc.stopTarget();
-			for (int i = 0; i < nofDoublePrecRegs; i++) {
+			for (int i = 0; i < nofDoublePrecRegs / 2; i++) {
 				long val = tc.getRegisterValue(fprs[i].name); 
 				fprs[i].floatValue = val;
 				if (arm) {
 					fprs[nofDoublePrecRegs+2*i].floatValue = val & 0xffffffffL;
 					fprs[nofDoublePrecRegs+2*i+1].floatValue = (val >> 32) & 0xffffffffL;
 				}
+			}
+			for (int i = nofDoublePrecRegs / 2; i < nofDoublePrecRegs; i++) {
+				long val = tc.getRegisterValue(fprs[i].name); 
+				fprs[i].floatValue = val;
 			}
 			fpscr[0].value = (int)tc.getRegisterValue(fpscr[0].name);
 			
