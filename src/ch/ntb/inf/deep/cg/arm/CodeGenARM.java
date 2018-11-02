@@ -123,9 +123,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
 		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
-			if (true) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
-			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR); // change later to 0xff
-			else RegAllocator.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
+			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR) & ~((1<<volEndGPR) | (1<<(volEndGPR-1)) | (1<<(volEndGPR-2)));
+			else RegAllocator.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
 			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocator.regsGPR));
 			RegAllocator.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
 			if (dbg) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocator.regsFPR));
@@ -391,13 +391,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (dbg) StdStreams.vrb.println("handle instruction " + instr.toString());
 			if (instr.ssaOpcode == sCloadLocal) continue;	
 			SSAValue[] opds = instr.getOperands();
-			if (instr.ssaOpcode == sCstoreToArray) {
+			if (instr.ssaOpcode == sCstoreToArray) {	// ref(int), index(must be int), val
 				src3Reg = opds[2].reg; 
 				src3RegLong = opds[2].regLong;
 				if (src3RegLong >= 0x100) {
 					if (dbg) StdStreams.vrb.println("opd3 regLong on stack slot for instr: " + instr.toString());
 					int slot = src3RegLong & 0xff;
-					src3RegLong = nonVolStartGPR + 5;
+					src3RegLong = volEndGPR;
 					createLSWordImm(code, armLdr, condAlways, src3RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
 				}
 				if (src3Reg >= 0x100) {
@@ -420,7 +420,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (src2RegLong >= 0x100) {
 						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						int slot = src2RegLong & 0xff;
-						src2RegLong = nonVolStartGPR + 7;
+						src2RegLong = volEndGPR - 2;
 						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
 					}
 					if (src2Reg >= 0x100) {
@@ -440,7 +440,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (src1RegLong >= 0x100) {
 					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					int slot = src1RegLong & 0xff;
-					src1RegLong = nonVolStartGPR + 6;
+					src1RegLong = volEndGPR - 1;
 					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
 				}
 				if (src1Reg >= 0x100) {
@@ -460,7 +460,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (dRegLong >= 0x100) {
 				if (dbg) StdStreams.vrb.println("res regLong on stack slot for instr: " + instr.toString());
 				dRegLongSlot = dRegLong & 0xff;
-				dRegLong = nonVolStartGPR + 5;
+				dRegLong = volEndGPR;
 			}
 			dReg = res.reg;
 			int dRegSlot = -1;
@@ -472,9 +472,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			}
 
 			int gAux1 = res.regGPR1;
-			if (gAux1 >= 0x100) gAux1 = nonVolStartGPR + 3;
+			if (gAux1 >= 0x100) {
+				gAux1 = nonVolStartGPR + 3;
+			}
 			int gAux2 = res.regGPR2;
-			if (gAux2 >= 0x100) gAux2 = nonVolStartGPR + 4;
+			if (gAux2 >= 0x100) {
+				gAux2 = nonVolStartGPR + 4;
+				assert false;
+			}
 			
 			switch (instr.ssaOpcode) { 
 			case sCloadConst: {
@@ -1132,8 +1137,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createDataProcMovReg(code, armMov, condAlways, dRegLong, src1RegLong, noShift, 0);
 							createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 						} else if (immVal < 32) {
-							createDataProcShiftImm(code, armLsl, condAlways, dReg, src1RegLong, 32 - immVal);
-							createDataProcReg(code, armOrr, condAlways, dReg, dReg, src1Reg, LSR, immVal);
+							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, src1RegLong, 32 - immVal);
+							createDataProcReg(code, armOrr, condAlways, dReg, scratchReg, src1Reg, LSR, immVal);
 							createDataProcShiftImm(code, armLsr, condAlways, dRegLong, src1RegLong, immVal);
 						} else if (immVal == 32) {
 							createDataProcMovReg(code, armMov, condAlways, dReg, src1RegLong, noShift, 0);
