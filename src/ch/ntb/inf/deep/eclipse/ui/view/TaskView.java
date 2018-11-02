@@ -12,6 +12,7 @@ import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.eclipse.ui.model.TaskObject;
 import ch.ntb.inf.deep.launcher.Launcher;
+import ch.ntb.inf.deep.linker.Linker32;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.target.TargetConnection;
 import ch.ntb.inf.deep.target.TargetConnectionException;
@@ -61,7 +62,7 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 					}else if(index == 3){
 						return Integer.toString(to.time);
 					}else if (index == 4) {
-						return Double.toString(to.load)+"%";
+						return Integer.toString(to.runtime);
 					}
 				}
 
@@ -84,7 +85,7 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 
 		viewer = new TableViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		
-		String[] titels = { "Classname", "nofActivations", "period(ms)","time(ms)" , "load(%)"};
+		String[] titels = { "Classname", "nofActivations", "period(ms)","time(ms)" , "runtime(us)"};
 		int[] bounds = { 400, 100, 100, 100, 100 };
 
 		TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
@@ -160,56 +161,63 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 			wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted)	tc.stopTarget();
 			
-			Item testItem = RefType.refTypeList.getItemByName("ch/ntb/inf/deep/runtime/ppc32/Task");
-			Class taskCls = (Class)testItem;
+			Class taskCls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/runtime/ppc32/Task");
+			if (taskCls == null) taskCls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/runtime/arm32/Task");
+			if (taskCls == null) {	// no task class
+				for (int i = 0; i < 32; i++) taskObj[i] = new TaskObject();
+				return;
+			}
 			Item tasks = taskCls.classFields.getItemByName("tasks");
 		
 			int taskArrayAddr;
 			taskArrayAddr = tc.readWord(tasks.address);
 			for (int i = 0; i < 34; i++) {
-	              int taskAddr = tc.readWord(taskArrayAddr + 4 * i);
-	              int tag = tc.readWord(taskAddr - 4);
-	              RefType ref = RefType.refTypeList;
-	              do {
-	                     if (tag == ref.address) {
-	                           Class cls = (Class)ref;
-	                           Field f = (Field)cls.getField(HString.getRegisteredHString("nextTime"));
-	                           long nextTime = (long)tc.readWord(taskAddr + f.offset) << (8 * slotSize) | (tc.readWord(taskAddr + f.offset + slotSize) & 0xffffffffL);
-	                           if (nextTime != 0x8000000000000000L && nextTime != 0x7fffffffffffffffL) {
-	                        	  taskObj[index].name = ref.name.toString();
-                                  f = (Field)cls.getField(HString.getRegisteredHString("nofActivations"));
-                                  taskObj[index].nofActivations = tc.readWord(taskAddr + f.offset);
-                                  f = (Field)cls.getField(HString.getRegisteredHString("period"));
-                                  taskObj[index].period = tc.readWord(taskAddr + f.offset);
-                                  f = (Field)cls.getField(HString.getRegisteredHString("time"));
-                                  taskObj[index].time = tc.readWord(taskAddr + f.offset);
-                                  f = (Field)cls.getField(HString.getRegisteredHString("diffTime"));
-                                  if(f != null) {
-                                	  int diffTime = tc.readWord(taskAddr + f.offset);
-                                	  taskObj[index].load = (double)diffTime / (10 * taskObj[index].period);
-                                  }else {
-                                	  taskObj[index].load = 123.45;
-                                  }
-                                  index++;
-	                           }
-	                           break;
-	                     }
-	                     ref = (RefType) ref.next;
-	              } while (ref != null) ;
+				int taskAddr = tc.readWord(taskArrayAddr + 4 * i);
+				int tag = tc.readWord(taskAddr - 4);
+				RefType ref = RefType.refTypeList;
+				do {
+					if (tag == ref.address) {
+						Class cls = (Class)ref;
+						Field f = (Field)cls.getField(HString.getRegisteredHString("nextTime"));
+						long nextTime;
+						if (Linker32.bigEndian)
+							nextTime = (long)tc.readWord(taskAddr + f.offset) << (8 * slotSize) | (tc.readWord(taskAddr + f.offset + slotSize) & 0xffffffffL);
+						else 
+							nextTime = (long)tc.readWord(taskAddr + f.offset + slotSize) << (8 * slotSize) | (tc.readWord(taskAddr + f.offset) & 0xffffffffL);
+//						System.out.println(Long.toHexString(nextTime));
+						if (((nextTime != 0x8000000000000000L) && (nextTime != 0x7fffffffffffffffL))) { 	// not high priority task nor low priority task
+							taskObj[index].name = ref.name.toString();
+							f = (Field)cls.getField(HString.getRegisteredHString("nofActivations"));
+							taskObj[index].nofActivations = tc.readWord(taskAddr + f.offset);
+							f = (Field)cls.getField(HString.getRegisteredHString("period"));
+							taskObj[index].period = tc.readWord(taskAddr + f.offset);
+							f = (Field)cls.getField(HString.getRegisteredHString("time"));
+							taskObj[index].time = tc.readWord(taskAddr + f.offset);
+							f = (Field)cls.getField(HString.getRegisteredHString("diffTime"));
+							if (f != null) {
+								int diffTime = tc.readWord(taskAddr + f.offset);
+								taskObj[index].runtime = diffTime;
+							} else {
+								taskObj[index].runtime = 0;
+							}
+							index++;
+						} 
+						break;
+					}
+					ref = (RefType) ref.next;
+				} while (ref != null) ;
 			}
+			for (int n = index; n < 32; n++) taskObj[n] = new TaskObject();
 			if (!wasFreezeAsserted)	tc.startTarget(-1);
 		} catch (TargetConnectionException e) {
-			// TODO Auto-generated catch block
 			if (!wasFreezeAsserted)
 				try {
 					tc.startTarget(-1);
 				} catch (TargetConnectionException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			e.printStackTrace();
 		}
-
 	}
 	
 	private void createActions() {

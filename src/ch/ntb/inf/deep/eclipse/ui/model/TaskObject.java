@@ -5,7 +5,7 @@ public class TaskObject {
 	public int nofActivations;
 	public int period;
 	public int time;
-	public double load;
+	public int runtime;
 	
 	public TaskObject() {
 		name = "";
