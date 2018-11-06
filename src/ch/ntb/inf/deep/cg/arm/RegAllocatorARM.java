@@ -115,8 +115,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
 			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 20) & 0xF;
-			if ((nofAuxRegGPR == 5 && res.type == tLong)	// long shift
-					|| ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble)))) // load double (load float not necessary, delete later), int -> float conversion
+			if ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble))) // load double (load float not necessary, delete later), int -> float conversion
 				nofAuxRegGPR = 1;
 			else if (nofAuxRegGPR == 7 && res.type == tLong)	// long division
 				nofAuxRegGPR = 2;

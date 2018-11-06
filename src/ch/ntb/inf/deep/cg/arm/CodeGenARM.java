@@ -1059,12 +1059,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createDataProcShiftImm(code, armLsl, condAlways, dRegLong, src1Reg, immVal - 32);
 							createMovw(code, armMovw, condAlways, dReg, 0);
 						}
-					} else { 
+					} else {  // implemented so as not to use aux register
 						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
-						createDataProcImm(code, armRsbs, condAlways, gAux1, scratchReg, 32);
-						createDataProcShiftReg(code, armLsr, condGE, gAux1, src1Reg, gAux1);
-						createDataProcShiftReg(code, armLsl, condGE, dRegLong, src1RegLong, scratchReg);
-						createDataProcReg(code, armOrr, condGE, dRegLong, gAux1, dRegLong, noShift, 0);
+						createDataProcImm(code, armRsbs, condAlways, LR, scratchReg, 32);
+						createDataProcShiftReg(code, armLsr, condGE, LR, src1Reg, LR);
+						createDataProcShiftReg(code, armLsl, condGE, scratchReg, src1RegLong, scratchReg);
+						createDataProcReg(code, armOrr, condGE, dRegLong, LR, scratchReg, noShift, 0);
+						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
 						createDataProcShiftReg(code, armLsl, condGE, dReg, src1Reg, scratchReg);
 						createDataProcImm(code, armSub, condLT, scratchReg, src2Reg, 32);
 						createDataProcShiftReg(code, armLsl, condLT, dRegLong, src1Reg, scratchReg);
@@ -1093,8 +1094,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createDataProcMovReg(code, armMov, condAlways, dRegLong, src1RegLong, noShift, 0);
 							createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 						} else if (immVal < 32) {
-							createDataProcShiftImm(code, armLsl, condAlways, dReg, src1RegLong, 32 - immVal);
-							createDataProcReg(code, armOrr, condAlways, dReg, dReg, src1Reg, ASR, immVal);
+							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, src1RegLong, 32 - immVal);
+							createDataProcReg(code, armOrr, condAlways, dReg, scratchReg, src1Reg, ASR, immVal);
 							createDataProcShiftImm(code, armAsr, condAlways, dRegLong, src1RegLong, immVal);
 						} else if (immVal == 32) {
 							createDataProcMovReg(code, armMov, condAlways, dReg, src1RegLong, noShift, 0);
@@ -1103,12 +1104,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createDataProcShiftImm(code, armAsr, condAlways, dReg, src1RegLong, immVal - 32);
 							createMedia(code, armSbfx, condAlways, dRegLong, dReg, 31, 1);							
 						}
-					} else { 
+					} else {  // implemented so as not to use aux register
 						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
-						createDataProcImm(code, armRsbs, condAlways, dReg, scratchReg, 32);
-						createDataProcShiftReg(code, armLsl, condGE, dReg, src1RegLong, dReg);
-						createDataProcShiftReg(code, armLsr, condGE, dRegLong, src1Reg, scratchReg);
-						createDataProcReg(code, armOrr, condGE, dReg, dReg, dRegLong, noShift, 0);
+						createDataProcImm(code, armRsbs, condAlways, LR, scratchReg, 32);
+						createDataProcShiftReg(code, armLsl, condGE, LR, src1RegLong, LR);
+						createDataProcShiftReg(code, armLsr, condGE, scratchReg, src1Reg, scratchReg);
+						createDataProcReg(code, armOrr, condGE, dReg, LR, scratchReg, noShift, 0);
+						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
 						createDataProcShiftReg(code, armAsr, condGE, dRegLong, src1RegLong, scratchReg);
 						createDataProcImm(code, armSub, condLT, scratchReg, src2Reg, 32);
 						createDataProcShiftReg(code, armAsr, condLT, dReg, src1RegLong, scratchReg);
@@ -1147,15 +1149,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createDataProcShiftImm(code, armLsr, condAlways, dReg, src1RegLong, immVal - 32);
 							createMovw(code, armMovw, condAlways, dRegLong, 0);
 						}
-					} else { 
+					} else { // implemented so as not to use aux register
 						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
-						createDataProcImm(code, armRsbs, condAlways, dReg, scratchReg, 32);
-						createDataProcShiftReg(code, armLsl, condGE, dReg, src1RegLong, dReg);
-						createDataProcShiftReg(code, armLsr, condGE, dRegLong, src1Reg, scratchReg);
-						createDataProcReg(code, armOrr, condGE, dReg, dReg, dRegLong, noShift, 0);
+						createDataProcImm(code, armRsbs, condAlways, LR, scratchReg, 32);
+						createDataProcShiftReg(code, armLsl, condGE, LR, src1RegLong, LR);
+						createDataProcShiftReg(code, armLsr, condGE, scratchReg, src1Reg, scratchReg);
+						createDataProcReg(code, armOrr, condGE, dReg, LR, scratchReg, noShift, 0);
+						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);	
 						createDataProcShiftReg(code, armLsr, condGE, dRegLong, src1RegLong, scratchReg);
-						createDataProcImm(code, armSub, condLT, scratchReg, src2Reg, 32);
-						createDataProcShiftReg(code, armLsr, condLT, dReg, src1RegLong, scratchReg);
+						createDataProcImm(code, armSub, condLT, LR, scratchReg, 32);
+						createDataProcShiftReg(code, armLsr, condLT, dReg, src1RegLong, LR);
 						createDataProcMovImm(code, armMov, condLT, dRegLong, 0);
 					}
 				} else {
@@ -1894,7 +1897,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tAshort: case tAinteger: case tAlong:
 					createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: 
+					createDataProcMovReg(code, armMov, condAlways, dRegLong, src1RegLong, noShift, 0);
+					createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+					break;
+				case tFloat: 
+					createFPdataProc(code, armVmov, condAlways, dReg, 0, src1Reg, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVmov, condAlways, dReg, 0, src1Reg, false);
 					break;
 				default:
 					if (dbg) StdStreams.vrb.println("type = " + (res.type & 0x7fffffff));
