@@ -9,10 +9,10 @@ public class SourceFileEntry {
 	public final int Size;
 	public final String filename;
 
-	public SourceFileEntry(int No, String filename) {
+	public SourceFileEntry(int No, String filename, int dir) {
 		this.No = No;
 		this.filename = filename;
-		this.Dir = 0;
+		this.Dir = dir;
 		this.Time = 0;
 		this.Size = 0;
 	}

@@ -38,6 +38,7 @@ import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.dwarf.DebugLineStateMaschine;
 import ch.ntb.inf.deep.dwarf.LineMatrixEntry;
+import ch.ntb.inf.deep.dwarf.SymbolTableEntry;
 import nl.lxtreme.binutils.elf.DynamicEntry;
 import nl.lxtreme.binutils.elf.Elf;
 import nl.lxtreme.binutils.elf.ProgramHeader;
@@ -88,7 +89,7 @@ public class ElfFileView extends ViewPart {
 		createView(parent);
 		addActionBar();
 	}
-	
+
 	private void createView(Composite parent) {
 		tabFolder = new TabFolder(parent, SWT.NULL);
 		headerTab = new TabItem(tabFolder, SWT.NULL);
@@ -102,21 +103,22 @@ public class ElfFileView extends ViewPart {
 		DebugTab = new TabItem(tabFolder, SWT.NULL);
 		DebugTab.setText("Debug Information");
 	}
-	
+
 	private void addActionBar() {
 		IActionBars bars = getViewSite().getActionBars();
-		//fillLocalPullDown(bars.getMenuManager());
+		// fillLocalPullDown(bars.getMenuManager());
 		fillLocalToolBar(bars.getToolBarManager());
 	}
-	
+
 	private void fillLocalToolBar(IToolBarManager manager) {
-		refresh = new Action(){
-			public void run(){
+		refresh = new Action() {
+			public void run() {
 				updateView();
 			}
 		};
 		refresh.setText("Refresh");
-		ImageDescriptor img = ImageDescriptor.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_TOOL_REDO));
+		ImageDescriptor img = ImageDescriptor
+				.createFromImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_TOOL_REDO));
 		refresh.setImageDescriptor(img);
 		manager.add(refresh);
 	}
@@ -125,7 +127,7 @@ public class ElfFileView extends ViewPart {
 	public void setFocus() {
 		updateView();
 	}
-	
+
 	private void updateView() {
 		Project activeProject = Configuration.getActiveProject();
 		String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\a.out";
@@ -308,13 +310,47 @@ public class ElfFileView extends ViewPart {
 		TabFolder debugTabFolder = new TabFolder(tabFolder, SWT.NULL);
 		DebugTab.setControl(debugTabFolder);
 
+		TabItem symbolTableTab = new TabItem(debugTabFolder, SWT.NULL);
+		symbolTableTab.setText(".symtab");
+
+		Table table = new Table(debugTabFolder, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
+		symbolTableTab.setControl(table);
+		table.setHeaderVisible(true);
+
+		// Table Header
+		String[] titels = { "Name", "Value", "Size", "Type","Bind", "Visibility", "shndx" };
+		int[] bounds = { 150, 80, 80, 80, 80, 80,80 };
+
+		for (int i = 0; i < titels.length; i++) {
+			TableColumn column = new TableColumn(table, SWT.NONE);
+			column.setText(titels[i]);
+			column.setWidth(bounds[i]);
+			column.setResizable(true);
+			column.setMoveable(false);
+		}
+
+		try {
+			ByteBuffer buf = elf.getSectionByName(".symtab");
+			while (buf.position() < buf.limit()) {
+				TableItem item = new TableItem(table, SWT.NONE);
+				SymbolTableEntry entry = new SymbolTableEntry(buf);
+				item.setText(0, "" + entry.name);
+				item.setText(1, String.format("%08X", entry.value));
+				item.setText(2, "" + entry.size);
+				item.setText(3, entry.type.toString());
+				item.setText(4, entry.bind.toString());
+				item.setText(5, entry.visibility.toString());
+				item.setText(6, "" + entry.shndx);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		TabItem debugStrTab = new TabItem(debugTabFolder, SWT.NULL);
 		debugStrTab.setText(".debug_str");
 		Text text = new Text(debugTabFolder, SWT.WRAP | SWT.V_SCROLL);
 		debugStrTab.setControl(text);
 		try {
-			debugStrTab.setControl(text);
-
 			ByteBuffer buf = elf.getSectionByName(".debug_str");
 			String[] strings = new String(buf.array(), StandardCharsets.UTF_8).split("\0");
 			text.setText(String.join("\n", strings));
@@ -332,9 +368,9 @@ public class ElfFileView extends ViewPart {
 				text = new Text(sashForm, SWT.WRAP | SWT.V_SCROLL);
 				StringJoiner sj = new StringJoiner("\n");
 				DebugLineStateMaschine stateMaschine = new DebugLineStateMaschine(buf, sj);
-				
+
 				stateMaschine.run();
-				
+
 				sj.add(String.format("%s\t\t\t%s\t\t%s\t\t%s", "File", "Line", "Column", "Address"));
 				for (LineMatrixEntry entry : stateMaschine.matrix) {
 					sj.add(String.format("%s\t\t%s\t\t\t%s\t\t\t\t0x%X", entry.filename, entry.line, entry.column,

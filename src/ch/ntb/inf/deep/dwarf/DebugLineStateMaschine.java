@@ -1,7 +1,6 @@
 package ch.ntb.inf.deep.dwarf;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
@@ -115,6 +114,14 @@ public class DebugLineStateMaschine {
 		init();
 
 		for (LineMatrixEntry line : matrix) {
+			if (!directories.contains(line.directoryName)) {
+				directories.add(line.directoryName);
+			}
+			int directoryIndex = directories.indexOf(line.directoryName) + 1;
+
+			if (!files.stream().anyMatch(x -> x.filename.equals(line.filename))) {
+				files.add(new SourceFileEntry(files.size(), line.filename, directoryIndex));
+			}
 			generateNextOpCodes(line);
 		}
 
@@ -133,14 +140,12 @@ public class DebugLineStateMaschine {
 
 	public void appendRowToMatrix() {
 		String filename = files.get(fileIndex - 1).filename;
-		matrix.add(new LineMatrixEntry(filename, line, column, address));
+		int directoryIndex = files.get(fileIndex - 1).Dir;
+		String directorName = directoryIndex > 0 ? directories.get(directoryIndex - 1) : "";
+		matrix.add(new LineMatrixEntry(filename, directorName, line, column, address));
 	}
 
 	public void generateNextOpCodes(LineMatrixEntry line) {
-		if (!files.stream().anyMatch(x -> x.filename == line.filename)) {
-			files.add(new SourceFileEntry(files.size(), line.filename));
-		}
-
 		int maxLineIncrement = line_base + line_range - 1;
 		int lineIncrement = line.line - this.line;
 		int desiredAddressIncrement = (int) (line.address - this.address);
@@ -172,12 +177,10 @@ public class DebugLineStateMaschine {
 		opcode.execute(this);
 	}
 
-	public ByteBuffer SerializeProgram(ByteOrder byteOrder) {
+	public void serialize(ByteBuffer buf) {
 		// Add Header!
-		ByteBuffer buf = ByteBuffer.allocate(0xFFFF);
-		buf.order(byteOrder);
-
-		int totalLengthPosition = buf.position();
+		int offset = buf.position();
+		int totalLengthPosition = offset;
 		buf.putInt(0); // Total Length dummy Value. Update later!
 		buf.putShort(Version); // Version
 		int headerLengthPosition = buf.position();
@@ -197,24 +200,19 @@ public class DebugLineStateMaschine {
 		}
 		buf.put((byte) 0);
 
-		int headerLength = buf.position() - 4 - 2 - 4; // Header Length does not include TotalLength, Version and
+		int headerLength = buf.position() - offset - 4 - 2 - 4; // Header Length does not include TotalLength, Version
+																// and HeaderLength
 
 		// Add program
 		for (Opcode opcode : program) {
 			opcode.serialize(buf);
 		}
-		
-		int totalLength = buf.position() - 4; 	// Total Length without Lenght field itself
-		buf.flip();
-		
+
+		int totalLength = buf.position() - offset - 4; // Total Length without Length field itself
+
 		// Update Missing fields
-		buf.position(totalLengthPosition);
-		buf.putInt(totalLength);
-		buf.position(headerLengthPosition);
-		buf.putInt(headerLength);
-		
-		buf.rewind();
-		return buf;
+		buf.putInt(totalLengthPosition, totalLength);
+		buf.putInt(headerLengthPosition, headerLength);
 	}
 
 	public void run() {

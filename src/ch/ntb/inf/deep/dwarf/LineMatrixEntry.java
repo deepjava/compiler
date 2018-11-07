@@ -2,12 +2,14 @@ package ch.ntb.inf.deep.dwarf;
 
 public class LineMatrixEntry {
 	public final String filename;
+	public final String directoryName;
 	public final int line;
 	public final int column;
 	public final long address;
 
-	public LineMatrixEntry(String filename, int line, int column, long address) {
+	public LineMatrixEntry(String filename, String directoryName, int line, int column, long address) {
 		this.filename = filename;
+		this.directoryName = directoryName;
 		this.line = line;
 		this.column = column;
 		this.address = address;

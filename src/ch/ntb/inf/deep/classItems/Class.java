@@ -1277,6 +1277,11 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 //		vrb.println("----------");
 //		constantBlock.printListRaw();
 	}
+	
+	public HString getSrcFileName() {
+		return srcFileName;
+	}
+		
 
 
 }
