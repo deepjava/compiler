@@ -31,10 +31,6 @@ public class CompilationUnit implements DebugInformationEntry {
 		startAddress = clazz.methods.address;
 
 		// TODO: Start and End Address doe not completely match with Assembly Code!
-		Method lastMethod = (Method) clazz.methods;
-		while (lastMethod.next != null) {
-			lastMethod = (Method) lastMethod.next;
-		}
 		endAddress = clazz.address + clazz.typeDescriptorSize - clazz.typeDescriptorOffset;
 		this.lineNumberTableMatrix = new ArrayList<>();
 		this.subProgramms = new ArrayList<>();

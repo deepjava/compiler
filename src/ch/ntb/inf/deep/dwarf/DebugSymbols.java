@@ -1,15 +1,12 @@
 package ch.ntb.inf.deep.dwarf;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
-import ch.ntb.inf.deep.classItems.RefType;
 import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
 
 public class DebugSymbols {
@@ -32,7 +29,8 @@ public class DebugSymbols {
 		debug_line = ByteBuffer.allocate(0xFFFF);
 		debug_line.order(byteOrder);
 
-		RefType refType = RefType.refTypeList;
+		
+		Class refType = Class.initClasses;
 		while (refType != null) {
 			if (refType.methods != null) {
 				Class clazz = (Class) refType;
@@ -48,7 +46,7 @@ public class DebugSymbols {
 					method = (Method) method.next;
 				}
 			}
-			refType = (RefType) refType.next;
+			refType = refType.nextClass;
 		}
 
 		serialize();
@@ -60,9 +58,9 @@ public class DebugSymbols {
 	}
 
 	private void serialize() {
-		//compilationUnits.get(0).serializeAbbrev(debug_abbrev);
+		compilationUnits.get(0).serializeAbbrev(debug_abbrev);
 		for (CompilationUnit cu : compilationUnits) {
-			cu.serializeAbbrev(debug_abbrev);
+		//	cu.serializeAbbrev(debug_abbrev);
 			cu.serialize(debug_info, debug_line.position());
 			cu.serializeLine(debug_line);
 		}

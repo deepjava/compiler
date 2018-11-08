@@ -22,7 +22,7 @@ public class DebugLineStateMaschine {
 	public boolean basic_block;
 	public boolean end_sequence;
 	public final List<LineMatrixEntry> matrix;
-
+	
 	private List<String> directories;
 	public final List<SourceFileEntry> files;
 	private final List<Opcode> program;
@@ -126,6 +126,10 @@ public class DebugLineStateMaschine {
 		}
 
 		// this.matrix and matrix should be the same now!
+
+		if (!matrix.isEmpty()) {
+			InsertEndOfSequence();
+		}
 	}
 
 	public void init() {
@@ -154,6 +158,9 @@ public class DebugLineStateMaschine {
 			generateNextOpCodes(line);
 		} else if (lineIncrement < line_base) {
 			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_advance_line, lineIncrement));
+			generateNextOpCodes(line);
+		} else if (desiredAddressIncrement < 0) {
+			addOpcodeAndExecute(new ExtendedOpcode(ExtendedOpcode.DW_LNE_set_address, line.address));
 			generateNextOpCodes(line);
 		} else {
 			// Special Op Code;
