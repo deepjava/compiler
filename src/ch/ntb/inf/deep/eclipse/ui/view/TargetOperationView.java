@@ -88,7 +88,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	tDouble = 7, tByte = 8, tShort = 9, tInteger = 10, tLong = 11;
 
 	static final byte slotSize = 4; // 4 bytes
-	static final int maxEntries = 32;
+	static final int maxEntries = 64;
 		
 	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
 
@@ -346,13 +346,16 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		// contentProvider
 		elements = new TargetOpObject[maxEntries];
 		if (vars.length > 1) {
-			for(int i = 0; i < vars.length && i < elements.length; i++){
+			for (int i = 0; i < vars.length && i < elements.length; i++) {
 				String[] obj = vars[i].split(",");
 				if (obj.length > 1) {
 					elements[i] = new TargetOpObject(Integer.decode(obj[0]),obj[1]);
 				} else {
 					elements[i] = new TargetOpObject();
 				}
+			}
+			if (vars.length < elements.length) {
+				for (int i = vars.length; i < elements.length; i++) elements[i] = new TargetOpObject();
 			}
 		} else {
 			for (int i = 0; i < maxEntries; i++) {
