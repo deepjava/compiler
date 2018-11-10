@@ -109,7 +109,7 @@ public class DebugLineStateMaschine {
 		this.opcode_base = 13;
 		this.line_range = 14;
 		this.line_base = -5;
-		this.is_stmt_default = false;
+		this.is_stmt_default = true;
 
 		init();
 
