@@ -232,6 +232,7 @@ public interface InstructionOpcs {
 	armVsub = (0xe3 << 20) | (0xa4 << 4),
 	armVmul = (0xe2 << 20) | (0xa0 << 4),
 	armVdiv = (0xe8 << 20) | (0xa0 << 4),
+	armVneg = (0xeb << 20) | (1 << 16) | (0xa4 << 4),
 	armVmov = (0xeb << 20) | (0xa4 << 4),
 	armVcvt = (0xeb << 20) | (0xac << 4),
 

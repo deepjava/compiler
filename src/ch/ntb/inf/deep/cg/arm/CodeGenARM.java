@@ -43,7 +43,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public static int idGETGPR, idGETEXTRD, idGETEXTRS, idGETCPR;
 	public static int idPUTGPR, idPUTEXTRD, idPUTEXTRS, idPUTCPR;
 
-	private static int LRoffset;	
+	private static int LRoffset;	//not used in ARM
 	private static int XERoffset;	
 	private static int CRoffset;	
 	private static int CTRoffset;	
@@ -53,7 +53,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static int GPRoffset;	
 	private static int FPRoffset;	
 	private static int localVarOffset;
-	private static int tempStorageOffset;	
+//	private static int tempStorageOffset;	//not used in ARM
 	private static int stackSize;
 	static boolean tempStorage;
 	static boolean enFloatsInExc;
@@ -123,7 +123,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
 		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
-			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+			if (true) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
 			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR) & ~((1<<volEndGPR) | (1<<(volEndGPR-1)) | (1<<(volEndGPR-2)));
 			else RegAllocator.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
 			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocator.regsGPR));
@@ -345,7 +345,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-		tempStorageOffset = FPRoffset - tempStorageSize;	//TODO change as in ppc
+//		tempStorageOffset = FPRoffset - tempStorageSize;	//TODO change as in ppc
 		paramOffset = 4;
 		return size;
 	}
@@ -368,7 +368,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-		tempStorageOffset = FPRoffset - tempStorageSize;
+//		tempStorageOffset = FPRoffset - tempStorageSize;
 		paramOffset = 4;
 		return size;
 	}
@@ -938,7 +938,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcImm(code, armRsb, condLT, dReg, dReg, 0);	// negate if dividend and divisor have opposite sign
 					}
 					break;
-				case tLong: case tFloat: case tDouble:
+				case tLong: 
+					break;
+				case tFloat:
+					createFPdataProc(code, armVdiv, condAlways, dReg, src1Reg, src2Reg, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVdiv, condAlways, dReg, src1Reg, src2Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1027,7 +1033,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcImm(code, armRsbs, condAlways, dReg, src1Reg, 0);
 					createDataProcImm(code, armRsc, condAlways, dRegLong, src1RegLong, 0);
 					break;
-				case tFloat: case tDouble:
+				case tFloat:
+					createFPdataProc(code, armVneg, condAlways, dReg, src1Reg, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVneg, condAlways, dReg, src1Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -2387,11 +2397,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
-	// floating point data processing (VADD, VSUB, VMUL, VMOV (moving between ext. regs))
+	// floating point data processing (VADD, VSUB, VMUL, VDIV, VMOV (moving between ext. regs))
 	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vn, int Vm, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (((Vn>>1)&0xf) << 16) | ((Vn&1) << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((Vn&0xf) << 16) | ((Vn>>4) << 7) | (Vm&0xf) | ((Vm>>4) << 5);
+		code.incInstructionNum();
+	}
+
+	// floating point data processing (VNEG)
+	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vm, boolean single) {
+		code.instructions[code.iCount] = (cond << 28) | opCode;
+		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
+		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | (Vm&0xf) | ((Vm>>4) << 5);
 		code.incInstructionNum();
 	}
 
