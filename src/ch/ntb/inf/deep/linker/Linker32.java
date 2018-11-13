@@ -46,6 +46,7 @@ import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Device;
 import ch.ntb.inf.deep.config.Segment;
+import ch.ntb.inf.deep.dwarf.DebugSymbols;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import nl.lxtreme.binutils.elf.AbiType;
@@ -1294,7 +1295,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		return bytesWritten;
 	}
 	
-	public static long writeTargetImageToElfFile(String fileName) throws IOException {
+	public static long writeTargetImageToElfFile(String fileName) throws IOException {		
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");	
 		ByteBuffer buf = ByteBuffer.allocate(0xFFFFF);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -1312,10 +1313,24 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		int size = buf.position();
 		buf.flip();
 		
-		Elf elf = new Elf(ElfClass.CLASS_32, ByteOrder.LITTLE_ENDIAN, AbiType.ARM, ObjectFileType.EXEC, MachineType.ARM, 0);
+		Elf elf = new Elf(ElfClass.CLASS_32, ByteOrder.LITTLE_ENDIAN, AbiType.ARM, ObjectFileType.EXEC, MachineType.ARM, 0, 0x100);
 		elf.AddSection(buf, ".text", SectionType.PROGBITS, 7, 0, 0, 0, 0);
 		SectionHeader section = elf.sectionHeaders.get(elf.sectionHeaders.size() - 1);
 		elf.addProgramHeader(SegmentType.LOAD, 7, section.fileOffset, 0, 0, size, size, 0);
+		
+		
+		// Add Debug Line Number Information
+		DebugSymbols debugSymbols = new DebugSymbols(ByteOrder.LITTLE_ENDIAN);		
+
+		
+		buf = debugSymbols.getDebug_abbrev();
+		elf.AddSection(buf, ".debug_abbrev", SectionType.PROGBITS, 0, 0, 0, 1, 0);
+		buf = debugSymbols.getDebug_info();
+		elf.AddSection(buf, ".debug_info", SectionType.PROGBITS, 0, 0, 0, 1, 0);
+		
+		buf = debugSymbols.getDebug_line();	
+		elf.AddSection(buf, ".debug_line", SectionType.PROGBITS, 0, 0, 0, 1, 0);
+		
 		elf.saveToFile(fileName);
 		elf.close();
 		if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");

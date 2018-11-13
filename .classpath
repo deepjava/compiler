@@ -8,6 +8,7 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="junitHostTest"/>
 	<classpathentry kind="lib" path="/ch.ntb.inf.deep.trglib/bin" sourcepath="/ch.ntb.inf.deep.trglib/src"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java-binutils"/>
 	<classpathentry kind="lib" path="tempLibs/java-binutils-0.1.0.jar" sourcepath="/java-binutils/src"/>
