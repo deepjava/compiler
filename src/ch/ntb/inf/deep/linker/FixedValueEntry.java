@@ -18,31 +18,55 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import ch.ntb.inf.deep.strings.HString;
 
+/** 
+ * For entries in the constant block, the type descriptor, and the system table which have fixed values,
+ * This entry has the size of 4 bytes.
+ */
 public class FixedValueEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
 	int val;
 		
+	/** 
+	 * Create fixed value entry with a given name for a given value.
+	 * 
+	 * @param name Name of the value
+	 * @param val Value
+	 */
 	public FixedValueEntry(HString name, int val) {
 		this.name = name;
 		this.val = val;
 	}
 	
-	public FixedValueEntry(int val) {
-		this(UNDEF, val);
-	}
-	
+	/** 
+	 * Create fixed value entry with a given name with no assigned value yet.
+	 * 
+	 * @param name Name of the value
+	 */
 	public FixedValueEntry(HString name) {
 		this(name, -1);
 	}
 	
+	/** 
+	 * Create fixed value entry with a given name with no assigned value yet.
+	 * 
+	 * @param name Name of the value
+	 */
 	public FixedValueEntry(String name) {
 		this(HString.getRegisteredHString(name), -1);
 	}
 	
+	/** 
+	 * Create fixed value entry with a given name for a given value.
+	 * 
+	 * @param name Name of the value
+	 * @param val Value
+	 */
 	public FixedValueEntry(String name, int val) {
 		this(HString.getRegisteredHString(name), val);
 	}
@@ -55,23 +79,33 @@ public class FixedValueEntry extends ConstBlkEntry {
 		return size;
 	}
 	
+	/**
+	 * Inserts this entry into a target segment represented by an integer array at a given byte offset.
+	 * 
+	 * @param a Integer array where this fixed value entry should be inserted
+	 * @param offset Offset in bytes where to insert
+	 * @return Number of bytes inserted
+	 */
 	protected int insertIntoArray(int[] a, int offset) {
 		int index = offset / 4;
-		int written = 0;
 		if(offset + size <= a.length * 4) {
 			a[index] = val;
-			written = size;
+			return size;
 		}
-		return written;
+		return 0;
 	}
 	
+	/**
+	 * Returns this entry as a byte array. Return in endianess order of the target.
+	 * 
+	 * @return Byte array
+	 */
 	public byte[] getBytes() {
-		byte[] bytes = new byte[size];
-		for (int i = 0; i < size; ++i) {
-		    int shift = i << 3; // i * 8
-		    bytes[(size - 1) - i] = (byte)((val & (0xff << shift)) >>> shift);
+		if (Linker32.bigEndian) {
+			return ByteBuffer.allocate(4).putInt(val).array();
+		} else {
+			return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(val).array();
 		}
-		return bytes;
 	}
 	
 	public String toString() {

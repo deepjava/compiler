@@ -18,19 +18,29 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.StringLiteral;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.strings.HString;
 
+/** 
+ * For entries in the constant block, the type descriptor, and the system table which are strings,
+ * This entry has the size of multiples of 4 bytes.
+ */
 public class StringEntry extends ConstBlkEntry {
 	
 	private static final int tag = 0x80000000; // set mark bit, clear array bit and primitive array bit
 	private static final int constHeaderSize = 3 * 4; // byte
-	
 	Item ref;
 	
+	/** 
+	 * Create string entry for a given item
+	 * 
+	 * @param ref Reference to item
+	 */
 	public StringEntry(Item ref) {
 		this.ref = ref;
 		this.name = ref.name;
@@ -40,27 +50,34 @@ public class StringEntry extends ConstBlkEntry {
 		return getHeaderSize() + Linker32.roundUpToNextWord(getNumberOfChars() * 2);
 	}
 	
+	/**
+	 * Inserts this entry into a target segment represented by an integer array at a given byte offset.
+	 * 
+	 * @param a Integer array where this string entry should be inserted
+	 * @param offset Offset in bytes where to insert
+	 * @return Number of bytes inserted
+	 */
 	protected int insertIntoArray(int[] a, int offset) {
 		HString s = ((StringLiteral)ref).string;
 		int size = getItemSize(); // byte
 		int index = offset / 4;
 		int objectSize = getHeaderSize() - constHeaderSize; // byte
 		int word = 0, c = 0, written = 0;
-		if(offset + size <= a.length * 4) {
+		if (offset + size <= a.length * 4) {
 			a[index++] = tag;
 			a[index++] = getStringClassAddr();
 			written += 8;
-			for(int i = 0; i < objectSize / 4; i ++) {
-				a[index++] = 0; // TODO @Martin: insert fields of object here...
+			for (int i = 0; i < objectSize / 4; i ++) {
+				a[index++] = 0; // TODO @Urs: insert fields of object here...
 				written += 4;
 			}
 			a[index++] = getNumberOfChars();
 			written += 4;
-			for(int j = 0; j < getNumberOfChars(); j++) {
-				word = (word << 16) + s.charAt(j);
+			for (int i = 0; i < getNumberOfChars(); i++) {
+				word = (word << 16) + s.charAt(i);
 				c++;
-				if(c > 1 || j == s.length() - 1) {
-					if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
+				if (c > 1 || i == s.length() - 1) {
+					if (i == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
 					if (!Linker32.bigEndian) word = Integer.rotateLeft(word, 16); 
 					a[index++] = word; 
 					written += 4;
@@ -72,10 +89,19 @@ public class StringEntry extends ConstBlkEntry {
 		return written;
 	}
 	
-	protected void insertBytes(byte[] bytes, int offset, int val) {
-		for (int i = 0; i < 4; ++i) {
-		    int shift = i << 3; // i * 8
-		    bytes[offset + 3 - i] = (byte)((val & (0xff << shift)) >>> shift);
+	protected void insertBytes(byte[] bytes, int offset, int val, int size) {
+		if (Linker32.bigEndian) {
+			ByteBuffer bb = ByteBuffer.allocate(size);
+			byte[] b;
+			if (size == 4) b = bb.putInt(val).array();
+			else b = bb.putChar((char)val).array();
+			System.arraycopy(b, 0, bytes, offset, size);
+		} else {
+			ByteBuffer bb = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+			byte[] b;
+			if (size == 4) b = bb.putInt(val).array();
+			else b = bb.putChar((char)val).array();
+			System.arraycopy(b, 0, bytes, offset, size);
 		}
 	}
 	
@@ -84,22 +110,37 @@ public class StringEntry extends ConstBlkEntry {
 		int size = getItemSize();
 		byte[] bytes = new byte[size];
 		int offset = 0; int word = 0; int c = 0;
-		insertBytes(bytes, offset, tag); offset += 4;
-		insertBytes(bytes, offset, getStringClassAddr()); offset += 4;
-		for(int i = getHeaderSize() - constHeaderSize; i > 0; i--) {
-			bytes[offset] = 0;
-			offset++;
-		}
-		insertBytes(bytes, offset, getNumberOfChars()); offset += 4;
-		for(int j = 0; j < getNumberOfChars(); j++) {
-			word = (word << 16) + s.charAt(j);
-			c++;
-			if(c > 1 || j == s.length() - 1) {
-				if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
-				insertBytes(bytes, offset, word); offset += 4;
-				c = 0;
-				word = 0;
+		if (Linker32.bigEndian) {
+			insertBytes(bytes, offset, tag, 4); offset += 4;
+			insertBytes(bytes, offset, getStringClassAddr(), 4); offset += 4;
+			for(int i = getHeaderSize() - constHeaderSize; i > 0; i--) {
+				bytes[offset] = 0;
+				offset++;
 			}
+			insertBytes(bytes, offset, getNumberOfChars(), 4); offset += 4;
+			for(int j = 0; j < getNumberOfChars(); j++) {
+				word = (word << 16) + s.charAt(j);
+				c++;
+				if(c > 1 || j == s.length() - 1) {
+					if(j == s.length() - 1 && s.length() % 2 != 0) word = word << 16;
+					insertBytes(bytes, offset, word, 4); offset += 4;
+					c = 0;
+					word = 0;
+				}
+			}
+		} else {
+			insertBytes(bytes, offset, tag, 4); offset += 4;
+			insertBytes(bytes, offset, getStringClassAddr(), 4); offset += 4;
+			for(int i = getHeaderSize() - constHeaderSize; i > 0; i--) {
+				bytes[offset] = 0;
+				offset++;
+			}
+			insertBytes(bytes, offset, getNumberOfChars(), 4); offset += 4;
+			for (int i = 0; i < getNumberOfChars(); i++) {
+				insertBytes(bytes, offset, s.charAt(i), 2);
+				offset += 2;
+			}
+			if (getNumberOfChars() % 2 != 0) insertBytes(bytes, offset, 0, 2);
 		}
 		return bytes;
 	}
@@ -125,24 +166,17 @@ public class StringEntry extends ConstBlkEntry {
 		sb.append(" tag\n");
 		sb.append(String.format("[%08X]", getStringClassAddr()));
 		sb.append(" string class address\n");
-		for(int i = 0; i < (getHeaderSize() - constHeaderSize) / 4; i++) {
+		for (int i = 0; i < (getHeaderSize() - constHeaderSize) / 4; i++) {
 			sb.append("[ Object ]\n");
 		}
 		sb.append(String.format("[%08X]", getNumberOfChars()));
 		sb.append(" number of characters");
-		for(int i = 0; i < getNumberOfChars() - 1; i += 2) {
-			sb.append(String.format("\n[%08X]", (s.charAt(i) << 16) + s.charAt(i + 1)));
+		for (int i = 0; i < getNumberOfChars(); i++) {
+			sb.append(String.format("\n[%04X]", (int)s.charAt(i)));
 			sb.append(' ');
 			sb.append(s.charAt(i));
-			sb.append(s.charAt(i + 1));
 		}
-		if(getNumberOfChars() % 2 != 0) {
-			int c = getNumberOfChars() - 1;
-			sb.append(String.format("\n[%08X]", s.charAt(c) << 16));
-			sb.append(' ');
-			sb.append(s.charAt(c));
-		}
-				
+		if (getNumberOfChars() % 2 != 0) sb.append("\n[0000]");	// entries must be multiples of 2 -> 4 bytes
 		return sb.toString();
 	}
 	

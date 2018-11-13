@@ -18,15 +18,27 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import ch.ntb.inf.deep.strings.HString;
 
+/** 
+ * For entries in the type descriptor which are interface methods,
+ * This entry has the size of 4 bytes.
+ */
 public class InterfaceEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
-	
 	short ifaceID;
 	short bmo;
 		
+	/** 
+	 * Create interface method entry. 
+	 * 
+	 * @param ifaceName Name of the interface
+	 * @param ifaceID Interface id
+	 * @param bmo 
+	 */
 	public InterfaceEntry(HString ifaceName, short ifaceID, short bmo) {
 		this.name = ifaceName;
 		this.ifaceID = ifaceID;
@@ -49,24 +61,33 @@ public class InterfaceEntry extends ConstBlkEntry {
 		bmo = (short)offset;
 	}
 
+	/**
+	 * Inserts this entry into a target segment represented by an integer array at a given byte offset.
+	 * 
+	 * @param a Integer array where this interface entry should be inserted
+	 * @param offset Offset in bytes where to insert
+	 * @return Number of bytes inserted
+	 */
 	protected int insertIntoArray(int[] a, int offset) {
 		int index = offset / 4;
-		int written = 0;
 		if(offset + size <= a.length * 4) {
 			a[index] = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
-			written = size;
+			return size;
 		}
-		return written;
+		return 0;
 	}
 	
+	/**
+	 * Returns this entry as a byte array. Return in endianess order of the target.
+	 * 
+	 * @return Byte array
+	 */
 	public byte[] getBytes() {
-		byte[] bytes = new byte[size];
-		int value = (int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF);
-		for (int i = 0; i < size; ++i) {
-		    int shift = i << 3; // i * 8
-		    bytes[(size - 1) - i] = (byte)((value & (0xff << shift)) >>> shift);
+		if (Linker32.bigEndian) {
+			return ByteBuffer.allocate(4).putInt((int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF)).array();
+		} else {
+			return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt((int)this.ifaceID << 16 | ((int)this.bmo & 0xFFFF)).array();
 		}
-		return bytes;
 	}
 	
 	public String toString() {

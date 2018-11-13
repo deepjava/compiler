@@ -18,15 +18,28 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.host.ErrorReporter;
 
+/** 
+ * For entries in the constant block which are constants (float, double).
+ * This entry has the size of 4 or 8 bytes.
+ */
 public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts {
 	
+	private static final ErrorReporter reporter = ErrorReporter.reporter;
 	Item ref;
 	
+	/** 
+	 * Create constant entry for a given item
+	 * 
+	 * @param ref Reference to item
+	 */
 	public ConstantEntry(Item ref) {
 		this.ref = ref;
 		this.name = ref.name;
@@ -36,13 +49,21 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 		return ((Type)ref.type).sizeInBits / 8;
 	}
 	
+	/**
+	 * Inserts this entry into a target segment represented by an integer array at a given byte offset.
+	 * The value is inserted according to the endianess of the target.
+	 * 
+	 * @param a Integer array where this constant entry should be inserted
+	 * @param offset Offset in bytes where to insert
+	 * @return Number of bytes inserted
+	 */
 	protected int insertIntoArray(int[] a, int offset) {
 		int size = this.getItemSize();
 		int index = offset / 4;
 		int written = 0;
 		if(offset + size <= a.length * 4) {
 			switch(size) {
-			case 8: // long/double 
+			case 8: // double 
 				if (Linker32.bigEndian) {
 					a[index] = ((StdConstant)ref).valueH;
 					a[index + 1] = ((StdConstant)ref).valueL;
@@ -52,58 +73,50 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 				}
 				written = size;
 				break;
-			case 4: // int/float 
+			case 4: // float 
 				a[index] = ((StdConstant)ref).valueH;
 				written = size;
 				break;
-			case 2: // short/char
-				break;
-			case 1:	// byte/boolean 
-				break;
 			default: // error
+				reporter.error(713, "use for float, double"); 
 				break;
 			}
 		}
 		return written;
 	}
 	
+	/**
+	 * Returns this entry as a byte array. Return in endianess order of the target.
+	 * 
+	 * @return Byte array
+	 */
 	public byte[] getBytes() {
 		int size = getItemSize();
-		byte[] bytes = new byte[size];
+		byte[] bytes = null;
 		
 		switch(size) {
-		case 8: // long/double
+		case 8: // double
 			if (Linker32.bigEndian) {
-				for (int i = 0; i < 4; ++i) {
-				    int shift = i << 3; // i * 8
-				    bytes[7 - i] = (byte)((((StdConstant)ref).valueL & (0xff << shift)) >>> shift);
-				}
-				for (int i = 0; i < 4; ++i) {
-				    int shift = i << 3; // i * 8
-				    bytes[3 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
-				}
+				ByteBuffer bb = ByteBuffer.allocate(8);
+				bb.putInt(((StdConstant)ref).valueH);
+				bb.putInt(((StdConstant)ref).valueL);
+				bytes = bb.array();
 			} else {
-				for (int i = 0; i < 4; ++i) {
-				    int shift = i << 3; // i * 8
-				    bytes[7 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
-				}
-				for (int i = 0; i < 4; ++i) {
-				    int shift = i << 3; // i * 8
-				    bytes[3 - i] = (byte)((((StdConstant)ref).valueL & (0xff << shift)) >>> shift);
-				}
+				ByteBuffer bb = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
+				bb.putInt(((StdConstant)ref).valueL);
+				bb.putInt(((StdConstant)ref).valueH);
+				bytes = bb.array();
 			}
 			break;
-		case 4: // int/float
-			for (int i = 0; i < size; ++i) {
-			    int shift = i << 3; // i * 8
-			    bytes[3 - i] = (byte)((((StdConstant)ref).valueH & (0xff << shift)) >>> shift);
+		case 4: // float
+			if (Linker32.bigEndian) {
+				bytes = ByteBuffer.allocate(4).putInt(((StdConstant)ref).valueH).array();
+			} else {
+				bytes = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(((StdConstant)ref).valueH).array();
 			}
-			break;
-		case 2: // short/char
-			break;
-		case 1:	// byte/boolean 
 			break;
 		default: // error
+			reporter.error(713, "use for float, double"); 
 			break;
 		}
 		return bytes;
@@ -113,7 +126,7 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 		int size = this.getItemSize();
 		StringBuilder sb = new StringBuilder();
 		switch(size) {
-		case 8: // long/double
+		case 8: // double
 			if (Linker32.bigEndian) {
 				sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
 				sb.append(' ');
@@ -128,16 +141,13 @@ public class ConstantEntry extends ConstBlkEntry implements ICdescAndTypeConsts 
 				sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
 			}
 			break;
-		case 4: // int/float 
+		case 4: // float 
 			sb.append(String.format("[%08X]", ((StdConstant)ref).valueH));
 			sb.append(' ');
 			sb.append(((StdConstant)ref));
 			break;
-		case 2: // short/char
-			break;
-		case 1:	// byte/boolean 
-			break;
 		default: // error
+			reporter.error(713, "use for float, double"); 
 			break;
 		}
 		return sb.toString();

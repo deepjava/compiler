@@ -18,21 +18,40 @@
 
 package ch.ntb.inf.deep.linker;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.strings.HString;
 
+/** 
+ * For entries in the type descriptor which are offsets. This are instance fields which are references.
+ * This entry has the size of 4 bytes.
+ */
 public class OffsetEntry extends ConstBlkEntry {
 	
 	private static final int size = 4;
 	
 	Item itemRef;
 	
+	/** 
+	 * Create offset entry for a given item
+	 * 
+	 * @param ref Reference to item
+	 */
 	public OffsetEntry(Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = ref.name;
 		else name = UNDEF;
 	}
 	
+	/** 
+	 * Create offset entry for a given item. 
+	 * The name of the entry can be specified with a prefix. 
+	 * The final name will be prefix + item.name
+	 * 
+	 * @param prefix Prefix
+	 * @param ref Reference to item
+	 */
 	public OffsetEntry(String prefix, Item ref) {
 		this.itemRef = ref;
 		if(ref.name != null) this.name = HString.getRegisteredHString(prefix + ref.name);
@@ -43,24 +62,34 @@ public class OffsetEntry extends ConstBlkEntry {
 		return size;
 	}
 	
+	/**
+	 * Inserts this entry into a target segment represented by an integer array at a given byte offset.
+	 * 
+	 * @param a Integer array where this offset entry should be inserted
+	 * @param offset Offset in bytes where to insert
+	 * @return Number of bytes inserted
+	 */
 	protected int insertIntoArray(int[] a, int offset) {
 		int value = itemRef.offset;
 		int index = offset / 4;
-		int written = 0;
 		if(offset + size <= a.length * 4) {
 			a[index] = value;
-			written = size;
+			return size;
 		}
-		return written;
+		return 0;
 	}
 	
+	/**
+	 * Returns this entry as a byte array. Return in endianess order of the target.
+	 * 
+	 * @return Byte array
+	 */
 	public byte[] getBytes() {
-		byte[] bytes = new byte[size];
-		for (int i = 0; i < size; ++i) {
-		    int shift = i << 3; // i * 8
-		    bytes[(size - 1) - i] = (byte)((itemRef.offset & (0xff << shift)) >>> shift);
+		if (Linker32.bigEndian) {
+			return ByteBuffer.allocate(4).putInt(itemRef.offset).array();
+		} else {
+			return ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(itemRef.offset).array();
 		}
-		return bytes;
 	}
 	
 	public String toString() {

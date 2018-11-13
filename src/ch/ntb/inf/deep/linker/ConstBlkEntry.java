@@ -21,6 +21,9 @@ package ch.ntb.inf.deep.linker;
 import ch.ntb.inf.deep.classItems.Item;
 import ch.ntb.inf.deep.host.StdStreams;
 
+/** 
+ * Base class for entries in the constant block, the type descriptor, and the system table.
+ */
 public class ConstBlkEntry extends Item {
 	
 	protected int getItemSize() {

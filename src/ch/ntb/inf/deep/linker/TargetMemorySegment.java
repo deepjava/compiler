@@ -62,7 +62,7 @@ public class TargetMemorySegment {
 		this.startAddress = startAddress;
 		assert startAddress != -1;
 		this.data = new int[Linker32.getBlockSize(item) / 4];
-		int offset = 0;
+		int offset = 0;	// offset in bytes
 		while (item != null) {
 			item.insertIntoArray(data, offset);
 			offset += item.getItemSize();

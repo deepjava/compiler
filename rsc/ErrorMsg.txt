@@ -87,6 +87,7 @@ ErrorNr;Description;Solution
 710;segment not found;
 711;segment size error;
 712;method with fixed offset cannot be placed in segment;
+713;constant block entry with unsupported size;
 720;address not set;
 721;offset not set;
 722;index not set;

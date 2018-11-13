@@ -1460,8 +1460,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 
 	/**
-	 * calculates total size of all items in the linked list starting with <code>item</code>
-	 * @return
+	 * Calculates total size of all items in bytes in the linked list of ConstBlkENtry starting with <code>item</code>
+	 * 
+	 * @return Size in bytes
 	 */
 	static int getBlockSize(Item item) {
 		int size = 0;
