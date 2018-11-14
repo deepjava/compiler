@@ -1324,11 +1324,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 
 		
 		buf = debugSymbols.getDebug_abbrev();
+		buf.flip();
 		elf.AddSection(buf, ".debug_abbrev", SectionType.PROGBITS, 0, 0, 0, 1, 0);
 		buf = debugSymbols.getDebug_info();
+		buf.flip();
 		elf.AddSection(buf, ".debug_info", SectionType.PROGBITS, 0, 0, 0, 1, 0);
 		
-		buf = debugSymbols.getDebug_line();	
+		buf = debugSymbols.getDebug_line();
+		buf.flip();
 		elf.AddSection(buf, ".debug_line", SectionType.PROGBITS, 0, 0, 0, 1, 0);
 		
 		elf.saveToFile(fileName);
