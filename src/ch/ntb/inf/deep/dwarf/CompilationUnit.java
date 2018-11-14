@@ -3,21 +3,25 @@ package ch.ntb.inf.deep.dwarf;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
 import ch.ntb.inf.deep.dwarf.die.DwAtType;
 import ch.ntb.inf.deep.dwarf.die.DwFormType;
 import ch.ntb.inf.deep.dwarf.die.DwTagType;
 
-public class CompilationUnit implements DebugInformationEntry {
+public class CompilationUnit extends DebugInformationEntry {
 	private final File srcFile;
 	private final List<LineMatrixEntry> lineNumberTableMatrix;
 	private final int startAddress;
 	private final int endAddress;
 	private final List<SubProgramDIE> subProgramms;
+	private final Map<String, BaseTypeDIE> types;
 
 	private static final byte abbrev_code = 1;
 	private static final short version = 4;
@@ -28,17 +32,32 @@ public class CompilationUnit implements DebugInformationEntry {
 		super();
 		File file = new File(clazz.name.toString());
 		this.srcFile = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
-		startAddress = clazz.methods.address;
+		this.startAddress = clazz.codeBase.getValue();
 
-		// TODO: Start and End Address doe not completely match with Assembly Code!
-		endAddress = clazz.address + clazz.typeDescriptorSize - clazz.typeDescriptorOffset;
 		this.lineNumberTableMatrix = new ArrayList<>();
+
+		this.types = new HashMap<>();
+		for (Type type : Type.wellKnownTypes) {
+			if (type != null) {
+				BaseTypeDIE newBaseTypeDIE = new BaseTypeDIE(type);
+				types.put(type.name.toString(), newBaseTypeDIE);
+			}
+		}
+
+//		Type type = Class.refTypeList;
+//		while (type != null) {
+//			BaseTypeDIE newBaseTypeDIE = new BaseTypeDIE(type);
+//			types.put(type, newBaseTypeDIE);
+//			type = (Type) type.next;
+//		}
+
 		this.subProgramms = new ArrayList<>();
 		Method method = (Method) clazz.methods;
 		while (method != null) {
-			subProgramms.add(new SubProgramDIE(method));
+			subProgramms.add(new SubProgramDIE(method, types));
 			method = (Method) method.next;
 		}
+		this.endAddress = subProgramms.get(subProgramms.size() -1).endAddress;
 	}
 
 	public void serialize(ByteBuffer buf, int debugLinePosition) {
@@ -59,8 +78,13 @@ public class CompilationUnit implements DebugInformationEntry {
 		buf.putInt(startAddress);
 		buf.putInt(endAddress);
 		buf.putInt(debugLinePosition);
-		
-		for( SubProgramDIE subProg: subProgramms) {
+
+		// Serialize all Types
+		for (BaseTypeDIE baseType : types.values()) {
+			baseType.serialize(buf, 0);
+		}
+
+		for (SubProgramDIE subProg : subProgramms) {
 			subProg.serialize(buf, 0);
 		}
 		// Last sibling terminated by a null entry
@@ -71,11 +95,10 @@ public class CompilationUnit implements DebugInformationEntry {
 		buf.putInt(offset, length);
 	}
 
-	@Override
-	public void serializeAbbrev(ByteBuffer buf) {
+	public static void serializeAbbrev(ByteBuffer buf) {
 		Utils.writeUnsignedLeb128(buf, abbrev_code); // abbrev_code ULEB128
 		Utils.writeUnsignedLeb128(buf, DwTagType.DW_TAG_compile_unit.value());
-		buf.put((byte) (hasChildern() ? 1 : 0)); // hasChilden (1 Byte) DW_CHILDREN_yes
+		buf.put((byte) 1); // hasChilden (1 Byte) DW_CHILDREN_yes
 
 		// Attributes first name (ULEB128) second form (ULEB128)
 		Utils.writeUnsignedLeb128(buf, DwAtType.DW_AT_producer.value());
@@ -103,9 +126,10 @@ public class CompilationUnit implements DebugInformationEntry {
 		Utils.writeUnsignedLeb128(buf, 0);
 		Utils.writeUnsignedLeb128(buf, 0);
 
-		
-		subProgramms.get(0).serializeAbbrev(buf);	
-		
+		BaseTypeDIE.serializeAbbrev(buf);
+
+		SubProgramDIE.serializeAbbrev(buf);
+
 		Utils.writeUnsignedLeb128(buf, 0); // End Symbol with 0
 	}
 
@@ -117,10 +141,5 @@ public class CompilationUnit implements DebugInformationEntry {
 	public void serializeLine(ByteBuffer buf) {
 		DebugLineStateMaschine stateMachine = new DebugLineStateMaschine(lineNumberTableMatrix);
 		stateMachine.serialize(buf);
-	}
-
-	@Override
-	public boolean hasChildern() {
-		return true;
 	}
 }

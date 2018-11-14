@@ -28,7 +28,6 @@ public class DebugSymbols {
 		debug_abbrev.order(byteOrder);
 		debug_line = ByteBuffer.allocate(0xFFFF);
 		debug_line.order(byteOrder);
-
 		
 		Class refType = Class.initClasses;
 		while (refType != null) {
@@ -58,7 +57,7 @@ public class DebugSymbols {
 	}
 
 	private void serialize() {
-		compilationUnits.get(0).serializeAbbrev(debug_abbrev);
+		CompilationUnit.serializeAbbrev(debug_abbrev);
 		for (CompilationUnit cu : compilationUnits) {
 		//	cu.serializeAbbrev(debug_abbrev);
 			cu.serialize(debug_info, debug_line.position());

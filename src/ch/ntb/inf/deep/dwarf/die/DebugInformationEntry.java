@@ -7,8 +7,8 @@ import java.nio.ByteBuffer;
  * @author Martin
  *
  */
-public interface DebugInformationEntry {
-	public boolean hasChildern();
-	public void serialize(ByteBuffer buf, int debugLinePosition);
-	public void serializeAbbrev(ByteBuffer buf);
+public abstract class DebugInformationEntry {
+	public int baseAddress;
+	
+	public abstract void serialize(ByteBuffer buf, int debugLinePosition);
 }
