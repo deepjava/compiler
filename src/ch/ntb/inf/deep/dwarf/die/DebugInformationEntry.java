@@ -1,23 +1,44 @@
 package ch.ntb.inf.deep.dwarf.die;
 
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import ch.ntb.inf.deep.dwarf.DieVisitor;
 
 public abstract class DebugInformationEntry {
 	private static int abbrevCodeCount = 1;
+
+	private List<DebugInformationEntry> children;
+	private DebugInformationEntry parent;
 	public final int abbrevCode;
 	public int baseAddress;
 
-	public boolean hasChildren;
+	protected DebugInformationEntry(DebugInformationEntry parent) {
+		this(parent, false);
+	}
 
-	protected DebugInformationEntry(boolean hasChildren) {
+	protected DebugInformationEntry(DebugInformationEntry parent, boolean insertAtBeginn) {
 		abbrevCode = abbrevCodeCount;
 		abbrevCodeCount++;
-		
-		this.hasChildren = hasChildren;
+		this.parent = parent;
+		children = new ArrayList<>();
+		if (parent != null) {
+			int insertIndex = insertAtBeginn ? 0 : parent.children.size();
+			parent.children.add(insertIndex, this);
+		}
+	}
+
+	public abstract void accept(DieVisitor visitor);
+
+	public DebugInformationEntry getParent() {
+		return parent;
+	}
+
+	public List<DebugInformationEntry> getChildren() {
+		return children;
 	}
 	
-//	public abstract void serialize(ByteBuffer debug_info, ByteBuffer debug_abbrev, ByteBuffer debug_line);
-	public abstract void accept(DieVisitor visitor);;
+	public boolean hasChildren() {
+		return !children.isEmpty();
+	}
 }

@@ -15,40 +15,28 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 	final File srcFile;
 	final List<LineMatrixEntry> lineNumberTableMatrix;
 	final int startAddress;
-	final int endAddress;
-	final List<SubProgramDIE> subProgramms;
-	final Map<String, BaseTypeDIE> types;
+	int endAddress;
+	final Map<String, BaseTypeDIE> knownTypes;
 
 	public CompilationUnitDIE(Class clazz) {
-		super(true);
+		super(null);
+		System.out.println("Class: " + clazz.name);
 		File file = new File(clazz.name.toString());
 		this.srcFile = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
 		this.startAddress = clazz.codeBase.getValue();
 
 		this.lineNumberTableMatrix = new ArrayList<>();
 
-		this.types = new HashMap<>();
-		for (Type type : Type.wellKnownTypes) {
-			if (type != null) {
-				BaseTypeDIE newBaseTypeDIE = new BaseTypeDIE(type);
-				types.put(type.name.toString(), newBaseTypeDIE);
-			}
-		}
+		this.knownTypes = new HashMap<>();
 
-		Type type = Class.refTypeList;
-		while (type != null) {
-			BaseTypeDIE newBaseTypeDIE = new BaseTypeDIE(type);
-			types.put(type.name.toString(), newBaseTypeDIE);
-			type = (Type) type.next;
-		}
-
-		this.subProgramms = new ArrayList<>();
 		Method method = (Method) clazz.methods;
 		while (method != null) {
-			subProgramms.add(new SubProgramDIE(method, types));
+			if (method.address != -1) {
+				SubProgramDIE die = new SubProgramDIE(method, this);
+				this.endAddress = die.endAddress;
+			}
 			method = (Method) method.next;
 		}
-		this.endAddress = subProgramms.get(subProgramms.size() - 1).endAddress;
 	}
 
 	public void addLineNumberEntry(int srcLineNumber, int machineCodeAddress) {
@@ -59,5 +47,12 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 	@Override
 	public void accept(DieVisitor visitor) {
 		visitor.visit(this);
+	}
+
+	public BaseTypeDIE getBaseTypeDie(Type type) {
+		if (!knownTypes.containsKey(type.name.toString())) {
+			knownTypes.put(type.name.toString(), new BaseTypeDIE(type, this));
+		}
+		return knownTypes.get(type.name.toString());
 	}
 }

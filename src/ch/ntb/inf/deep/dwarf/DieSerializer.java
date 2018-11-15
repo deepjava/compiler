@@ -3,8 +3,10 @@ package ch.ntb.inf.deep.dwarf;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
 import ch.ntb.inf.deep.dwarf.die.DwAtType;
 import ch.ntb.inf.deep.dwarf.die.DwFormType;
+import ch.ntb.inf.deep.dwarf.die.DwOpType;
 import ch.ntb.inf.deep.dwarf.die.DwTagType;
 
 public class DieSerializer implements DieVisitor {
@@ -36,7 +38,7 @@ public class DieSerializer implements DieVisitor {
 
 		Utils.writeUnsignedLeb128(debug_abbrev, die.abbrevCode); // abbrev_code ULEB128
 		Utils.writeUnsignedLeb128(debug_abbrev, DwTagType.DW_TAG_base_type.value());
-		debug_abbrev.put((byte) 0); // hasChilden (1 Byte) DW_CHILDREN_yes
+		debug_abbrev.put((byte) (die.hasChildren() ? 1 : 0)); // hasChilden (1 Byte) DW_CHILDREN_yes
 
 		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_byte_size.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data1.value());
@@ -55,6 +57,7 @@ public class DieSerializer implements DieVisitor {
 	@Override
 	public void visit(CompilationUnitDIE die) {
 		// Header
+		die.baseAddress = debug_info.position();
 		int offset = debug_info.position();
 		debug_info.putInt(0); // Dummy value for length. Update later
 		debug_info.putShort(version);
@@ -74,7 +77,7 @@ public class DieSerializer implements DieVisitor {
 		// Abbrev
 		Utils.writeUnsignedLeb128(debug_abbrev, die.abbrevCode); // abbrev_code ULEB128
 		Utils.writeUnsignedLeb128(debug_abbrev, DwTagType.DW_TAG_compile_unit.value());
-		debug_abbrev.put((byte) 1); // hasChilden (1 Byte) DW_CHILDREN_yes
+		debug_abbrev.put((byte) (die.hasChildren() ? 1 : 0)); // hasChilden (1 Byte) DW_CHILDREN_yes
 
 		// Attributes first name (ULEB128) second form (ULEB128)
 		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_producer.value());
@@ -106,13 +109,8 @@ public class DieSerializer implements DieVisitor {
 		DebugLineStateMaschine stateMachine = new DebugLineStateMaschine(die.lineNumberTableMatrix);
 		stateMachine.serialize(debug_line);
 
-		// Serialize all Types
-		for (BaseTypeDIE baseType : die.types.values()) {
-			baseType.accept(this);
-		}
-
-		for (SubProgramDIE subProg : die.subProgramms) {
-			subProg.accept(this);
+		for (DebugInformationEntry child : die.getChildren()) {
+			child.accept(this);
 		}
 		// Last sibling terminated by a null entry
 		Utils.writeUnsignedLeb128(debug_info, 0);
@@ -134,11 +132,15 @@ public class DieSerializer implements DieVisitor {
 		debug_info.putInt(die.lineNo);
 		debug_info.putInt(die.startAddress);
 		debug_info.putInt(die.endAddress);
-		debug_info.putInt(die.returnType.baseAddress);
+		debug_info.putInt(die.returnType.baseAddress - die.getParent().baseAddress);
+//		Utils.writeUnsignedLeb128(debug_info, 1);		// Expr Length
+//		debug_info.put(DwOpType.DW_OP_call_frame_cfa.value());
+//		Utils.writeUnsignedLeb128(debug_info, 1);		// Expr Length
+//		debug_info.put(DwOpType.DW_OP_reg0.value());
 
 		Utils.writeUnsignedLeb128(debug_abbrev, die.abbrevCode); // abbrev_code ULEB128
 		Utils.writeUnsignedLeb128(debug_abbrev, DwTagType.DW_TAG_subprogram.value());
-		debug_abbrev.put((byte) 0); // hasChilden (1 Byte) DW_CHILDREN_yes
+		debug_abbrev.put((byte) (die.hasChildren() ? 1 : 0)); // hasChilden (1 Byte) DW_CHILDREN_yes
 
 		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_external.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_flag.value());
@@ -163,6 +165,46 @@ public class DieSerializer implements DieVisitor {
 
 		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_type.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_ref4.value());
+
+//		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_frame_base.value());
+//		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_exprloc.value());
+
+//		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_location.value());
+//		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_exprloc.value());
+
+		// Ending of Attribute List
+		Utils.writeUnsignedLeb128(debug_abbrev, 0);
+		Utils.writeUnsignedLeb128(debug_abbrev, 0);
+		
+		if (die.hasChildren()) {
+			for(DebugInformationEntry child:  die.getChildren()) {
+				child.accept(this);
+			}
+			// Last sibling terminated by a null entry
+			Utils.writeUnsignedLeb128(debug_info, 0);
+		}
+	}
+
+	@Override
+	public void visit(VariableDIE die) {
+		Utils.writeUnsignedLeb128(debug_info, die.abbrevCode);
+		debug_info.put(Utils.serialize(die.name));
+		debug_info.putInt(die.type.baseAddress - die.getParent().baseAddress);
+		Utils.writeUnsignedLeb128(debug_info, 1);		// Expr Length
+		debug_info.put(DwOpType.DW_OP_reg0.value());
+
+		Utils.writeUnsignedLeb128(debug_abbrev, die.abbrevCode); // abbrev_code ULEB128
+		Utils.writeUnsignedLeb128(debug_abbrev, DwTagType.DW_TAG_formal_parameter.value());
+		debug_abbrev.put((byte) (die.hasChildren() ? 1 : 0)); // hasChilden (1 Byte) DW_CHILDREN_yes
+
+		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_name.value());
+		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_string.value());
+		
+		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_type.value());
+		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_ref4.value());
+		
+		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_location.value());
+		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_exprloc.value());
 
 		// Ending of Attribute List
 		Utils.writeUnsignedLeb128(debug_abbrev, 0);

@@ -9,7 +9,7 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
 
-public class DebugSymbols {
+public class DebugSymbols{
 	private final List<CompilationUnitDIE> compilationUnits;
 	private final DieSerializer serializer;
 
@@ -20,7 +20,8 @@ public class DebugSymbols {
 
 		Class refType = Class.initClasses;
 		while (refType != null) {
-			if (refType.methods != null) { // && refType.name.toString().equals("test/ObjFields")) {
+			if (refType.methods != null && refType.name.toString().equals("test/ObjFields")) {
+//			if (refType.methods != null){
 				Class clazz = (Class) refType;
 				setNextCompilationUnit(clazz);
 				Method method = (Method) clazz.methods;
@@ -59,5 +60,4 @@ public class DebugSymbols {
 	public ByteBuffer getDebug_line() {
 		return serializer.debug_line;
 	}
-
 }
