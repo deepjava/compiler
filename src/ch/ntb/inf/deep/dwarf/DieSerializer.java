@@ -32,8 +32,8 @@ public class DieSerializer implements DieVisitor {
 	public void visit(BaseTypeDIE die) {
 		die.baseAddress = debug_info.position();
 		Utils.writeUnsignedLeb128(debug_info, die.abbrevCode);
-		debug_info.put((byte) die.type.getTypeSize());
-		debug_info.put(die.encoding);
+		debug_info.put((byte) die.sizeInBytes);
+		debug_info.put(die.encoding.value());
 		debug_info.put(Utils.serialize(die.name));
 
 		Utils.writeUnsignedLeb128(debug_abbrev, die.abbrevCode); // abbrev_code ULEB128

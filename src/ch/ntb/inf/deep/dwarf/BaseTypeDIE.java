@@ -1,75 +1,74 @@
 package ch.ntb.inf.deep.dwarf;
 
-import ch.ntb.inf.deep.classItems.ICdescAndTypeConsts;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
 import ch.ntb.inf.deep.dwarf.die.DwAteType;
 
 public class BaseTypeDIE extends DebugInformationEntry {
 
-	final Type type;
-	byte encoding;
-	String name;
+	final byte sizeInBytes;
+	final DwAteType encoding;
+	final String name;
 
 	public BaseTypeDIE(Type type, DebugInformationEntry parent) {
-		super(parent, true);	// Insert at First Position to be sure it is serialized before its depending DIE
-		this.type = type;
-		switch (type.category) {
-		case ICdescAndTypeConsts.tcPrimitive:
-			primitiveType(type.name.charAt(0));
-			break;
-		case ICdescAndTypeConsts.tcRef:
-			name = type.name.toString();
-			this.encoding = DwAteType.DW_ATE_address.value();
-			break;
-		case ICdescAndTypeConsts.tcArray:
-			primitiveType(type.name.charAt(1));
-			this.name = "[" + this.name + "]";
-			this.encoding = DwAteType.DW_ATE_address.value();
-			break;
+		super(parent, true); // Insert at First Position to be sure it is serialized before its depending DIE
+		this.sizeInBytes = (byte) type.getTypeSize();
+		String typeName = "";
+		if (type.category == 'L') {
+			typeName += type.category;
+		}
+		typeName += type.name;
+		this.name = getTypeName(typeName);
+		this.encoding = getTypeEncoding(typeName);
+	}
+
+	private DwAteType getTypeEncoding(String typeName) {
+		switch (typeName.charAt(0)) {
+		case 'V':
+		case 'S':
+		case 'J':
+		case 'I':
+			return DwAteType.DW_ATE_signed;
+		case 'Z':
+			return DwAteType.DW_ATE_boolean;
+		case 'B':
+		case 'C':
+			return DwAteType.DW_ATE_signed_char;
+		case 'F':
+		case 'D':
+			return DwAteType.DW_ATE_float;
+		case 'L':
+		case '[':
+			return DwAteType.DW_ATE_address;
 		default:
 			throw new RuntimeException("Unknown Base Type found");
 		}
 	}
 
-	private void primitiveType(char c) {
-		switch (c) {
+	private String getTypeName(String typeName) {
+		switch (typeName.charAt(0)) {
 		case 'V':
-			this.encoding = DwAteType.DW_ATE_signed.value();
-			name = "void";
-			break;
+			return "void";
 		case 'Z':
-			this.encoding = DwAteType.DW_ATE_boolean.value();
-			name = "boolean";
-			break;
+			return "boolean";
 		case 'B':
-			name = "byte";
-			this.encoding = DwAteType.DW_ATE_signed_char.value();
-			break;
+			return "byte";
 		case 'S':
-			this.encoding = DwAteType.DW_ATE_signed.value();
-			name = "short";
-			break;
+			return "short";
 		case 'C':
-			this.encoding = DwAteType.DW_ATE_signed_char.value();
-			name = "char";
-			break;
+			return "char";
 		case 'I':
-			this.encoding = DwAteType.DW_ATE_signed.value();
-			name = "int";
-			break;
+			return "int";
 		case 'J':
-			this.encoding = DwAteType.DW_ATE_signed.value();
-			name = "long";
-			break;
+			return "long";
 		case 'F':
-			this.encoding = DwAteType.DW_ATE_float.value();
-			name = "float";
-			break;
+			return "float";
 		case 'D':
-			this.encoding = DwAteType.DW_ATE_float.value();
-			name = "double";
-			break;
+			return "double";
+		case 'L':
+			return typeName.substring(1).replace(";", "");
+		case '[':
+			return getTypeName(typeName.substring(1)) + "[]";
 		default:
 			throw new RuntimeException("Unknown Base Type found");
 		}
