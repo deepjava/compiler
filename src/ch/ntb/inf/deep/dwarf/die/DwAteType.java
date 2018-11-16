@@ -10,10 +10,10 @@ public enum DwAteType {
 	DW_ATE_unsigned(7),
 	DW_ATE_unsigned_char(8);
 	
-	private int value;
+	private byte value;
 
 	DwAteType(int value) {
-		this.value = value;
+		this.value = (byte)value;
 	}
 	
 	public static DwAteType byValue(int value) {
@@ -25,7 +25,7 @@ public enum DwAteType {
 		return null;
 	}
 	
-	public int value() {
+	public byte value() {
 		return this.value;
 	}
 }

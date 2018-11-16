@@ -96,7 +96,7 @@ public class Utils {
 		String joinedString = String.join("\0", strs) + '\0';
 		return serialize(joinedString);
 	}
-
+	
 	public static byte[] serialize(String str) {
 		return (str + '\0').getBytes();
 	}

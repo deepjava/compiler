@@ -87,6 +87,9 @@ public class Method extends ClassMember {
 	}
 
 	public int getCodeSizeInBytes() {
+		if (machineCode == null) {
+			return 0;
+		}
 		return machineCode.iCount * 4;
 	}
 	

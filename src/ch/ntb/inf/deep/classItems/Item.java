@@ -196,6 +196,11 @@ public abstract class Item implements Cloneable, ICclassFileConsts, ICdescAndTyp
 	public static void indent(int indentLevel) {
 		StdStreams.vrbPrintIndent(indentLevel);
 	}
+	
+	@Override
+	public String toString() {
+		return name.toString();
+	}
 
 
 }
