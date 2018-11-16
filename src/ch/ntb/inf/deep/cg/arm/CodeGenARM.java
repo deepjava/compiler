@@ -60,9 +60,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	// information about the src registers for parameters of a call to a method within this method
 	private static int[] srcGPR = new int[nofGPR];
-	private static int[] srcFPR = new int[nofFPR];
+	private static int[] srcFPR = new int[nofEXTR];
 	private static int[] srcGPRcount = new int[nofGPR];
-	private static int[] srcFPRcount = new int[nofFPR];
+	private static int[] srcFPRcount = new int[nofEXTR];
 
 	private static boolean newString;
 
@@ -100,8 +100,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 		tempStorage = false;
 		enFloatsInExc = false;
-		RegAllocator.regsGPR = regsGPRinitial;
-		RegAllocator.regsFPR = regsFPRinitial;
+		RegAllocatorARM.regsGPR = regsGPRinitial;
+		RegAllocatorARM.regsEXTRD = regsEXTRDinitial;
+		RegAllocatorARM.regsEXTRS = regsEXTRSinitial;
 
 		RegAllocator.buildIntervals(ssa);
 		
@@ -123,12 +124,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
 		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
-			if (true) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
-			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR) & ~((1<<volEndGPR) | (1<<(volEndGPR-1)) | (1<<(volEndGPR-2)));
-			else RegAllocator.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
-			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocator.regsGPR));
-			RegAllocator.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
-			if (dbg) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocator.regsFPR));
+			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+			if (RegAllocator.useLongs) RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR) & ~((1<<volEndGPR) | (1<<(volEndGPR-1)) | (1<<(volEndGPR-2)));
+			else RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
+			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsGPR));
+			RegAllocatorARM.regsEXTRD = regsEXTRDinitial & ~(0x7 << nonVolStartEXTR);
+			RegAllocatorARM.regsEXTRS = regsEXTRSinitial & ~(0x7 << nonVolStartEXTR);
+			if (dbg) StdStreams.vrb.println("regsEXTRDinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRD) + ", regsEXTRSinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRS));
 			RegAllocator.stackSlotSpilledRegs = -1;
 			parseExitSet(lastExitSet, method.maxStackSlots);
 			if (dbg) {
@@ -247,8 +249,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					RegAllocator.useLongs = true;
 					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocatorARM.reserveReg(gpr, true);
-						int regLong = RegAllocatorARM.reserveReg(gpr, true);
+						int reg = RegAllocatorARM.reserveReg(gpr, true, false);
+						int regLong = RegAllocatorARM.reserveReg(gpr, true, false);
 						moveGPRsrc[nofMoveGPR] = nofParamGPR;
 						moveGPRsrc[nofMoveGPR+1] = nofParamGPR+1;
 						moveGPRdst[nofMoveGPR++] = reg;
@@ -258,16 +260,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if(dbg) StdStreams.vrb.print(reg + ",r" + regLong);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
-						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg);
+						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg, false);
 						else {
-							reg = RegAllocatorARM.reserveReg(gpr, false);
+							reg = RegAllocatorARM.reserveReg(gpr, false, false);
 							moveGPRsrc[nofMoveGPR] = nofParamGPR;
 							moveGPRdst[nofMoveGPR++] = reg;
 						}
 						int regLong = paramStartGPR + nofParamGPR + 1;
-						if (regLong <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, regLong);
+						if (regLong <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, regLong, false);
 						else {
-							regLong = RegAllocatorARM.reserveReg(gpr, false);
+							regLong = RegAllocatorARM.reserveReg(gpr, false, false);
 							moveGPRsrc[nofMoveGPR] = nofParamGPR + 1;
 							moveGPRdst[nofMoveGPR++] = regLong;
 						}
@@ -282,16 +284,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("fr");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocatorARM.reserveReg(fpr, true);
+						int reg = RegAllocatorARM.reserveReg(extr, true, type == tFloat);
 						moveFPRsrc[nofMoveFPR] = nofParamFPR;
 						moveFPRdst[nofMoveFPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
-						int reg = paramStartFPR + nofParamFPR;
-						if (reg <= paramEndFPR) RegAllocatorARM.reserveReg(fpr, reg);
+						int reg = paramStartEXTR + nofParamFPR;
+						if (reg <= paramEndEXTR) RegAllocatorARM.reserveReg(extr, reg, type == tFloat);
 						else {
-							reg = RegAllocatorARM.reserveReg(fpr, false);
+							reg = RegAllocatorARM.reserveReg(extr, false, type == tFloat);
 							moveFPRsrc[nofMoveFPR] = nofParamFPR;
 							moveFPRdst[nofMoveFPR++] = reg;
 						}
@@ -305,16 +307,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (exitSet[i+maxStackSlots] != null) {	// if null -> parameter is never used
 					if(dbg) StdStreams.vrb.print("r");
 					if (paramHasNonVolReg[i]) {
-						int reg = RegAllocatorARM.reserveReg(gpr, true);	// nonvolatile or stack slot
+						int reg = RegAllocatorARM.reserveReg(gpr, true, false);	// nonvolatile or stack slot
 						moveGPRsrc[nofMoveGPR] = nofParamGPR;
 						moveGPRdst[nofMoveGPR++] = reg;
 						paramRegNr[i] = reg;
 						if(dbg) StdStreams.vrb.print(reg);
 					} else {
 						int reg = paramStartGPR + nofParamGPR;
-						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg); // mark as reserved
+						if (reg <= paramEndGPR) RegAllocatorARM.reserveReg(gpr, reg, false); // mark as reserved
 						else {
-							reg = RegAllocatorARM.reserveReg(gpr, false);	// volatile, nonvolatile or stack slot
+							reg = RegAllocatorARM.reserveReg(gpr, false, false);	// volatile, nonvolatile or stack slot
 							moveGPRsrc[nofMoveGPR] = nofParamGPR;
 							moveGPRdst[nofMoveGPR++] = reg;
 						}
@@ -329,7 +331,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		int nof = nofParamGPR - (paramEndGPR - paramStartGPR + 1);
 		if (nof > 0) recParamSlotsOnStack = nof;
-		nof = nofParamFPR - (paramEndFPR - paramStartFPR + 1);
+		nof = nofParamFPR - (paramEndEXTR - paramStartEXTR + 1);
 		if (nof > 0) recParamSlotsOnStack += nof*2;
 		
 		if(dbg) StdStreams.vrb.println("]");
@@ -337,13 +339,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	private static int calcStackSize() {
 		int size = 4 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
-		if (enFloatsInExc) size += nonVolStartFPR * 8 + 8;	// save volatile FPR's and FPSCR
+		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
 //		int padding = (16 - (size % 16)) % 16;
 //		size = size + padding;
 		LRoffset = size - 4;
 		GPRoffset = LRoffset - nofNonVolGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
-		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
+		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
 //		tempStorageOffset = FPRoffset - tempStorageSize;	//TODO change as in ppc
 		paramOffset = 4;
@@ -353,8 +355,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static int calcStackSizeException() {
 		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
 		if (enFloatsInExc) {
-			size += nofNonVolFPR * 8;	// save used nonvolatile FPR's
-			size += nonVolStartFPR * 8 + 8;	// save all volatile FPR's and FPSCR
+			size += nofNonVolFPR * 8;	// save used nonvolatile EXTR's
+			size += nonVolStartEXTR * 8 + 8;	// save all volatile EXTR's and FPSCR
 		}
 		int padding = (16 - (size % 16)) % 16;
 		size = size + padding;
@@ -366,7 +368,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		SRR0offset = SRR1offset - 4;
 		GPRoffset = SRR0offset - nofGPR * 4;
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
-		if (enFloatsInExc) FPRoffset -= nonVolStartFPR * 8 + 8;
+		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
 //		tempStorageOffset = FPRoffset - tempStorageSize;
 		paramOffset = 4;
@@ -405,7 +407,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (dbg) StdStreams.vrb.println("opd3 reg on stack slot for instr: " + instr.toString());
 					int slot = src3Reg & 0xff;
 					if ((opds[2].type == tFloat) || (opds[2].type == tDouble)) {
-						src3Reg = nonVolStartFPR + 0;
+						src3Reg = nonVolStartEXTR + 0;
 //						createIrDrAd(code, ppcLfd, src3Reg, stackPtr, localVarOffset + 4 * slot);
 					} else {
 						src3Reg = nonVolStartGPR + 0;
@@ -427,7 +429,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						int slot = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
-							src2Reg = nonVolStartFPR + 2;
+							src2Reg = nonVolStartEXTR + 2;
 //							createIrDrAd(code, ppcLfd, src2Reg, stackPtr, localVarOffset + 4 * slot);
 						} else {
 							src2Reg = nonVolStartGPR + 2;
@@ -447,7 +449,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					int slot = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
-						src1Reg = nonVolStartFPR + 1;
+						src1Reg = nonVolStartEXTR + 1;
 //						createIrDrAd(code, ppcLfd, src1Reg, stackPtr, localVarOffset + 4 * slot);
 					} else {
 						src1Reg = nonVolStartGPR + 1;
@@ -467,7 +469,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (dReg >= 0x100) {
 				if (dbg) StdStreams.vrb.println("res reg on stack slot for instr: " + instr.toString());
 				dRegSlot = dReg & 0xff;
-				if ((res.type == tFloat) || (res.type == tDouble)) dReg = nonVolStartFPR + 0;
+				if ((res.type == tFloat) || (res.type == tDouble)) dReg = nonVolStartEXTR + 0;
 				else dReg = nonVolStartGPR + 0;
 			}
 
@@ -525,13 +527,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					case tDouble:
 						constant = (StdConstant)res.constant;
 						if (constant.valueH == 0) {	// 0.0 must be loaded directly as it's not in the cp
-							loadConstant(code, gAux1, 0);
+							loadConstant(code, LR, 0);
 							loadConstant(code, scratchReg, 0);
-							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, gAux1, false, false);
+							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, LR, false, false);
 						} else if (constant.valueH == 0x3ff00000) {	// 1.0
-							loadConstant(code, gAux1, 0x3ff00000);
+							loadConstant(code, LR, 0x3ff00000);
 							loadConstant(code, scratchReg, 0);
-							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, gAux1, false, false);
+							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, LR, false, false);
 						} else {
 							loadConstantAndFixup(code, scratchReg, constant);	// address of constant (in the const area) is loaded
 							createLSExtReg(code, armVldr, condAlways, dReg, scratchReg, 0, false);
@@ -1290,7 +1292,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createMedia(code, armSbfx, condAlways, dRegLong, src1Reg, 31, 1);
 					break;
 				case tFloat: 
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1Reg, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR, 0x8, true);
+					break;
 				case tDouble:
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1Reg, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR, 0x8, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1301,13 +1308,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			case sCconvLong: {	// long -> other type
 				switch (res.type & ~(1<<ssaTaFitIntoInt)){
 				case tByte:
-					assert false : "not done yet";
+					createPacking(code, armSxtb, condAlways, dReg, src1Reg);
 					break;
 				case tChar: 
-					assert false : "not done yet";
+					createDataProcReg(code, armMov, condAlways, dReg, 0, src1Reg, LSL, 16);
+					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
-					assert false : "not done yet";
+					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
 				case tInteger:
 					createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
@@ -1327,26 +1335,24 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			case sCconvFloat: {	// float -> other type
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
-//					createIrDrB(code, ppcFctiw, 0, src1Reg);
-//					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
-//					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
-//					createIrArS(code, ppcExtsb, dReg, 0);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createPacking(code, armSxtb, condAlways, dReg, dReg);
 					break;
 				case tChar: 
-//					createIrDrB(code, ppcFctiw, 0, src1Reg);
-//					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
-//					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
-//					createIrArSSHMBME(code, ppcRlwinm, dReg, 0, 0, 16, 31);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSL, 16);
+					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
-//					createIrDrB(code, ppcFctiw, 0, src1Reg);
-//					createIrSrAd(code, ppcStfd, 0, stackPtr, tempStorageOffset);
-//					createIrDrAd(code, ppcLwz, 0, stackPtr, tempStorageOffset + 4);
-//					createIrArS(code, ppcExtsh, dReg, 0);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
 				case tInteger:
-					createFPdataConv(code, armVcvt, condAlways, scratchRegFpr, src1Reg, 0xd, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegFpr, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
 					break;
 				case tLong:	
 //					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
@@ -1362,7 +1368,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
 					break;
 				case tDouble:
-//					createIrDrB(code, ppcFmr, dReg, src1Reg);
+					createFPdataConvPrec(code, armVcvt, condAlways, dReg, src1Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1371,8 +1377,48 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				break;}
 			case sCconvDouble: {	// double -> other type
-//				ErrorReporter.reporter.error(610);
-//				assert false : "result of SSA instruction has wrong type";
+				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
+				case tByte:
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createPacking(code, armSxtb, condAlways, dReg, dReg);
+					break;
+				case tChar: 
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSL, 16);
+					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
+					break;
+				case tShort: 
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, true);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createPacking(code, armSxth, condAlways, dReg, src1Reg);
+					break;
+				case tInteger:
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 0xd, false);
+					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					break;
+				case tLong:	
+//					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
+//					Method m = Method.getCompSpecSubroutine("doubleToLong");
+//					createIrDrB(code, ppcFmr, 0, src1Reg);
+//					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
+//					createIrSspr(code, ppcMtspr, LR, 29);
+//					createIBOBILK(code, ppcBclr, BOalways, 0, true);
+//					createIrDrAd(code, ppcLmw, 29, stackPtr, tempStorageOffset + 8 + 4); // restore
+//					createIrArSrB(code, ppcOr, dReg, 28, 28);
+//					if (dReg != 28) // restore last register if not destination register
+//						createIrDrAd(code, ppcLwz, 28, stackPtr, tempStorageOffset + 8);
+//					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
+					break;
+				case tFloat:
+					createFPdataConvPrec(code, armVcvt, condAlways, dReg, src1Reg, true);
+					break;
+				default:
+					ErrorReporter.reporter.error(610);
+					assert false : "result of SSA instruction has wrong type";
+					return;
+				}
 				break;}
 			case sCcmpl: case sCcmpg: {
 				int type = opds[0].type & ~(1<<ssaTaFitIntoInt);
@@ -1956,7 +2002,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private void copyParameters(Code32 code, SSAValue[] opds) {
 		int offset = 0;
 		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = -1; srcGPRcount[k] = 0;}
-		for (int k = 0; k < nofFPR; k++) {srcFPR[k] = -1; srcFPRcount[k] = 0;}
+		for (int k = 0; k < nofEXTR; k++) {srcFPR[k] = -1; srcFPRcount[k] = 0;}
 
 		// get info about in which register parameters are located
 		// parameters which go onto the stack are treated equally
@@ -1967,7 +2013,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				srcGPR[kGPR + 1 + paramStartGPR] = opds[k].reg;
 				kGPR += 2;
 			} else if (type == tFloat || type == tDouble) {
-				srcFPR[kFPR + paramStartFPR] = opds[k].reg;
+				srcFPR[kFPR + paramStartEXTR] = opds[k].reg;
 				kFPR++;
 			} else {
 				srcGPR[kGPR + paramStartGPR] = opds[k].reg;
@@ -1990,9 +2036,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (srcGPR[i] <= topGPR) srcGPRcount[srcGPR[i]]++;
 			i++;
 		}
-		i = paramStartFPR;
+		i = paramStartEXTR;
 		while (srcFPR[i] != -1) {
-			if (srcFPR[i] <= topFPR) srcFPRcount[srcFPR[i]]++;
+			if (srcFPR[i] <= topEXTR) srcFPRcount[srcFPR[i]]++;
 			i++;
 		}
 		if (dbg) {
@@ -2010,7 +2056,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (srcGPR[i] == i) srcGPRcount[i]--;
 			i++;
 		}
-		i = paramStartFPR;
+		i = paramStartEXTR;
 		while (srcFPR[i] != -1) {
 			if (srcFPR[i] == i) srcFPRcount[i]--;
 			i++;
@@ -2065,11 +2111,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println();
 		done = false;
 		while (!done) {
-			i = paramStartFPR; done = true;
+			i = paramStartEXTR; done = true;
 			while (srcFPR[i] != -1) {
-				if (i > paramEndFPR) {	// copy to stack
+				if (i > paramEndEXTR) {	// copy to stack
 					if (srcFPRcount[i] >= 0) { // check if not done yet
-						if (dbg) StdStreams.vrb.println("\tFPR: parameter " + (i-paramStartFPR) + " from register " + srcFPR[i] + " to stack slot");
+						if (dbg) StdStreams.vrb.println("\tFPR: parameter " + (i-paramStartEXTR) + " from register " + srcFPR[i] + " to stack slot");
 						if (srcFPR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
 //							createIrDrAd(code, ppcLfd, 0, stackPtr, localVarOffset + 4 * (srcFPR[i] - 0x100));
 //							createIrSrAd(code, ppcStfd, 0, stackPtr, paramOffset + offset);
@@ -2083,7 +2129,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 				} else {	// copy to register
 					if (srcFPRcount[i] == 0) { // check if register no longer used for parameter
-						if (dbg) StdStreams.vrb.println("\tFPR: parameter " + (i-paramStartFPR) + " from register " + srcFPR[i] + " to " + i);
+						if (dbg) StdStreams.vrb.println("\tFPR: parameter " + (i-paramStartEXTR) + " from register " + srcFPR[i] + " to " + i);
 						if (srcFPR[i] >= 0x100) {	// copy from stack
 //							createIrDrAd(code, ppcLfd, i, stackPtr, localVarOffset + 4 * (srcFPR[i] - 0x100));
 						} else {
@@ -2135,7 +2181,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		done = false;
 		while (!done) {
-			i = paramStartFPR; done = true;
+			i = paramStartEXTR; done = true;
 			while (srcFPR[i] != -1) {
 				int src = 0;
 				if (srcFPRcount[i] == 1) {
@@ -2146,7 +2192,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				boolean done1 = false;
 				while (!done1) {
-					int k = paramStartFPR; done1 = true;
+					int k = paramStartEXTR; done1 = true;
 					while (srcFPR[k] != -1) {
 						if (srcFPRcount[k] == 0 && k != src) {
 //							createIrDrB(code, ppcFmr, k, srcFPR[k]);
@@ -2413,11 +2459,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
-	// floating point data processing (VCVT)
+	// floating point data processing (VCVT, between floating point and integer)
 	private void createFPdataConv(Code32 code, int opCode, int cond, int Vd, int Vm, int opc, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (opc << 16) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | (opc << 16) | (Vm&0xf) | ((Vm>>4) << 5);
+		code.incInstructionNum();
+	}
+
+	// floating point data processing (VCVT, between single and double precision)
+	private void createFPdataConvPrec(Code32 code, int opCode, int cond, int Vd, int Vm, boolean toSingle) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (7 << 16);
+		if (toSingle) code.instructions[code.iCount] |= (1 << 8) | (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (Vm&0xf) | ((Vm>>4) << 5);
+		else code.instructions[code.iCount] |= ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
 		code.incInstructionNum();
 	}
 

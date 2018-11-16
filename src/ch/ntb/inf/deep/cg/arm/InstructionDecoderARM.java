@@ -2584,7 +2584,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f32.f64 S" + VdD + ", D" + MVm;
 								}
 								else if (op8_1==0x0) {	// sz=0
-									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64.f32 D" + VdD + ", S" + MVm;
+									return "vcvt" + (cond!=condAlways?condString[cond]:"") + ".f64.f32 D" + DVd + ", S" + VmM;
 								}
 							}
 							if ( ((op16_4 == 0x8) && (op6_1==0x1)) || (((op16_4 & 0xe)==0xc) && (op6_1==0x1)) ) {	// Vector Convert p.870

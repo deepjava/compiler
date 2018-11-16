@@ -36,6 +36,9 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
 public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
 
+	// used to indicate used and free GPRs and EXTRs, the EXTRs must be differentiated between D0..D31 and S0..S31
+	public static int regsGPR, regsEXTRD, regsEXTRS;
+
 	/**
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
@@ -53,7 +56,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				if (((NoOpnd)instr).firstInCatch) {
 					// if the variable of type Exception in a catch clause is loaded for further use,
 					// it will be passed as a parameter in a prefixed register
-					res.reg = reserveReg(gpr, true);
+					res.reg = reserveReg(gpr, true, false);
 					continue;
 				}
 				int type = res.type;
@@ -115,20 +118,21 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
 			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 20) & 0xF;
-			if ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble))) // load double (load float not necessary, delete later), int -> float conversion
-				nofAuxRegGPR = 1;
-			else if (nofAuxRegGPR == 7 && res.type == tLong)	// long division
+//			if ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble))) // load double (load float not necessary, delete later), int -> float conversion
+//				nofAuxRegGPR = 1;
+//			else 
+			if (nofAuxRegGPR == 7 && res.type == tLong)	// long division
 				nofAuxRegGPR = 2;
 			else if (nofAuxRegGPR == 8) {	// modulo division
 				if (res.type == tLong) {nofAuxRegGPR = 2;}
 				else if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
 			}
 			
-			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false);
+			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false, false);
 			else if (nofAuxRegGPR == 2) {
-				res.regGPR1 = reserveReg(gpr, false);
+				res.regGPR1 = reserveReg(gpr, false, false);
 				if (dbg) if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
-				res.regGPR2 = reserveReg(gpr, false);
+				res.regGPR2 = reserveReg(gpr, false, false);
 				if (dbg) if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
 			}
 			
@@ -148,16 +152,16 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				if (dbg) StdStreams.vrb.println("\tjoinVal != null");
 				if (joinVal.reg < 0) {	// join: register not assigned yet
 					if (res.type == tLong) {
-						joinVal.regLong = reserveReg(gpr, joinVal.nonVol);
-						joinVal.reg = reserveReg(gpr, joinVal.nonVol);
+						joinVal.regLong = reserveReg(gpr, joinVal.nonVol, false);
+						joinVal.reg = reserveReg(gpr, joinVal.nonVol, false);
 						res.regLong = joinVal.regLong;
 						res.reg = joinVal.reg;
 					} else if ((res.type == tFloat) || (res.type == tDouble)) {
-						joinVal.reg = reserveReg(fpr, joinVal.nonVol);
+						joinVal.reg = reserveReg(extr, joinVal.nonVol, res.type == tFloat);
 						res.reg = joinVal.reg;
 					} else if (res.type == tVoid) {
 					} else {
-						joinVal.reg = reserveReg(gpr, joinVal.nonVol);
+						joinVal.reg = reserveReg(gpr, joinVal.nonVol, false);
 						res.reg = joinVal.reg;
 					}
 				} else {// assign same register as phi function
@@ -165,17 +169,17 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if (res.type == tLong) {
 						res.regLong = joinVal.regLong;	
 						res.reg = joinVal.reg;
-						reserveReg(gpr, res.regLong);
-						reserveReg(gpr, res.reg);
+						reserveReg(gpr, res.regLong, false);
+						reserveReg(gpr, res.reg, false);
 					} else if ((res.type == tFloat) || (res.type == tDouble)) {
 						res.reg = joinVal.reg;
-						reserveReg(fpr, res.reg);
+						reserveReg(extr, res.reg, res.type == tFloat);
 					} else if (res.type == tVoid) {
 						res.reg = joinVal.reg;
-						reserveReg(gpr, res.reg);
+						reserveReg(gpr, res.reg, false);
 					} else {
 						res.reg = joinVal.reg;
-						reserveReg(gpr, res.reg);
+						reserveReg(gpr, res.reg, false);
 					}
 				}
 			} else if (instr.ssaOpcode == sCloadConst) {
@@ -271,8 +275,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			}
 			if (dbg) StdStreams.vrb.println("\treg = " + res.reg);
 
-			if (res.regGPR1 != -1) freeReg(gpr, res.regGPR1);
-			if (res.regGPR2 != -1) freeReg(gpr, res.regGPR2);
+			if (res.regGPR1 != -1) freeReg(gpr, res.regGPR1, false);
+			if (res.regGPR2 != -1) freeReg(gpr, res.regGPR2, false);
 
 			// free registers of operands if end of live range reached 
 			SSAValue[] opds = instr.getOperands();
@@ -317,7 +321,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		CodeGenARM.nofVolFPR = nofVolFPR;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
-		nof = maxNofParamFPR - (paramEndFPR - paramStartFPR + 1);
+		nof = maxNofParamFPR - (paramEndEXTR - paramStartEXTR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;
 	}
 
@@ -328,20 +332,20 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 	private static void findReg(SSAValue res) {
 		int type = res.type;
 		if (type == tLong) {
-			res.regLong = reserveReg(gpr, res.nonVol);
-			res.reg = reserveReg(gpr, res.nonVol);
+			res.regLong = reserveReg(gpr, res.nonVol, false);
+			res.reg = reserveReg(gpr, res.nonVol, false);
 			useLongs = true;
 		} else if ((type == tFloat) || (type == tDouble)) {
-			res.reg = reserveReg(fpr, res.nonVol);
+			res.reg = reserveReg(extr, res.nonVol, type == tFloat);
 		} else if (type == tVoid) {
 		} else {
-			res.reg = reserveReg(gpr, res.nonVol);
+			res.reg = reserveReg(gpr, res.nonVol, false);
 		}
 	}
 
-	static int reserveReg(boolean isGPR, boolean isNonVolatile) {
-		if (dbg) StdStreams.vrb.print("\tbefore reserving " + Integer.toHexString(regsGPR));
+	static int reserveReg(boolean isGPR, boolean isNonVolatile, boolean single) {
 		if (isGPR) {
+			if (dbg) StdStreams.vrb.print("\tbefore reserving " + Integer.toHexString(regsGPR));
 			int i;
 			if (!isNonVolatile) {	// is volatile
 				i = paramStartGPR;
@@ -366,31 +370,61 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (dbg) StdStreams.vrb.print("\tnot enough GPR's, reserve stack slot");
 			fullRegSet = false;
 			return getEmptyStackSlot(false);
-		} else {	// FPR
+		} else {	// EXTR
+			if (dbg) StdStreams.vrb.print("\tbefore reserving regsEXTRD:" + Integer.toHexString(regsEXTRD) + " regsEXTRS:" + Integer.toHexString(regsEXTRS));
 			int i;
 			if (!isNonVolatile) {	// is volatile
-				i = paramStartFPR;
-				while (i < nonVolStartFPR) {
-					if ((regsFPR & (1 << i)) != 0) {
-						regsFPR &= ~(1 << i);	
-						if (i-paramStartFPR > nofVolFPR) nofVolFPR = i+1-paramStartFPR;
-						return i;
+				if (single) {
+					i = paramStartEXTR;
+					while (i < nonVolStartEXTR * 2) {
+						if ((regsEXTRS & (1 << i)) != 0) {
+							regsEXTRS &= ~(1 << i);	
+							regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
+							if (i-paramStartEXTR > nofVolFPR) nofVolFPR = i+1-paramStartEXTR;
+							return i;
+						}
+						i++;						
 					}
-					i++;
+				} else {
+					i = paramStartEXTR;
+					while (i < nonVolStartEXTR) {
+						if ((regsEXTRD & (1 << i)) != 0) {
+							regsEXTRD &= ~(1 << i);	
+							regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
+							if (i-paramStartEXTR > nofVolFPR) nofVolFPR = i+1-paramStartEXTR;
+							return i;
+						}
+						i++;
+					}				
 				}
 			} 
-			i = topFPR;
-			while (i >= nonVolStartFPR) {
-				if ((regsFPR & (1 << i)) != 0) {
-					regsFPR &= ~(1 << i);
-					if (nofFPR - i > nofNonVolFPR) nofNonVolFPR = nofFPR - i;
-					return i;
-				}
-				i--;
+			i = topEXTR;
+			if (single) {
+				while (i >= nonVolStartEXTR * 2) {
+					if ((regsEXTRS & (1 << i)) != 0) {
+						regsEXTRS &= ~(1 << i);
+						regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
+						if (nofEXTR - i > nofNonVolFPR) nofNonVolFPR = nofEXTR - i;
+						return i;
+					}
+					i--;
+				}							
+			} else {
+				while (i >= nonVolStartEXTR) {
+					if ((regsEXTRD & (1 << i)) != 0) {
+						regsEXTRD &= ~(1 << i);
+						if (i < 16) regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
+						if (nofEXTR - i > nofNonVolFPR) nofNonVolFPR = nofEXTR - i;
+						return i;
+					}
+					i--;
+				}			
 			}
+
 			if (dbg) StdStreams.vrb.print("\tnot enough FPR's, reserve stack slot");
 			fullRegSet = false;
-			return getEmptyStackSlot(true);
+			if (single) return getEmptyStackSlot(false);
+			else return getEmptyStackSlot(true);
 		}
 	}
 
@@ -424,28 +458,37 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		stackSlotSpilledRegs |= 1 << slot;
 	}
 
-	static void reserveReg(boolean isGPR, int regNr) {
+	static void reserveReg(boolean isGPR, int regNr, boolean single) {
 		if (isGPR) {
 			if (regNr < 0x100) regsGPR &= ~(1 << regNr);
 			else stackSlotSpilledRegs &= ~(1 << (regNr - 0x100));
 		} else {
-			if (regNr < 0x100) regsFPR &= ~(1 << regNr);
-			else stackSlotSpilledRegs &= ~(3 << (regNr - 0x100));
+			if (single) {
+				if (regNr < 0x100) {
+					regsEXTRS &= ~(1 << regNr);
+					regsEXTRD &= ~(1 << (regNr/2));	// mark double precision register as well
+				} else stackSlotSpilledRegs &= ~(1 << (regNr - 0x100));				
+			} else {
+				if (regNr < 0x100) {
+					regsEXTRD &= ~(1 << regNr);
+					regsEXTRS &= ~(3 << (regNr*2));	// mark single precision registers as well
+				} else stackSlotSpilledRegs &= ~(3 << (regNr - 0x100));				
+			}
 		}
 	}
 
 	private static void freeReg(SSAValue val) {
 		if (val.type == tLong) {
-			freeReg(gpr, val.regLong);
-			freeReg(gpr, val.reg);
+			freeReg(gpr, val.regLong, false);
+			freeReg(gpr, val.reg, false);
 		} else if ((val.type == tFloat) || (val.type == tDouble)) {
-			freeReg(fpr, val.reg);
+			freeReg(extr, val.reg, val.type == tFloat);
 		} else {
-			freeReg(gpr, val.reg);
+			freeReg(gpr, val.reg, false);
 		}
 	}
 
-	private static void freeReg(boolean isGPR, int reg) {
+	private static void freeReg(boolean isGPR, int reg, boolean single) {
 		if (isGPR) {
 			if (reg < 0x100) {
 			regsGPR |= 1 << reg;
@@ -455,13 +498,28 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
 			}
 		} else {
-			if (reg < 0x100) {
-				regsFPR |= 1 << reg;
-				if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsFPR=0x" + Integer.toHexString(regsFPR));
+			if (single) {
+				if (reg < 0x100) {
+					regsEXTRS |= 1 << reg;
+					int r = reg % 2 == 0 ? reg + 1 : reg - 1;
+					if ((regsEXTRS & (1 << r)) != 0) {
+						regsEXTRD |= 1 << (reg/2);	// release double precision register as well
+					}
+					if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsEXTRD=0x" + Integer.toHexString(regsEXTRD) + " regsEXTRS=0x" + Integer.toHexString(regsEXTRS));
+				} else {
+					releaseStackSlot(reg - 0x100);
+					if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
+				}			
 			} else {
-				releaseStackSlot(reg - 0x100);
-				releaseStackSlot(reg + 1 - 0x100);
-				if (dbg) StdStreams.vrb.println("\tfree stack slot " + (reg + 1));
+				if (reg < 0x100) {
+					regsEXTRD |= 1 << reg;
+					regsEXTRS |= 3 << (reg*2);	// release single precision registers as well
+					if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsEXTRD=0x" + Integer.toHexString(regsEXTRD) + " regsEXTRS=0x" + Integer.toHexString(regsEXTRS));
+				} else {
+					releaseStackSlot(reg - 0x100);
+					releaseStackSlot(reg + 1 - 0x100);
+					if (dbg) StdStreams.vrb.println("\tfree stack slot " + (reg + 1));
+				}			
 			}
 		}
 	}

@@ -99,8 +99,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("build intervals");
 
 		enFloatsInExc = false;
-		RegAllocator.regsGPR = regsGPRinitial;
-		RegAllocator.regsFPR = regsFPRinitial;
+		RegAllocatorPPC.regsGPR = regsGPRinitial;
+		RegAllocatorPPC.regsFPR = regsFPRinitial;
 
 		RegAllocator.buildIntervals(ssa);
 		
@@ -123,11 +123,11 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		RegAllocatorPPC.assignRegisters();
 		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
 			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
-			if (RegAllocator.useLongs) RegAllocator.regsGPR = regsGPRinitial & ~(0xff << nonVolStartGPR);
-			else RegAllocator.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
-			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocator.regsGPR));
-			RegAllocator.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
-			if (dbg) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocator.regsFPR));
+			if (RegAllocator.useLongs) RegAllocatorPPC.regsGPR = regsGPRinitial & ~(0xff << nonVolStartGPR);
+			else RegAllocatorPPC.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
+			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorPPC.regsGPR));
+			RegAllocatorPPC.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
+			if (dbg) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocatorPPC.regsFPR));
 			RegAllocator.stackSlotSpilledRegs = -1;
 			parseExitSet(lastExitSet, method.maxStackSlots);
 			if (dbg) {

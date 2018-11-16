@@ -35,6 +35,9 @@ import ch.ntb.inf.deep.ssa.instruction.NoOpnd;
 
 public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstructionMnemonics, Registers, ICclassFileConsts {
 
+	// used to indicate of used and free GPRs and FPRs
+	public static int regsGPR, regsFPR;	
+
 	/**
 	 * Assign a register or memory location to all SSAValues
 	 * finally, determine how many parameters are passed on the stack
