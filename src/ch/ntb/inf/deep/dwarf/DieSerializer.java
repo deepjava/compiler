@@ -6,7 +6,6 @@ import java.nio.ByteOrder;
 import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
 import ch.ntb.inf.deep.dwarf.die.DwAtType;
 import ch.ntb.inf.deep.dwarf.die.DwFormType;
-import ch.ntb.inf.deep.dwarf.die.DwOpType;
 import ch.ntb.inf.deep.dwarf.die.DwTagType;
 
 public class DieSerializer implements DieVisitor {
@@ -129,7 +128,7 @@ public class DieSerializer implements DieVisitor {
 		debug_info.put(die.accessability);
 		debug_info.put(Utils.serialize(die.name));
 		debug_info.put(die.fileNo);
-		debug_info.putInt(die.lineNo);
+//		debug_info.putInt(die.lineNo);
 		debug_info.putInt(die.startAddress);
 		debug_info.putInt(die.endAddress);
 		debug_info.putInt(die.returnType.baseAddress - die.getParent().baseAddress);
@@ -154,8 +153,8 @@ public class DieSerializer implements DieVisitor {
 		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_decl_file.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data1.value());
 
-		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_decl_line.value());
-		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data4.value());
+//		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_decl_line.value());
+//		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data4.value());
 
 		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_low_pc.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_addr.value());
@@ -190,9 +189,8 @@ public class DieSerializer implements DieVisitor {
 		Utils.writeUnsignedLeb128(debug_info, die.abbrevCode);
 		debug_info.put(Utils.serialize(die.name));
 		debug_info.putInt(die.type.baseAddress - die.getParent().baseAddress);
-		Utils.writeUnsignedLeb128(debug_info, 1);		// Expr Length
-		debug_info.put(DwOpType.DW_OP_reg0.value());
-
+		die.expression.serialize(debug_info);
+		
 		Utils.writeUnsignedLeb128(debug_abbrev, die.abbrevCode); // abbrev_code ULEB128
 		Utils.writeUnsignedLeb128(debug_abbrev, DwTagType.DW_TAG_formal_parameter.value());
 		debug_abbrev.put((byte) (die.hasChildren() ? 1 : 0)); // hasChilden (1 Byte) DW_CHILDREN_yes

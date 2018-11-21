@@ -11,7 +11,7 @@ public class SubProgramDIE extends DebugInformationEntry {
 	final int startAddress;
 	final int endAddress;
 	final byte fileNo;
-	final int lineNo;
+//	final int lineNo;
 	final boolean isStatic;
 	final byte accessability;
 	final BaseTypeDIE returnType;
@@ -46,17 +46,17 @@ public class SubProgramDIE extends DebugInformationEntry {
 		this.endAddress = this.startAddress + method.getCodeSizeInBytes();
 
 		this.fileNo = 1;
-		// TODO: Set Method Declaration Line Number!
-		if (method.ssa == null) {
-			this.lineNo = 0;
-		} else {
-			this.lineNo = method.ssa.lowestLineNr - 1;
-		}
+//		// TODO: Set Method Declaration Line Number!
+//		if (method.ssa == null) {
+//			this.lineNo = 0;
+//		} else {
+//			this.lineNo = method.ssa.lowestLineNr - 1;
+//		}
 
 		returnType = parent.getBaseTypeDie((Type) method.type);
 		// Method Parameters
 		for (int i = 0; i < method.nofParams; i++) {
-			new VariableDIE(this, method.localVars[i]);
+			new VariableDIE(method.localVars[i], this);
 		}
 	}
 

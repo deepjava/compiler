@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
@@ -28,6 +29,12 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		this.lineNumberTableMatrix = new ArrayList<>();
 
 		this.knownTypes = new HashMap<>();
+
+		Field field = (Field) clazz.instFields;
+		while (field != null) {
+			new VariableDIE(field, this);
+			field = (Field) field.next;
+		}
 
 		Method method = (Method) clazz.methods;
 		while (method != null) {
