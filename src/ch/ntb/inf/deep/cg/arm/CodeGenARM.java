@@ -53,9 +53,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private static int GPRoffset;	
 	private static int FPRoffset;	
 	private static int localVarOffset;
-//	private static int tempStorageOffset;	//not used in ARM
 	private static int stackSize;
-	static boolean tempStorage;
 	static boolean enFloatsInExc;
 
 	// information about the src registers for parameters of a call to a method within this method
@@ -69,8 +67,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public CodeGenARM() {}
 
 	public void init() { 
-//		Class cls = Configuration.getOS().usClass;
-		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/arm/US");
+		Class cls = Configuration.getOS().usClass;
+//		System.out.println(cls.name);
+//		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/arm/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
 		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
@@ -98,7 +97,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		
 		if (dbg) StdStreams.vrb.println("build intervals");
 
-		tempStorage = false;
 		enFloatsInExc = false;
 		RegAllocatorARM.regsGPR = regsGPRinitial;
 		RegAllocatorARM.regsEXTRD = regsEXTRDinitial;
@@ -129,7 +127,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			else RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
 			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsGPR));
 			RegAllocatorARM.regsEXTRD = regsEXTRDinitial & ~(0x7 << nonVolStartEXTR);
-			RegAllocatorARM.regsEXTRS = regsEXTRSinitial & ~(0x7 << nonVolStartEXTR);
+			RegAllocatorARM.regsEXTRS = regsEXTRSinitial & ~(0x3f << (nonVolStartEXTR*2));
 			if (dbg) StdStreams.vrb.println("regsEXTRDinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRD) + ", regsEXTRSinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRS));
 			RegAllocator.stackSlotSpilledRegs = -1;
 			parseExitSet(lastExitSet, method.maxStackSlots);
@@ -168,7 +166,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
 			} else {
 				stackSize = calcStackSizeException();
-				insertPrologException();
+				insertPrologException(code);
 			}
 		} else {
 			stackSize = calcStackSize();
@@ -229,7 +227,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
 //				createIBOBILK(ppcBclr, BOalways, 0, false);
 			} else {
-				insertEpilogException(stackSize);
+				insertEpilogException(code, stackSize);
 			}
 		} else {
 			insertEpilog(code, stackSize);
@@ -338,7 +336,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private static int calcStackSize() {
-		int size = 4 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
+		int size = 4 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;
 		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
 //		int padding = (16 - (size % 16)) % 16;
 //		size = size + padding;
@@ -347,13 +345,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-//		tempStorageOffset = FPRoffset - tempStorageSize;	//TODO change as in ppc
+//		System.out.println("size = " + size + "  GPRoffset = " + GPRoffset + "  FPRoffset = " + FPRoffset + "  localVarOffset = " + localVarOffset);
 		paramOffset = 4;
 		return size;
 	}
 
 	private static int calcStackSizeException() {
-		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4 + (tempStorage? tempStorageSize : 0);
+		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4;
 		if (enFloatsInExc) {
 			size += nofNonVolFPR * 8;	// save used nonvolatile EXTR's
 			size += nonVolStartEXTR * 8 + 8;	// save all volatile EXTR's and FPSCR
@@ -370,7 +368,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
-//		tempStorageOffset = FPRoffset - tempStorageSize;
 		paramOffset = 4;
 		return size;
 	}
@@ -403,12 +400,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armLdr, condAlways, src3RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
 				}
 				if (src3Reg >= 0x100) {
-//					assert false;
 					if (dbg) StdStreams.vrb.println("opd3 reg on stack slot for instr: " + instr.toString());
 					int slot = src3Reg & 0xff;
 					if ((opds[2].type == tFloat) || (opds[2].type == tDouble)) {
-						src3Reg = nonVolStartEXTR + 0;
-//						createIrDrAd(code, ppcLfd, src3Reg, stackPtr, localVarOffset + 4 * slot);
+						src3Reg = nonVolStartEXTR * ((opds[2].type == tFloat)?2:1) + 0;
+						createLSExtReg(code, armVldr, condAlways, src3Reg, stackPtr, localVarOffset + 4 * slot, (opds[2].type == tFloat));
 					} else {
 						src3Reg = nonVolStartGPR + 0;
 						createLSWordImm(code, armLdr, condAlways, src3Reg, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
@@ -429,8 +425,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						int slot = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
-							src2Reg = nonVolStartEXTR + 2;
-//							createIrDrAd(code, ppcLfd, src2Reg, stackPtr, localVarOffset + 4 * slot);
+							src2Reg = nonVolStartEXTR * ((opds[1].type == tFloat)?2:1) + 2;
+							createLSExtReg(code, armVldr, condAlways, src2Reg, stackPtr, localVarOffset + 4 * slot, (opds[1].type == tFloat));
 						} else {
 							src2Reg = nonVolStartGPR + 2;
 							createLSWordImm(code, armLdr, condAlways, src2Reg, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
@@ -449,8 +445,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					int slot = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
-						src1Reg = nonVolStartEXTR + 1;
-//						createIrDrAd(code, ppcLfd, src1Reg, stackPtr, localVarOffset + 4 * slot);
+						src1Reg = nonVolStartEXTR * ((opds[0].type == tFloat)?2:1) + 1;
+						createLSExtReg(code, armVldr, condAlways, src1Reg, stackPtr, localVarOffset + 4 * slot, (opds[0].type == tFloat));
 					} else {
 						src1Reg = nonVolStartGPR + 1;
 						createLSWordImm(code, armLdr, condAlways, src1Reg, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
@@ -469,7 +465,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (dReg >= 0x100) {
 				if (dbg) StdStreams.vrb.println("res reg on stack slot for instr: " + instr.toString());
 				dRegSlot = dReg & 0xff;
-				if ((res.type == tFloat) || (res.type == tDouble)) dReg = nonVolStartEXTR + 0;
+				if ((res.type == tFloat) || (res.type == tDouble)) dReg = nonVolStartEXTR * ((res.type == tFloat)?2:1) + 0;
 				else dReg = nonVolStartGPR + 0;
 			}
 
@@ -1573,20 +1569,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					} else if (m.id == idREF) { // REF
 						createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 					} else if (m.id == idDoubleToBits) { // DoubleToBits
-//						createIrSrAd(ppcStfd, opds[0].reg, stackPtr, tempStorageOffset);
-//						createIrDrAd(ppcLwz, res.regLong, stackPtr, tempStorageOffset);
-//						createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset + 4);
+						createFPregMove(code, armVmovDouble, condAlways, src1Reg, dReg, dRegLong, true, false);
 					} else if (m.id == idBitsToDouble) { // BitsToDouble
-//						createIrSrAd(ppcStw, opds[0].regLong, stackPtr, tempStorageOffset);
-//						createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset+4);
-//						createIrDrAd(ppcLfd, res.reg, stackPtr, tempStorageOffset);
+						createFPregMove(code, armVmovDouble, condAlways, dReg, src1Reg, src1RegLong, false, false);
 					} else if (m.id == idFloatToBits) { // FloatToBits
-//						createIrSrAd(ppcStfs, opds[0].reg, stackPtr, tempStorageOffset);
-//						createIrDrAd(ppcLwz, res.reg, stackPtr, tempStorageOffset);
+						createFPregMove(code, armVmovSingle, condAlways, src1Reg, dReg, 0, true, true);
 					} else if (m.id == idBitsToFloat) { // BitsToFloat
-//						createIrSrAd(ppcStw, opds[0].reg, stackPtr, tempStorageOffset);
-//						createIrDrAd(ppcLfs, 0, stackPtr, tempStorageOffset);
-//						createIrDrB(ppcFmr, res.reg, 0);
+						createFPregMove(code, armVmovSingle, condAlways, dReg, src1Reg, 0, false, true);
 					} else {
 						ErrorReporter.reporter.error(626, m.name.toString());
 						assert false : "not implemented " + m.name.toString();
@@ -1977,7 +1966,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			}
 			if (dRegLongSlot >= 0) createLSWordImm(code, armStr, condAlways, dRegLong, stackPtr, localVarOffset + 4 * dRegLongSlot, 1, 1, 0);
 			if (dRegSlot >= 0) {
-				if ((res.type == tFloat) || (res.type == tDouble)); // createIrSrAd(code, ppcStfd, dReg, stackPtr, localVarOffset + 4 * dRegSlot);
+				if ((res.type == tFloat) || (res.type == tDouble)) createLSExtReg(code, armVstr, condAlways, dReg, stackPtr, localVarOffset + 4 * dRegSlot, (res.type == tFloat));
 				else createLSWordImm(code, armStr, condAlways, dReg, stackPtr, localVarOffset + 4 * dRegSlot, 1, 1, 0);
 			}
 		}
@@ -2434,6 +2423,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		createBlockDataTransfer(code, opCode, cond, stackPtr, regList, 1);
 	}
 	
+	// block data transfer	(VPOP, VPUSH)
+	private void createBlockDataTransferExtr(Code32 code, int opCode, int cond, int Vd, int nof, boolean single) {
+		if (single) code.instructions[code.iCount] = (cond << 28) | opCode | (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | nof * 2;
+		else code.instructions[code.iCount] = (cond << 28) | opCode | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | nof * 2;
+		code.incInstructionNum();
+	}
+	
 	// load/store extension registers (VLDR, VSTR)
 	private void createLSExtReg(Code32 code, int opCode, int cond, int Vd, int Rn, int imm, boolean single) {
 		imm >>= 2;	// immediates are multiples of 4
@@ -2719,12 +2715,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrS(code, ppcIsync, 0);	// must context synchronize after setting of FP bit
 //		}
 		int offset = FPRoffset;
-//		if (nofNonVolFPR > 0) {
-//			for (int i = 0; i < nofNonVolFPR; i++) {
-//				createIrSrAd(code, ppcStfd, topFPR-i, stackPtr, offset);
-//				offset += 8;
-//			}
-//		}
+		if (nofNonVolFPR > 0) {
+			if (nofNonVolFPR <= 16)
+				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR, false);
+			else {
+				createBlockDataTransferExtr(code, armVpush, condAlways, 16, 16, false);
+				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR-16, false);			
+			}
+		}
 //		if (enFloatsInExc) {
 //			for (int i = 0; i < nonVolStartFPR; i++) {	// save volatiles
 //				createIrSrAd(code, ppcStfd, i, stackPtr, offset);
@@ -2801,12 +2799,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				offset -= 8;
 //			}
 //		}
-//		if (nofNonVolFPR > 0) {
-//			for (int i = nofNonVolFPR - 1; i >= 0; i--) {
-//				createIrDrAd(ppcLfd, topFPR-i, stackPtr, offset);
-//				offset -= 8;
-//			}
-//		}
+		if (nofNonVolFPR > 0) {
+			if (nofNonVolFPR <= 16) 
+				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR, false);
+			else {
+				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR-16, false);			
+				createBlockDataTransferExtr(code, armVpop, condAlways, 16, 16, false);
+			}
+		}
 		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, RegAllocator.maxLocVarStackSlots * 4 );
 		int regList = 1 << PC;
 		if (nofNonVolGPR > 0)
@@ -2830,24 +2830,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		createIpat(code, 0);	// address of constant segment 		
 	}
 
-	private void insertPrologException() {
-//		iCount = 0;
-//		createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -stackSize);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, GPRoffset);
-//		createIrSspr(ppcMfspr, SRR0, 0);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, SRR0offset);
-//		createIrSspr(ppcMfspr, SRR1, 0);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, SRR1offset);
-//		createIrSspr(ppcMtspr, EID, 0);
-//		createIrSspr(ppcMfspr, LR, 0);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, LRoffset);
-//		createIrSspr(ppcMfspr, XER, 0);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, XERoffset);
-//		createIrSspr(ppcMfspr, CTR, 0);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, CTRoffset);
-//		createIrD(ppcMfcr, 0);
-//		createIrSrAsimm(ppcStw, 0, stackPtr, CRoffset);
-//		createIrSrAd(ppcStmw, 2, stackPtr, GPRoffset + 8);
+	private void insertPrologException(Code32 code) {
+		code.iCount = 0;
+		createBlockDataTransfer(code, armPush, condAlways, 0xffff);
 //		if (enFloatsInExc) {
 //			createIrD(ppcMfmsr, 0);
 //			createIrArSuimm(ppcOri, 0, 0, 0x2000);
@@ -2869,7 +2854,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		}
 	}
 
-	private void insertEpilogException(int stackSize) {
+	private void insertEpilogException(Code32 code, int stackSize) {
 //		int offset = GPRoffset - 8;
 //		if (enFloatsInExc) {
 //			createIrDrAd(ppcLfd, 0, stackPtr, offset);
@@ -2886,21 +2871,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				offset -= 8;
 //			}
 //		}
-//		createIrDrAd(ppcLmw, 2, stackPtr, GPRoffset + 8);
-//		createIrDrAd(ppcLwz, 0, stackPtr, CRoffset);
-//		createICRMrS(ppcMtcrf, 0xff, 0);
-//		createIrDrAd(ppcLwz, 0, stackPtr, CTRoffset);
-//		createIrSspr(ppcMtspr, CTR, 0);
-//		createIrDrAd(ppcLwz, 0, stackPtr, XERoffset);
-//		createIrSspr(ppcMtspr, XER, 0);
-//		createIrDrAd(ppcLwz, 0, stackPtr, LRoffset);
-//		createIrSspr(ppcMtspr, LR, 0);
-//		createIrDrAd(ppcLwz, 0, stackPtr, SRR1offset);
-//		createIrSspr(ppcMtspr, SRR1, 0);
-//		createIrDrAd(ppcLwz, 0, stackPtr, SRR0offset);
-//		createIrSspr(ppcMtspr, SRR0, 0);
-//		createIrDrAd(ppcLwz, 0, stackPtr, GPRoffset);
-////		createIrDrAsimm(ppcAddi, stackPtr, stackPtr, stackSize);
+		createBlockDataTransfer(code, armPop, condAlways, 0xffff);
 //		createIrfi(ppcRfi);
 	}
 

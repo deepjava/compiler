@@ -226,6 +226,8 @@ public interface InstructionOpcs {
 	// extension register load / store
 	armVldr = (0xd1 << 20) | (0xa << 8),
 	armVstr = (0xd0 << 20) | (0xa << 8),
+	armVpop = (0xcbd << 16) | (0xb << 8),
+	armVpush = (0xd2d << 16) | (0xb << 8),
 
 	// floating point data processing
 	armVadd = (0xe3 << 20) | (0xa0 << 4),
@@ -249,13 +251,25 @@ public interface InstructionOpcs {
 	armStr   = (0x40 << 20),
 	armLdrb  = (0x45 << 20),
 	armStrb  = (0x44 << 20),
-	// Extra load/store halfword, double word and signed byte
+	// extra load/store halfword, double word and signed byte
 	armLdrsb = (0x01 << 20) | (0xd << 4),
 	armLdrh  = (0x01 << 20) | (0xb << 4),
 	armLdrsh = (0x01 << 20) | (0xf << 4),
 	armStrh  = (0xb << 4),
 
-	// various
+	// block data transfer
+	armLdm   = (0x89 << 20),
+	armLdmda = (0x81 << 20),
+	armLdmdb = (0x91 << 20),
+	armLdmib = (0x99 << 20),
+	armStm   = (0x88 << 20),
+	armStmda = (0x80 << 20),
+	armStmdb = (0x90 << 20),
+	armStmib = (0x98 << 20),
+	armPop   = (0x8bd << 16),
+	armPush  = (0x92d << 16),
+
+			// various
 	armSvc = 0x0f000000,
 	armClz = (0x16f << 16) | (0xf1 << 4),
 
@@ -305,19 +319,6 @@ public interface InstructionOpcs {
 	
 	// SMC
 	armSmc = 0x01600070,
-	
-	// Block data transfer
-	armLdm   = (0x89 << 20),
-	armLdmda = (0x81 << 20),
-	armLdmdb = (0x91 << 20),
-	armLdmib = (0x99 << 20),
-	armStm   = (0x88 << 20),
-	armStmda = (0x80 << 20),
-	armStmdb = (0x90 << 20),
-	armStmib = (0x98 << 20),
-	// ...Rn=0, W=0
-	armPop   = (0x8bd << 16),
-	armPush  = (0x92d << 16),
 	
 	// packing, unpacking, saturation, reversal
 	armSxtb = (0x2 << 20) | (0xf << 16) | (0x3 << 5),

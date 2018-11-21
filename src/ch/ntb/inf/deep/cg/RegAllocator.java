@@ -58,12 +58,11 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	// used for resolving phi functions
 	public static SSAValue[] joins = new SSAValue[maxNofJoins], rootJoins = new SSAValue[maxNofJoins];
 	
-	// set if a method spills register to the stack  
+	// set if a method spills registers to the stack  
 	protected static boolean spill;
 
-//	public static int regsGPR, regsFPR;
-	protected static int nofNonVolGPR, nofNonVolFPR;
-	protected static int nofVolGPR, nofVolFPR;
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
+	protected static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
 	// used to find call in this method with most parameters -> gives stack size
 	protected static int maxNofParamGPR, maxNofParamFPR;
 	// in the first run the register allocator uses the full set of registers

@@ -68,8 +68,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	public CodeGenPPC() {}
 
 	public void init() { 
-//		Class cls = Configuration.getOS().usClass;
-		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/ppc/US");
+		Class cls = Configuration.getOS().usClass;
+//		Class cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/ppc/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
 		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}

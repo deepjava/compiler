@@ -349,7 +349,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				while (i <= volEndGPR) {
 					if ((regsGPR & (1 << i)) != 0) {
 						regsGPR &= ~(1 << i);	
-						if (i-paramStartGPR > nofVolGPR) nofVolGPR = i+1-paramStartGPR;
+						if (i-paramStartGPR+1 > nofVolGPR) nofVolGPR = i+1-paramStartGPR;
 						return i;
 					}
 					i++;
@@ -374,7 +374,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				while (i < nonVolStartFPR) {
 					if ((regsFPR & (1 << i)) != 0) {
 						regsFPR &= ~(1 << i);	
-						if (i-paramStartFPR > nofVolFPR) nofVolFPR = i+1-paramStartFPR;
+						if (i-paramStartFPR+1 > nofVolFPR) nofVolFPR = i+1-paramStartFPR;
 						return i;
 					}
 					i++;

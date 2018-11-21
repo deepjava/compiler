@@ -57,7 +57,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	protected static int nofParam;	
 	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
 	protected static int nofParamGPR, nofParamFPR;	 
-	// maximum nof registers used by this method
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
 	public static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
 	// gives required stack space for parameters of this method if not enough registers
 	protected static int recParamSlotsOnStack;

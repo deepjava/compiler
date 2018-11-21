@@ -1073,9 +1073,18 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		return registerStr;
 	}
 	
-//	private static String list(int dList) {	// p.1080	WARNING: not correctly implemented
-//		return "???" + Integer.toHexString(dList) + "???";
-//	}
+	private static String list(int Vd, int imm8, boolean single) {	// Encoding of lists of EXTR registers  p.295	->	see in instructions
+		String registerStr = "";
+		int regs = imm8 / 2;
+		if (imm8 % 2 != 0) return "UNPREDICTABLE";
+		if (regs == 0 || regs > 16 || Vd + regs > 32) return "UNPREDICTABLE";
+		for (int i = 0; i < regs; i++) {
+			registerStr = registerStr + (single?"S":"D") + (Vd + i) + ", ";
+		}
+	
+		registerStr = registerStr.substring(0,registerStr.length()-2);	// delete last ", "	
+		return registerStr;
+	}
 	
 	private static String decodeDSBOption(int option) {	// p.380
 		switch(option) { 
@@ -2389,12 +2398,12 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							}
 						}
 						if (((op20_5 & 0x1b)==0x12)&&(n==0xd)) {	// Vector Push Registers p.992
-//							if (op8_1 == 0x1) {	// Encoding A1
-//								return "vpush" + (cond!=condAlways?condString[cond]:"") + list(DVd);
-//							}
-//							else if (op8_1 == 0x0) {	// Encoding A2
-//								return "vpush" + (cond!=condAlways?condString[cond]:"") + list(VdD);
-//							}
+							if (op8_1 == 0x1) {	// Encoding A1
+								return "vpush" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, false);
+							}
+							else if (op8_1 == 0x0) {	// Encoding A2
+								return "vpush" + (cond!=condAlways?condString[cond]:"") + " " + list(VdD, op0_8, true);
+							}
 						}
 						if ( ((op20_5 & 0x1b)==0x09) || (((op20_5 & 0x1b)==0x0b)&&(n!=0xd)) || ((op20_5 & 0x1b)==0x13) ){	// Vector Load Multiple p.922
 //							if (op8_1 == 0x1) {	// Encoding A1
@@ -2405,12 +2414,12 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 //							}							
 						}
 						if (((op20_5 & 0x1b)==0x0b)&&(n==0xd)) {	// Vector Pop Registers p.990
-//							if (op8_1 == 0x1) {	// Encoding A1
-//								return "vpop" + (cond!=condAlways?condString[cond]:"") + list(DVd);
-//							}
-//							else if (op8_1 == 0x0) {	// Encoding A2
-//								return "vpop" + (cond!=condAlways?condString[cond]:"") + list(DVd);
-//							}							
+							if (op8_1 == 0x1) {	// Encoding A1
+								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, false);
+							}
+							else if (op8_1 == 0x0) {	// Encoding A2
+								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, true);
+							}							
 						}
 						if ((op20_5 & 0x13)==0x11) {	// Vector Load Register p.924
 							if (op8_1 == 0x1) {	// Encoding A1
@@ -2431,7 +2440,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 								return "vmov" + (cond!=condAlways?condString[cond]:"") + " R" + op12_4 + ", R" + op16_4 + ", S" + VmM + ", S" + (VmM+1);
 							}
 						}
-						if ( (op8_1==0x1) && ((op4_4 & 0xb)==0x1) ) {	// VMOV (between two ARM core registers and a doubleword extension register) p.948
+						if ( (op8_1==0x1) && ((op4_4 & 0xd)==0x1) ) {	// VMOV (between two ARM core registers and a doubleword extension register) p.948
 							if (op20_1 == 0x0) {	// Encoded as op = 0
 								return "vmov" + (cond!=condAlways?condString[cond]:"") + " D" + MVm + ", R" + op12_4 + ", R" + op16_4;
 							}

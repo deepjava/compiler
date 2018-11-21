@@ -87,10 +87,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
 					CodeGenARM.enFloatsInExc = true;
 				}
-				int id = ((Method)call.item).id;
-				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
-					CodeGenARM.tempStorage = true;
+//				int id = ((Method)call.item).id;
+//				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
+//					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
+//					CodeGenARM.tempStorage = true;
 			}
 		}
 		
@@ -118,9 +118,6 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
 			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 20) & 0xF;
-//			if ((nofAuxRegGPR == 6 && (res.type == tFloat || res.type == tDouble))) // load double (load float not necessary, delete later), int -> float conversion
-//				nofAuxRegGPR = 1;
-//			else 
 			if (nofAuxRegGPR == 7 && res.type == tLong)	// long division
 				nofAuxRegGPR = 2;
 			else if (nofAuxRegGPR == 8) {	// modulo division
@@ -136,14 +133,6 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				if (dbg) if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
 			}
 			
-			// reserve temporary storage on the stack for certain fpr operations
-			if ((scAttrTab[instr.ssaOpcode] & (1 << ssaApTempStore)) != 0) 
-				CodeGenARM.tempStorage = true;
-			if (instr.ssaOpcode == sCloadConst && (res.type == tFloat || res.type == tDouble))
-				CodeGenARM.tempStorage = true;
-			if ((instr.ssaOpcode == sCdiv || instr.ssaOpcode == sCrem) && res.type == tLong)
-				CodeGenARM.tempStorage = true;
-
 			// reserve register for result of instruction
 			if (instr.ssaOpcode == sCloadLocal) {
 				// already done
@@ -192,30 +181,20 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					// and opd must not be already in a register 
 					// and opd must have join == null
 					int type = res.type & 0x7fffffff;
-					if ((instr1.ssaOpcode == sCadd) && ((type == tInteger) || (type == tLong))) {
+					if ((instr1.ssaOpcode == sCadd) && (type == tInteger)) {
 						StdConstant constant = (StdConstant)res.constant;
-						if (res.type == tLong) {
-							long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-							if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
-						} else {	
+						int immVal = constant.valueH;
+						if (immVal < 0) immVal = -immVal;
+						int lead = Integer.numberOfLeadingZeros(immVal);
+						lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
+						if (lead + Integer.numberOfTrailingZeros(immVal) < 24) findReg(res);	
+					} else if ((instr1.ssaOpcode == sCsub) && (type == tInteger)) {
+							StdConstant constant = (StdConstant)res.constant;
 							int immVal = constant.valueH;
 							if (immVal < 0) immVal = -immVal;
 							int lead = Integer.numberOfLeadingZeros(immVal);
 							lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
-							if (lead + Integer.numberOfTrailingZeros(immVal) < 24) findReg(res);	
-						}
-					} else if ((instr1.ssaOpcode == sCsub) && ((type == tInteger) || (type == tLong))) {
-							StdConstant constant = (StdConstant)res.constant;
-							if (res.type == tLong) {
-								long immValLong = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-								if ((immValLong >= -255) && (immValLong <= 255)) {} else findReg(res);
-							} else {	
-								int immVal = constant.valueH;
-								if (immVal < 0) immVal = -immVal;
-								int lead = Integer.numberOfLeadingZeros(immVal);
-								lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
-								if (lead + Integer.numberOfTrailingZeros(immVal) < 24) findReg(res);
-							}
+							if (lead + Integer.numberOfTrailingZeros(immVal) < 24) findReg(res);
 					} else if (instr1.ssaOpcode == sCmul) {
 						StdConstant constant = (StdConstant)res.constant;
 						boolean isPowerOf2; int immVal = 0;
@@ -352,7 +331,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				while (i <= volEndGPR) {
 					if ((regsGPR & (1 << i)) != 0) {
 						regsGPR &= ~(1 << i);	
-						if (i + 1 > nofVolGPR) nofVolGPR = i + 1;
+						if (i - paramStartGPR + 1 > nofVolGPR) nofVolGPR = i + 1 - paramStartGPR;
 						return i;
 					}
 					i++;
@@ -380,7 +359,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						if ((regsEXTRS & (1 << i)) != 0) {
 							regsEXTRS &= ~(1 << i);	
 							regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
-							if (i-paramStartEXTR > nofVolFPR) nofVolFPR = i+1-paramStartEXTR;
+							if (i - paramStartEXTR + 1 > nofVolFPR) nofVolFPR = i + 1 - paramStartEXTR;
 							return i;
 						}
 						i++;						
@@ -391,7 +370,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						if ((regsEXTRD & (1 << i)) != 0) {
 							regsEXTRD &= ~(1 << i);	
 							regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
-							if (i-paramStartEXTR > nofVolFPR) nofVolFPR = i+1-paramStartEXTR;
+							if (i - paramStartEXTR + 1 > nofVolFPR) nofVolFPR = i + 1 - paramStartEXTR;
 							return i;
 						}
 						i++;
