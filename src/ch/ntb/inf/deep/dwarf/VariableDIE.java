@@ -15,7 +15,7 @@ public class VariableDIE extends DebugInformationEntry {
 	protected VariableDIE(LocalVar localVar, DebugInformationEntry parent) {
 		super(parent);
 		this.name = localVar.name.toString();
-		this.type = ((CompilationUnitDIE) parent.getParent()).getBaseTypeDie((Type) localVar.type);
+		this.type = ((CompilationUnitDIE) parent.getParent().getParent()).getBaseTypeDie((Type) localVar.type);
 		this.expression = new SimpleExpression(DwOpType.DW_OP_reg0);
 	}
 

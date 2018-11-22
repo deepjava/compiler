@@ -7,41 +7,46 @@ import java.util.List;
 import java.util.Map;
 
 import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
 import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
+import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
 
 public class CompilationUnitDIE extends DebugInformationEntry {
+	final String name;
 	final File srcFile;
 	final List<LineMatrixEntry> lineNumberTableMatrix;
-	final int startAddress;
-	int endAddress;
+	final String compileDirecotry = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\runtime-EclipseApplication\\test\\src";
+	final int low_pc;
+	int high_pc;
 	final Map<String, BaseTypeDIE> knownTypes;
 
 	public CompilationUnitDIE(Class clazz) {
 		super(null);
-		System.out.println("Class: " + clazz.name);
+
+		this.name = clazz.getSrcFileName().toString();
 		File file = new File(clazz.name.toString());
 		this.srcFile = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
-		this.startAddress = clazz.codeBase.getValue();
 
 		this.lineNumberTableMatrix = new ArrayList<>();
 
 		this.knownTypes = new HashMap<>();
-
-		Field field = (Field) clazz.instFields;
-		while (field != null) {
-			new VariableDIE(field, this);
-			field = (Field) field.next;
-		}
-
+		
+		this.low_pc = clazz.codeBase.getValue();
+		
+		
+		new ClassTypeDIE(clazz, this);
+		
+		
 		Method method = (Method) clazz.methods;
 		while (method != null) {
-			if (method.address != -1) {
-				SubProgramDIE die = new SubProgramDIE(method, this);
-				this.endAddress = die.endAddress;
+			if (method.ssa != null) {
+				for (LineNrSSAInstrPair line : method.ssa.getLineNrTable()) {
+					int address = method.address + line.ssaInstr.machineCodeOffset * 4;
+					addLineNumberEntry(line.lineNr, address);
+				}
 			}
+			high_pc = method.address + method.getCodeSizeInBytes();
 			method = (Method) method.next;
 		}
 	}
