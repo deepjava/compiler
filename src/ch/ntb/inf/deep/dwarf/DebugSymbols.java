@@ -28,7 +28,7 @@ public class DebugSymbols{
 
 		serializer = new DieSerializer(byteOrder);
 		for (CompilationUnitDIE cu : compilationUnits) {
-			cu.accept(serializer);
+			cu.serialize(serializer);
 		}
 	}
 	

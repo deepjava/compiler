@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.dwarf.Utils;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 
 public class SubProgramDIE extends DebugInformationEntry {
@@ -15,7 +16,7 @@ public class SubProgramDIE extends DebugInformationEntry {
 	final BaseTypeDIE returnType;
 
 	public SubProgramDIE(Method method, ClassTypeDIE classTypeDIE) {
-		super(classTypeDIE);
+		super(classTypeDIE, DwTagType.DW_TAG_subprogram);
 		System.out.println("\tMethod: " + method.name);
 		if ((method.accAndPropFlags & (1 << ICclassFileConsts.apfStatic)) != 0
 				|| (method.accAndPropFlags & (1 << ICclassFileConsts.dpfSysPrimitive)) != 0) {
@@ -51,7 +52,33 @@ public class SubProgramDIE extends DebugInformationEntry {
 	}
 
 	@Override
-	public void accept(DieVisitor visitor) {
-		visitor.visit(this);
+	public void serializeDie(DieSerializer serialize) {
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_external.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_flag.value());
+		serialize.debug_info.put((byte) (isStatic ? 0 : 1));
+		
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_accessibility.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());		
+		serialize.debug_info.put(accessability);
+
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_name.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_string.value());
+		serialize.debug_info.put(Utils.serialize(name));
+
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_decl_file.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());
+		serialize.debug_info.put(fileNo);
+
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_low_pc.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_addr.value());
+		serialize.debug_info.putInt(startAddress);
+
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_high_pc.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_addr.value());
+		serialize.debug_info.putInt(endAddress);
+
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_type.value());
+		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_ref4.value());
+		serialize.debug_info.putInt(returnType.baseAddress - getRoot().baseAddress);
 	}
 }
