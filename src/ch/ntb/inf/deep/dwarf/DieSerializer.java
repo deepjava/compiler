@@ -240,10 +240,29 @@ public class DieSerializer implements DieVisitor {
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_ref4.value());
 		debug_info.putInt(die.type.baseAddress - die.getRoot().baseAddress);
 		
-		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_data_member_location.value());
-		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data4.value());
-		debug_info.putInt(die.offset);
-
+		if (die instanceof ClassMemberDIE) {
+			ClassMemberDIE classMemberDie = (ClassMemberDIE)die;
+			
+			Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_location.value());
+			Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_exprloc.value());
+			classMemberDie.location.serialize(debug_info);
+			
+			Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_external.value());
+			Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_flag.value());
+			debug_info.put((byte) 1);
+		} else {
+			InstanceMemberDIE instanceMemberDie = (InstanceMemberDIE)die;
+			
+			Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_data_member_location.value());
+			Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data4.value());
+			debug_info.putInt(instanceMemberDie.offset);
+			
+		}
+		
+		Utils.writeUnsignedLeb128(debug_abbrev, DwAtType.DW_AT_accessibility.value());
+		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_data1.value());		
+		debug_info.put(die.accessability);
+		
 		// Ending of Attribute List
 		Utils.writeUnsignedLeb128(debug_abbrev, 0);
 		Utils.writeUnsignedLeb128(debug_abbrev, 0);

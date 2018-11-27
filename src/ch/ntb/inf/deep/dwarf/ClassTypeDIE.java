@@ -18,8 +18,24 @@ public class ClassTypeDIE extends DebugInformationEntry {
 		this.byteSize = (byte)clazz.getTypeSize();
 		
 		Field field = (Field) clazz.instFields;
+		while (field != null && field != clazz.classFields) {
+			// Instance Fields
+			System.out.println("\tInstance Field: " + field.name + " offset: " + field.offset);
+			new InstanceMemberDIE(field, this);
+			field = (Field) field.next;
+		}
+		
+		while (field != null && field != clazz.constFields) {
+			// Static Fields
+			System.out.println("\tStatic Field: " + field.name + " address: " + field.address);
+			new ClassMemberDIE(field, this);
+			field = (Field) field.next;
+		}
+		
 		while (field != null) {
-			new MemberDIE(field, this);
+			// Constant Fields
+			System.out.println("\tConstant Field: " + field.name + " address: " + field.address);
+			new ClassMemberDIE(field, this);
 			field = (Field) field.next;
 		}
 		
