@@ -1,8 +1,7 @@
-package ch.ntb.inf.deep.dwarf;
+package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 
 public class SubProgramDIE extends DebugInformationEntry {

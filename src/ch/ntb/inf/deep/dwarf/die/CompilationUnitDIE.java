@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.dwarf;
+package ch.ntb.inf.deep.dwarf.die;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.Map;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
+import ch.ntb.inf.deep.dwarf.LineMatrixEntry;
 import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
 
 public class CompilationUnitDIE extends DebugInformationEntry {

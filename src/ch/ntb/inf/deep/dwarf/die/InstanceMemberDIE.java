@@ -1,7 +1,6 @@
-package ch.ntb.inf.deep.dwarf;
+package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Field;
-import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
 
 public class InstanceMemberDIE extends MemberDIE {
 

@@ -1,12 +1,10 @@
-package ch.ntb.inf.deep.dwarf;
+package ch.ntb.inf.deep.dwarf.die;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
-import ch.ntb.inf.deep.dwarf.die.DwAtType;
-import ch.ntb.inf.deep.dwarf.die.DwFormType;
-import ch.ntb.inf.deep.dwarf.die.DwTagType;
+import ch.ntb.inf.deep.dwarf.DebugLineStateMaschine;
+import ch.ntb.inf.deep.dwarf.Utils;
 
 public class DieSerializer implements DieVisitor {
 

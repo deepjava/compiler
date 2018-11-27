@@ -1,8 +1,6 @@
-package ch.ntb.inf.deep.dwarf;
+package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.die.DebugInformationEntry;
-import ch.ntb.inf.deep.dwarf.die.DwAteType;
 
 public class BaseTypeDIE extends DebugInformationEntry {
 

@@ -5,6 +5,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.dwarf.die.CompilationUnitDIE;
+import ch.ntb.inf.deep.dwarf.die.DieSerializer;
 
 public class DebugSymbols{
 	private final List<CompilationUnitDIE> compilationUnits;

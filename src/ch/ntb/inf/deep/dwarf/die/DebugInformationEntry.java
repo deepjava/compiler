@@ -3,8 +3,6 @@ package ch.ntb.inf.deep.dwarf.die;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.ntb.inf.deep.dwarf.DieVisitor;
-
 public abstract class DebugInformationEntry {
 	private static int abbrevCodeCount = 1;
 
