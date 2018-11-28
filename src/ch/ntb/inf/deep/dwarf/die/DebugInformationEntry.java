@@ -38,6 +38,14 @@ public abstract class DebugInformationEntry {
 		return children;
 	}
 	
+	public DebugInformationEntry getRoot() {
+		if (getParent() == null) {
+			return this;
+		} else {
+			return getParent().getRoot();
+		}
+	}
+	
 	public boolean hasChildren() {
 		return !children.isEmpty();
 	}

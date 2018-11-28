@@ -11,13 +11,12 @@ public class SubProgramDIE extends DebugInformationEntry {
 	final int startAddress;
 	final int endAddress;
 	final byte fileNo;
-	final int lineNo;
 	final boolean isStatic;
 	final byte accessability;
 	final BaseTypeDIE returnType;
 
-	public SubProgramDIE(Method method, CompilationUnitDIE parent) {
-		super(parent);
+	public SubProgramDIE(Method method, ClassTypeDIE classTypeDIE) {
+		super(classTypeDIE);
 		System.out.println("\tMethod: " + method.name);
 		if ((method.accAndPropFlags & (1 << ICclassFileConsts.apfStatic)) != 0
 				|| (method.accAndPropFlags & (1 << ICclassFileConsts.dpfSysPrimitive)) != 0) {
@@ -40,24 +39,16 @@ public class SubProgramDIE extends DebugInformationEntry {
 
 		this.name = method.name.toString();
 		this.startAddress = method.address;
-		if (this.startAddress == -1) {
-			System.out.println(method.name);
-		}
 		this.endAddress = this.startAddress + method.getCodeSizeInBytes();
 
 		this.fileNo = 1;
-		// TODO: Set Method Declaration Line Number!
-		if (method.ssa == null) {
-			this.lineNo = 0;
-		} else {
-			this.lineNo = method.ssa.lowestLineNr - 1;
-		}
 
-		returnType = parent.getBaseTypeDie((Type) method.type);
+		returnType = ((CompilationUnitDIE)classTypeDIE.getRoot()).getBaseTypeDie((Type) method.type);
+		
 		// Method Parameters
-		for (int i = 0; i < method.nofParams; i++) {
-			new VariableDIE(this, method.localVars[i]);
-		}
+//		for (int i = 0; i < method.nofParams; i++) {
+//			new VariableDIE(method.localVars[i], this);
+//		}
 	}
 
 	@Override
