@@ -21,6 +21,7 @@ package ch.ntb.inf.deep.ssa;
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.LocalVar;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
@@ -30,7 +31,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public int nofLoopheaders;
 	public boolean isParam[]; // indicates which locals are passed as parameters
 	public int paramType[]; // types of those parameters
-	public LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
+	private LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
+	private LocalVar[] localVarTab; // length equals local variables table length in class file, entries are sorted by bca
 	public int highestLineNr;
 	public int lowestLineNr;	
 	private int returnCount;
@@ -128,6 +130,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		renumberInstructions(cfg);
 		createLineNrSSATable();
+		createLocalVarsTable();
 //		if (true) StdStreams.vrb.println(cfg.toString());
 //		if (true) StdStreams.vrb.println(toString());
 	}
@@ -301,13 +304,13 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			SSANode node = (SSANode) cfg.rootNode;
 			for (int n = 0; n < origTab.length; n++) {
 				int pc = (origTab[n] >> 16) & 0xFFFF;
-				if (pc == 0) {
+				if (pc == 0) {	// start with first ssa instruction
 					lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[0]);
 					setHighestLowestLineNr(origTab[n] & 0xFFFF);
 				} else {
 					while (node != null) {
 						int i = 0;
-						while (i < node.nofInstr && pc > node.instructions[i].bca) i++;
+						while (i < node.nofInstr && pc > node.instructions[i].bca) i++;	// search ssa instruction with corresponding bytecode address
 						if (i < node.nofInstr) {
 							if (pc == node.instructions[i].bca)
 								lineNumTab[n] = new LineNrSSAInstrPair(pc, origTab[n] & 0xFFFF, node.instructions[i]);
@@ -328,6 +331,72 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 
 	public LineNrSSAInstrPair[] getLineNrTable() {
 		return lineNumTab;
+	}
+
+	/**
+	 * Creates a table holding information about the local variables of this method.
+	 * The information given in the bytecode is used to find corresponding ssa instructions and machine code instructions.
+	 * Care must be taken about the range:
+	 *     startPc denotes the bytecode instruction at which a local is already defined, that is after a store instruction
+	 *     endPc denotes the bytecode instruction after the local went out of scope 
+	 */
+	private void createLocalVarsTable() {
+		localVarTab = cfg.method.localVars;
+		if (localVarTab != null) { 
+			SSANode node = (SSANode) cfg.rootNode;
+			for (int i = 0; i < localVarTab.length; i++) {
+				LocalVar lv = localVarTab[i];
+				while (lv != null) {	// empty slot for longs and doubles
+					int start = lv.startPc;
+					node = (SSANode) cfg.rootNode;
+					if (start == 0) {
+						lv.ssaInstrStart = node.instructions[0];
+					} else {
+						while (node != null) {
+							int n = 0;
+							while (n < node.nofInstr && start > node.instructions[n].bca) n++;
+							if (n < node.nofInstr) {
+								if (start == node.instructions[n].bca)
+									lv.ssaInstrStart = node.instructions[n];
+								else if (n > 0 && start == node.instructions[n-1].bca)
+									lv.ssaInstrStart = node.instructions[n-1];
+								else 
+									lv.ssaInstrStart = node.instructions[n];
+								break;
+							}
+							node = (SSANode) node.next;
+						}
+					}
+					int end = start + lv.length;
+					node = (SSANode) cfg.rootNode;
+					if (end == 0) {
+						lv.ssaInstrEnd = node.instructions[0];
+					} else {
+						while (node != null) {
+							int n = 0;
+							while (n < node.nofInstr && end > node.instructions[n].bca) n++;
+							if (n < node.nofInstr) {
+								if (end == node.instructions[n].bca)
+									lv.ssaInstrEnd = node.instructions[n];
+								else if (n > 0 && end == node.instructions[n-1].bca)
+									lv.ssaInstrEnd = node.instructions[n-1];
+								else 
+									lv.ssaInstrEnd = node.instructions[n];
+								break;
+							} else if (node.next == null) {	// last node
+								lv.ssaInstrEnd = node.instructions[n-1];
+							}
+							node = (SSANode) node.next;
+						}
+					}
+					lv = (LocalVar) lv.next;	// locals occupying the same slot are linked by field "next"
+				}
+			}
+		}
+	}
+
+	public LocalVar[] getLocalVarsTable() {
+		return localVarTab;
 	}
 
 	/**
@@ -367,8 +436,21 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			sb.append(node.toString() + "\n");
 			node = (SSANode) node.next;
 		}
-		sb.append("\nLine Number Table\n");
-		for (int i = 0; i < lineNumTab.length && lineNumTab[i] != null; i++) sb.append(lineNumTab[i].toString() + "\n");
+		if (lineNumTab != null) {
+			sb.append("\nLine Number Table\n");
+			for (int i = 0; i < lineNumTab.length && lineNumTab[i] != null; i++) sb.append(lineNumTab[i].toString() + "\n");
+			sb.append("\n");
+		}
+		if (localVarTab != null) {
+			sb.append("\nLocal Variable Table\n");
+			for (int i = 0; i < localVarTab.length; i++) {
+				LocalVar lv = localVarTab[i];
+				while (lv != null) {	// locals occupying the same slot are linked by field "next"
+					sb.append(lv.toString() + "\n");
+					lv = (LocalVar) lv.next;
+				}
+			}
+		}
 		sb.append("\n");
 		
 		return sb.toString();

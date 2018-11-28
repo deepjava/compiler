@@ -18,12 +18,30 @@
 
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
+
 public class LocalVar extends Item {
 
-	int startPc, length; // life range: [startPc, startPc+length]
+	public int startPc, length; // life range in bytecode: [startPc, startPc+length]
+	public SSAInstruction ssaInstrStart, ssaInstrEnd;	// associated ssa instructions
 	
 	public void print(int indentLevel) {
 		indent(indentLevel);
 		vrb.printf("[%1$2d] (%2$c)%3$s %4$s  [%5$d,%6$d]", index, (char)((Type)type).category, type.name, name, startPc, startPc+length);
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name.toString() + ": index=" + index + ", category=" + (char)((Type)type).category + ", type=" + type.name);
+		sb.append(", bytecode: from " + startPc + " to " + (startPc+length));
+		if (ssaInstrStart != null) {
+			sb.append(" <=> ssa instruction: from " + ssaInstrStart.result.n);
+			if (ssaInstrEnd != null) sb.append(" to " + ssaInstrEnd.result.n);
+			if (ssaInstrStart.machineCodeOffset != -1)
+				sb.append(" <=> code: from " + ssaInstrStart.machineCodeOffset + " to " + ssaInstrEnd.machineCodeOffset);
+		}
+		return sb.toString();
+	}
+
 }
