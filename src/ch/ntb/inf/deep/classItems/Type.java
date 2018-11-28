@@ -18,6 +18,7 @@
 
 package ch.ntb.inf.deep.classItems;
 
+import ch.ntb.inf.deep.dwarf.die.TypeDIE;
 import ch.ntb.inf.deep.strings.HString;
 import ch.ntb.inf.deep.strings.StringTable;
 
@@ -34,6 +35,8 @@ public class Type extends Item {
 
 	public char category;	// { 'P', 'L', '[' } == { tcPrimitive, tcRef, tcArray } declared in: IDescAndTypeConsts
 	public byte sizeInBits; // { 1..8, 16, 32, 64 }
+	public TypeDIE dwarfDIE;	// Reference to the corresponding DWARF Type
+	
 
 	protected Type(HString name, Type baseType) {
 		super(name, baseType);

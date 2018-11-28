@@ -3,20 +3,21 @@ package ch.ntb.inf.deep.dwarf.die;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.Method;
-import ch.ntb.inf.deep.dwarf.Utils;;
 
-public class ClassTypeDIE extends DebugInformationEntry {
+public class ClassTypeDIE extends TypeDIE {
 
 	public final String name;
 	public final byte byteSize;
 	public final int fileNo = 1;
 
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
-		super(parent, DwTagType.DW_TAG_class_type, true);
+		super(parent, DwTagType.DW_TAG_class_type);
 		System.out.println("Class: " + clazz.name);
 		this.name = clazz.name.toString();
 		this.byteSize = (byte)clazz.getTypeSize();
 		
+		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this); 
+				
 		Field field = (Field) clazz.instFields;
 		while (field != null && field != clazz.classFields) {
 			// Instance Fields
@@ -51,13 +52,7 @@ public class ClassTypeDIE extends DebugInformationEntry {
 
 	@Override
 	public void serializeDie(DieSerializer serialize) {
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_name.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_string.value());
-		serialize.debug_info.put(Utils.serialize(name));
-		
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_byte_size.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());
-		serialize.debug_info.put(byteSize);
+		serialize.add(DwAtType.DW_AT_name, name);
+		serialize.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, byteSize);
 	}
-
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.ntb.inf.deep.dwarf.Utils;
+import ch.ntb.inf.deep.classItems.Type;
 
 public abstract class DebugInformationEntry {
 	private static int abbrevCodeCount = 1;
@@ -13,7 +14,7 @@ public abstract class DebugInformationEntry {
 
 	protected final DwTagType type;
 	public final int abbrevCode;
-	public int baseAddress;
+	public int baseAddress = -1;
 
 	protected DebugInformationEntry(DebugInformationEntry parent, DwTagType type) {
 		this(parent, type, false);
@@ -31,6 +32,13 @@ public abstract class DebugInformationEntry {
 		}
 	}
 
+	protected static TypeDIE getType(Type type, DebugInformationEntry parent) {
+		if (type.dwarfDIE == null || parent.getRoot() != type.dwarfDIE.getRoot()) {
+			TypeDIE.generateNewTypeDIE(type, parent);
+		}
+		return type.dwarfDIE;
+	}
+
 	public void serialize(DieSerializer serializer) {
 		baseAddress = serializer.debug_info.position();
 		Utils.writeUnsignedLeb128(serializer.debug_info, abbrevCode);
@@ -43,9 +51,9 @@ public abstract class DebugInformationEntry {
 		// Ending of Attribute List
 		Utils.writeUnsignedLeb128(serializer.debug_abbrev, 0);
 		Utils.writeUnsignedLeb128(serializer.debug_abbrev, 0);
-		
+
 		if (hasChildren()) {
-			for(DebugInformationEntry child:  getChildren()) {
+			for (DebugInformationEntry child : getChildren()) {
 				child.serialize(serializer);
 			}
 			// Last sibling terminated by a null entry

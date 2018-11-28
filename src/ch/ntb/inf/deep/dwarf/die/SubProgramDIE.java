@@ -2,8 +2,8 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.Utils;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.LocalVar;
 
 public class SubProgramDIE extends DebugInformationEntry {
 
@@ -13,10 +13,10 @@ public class SubProgramDIE extends DebugInformationEntry {
 	final byte fileNo;
 	final boolean isStatic;
 	final byte accessability;
-	final BaseTypeDIE returnType;
+	final TypeDIE returnType;
 
-	public SubProgramDIE(Method method, ClassTypeDIE classTypeDIE) {
-		super(classTypeDIE, DwTagType.DW_TAG_subprogram);
+	public SubProgramDIE(Method method, DebugInformationEntry parent) {
+		super(parent, DwTagType.DW_TAG_subprogram);
 		System.out.println("\tMethod: " + method.name);
 		if ((method.accAndPropFlags & (1 << ICclassFileConsts.apfStatic)) != 0
 				|| (method.accAndPropFlags & (1 << ICclassFileConsts.dpfSysPrimitive)) != 0) {
@@ -43,42 +43,35 @@ public class SubProgramDIE extends DebugInformationEntry {
 
 		this.fileNo = 1;
 
-		returnType = ((CompilationUnitDIE)classTypeDIE.getRoot()).getBaseTypeDie((Type) method.type);
-		
+		returnType = getType((Type) method.type, parent.getRoot());
+
 		// Method Parameters
-//		for (int i = 0; i < method.nofParams; i++) {
-//			new VariableDIE(method.localVars[i], this);
-//		}
+		if (method.localVars != null && method.ssa != null) {
+			for (LocalVar localVar : method.localVars) {
+				while (localVar != null) {
+					if (method.ssa.isParam[localVar.index + method.maxStackSlots]) {
+						System.out.println("\t\tParameter " + localVar.name);
+						new VariableDIE(localVar, this);
+					} else {
+						System.out.println("\t\tVariable " + localVar.name);
+					}
+					localVar = (LocalVar) localVar.next;
+				}
+			}
+		}
 	}
 
 	@Override
 	public void serializeDie(DieSerializer serialize) {
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_external.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_flag.value());
-		serialize.debug_info.put((byte) (isStatic ? 0 : 1));
-		
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_accessibility.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());		
-		serialize.debug_info.put(accessability);
+		if (isStatic) {
+			serialize.addFlag(DwAtType.DW_AT_external);
+		}
 
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_name.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_string.value());
-		serialize.debug_info.put(Utils.serialize(name));
-
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_decl_file.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());
-		serialize.debug_info.put(fileNo);
-
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_low_pc.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_addr.value());
-		serialize.debug_info.putInt(startAddress);
-
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_high_pc.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_addr.value());
-		serialize.debug_info.putInt(endAddress);
-
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_type.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_ref4.value());
-		serialize.debug_info.putInt(returnType.baseAddress - getRoot().baseAddress);
+		serialize.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
+		serialize.add(DwAtType.DW_AT_name, name);
+		serialize.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
+		serialize.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
+		serialize.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
+		serialize.addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, returnType.baseAddress - getRoot().baseAddress);
 	}
 }

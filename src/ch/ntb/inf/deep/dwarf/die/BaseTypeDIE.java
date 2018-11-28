@@ -1,16 +1,16 @@
 package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.Utils;
 
-public class BaseTypeDIE extends DebugInformationEntry {
+public class BaseTypeDIE extends TypeDIE {
 
 	final byte sizeInBytes;
 	final DwAteType encoding;
 	final String name;
 
-	public BaseTypeDIE(Type type, DebugInformationEntry parent) {
-		super(parent, DwTagType.DW_TAG_base_type, true); // Insert at First Position to be sure it is serialized before its depending DIE
+	protected BaseTypeDIE(Type type, DebugInformationEntry parent) {
+		super(parent, DwTagType.DW_TAG_base_type);
+		type.dwarfDIE = this;
 		this.sizeInBytes = (byte) type.getTypeSize();
 		String typeName = "";
 		if (type.category == 'L') {
@@ -75,16 +75,8 @@ public class BaseTypeDIE extends DebugInformationEntry {
 
 	@Override
 	public void serializeDie(DieSerializer serialize) {
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_byte_size.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());
-		serialize.debug_info.put(sizeInBytes);
-
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_encoding.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_data1.value());
-		serialize.debug_info.put(encoding.value());
-
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwAtType.DW_AT_name.value());
-		Utils.writeUnsignedLeb128(serialize.debug_abbrev, DwFormType.DW_FORM_string.value());
-		serialize.debug_info.put(Utils.serialize(name));
+		serialize.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, sizeInBytes);
+		serialize.addByte(DwAtType.DW_AT_encoding, DwFormType.DW_FORM_data1, encoding.value());
+		serialize.add(DwAtType.DW_AT_name, name);
 	}
 }

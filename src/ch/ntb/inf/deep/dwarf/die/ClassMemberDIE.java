@@ -12,5 +12,12 @@ public class ClassMemberDIE extends MemberDIE {
 		super(field, parent);
 		location = new AddressExpression(field.address);
 	}
+	
+	@Override
+	public void serializeDie(DieSerializer serialize) {
+		super.serializeDie(serialize);
+		serialize.add(DwAtType.DW_AT_location, DwFormType.DW_FORM_exprloc, location);	
+		serialize.addByte(DwAtType.DW_AT_external, DwFormType.DW_FORM_flag, (byte) 1);
+	}
 
 }
