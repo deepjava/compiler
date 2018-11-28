@@ -21,6 +21,6 @@ public class RefTypeDIE extends TypeDIE {
 	@Override
 	protected void serializeDie(DieSerializer serializer) {
 		serializer.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, (byte) 4); // 32 Bit Pointer
-		serializer.addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, baseType.baseAddress - getRoot().baseAddress);
+		serializer.addTypeDIE(baseType);
 	}
 }

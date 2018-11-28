@@ -30,6 +30,7 @@ public class DebugSymbols{
 		for (CompilationUnitDIE cu : compilationUnits) {
 			cu.serialize(serializer);
 		}
+		serializer.updateMissingReferences();
 	}
 	
 	public ByteBuffer getDebug_info() {

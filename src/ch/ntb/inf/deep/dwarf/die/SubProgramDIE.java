@@ -72,6 +72,6 @@ public class SubProgramDIE extends DebugInformationEntry {
 		serialize.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
 		serialize.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
 		serialize.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
-		serialize.addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, returnType.baseAddress - getRoot().baseAddress);
+		serialize.addTypeDIE(returnType);
 	}
 }

@@ -21,8 +21,7 @@ public class VariableDIE extends DebugInformationEntry {
 	@Override
 	public void serializeDie(DieSerializer serialize) {
 		serialize.add(DwAtType.DW_AT_name, name);
-		serialize.addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, type.baseAddress - getRoot().baseAddress);
-
+		serialize.addTypeDIE(type);
 		serialize.addByte(DwAtType.DW_AT_artificial, DwFormType.DW_FORM_flag, (byte) 1);
 		serialize.add(DwAtType.DW_AT_location, DwFormType.DW_FORM_exprloc, expression);
 	}
