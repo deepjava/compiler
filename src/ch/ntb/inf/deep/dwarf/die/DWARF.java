@@ -8,7 +8,7 @@ import java.util.Map;
 import ch.ntb.inf.deep.dwarf.DwarfExpression;
 import ch.ntb.inf.deep.dwarf.Utils;
 
-public class DieSerializer {
+public class DWARF {
 
 	public final ByteBuffer debug_info;
 	public final ByteBuffer debug_abbrev;
@@ -17,7 +17,7 @@ public class DieSerializer {
 	private Map<Integer, TypeDIE> references; // Holds Reference Pointers to updated later the Address after all DIE's
 												// are serialized
 
-	public DieSerializer(ByteOrder byteOrder) {
+	public DWARF(ByteOrder byteOrder) {
 		debug_info = ByteBuffer.allocate(0xFFFF);
 		debug_info.order(byteOrder);
 		debug_abbrev = ByteBuffer.allocate(0xFFFF);
@@ -52,9 +52,9 @@ public class DieSerializer {
 		debug_info.put(Utils.serialize(str));
 	}
 
-	public void add(DwAtType type, DwFormType form, DwarfExpression expr) {
+	public void add(DwAtType type, DwarfExpression expr) {
 		Utils.writeUnsignedLeb128(debug_abbrev, type.value());
-		Utils.writeUnsignedLeb128(debug_abbrev, form.value());
+		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_exprloc.value());
 		expr.serialize(debug_info);
 	}
 
@@ -64,7 +64,7 @@ public class DieSerializer {
 		debug_info.put((byte) 1);
 	}
 
-	public void addTypeDIE(TypeDIE typeDie) {
+	public void add(TypeDIE typeDie) {
 		references.put(debug_info.position(), typeDie);
 		addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, -1); // Write a Dummy Value at this Index!
 	}
@@ -75,5 +75,10 @@ public class DieSerializer {
 			int position = ref.getKey();
 			debug_info.putInt(position, die.baseAddress - die.getRoot().baseAddress);
 		}
+	}
+
+	public void addDieEnd() {
+		Utils.writeUnsignedLeb128(debug_abbrev, 0);
+		Utils.writeUnsignedLeb128(debug_abbrev, 0);		
 	}
 }

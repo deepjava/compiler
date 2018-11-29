@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.dwarf.die.CompilationUnitDIE;
-import ch.ntb.inf.deep.dwarf.die.DieSerializer;
+import ch.ntb.inf.deep.dwarf.die.DWARF;
 
 public class DebugSymbols{
 	private final List<CompilationUnitDIE> compilationUnits;
-	private final DieSerializer serializer;
+	private final DWARF serializer;
 
 	public DebugSymbols(ByteOrder byteOrder) {
 		compilationUnits = new ArrayList<>();
@@ -26,7 +26,7 @@ public class DebugSymbols{
 			refType = refType.nextClass;
 		}
 
-		serializer = new DieSerializer(byteOrder);
+		serializer = new DWARF(byteOrder);
 		for (CompilationUnitDIE cu : compilationUnits) {
 			cu.serialize(serializer);
 		}

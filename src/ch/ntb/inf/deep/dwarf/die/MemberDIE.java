@@ -5,9 +5,9 @@ import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.Type;
 
 public abstract class MemberDIE extends DebugInformationEntry {
-	final String name;
-	final TypeDIE type;
-	final byte accessability;
+	private final String name;
+	private final TypeDIE type;
+	private final byte accessability;
 
 	public MemberDIE(Field field, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_member);
@@ -28,9 +28,9 @@ public abstract class MemberDIE extends DebugInformationEntry {
 	}
 
 	@Override
-	public void serializeDie(DieSerializer serialize) {
-		serialize.add(DwAtType.DW_AT_name, name);
-		serialize.addTypeDIE(type);
-		serialize.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
+	public void serializeDie(DWARF dwarf) {
+		dwarf.add(DwAtType.DW_AT_name, name);
+		dwarf.add(type);
+		dwarf.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
 	}
 }

@@ -6,7 +6,7 @@ import ch.ntb.inf.deep.dwarf.DwarfExpression;
 
 public class ClassMemberDIE extends MemberDIE {
 
-	final DwarfExpression location;
+	private final DwarfExpression location;
 
 	public ClassMemberDIE(Field field, DebugInformationEntry parent) {
 		super(field, parent);
@@ -14,10 +14,10 @@ public class ClassMemberDIE extends MemberDIE {
 	}
 	
 	@Override
-	public void serializeDie(DieSerializer serialize) {
-		super.serializeDie(serialize);
-		serialize.add(DwAtType.DW_AT_location, DwFormType.DW_FORM_exprloc, location);	
-		serialize.addByte(DwAtType.DW_AT_external, DwFormType.DW_FORM_flag, (byte) 1);
+	public void serializeDie(DWARF dwarf) {
+		super.serializeDie(dwarf);
+		dwarf.add(DwAtType.DW_AT_data_member_location, location);	
+		dwarf.addByte(DwAtType.DW_AT_external, DwFormType.DW_FORM_flag, (byte) 1);
 	}
 
 }

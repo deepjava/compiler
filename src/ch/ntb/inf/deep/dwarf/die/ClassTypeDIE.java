@@ -6,9 +6,8 @@ import ch.ntb.inf.deep.classItems.Method;
 
 public class ClassTypeDIE extends TypeDIE {
 
-	public final String name;
-	public final byte byteSize;
-	public final int fileNo = 1;
+	private final String name;
+	private final byte byteSize;
 
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_class_type);
@@ -26,19 +25,22 @@ public class ClassTypeDIE extends TypeDIE {
 			field = (Field) field.next;
 		}
 		
+		field = (Field) clazz.classFields;
 		while (field != null && field != clazz.constFields) {
 			// Static Fields
 			System.out.println("\tStatic Field: " + field.name + " address: " + field.address);
 			new ClassMemberDIE(field, this);
 			field = (Field) field.next;
 		}
-		
-		while (field != null) {
-			// Constant Fields
-			System.out.println("\tConstant Field: " + field.name + " address: " + field.address);
-			new ClassMemberDIE(field, this);
-			field = (Field) field.next;
-		}
+
+		// TODO: Insert Constant Member!
+//		ConstField constant  = (ConstField) clazz.constFields;
+//		while (constant != null) {
+//			// Constant Fields
+//			System.out.println("\tConstant Field: " + field.name + " address: " + field.offset);
+//			new ConstantDIE(constant, this);
+//			constant = (ConstField) field.next;
+//		}
 		
 		
 		Method method = (Method) clazz.methods;
@@ -51,8 +53,8 @@ public class ClassTypeDIE extends TypeDIE {
 	}
 
 	@Override
-	public void serializeDie(DieSerializer serialize) {
-		serialize.add(DwAtType.DW_AT_name, name);
-		serialize.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, byteSize);
+	public void serializeDie(DWARF dwarf) {
+		dwarf.add(DwAtType.DW_AT_name, name);
+		dwarf.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, byteSize);
 	}
 }

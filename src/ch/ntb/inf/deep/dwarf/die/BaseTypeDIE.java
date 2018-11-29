@@ -4,9 +4,9 @@ import ch.ntb.inf.deep.classItems.Type;
 
 public class BaseTypeDIE extends TypeDIE {
 
-	final byte sizeInBytes;
-	final DwAteType encoding;
-	final String name;
+	private final byte sizeInBytes;
+	private final DwAteType encoding;
+	private final String name;
 
 	protected BaseTypeDIE(Type type, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_base_type);
@@ -74,9 +74,9 @@ public class BaseTypeDIE extends TypeDIE {
 	}
 
 	@Override
-	public void serializeDie(DieSerializer serialize) {
-		serialize.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, sizeInBytes);
-		serialize.addByte(DwAtType.DW_AT_encoding, DwFormType.DW_FORM_data1, encoding.value());
-		serialize.add(DwAtType.DW_AT_name, name);
+	public void serializeDie(DWARF dwarf) {
+		dwarf.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, sizeInBytes);
+		dwarf.addByte(DwAtType.DW_AT_encoding, DwFormType.DW_FORM_data1, encoding.value());
+		dwarf.add(DwAtType.DW_AT_name, name);
 	}
 }

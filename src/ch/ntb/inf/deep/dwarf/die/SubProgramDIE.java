@@ -2,18 +2,19 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.LocalVar;
 
 public class SubProgramDIE extends DebugInformationEntry {
 
-	final String name;
-	final int startAddress;
-	final int endAddress;
-	final byte fileNo;
-	final boolean isStatic;
-	final byte accessability;
-	final TypeDIE returnType;
+	private final String name;
+	private final int startAddress;
+	private final int endAddress;
+	private final byte fileNo;
+	private final boolean isStatic;
+	private final byte accessability;
+	private final TypeDIE returnType;
 
 	public SubProgramDIE(Method method, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_subprogram);
@@ -45,14 +46,26 @@ public class SubProgramDIE extends DebugInformationEntry {
 
 		returnType = getType((Type) method.type, parent.getRoot());
 
-		// Method Parameters
+		// Search for Lexical Blocks
+		CFGNode cfgNode = method.cfg.rootNode;
+		while (cfgNode != null) {
+			if (cfgNode.isLoopHeader()) {
+				System.out.println("Has Loop inside!");
+			} else {
+				System.out.println("CFG");
+			}
+			cfgNode = cfgNode.next;
+		}
+
+		// Method Parameters and Local Variables
 		if (method.localVars != null && method.ssa != null) {
 			for (LocalVar localVar : method.localVars) {
 				while (localVar != null) {
 					if (method.ssa.isParam[localVar.index + method.maxStackSlots]) {
 						System.out.println("\t\tParameter " + localVar.name);
-						new VariableDIE(localVar, this);
+						new ParameterDIE(localVar, this);
 					} else {
+						new VariableDIE(localVar, this);
 						System.out.println("\t\tVariable " + localVar.name);
 					}
 					localVar = (LocalVar) localVar.next;
@@ -62,16 +75,16 @@ public class SubProgramDIE extends DebugInformationEntry {
 	}
 
 	@Override
-	public void serializeDie(DieSerializer serialize) {
+	public void serializeDie(DWARF dwarf) {
 		if (isStatic) {
-			serialize.addFlag(DwAtType.DW_AT_external);
+			dwarf.addFlag(DwAtType.DW_AT_external);
 		}
 
-		serialize.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
-		serialize.add(DwAtType.DW_AT_name, name);
-		serialize.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
-		serialize.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
-		serialize.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
-		serialize.addTypeDIE(returnType);
+		dwarf.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
+		dwarf.add(DwAtType.DW_AT_name, name);
+		dwarf.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
+		dwarf.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
+		dwarf.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
+		dwarf.add(returnType);
 	}
 }
