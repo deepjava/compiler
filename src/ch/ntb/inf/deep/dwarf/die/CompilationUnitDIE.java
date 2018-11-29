@@ -64,7 +64,7 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 	}
 
 	private void addHeader(DWARF dwarf) {
-		dwarf.debug_info.putInt(0); // Dummy value for length. Update later
+		dwarf.debug_info.putInt(-1); // Dummy value for length. Update later
 		dwarf.debug_info.putShort(version);
 		dwarf.debug_info.putInt(dwarf.debug_abbrev.position()); // abbrev Offset
 		dwarf.debug_info.put(pointer_size);

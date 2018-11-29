@@ -1,8 +1,11 @@
 package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.ConstField;
 import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.classItems.StdConstant;
+import ch.ntb.inf.deep.classItems.StringLiteral;
 
 public class ClassTypeDIE extends TypeDIE {
 
@@ -13,10 +16,10 @@ public class ClassTypeDIE extends TypeDIE {
 		super(parent, DwTagType.DW_TAG_class_type);
 		System.out.println("Class: " + clazz.name);
 		this.name = clazz.name.toString();
-		this.byteSize = (byte)clazz.getTypeSize();
-		
-		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this); 
-				
+		this.byteSize = (byte) clazz.getTypeSize();
+
+		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this);
+
 		Field field = (Field) clazz.instFields;
 		while (field != null && field != clazz.classFields) {
 			// Instance Fields
@@ -24,7 +27,7 @@ public class ClassTypeDIE extends TypeDIE {
 			new InstanceMemberDIE(field, this);
 			field = (Field) field.next;
 		}
-		
+
 		field = (Field) clazz.classFields;
 		while (field != null && field != clazz.constFields) {
 			// Static Fields
@@ -33,16 +36,17 @@ public class ClassTypeDIE extends TypeDIE {
 			field = (Field) field.next;
 		}
 
-		// TODO: Insert Constant Member!
-//		ConstField constant  = (ConstField) clazz.constFields;
-//		while (constant != null) {
-//			// Constant Fields
-//			System.out.println("\tConstant Field: " + field.name + " address: " + field.offset);
-//			new ConstantDIE(constant, this);
-//			constant = (ConstField) field.next;
-//		}
-		
-		
+		ConstField constant = (ConstField) clazz.constFields;
+		while (constant != null) {
+			System.out.println("\tConstant Field: " + field.name);
+			if (constant.getConstantItem() instanceof StdConstant) {
+				new ConstantDIE((StdConstant) constant.getConstantItem(), constant.name, this);
+			} else if (constant.getConstantItem() instanceof StringLiteral) {
+				new ClassMemberDIE(constant, constant.getConstantItem().address, this);
+			}
+			constant = (ConstField) constant.next;
+		}
+
 		Method method = (Method) clazz.methods;
 		while (method != null) {
 			if (method.address != -1) {

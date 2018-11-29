@@ -2,7 +2,6 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.LocalVar;
 
@@ -45,17 +44,6 @@ public class SubProgramDIE extends DebugInformationEntry {
 		this.fileNo = 1;
 
 		returnType = getType((Type) method.type, parent.getRoot());
-
-		// Search for Lexical Blocks
-		CFGNode cfgNode = method.cfg.rootNode;
-		while (cfgNode != null) {
-			if (cfgNode.isLoopHeader()) {
-				System.out.println("Has Loop inside!");
-			} else {
-				System.out.println("CFG");
-			}
-			cfgNode = cfgNode.next;
-		}
 
 		// Method Parameters and Local Variables
 		if (method.localVars != null && method.ssa != null) {

@@ -39,6 +39,12 @@ public class DWARF {
 		Utils.writeUnsignedLeb128(debug_abbrev, form.value());
 		debug_info.putInt(value);
 	}
+	
+	public void addLong(DwAtType type, DwFormType form, long value) {
+		Utils.writeUnsignedLeb128(debug_abbrev, type.value());
+		Utils.writeUnsignedLeb128(debug_abbrev, form.value());
+		debug_info.putLong(value);
+	}
 
 	public void addShort(DwAtType type, DwFormType form, short value) {
 		Utils.writeUnsignedLeb128(debug_abbrev, type.value());
