@@ -39,7 +39,7 @@ interface Registers {
 
 	final int returnGPR1 = 0;	// GPR with return value
 	final int returnGPR2 = 1;	// GPR with return value used for longs
-	final int returnEXTR = 0;	// EXTR with return value
+	final int returnEXTR = 1;	// EXTR with return value
 	
 	final int scratchReg = 6;		// scratch register
 	final int stackPtr = 13;	// register for stack pointer
