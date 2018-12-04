@@ -20,10 +20,30 @@ package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
+
 public class LocalVar extends Item {
 
 	public int startPc, length; // life range in bytecode: [startPc, startPc+length]
 	public SSAInstruction ssaInstrStart, ssaInstrEnd;	// associated ssa instructions
+	public LocalVarRange range, curr;	// linked list of ranges where the lv lives in a given register or stack slot
+	
+	public void startRange(SSAInstruction start, SSAInstruction end, int reg) {
+		if (range == null) {
+			range = new LocalVarRange();
+			curr = range;
+		} else {
+			curr.ssaEnd = end;
+			curr.next = new LocalVarRange();
+			curr = curr.next;
+		}
+		curr.ssaStart = start;
+		curr.reg = reg;
+	}
+	
+	public void endRange(SSAInstruction end) {
+		if (curr != null) 
+			curr.ssaEnd = end;
+	}
 	
 	public void print(int indentLevel) {
 		indent(indentLevel);
@@ -38,8 +58,18 @@ public class LocalVar extends Item {
 		if (ssaInstrStart != null) {
 			sb.append(" <=> ssa instruction: from " + ssaInstrStart.result.n);
 			if (ssaInstrEnd != null) sb.append(" to " + ssaInstrEnd.result.n);
-			if (ssaInstrStart.machineCodeOffset != -1)
-				sb.append(" <=> code: from " + ssaInstrStart.machineCodeOffset + " to " + ssaInstrEnd.machineCodeOffset);
+//			if (ssaInstrStart.machineCodeOffset != -1) {
+				sb.append(" <=> code: from " + ssaInstrStart.machineCodeOffset);
+				if (ssaInstrEnd != null) sb.append(" to " + ssaInstrEnd.machineCodeOffset);				
+				LocalVarRange r = range;
+				while (r != null) {
+//					sb.append(" [" + r.ssaStart.machineCodeOffset + "-" + r.ssaEnd.machineCodeOffset + "|" + r.ssaStart.result.reg + "]");
+					sb.append(" [" + r.ssaStart.machineCodeOffset);
+					if (r.ssaEnd != null) sb.append("-" + r.ssaEnd.machineCodeOffset);
+					sb.append("|" + r.reg + "]");
+					r = r.next;
+				}
+//			}
 		}
 		return sb.toString();
 	}
