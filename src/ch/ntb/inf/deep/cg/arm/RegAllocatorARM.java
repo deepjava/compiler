@@ -22,6 +22,7 @@ import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.RegAllocator;
 import ch.ntb.inf.deep.cg.arm.CodeGenARM;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
+import ch.ntb.inf.deep.classItems.LocalVar;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.host.ErrorReporter;
@@ -46,7 +47,42 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 	 * checks if temporary space on stack is necessary
 	 */
 	static void assignRegisters() {
+		if (dbg) {
+			StdStreams.vrb.println("\nLocal Variable Table");
+			LocalVar[] lvTable = ssa.getLocalVarsTable();
+			if (lvTable != null) {
+				for (int i = 0; i < lvTable.length; i++) {
+					LocalVar lv = lvTable[i];
+					while (lv != null) {	// locals occupying the same slot are linked by field "next"
+						StdStreams.vrb.println(lv.toString());
+						lv = (LocalVar) lv.next;
+					}
+				}
+			} 
+		}
+		
+		StdStreams.vrb.println("\nset range of locals which are parameters to the first ssa instruction");
+		LocalVar[] lvTable = ssa.getLocalVarsTable();
+		if (lvTable != null) {
+			for (int i = 0; i < lvTable.length; i++) {
+				LocalVar lv = lvTable[i];
+				while (lv != null) {	// locals occupying the same slot are linked by field "next"
+					if (ssa.isParam[lv.index + maxOpStackSlots]) {
+						SSAInstruction f = new NoOpnd(0, 0);
+						f.machineCodeOffset = 0;
+						f.result = new SSAValue();
+						f.result.reg = CodeGenARM.paramRegNr[lv.index];
+						lv.ssaInstrStart = f;
+						lv.startRange(instrs[0], null, -1);
+						if (dbg) StdStreams.vrb.println("\tstart first lv range of " + lv.toString());
+					}
+					lv = (LocalVar) lv.next;
+				}
+			}
+		} 
+
 		// handle loadLocal first
+		if (dbg) StdStreams.vrb.println("assign registers");
 		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
@@ -103,7 +139,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			// SSA instruction of the last node can now release their registers 
 			if (instr.ssaOpcode != sCPhiFunc) {
 				SSAInstruction instr1 = instr.freePhi;
-				if (dbg) {if (instr1 != null) StdStreams.vrb.println("\tfree registers for phi-functions of last node");}
+				if (dbg) {if (instr1 != null) StdStreams.vrb.println("\t\tfree registers for phi-functions of last node");}
 				while (instr1 != null) {
 					SSAValue val = instr1.result.join;
 					if (val != null && val.reg > -1 && val.end < i) {
@@ -128,9 +164,9 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false, false);
 			else if (nofAuxRegGPR == 2) {
 				res.regGPR1 = reserveReg(gpr, false, false);
-				if (dbg) if (res.regGPR1 != -1) StdStreams.vrb.print("\tauxReg1 = " + res.regGPR1);
+				if (dbg) if (res.regGPR1 != -1) StdStreams.vrb.print("\t\tauxReg1 = " + res.regGPR1);
 				res.regGPR2 = reserveReg(gpr, false, false);
-				if (dbg) if (res.regGPR2 != -1) StdStreams.vrb.print("\tauxReg2 = " + res.regGPR2);
+				if (dbg) if (res.regGPR2 != -1) StdStreams.vrb.print("\t\tauxReg2 = " + res.regGPR2);
 			}
 			
 			// reserve register for result of instruction
@@ -138,7 +174,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				// already done
 			} else if (res.join != null) {
 				SSAValue joinVal = res.join;
-				if (dbg) StdStreams.vrb.println("\tjoinVal != null");
+				if (dbg) StdStreams.vrb.println("\t\tjoinVal != null");
 				if (joinVal.reg < 0) {	// join: register not assigned yet
 					if (res.type == tLong) {
 						joinVal.regLong = reserveReg(gpr, joinVal.nonVol, false);
@@ -154,7 +190,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						res.reg = joinVal.reg;
 					}
 				} else {// assign same register as phi function
-					if (dbg) StdStreams.vrb.println("\tassign same reg as join val");
+					if (dbg) StdStreams.vrb.println("\t\tassign same reg as join val");
 					if (res.type == tLong) {
 						res.regLong = joinVal.regLong;	
 						res.reg = joinVal.reg;
@@ -176,7 +212,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				SSAInstruction instr1 = instrs[res.end];
 				boolean imm = (scAttrTab[instr1.ssaOpcode] & (1 << ssaApImmOpd)) != 0;
 				if (imm && res.index < maxOpStackSlots && res.join == null) {
-					if (dbg) StdStreams.vrb.print("\timmediate");
+					if (dbg) StdStreams.vrb.print("\t\timmediate");
 					// opd must be used in an instruction with immediate form available
 					// and opd must not be already in a register 
 					// and opd must have join == null
@@ -252,7 +288,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				if (res.reg < 0) 	// not yet assigned
 					findReg(res);
 			}
-			if (dbg) StdStreams.vrb.println("\treg = " + res.reg);
+			if (dbg) StdStreams.vrb.println("\t\treg = " + res.reg);
 
 			if (res.regGPR1 != -1) freeReg(gpr, res.regGPR1, false);
 			if (res.regGPR2 != -1) freeReg(gpr, res.regGPR2, false);
@@ -293,6 +329,41 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				if (gpr > maxNofParamGPR) maxNofParamGPR = gpr; 
 				if (fpr > maxNofParamFPR) maxNofParamFPR = fpr; 
 			}
+			
+			// if result of instruction is local variable -> record register ranges
+			int lvIndex = res.index - maxOpStackSlots;
+//			LocalVar[] lvTable = ssa.getLocalVarsTable();
+			if (lvIndex >= 0 && lvTable != null && lvIndex < lvTable.length) {	// there are rare cases where the java compiler generates bytecode with local variables but leaves the table empty!
+				LocalVar lv = lvTable[lvIndex];
+				while (lv != null && (lv.startPc + lv.length) < instr.bca) lv = (LocalVar) lv.next;	// choose active lv for this instruction
+				if (lv != null) {
+					if (dbg) StdStreams.vrb.println("\t\tres is lv "+ lv.toString());
+					if (lv.ssaInstrStart == null) {
+						if (dbg) StdStreams.vrb.println("\t\tstart first lv range"); 
+						lv.ssaInstrStart = instrs[i+1];
+						lv.startRange(instrs[i+1], null, res.reg);
+					} else {
+						if (lv.curr.reg != res.reg) {
+							if (dbg) StdStreams.vrb.println("\t\tstart new lv range");
+							lv.startRange(instrs[i+1], instr, res.reg);
+						}
+					}
+				}
+			}
+			// check if this instruction is end of lv range
+			if (lvTable != null) {
+				for (int k = 0; k < lvTable.length; k++) {
+					LocalVar lv = lvTable[k];
+					while (lv != null) {	// locals occupying the same slot are linked by field "next"
+						if (lv.ssaInstrEnd == null && instr.bca == lv.startPc + lv.length) {
+							lv.ssaInstrEnd = instr;
+							lv.endRange(instr);
+							if (dbg) StdStreams.vrb.println("\t\tis end of lv:" + lv.toString());
+						}
+						lv = (LocalVar) lv.next;
+					}
+				}
+			}
 		}
 		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
 		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
@@ -302,6 +373,33 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
 		nof = maxNofParamFPR - (paramEndEXTR - paramStartEXTR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;
+		
+		// set end of all lv if not yet set
+//		LocalVar[] lvTable = ssa.getLocalVarsTable();
+		if (lvTable != null) {
+				for (int k = 0; k < lvTable.length; k++) {
+				LocalVar lv = lvTable[k];
+				while (lv != null) {	// locals occupying the same slot are linked by field "next"
+					if (lv.ssaInstrEnd == null) {
+						lv.ssaInstrEnd = instrs[nofInstructions-1];
+						lv.endRange(instrs[nofInstructions-1]);
+					}
+					lv = (LocalVar) lv.next;
+				}
+			}
+		}
+		if (dbg) {
+			StdStreams.vrb.println("\nLocal Variable Table");
+			if (lvTable != null) {
+				for (int i = 0; i < lvTable.length; i++) {
+					LocalVar lv = lvTable[i];
+					while (lv != null) {	// locals occupying the same slot are linked by field "next"
+						StdStreams.vrb.println(lv.toString());
+						lv = (LocalVar) lv.next;
+					}
+				}
+			}
+		}
 	}
 
 	public static boolean isPowerOf2(long val) {
@@ -324,7 +422,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 
 	static int reserveReg(boolean isGPR, boolean isNonVolatile, boolean single) {
 		if (isGPR) {
-			if (dbg) StdStreams.vrb.print("\tbefore reserving " + Integer.toHexString(regsGPR));
+			if (dbg) StdStreams.vrb.print("\t\tbefore reserving " + Integer.toHexString(regsGPR));
 			int i;
 			if (!isNonVolatile) {	// is volatile
 				i = paramStartGPR;
@@ -346,11 +444,11 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				}
 				i--;
 			}
-			if (dbg) StdStreams.vrb.print("\tnot enough GPR's, reserve stack slot");
+			if (dbg) StdStreams.vrb.print("\t\tnot enough GPR's, reserve stack slot");
 			fullRegSet = false;
 			return getEmptyStackSlot(false);
 		} else {	// EXTR
-			if (dbg) StdStreams.vrb.print("\tbefore reserving regsEXTRD:" + Integer.toHexString(regsEXTRD) + " regsEXTRS:" + Integer.toHexString(regsEXTRS));
+			if (dbg) StdStreams.vrb.print("\t\tbefore reserving regsEXTRD:" + Integer.toHexString(regsEXTRD) + " regsEXTRS:" + Integer.toHexString(regsEXTRS));
 			int i;
 			if (!isNonVolatile) {	// is volatile
 				if (single) {
@@ -400,7 +498,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				}			
 			}
 
-			if (dbg) StdStreams.vrb.print("\tnot enough FPR's, reserve stack slot");
+			if (dbg) StdStreams.vrb.print("\t\tnot enough FPR's, reserve stack slot");
 			fullRegSet = false;
 			if (single) return getEmptyStackSlot(false);
 			else return getEmptyStackSlot(true);
@@ -471,10 +569,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		if (isGPR) {
 			if (reg < 0x100) {
 			regsGPR |= 1 << reg;
-			if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
+			if (dbg) StdStreams.vrb.println("\t\tfree reg " + reg + "\tregsGPR=0x" + Integer.toHexString(regsGPR));
 			} else {
 				releaseStackSlot(reg - 0x100);
-				if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
+				if (dbg) StdStreams.vrb.println("\t\tfree stack slot " + reg);
 			}
 		} else {
 			if (single) {
@@ -484,20 +582,20 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if ((regsEXTRS & (1 << r)) != 0) {
 						regsEXTRD |= 1 << (reg/2);	// release double precision register as well
 					}
-					if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsEXTRD=0x" + Integer.toHexString(regsEXTRD) + " regsEXTRS=0x" + Integer.toHexString(regsEXTRS));
+					if (dbg) StdStreams.vrb.println("\t\tfree reg " + reg + "\tregsEXTRD=0x" + Integer.toHexString(regsEXTRD) + " regsEXTRS=0x" + Integer.toHexString(regsEXTRS));
 				} else {
 					releaseStackSlot(reg - 0x100);
-					if (dbg) StdStreams.vrb.println("\tfree stack slot " + reg);
+					if (dbg) StdStreams.vrb.println("\t\tfree stack slot " + reg);
 				}			
 			} else {
 				if (reg < 0x100) {
 					regsEXTRD |= 1 << reg;
 					regsEXTRS |= 3 << (reg*2);	// release single precision registers as well
-					if (dbg) StdStreams.vrb.println("\tfree reg " + reg + "\tregsEXTRD=0x" + Integer.toHexString(regsEXTRD) + " regsEXTRS=0x" + Integer.toHexString(regsEXTRS));
+					if (dbg) StdStreams.vrb.println("\t\tfree reg " + reg + "\tregsEXTRD=0x" + Integer.toHexString(regsEXTRD) + " regsEXTRS=0x" + Integer.toHexString(regsEXTRS));
 				} else {
 					releaseStackSlot(reg - 0x100);
 					releaseStackSlot(reg + 1 - 0x100);
-					if (dbg) StdStreams.vrb.println("\tfree stack slot " + (reg + 1));
+					if (dbg) StdStreams.vrb.println("\t\tfree stack slot " + (reg + 1));
 				}			
 			}
 		}

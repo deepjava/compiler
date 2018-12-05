@@ -43,15 +43,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public static int idGETGPR, idGETEXTRD, idGETEXTRS, idGETCPR;
 	public static int idPUTGPR, idPUTEXTRD, idPUTEXTRS, idPUTCPR;
 
-	private static int LRoffset;	//not used in ARM
-	private static int XERoffset;	
-	private static int CRoffset;	
-	private static int CTRoffset;	
-	private static int SRR0offset;	
-	private static int SRR1offset;	
+//	private static int LRoffset;	//not used in ARM
+//	private static int XERoffset;	
+//	private static int CRoffset;	
+//	private static int CTRoffset;	
+//	private static int SRR0offset;	
+//	private static int SRR1offset;	
 	private static int paramOffset;
-	private static int GPRoffset;	
-	private static int FPRoffset;	
+//	private static int GPRoffset;	
+//	private static int FPRoffset;	
 	private static int localVarOffset;
 	private static int stackSize;
 	static boolean enFloatsInExc;
@@ -336,39 +336,41 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private static int calcStackSize() {
-		int size = 4 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;
-		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
+//		int size = 4 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;
+//		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
+		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
 //		int padding = (16 - (size % 16)) % 16;
 //		size = size + padding;
-		LRoffset = size - 4;
-		GPRoffset = LRoffset - nofNonVolGPR * 4;
-		FPRoffset = GPRoffset - nofNonVolFPR * 8;
-		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
-		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
+//		LRoffset = size - 4;
+//		GPRoffset = LRoffset - nofNonVolGPR * 4;
+//		FPRoffset = GPRoffset - nofNonVolFPR * 8;
+//		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 //		System.out.println("size = " + size + "  GPRoffset = " + GPRoffset + "  FPRoffset = " + FPRoffset + "  localVarOffset = " + localVarOffset);
 		paramOffset = 4;
+		localVarOffset = paramOffset + callParamSlotsOnStack * 4;
 		return size;
 	}
 
 	private static int calcStackSizeException() {
-		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4;
-		if (enFloatsInExc) {
-			size += nofNonVolFPR * 8;	// save used nonvolatile EXTR's
-			size += nonVolStartEXTR * 8 + 8;	// save all volatile EXTR's and FPSCR
-		}
-		int padding = (16 - (size % 16)) % 16;
-		size = size + padding;
-		LRoffset = size - 4;
-		XERoffset = LRoffset - 4;
-		CRoffset = XERoffset - 4;
-		CTRoffset = CRoffset - 4;
-		SRR1offset = CTRoffset - 4;
-		SRR0offset = SRR1offset - 4;
-		GPRoffset = SRR0offset - nofGPR * 4;
-		FPRoffset = GPRoffset - nofNonVolFPR * 8;
-		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
-		localVarOffset = FPRoffset - RegAllocator.maxLocVarStackSlots * 4;
+//		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4;
+//		if (enFloatsInExc) {
+//			size += nofNonVolFPR * 8;	// save used nonvolatile EXTR's
+//			size += nonVolStartEXTR * 8 + 8;	// save all volatile EXTR's and FPSCR
+//		}
+		int size = RegAllocator.maxLocVarStackSlots * 4;
+//		int padding = (16 - (size % 16)) % 16;
+//		size = size + padding;
+//		LRoffset = size - 4;
+//		XERoffset = LRoffset - 4;
+//		CRoffset = XERoffset - 4;
+//		CTRoffset = CRoffset - 4;
+//		SRR1offset = CTRoffset - 4;
+//		SRR0offset = SRR1offset - 4;
+//		GPRoffset = SRR0offset - nofGPR * 4;
+//		FPRoffset = GPRoffset - nofNonVolFPR * 8;
+//		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		paramOffset = 4;
+		localVarOffset = paramOffset;
 		return size;
 	}
 
@@ -1638,26 +1640,24 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcImm(code, armMov, condAlways, paramStartGPR + opds.length, 0, sizeOfObject); // reg after last parameter
 					}
 
-					// get result
+					// get result, must be copied from return register to result register
 					int type = res.type & ~(1<<ssaTaFitIntoInt);
-					if (type == tLong) {
-//						assert false;
-//						if (res.regLong == returnGPR2) {
-//							if (res.reg == returnGPR1) {	// returnGPR2 -> r0, returnGPR1 -> r3, r0 -> r2
-//								createIrArSrB(ppcOr, 0, returnGPR2, returnGPR2);
-//								createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
-//								createIrArSrB(ppcOr, res.reg, 0, 0);
-//							} else {	// returnGPR2 -> reg, returnGPR1 -> r3
-//								createIrArSrB(ppcOr, res.reg, returnGPR2, returnGPR2);
-//								createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
-//							}
-//						} else { // returnGPR1 -> regLong, returnGPR2 -> reg
-//							createIrArSrB(ppcOr, res.regLong, returnGPR1, returnGPR1);
-//							createIrArSrB(ppcOr, res.reg, returnGPR2, returnGPR2);
-//						}
+					if (type == tLong) {	// call must return in correct registers
+						if (dRegLong == returnGPR2) {
+							if (dReg == returnGPR1) {	// returnGPR2 -> scratchReg, returnGPR1 -> returnGPR2, scratchReg -> returnGPR1
+								createDataProcMovReg(code, armMov, condAlways, scratchReg, returnGPR2, noShift, 0);
+								createDataProcMovReg(code, armMov, condAlways, dRegLong, returnGPR1, noShift, 0);
+								createDataProcMovReg(code, armMov, condAlways, dReg, scratchReg, noShift, 0);
+							} else {	// returnGPR2 -> reg, returnGPR1 -> r3
+								createDataProcMovReg(code, armMov, condAlways, dReg, returnGPR2, noShift, 0);
+								createDataProcMovReg(code, armMov, condAlways, dRegLong, returnGPR1, noShift, 0);
+							}
+						} else { // returnGPR1 -> regLong, returnGPR2 -> reg
+							createDataProcMovReg(code, armMov, condAlways, dRegLong, returnGPR1, noShift, 0);
+							createDataProcMovReg(code, armMov, condAlways, dReg, returnGPR2, noShift, 0);
+						}
 					} else if (type == tFloat || type == tDouble) {
-//						assert false;
-//						createIrDrB(ppcFmr, res.reg, returnFPR);
+						createFPdataProc(code, armVmov, condAlways, dReg, 0, returnEXTR, (type == tFloat));
 					} else if (type == tVoid) {
 						if (newString) {
 							newString = false;
@@ -1805,7 +1805,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcMovReg(code, armMov, condAlways, returnGPR2, src1Reg, noShift, 0);
 					break;
 				case bCfreturn: 
+					createFPdataProc(code, armVmov, condAlways, returnEXTR, 0, src1Reg, true);
+					break;
 				case bCdreturn:
+					createFPdataProc(code, armVmov, condAlways, returnEXTR, 0, src1Reg, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(620);
@@ -2122,7 +2125,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (srcFPR[i] >= 0x100) {	// copy from stack
 //							createIrDrAd(code, ppcLfd, i, stackPtr, localVarOffset + 4 * (srcFPR[i] - 0x100));
 						} else {
-//							createIrDrB(code, ppcFmr, i, srcFPR[i]);
+							createFPdataProc(code, armVmov, condAlways, i, 0, srcFPR[i], true);	// use scratchRegEXTR
 							srcFPRcount[srcFPR[i]]--;
 						}
 						srcFPRcount[i]--;  
@@ -2175,7 +2178,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				int src = 0;
 				if (srcFPRcount[i] == 1) {
 					src = i;
-//					createIrDrB(code, ppcFmr, 0, srcFPR[i]);
+					createFPdataProc(code, armVmov, condAlways, 0, 0, srcFPR[i], true);
 					srcFPRcount[srcFPR[i]]--;
 					done = false;
 				}
@@ -2185,6 +2188,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					while (srcFPR[k] != -1) {
 						if (srcFPRcount[k] == 0 && k != src) {
 //							createIrDrB(code, ppcFmr, k, srcFPR[k]);
+							createFPdataProc(code, armVmov, condAlways, k, 0, srcFPR[k], true);
 							srcFPRcount[k]--; srcFPRcount[srcFPR[k]]--; 
 							done1 = false;
 						}
@@ -2193,6 +2197,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				if (src != 0) {
 //					createIrDrB(code, ppcFmr, src, 0);
+					createFPdataProc(code, armVmov, condAlways, src, 0, 0, true);
 					srcFPRcount[src]--;
 				}
 				i++;
@@ -2200,73 +2205,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		if (dbg) StdStreams.vrb.println("done");
 	}
-
-	// copy parameters for subroutines into registers r30/r31, r28/r29
-	private void copyParametersSubroutine(int op0regLong, int op0reg, int op1regLong, int op1reg) {
-		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
-
-		// get info about in which register parameters are located
-		srcGPR[topGPR] = op0reg;
-		srcGPR[topGPR-1] = op0regLong;
-		if (op1regLong != 0 && op1reg != 0) {srcGPR[topGPR-2] = op1reg; srcGPR[topGPR-3] = op1regLong;}
-		
-		// count register usage
-		int i = topGPR;
-		while (srcGPR[i] != 0) srcGPRcount[srcGPR[i--]]++;
-		
-		// handle move to itself
-		i = topGPR;
-		while (srcGPR[i] != 0) {
-			if (srcGPR[i] == i) srcGPRcount[i]--;
-			i--;
-		}
-
-		// move registers 
-		boolean done = false;
-		while (!done) {
-			i = topGPR; done = true;
-			while (srcGPR[i] != 0) {
-				if (srcGPRcount[i] == 0) { // check if register no longer used for parameter
-//					createIrArSrB(ppcOr, i, srcGPR[i], srcGPR[i]);
-					srcGPRcount[i]--; srcGPRcount[srcGPR[i]]--; 
-					done = false;
-				}
-				i--; 
-			}
-		}
-
-		// resolve cycles
-		done = false;
-		while (!done) {
-			i = topGPR; done = true;
-			while (srcGPR[i] != 0) {
-				int src = 0;
-				if (srcGPRcount[i] == 1) {
-					src = i;
-//					createIrArSrB(ppcOr, 0, srcGPR[i], srcGPR[i]);
-					srcGPRcount[srcGPR[i]]--;
-					done = false;
-				}
-				boolean done1 = false;
-				while (!done1) {
-					int k = topGPR; done1 = true;
-					while (srcGPR[k] != 0) {
-						if (srcGPRcount[k] == 0 && k != src) {
-//							createIrArSrB(ppcOr, k, srcGPR[k], srcGPR[k]);
-							srcGPRcount[k]--; srcGPRcount[srcGPR[k]]--; 
-							done1 = false;
-						}
-						k--; 
-					}
-				}
-				if (src != 0) {
-//					createIrArSrB(ppcOr, src, 0, 0);
-					srcGPRcount[src]--;
-				}
-				i--;
-			}
-		}
-	}	
 
 	// data processing with second operand as immediate value, op in bits 24 to 20
 	private void createDataProcImm(Code32 code, int op, int cond, int Rd, int Rn, int imm12) {
@@ -2441,6 +2379,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	// floating point data processing (VADD, VSUB, VMUL, VDIV, VMOV (moving between ext. regs))
 	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vn, int Vm, boolean single) {
+		if (opCode == armVmov && (Vd == Vm)) return;	// mov Vx, Vx makes no sense	
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (((Vn>>1)&0xf) << 16) | ((Vn&1) << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
 		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | ((Vn&0xf) << 16) | ((Vn>>4) << 7) | (Vm&0xf) | ((Vm>>4) << 5);
@@ -2714,7 +2653,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrS(code, ppcMtmsr, 0);
 //			createIrS(code, ppcIsync, 0);	// must context synchronize after setting of FP bit
 //		}
-		int offset = FPRoffset;
+//		int offset = FPRoffset;
 		if (nofNonVolFPR > 0) {
 			if (nofNonVolFPR <= 16)
 				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR, false);
@@ -2746,7 +2685,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			for (int i = 0; moveFPRdst[i] != 0; i++) StdStreams.vrb.print(moveFPRdst[i] + ","); 
 			StdStreams.vrb.println();
 		}
-		offset = 0;
+		int offset = 0;
 		for (int i = 0; i < nofMoveGPR; i++) {
 			if (moveGPRsrc[i]+paramStartGPR <= paramEndGPR) {// copy from parameter register
 				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveGPRsrc[i] + " into GPR" + moveGPRdst[i]);

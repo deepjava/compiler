@@ -29,8 +29,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	private static final boolean dbg = false;
 	public CFG cfg;
 	public int nofLoopheaders;
-	public boolean isParam[]; // indicates which locals are passed as parameters
-	public int paramType[]; // types of those parameters
+	public boolean isParam[]; // indicates which locals are passed as parameters, array contains op-stack and locals
+	public int paramType[]; // types of those parameters, array contains op-stack and locals
 	private LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
 	private LocalVar[] localVarTab; // length equals local variables table length in class file, entries are sorted by bca
 	public int highestLineNr;
@@ -48,26 +48,26 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		sortedNodes = new SSANode[nofNodes];
 		returnNodes = new SSANode[4];
 
-		if (dbg) StdStreams.vrb.println("generate ssa for " + cfg.method.owner.name + "." + cfg.method.name);
+		if (dbg) StdStreams.vrb.println("\ngenerate ssa for " + cfg.method.owner.name + "." + cfg.method.name);
 		
 		findParameters();	// fills parameter array
 		sortNodes((SSANode)cfg.rootNode);
 		
 		if (dbg) {
-			StdStreams.vrb.print("Node order: ");
+			StdStreams.vrb.print("node order: ");
 			for (int i = 0; i < nofSortedNodes - 1; i++){
 				StdStreams.vrb.print("[" + sortedNodes[i].firstBCA + ":"+ sortedNodes[i].lastBCA + "], ");
 			}
 			StdStreams.vrb.println("[" + sortedNodes[nofSortedNodes-1].firstBCA + ":"+ sortedNodes[nofSortedNodes-1].lastBCA + "]");
 			if (isParam.length > 0){
-				StdStreams.vrb.println("IsParam");
-				StdStreams.vrb.print("[ ");
+				StdStreams.vrb.print("is parameter ");
+				StdStreams.vrb.print("[");
 				for (int i = 0; i < isParam.length - 1; i++) {
 					StdStreams.vrb.print(isParam[i] + ", ");
 				}
-				StdStreams.vrb.println(isParam[isParam.length - 1] + " ]");
+				StdStreams.vrb.println(isParam[isParam.length - 1] + "]");
 			}
-			
+			StdStreams.vrb.println();
 		}
 		
 		// visit all
@@ -77,7 +77,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			node.merge();
 			node.traversCode();	// translate bytecode into ssa instructions
 		}
-		if (dbg) StdStreams.vrb.println(toString());
+		if (dbg) StdStreams.vrb.print(toString());
 
 		// visit loop headers again
 		for (int i = 0; i < nofLoopheaders; i++) {
@@ -130,7 +130,8 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 		}
 		renumberInstructions(cfg);
 		createLineNrSSATable();
-		createLocalVarsTable();
+//		createLocalVarsTable();
+		localVarTab = cfg.method.localVars;
 //		if (true) StdStreams.vrb.println(cfg.toString());
 //		if (true) StdStreams.vrb.println(toString());
 	}
@@ -331,68 +332,6 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 
 	public LineNrSSAInstrPair[] getLineNrTable() {
 		return lineNumTab;
-	}
-
-	/**
-	 * Creates a table holding information about the local variables of this method.
-	 * The information given in the bytecode is used to find corresponding ssa instructions and machine code instructions.
-	 * Care must be taken about the range:
-	 *     startPc denotes the bytecode instruction at which a local is already defined, that is after a store instruction
-	 *     endPc denotes the bytecode instruction after the local went out of scope 
-	 */
-	private void createLocalVarsTable() {
-		localVarTab = cfg.method.localVars;
-		if (localVarTab != null) { 
-			SSANode node = (SSANode) cfg.rootNode;
-			for (int i = 0; i < localVarTab.length; i++) {
-				LocalVar lv = localVarTab[i];
-				while (lv != null) {	// empty slot for longs and doubles
-					int start = lv.startPc;
-					node = (SSANode) cfg.rootNode;
-					if (start == 0) {
-						lv.ssaInstrStart = node.instructions[0];
-					} else {
-						while (node != null) {
-							int n = 0;
-							while (n < node.nofInstr && start > node.instructions[n].bca) n++;
-							if (n < node.nofInstr) {
-								if (start == node.instructions[n].bca)
-									lv.ssaInstrStart = node.instructions[n];
-								else if (n > 0 && start == node.instructions[n-1].bca)
-									lv.ssaInstrStart = node.instructions[n-1];
-								else 
-									lv.ssaInstrStart = node.instructions[n];
-								break;
-							}
-							node = (SSANode) node.next;
-						}
-					}
-					int end = start + lv.length;
-					node = (SSANode) cfg.rootNode;
-					if (end == 0) {
-						lv.ssaInstrEnd = node.instructions[0];
-					} else {
-						while (node != null) {
-							int n = 0;
-							while (n < node.nofInstr && end > node.instructions[n].bca) n++;
-							if (n < node.nofInstr) {
-								if (end == node.instructions[n].bca)
-									lv.ssaInstrEnd = node.instructions[n];
-								else if (n > 0 && end == node.instructions[n-1].bca)
-									lv.ssaInstrEnd = node.instructions[n-1];
-								else 
-									lv.ssaInstrEnd = node.instructions[n];
-								break;
-							} else if (node.next == null) {	// last node
-								lv.ssaInstrEnd = node.instructions[n-1];
-							}
-							node = (SSANode) node.next;
-						}
-					}
-					lv = (LocalVar) lv.next;	// locals occupying the same slot are linked by field "next"
-				}
-			}
-		}
 	}
 
 	public LocalVar[] getLocalVarsTable() {
