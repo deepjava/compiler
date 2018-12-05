@@ -1,4 +1,4 @@
-package ch.ntb.inf.deep.dwarf;
+package ch.ntb.inf.deep.dwarf.location;
 
 import java.nio.ByteBuffer;
 

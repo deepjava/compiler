@@ -1,8 +1,8 @@
 package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Field;
-import ch.ntb.inf.deep.dwarf.AddressExpression;
-import ch.ntb.inf.deep.dwarf.DwarfExpression;
+import ch.ntb.inf.deep.dwarf.location.AddressExpression;
+import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
 
 public class ClassMemberDIE extends MemberDIE {
 
@@ -13,14 +13,14 @@ public class ClassMemberDIE extends MemberDIE {
 	}
 
 	public ClassMemberDIE(Field field, int address, DebugInformationEntry parent) {
-		super(field, parent);
+		super(field, parent, DwTagType.DW_TAG_variable);
 		location = new AddressExpression(address);
 	}
 
 	@Override
 	public void serializeDie(DWARF dwarf) {
 		super.serializeDie(dwarf);
-		dwarf.add(DwAtType.DW_AT_data_member_location, location);
+		dwarf.add(DwAtType.DW_AT_location, location);
 		dwarf.addByte(DwAtType.DW_AT_external, DwFormType.DW_FORM_flag, (byte) 1);
 	}
 

@@ -1334,6 +1334,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		buf.flip();
 		elf.AddSection(buf, ".debug_line", SectionType.PROGBITS, 0, 0, 0, 1, 0);
 		
+		buf = debugSymbols.getDebug_loc();
+		buf.flip();
+		elf.AddSection(buf, ".debug_loc", SectionType.PROGBITS, 0, 0, 0, 1, 0);
+		
 		elf.saveToFile(fileName);
 		elf.close();
 		if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");

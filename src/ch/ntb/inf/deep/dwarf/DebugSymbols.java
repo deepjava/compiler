@@ -17,8 +17,8 @@ public class DebugSymbols{
 
 		Class refType = Class.initClasses;
 		while (refType != null) {
-			if (refType.methods != null) {
-//			if (refType.methods != null && refType.name.toString().contains("ObjFields")) {
+//			if (refType.methods != null) {
+			if (refType.methods != null && refType.name.toString().contains("ObjFields")) {
 				Class clazz = (Class) refType;
 				CompilationUnitDIE cu = new CompilationUnitDIE(clazz);
 				compilationUnits.add(cu);
@@ -26,11 +26,7 @@ public class DebugSymbols{
 			refType = refType.nextClass;
 		}
 
-		serializer = new DWARF(byteOrder);
-		for (CompilationUnitDIE cu : compilationUnits) {
-			cu.serialize(serializer);
-		}
-		serializer.updateMissingReferences();
+		serializer = new DWARF(byteOrder, compilationUnits);
 	}
 	
 	public ByteBuffer getDebug_info() {
@@ -43,5 +39,9 @@ public class DebugSymbols{
 
 	public ByteBuffer getDebug_line() {
 		return serializer.debug_line;
+	}
+	
+	public ByteBuffer getDebug_loc() {
+		return serializer.debug_loc;
 	}
 }

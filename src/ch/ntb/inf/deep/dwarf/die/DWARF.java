@@ -3,29 +3,38 @@ package ch.ntb.inf.deep.dwarf.die;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import ch.ntb.inf.deep.dwarf.DwarfExpression;
 import ch.ntb.inf.deep.dwarf.Utils;
+import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
 
 public class DWARF {
 
 	public final ByteBuffer debug_info;
 	public final ByteBuffer debug_abbrev;
 	public final ByteBuffer debug_line;
+	public final ByteBuffer debug_loc;
 
 	private Map<Integer, TypeDIE> references; // Holds Reference Pointers to updated later the Address after all DIE's
 												// are serialized
 
-	public DWARF(ByteOrder byteOrder) {
+	public DWARF(ByteOrder byteOrder, List<CompilationUnitDIE> compilationUnits) {
 		debug_info = ByteBuffer.allocate(0xFFFF);
 		debug_info.order(byteOrder);
 		debug_abbrev = ByteBuffer.allocate(0xFFFF);
 		debug_abbrev.order(byteOrder);
 		debug_line = ByteBuffer.allocate(0xFFFF);
 		debug_line.order(byteOrder);
+		debug_loc = ByteBuffer.allocate(0xFFFF);
+		debug_loc.order(byteOrder);
 
 		references = new HashMap<>();
+		
+		for (CompilationUnitDIE cu : compilationUnits) {
+			cu.serialize(this);
+		}
+		updateMissingReferences();
 	}
 
 	public void addByte(DwAtType type, DwFormType form, byte value) {

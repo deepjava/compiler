@@ -7,7 +7,7 @@ public class InstanceMemberDIE extends MemberDIE {
 	private final int offset;
 
 	public InstanceMemberDIE(Field field, DebugInformationEntry parent) {
-		super(field, parent);
+		super(field, parent, DwTagType.DW_TAG_member);
 		this.offset = field.offset;
 	}
 

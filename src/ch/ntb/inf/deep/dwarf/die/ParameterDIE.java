@@ -2,8 +2,8 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.LocalVar;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.DwarfExpression;
-import ch.ntb.inf.deep.dwarf.SimpleExpression;
+import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
+import ch.ntb.inf.deep.dwarf.location.SimpleExpression;
 
 public class ParameterDIE extends DebugInformationEntry {
 

@@ -8,7 +8,7 @@ import ch.ntb.inf.deep.classItems.LocalVar;
 public class SubProgramDIE extends DebugInformationEntry {
 
 	private final String name;
-	private final int startAddress;
+	final int startAddress;
 	private final int endAddress;
 	private final byte fileNo;
 	private final boolean isStatic;
@@ -46,8 +46,8 @@ public class SubProgramDIE extends DebugInformationEntry {
 		returnType = getType((Type) method.type, parent.getRoot());
 
 		// Method Parameters and Local Variables
-		if (method.localVars != null && method.ssa != null) {
-			for (LocalVar localVar : method.localVars) {
+		if (method.ssa != null && method.ssa.getLocalVarsTable() != null) {
+			for (LocalVar localVar : method.ssa.getLocalVarsTable()) {
 				while (localVar != null) {
 					if (method.ssa.isParam[localVar.index + method.maxStackSlots]) {
 						System.out.println("\t\tParameter " + localVar.name);

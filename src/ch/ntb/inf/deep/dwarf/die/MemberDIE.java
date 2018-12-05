@@ -9,8 +9,8 @@ public abstract class MemberDIE extends DebugInformationEntry {
 	private final TypeDIE type;
 	private final byte accessability;
 
-	public MemberDIE(Field field, DebugInformationEntry parent) {
-		super(parent, DwTagType.DW_TAG_member);
+	public MemberDIE(Field field, DebugInformationEntry parent, DwTagType tagType) {
+		super(parent, tagType);
 		this.name = field.name.toString();
 		this.type = getType((Type) field.type, parent.getRoot());
 
@@ -26,7 +26,7 @@ public abstract class MemberDIE extends DebugInformationEntry {
 			this.accessability = 0x2;
 		}
 	}
-
+	
 	@Override
 	public void serializeDie(DWARF dwarf) {
 		dwarf.add(DwAtType.DW_AT_name, name);

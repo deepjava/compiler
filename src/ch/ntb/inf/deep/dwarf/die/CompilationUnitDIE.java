@@ -8,6 +8,7 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.dwarf.DebugLineStateMaschine;
 import ch.ntb.inf.deep.dwarf.LineMatrixEntry;
+import ch.ntb.inf.deep.dwarf.Utils;
 import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
 
 public class CompilationUnitDIE extends DebugInformationEntry {
@@ -61,6 +62,8 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		// Update Missing Length information
 		int length = dwarf.debug_info.position() - baseAddress - 4; // Length without Length field itself
 		dwarf.debug_info.putInt(baseAddress, length);
+		
+		Utils.writeUnsignedLeb128(dwarf.debug_abbrev, 0); // End Symbol with 0
 	}
 
 	private void addHeader(DWARF dwarf) {
