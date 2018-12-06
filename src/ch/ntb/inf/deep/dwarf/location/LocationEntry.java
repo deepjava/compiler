@@ -17,8 +17,11 @@ public class LocationEntry implements LocationListEntry {
 		if (range.reg >= 0 && range.reg <= 31) {
 			this.operation = (byte) (DwOpType.DW_OP_reg0.value() + range.reg);
 		} else {
-			throw new IllegalArgumentException("Registers only between 0 to 31 are supported!");
-		} // TODO Auto-generated constructor stub
+			// TODO: reinsert Exception if illegal Register!
+//			throw new IllegalArgumentException("Registers only between 0 to 31 are supported!");
+			this.operation = DwOpType.DW_OP_nop.value();
+
+		}
 	}
 
 	@Override

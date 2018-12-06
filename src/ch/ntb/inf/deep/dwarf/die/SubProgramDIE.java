@@ -53,8 +53,8 @@ public class SubProgramDIE extends DebugInformationEntry {
 						System.out.println("\t\tParameter " + localVar.name);
 						new ParameterDIE(localVar, this);
 					} else {
-						new VariableDIE(localVar, this);
 						System.out.println("\t\tVariable " + localVar.name);
+						new VariableDIE(localVar, this);
 					}
 					localVar = (LocalVar) localVar.next;
 				}

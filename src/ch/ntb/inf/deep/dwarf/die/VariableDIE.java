@@ -27,7 +27,9 @@ public class VariableDIE extends DebugInformationEntry {
 
 		LocalVarRange range = localVar.range;
 		while (range != null) {
-			this.locationList.add(new LocationEntry(range));
+			if (range.ssaEnd != null) {
+				this.locationList.add(new LocationEntry(range));
+			}
 			range = range.next;
 		}
 

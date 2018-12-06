@@ -17,8 +17,8 @@ public class DebugSymbols{
 
 		Class refType = Class.initClasses;
 		while (refType != null) {
-//			if (refType.methods != null) {
-			if (refType.methods != null && refType.name.toString().contains("ObjFields")) {
+			if (refType.methods != null) {
+//			if (refType.methods != null && refType.name.toString().contains("ObjFields")) {
 				Class clazz = (Class) refType;
 				CompilationUnitDIE cu = new CompilationUnitDIE(clazz);
 				compilationUnits.add(cu);

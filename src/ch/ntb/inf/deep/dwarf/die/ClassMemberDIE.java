@@ -13,15 +13,15 @@ public class ClassMemberDIE extends MemberDIE {
 	}
 
 	public ClassMemberDIE(Field field, int address, DebugInformationEntry parent) {
-		super(field, parent, DwTagType.DW_TAG_variable);
+		// Static Class Members need to be added to Compilation Unit. Otherwise dereferencing not work!
+		super(field, parent.getParent(), DwTagType.DW_TAG_variable);
 		location = new AddressExpression(address);
 	}
 
 	@Override
 	public void serializeDie(DWARF dwarf) {
 		super.serializeDie(dwarf);
+		dwarf.addFlag(DwAtType.DW_AT_external);
 		dwarf.add(DwAtType.DW_AT_location, location);
-		dwarf.addByte(DwAtType.DW_AT_external, DwFormType.DW_FORM_flag, (byte) 1);
 	}
-
 }
