@@ -35,7 +35,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 	public int[] instructions;	// contains machine instructions for the ssa of a method
 	public int iCount;	// nof instructions for this method, including exception information
 	public int excTabCount;	// start of exception information in instruction array
-	
+	public int localVarOffset;	// stack offset (in bytes) to locals stored on the stack
 	public Item[] fixups;	// contains all references whose address has to be fixed by the linker
 	public int fCount;	// nof fixups
 	public int lastFixup;	// instr number where the last fixup is found

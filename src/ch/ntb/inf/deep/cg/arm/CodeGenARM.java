@@ -47,13 +47,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //	private static int XERoffset;	
 //	private static int CRoffset;	
 //	private static int CTRoffset;	
-//	private static int SRR0offset;	
-//	private static int SRR1offset;	
 	private static int paramOffset;
 //	private static int GPRoffset;	
 //	private static int FPRoffset;	
-	private static int localVarOffset;
-	private static int stackSize;
+//	private static int localVarOffset;
+//	private static int stackSize;
 	static boolean enFloatsInExc;
 
 	// information about the src registers for parameters of a call to a method within this method
@@ -155,6 +153,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (paramRegEnd[n] != -1) StdStreams.vrb.print(paramRegEnd[n] + "  "); 
 			StdStreams.vrb.println();
 		}
+		int stackSize = 0;
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
 			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table has no prolog
@@ -165,12 +164,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				createIrSrAd(ppcStmw, 28, stackPtr, 4);
 //				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
 			} else {
-				stackSize = calcStackSizeException();
-				insertPrologException(code);
+				stackSize = calcStackSizeException(code);
+				insertPrologException(code, stackSize);
 			}
 		} else {
-			stackSize = calcStackSize();
-			insertProlog(code);	// builds stack frame and copies parameters
+			stackSize = calcStackSize(code);
+			insertProlog(code, stackSize);	// builds stack frame and copies parameters
 		}
 		
 		SSANode node = (SSANode)ssa.cfg.rootNode;
@@ -335,23 +334,26 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if(dbg) StdStreams.vrb.println("]");
 	}
 
-	private static int calcStackSize() {
-//		int size = 4 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;
+	/**
+	 * Calculates stack size in bytes. Includes saved nonvolatiles, locals on the stack and parameters passed on the stack.
+	 * @return Nof bytes on the stack
+	 */
+	private static int calcStackSize(Code32 code) {
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;	// includes LR and back trace
 //		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
-		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
+//		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
 //		int padding = (16 - (size % 16)) % 16;
 //		size = size + padding;
 //		LRoffset = size - 4;
 //		GPRoffset = LRoffset - nofNonVolGPR * 4;
 //		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 //		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
-//		System.out.println("size = " + size + "  GPRoffset = " + GPRoffset + "  FPRoffset = " + FPRoffset + "  localVarOffset = " + localVarOffset);
 		paramOffset = 4;
-		localVarOffset = paramOffset + callParamSlotsOnStack * 4;
+		code.localVarOffset = paramOffset + callParamSlotsOnStack * 4;
 		return size;
 	}
 
-	private static int calcStackSizeException() {
+	private static int calcStackSizeException(Code32 code) {
 //		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4;
 //		if (enFloatsInExc) {
 //			size += nofNonVolFPR * 8;	// save used nonvolatile EXTR's
@@ -370,7 +372,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		FPRoffset = GPRoffset - nofNonVolFPR * 8;
 //		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		paramOffset = 4;
-		localVarOffset = paramOffset;
+		code.localVarOffset = paramOffset;
 		return size;
 	}
 
@@ -399,17 +401,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (dbg) StdStreams.vrb.println("opd3 regLong on stack slot for instr: " + instr.toString());
 					int slot = src3RegLong & 0xff;
 					src3RegLong = volEndGPR;
-					createLSWordImm(code, armLdr, condAlways, src3RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
+					createLSWordImm(code, armLdr, condAlways, src3RegLong, stackPtr, code.localVarOffset + 4 * slot, 1, 1, 0);	
 				}
 				if (src3Reg >= 0x100) {
 					if (dbg) StdStreams.vrb.println("opd3 reg on stack slot for instr: " + instr.toString());
 					int slot = src3Reg & 0xff;
 					if ((opds[2].type == tFloat) || (opds[2].type == tDouble)) {
 						src3Reg = nonVolStartEXTR * ((opds[2].type == tFloat)?2:1) + 0;
-						createLSExtReg(code, armVldr, condAlways, src3Reg, stackPtr, localVarOffset + 4 * slot, (opds[2].type == tFloat));
+						createLSExtReg(code, armVldr, condAlways, src3Reg, stackPtr, code.localVarOffset + 4 * slot, (opds[2].type == tFloat));
 					} else {
 						src3Reg = nonVolStartGPR + 0;
-						createLSWordImm(code, armLdr, condAlways, src3Reg, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
+						createLSWordImm(code, armLdr, condAlways, src3Reg, stackPtr, code.localVarOffset + 4 * slot, 1, 1, 0);	
 					}
 				}			
 			}
@@ -421,17 +423,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						int slot = src2RegLong & 0xff;
 						src2RegLong = volEndGPR - 2;
-						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
+						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, code.localVarOffset + 4 * slot, 1, 1, 0);	
 					}
 					if (src2Reg >= 0x100) {
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						int slot = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
 							src2Reg = nonVolStartEXTR * ((opds[1].type == tFloat)?2:1) + 2;
-							createLSExtReg(code, armVldr, condAlways, src2Reg, stackPtr, localVarOffset + 4 * slot, (opds[1].type == tFloat));
+							createLSExtReg(code, armVldr, condAlways, src2Reg, stackPtr, code.localVarOffset + 4 * slot, (opds[1].type == tFloat));
 						} else {
 							src2Reg = nonVolStartGPR + 2;
-							createLSWordImm(code, armLdr, condAlways, src2Reg, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
+							createLSWordImm(code, armLdr, condAlways, src2Reg, stackPtr, code.localVarOffset + 4 * slot, 1, 1, 0);	
 						}
 					}			
 				}
@@ -441,17 +443,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					int slot = src1RegLong & 0xff;
 					src1RegLong = volEndGPR - 1;
-					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
+					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, code.localVarOffset + 4 * slot, 1, 1, 0);	
 				}
 				if (src1Reg >= 0x100) {
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					int slot = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
 						src1Reg = nonVolStartEXTR * ((opds[0].type == tFloat)?2:1) + 1;
-						createLSExtReg(code, armVldr, condAlways, src1Reg, stackPtr, localVarOffset + 4 * slot, (opds[0].type == tFloat));
+						createLSExtReg(code, armVldr, condAlways, src1Reg, stackPtr, code.localVarOffset + 4 * slot, (opds[0].type == tFloat));
 					} else {
 						src1Reg = nonVolStartGPR + 1;
-						createLSWordImm(code, armLdr, condAlways, src1Reg, stackPtr, localVarOffset + 4 * slot, 1, 1, 0);	
+						createLSWordImm(code, armLdr, condAlways, src1Reg, stackPtr, code.localVarOffset + 4 * slot, 1, 1, 0);	
 					}
 				}			
 			}
@@ -465,7 +467,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			dReg = res.reg;
 			int dRegSlot = -1;
 			if (dReg >= 0x100) {
-				if (dbg) StdStreams.vrb.println("res reg on stack slot for instr: " + instr.toString());
+				if (dbg) StdStreams.vrb.println("res reg on stack slot " + (dReg & 0xff) + " for instr: " + instr.toString());
 				dRegSlot = dReg & 0xff;
 				if ((res.type == tFloat) || (res.type == tDouble)) dReg = nonVolStartEXTR * ((res.type == tFloat)?2:1) + 0;
 				else dReg = nonVolStartGPR + 0;
@@ -1967,10 +1969,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				assert false : "SSA instruction not implemented: " + SSAInstructionMnemonics.scMnemonics[instr.ssaOpcode] + " function";
 				return;
 			}
-			if (dRegLongSlot >= 0) createLSWordImm(code, armStr, condAlways, dRegLong, stackPtr, localVarOffset + 4 * dRegLongSlot, 1, 1, 0);
+			if (dRegLongSlot >= 0) createLSWordImm(code, armStr, condAlways, dRegLong, stackPtr, code.localVarOffset + 4 * dRegLongSlot, 1, 1, 0);
 			if (dRegSlot >= 0) {
-				if ((res.type == tFloat) || (res.type == tDouble)) createLSExtReg(code, armVstr, condAlways, dReg, stackPtr, localVarOffset + 4 * dRegSlot, (res.type == tFloat));
-				else createLSWordImm(code, armStr, condAlways, dReg, stackPtr, localVarOffset + 4 * dRegSlot, 1, 1, 0);
+				if ((res.type == tFloat) || (res.type == tDouble)) createLSExtReg(code, armVstr, condAlways, dReg, stackPtr, code.localVarOffset + 4 * dRegSlot, (res.type == tFloat));
+				else createLSWordImm(code, armStr, condAlways, dReg, stackPtr, code.localVarOffset + 4 * dRegSlot, 1, 1, 0);
 			}
 		}
 	}
@@ -2071,12 +2073,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (srcGPRcount[i] >= 0) { // check if not done yet
 						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to stack slot");
 						if (srcGPR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
-							assert false;
-//							createIrDrAd(code, ppcLwz, 0, stackPtr, localVarOffset + 4 * (srcGPR[i] - 0x100));
-//							createIrSrAsimm(code, ppcStw, 0, stackPtr, paramOffset + offset);
+							createLSWordImm(code, armLdr, condAlways, scratchReg, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
+							createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, paramOffset + offset, 1, 1, 0);
 						} else {
-							assert false;
-//							createIrSrAsimm(code, ppcStw, srcGPR[i], stackPtr, paramOffset + offset);
+							createLSWordImm(code, armStr, condAlways, srcGPR[i], stackPtr, paramOffset + offset, 1, 1, 0);
 							srcGPRcount[srcGPR[i]]--; 
 						}
 						offset += 4;
@@ -2087,8 +2087,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (srcGPRcount[i] == 0) { // check if register no longer used for parameter
 						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register " + srcGPR[i] + " to " + i);
 						if (srcGPR[i] >= 0x100) {	// copy from stack
-//							assert false;
-//							createIrDrAd(code, ppcLwz, i, stackPtr, localVarOffset + 4 * (srcGPR[i] - 0x100));
+							createLSWordImm(code, armLdr, condAlways, i, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
 						} else {
 							createDataProcMovReg(code, armMov, condAlways, i,  srcGPR[i], noShift, 0);
 							srcGPRcount[srcGPR[i]]--; 
@@ -2638,7 +2637,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[currInstr] = clazz.varSegment.address + clazz.varOffset;
 	}
 
-	private void insertProlog(Code32 code) {
+	private void insertProlog(Code32 code, int stackSize) {
 		code.iCount = 0;
 		
 		int regList = 1 << LR;
@@ -2670,7 +2669,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrD(code, ppcMffs, 0);
 //			createIrSrAd(code, ppcStfd, 0, stackPtr, offset);
 //		}
-		createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, RegAllocator.maxLocVarStackSlots * 4 );
+		if (stackSize > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, stackSize - ((nofNonVolGPR+1) * 4 + nofNonVolFPR * 8));
+//		if (stackSize > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, stackSize);
 		if (dbg) {
 			StdStreams.vrb.print("moveGPRsrc = ");
 			for (int i = 0; moveGPRsrc[i] != 0; i++) StdStreams.vrb.print(moveGPRsrc[i] + ","); 
@@ -2691,17 +2691,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveGPRsrc[i] + " into GPR" + moveGPRdst[i]);
 				if (moveGPRdst[i] < 0x100)
 					createDataProcMovReg(code, armMov, condAlways, moveGPRdst[i], moveGPRsrc[i]+paramStartGPR, noShift, 0);
-//				else 	// copy to stack slot (locals)
-//					assert false;
+				else 	// copy to stack slot (locals)
 //					createIrSrAd(code, ppcStw, moveGPRsrc[i]+paramStartGPR, stackPtr, localVarOffset + 4 * (moveGPRdst[i] - 0x100));
+					createLSWordImm(code, armStr, condAlways, moveGPRsrc[i]+paramStartGPR, stackPtr, code.localVarOffset + 4 * (moveGPRdst[i] - 0x100), 1, 1, 0);
 			} else { // copy from stack slot (parameters)
 				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveGPRsrc[i] + " from stack slot into GPR" + moveGPRdst[i]);
+				if (dbg) StdStreams.vrb.println("stackSize=" + stackSize);
+				if (dbg) StdStreams.vrb.println("paramOffset=" + paramOffset);
+				if (dbg) StdStreams.vrb.println("offset=" + offset);
 				if (moveGPRdst[i] < 0x100)
-					createLSWordImm(code,armLdr, condAlways, moveGPRdst[i], stackPtr, stackSize + paramOffset + offset, 0, 0, 0);
+					createLSWordImm(code,armLdr, condAlways, moveGPRdst[i], stackPtr, stackSize + paramOffset + offset, 1, 1, 0);
 				else { 	// copy to stack slot (locals)
-					assert false;
-//					createIrDrAd(code, ppcLwz, 0, stackPtr, stackSize + paramOffset + offset);
-//					createIrSrAd(code, ppcStw, 0, stackPtr, localVarOffset + 4 * (moveGPRdst[i] - 0x100));
+					createLSWordImm(code, armLdr, condAlways, scratchReg, stackPtr, stackSize + paramOffset + offset, 1, 1, 0);
+					createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, code.localVarOffset + 4 * (moveGPRdst[i] - 0x100), 1, 1, 0);
 				}	
 				offset += 4;
 			}
@@ -2746,7 +2748,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				createBlockDataTransferExtr(code, armVpop, condAlways, 16, 16, false);
 			}
 		}
-		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, RegAllocator.maxLocVarStackSlots * 4 );
+//		if (stackSize > 0) createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, stackSize);
+		if (stackSize > 0) createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, stackSize - ((nofNonVolGPR+1) * 4 + nofNonVolFPR * 8));
 		int regList = 1 << PC;
 		if (nofNonVolGPR > 0)
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
@@ -2769,7 +2772,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		createIpat(code, 0);	// address of constant segment 		
 	}
 
-	private void insertPrologException(Code32 code) {
+	private void insertPrologException(Code32 code, int stackSize) {
 		code.iCount = 0;
 		createBlockDataTransfer(code, armPush, condAlways, 0xffff);
 //		if (enFloatsInExc) {

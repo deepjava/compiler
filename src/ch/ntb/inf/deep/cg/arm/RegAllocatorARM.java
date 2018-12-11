@@ -61,7 +61,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			} 
 		}
 		
-		StdStreams.vrb.println("\nset range of locals which are parameters to the first ssa instruction");
+		if (dbg) StdStreams.vrb.println("\nset range of locals which are parameters to the first ssa instruction");
 		LocalVar[] lvTable = ssa.getLocalVarsTable();
 		if (lvTable != null) {
 			for (int i = 0; i < lvTable.length; i++) {
