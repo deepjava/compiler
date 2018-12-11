@@ -43,15 +43,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public static int idGETGPR, idGETEXTRD, idGETEXTRS, idGETCPR;
 	public static int idPUTGPR, idPUTEXTRD, idPUTEXTRS, idPUTCPR;
 
-//	private static int LRoffset;	//not used in ARM
-//	private static int XERoffset;	
-//	private static int CRoffset;	
-//	private static int CTRoffset;	
 	private static int paramOffset;
-//	private static int GPRoffset;	
-//	private static int FPRoffset;	
-//	private static int localVarOffset;
-//	private static int stackSize;
 	static boolean enFloatsInExc;
 
 	// information about the src registers for parameters of a call to a method within this method
@@ -66,8 +58,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	public void init() { 
 		Class cls = Configuration.getOS().usClass;
-//		System.out.println(cls.name);
-//		cls = (Class)RefType.refTypeList.getItemByName("ch/ntb/inf/deep/unsafe/arm/US");
 		if (cls == null) {ErrorReporter.reporter.error(630); return;}
 		Method m = Configuration.getOS().getSystemMethodByName(cls, "GETGPR"); 
 		if (m != null) idGETGPR = m.id; else {ErrorReporter.reporter.error(631); return;}
@@ -115,7 +105,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
 			StdStreams.vrb.println();
 		}
-//		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
@@ -137,7 +126,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			RegAllocatorARM.resetRegisters();
 			RegAllocatorARM.assignRegisters();
 		}
-//		StdStreams.vrb.print(ssa.toString());
 
 		if (dbg) {
 			StdStreams.vrb.println(RegAllocatorARM.joinsToString());
