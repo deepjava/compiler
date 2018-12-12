@@ -52,6 +52,7 @@ import ch.ntb.inf.deep.host.StdStreams;
 import nl.lxtreme.binutils.elf.AbiType;
 import nl.lxtreme.binutils.elf.Elf;
 import nl.lxtreme.binutils.elf.ElfClass;
+import nl.lxtreme.binutils.elf.Flags;
 import nl.lxtreme.binutils.elf.MachineType;
 import nl.lxtreme.binutils.elf.ObjectFileType;
 import nl.lxtreme.binutils.elf.SectionHeader;
@@ -1313,7 +1314,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		int size = buf.position();
 		buf.flip();
 		
-		Elf elf = new Elf(ElfClass.CLASS_32, ByteOrder.LITTLE_ENDIAN, AbiType.ARM, ObjectFileType.EXEC, MachineType.ARM, 0, 0x100);
+		Elf elf = new Elf(ElfClass.CLASS_32, ByteOrder.LITTLE_ENDIAN, AbiType.SYSV, ObjectFileType.EXEC, MachineType.ARM, Flags.EF_ARM_EABI_VER5 | Flags.EF_ARM_VFP_FLOAT, 0x100);
 		elf.AddSection(buf, ".text", SectionType.PROGBITS, 7, 0, 0, 0, 0);
 		SectionHeader section = elf.sectionHeaders.get(elf.sectionHeaders.size() - 1);
 		elf.addProgramHeader(SegmentType.LOAD, 7, section.fileOffset, 0, 0, size, size, 0);
