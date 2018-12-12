@@ -32,7 +32,7 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 	public boolean isParam[]; // indicates which locals are passed as parameters, array contains op-stack and locals
 	public int paramType[]; // types of those parameters, array contains op-stack and locals
 	private LineNrSSAInstrPair[] lineNumTab; // length equals line number table length in class file, entries are sorted by bca
-	private LocalVar[] localVarTab; // length equals local variables table length in class file, entries are sorted by bca
+	public LocalVar[] localVarTab; // length equals local variables table length in class file, entries are sorted by bca
 	public int highestLineNr;
 	public int lowestLineNr;	
 	private int returnCount;

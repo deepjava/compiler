@@ -117,6 +117,18 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			RegAllocatorARM.regsEXTRS = regsEXTRSinitial & ~(0x3f << (nonVolStartEXTR*2));
 			if (dbg) StdStreams.vrb.println("regsEXTRDinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRD) + ", regsEXTRSinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRS));
 			RegAllocator.stackSlotSpilledRegs = -1;
+			// empty local variable information
+			LocalVar[] lvTable = ssa.localVarTab;
+			if (lvTable != null) {
+				for (int i = 0; i < lvTable.length; i++) {
+					LocalVar lv = lvTable[i];
+					while (lv != null) {	// locals occupying the same slot are linked by field "next"
+						lv.range = null;
+						lv.ssaInstrStart = null;
+						lv = (LocalVar) lv.next;
+					}
+				}
+			}
 			parseExitSet(lastExitSet, method.maxStackSlots);
 			if (dbg) {
 				StdStreams.vrb.print("parameter go into register: ");

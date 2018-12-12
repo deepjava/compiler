@@ -64,7 +64,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 		for (i = 0; i < iCount; i++) {
 			if ((instructions[i] & 0xffffff00) == 0) break;	
 			sb.append("\t" + String.format("%08X", instructions[i]));
-			sb.append("\t[0x");
+			sb.append("\t" + String.format("%3d", i) + "[0x");
 			sb.append(Integer.toHexString(i * 4));
 			sb.append("]\t");
 			sb.append(InstructionDecoder.dec.getMnemonic(instructions[i]));
@@ -90,27 +90,27 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 			if ((ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) return sb.toString();	// exception methods have no unwinding or exception table 
 		
 			sb.append("\t" + String.format("%08X", instructions[i]));
-			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+			sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 			sb.append((byte)instructions[i++]); sb.append("  (offset to unwind code)\n");
 			while (instructions[i] != 0xffffffff) {
 				sb.append("\t" + String.format("%08X", instructions[i]));
-				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (start address of try)\n");
 				sb.append("\t" + String.format("%08X", instructions[i]));
-				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (end address of try)\n");
 				sb.append("\t" + String.format("%08X", instructions[i]));
-				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (address of catch type)\n");
 				sb.append("\t" + String.format("%08X", instructions[i]));
-				sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+				sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 				sb.append("0x" + Integer.toHexString(instructions[i++])); sb.append("  (address of catch)\n");
 			}
 			sb.append("\t" + String.format("%08X", instructions[i]));
-			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+			sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 			sb.append("(end of method)\n"); i++;
 			sb.append("\t" + String.format("%08X", instructions[i]));
-			sb.append("\t[0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
+			sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
 			sb.append(instructions[i++]); sb.append("  (address of class variables)\n");
 		}
 		return sb.toString();

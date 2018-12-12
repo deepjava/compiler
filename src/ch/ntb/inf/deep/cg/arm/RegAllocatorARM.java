@@ -47,9 +47,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 	 * checks if temporary space on stack is necessary
 	 */
 	static void assignRegisters() {
+		if (dbg) StdStreams.vrb.println("\n\nallocate registers for " + ssa.cfg.method.name);
 		if (dbg) {
-			StdStreams.vrb.println("\nLocal Variable Table");
-			LocalVar[] lvTable = ssa.getLocalVarsTable();
+			StdStreams.vrb.println("local variable table");
+			LocalVar[] lvTable = ssa.localVarTab;
 			if (lvTable != null) {
 				for (int i = 0; i < lvTable.length; i++) {
 					LocalVar lv = lvTable[i];
@@ -61,8 +62,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			} 
 		}
 		
-		if (dbg) StdStreams.vrb.println("\nset range of locals which are parameters to the first ssa instruction");
-		LocalVar[] lvTable = ssa.getLocalVarsTable();
+		if (dbg) StdStreams.vrb.println("\nset range of locals which are parameters");
+		LocalVar[] lvTable = ssa.localVarTab;
 		if (lvTable != null) {
 			for (int i = 0; i < lvTable.length; i++) {
 				LocalVar lv = lvTable[i];
@@ -71,10 +72,12 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						SSAInstruction f = new NoOpnd(0, 0);
 						f.machineCodeOffset = 0;
 						f.result = new SSAValue();
-						f.result.reg = CodeGenARM.paramRegNr[lv.index];
+						int reg = CodeGenARM.paramRegNr[lv.index];
+						f.result.reg = reg;
 						lv.ssaInstrStart = f;
-						lv.startRange(instrs[0], null, -1);
-						if (dbg) StdStreams.vrb.println("\tstart first lv range of " + lv.toString());
+						lv.startRange(f, null, reg);
+						lv.endRange(instrs[nofInstructions-1]);
+						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
 					}
 					lv = (LocalVar) lv.next;
 				}
@@ -332,8 +335,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			
 			// if result of instruction is local variable -> record register ranges
 			int lvIndex = res.index - maxOpStackSlots;
-//			LocalVar[] lvTable = ssa.getLocalVarsTable();
-			if (lvIndex >= 0 && lvTable != null && lvIndex < lvTable.length) {	// there are rare cases where the java compiler generates bytecode with local variables but leaves the table empty!
+			if (lvIndex >= 0 && lvTable != null && lvIndex < lvTable.length) {	// there are rare cases where the java compiler generates bytecode with local variables but leaves the table empty (no source)!
 				LocalVar lv = lvTable[lvIndex];
 				while (lv != null && (lv.startPc + lv.length) < instr.bca) lv = (LocalVar) lv.next;	// choose active lv for this instruction
 				if (lv != null) {
@@ -355,9 +357,11 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				for (int k = 0; k < lvTable.length; k++) {
 					LocalVar lv = lvTable[k];
 					while (lv != null) {	// locals occupying the same slot are linked by field "next"
-						if (lv.ssaInstrEnd == null && instr.bca == lv.startPc + lv.length) {
-							lv.ssaInstrEnd = instr;
-							lv.endRange(instr);
+						if (instr.bca >= lv.startPc + lv.length) {
+							if (lv.ssaInstrEnd == null) {
+								lv.ssaInstrEnd = instr;
+							}
+							if (lv.curr != null && lv.curr.ssaEnd == null) lv.endRange(instr);
 							if (dbg) StdStreams.vrb.println("\t\tis end of lv:" + lv.toString());
 						}
 						lv = (LocalVar) lv.next;
@@ -375,7 +379,6 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;
 		
 		// set end of all lv if not yet set
-//		LocalVar[] lvTable = ssa.getLocalVarsTable();
 		if (lvTable != null) {
 				for (int k = 0; k < lvTable.length; k++) {
 				LocalVar lv = lvTable[k];
@@ -384,6 +387,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						lv.ssaInstrEnd = instrs[nofInstructions-1];
 						lv.endRange(instrs[nofInstructions-1]);
 					}
+					if (lv.curr != null) 
+						if (lv.curr.ssaEnd == null) lv.curr.ssaEnd = instrs[nofInstructions-1];
 					lv = (LocalVar) lv.next;
 				}
 			}
