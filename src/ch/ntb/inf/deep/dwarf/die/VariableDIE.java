@@ -17,7 +17,7 @@ public class VariableDIE extends DebugInformationEntry {
 	private final TypeDIE type;
 	private final List<LocationListEntry> locationList;
 
-	protected VariableDIE(LocalVar localVar, SubProgramDIE parent) {
+	protected VariableDIE(LocalVar localVar, int localVarOffset, SubProgramDIE parent) {
 		super(parent, DwTagType.DW_TAG_variable);
 		this.name = localVar.name.toString();
 		this.type = TypeDIE.getType((Type) localVar.type, parent.getRoot());
@@ -27,9 +27,7 @@ public class VariableDIE extends DebugInformationEntry {
 
 		LocalVarRange range = localVar.range;
 		while (range != null) {
-			if (range.ssaEnd != null) {
-				this.locationList.add(new LocationEntry(range));
-			}
+			this.locationList.add(new LocationEntry(range, localVarOffset));
 			range = range.next;
 		}
 
