@@ -76,6 +76,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						f.result.reg = reg;
 						lv.ssaInstrStart = f;
 						lv.startRange(f, null, reg);
+//						lv.ssaInstrStart = instrs[0];
+//						lv.startRange(instrs[0], null, reg);
 						lv.endRange(instrs[nofInstructions-1]);
 						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
 					}

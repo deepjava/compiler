@@ -180,12 +180,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			node = (SSANode) node.next;
 		}
 		node = (SSANode)ssa.cfg.rootNode;
+		if (dbg) StdStreams.vrb.println("\nresolve local branch targets");
 		while (node != null) {	// resolve local branch targets
 			if (node.nofInstr > 0) {
 				if ((node.instructions[node.nofInstr-1].ssaOpcode == sCbranch) || (node.instructions[node.nofInstr-1].ssaOpcode == sCswitch)) {
 					int instr = code.instructions[node.codeEndIndex];
 					CFGNode[] successors = node.successors;
 					if ((instr & 0x0f000000) == armB) {		
+						if (dbg) StdStreams.vrb.println("local branch at instruction: " + node.codeEndIndex);
 						if ((instr & 0xffff) != 0) {	// switch
 							int nofCases = instr & 0xffff;
 							int k;
@@ -194,20 +196,24 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 								code.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset - 2) & 0xffffff;
 							}
 							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
+							if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
 							code.instructions[node.codeEndIndex] &= 0xff000000;
 							code.instructions[node.codeEndIndex] |= (branchOffset - 2) & 0xffffff;
 						} else {
 							int branchOffset;
-							if ((instr & (condAlways << 28)) == condAlways << 28)
+							if ((instr & (condAlways << 28)) == condAlways << 28) {	// no choice, only one successor
 								branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
-							else 
+							} else {	// conditionally branch to second choice
 								branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
+							}
+							if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
 							code.instructions[node.codeEndIndex] |= (branchOffset - 2) & 0xffffff;	// account for pipeline
 						}
 					}
 				} else if (node.instructions[node.nofInstr-1].ssaOpcode == sCreturn) {
 					if (node.next != null) {
 						int branchOffset = code.iCount - node.codeEndIndex;
+						if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
 						code.instructions[node.codeEndIndex] |= (branchOffset - 2) & 0xffffff;	// account for pipeline
 					}
 				}
@@ -339,7 +345,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	 * @return Nof bytes on the stack
 	 */
 	private static int calcStackSize(Code32 code) {
-		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;	// includes LR and back trace
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;	// includes LR and SP for back trace
 //		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
 //		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
 //		int padding = (16 - (size % 16)) % 16;
@@ -603,9 +609,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				int refReg = src1Reg;	// ref to array;
 				int indexReg = src2Reg;	// index into array;
 				if (meth.ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
-//					createIrDrAd(ppcLwz, res.regGPR1, refReg, objectSize);	// read field "count", must be first field
-					createDataProcMovReg(code, armLsl, condAlways, dReg, refReg, noShift, objectSize);	// read field "count", must be first field
-//					createItrap(ppcTw, TOifgeU, indexReg, res.regGPR1);
+					createDataProcMovReg(code, armLsl, condAlways, scratchReg, refReg, noShift, objectSize);	// read field "count", must be first field
+					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
+					createSvc(code, armSvc, condCS, 7);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
@@ -1617,14 +1623,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							int refReg = src1Reg;
 							if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
 							copyParameters(code, opds);
-//							createItrap(ppcTwi, TOifequal, refReg, 0);
+							createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+							createSvc(code, armSvc, condEQ, 7);
 							insertBLAndFixup(code, m);
 						}
 					} else {	// invokevirtual 
 						int refReg = src1Reg;
 						int offset = Linker32.tdMethTabOffset;
 						offset -= m.index * Linker32.slotSize; 
-//						createItrap(ppcTwi, TOifequal, refReg, 0);
+						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+						createSvc(code, armSvc, condEQ, 7);
 						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
 						createLSWordImm(code, armLdr, condAlways, LR, LR, -offset, 1, 0, 0);
 						if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
@@ -2311,19 +2319,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 		
-	// branch (immediate) (B, BL, BLX(imm)) 
+	// branch (immediate) relative, +-32M (B, BL, BLX(imm)) 
 	private void createBranchImm(Code32 code, int op, int cond, int imm24) {
 		code.instructions[code.iCount] = (cond << 28) | op | (imm24 & 0xffffff);
 		code.incInstructionNum();
 	}
 	
-	// branch (register) (including BLX(reg), BX, BXJ)
+	// branch (register) absolute, whole range (including BLX(reg), BX, BXJ)
 	private void createBranchReg(Code32 code, int op, int cond, int Rm) {
 		code.instructions[code.iCount] = (cond << 28) | op | (Rm << 0);
 		code.incInstructionNum();
 	}
 	
-	// Load/store word and unsigned byte (immediate)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
+	// load/store word and unsigned byte (immediate)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
 	// P = 1 -> preindexed, U = 1 -> add offset, W = 1 -> write back
 	private void createLSWordImm(Code32 code, int opCode, int cond, int Rt, int Rn, int imm12, int P, int U, int W) {
 		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
@@ -2338,7 +2346,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (0xf << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
 		code.incInstructionNum();
 	}
-	// Load/store word and unsigned byte (register)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
+	// load/store word and unsigned byte (register)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
 	// LDRH, LDRSH, LDRSB, STRH do not allow register shifts 
 	// P = 1 -> preindexed, U = 1 -> add offset, W = 1 -> write back
 	private void createLSWordReg(Code32 code, int opCode, int cond, int Rt, int Rn, int Rm, int shiftType, int shiftAmount, int P, int U, int W) {
@@ -2467,47 +2475,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 	
 	/*
-	 * inserts a load register literal instruction
-	 * the address of a class constant is taken relative to the PC and will later be fixed
-	 */
-	private void loadConstantFromPoolAndFixup(Code32 code, int reg, Item item) {
-		if (code.lastFixup < 0 || code.lastFixup > 4096) {ErrorReporter.reporter.error(602); return;}
-		createLSWordLit(code, armLdr, condAlways, reg, code.lastFixup, 1, 1, 0);
-		code.lastFixup = code.iCount - 1;
-		code.fixups[code.fCount] = item;
-		code.fCount++;
-		int len = code.fixups.length;
-		if (code.fCount == len) {
-			Item[] newFixups = new Item[2 * len];
-			for (int k = 0; k < len; k++)
-				newFixups[k] = code.fixups[k];
-			code.fixups = newFixups;
-		}		
-	}
-
-	/*
-	 * reads or writes the content of a class variable
-	 * both instructions will later be fixed
-	 */
-	private void loadStoreVarAndFixup(Code32 code, int opCode, int reg, Item item) {
-		if (code.lastFixup < 0 || code.lastFixup > 4096) {ErrorReporter.reporter.error(602); return;}
-//		createLSWordLit(code, armLdr, condAlways, LR, code.lastFixup, 1, 1, 0);
-		createMovw(code, armMovw, condAlways, LR, code.lastFixup);
-		createMovw(code, armMovt, condAlways, LR, 0);
-		createLSWordImm(code, opCode, condAlways, reg, LR, 0, 1, 1, 0);
-		code.lastFixup = code.iCount - 3;
-		code.fixups[code.fCount] = item;
-		code.fCount++;
-		int len = code.fixups.length;
-		if (code.fCount == len) {
-			Item[] newFixups = new Item[2 * len];
-			for (int k = 0; k < len; k++)
-				newFixups[k] = code.fixups[k];
-			code.fixups = newFixups;
-		}		
-	}
-	
-	/*
 	 * loads the address of a method or a class field
 	 * both instructions will later be fixed
 	 */
@@ -2526,26 +2493,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			code.fixups = newFixups;
 		}		
 	}
-	
-//	/*
-//	 * writes the content of a class variable
-//	 * both instructions will later be fixed
-//	 */
-//	private void storeVarAndFixup(Code32 code, int opCode, int srcReg, Item item) {
-//		if (code.lastFixup < 0 || code.lastFixup > 4096) {ErrorReporter.reporter.error(602); return;}
-//		createLSWordLit(code, armLdr, condAlways, LR, code.lastFixup, 1, 1, 0);
-//		createLSWordImm(code, opCode, condAlways, srcReg, LR, 0, 1, 1, 0);
-//		code.lastFixup = code.iCount - 2;
-//		code.fixups[code.fCount] = item;
-//		code.fCount++;
-//		int len = code.fixups.length;
-//		if (code.fCount == len) {
-//			Item[] newFixups = new Item[2 * len];
-//			for (int k = 0; k < len; k++)
-//				newFixups[k] = code.fixups[k];
-//			code.fixups = newFixups;
-//		}		
-//	}
 	
 	/*
 	 * inserts a BL instruction
@@ -2638,12 +2585,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private void insertProlog(Code32 code, int stackSize) {
-		code.iCount = 0;
-		
+		code.iCount = 0;	
+		createDataProcMovReg(code, armMov, condAlways, scratchReg, stackPtr, noShift, 0);	// make copy for back trace
 		int regList = 1 << LR;
 		if (nofNonVolGPR > 0) 
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
-		createBlockDataTransfer(code, armPush, condAlways, regList);
+		createBlockDataTransfer(code, armPush, condAlways, regList);	// store LR and nonvolatiles
 		// enFloatsInExc could be true, even if this is no exception method
 		// such a case arises when this method is called from within an exception method
 //		if (enFloatsInExc) {
@@ -2653,7 +2600,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrS(code, ppcIsync, 0);	// must context synchronize after setting of FP bit
 //		}
 //		int offset = FPRoffset;
-		if (nofNonVolFPR > 0) {
+		if (nofNonVolFPR > 0) {	// store nonvolatiles EXTR 
 			if (nofNonVolFPR <= 16)
 				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR, false);
 			else {
@@ -2669,8 +2616,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrD(code, ppcMffs, 0);
 //			createIrSrAd(code, ppcStfd, 0, stackPtr, offset);
 //		}
-		if (stackSize > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, stackSize - ((nofNonVolGPR+1) * 4 + nofNonVolFPR * 8));
-//		if (stackSize > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, stackSize);
+		int localStorage = stackSize - (8 + nofNonVolGPR * 4 + nofNonVolFPR * 8);
+		if (localStorage > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, localStorage);	// add space for locals and parameters
+		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store back trace
 		if (dbg) {
 			StdStreams.vrb.print("moveGPRsrc = ");
 			for (int i = 0; moveGPRsrc[i] != 0; i++) StdStreams.vrb.print(moveGPRsrc[i] + ","); 
@@ -2689,19 +2637,18 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		for (int i = 0; i < nofMoveGPR; i++) {
 			if (moveGPRsrc[i]+paramStartGPR <= paramEndGPR) {// copy from parameter register
 				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveGPRsrc[i] + " into GPR" + moveGPRdst[i]);
-				if (moveGPRdst[i] < 0x100)
+				if (moveGPRdst[i] < 0x100)	// to other register
 					createDataProcMovReg(code, armMov, condAlways, moveGPRdst[i], moveGPRsrc[i]+paramStartGPR, noShift, 0);
-				else 	// copy to stack slot (locals)
-//					createIrSrAd(code, ppcStw, moveGPRsrc[i]+paramStartGPR, stackPtr, localVarOffset + 4 * (moveGPRdst[i] - 0x100));
+				else 	// to stack slot (locals)
 					createLSWordImm(code, armStr, condAlways, moveGPRsrc[i]+paramStartGPR, stackPtr, code.localVarOffset + 4 * (moveGPRdst[i] - 0x100), 1, 1, 0);
 			} else { // copy from stack slot (parameters)
 				if (dbg) StdStreams.vrb.println("Prolog: copy parameter " + moveGPRsrc[i] + " from stack slot into GPR" + moveGPRdst[i]);
 				if (dbg) StdStreams.vrb.println("stackSize=" + stackSize);
 				if (dbg) StdStreams.vrb.println("paramOffset=" + paramOffset);
 				if (dbg) StdStreams.vrb.println("offset=" + offset);
-				if (moveGPRdst[i] < 0x100)
+				if (moveGPRdst[i] < 0x100)	// to register
 					createLSWordImm(code,armLdr, condAlways, moveGPRdst[i], stackPtr, stackSize + paramOffset + offset, 1, 1, 0);
-				else { 	// copy to stack slot (locals)
+				else { 	// to stack slot (locals)
 					createLSWordImm(code, armLdr, condAlways, scratchReg, stackPtr, stackSize + paramOffset + offset, 1, 1, 0);
 					createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, code.localVarOffset + 4 * (moveGPRdst[i] - 0x100), 1, 1, 0);
 				}	
@@ -2730,6 +2677,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	private void insertEpilog(Code32 code, int stackSize) {
 		int epilogStart = code.iCount;
+//		createBlockDataTransfer(code, armPopSingle, condAlways, stackPtr << 12);
+		int localStorage = stackSize - (4 + nofNonVolGPR * 4 + nofNonVolFPR * 8);
+		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, localStorage);
 //		int offset = GPRoffset - 8;
 //		if (enFloatsInExc) {
 //			createIrDrAd(ppcLfd, 0, stackPtr, offset);
@@ -2748,8 +2698,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				createBlockDataTransferExtr(code, armVpop, condAlways, 16, 16, false);
 			}
 		}
-//		if (stackSize > 0) createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, stackSize);
-		if (stackSize > 0) createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, stackSize - ((nofNonVolGPR+1) * 4 + nofNonVolFPR * 8));
 		int regList = 1 << PC;
 		if (nofNonVolGPR > 0)
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 

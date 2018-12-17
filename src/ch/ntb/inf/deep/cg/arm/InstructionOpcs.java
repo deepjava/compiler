@@ -266,8 +266,10 @@ public interface InstructionOpcs {
 	armStmda = (0x80 << 20),
 	armStmdb = (0x90 << 20),
 	armStmib = (0x98 << 20),
-	armPop   = (0x8bd << 16),
+	armPop   = (0x8bd << 16), 
 	armPush  = (0x92d << 16),
+	armPopSingle   = (0x49d << 16) | 4,
+	armPushSingle  = (0x52d << 16) | 4,
 
 			// various
 	armSvc = 0x0f000000,
