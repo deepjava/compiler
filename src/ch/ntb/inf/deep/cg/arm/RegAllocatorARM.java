@@ -62,31 +62,31 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			} 
 		}
 		
-		if (dbg) StdStreams.vrb.println("\nset range of locals which are parameters");
+//		if (dbg) StdStreams.vrb.println("\nset range of locals which are parameters");
 		LocalVar[] lvTable = ssa.localVarTab;
-		if (lvTable != null) {
-			for (int i = 0; i < lvTable.length; i++) {
-				LocalVar lv = lvTable[i];
-				while (lv != null) {	// locals occupying the same slot are linked by field "next"
-					if (ssa.isParam[lv.index + maxOpStackSlots]) {
-						SSAInstruction f = new NoOpnd(0, 0);
-						f.machineCodeOffset = 0;
-						f.result = new SSAValue();
-						int reg = CodeGenARM.paramRegNr[lv.index];
-						f.result.reg = reg;
-						lv.ssaInstrStart = f;
-						lv.startRange(f, null, reg);
+//		if (lvTable != null) {
+//			for (int i = 0; i < lvTable.length; i++) {
+//				LocalVar lv = lvTable[i];
+//				while (lv != null) {	// locals occupying the same slot are linked by field "next"
+//					if (ssa.isParam[lv.index + maxOpStackSlots]) {
+//						SSAInstruction f = new NoOpnd(0, 0);
+//						f.machineCodeOffset = 0;
+//						f.result = new SSAValue();
+//						int reg = CodeGenARM.paramRegNr[lv.index];
+//						f.result.reg = reg;
+////						lv.ssaInstrStart = f;
+////						lv.startRange(f, null, reg);
 //						lv.ssaInstrStart = instrs[0];
 //						lv.startRange(instrs[0], null, reg);
-						lv.endRange(instrs[nofInstructions-1]);
-						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
-					}
-					lv = (LocalVar) lv.next;
-				}
-			}
-		} 
+//						lv.endRange(instrs[nofInstructions-1]);
+//						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
+//					}
+//					lv = (LocalVar) lv.next;
+//				}
+//			}
+//		} 
 
-		// handle loadLocal first
+		// handle loadLocal first, these values are parameters
 		if (dbg) StdStreams.vrb.println("assign registers");
 		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
 		for (int i = 0; i < nofInstructions; i++) {
@@ -100,15 +100,27 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					res.reg = reserveReg(gpr, true, false);
 					continue;
 				}
+				LocalVar lv = null;
+				if (lvTable != null) lv = lvTable[res.index - maxOpStackSlots];
 				int type = res.type;
 				if (type == tLong) {
 					res.regLong = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
 					res.reg = CodeGenARM.paramRegNr[res.index+1 - maxOpStackSlots];
-				} else if ((type == tFloat) || (type == tDouble)) {
-					res.reg = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
+					if (lv != null) {
+						lv.ssaInstrStart = instrs[0];
+						lv.startRange(instrs[0], null, res.regLong, res.reg);
+						lv.endRange(instrs[nofInstructions-1]);
+						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
+					}
 				} else if (type == tVoid) {
-				} else {
+				} else {	// any other type such as int, float or double
 					res.reg = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
+					if (lv != null) {
+						lv.ssaInstrStart = instrs[0];
+						lv.startRange(instrs[0], null, res.reg);
+						lv.endRange(instrs[nofInstructions-1]);
+						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
+					}
 				}	
 				SSAValue joinVal = res.join;
 				if (joinVal != null) {
@@ -345,11 +357,13 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if (lv.ssaInstrStart == null) {
 						if (dbg) StdStreams.vrb.println("\t\tstart first lv range"); 
 						lv.ssaInstrStart = instrs[i+1];
-						lv.startRange(instrs[i+1], null, res.reg);
+						if (res.type == tLong) lv.startRange(instrs[i+1], null, res.regLong, res.reg);
+						else lv.startRange(instrs[i+1], null, res.reg);
 					} else {
 						if (lv.curr.reg != res.reg) {
 							if (dbg) StdStreams.vrb.println("\t\tstart new lv range");
-							lv.startRange(instrs[i+1], instr, res.reg);
+							if (res.type == tLong) lv.startRange(instrs[i+1], instr, res.regLong, res.reg);
+							else lv.startRange(instrs[i+1], instr, res.reg);
 						}
 					}
 				}

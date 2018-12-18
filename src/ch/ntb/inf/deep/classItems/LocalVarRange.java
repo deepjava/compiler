@@ -24,6 +24,7 @@ public class LocalVarRange {
 	public SSAInstruction ssaStart;	// first ssa instruction which produces this local variable living in a given register
 	public SSAInstruction ssaEnd;	// last ssa instruction
 	public int reg;	// register or stack slot
+	public int regLong = -1;	// register or stack slot for type long
 	public LocalVarRange next;
 }
 

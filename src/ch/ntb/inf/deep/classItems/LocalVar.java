@@ -39,7 +39,21 @@ public class LocalVar extends Item {
 		curr.ssaStart = start;
 		curr.reg = reg;
 	}
-	
+
+	public void startRange(SSAInstruction start, SSAInstruction end, int regLong, int reg) {
+		if (range == null) {
+			range = new LocalVarRange();
+			curr = range;
+		} else {
+			curr.ssaEnd = end;
+			curr.next = new LocalVarRange();
+			curr = curr.next;
+		}
+		curr.ssaStart = start;
+		curr.reg = reg;
+		curr.regLong = regLong;
+	}
+
 	public void endRange(SSAInstruction end) {
 		if (curr != null) 
 			curr.ssaEnd = end;
@@ -63,15 +77,13 @@ public class LocalVar extends Item {
 				if (ssaInstrEnd != null) sb.append(" to " + ssaInstrEnd.machineCodeOffset);				
 				LocalVarRange r = range;
 				while (r != null) {
-//					sb.append(" [" + r.ssaStart.machineCodeOffset + "-" + r.ssaEnd.machineCodeOffset + "|" + r.ssaStart.result.reg + "]");
 					sb.append(" [" + r.ssaStart.machineCodeOffset);
 					if (r.ssaEnd != null) sb.append("-" + r.ssaEnd.machineCodeOffset);
-					sb.append("|" + r.reg + "]");
+					sb.append("|" + ((r.regLong != -1) ? (r.regLong + ",") : "") + r.reg + "]");
 					r = r.next;
 				}
 //			}
 		}
 		return sb.toString();
 	}
-
 }
