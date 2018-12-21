@@ -47,7 +47,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 	 * checks if temporary space on stack is necessary
 	 */
 	static void assignRegisters() {
-		if (dbg) StdStreams.vrb.println("\n\nallocate registers for " + ssa.cfg.method.name);
+		// used to find call in this method with most parameters -> gives stack size
+		int maxNofParamGPR = 0, maxNofParamEXTR = 0;
+
+		if (dbg) StdStreams.vrb.println("\nallocate registers for " + ssa.cfg.method.name);
 		if (dbg) {
 			StdStreams.vrb.println("local variable table");
 			LocalVar[] lvTable = ssa.localVarTab;
@@ -336,15 +339,15 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			// find call which needs most registers for parameters
 			// this determines the size of the stack for this method
 			if (instr.ssaOpcode == sCcall) {
-				int gpr = 0, fpr = 0;
+				int gpr = 0, extr = 0;
 				for (SSAValue opd : opds) {
 					int type = opd.type & ~(1<<ssaTaFitIntoInt);
 					if (type == tLong) gpr += 2;
-					else if (type == tFloat || type == tDouble) fpr++;
+					else if (type == tFloat || type == tDouble) extr++;
 					else gpr++;
 				}
 				if (gpr > maxNofParamGPR) maxNofParamGPR = gpr; 
-				if (fpr > maxNofParamFPR) maxNofParamFPR = fpr; 
+				if (extr > maxNofParamEXTR) maxNofParamEXTR = extr; 
 			}
 			
 			// if result of instruction is local variable -> record register ranges
@@ -390,9 +393,9 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		CodeGenARM.nofVolGPR = nofVolGPR;
 		CodeGenARM.nofVolFPR = nofVolFPR;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
-		nof = maxNofParamFPR - (paramEndEXTR - paramStartEXTR + 1);
-		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;
+		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof;
+		nof = maxNofParamEXTR - (paramEndEXTR - paramStartEXTR + 1);
+		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;	// reserve 2 stack slots regardless if type is float or double
 		
 		// set end of all lv if not yet set
 		if (lvTable != null) {

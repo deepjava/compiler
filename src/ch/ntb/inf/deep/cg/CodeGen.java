@@ -88,7 +88,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 		nofVolGPR = 0; nofVolFPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
-		if (dbg) StdStreams.vrb.println("generate code for " + m.owner.name + "." + m.name);
+		if (dbg) StdStreams.vrb.println("\ngenerate code for " + m.owner.name + "." + m.name);
 		for (int i = 0; i < maxNofParam; i++) {
 			paramType[i] = tVoid;
 			paramRegNr[i] = -1;
