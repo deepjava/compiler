@@ -55,6 +55,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	
 	// nof parameter for a method, set by SSA, includes "this", long and doubles count as 2 parameters
 	protected static int nofParam;	
+	// nof registers used for parameters
 	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
 	protected static int nofParamGPR, nofParamFPR;	 
 	// maximum nof registers used by this method, used to calculate stack size and for debugging output
@@ -78,6 +79,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	protected static int[] moveGPRdst = new int[maxNofParam];
 	protected static int[] moveFPRsrc = new int[maxNofParam];
 	protected static int[] moveFPRdst = new int[maxNofParam];
+	protected static boolean[] moveFPRtype = new boolean[maxNofParam];
 
 	public CodeGen() {}
 	

@@ -112,7 +112,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if (lv != null) {
 						lv.ssaInstrStart = instrs[0];
 						lv.startRange(instrs[0], null, res.regLong, res.reg);
-						lv.endRange(instrs[nofInstructions-1]);
+//						lv.endRange(instrs[nofInstructions-1]);
 						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
 					}
 				} else if (type == tVoid) {
@@ -121,7 +121,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if (lv != null) {
 						lv.ssaInstrStart = instrs[0];
 						lv.startRange(instrs[0], null, res.reg);
-						lv.endRange(instrs[nofInstructions-1]);
+						lv.endRange(instrs[res.end]);
 						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
 					}
 				}	
@@ -405,9 +405,13 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if (lv.ssaInstrEnd == null) {
 						lv.ssaInstrEnd = instrs[nofInstructions-1];
 						lv.endRange(instrs[nofInstructions-1]);
+						if (dbg) StdStreams.vrb.println("\tset end of lv " + lv.toString());
 					}
 					if (lv.curr != null) 
-						if (lv.curr.ssaEnd == null) lv.curr.ssaEnd = instrs[nofInstructions-1];
+						if (lv.curr.ssaEnd == null) {
+							lv.curr.ssaEnd = instrs[nofInstructions-1];
+							if (dbg) StdStreams.vrb.println("\tset end of lv " + lv.toString());
+						}
 					lv = (LocalVar) lv.next;
 				}
 			}
