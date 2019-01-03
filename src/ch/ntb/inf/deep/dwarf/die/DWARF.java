@@ -16,10 +16,11 @@ public class DWARF {
 	public final ByteBuffer debug_line;
 	public final ByteBuffer debug_loc;
 
-	private Map<Integer, TypeDIE> references; // Holds Reference Pointers to updated later the Address after all DIE's
-												// are serialized
+	// Holds Reference Pointers to updated later the Address after all DIE's are
+	// serialized
+	private Map<Integer, TypeDIE> references;
 
-	public DWARF(ByteOrder byteOrder, List<CompilationUnitDIE> compilationUnits) {
+	public DWARF(ByteOrder byteOrder, CompilationUnitDIE compilationUnit) {
 		debug_info = ByteBuffer.allocate(0xFFFF);
 		debug_info.order(byteOrder);
 		debug_abbrev = ByteBuffer.allocate(0xFFFF);
@@ -31,9 +32,7 @@ public class DWARF {
 
 		references = new HashMap<>();
 
-		for (CompilationUnitDIE cu : compilationUnits) {
-			cu.serialize(this);
-		}
+		compilationUnit.serialize(this);
 		updateMissingReferences();
 	}
 

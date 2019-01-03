@@ -22,7 +22,7 @@ public class DebugLineStateMaschine {
 	public boolean basic_block;
 	public boolean end_sequence;
 	public final List<LineMatrixEntry> matrix;
-	
+
 	private List<String> directories;
 	public final List<SourceFileEntry> files;
 	private final List<Opcode> program;
@@ -153,7 +153,12 @@ public class DebugLineStateMaschine {
 		int maxLineIncrement = line_base + line_range - 1;
 		int lineIncrement = line.line - this.line;
 		int desiredAddressIncrement = (int) (line.address - this.address);
-		if (lineIncrement > maxLineIncrement) {
+		if (!files.get(fileIndex - 1).filename.equals(line.filename)) {
+			InsertEndOfSequence();
+			int fileIndex = files.stream().filter(x -> x.filename.equals(line.filename)).findFirst().get().No + 1;
+			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_set_file, fileIndex));
+			generateNextOpCodes(line);
+		} else if (lineIncrement > maxLineIncrement) {
 			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_advance_line, lineIncrement));
 			generateNextOpCodes(line);
 		} else if (lineIncrement < line_base) {

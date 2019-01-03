@@ -20,6 +20,9 @@ public class ClassTypeDIE extends TypeDIE {
 
 		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this);
 
+	}
+
+	public void InsertMembers(Class clazz) {
 		Field field = (Field) clazz.instFields;
 		while (field != null && field != clazz.classFields) {
 			// Instance Fields
@@ -47,7 +50,9 @@ public class ClassTypeDIE extends TypeDIE {
 			}
 			constant = (ConstField) constant.next;
 		}
+	}
 
+	public void InsertMethods(Class clazz) {
 		Method method = (Method) clazz.methods;
 		while (method != null) {
 			if (method.address != -1) {

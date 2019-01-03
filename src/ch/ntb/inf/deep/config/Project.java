@@ -60,6 +60,10 @@ public class Project extends Item {
 		return deepProjectName;
 	}
 	
+	public HString getProjectFileName() {
+		return deepProjectFileName;
+	}
+	
 	public void setTctFileName(String name) {
 		tctFileName = HString.getHString(name);
 	}
