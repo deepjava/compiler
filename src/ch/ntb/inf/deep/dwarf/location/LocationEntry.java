@@ -11,6 +11,7 @@ public class LocationEntry implements LocationListEntry {
 	private final int startOffset;
 	private final int endOffset;
 	private final int reg;
+	private final int regLong;
 	private final int localVarOffset;
 
 	public LocationEntry(LocalVarRange range, int localVarOffset) {
@@ -24,21 +25,28 @@ public class LocationEntry implements LocationListEntry {
 					"Location can be between 0 and 31 for Registers or higher as 256 for Stack Slot but was "
 							+ range.reg);
 		}
+		this.regLong = range.regLong;
 	}
 
 	@Override
 	public void serialize(ByteBuffer buf) {
 		buf.putInt(startOffset);
 		buf.putInt(endOffset);
+		int lengthPosition = buf.position();
+		buf.putShort((short) 0); // dummy Length. Write it later Expression length DWARF 4 Chapter 7.7.3
 		if (reg <= 31) {
-			buf.putShort((short) 1); // Expression length DWARF 4 Chapter 7.7.3
 			buf.put((byte) (DwOpType.DW_OP_reg0.value() + reg));
+			if (regLong > -1) {
+				buf.put(DwOpType.DW_OP_piece.value());
+				Utils.writeUnsignedLeb128(buf, 4);
+				buf.put((byte) (DwOpType.DW_OP_reg0.value() + regLong));
+				buf.put(DwOpType.DW_OP_piece.value());
+				Utils.writeUnsignedLeb128(buf, 4);
+			}
 		} else if (reg >= 256) {
-			int lengthPosition = buf.position();
-			buf.putShort((short) 0); // dummy Length. Write it later
 			buf.put(DwOpType.DW_OP_breg13.value());
 			Utils.writeSignedLeb128(buf, (reg - 256) * 4 + localVarOffset); // Stack Position Number
-			buf.putShort(lengthPosition, (short) (buf.position() - lengthPosition - 2));
 		}
+		buf.putShort(lengthPosition, (short) (buf.position() - lengthPosition - 2));
 	}
 }

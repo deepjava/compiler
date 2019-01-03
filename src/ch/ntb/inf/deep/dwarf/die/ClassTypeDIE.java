@@ -32,6 +32,7 @@ public class ClassTypeDIE extends TypeDIE {
 		while (field != null && field != clazz.constFields) {
 			// Static Fields
 			System.out.println("\tStatic Field: " + field.name + " address: " + field.address);
+			//TODO: Static Fields are not printed if i print a object. Not Member of Object!
 			new ClassMemberDIE(field, this);
 			field = (Field) field.next;
 		}

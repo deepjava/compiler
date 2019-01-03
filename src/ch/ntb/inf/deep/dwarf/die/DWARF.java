@@ -30,7 +30,7 @@ public class DWARF {
 		debug_loc.order(byteOrder);
 
 		references = new HashMap<>();
-		
+
 		for (CompilationUnitDIE cu : compilationUnits) {
 			cu.serialize(this);
 		}
@@ -48,7 +48,7 @@ public class DWARF {
 		Utils.writeUnsignedLeb128(debug_abbrev, form.value());
 		debug_info.putInt(value);
 	}
-	
+
 	public void addLong(DwAtType type, DwFormType form, long value) {
 		Utils.writeUnsignedLeb128(debug_abbrev, type.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, form.value());
@@ -80,12 +80,14 @@ public class DWARF {
 	}
 
 	public void add(TypeDIE typeDie) {
-		references.put(debug_info.position(), typeDie);
-		addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, -1); // Write a Dummy Value at this Index!
+		if (typeDie != null) {
+			references.put(debug_info.position(), typeDie);
+			addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, -1); // Write a Dummy Value at this Index!
+		}
 	}
 
 	public void updateMissingReferences() {
-		for(Map.Entry<Integer, TypeDIE> ref : references.entrySet()) {
+		for (Map.Entry<Integer, TypeDIE> ref : references.entrySet()) {
 			DebugInformationEntry die = ref.getValue();
 			int position = ref.getKey();
 			debug_info.putInt(position, die.baseAddress - die.getRoot().baseAddress);
@@ -94,6 +96,6 @@ public class DWARF {
 
 	public void addDieEnd() {
 		Utils.writeUnsignedLeb128(debug_abbrev, 0);
-		Utils.writeUnsignedLeb128(debug_abbrev, 0);		
+		Utils.writeUnsignedLeb128(debug_abbrev, 0);
 	}
 }

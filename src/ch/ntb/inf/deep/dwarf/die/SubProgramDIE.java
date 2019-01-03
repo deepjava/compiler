@@ -2,6 +2,8 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
+import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
+import ch.ntb.inf.deep.dwarf.location.SimpleExpression;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.LocalVar;
 
@@ -51,10 +53,12 @@ public class SubProgramDIE extends DebugInformationEntry {
 				while (localVar != null) {
 					if (method.ssa.isParam[localVar.index + method.maxStackSlots]) {
 						System.out.println("\t\tParameter " + localVar.name);
-						new ParameterDIE(localVar, this);
+						//new ParameterDIE(localVar, this);
+						new VariableDIE(localVar, method.machineCode.localVarOffset, this,
+								DwTagType.DW_TAG_formal_parameter);
 					} else {
 						System.out.println("\t\tVariable " + localVar.name);
-						new VariableDIE(localVar, method.machineCode.localVarOffset, this);
+						new VariableDIE(localVar, method.machineCode.localVarOffset, this, DwTagType.DW_TAG_variable);
 					}
 					localVar = (LocalVar) localVar.next;
 				}
@@ -73,6 +77,9 @@ public class SubProgramDIE extends DebugInformationEntry {
 		dwarf.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
 		dwarf.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
 		dwarf.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
+
+		dwarf.add(DwAtType.DW_AT_frame_base, new SimpleExpression(DwOpType.DW_OP_call_frame_cfa));
 		dwarf.add(returnType);
+
 	}
 }

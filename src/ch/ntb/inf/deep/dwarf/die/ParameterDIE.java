@@ -15,7 +15,7 @@ public class ParameterDIE extends DebugInformationEntry {
 		super(parent, DwTagType.DW_TAG_formal_parameter);
 		this.name = localVar.name.toString();
 		this.type = getType((Type) localVar.type, parent);
-		this.location = new SimpleExpression(DwOpType.DW_OP_reg0);
+		this.location = new SimpleExpression(DwOpType.DW_OP_reg1);
 	}
 
 	@Override
