@@ -65,33 +65,11 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			} 
 		}
 		
-//		if (dbg) StdStreams.vrb.println("\nset range of locals which are parameters");
-		LocalVar[] lvTable = ssa.localVarTab;
-//		if (lvTable != null) {
-//			for (int i = 0; i < lvTable.length; i++) {
-//				LocalVar lv = lvTable[i];
-//				while (lv != null) {	// locals occupying the same slot are linked by field "next"
-//					if (ssa.isParam[lv.index + maxOpStackSlots]) {
-//						SSAInstruction f = new NoOpnd(0, 0);
-//						f.machineCodeOffset = 0;
-//						f.result = new SSAValue();
-//						int reg = CodeGenARM.paramRegNr[lv.index];
-//						f.result.reg = reg;
-////						lv.ssaInstrStart = f;
-////						lv.startRange(f, null, reg);
-//						lv.ssaInstrStart = instrs[0];
-//						lv.startRange(instrs[0], null, reg);
-//						lv.endRange(instrs[nofInstructions-1]);
-//						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
-//					}
-//					lv = (LocalVar) lv.next;
-//				}
-//			}
-//		} 
 
 		// handle loadLocal first, these values are parameters
 		if (dbg) StdStreams.vrb.println("assign registers");
 		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
+		LocalVar[] lvTable = ssa.localVarTab;
 		for (int i = 0; i < nofInstructions; i++) {
 			SSAInstruction instr = instrs[i];
 			SSAValue res = instr.result;
@@ -111,8 +89,9 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					res.reg = CodeGenARM.paramRegNr[res.index+1 - maxOpStackSlots];
 					if (lv != null) {
 						lv.ssaInstrStart = instrs[0];
+						lv.ssaInstrEnd = instrs[res.end];
 						lv.startRange(instrs[0], null, res.regLong, res.reg);
-//						lv.endRange(instrs[nofInstructions-1]);
+						lv.endRange(instrs[res.end]);
 						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
 					}
 				} else if (type == tVoid) {
@@ -120,6 +99,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					res.reg = CodeGenARM.paramRegNr[res.index - maxOpStackSlots];
 					if (lv != null) {
 						lv.ssaInstrStart = instrs[0];
+						lv.ssaInstrEnd = instrs[res.end];
 						lv.startRange(instrs[0], null, res.reg);
 						lv.endRange(instrs[res.end]);
 						if (dbg) StdStreams.vrb.println("\tset range of lv " + lv.toString());
@@ -357,34 +337,21 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				while (lv != null && (lv.startPc + lv.length) < instr.bca) lv = (LocalVar) lv.next;	// choose active lv for this instruction
 				if (lv != null) {
 					if (dbg) StdStreams.vrb.println("\t\tres is lv "+ lv.toString());
-					if (lv.ssaInstrStart == null) {
-						if (dbg) StdStreams.vrb.println("\t\tstart first lv range"); 
-						lv.ssaInstrStart = instrs[i+1];
-						if (res.type == tLong) lv.startRange(instrs[i+1], null, res.regLong, res.reg);
-						else lv.startRange(instrs[i+1], null, res.reg);
+					SSAInstruction start = instrs[i+1];
+					if (lv.ssaInstrStart == null) {	// start of lv range
+						if (dbg) StdStreams.vrb.println("\t\tstart first lv range");
+						lv.ssaInstrStart = start;
+						if (res.type == tLong) lv.startRange(start, null, res.regLong, res.reg);
+						else lv.startRange(start, null, res.reg);
 					} else {
-						if (lv.curr.reg != res.reg) {
+						if (lv.curr.reg != res.reg) {	// start new lv range if register changed
 							if (dbg) StdStreams.vrb.println("\t\tstart new lv range");
-							if (res.type == tLong) lv.startRange(instrs[i+1], instr, res.regLong, res.reg);
-							else lv.startRange(instrs[i+1], instr, res.reg);
+							if (res.type == tLong) lv.startRange(start, instr, res.regLong, res.reg);
+							else lv.startRange(start, instr, res.reg);
 						}
 					}
-				}
-			}
-			// check if this instruction is end of lv range
-			if (lvTable != null) {
-				for (int k = 0; k < lvTable.length; k++) {
-					LocalVar lv = lvTable[k];
-					while (lv != null) {	// locals occupying the same slot are linked by field "next"
-						if (instr.bca >= lv.startPc + lv.length) {
-							if (lv.ssaInstrEnd == null) {
-								lv.ssaInstrEnd = instr;
-							}
-							if (lv.curr != null && lv.curr.ssaEnd == null) lv.endRange(instr);
-							if (dbg) StdStreams.vrb.println("\t\tis end of lv:" + lv.toString());
-						}
-						lv = (LocalVar) lv.next;
-					}
+					lv.ssaInstrEnd = instrs[res.end];
+					lv.endRange(instrs[res.end]);
 				}
 			}
 		}
@@ -397,25 +364,6 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		nof = maxNofParamEXTR - (paramEndEXTR - paramStartEXTR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;	// reserve 2 stack slots regardless if type is float or double
 		
-		// set end of all lv if not yet set
-		if (lvTable != null) {
-				for (int k = 0; k < lvTable.length; k++) {
-				LocalVar lv = lvTable[k];
-				while (lv != null) {	// locals occupying the same slot are linked by field "next"
-					if (lv.ssaInstrEnd == null) {
-						lv.ssaInstrEnd = instrs[nofInstructions-1];
-						lv.endRange(instrs[nofInstructions-1]);
-						if (dbg) StdStreams.vrb.println("\tset end of lv " + lv.toString());
-					}
-					if (lv.curr != null) 
-						if (lv.curr.ssaEnd == null) {
-							lv.curr.ssaEnd = instrs[nofInstructions-1];
-							if (dbg) StdStreams.vrb.println("\tset end of lv " + lv.toString());
-						}
-					lv = (LocalVar) lv.next;
-				}
-			}
-		}
 		if (dbg) {
 			StdStreams.vrb.println("\nLocal Variable Table");
 			if (lvTable != null) {
