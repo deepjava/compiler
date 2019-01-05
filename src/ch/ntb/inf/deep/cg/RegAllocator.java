@@ -63,8 +63,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 
 	// maximum nof registers used by this method, used to calculate stack size and for debugging output
 	protected static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
-	// used to find call in this method with most parameters -> gives stack size
-	protected static int maxNofParamGPR, maxNofParamFPR;
 	// in the first run the register allocator uses the full set of registers
 	// if spilling is necessary a reduced set has to be used in the second run
 	public static boolean fullRegSet;
@@ -79,7 +77,6 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		maxOpStackSlots = ssa.cfg.method.maxStackSlots;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
-		maxNofParamGPR = 0; maxNofParamFPR = 0;
 		fullRegSet = true;
 		useLongs = false;
 		stackSlotSpilledRegs = -1;

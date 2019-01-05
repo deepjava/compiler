@@ -45,6 +45,9 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 	 * checks if temporary space on stack is necessary
 	 */
 	static void assignRegisters() {
+		// used to find call in this method with most parameters -> gives stack size
+		int maxNofParamGPR = 0, maxNofParamFPR = 0;
+
 		// handle loadLocal first
 		if (dbg) StdStreams.vrb.println("\thandle load locals first:");
 		for (int i = 0; i < nofInstructions; i++) {

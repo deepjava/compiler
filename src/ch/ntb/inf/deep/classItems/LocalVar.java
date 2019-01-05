@@ -20,11 +20,12 @@ package ch.ntb.inf.deep.classItems;
 
 import ch.ntb.inf.deep.ssa.instruction.SSAInstruction;
 
-
 public class LocalVar extends Item {
 
 	public int startPc, length; // life range in bytecode: [startPc, startPc+length]
-	public SSAInstruction ssaInstrStart, ssaInstrEnd;	// associated ssa instructions
+	public SSAInstruction ssaInstrStart, ssaInstrEnd;	// associated ssa instructions, care must be given to parameters.
+														// their live range in the bytecode spans the whole method, the ssaInstrEnd is set to the 
+														// instruction, where the parameter is last used
 	public LocalVarRange range, curr;	// linked list of ranges where the lv lives in a given register or stack slot
 	
 	public void startRange(SSAInstruction start, SSAInstruction end, int reg) {
@@ -55,8 +56,10 @@ public class LocalVar extends Item {
 	}
 
 	public void endRange(SSAInstruction end) {
-		if (curr != null) 
-			curr.ssaEnd = end;
+		if (curr != null) {
+			if (end.result.n > curr.ssaStart.result.n) curr.ssaEnd = end;
+			else curr.ssaEnd = curr.ssaStart;
+		}
 	}
 	
 	public void print(int indentLevel) {
