@@ -6,28 +6,28 @@ import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
+import ch.ntb.inf.deep.classItems.Type;
 
 public class ClassTypeDIE extends TypeDIE {
 
 	private final String name;
-	private final byte byteSize;
+	private byte byteSize;
 
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_class_type);
 		System.out.println("Class: " + clazz.name);
 		this.name = clazz.name.toString();
-		this.byteSize = (byte) clazz.getTypeSize();
-
 		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this);
-
 	}
 
 	public void InsertMembers(Class clazz) {
 		Field field = (Field) clazz.instFields;
+		byteSize = 0;
 		while (field != null && field != clazz.classFields) {
 			// Instance Fields
 			System.out.println("\tInstance Field: " + field.name + " offset: " + field.offset);
 			new InstanceMemberDIE(field, this);
+			byteSize += (byte)((Type)field.type).getTypeSize();
 			field = (Field) field.next;
 		}
 
