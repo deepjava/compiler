@@ -3,7 +3,6 @@ package ch.ntb.inf.deep.dwarf.die;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import ch.ntb.inf.deep.dwarf.Utils;

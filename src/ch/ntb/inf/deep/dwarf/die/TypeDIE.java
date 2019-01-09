@@ -16,6 +16,8 @@ public abstract class TypeDIE extends DebugInformationEntry {
 			// TODO: Handling Reference Types!
 			return new RefTypeDIE(type, parent);
 			//return new BaseTypeDIE(type, parent);
+		} else if (type.name.charAt(0) == ICdescAndTypeConsts.tcArray){
+			return new ArrayTypeDIE(type, parent);
 		} else {
 			return new BaseTypeDIE(type, parent);
 		}
