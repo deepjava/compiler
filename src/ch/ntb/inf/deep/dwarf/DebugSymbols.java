@@ -2,12 +2,6 @@ package ch.ntb.inf.deep.dwarf;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import ch.ntb.inf.deep.classItems.Class;
-import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.dwarf.die.CompilationUnitDIE;
 import ch.ntb.inf.deep.dwarf.die.DWARF;
 

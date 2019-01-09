@@ -2,7 +2,6 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
 import ch.ntb.inf.deep.dwarf.location.SimpleExpression;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.LocalVar;

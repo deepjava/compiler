@@ -17,7 +17,7 @@ public class DWARF {
 
 	// Holds Reference Pointers to updated later the Address after all DIE's are
 	// serialized
-	private Map<Integer, TypeDIE> references;
+	private Map<Integer, DebugInformationEntry> references;
 
 	public DWARF(ByteOrder byteOrder, CompilationUnitDIE compilationUnit) {
 		debug_info = ByteBuffer.allocate(0xFFFF);
@@ -77,15 +77,19 @@ public class DWARF {
 		debug_info.put((byte) 1);
 	}
 
-	public void add(TypeDIE typeDie) {
-		if (typeDie != null) {
-			references.put(debug_info.position(), typeDie);
-			addInt(DwAtType.DW_AT_type, DwFormType.DW_FORM_ref4, -1); // Write a Dummy Value at this Index!
+	public void addReference(DwAtType type, DebugInformationEntry die) {
+		if (die != null) {
+			references.put(debug_info.position(), die);
+			addInt(type, DwFormType.DW_FORM_ref4, -1); // Write a Dummy Value at this Index!
 		}
 	}
 
+	public void add(TypeDIE die) {
+		addReference(DwAtType.DW_AT_type, die);
+	}
+
 	public void updateMissingReferences() {
-		for (Map.Entry<Integer, TypeDIE> ref : references.entrySet()) {
+		for (Map.Entry<Integer, DebugInformationEntry> ref : references.entrySet()) {
 			DebugInformationEntry die = ref.getValue();
 			int position = ref.getKey();
 			debug_info.putInt(position, die.baseAddress - die.getRoot().baseAddress);

@@ -24,7 +24,6 @@ import java.io.InputStream;
 
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Segment;
-import ch.ntb.inf.deep.dwarf.die.ClassTypeDIE;
 import ch.ntb.inf.deep.host.ClassFileAdmin;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.linker.FixedValueEntry;
