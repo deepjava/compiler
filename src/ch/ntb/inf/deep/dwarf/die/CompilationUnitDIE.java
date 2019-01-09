@@ -42,9 +42,6 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		}
 
 		for (Class clazz: classes.keySet()) {
-//			if (!c.name.toString().contains("ObjFields")) {
-//				continue;
-//			}
 			classes.get(clazz).InsertMembers(clazz);
 			classes.get(clazz).InsertMethods(clazz);
 

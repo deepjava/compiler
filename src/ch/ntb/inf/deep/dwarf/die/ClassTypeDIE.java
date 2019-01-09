@@ -12,13 +12,18 @@ public class ClassTypeDIE extends TypeDIE {
 
 	private final String name;
 	private byte byteSize;
-	
+
 	// TODO: Insert Inheritance and Interfaces with DW_TAG_Inheritance
 
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_class_type);
 		this.name = clazz.name.toString();
 		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this);
+
+		if (clazz.type != null) {
+			// java/lang/Object has no Base Type
+			new InheritanceDIE((Type)clazz.type, this);
+		}
 	}
 
 	public void InsertMembers(Class clazz) {
@@ -29,15 +34,14 @@ public class ClassTypeDIE extends TypeDIE {
 			// Instance Fields
 			System.out.println("\tInstance Field: " + field.name + " offset: " + field.offset);
 			new InstanceMemberDIE(field, this);
-			byteSize += (byte)((Type)field.type).getTypeSize();
+			// To get Object Size take the offset of the Last Element and ad its Size
+			byteSize = (byte)(field.offset + ((Type) field.type).getTypeSize());
 			field = (Field) field.next;
 		}
 
 		field = (Field) clazz.classFields;
 		while (field != null && field != clazz.constFields) {
 			// Static Fields
-			System.out.println("\tStatic Field: " + field.name + " address: " + field.address);
-			//TODO: Static Fields are not printed if i print a object. Not Member of Object!
 			new ClassMemberDIE(field, this);
 			field = (Field) field.next;
 		}

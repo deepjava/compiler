@@ -18,7 +18,6 @@ public class SubProgramDIE extends DebugInformationEntry {
 
 	public SubProgramDIE(Method method, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_subprogram);
-		System.out.println("\tMethod: " + method.name);
 		if ((method.accAndPropFlags & (1 << ICclassFileConsts.apfStatic)) != 0
 				|| (method.accAndPropFlags & (1 << ICclassFileConsts.dpfSysPrimitive)) != 0) {
 			this.isStatic = true;
@@ -51,12 +50,9 @@ public class SubProgramDIE extends DebugInformationEntry {
 			for (LocalVar localVar : method.ssa.getLocalVarsTable()) {
 				while (localVar != null) {
 					if (method.ssa.isParam[localVar.index + method.maxStackSlots]) {
-						System.out.println("\t\tParameter " + localVar.name);
-						//new ParameterDIE(localVar, this);
 						new VariableDIE(localVar, method.machineCode.localVarOffset, this,
 								DwTagType.DW_TAG_formal_parameter);
 					} else {
-						System.out.println("\t\tVariable " + localVar.name);
 						new VariableDIE(localVar, method.machineCode.localVarOffset, this, DwTagType.DW_TAG_variable);
 					}
 					localVar = (LocalVar) localVar.next;

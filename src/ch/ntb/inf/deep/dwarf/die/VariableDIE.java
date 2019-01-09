@@ -38,7 +38,11 @@ public class VariableDIE extends DebugInformationEntry {
 
 	@Override
 	protected void serializeDie(DWARF dwarf) {
-		dwarf.add(DwAtType.DW_AT_name, name);
+		if (name.equals("this")) {
+			dwarf.addFlag(DwAtType.DW_AT_artificial);
+		} else {
+			dwarf.add(DwAtType.DW_AT_name, name);
+		}
 		dwarf.add(type);
 		dwarf.addInt(DwAtType.DW_AT_location, DwFormType.DW_FORM_sec_offset, dwarf.debug_loc.position());
 		locationList.stream().forEach(x -> x.serialize(dwarf.debug_loc));
