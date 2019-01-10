@@ -2,7 +2,6 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.Type;
-import ch.ntb.inf.deep.dwarf.location.SimpleExpression;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.classItems.LocalVar;
 
@@ -15,6 +14,7 @@ public class SubProgramDIE extends DebugInformationEntry {
 	private final boolean isStatic;
 	private final byte accessability;
 	private final TypeDIE returnType;
+	private VariableDIE objectRefcerence;
 
 	public SubProgramDIE(Method method, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_subprogram);
@@ -49,11 +49,10 @@ public class SubProgramDIE extends DebugInformationEntry {
 		if (method.ssa != null && method.ssa.getLocalVarsTable() != null) {
 			for (LocalVar localVar : method.ssa.getLocalVarsTable()) {
 				while (localVar != null) {
-					if (method.ssa.isParam[localVar.index + method.maxStackSlots]) {
-						new VariableDIE(localVar, method.machineCode.localVarOffset, this,
-								DwTagType.DW_TAG_formal_parameter);
-					} else {
-						new VariableDIE(localVar, method.machineCode.localVarOffset, this, DwTagType.DW_TAG_variable);
+					boolean isParameter = method.ssa.isParam[localVar.index + method.maxStackSlots];
+					VariableDIE die = new VariableDIE(localVar, method.machineCode.localVarOffset, this, isParameter);
+					if (localVar.name.toString().equals("this")) {
+						objectRefcerence = die;
 					}
 					localVar = (LocalVar) localVar.next;
 				}
@@ -63,17 +62,19 @@ public class SubProgramDIE extends DebugInformationEntry {
 
 	@Override
 	public void serializeDie(DWARF dwarf) {
-		if (isStatic) {
-			dwarf.addFlag(DwAtType.DW_AT_external);
-		}
-
-		dwarf.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
 		dwarf.add(DwAtType.DW_AT_name, name);
+		dwarf.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
 		dwarf.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
 		dwarf.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
 		dwarf.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
-
-		dwarf.add(DwAtType.DW_AT_frame_base, new SimpleExpression(DwOpType.DW_OP_call_frame_cfa));
+		
+		if (isStatic) {
+			dwarf.addFlag(DwAtType.DW_AT_external);
+		}
+		
+		if (this.objectRefcerence != null) {
+			dwarf.addReference(DwAtType.DW_AT_object_pointer, objectRefcerence);
+		}
 		dwarf.add(returnType);
 
 	}

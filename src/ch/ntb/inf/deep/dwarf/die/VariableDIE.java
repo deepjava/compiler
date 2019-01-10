@@ -17,8 +17,8 @@ public class VariableDIE extends DebugInformationEntry {
 	private final TypeDIE type;
 	private final List<LocationListEntry> locationList;
 
-	protected VariableDIE(LocalVar localVar, int localVarOffset, SubProgramDIE parent, DwTagType dwarfTagType) {
-		super(parent, dwarfTagType);
+	protected VariableDIE(LocalVar localVar, int localVarOffset, SubProgramDIE parent, boolean isParameter) {
+		super(parent, isParameter ? DwTagType.DW_TAG_formal_parameter : DwTagType.DW_TAG_variable);
 		this.name = localVar.name.toString();
 		this.type = TypeDIE.getType((Type) localVar.type, parent.getRoot());
 
@@ -38,11 +38,11 @@ public class VariableDIE extends DebugInformationEntry {
 
 	@Override
 	protected void serializeDie(DWARF dwarf) {
+		dwarf.add(DwAtType.DW_AT_name, name);
 		if (name.equals("this")) {
 			dwarf.addFlag(DwAtType.DW_AT_artificial);
-		} else {
-			dwarf.add(DwAtType.DW_AT_name, name);
 		}
+
 		dwarf.add(type);
 		dwarf.addInt(DwAtType.DW_AT_location, DwFormType.DW_FORM_sec_offset, dwarf.debug_loc.position());
 		locationList.stream().forEach(x -> x.serialize(dwarf.debug_loc));

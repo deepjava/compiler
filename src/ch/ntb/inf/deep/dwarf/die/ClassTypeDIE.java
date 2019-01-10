@@ -13,8 +13,6 @@ public class ClassTypeDIE extends TypeDIE {
 	private final String name;
 	private byte byteSize;
 
-	// TODO: Insert Inheritance and Interfaces with DW_TAG_Inheritance
-
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_class_type);
 		this.name = clazz.name.toString();
@@ -22,7 +20,7 @@ public class ClassTypeDIE extends TypeDIE {
 
 		if (clazz.type != null) {
 			// java/lang/Object has no Base Type
-			new InheritanceDIE((Type)clazz.type, this);
+			new InheritanceDIE((Type) clazz.type, this);
 		}
 	}
 
@@ -35,7 +33,7 @@ public class ClassTypeDIE extends TypeDIE {
 			System.out.println("\tInstance Field: " + field.name + " offset: " + field.offset);
 			new InstanceMemberDIE(field, this);
 			// To get Object Size take the offset of the Last Element and ad its Size
-			byteSize = (byte)(field.offset + ((Type) field.type).getTypeSize());
+			byteSize = (byte) (field.offset + ((Type) field.type).getTypeSize());
 			field = (Field) field.next;
 		}
 
