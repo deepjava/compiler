@@ -20,11 +20,9 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 	private static final byte pointer_size = 4;
 	private static final short DW_LANG_JAVA = 0x000b;
 
-//	private final File srcFile;
 	private final String projectFilePath;
 	private final List<LineMatrixEntry> lineNumberTableMatrix;
 	private final HashMap<Class, ClassTypeDIE> classes;
-	private final String compileDirecotry = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\runtime-EclipseApplication\\test\\src";
 	private final int low_pc = 0;
 	private final int high_pc = 0xFFFF;
 
@@ -94,7 +92,6 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		dwarf.add(DwAtType.DW_AT_producer, "deepjava.org");
 		dwarf.addShort(DwAtType.DW_AT_language, DwFormType.DW_FORM_data2, DW_LANG_JAVA);
 		dwarf.add(DwAtType.DW_AT_name, projectFilePath);
-		dwarf.add(DwAtType.DW_AT_comp_dir, compileDirecotry);
 		dwarf.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, low_pc);
 		dwarf.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, high_pc);
 		dwarf.addInt(DwAtType.DW_AT_stmt_list, DwFormType.DW_FORM_data4, dwarf.debug_line.position());
