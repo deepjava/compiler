@@ -12,7 +12,7 @@ import ch.ntb.inf.deep.dwarf.location.LocationEntry;
 import ch.ntb.inf.deep.dwarf.location.LocationListEntry;
 
 public class VariableDIE extends DebugInformationEntry {
-
+	
 	private final String name;
 	private final TypeDIE type;
 	private final List<LocationListEntry> locationList;

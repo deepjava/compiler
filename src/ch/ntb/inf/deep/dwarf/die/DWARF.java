@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ch.ntb.inf.deep.dwarf.Utils;
-import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
+import ch.ntb.inf.deep.dwarf.location.AddressLocation;
 
 public class DWARF {
 
@@ -65,7 +65,7 @@ public class DWARF {
 		debug_info.put(Utils.serialize(str));
 	}
 
-	public void add(DwAtType type, DwarfExpression expr) {
+	public void add(DwAtType type, AddressLocation expr) {
 		Utils.writeUnsignedLeb128(debug_abbrev, type.value());
 		Utils.writeUnsignedLeb128(debug_abbrev, DwFormType.DW_FORM_exprloc.value());
 		expr.serialize(debug_info);

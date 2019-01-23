@@ -1,8 +1,7 @@
 package ch.ntb.inf.deep.dwarf.die;
 
 import ch.ntb.inf.deep.classItems.Field;
-import ch.ntb.inf.deep.dwarf.location.AddressExpression;
-import ch.ntb.inf.deep.dwarf.location.DwarfExpression;
+import ch.ntb.inf.deep.dwarf.location.AddressLocation;
 
 public class ClassMemberDIE extends MemberDIE {
 
@@ -25,13 +24,13 @@ public class ClassMemberDIE extends MemberDIE {
 
 class ClassMemberImplementationDIE extends DebugInformationEntry {
 
-	private final DwarfExpression location;
+	private final AddressLocation location;
 	private final ClassMemberDIE declerationDIE;
 
 	public ClassMemberImplementationDIE(Field field, ClassMemberDIE declerationDIE, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_variable);
 		this.declerationDIE = declerationDIE;
-		location = new AddressExpression(field.address);
+		location = new AddressLocation(field.address);
 	}
 
 	@Override

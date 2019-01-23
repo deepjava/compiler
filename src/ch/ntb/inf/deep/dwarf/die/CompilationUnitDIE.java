@@ -46,8 +46,6 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 			File file = new File(clazz.name.toString());
 			file = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
 
-			// this.low_pc = Math.min(this.low_pc, c.codeBase.getValue());
-
 			Method method = (Method) clazz.methods;
 			while (method != null) {
 				if (method.ssa != null) {
@@ -56,7 +54,6 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 						addLineNumberEntry(file, line.lineNr, address);
 					}
 				}
-//				this.high_pc = Math.max(this.high_pc, method.address + method.getCodeSizeInBytes());
 				method = (Method) method.next;
 			}
 		}
