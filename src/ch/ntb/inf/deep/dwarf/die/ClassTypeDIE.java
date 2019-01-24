@@ -6,32 +6,40 @@ import ch.ntb.inf.deep.classItems.Field;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.classItems.StdConstant;
 import ch.ntb.inf.deep.classItems.StringLiteral;
+import ch.ntb.inf.deep.classItems.Type;
 
 public class ClassTypeDIE extends TypeDIE {
 
 	private final String name;
-	private final byte byteSize;
+	private byte byteSize;
 
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_class_type);
-		System.out.println("Class: " + clazz.name);
 		this.name = clazz.name.toString();
-		this.byteSize = (byte) clazz.getTypeSize();
-
 		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this);
 
+		if (clazz.type != null) {
+			// java/lang/Object has no Base Type
+			new InheritanceDIE((Type) clazz.type, this);
+		}
+	}
+
+	public void InsertMembers(Class clazz) {
+		System.out.println("Class: " + clazz.name);
 		Field field = (Field) clazz.instFields;
+		byteSize = 0;
 		while (field != null && field != clazz.classFields) {
 			// Instance Fields
 			System.out.println("\tInstance Field: " + field.name + " offset: " + field.offset);
 			new InstanceMemberDIE(field, this);
+			// To get Object Size take the offset of the Last Element and ad its Size
+			byteSize = (byte) (field.offset + ((Type) field.type).getTypeSize());
 			field = (Field) field.next;
 		}
 
 		field = (Field) clazz.classFields;
 		while (field != null && field != clazz.constFields) {
 			// Static Fields
-			System.out.println("\tStatic Field: " + field.name + " address: " + field.address);
 			new ClassMemberDIE(field, this);
 			field = (Field) field.next;
 		}
@@ -46,7 +54,9 @@ public class ClassTypeDIE extends TypeDIE {
 			}
 			constant = (ConstField) constant.next;
 		}
+	}
 
+	public void InsertMethods(Class clazz) {
 		Method method = (Method) clazz.methods;
 		while (method != null) {
 			if (method.address != -1) {

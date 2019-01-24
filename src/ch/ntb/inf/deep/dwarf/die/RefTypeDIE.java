@@ -23,4 +23,8 @@ public class RefTypeDIE extends TypeDIE {
 		dwarf.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, (byte) 4); // 32 Bit Pointer
 		dwarf.add(baseType);
 	}
+
+	public TypeDIE getBaseType() {
+		return baseType;
+	}
 }
