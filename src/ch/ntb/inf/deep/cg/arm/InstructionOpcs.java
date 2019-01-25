@@ -237,10 +237,12 @@ public interface InstructionOpcs {
 	armVneg = (0xeb << 20) | (1 << 16) | (0xa4 << 4),
 	armVmov = (0xeb << 20) | (0xa4 << 4),	// move between EXTR
 	armVcvt = (0xeb << 20) | (0xac << 4),
+	armVcmp = (0xeb4 << 16) | (0xa4 << 4),
 
 	// floating point move between registers
 	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),	// move between EXTR and two GPR
 	armVmovSingle = (0xe0 << 20) | (0xa1 << 4),	// move between EXTR and one GPR
+	armVmrs = (0xef1 << 16) | (0xa10),	// move from FPSCR to GPR
 	
 	// coprocessor
 	armMrc = (0xe1 << 20) | (0x1 << 4),

@@ -1673,7 +1673,28 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						return;
 					}
 				} else if (type == tFloat  || type == tDouble) {
-					i--;
+					createFPdataProc(code, armVcmp, condAlways, src1Reg, src2Reg, type == tFloat);
+					createCoProcFPU(code, armVmrs, condAlways, 15);	
+					SSAInstruction next = node.instructions[i+1];
+					assert next.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
+					int bci = meth.cfg.code[node.lastBCA] & 0xff;
+					if (bci == bCifeq) 
+						createBranchImm(code, armB, condEQ, 0);
+					else if (bci == bCifne)
+						createBranchImm(code, armB, condNOTEQ, 0);
+					else if (bci == bCiflt)
+						createBranchImm(code, armB, condLT, 0);
+					else if (bci == bCifge)
+						createBranchImm(code, armB, condGE, 0);
+					else if (bci == bCifgt)
+						createBranchImm(code, armB, condGT, 0);
+					else if (bci == bCifle)
+						createBranchImm(code, armB, condLE, 0);
+					else {
+						ErrorReporter.reporter.error(623);
+						assert false : "sCcompl or sCcompg is not followed by branch instruction";
+						return;
+					}
 				} else {
 					ErrorReporter.reporter.error(611);
 					assert false : "operand of SSA instruction has wrong type";
@@ -2746,6 +2767,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	// coprocessor (MCR, MRC)
 	private void createCoProc(Code32 code, int opCode, int cond, int coproc, int opc1, int Rt, int CRn, int CRm, int opc2) {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (coproc << 8) | (opc1 << 21) | (Rt << 12) | (CRn << 16) | CRm | (opc2 << 5);
+		code.incInstructionNum();
+	}
+
+	// coprocessor FPU (VMRS)
+	private void createCoProcFPU(Code32 code, int opCode, int cond, int Rt) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12);
 		code.incInstructionNum();
 	}
 
