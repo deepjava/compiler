@@ -154,9 +154,18 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (instr.ssaOpcode == sCPhiFunc && res.join == null) continue; 
 			// reserve auxiliary register for this instruction
 			int nofAuxRegGPR = (scAttrTab[instr.ssaOpcode] >> 20) & 0xF;
-			if (nofAuxRegGPR == 7 && res.type == tLong)	// long division
-				nofAuxRegGPR = 2;
-			else if (nofAuxRegGPR == 8) {	// modulo division
+			if (nofAuxRegGPR == 4) {	// scDiv
+				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {nofAuxRegGPR = 1;}
+				else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
+					if (fullRegSet) {fullRegSet = false; return;}	// terminate if first run and force second allocation
+					else nofAuxRegGPR = 0;
+				}
+			} else if (nofAuxRegGPR == 5) {	// scRem
+				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger || (res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
+					if (fullRegSet) {fullRegSet = false; return;}	// terminate if first run and force second allocation
+					else nofAuxRegGPR = 0;
+				}
+			} else if (nofAuxRegGPR == 8) {	// modulo division
 				if (res.type == tLong) {nofAuxRegGPR = 2;}
 				else if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
 			}
@@ -246,8 +255,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						} else {
 							findReg(res);
 						}
-					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
-						// division by const, use immediate
+					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && (type == tInteger) && (res == instr1.getOperands()[1])) {
+						// check if division by const which is a power of 2, const must be divisor and positive
 					} else if ((instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)
@@ -356,6 +365,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			}
 		}
 		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
+		if (!fullRegSet) CodeGenARM.nofNonVolGPR = topGPR - nonVolStartGPR + 1;
 		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
 		CodeGenARM.nofVolGPR = nofVolGPR;
 		CodeGenARM.nofVolFPR = nofVolFPR;
