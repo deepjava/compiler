@@ -23,7 +23,7 @@ public class VariableDIE extends DebugInformationEntry {
 		this.type = TypeDIE.getType((Type) localVar.type, parent.getRoot());
 
 		this.locationList = new ArrayList<>();
-		this.locationList.add(new BaseAddress(parent.startAddress));
+		this.locationList.add(new BaseAddress(parent.getLow_pc()));
 
 		LocalVarRange range = localVar.range;
 		while (range != null) {

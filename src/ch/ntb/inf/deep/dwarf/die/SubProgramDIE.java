@@ -8,8 +8,8 @@ import ch.ntb.inf.deep.classItems.LocalVar;
 public class SubProgramDIE extends DebugInformationEntry {
 
 	private final String name;
-	final int startAddress;
-	private final int endAddress;
+	private final int low_pc;
+	private final int high_pc;
 	private final byte fileNo;
 	private final boolean isStatic;
 	private final byte accessability;
@@ -38,8 +38,8 @@ public class SubProgramDIE extends DebugInformationEntry {
 		}
 
 		this.name = method.name.toString();
-		this.startAddress = method.address;
-		this.endAddress = this.startAddress + method.getCodeSizeInBytes();
+		this.low_pc = method.address;
+		this.high_pc = this.low_pc + method.getCodeSizeInBytes();
 
 		this.fileNo = 1;
 
@@ -65,8 +65,8 @@ public class SubProgramDIE extends DebugInformationEntry {
 		dwarf.add(DwAtType.DW_AT_name, name);
 		dwarf.addByte(DwAtType.DW_AT_accessibility, DwFormType.DW_FORM_data1, accessability);
 		dwarf.addByte(DwAtType.DW_AT_decl_file, DwFormType.DW_FORM_data1, fileNo);
-		dwarf.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, startAddress);
-		dwarf.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, endAddress);
+		dwarf.addInt(DwAtType.DW_AT_low_pc, DwFormType.DW_FORM_addr, low_pc);
+		dwarf.addInt(DwAtType.DW_AT_high_pc, DwFormType.DW_FORM_addr, high_pc);
 		
 		if (isStatic) {
 			dwarf.addFlag(DwAtType.DW_AT_external);
@@ -78,4 +78,12 @@ public class SubProgramDIE extends DebugInformationEntry {
 		dwarf.add(returnType);
 
 	}
+
+	public int getLow_pc() {
+		return low_pc;
+	}
+
+	public int getHigh_pc() {
+		return high_pc;
+	}	
 }

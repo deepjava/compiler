@@ -28,7 +28,7 @@ public abstract class DebugInformationEntry {
 	}
 
 	protected static TypeDIE getType(Type type, DebugInformationEntry parent) {
-		if (type.dwarfDIE == null || parent.getRoot() != type.dwarfDIE.getRoot()) {
+		if (type.dwarfDIE == null) { // || parent.getRoot() != type.dwarfDIE.getRoot()) {
 			TypeDIE.generateNewTypeDIE(type, parent);
 		}
 		return type.dwarfDIE;

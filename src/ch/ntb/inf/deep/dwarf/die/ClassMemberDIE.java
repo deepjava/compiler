@@ -35,8 +35,6 @@ class ClassMemberImplementationDIE extends DebugInformationEntry {
 
 	@Override
 	protected void serializeDie(DWARF dwarf) {
-		// DwAtType.DW_AT_specification;
-		// dwarf.add
 		dwarf.addReference(DwAtType.DW_AT_specification, declerationDIE);
 		dwarf.add(DwAtType.DW_AT_location, location);
 	}

@@ -12,9 +12,11 @@ public class ClassTypeDIE extends TypeDIE {
 
 	private final String name;
 	private byte byteSize;
+	private final Class clazz;
 
 	public ClassTypeDIE(Class clazz, DebugInformationEntry parent) {
 		super(parent, DwTagType.DW_TAG_class_type);
+		this.clazz = clazz;
 		this.name = clazz.name.toString();
 		clazz.dwarfDIE = new RefTypeDIE(clazz, parent, this);
 
@@ -24,7 +26,7 @@ public class ClassTypeDIE extends TypeDIE {
 		}
 	}
 
-	public void InsertMembers(Class clazz) {
+	public void InsertMembers() {
 		System.out.println("Class: " + clazz.name);
 		Field field = (Field) clazz.instFields;
 		byteSize = 0;
@@ -56,7 +58,7 @@ public class ClassTypeDIE extends TypeDIE {
 		}
 	}
 
-	public void InsertMethods(Class clazz) {
+	public void InsertMethods() {
 		Method method = (Method) clazz.methods;
 		while (method != null) {
 			if (method.address != -1) {
@@ -70,5 +72,27 @@ public class ClassTypeDIE extends TypeDIE {
 	public void serializeDie(DWARF dwarf) {
 		dwarf.add(DwAtType.DW_AT_name, name);
 		dwarf.addByte(DwAtType.DW_AT_byte_size, DwFormType.DW_FORM_data1, byteSize);
+	}
+	
+	public int getLowPc() {
+		int low_pc = Integer.MAX_VALUE;
+		
+		for(DebugInformationEntry die: this.getChildren()) {
+			if (die instanceof SubProgramDIE) {
+				low_pc = Math.min(low_pc, ((SubProgramDIE)die).getLow_pc());
+			}
+		}
+		return low_pc;
+	}
+	
+	public int getHighPc() {
+		int high_pc = Integer.MIN_VALUE;
+		
+		for(DebugInformationEntry die: this.getChildren()) {
+			if (die instanceof SubProgramDIE) {
+				high_pc = Math.max(high_pc, ((SubProgramDIE)die).getHigh_pc());
+			}
+		}
+		return high_pc;
 	}
 }

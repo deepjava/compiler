@@ -2,6 +2,7 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ public class DWARF {
 	// serialized
 	private Map<Integer, DebugInformationEntry> references;
 
-	public DWARF(ByteOrder byteOrder, CompilationUnitDIE compilationUnit) {
+	public DWARF(ByteOrder byteOrder, Collection<CompilationUnitDIE> compilationUnits) {
 		debug_info = ByteBuffer.allocate(0xFFFF);
 		debug_info.order(byteOrder);
 		debug_abbrev = ByteBuffer.allocate(0xFFFF);
@@ -31,7 +32,7 @@ public class DWARF {
 
 		references = new HashMap<>();
 
-		compilationUnit.serialize(this);
+		compilationUnits.forEach(cu -> cu.serialize(this));
 		updateMissingReferences();
 	}
 
@@ -80,7 +81,7 @@ public class DWARF {
 	public void addReference(DwAtType type, DebugInformationEntry die) {
 		if (die != null) {
 			references.put(debug_info.position(), die);
-			addInt(type, DwFormType.DW_FORM_ref4, -1); // Write a Dummy Value at this Index!
+			addInt(type, DwFormType.DW_FORM_ref_addr, -1); // Write a Dummy Value at this Index!
 		}
 	}
 
@@ -92,7 +93,7 @@ public class DWARF {
 		for (Map.Entry<Integer, DebugInformationEntry> ref : references.entrySet()) {
 			DebugInformationEntry die = ref.getValue();
 			int position = ref.getKey();
-			debug_info.putInt(position, die.baseAddress - die.getRoot().baseAddress);
+			debug_info.putInt(position, die.baseAddress);
 		}
 	}
 

@@ -2,8 +2,6 @@ package ch.ntb.inf.deep.dwarf.die;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import ch.ntb.inf.deep.classItems.Class;
@@ -22,40 +20,39 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 
 	private final String projectFilePath;
 	private final List<LineMatrixEntry> lineNumberTableMatrix;
-	private final HashMap<Class, ClassTypeDIE> classes;
-	private final int low_pc = 0;
-	private final int high_pc = 0xFFFF;
+	private final ClassTypeDIE classTypeDIE;
+	private final Class clazz;
+	private int low_pc;
+	private int high_pc;
 
-	public CompilationUnitDIE() {
+	public CompilationUnitDIE(Class clazz) {
 		super(null, DwTagType.DW_TAG_compile_unit);
 		this.lineNumberTableMatrix = new ArrayList<>();
-		this.classes = new HashMap<>();
 		projectFilePath = Configuration.getActiveProject().getProjectFileName().toString();
 
-		ClassIterator classIterator = new ClassIterator();
-		// First Iteration for Types which are used in Second Iteration
-		while (classIterator.hasNext()) {
-			Class clazz = classIterator.next();
-			classes.put(clazz, new ClassTypeDIE(clazz, this));
-		}
+		this.clazz = clazz;
+		classTypeDIE = new ClassTypeDIE(clazz, this);
+	}
 
-		for (Class clazz: classes.keySet()) {
-			classes.get(clazz).InsertMembers(clazz);
-			classes.get(clazz).InsertMethods(clazz);
+	public void insertChildInformation() {
+		classTypeDIE.InsertMembers();
+		classTypeDIE.InsertMethods();
 
-			File file = new File(clazz.name.toString());
-			file = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
+		low_pc = classTypeDIE.getLowPc();
+		high_pc = classTypeDIE.getHighPc();
 
-			Method method = (Method) clazz.methods;
-			while (method != null) {
-				if (method.ssa != null) {
-					for (LineNrSSAInstrPair line : method.ssa.getLineNrTable()) {
-						int address = method.address + line.ssaInstr.machineCodeOffset * 4;
-						addLineNumberEntry(file, line.lineNr, address);
-					}
+		File file = new File(clazz.name.toString());
+		file = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
+
+		Method method = (Method) clazz.methods;
+		while (method != null) {
+			if (method.ssa != null) {
+				for (LineNrSSAInstrPair line : method.ssa.getLineNrTable()) {
+					int address = method.address + line.ssaInstr.machineCodeOffset * 4;
+					addLineNumberEntry(file, line.lineNr, address);
 				}
-				method = (Method) method.next;
 			}
+			method = (Method) method.next;
 		}
 	}
 
@@ -96,30 +93,5 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		// Serialize Line
 		DebugLineStateMaschine stateMachine = new DebugLineStateMaschine(lineNumberTableMatrix);
 		stateMachine.serialize(dwarf.debug_line);
-	}
-
-	private class ClassIterator implements Iterator<Class> {
-
-		private Class actual;
-
-		public ClassIterator() {
-			actual = Class.initClasses;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return actual != null;
-		}
-
-		@Override
-		public Class next() {
-			Class result = actual;
-			if (actual == Class.initClassesTail) {
-				actual = Class.nonInitClasses;
-			} else {
-				actual = actual.nextClass;
-			}
-			return result;
-		}
 	}
 }
