@@ -1,11 +1,16 @@
 package ch.ntb.inf.deep.dwarf;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-public class DebugLineStateMaschine {
+import ch.ntb.inf.deep.classItems.Class;
+import ch.ntb.inf.deep.classItems.Method;
+import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
+
+public class DebugLineStateMachine {
 	public static final short Version = 2;
 	private static final byte[] standard_opcode_lengths = new byte[] { 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1 };
 
@@ -27,7 +32,7 @@ public class DebugLineStateMaschine {
 	public final List<SourceFileEntry> files;
 	private final List<Opcode> program;
 
-	public DebugLineStateMaschine(ByteBuffer buf, StringJoiner sj) {
+	public DebugLineStateMachine(ByteBuffer buf, StringJoiner sj) {
 		matrix = new ArrayList<>();
 		this.program = new ArrayList<Opcode>();
 
@@ -38,7 +43,7 @@ public class DebugLineStateMaschine {
 		length += 4; // Add Length for Length itself
 		int version = buf.getShort(); // uhalf
 		sj.add("Version: " + version);
-		if (DebugLineStateMaschine.Version != version) {
+		if (DebugLineStateMachine.Version != version) {
 			throw new RuntimeException("Debug Line Parser Supports only Version 2 but was Version " + version);
 		}
 		int prologueLength = buf.getInt(); // uword
@@ -99,7 +104,7 @@ public class DebugLineStateMaschine {
 		}
 	}
 
-	public DebugLineStateMaschine(List<LineMatrixEntry> matrix) {
+	public DebugLineStateMachine(Class clazz, File file) {
 		this.matrix = new ArrayList<>();
 		this.program = new ArrayList<Opcode>();
 		this.directories = new ArrayList<>();
@@ -110,23 +115,33 @@ public class DebugLineStateMaschine {
 		this.line_range = 14;
 		this.line_base = -5;
 		this.is_stmt_default = true;
-		
-		// Generation all Opcodes from the Matrix
+
 		init();
+		
+		String filename = file.getName();
+		String directoryName = file.getParent().replace('\\', '/');
 
-		for (LineMatrixEntry line : matrix) {
-			if (!directories.contains(line.directoryName)) {
-				directories.add(line.directoryName);
-			}
-			int directoryIndex = directories.indexOf(line.directoryName) + 1;
 
-			if (!files.stream().anyMatch(x -> x.filename.equals(line.filename))) {
-				files.add(new SourceFileEntry(files.size(), line.filename, directoryIndex));
+		// Generation all Opcodes from the class Line Number Tables
+		Method method = (Method) clazz.methods;
+		while (method != null) {
+			if (method.ssa != null) {
+				for (LineNrSSAInstrPair line : method.ssa.getLineNrTable()) {
+					int address = method.address + line.ssaInstr.machineCodeOffset * 4;
+					int lineNumber = line.lineNr;
+					if (!directories.contains(directoryName)) {
+						directories.add(directoryName);
+					}
+					int directoryIndex = directories.indexOf(directoryName) + 1;
+
+					if (!files.stream().anyMatch(x -> x.filename.equals(filename))) {
+						files.add(new SourceFileEntry(files.size(), filename, directoryIndex));
+					}
+					generateNextOpCodes(lineNumber, address, filename);
+				}
 			}
-			generateNextOpCodes(line);
+			method = (Method) method.next;
 		}
-
-		// this.matrix and matrix should be the same now!
 	}
 
 	public void init() {
@@ -146,30 +161,30 @@ public class DebugLineStateMaschine {
 		matrix.add(new LineMatrixEntry(filename, directorName, line, column, address));
 	}
 
-	public void generateNextOpCodes(LineMatrixEntry line) {
+	public void generateNextOpCodes(int line, long address, String filename) {
 		int maxLineIncrement = line_base + line_range - 1;
-		int lineIncrement = line.line - this.line;
-		int desiredAddressIncrement = (int) (line.address - this.address);
-		if (!files.get(fileIndex - 1).filename.equals(line.filename)) {
-			int fileIndex = files.stream().filter(x -> x.filename.equals(line.filename)).findFirst().get().No + 1;
+		int lineIncrement = line - this.line;
+		int desiredAddressIncrement = (int) (address - this.address);
+		if (!files.get(fileIndex - 1).filename.equals(filename)) {
+			int fileIndex = files.stream().filter(x -> x.filename.equals(filename)).findFirst().get().No + 1;
 			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_set_file, fileIndex));
-			generateNextOpCodes(line);
+			generateNextOpCodes(line, address, filename);
 		} else if (lineIncrement > maxLineIncrement) {
 			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_advance_line, lineIncrement));
-			generateNextOpCodes(line);
+			generateNextOpCodes(line, address, filename);
 		} else if (lineIncrement < line_base) {
 			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_advance_line, lineIncrement));
-			generateNextOpCodes(line);
+			generateNextOpCodes(line, address, filename);
 		} else if (desiredAddressIncrement < 0) {
-			addOpcodeAndExecute(new ExtendedOpcode(ExtendedOpcode.DW_LNE_set_address, line.address));
-			generateNextOpCodes(line);
+			addOpcodeAndExecute(new ExtendedOpcode(ExtendedOpcode.DW_LNE_set_address, address));
+			generateNextOpCodes(line, address, filename);
 		} else {
 			// Special Op Code;
 			int addressAdvance = desiredAddressIncrement / minimum_instruction_length;
 			int opcode = (lineIncrement - line_base) + (line_range * addressAdvance) + opcode_base;
 			if (opcode > 255) {
 				addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_advance_pc, addressAdvance));
-				generateNextOpCodes(line);
+				generateNextOpCodes(line, address, filename);
 			} else {
 				addOpcodeAndExecute(new SpecialOpcode((short) opcode));
 			}

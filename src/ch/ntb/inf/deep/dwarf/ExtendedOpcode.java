@@ -56,7 +56,7 @@ public class ExtendedOpcode extends Opcode {
 	}
 
 	@Override
-	public void execute(DebugLineStateMaschine state) {
+	public void execute(DebugLineStateMachine state) {
 		switch (internalOpcode) {
 		case DW_LNE_end_sequence:
 			state.end_sequence = true;

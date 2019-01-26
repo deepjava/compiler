@@ -18,7 +18,7 @@ public class SpecialOpcode extends Opcode {
 	}
 
 	@Override
-	public void execute(DebugLineStateMaschine state) {
+	public void execute(DebugLineStateMachine state) {
 		int adjustedOpcode = (opcode - state.opcode_base);
 		int addressIncrement = state.minimum_instruction_length * (adjustedOpcode / state.line_range);
 		int lineIncrement = state.line_base + (adjustedOpcode % state.line_range);

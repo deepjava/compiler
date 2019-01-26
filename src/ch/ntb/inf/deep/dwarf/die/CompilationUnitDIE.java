@@ -7,7 +7,7 @@ import java.util.List;
 import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.dwarf.DebugLineStateMaschine;
+import ch.ntb.inf.deep.dwarf.DebugLineStateMachine;
 import ch.ntb.inf.deep.dwarf.LineMatrixEntry;
 import ch.ntb.inf.deep.dwarf.Utils;
 import ch.ntb.inf.deep.ssa.LineNrSSAInstrPair;
@@ -19,19 +19,19 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 	private static final short DW_LANG_JAVA = 0x000b;
 
 	private final String projectFilePath;
-	private final List<LineMatrixEntry> lineNumberTableMatrix;
 	private final ClassTypeDIE classTypeDIE;
 	private final Class clazz;
+	private DebugLineStateMachine debugLineStateMaschine;
 	private int low_pc;
 	private int high_pc;
 
 	public CompilationUnitDIE(Class clazz) {
 		super(null, DwTagType.DW_TAG_compile_unit);
-		this.lineNumberTableMatrix = new ArrayList<>();
 		projectFilePath = Configuration.getActiveProject().getProjectFileName().toString();
 
 		this.clazz = clazz;
 		classTypeDIE = new ClassTypeDIE(clazz, this);
+		
 	}
 
 	public void insertChildInformation() {
@@ -44,21 +44,7 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		File file = new File(clazz.name.toString());
 		file = new File(file.getParent() + "\\" + clazz.getSrcFileName().toString());
 
-		Method method = (Method) clazz.methods;
-		while (method != null) {
-			if (method.ssa != null) {
-				for (LineNrSSAInstrPair line : method.ssa.getLineNrTable()) {
-					int address = method.address + line.ssaInstr.machineCodeOffset * 4;
-					addLineNumberEntry(file, line.lineNr, address);
-				}
-			}
-			method = (Method) method.next;
-		}
-	}
-
-	public void addLineNumberEntry(File file, int srcLineNumber, int machineCodeAddress) {
-		lineNumberTableMatrix.add(new LineMatrixEntry(file.getName(), file.getParent().replace('\\', '/'),
-				srcLineNumber, 0, machineCodeAddress));
+		debugLineStateMaschine = new DebugLineStateMachine(clazz, file);
 	}
 
 	@Override
@@ -91,7 +77,6 @@ public class CompilationUnitDIE extends DebugInformationEntry {
 		dwarf.addInt(DwAtType.DW_AT_stmt_list, DwFormType.DW_FORM_data4, dwarf.debug_line.position());
 
 		// Serialize Line
-		DebugLineStateMaschine stateMachine = new DebugLineStateMaschine(lineNumberTableMatrix);
-		stateMachine.serialize(dwarf.debug_line);
+		debugLineStateMaschine.serialize(dwarf.debug_line);
 	}
 }

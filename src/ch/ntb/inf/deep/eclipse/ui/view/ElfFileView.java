@@ -36,7 +36,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Project;
-import ch.ntb.inf.deep.dwarf.DebugLineStateMaschine;
+import ch.ntb.inf.deep.dwarf.DebugLineStateMachine;
 import ch.ntb.inf.deep.dwarf.LineMatrixEntry;
 import ch.ntb.inf.deep.dwarf.SymbolTableEntry;
 import nl.lxtreme.binutils.elf.DynamicEntry;
@@ -367,7 +367,7 @@ public class ElfFileView extends ViewPart {
 			while (buf.position() < buf.capacity()) {
 				text = new Text(sashForm, SWT.WRAP | SWT.V_SCROLL);
 				StringJoiner sj = new StringJoiner("\n");
-				DebugLineStateMaschine stateMaschine = new DebugLineStateMaschine(buf, sj);
+				DebugLineStateMachine stateMaschine = new DebugLineStateMachine(buf, sj);
 
 				stateMaschine.run();
 

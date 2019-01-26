@@ -61,7 +61,7 @@ public class StandardOpcode extends Opcode {
 	}
 
 	@Override
-	public void execute(DebugLineStateMaschine state) {
+	public void execute(DebugLineStateMachine state) {
 		switch (opcode) {
 		case DW_LNS_copy:
 			state.appendRowToMatrix();

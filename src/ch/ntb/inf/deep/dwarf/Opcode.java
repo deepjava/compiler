@@ -15,7 +15,7 @@ public abstract class Opcode {
 	}
 
 	public abstract void Parse(ByteBuffer buffer);
-	public abstract void execute(DebugLineStateMaschine state);
+	public abstract void execute(DebugLineStateMachine state);
 	public abstract void serialize(ByteBuffer buffer);
 
 	@Override
