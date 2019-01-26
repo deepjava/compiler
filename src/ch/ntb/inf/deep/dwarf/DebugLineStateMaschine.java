@@ -110,7 +110,8 @@ public class DebugLineStateMaschine {
 		this.line_range = 14;
 		this.line_base = -5;
 		this.is_stmt_default = true;
-
+		
+		// Generation all Opcodes from the Matrix
 		init();
 
 		for (LineMatrixEntry line : matrix) {
@@ -126,10 +127,6 @@ public class DebugLineStateMaschine {
 		}
 
 		// this.matrix and matrix should be the same now!
-
-		if (!matrix.isEmpty()) {
-			InsertEndOfSequence();
-		}
 	}
 
 	public void init() {
@@ -154,7 +151,6 @@ public class DebugLineStateMaschine {
 		int lineIncrement = line.line - this.line;
 		int desiredAddressIncrement = (int) (line.address - this.address);
 		if (!files.get(fileIndex - 1).filename.equals(line.filename)) {
-			InsertEndOfSequence();
 			int fileIndex = files.stream().filter(x -> x.filename.equals(line.filename)).findFirst().get().No + 1;
 			addOpcodeAndExecute(new StandardOpcode(StandardOpcode.DW_LNS_set_file, fileIndex));
 			generateNextOpCodes(line);
