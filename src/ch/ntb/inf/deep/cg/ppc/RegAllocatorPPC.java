@@ -368,7 +368,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				i--;
 			}
 			if (dbg) StdStreams.vrb.print("\tnot enough GPR's, reserve stack slot");
-			fullRegSet = false;
+			fullRegSetGPR = false;
 			return getEmptyStackSlot(false);
 		} else {	// FPR
 			int i;
@@ -393,7 +393,7 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 				i--;
 			}
 			if (dbg) StdStreams.vrb.print("\tnot enough FPR's, reserve stack slot");
-			fullRegSet = false;
+			fullRegSetFPR = false;
 			return getEmptyStackSlot(true);
 		}
 	}

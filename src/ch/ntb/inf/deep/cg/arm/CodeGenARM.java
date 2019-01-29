@@ -100,14 +100,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorARM.assignRegisters();
-		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
-			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
-			if (RegAllocator.useLongs) RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR) & ~((1<<volEndGPR) | (1<<(volEndGPR-1)) | (1<<(volEndGPR-2)));
-			else RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
-			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsGPR));
-			RegAllocatorARM.regsEXTRD = regsEXTRDinitial & ~(0x7 << nonVolStartEXTR);
-			RegAllocatorARM.regsEXTRS = regsEXTRSinitial & ~(0x3f << (nonVolStartEXTR*2));
-			if (dbg) StdStreams.vrb.println("regsEXTRDinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRD) + ", regsEXTRSinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRS));
+		if (!RegAllocator.fullRegSetGPR || !RegAllocator.fullRegSetFPR) {	// repeat with a reduced register set
+			if (!RegAllocator.fullRegSetGPR) {
+				if (dbg) StdStreams.vrb.println("GPR register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+				if (RegAllocator.useLongs) RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR) & ~((1<<volEndGPR) | (1<<(volEndGPR-1)) | (1<<(volEndGPR-2)));
+				else RegAllocatorARM.regsGPR = regsGPRinitial & ~(0xf << nonVolStartGPR);
+				if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsGPR));
+			}
+			if (!RegAllocator.fullRegSetFPR) {
+				if (dbg) StdStreams.vrb.println("FPR register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+				RegAllocatorARM.regsEXTRD = regsEXTRDinitial & ~(0x7 << nonVolStartEXTR);
+				RegAllocatorARM.regsEXTRS = regsEXTRSinitial & ~(0x3f << (nonVolStartEXTR*2));
+				if (dbg) StdStreams.vrb.println("regsEXTRDinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRD) + ", regsEXTRSinitial = 0x" + Integer.toHexString(RegAllocatorARM.regsEXTRS));
+			}
 			RegAllocator.stackSlotSpilledRegs = -1;
 			// empty local variable information
 			LocalVar[] lvTable = ssa.localVarTab;
@@ -1180,7 +1185,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcShiftReg(code, armLsl, condLT, src2RegLongCopy, src2RegCopy, scratchReg);
 					createDataProcMovImm(code, armMov, condLT, src2RegCopy, 0);
 					
-//					createDataProcMovReg(code, armMov, condAlways, 10, dReg, noShift, 0);
 					loadConstant(code, LR, 1); // set bit 0 in aux register (LR/scratch), which will be shifted left then right
 					loadConstant(code, scratchReg, 0);
 					createDataProcCmpImm(code, armCmp, condAlways, dRegCopy, 0); // do not shift if negative shift amount
@@ -1214,7 +1218,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcImm(code, armRsbs, condAlways, dRegCopy, dRegCopy, 0);	
 					createDataProcImm(code, armRsc, condAlways, dRegLongCopy, dRegLongCopy, 0);	
 
-	// achtung wenn dReg src1
 					// fetch divisor and dividend again from register or stack
 					if (src1RegLong != src1RegLongCopy) createDataProcMovReg(code, armMov, condAlways, src1RegLongCopy, src1RegLong, noShift, 0);
 					else createLSWordImm(code, armLdr, condAlways, src1RegLongCopy, stackPtr, code.localVarOffset + 4 * slot1L, 1, 1, 0);
@@ -2935,8 +2938,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		int regList = 1 << LR;
 		if (nofNonVolGPR > 0) 
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
-//		if (!RegAllocator.fullRegSet)
-//			for (int i = 0; i < 6; i++) regList += 1 << (topGPR - i); 
 		createBlockDataTransfer(code, armPush, condAlways, regList);	// store LR and nonvolatiles
 		// enFloatsInExc could be true, even if this is no exception method
 		// such a case arises when this method is called from within an exception method
@@ -3037,7 +3038,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	private void insertEpilog(Code32 code, int stackSize) {
 		int epilogStart = code.iCount;
-//		createBlockDataTransfer(code, armPopSingle, condAlways, stackPtr << 12);
 		int localStorage = stackSize - (4 + nofNonVolGPR * 4 + nofNonVolFPR * 8);
 		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, localStorage);
 //		int offset = GPRoffset - 8;
@@ -3061,8 +3061,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		int regList = 1 << PC;
 		if (nofNonVolGPR > 0)
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
-//		if (!RegAllocator.fullRegSet)
-//			for (int i = 0; i < 6; i++) regList += 1 << (topGPR - i); 
 		createBlockDataTransfer(code, armPop, condAlways, regList);
 		
 		createIpat(code, (-(code.iCount-epilogStart)*4) & 0xff);
