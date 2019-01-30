@@ -157,12 +157,12 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (nofAuxRegGPR == 4) {	// scDiv
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {nofAuxRegGPR = 1;}
 				else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (fullRegSet) {fullRegSet = false; return;}	// terminate if first run and force second allocation
+					if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
 					else nofAuxRegGPR = 0;
 				}
 			} else if (nofAuxRegGPR == 5) {	// scRem
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger || (res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (fullRegSet) {fullRegSet = false; return;}	// terminate if first run and force second allocation
+					if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
 					else nofAuxRegGPR = 0;
 				}
 			} else if (nofAuxRegGPR == 8) {	// modulo division
@@ -365,7 +365,6 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			}
 		}
 		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
-		if (!fullRegSet) CodeGenARM.nofNonVolGPR = topGPR - nonVolStartGPR + 1;
 		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
 		CodeGenARM.nofVolGPR = nofVolGPR;
 		CodeGenARM.nofVolFPR = nofVolFPR;
@@ -431,7 +430,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 				i--;
 			}
 			if (dbg) StdStreams.vrb.print("\t\tnot enough GPR's, reserve stack slot");
-			fullRegSet = false;
+			fullRegSetGPR = false;
 			return getEmptyStackSlot(false);
 		} else {	// EXTR
 			if (dbg) StdStreams.vrb.print("\t\tbefore reserving regsEXTRD:" + Integer.toHexString(regsEXTRD) + " regsEXTRS:" + Integer.toHexString(regsEXTRS));
@@ -485,7 +484,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			}
 
 			if (dbg) StdStreams.vrb.print("\t\tnot enough FPR's, reserve stack slot");
-			fullRegSet = false;
+			fullRegSetFPR = false;
 			if (single) return getEmptyStackSlot(false);
 			else return getEmptyStackSlot(true);
 		}

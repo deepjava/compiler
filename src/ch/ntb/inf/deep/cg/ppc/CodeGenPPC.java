@@ -103,30 +103,32 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 
 		RegAllocator.buildIntervals(ssa);
 		
+		// determine, which parameters go into which register
 		if (dbg) StdStreams.vrb.println("assign registers to parameters");
 		SSANode b = (SSANode) ssa.cfg.rootNode;
-		while (b.next != null) {
-			b = (SSANode) b.next;
-		}	
+		while (b.next != null) b = (SSANode) b.next;
 		SSAValue[] lastExitSet = b.exitSet;
-		// determine, which parameters go into which register
 		parseExitSet(lastExitSet, method.maxStackSlots);
 		if (dbg) {
 			StdStreams.vrb.print("parameter go into register: ");
 			for (int n = 0; paramRegNr[n] != -1; n++) StdStreams.vrb.print(paramRegNr[n] + "  "); 
 			StdStreams.vrb.println();
 		}
-//		StdStreams.vrb.print(ssa.toString());
 		
 		if (dbg) StdStreams.vrb.println("allocate registers");
 		RegAllocatorPPC.assignRegisters();
-		if (!RegAllocator.fullRegSet) {	// repeat with a reduced register set
-			if (dbg) StdStreams.vrb.println("register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
-			if (RegAllocator.useLongs) RegAllocatorPPC.regsGPR = regsGPRinitial & ~(0xff << nonVolStartGPR);
-			else RegAllocatorPPC.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
-			if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorPPC.regsGPR));
-			RegAllocatorPPC.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
-			if (dbg) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocatorPPC.regsFPR));
+		if (!RegAllocator.fullRegSetGPR || !RegAllocator.fullRegSetFPR) {	// repeat with a reduced register set
+			if (!RegAllocator.fullRegSetGPR) {
+				if (dbg) StdStreams.vrb.println("GPR register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+				if (RegAllocator.useLongs) RegAllocatorPPC.regsGPR = regsGPRinitial & ~(0xff << nonVolStartGPR);
+				else RegAllocatorPPC.regsGPR = regsGPRinitial & ~(0x1f << nonVolStartGPR);
+				if (dbg) StdStreams.vrb.println("regsGPRinitial = 0x" + Integer.toHexString(RegAllocatorPPC.regsGPR));
+			}
+			if (!RegAllocator.fullRegSetFPR) {
+				if (dbg) StdStreams.vrb.println("FPR register allocation for method " + method.owner.name + "." + method.name + " was not successful, run again and use stack slots");
+				RegAllocatorPPC.regsFPR = regsFPRinitial& ~(0x7 << nonVolStartFPR);
+				if (dbg) StdStreams.vrb.println("regsFPRinitial = 0x" + Integer.toHexString(RegAllocatorPPC.regsFPR));
+			}
 			RegAllocator.stackSlotSpilledRegs = -1;
 			parseExitSet(lastExitSet, method.maxStackSlots);
 			if (dbg) {

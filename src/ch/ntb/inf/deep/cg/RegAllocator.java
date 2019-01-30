@@ -65,7 +65,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	protected static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
 	// in the first run the register allocator uses the full set of registers
 	// if spilling is necessary a reduced set has to be used in the second run
-	public static boolean fullRegSet;
+	public static boolean fullRegSetGPR, fullRegSetFPR;
 	// set to true, if longs are used in a method
 	public static boolean useLongs;
 
@@ -77,7 +77,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 		maxOpStackSlots = ssa.cfg.method.maxStackSlots;
 		nofNonVolGPR = 0; nofNonVolFPR = 0;
 		nofVolGPR = 0; nofVolFPR = 0;
-		fullRegSet = true;
+		fullRegSetGPR = true; fullRegSetFPR = true;
 		useLongs = false;
 		stackSlotSpilledRegs = -1;
 		maxLocVarStackSlots = 0;
