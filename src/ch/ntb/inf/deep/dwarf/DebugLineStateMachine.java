@@ -142,6 +142,7 @@ public class DebugLineStateMachine {
 			}
 			method = (Method) method.next;
 		}
+		InsertEndOfSequence();
 	}
 
 	public void init() {
