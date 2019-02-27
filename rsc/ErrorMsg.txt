@@ -114,5 +114,6 @@ ErrorNr;Description;Solution
 813;BDI packet wrong, try to reset BDI;
 814;ready bit not set, try to reset BDI;
 815;Connection to target not possible! (port seems to be busy);
+820;no target image file found;
 
 900;Connection lost;

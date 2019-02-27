@@ -408,7 +408,9 @@ public class Launcher implements ICclassFileConsts {
 					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
 						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
 					} else if (programmer.name.equals(HString.getHString("openOCD"))) {
-						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+						HString str = Configuration.getActiveProject().getImgFileName();
+						if (str == null) reporter.error(820);
+						else tc.downloadImageFile(str.toString());
 					} else {
 						TargetMemorySegment tms = Linker32.targetImage;
 						while (tms != null && reporter.nofErrors <= 0) {
