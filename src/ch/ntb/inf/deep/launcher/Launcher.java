@@ -409,7 +409,6 @@ public class Launcher implements ICclassFileConsts {
 						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
 					} else if (programmer.name.equals(HString.getHString("openOCD"))) {
 						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
-//						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString().replace(".", ".InternalRam.")); // MM
 					} else {
 						TargetMemorySegment tms = Linker32.targetImage;
 						while (tms != null && reporter.nofErrors <= 0) {

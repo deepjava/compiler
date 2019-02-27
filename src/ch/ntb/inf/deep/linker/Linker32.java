@@ -1256,7 +1256,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
-		currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
+//		currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
+		currentFileName = new String(pathAndFileName + "." + fileExtension);
 		try {
 			DataOutputStream binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));
 		
