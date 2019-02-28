@@ -21,17 +21,17 @@ package ch.ntb.inf.deep.cg.arm;
 public interface InstructionOpcs {
 	
 	// Condition codes
-	final int condEQ = 0;
-	final int condNOTEQ = 1;
-	final int condCS = 2;
-	final int condCC = 3;
-	final int condMI = 4;
-	final int condPL = 5;
-	final int condVS = 6;
-	final int condVC = 7;
-	final int condHI = 8;
-	final int condLS = 9;
-	final int condGE = 10;
+	final int condEQ = 0;	// Z == 1
+	final int condNOTEQ = 1;// Z == 0
+	final int condCS = 2;	// C == 1 -> unsigned higher or same
+	final int condCC = 3;	// C == 0 -> unsigned lower
+	final int condMI = 4;	// N == 1
+	final int condPL = 5;	// N == 0
+	final int condVS = 6;	// V == 1
+	final int condVC = 7;	// V == 0
+	final int condHI = 8;	// C == 1 & Z == 0 -> unsigned higher
+	final int condLS = 9;	// C == 0 | Z == 1 -> unsigned lower or same
+	final int condGE = 10;	
 	final int condLT = 11;
 	final int condGT = 12;
 	final int condLE = 13;

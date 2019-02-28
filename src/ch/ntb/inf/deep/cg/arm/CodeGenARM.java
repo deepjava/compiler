@@ -199,12 +199,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							code.instructions[node.codeEndIndex] |= (branchOffset - 2) & 0xffffff;
 						} else {
 							int branchOffset;
-							if ((instr & (condAlways << 28)) == condAlways << 28) {	// no choice, only one successor
-								branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
+							if ((instr & (condAlways << 28)) == condAlways << 28) {	// no choice, take first successor, unless specified by mark bit
+								if ((instr & 0x800000) != 0) {	// mark bit
+									branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
+									if (dbg) StdStreams.vrb.println("unconditional branch, mark bit set, choose successor = 1, branchOffset: " + branchOffset);	
+								} else branchOffset = ((SSANode)successors[0]).codeStartIndex - node.codeEndIndex;
 							} else {	// conditionally branch to second choice
 								branchOffset = ((SSANode)successors[1]).codeStartIndex - node.codeEndIndex;
+								if (dbg) StdStreams.vrb.println("branchOffset: " + branchOffset);
 							}
 							if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
+							code.instructions[node.codeEndIndex] &= 0xff000000;
 							code.instructions[node.codeEndIndex] |= (branchOffset - 2) & 0xffffff;	// account for pipeline
 						}
 					}
@@ -1655,21 +1660,27 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcCmpReg(code, armCmp, condEQ, src1Reg, src2Reg, noShift, 0);
 						createBranchImm(code, armB, condNOTEQ, 0);
 					} else if (bci == bCiflt) {
-						createDataProcCmpReg(code, armCmp, condAlways, src1RegLong, src2RegLong, noShift, 0);
-						createDataProcCmpReg(code, armCmp, condEQ, src1Reg, src2Reg, noShift, 0);
+						createDataProcCmpReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
+						createDataProcReg(code, armSbcs, condAlways, scratchReg, src1RegLong, src2RegLong, noShift, 0);
 						createBranchImm(code, armB, condLT, 0);
 					} else if (bci == bCifge) {
-						createDataProcCmpReg(code, armCmp, condAlways, src1RegLong, src2RegLong, noShift, 0);
-						createDataProcCmpReg(code, armCmp, condEQ, src1Reg, src2Reg, noShift, 0);
+						createDataProcCmpReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
+						createDataProcReg(code, armSbcs, condAlways, scratchReg, src1RegLong, src2RegLong, noShift, 0);
 						createBranchImm(code, armB, condGE, 0);
 					} else if (bci == bCifgt) {
 						createDataProcCmpReg(code, armCmp, condAlways, src1RegLong, src2RegLong, noShift, 0);
-						createDataProcCmpReg(code, armCmp, condEQ, src1Reg, src2Reg, noShift, 0);
-						createBranchImm(code, armB, condGT, 0);
+						createBranchImm(code, armB, condLT, 3);
+						createBranchImm(code, armB, condGT, 1);
+						createDataProcCmpReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
+						createBranchImm(code, armB, condLS, 0);
+						createBranchImm(code, armB, condAlways, 0x800000);
 					} else if (bci == bCifle) {
 						createDataProcCmpReg(code, armCmp, condAlways, src1RegLong, src2RegLong, noShift, 0);
-						createDataProcCmpReg(code, armCmp, condEQ, src1Reg, src2Reg, noShift, 0);
-						createBranchImm(code, armB, condLE, 0);
+						createBranchImm(code, armB, condGT, 3);
+						createBranchImm(code, armB, condLT, 1);
+						createDataProcCmpReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
+						createBranchImm(code, armB, condHI, 0);
+						createBranchImm(code, armB, condAlways, 0x800000);
 					} else {
 						ErrorReporter.reporter.error(623);
 						assert false : "sCcompl or sCcompg is not followed by branch instruction";
