@@ -22,6 +22,7 @@ project ExampleProjectZybo7000 {
 #	rootclasses = "java/lang/Object";
 #	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/Reset";
 	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/SystemOutDemo";
+	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/BlinkerApplication";
 
 #	tctfile = "tct/targetCommands.dtct";
 

@@ -1284,7 +1284,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				} else if (type == tLong) {
 					if (src2Reg < 0) {	
 						int immVal = ((StdConstant)opds[1].constant).valueH % 64;
-						if (immVal < 32) {
+						if (immVal == 0) {
+							createDataProcMovReg(code, armMov, condAlways, dRegLong, src1RegLong, noShift, 0);
+							createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+						} else if (immVal < 32) {
 							createDataProcShiftImm(code, armLsr, condAlways, scratchReg, src1Reg, 32 - immVal);
 							createDataProcReg(code, armOrr, condAlways, dRegLong, scratchReg, src1RegLong, LSL, immVal);
 							createDataProcShiftImm(code, armLsl, condAlways, dReg, src1Reg, immVal);
@@ -1318,7 +1321,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (type == tInteger) {
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
-						createDataProcMovReg(code, armAsr, condAlways, dReg, src1Reg, noShift, immVal);
+						if (immVal == 0) createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+						else createDataProcMovReg(code, armAsr, condAlways, dReg, src1Reg, noShift, immVal);
 					} else {
 						createDataProcImm(code, armAnd, condAlways, src2Reg, src2Reg, 0x1f);	// arm takes the lowest 8 bit, whereas java allows only 5 bits
 						createDataProcShiftReg(code, armAsr, condAlways, dReg, src1Reg, src2Reg);
@@ -1363,7 +1367,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (type == tInteger) {
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH % 32;
-						createDataProcMovReg(code, armLsr, condAlways, dReg, src1Reg, noShift, immVal);
+						if (immVal == 0) createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+						else createDataProcMovReg(code, armLsr, condAlways, dReg, src1Reg, noShift, immVal);
 					} else {
 						createDataProcImm(code, armAnd, condAlways, src2Reg, src2Reg, 0x1f);	// arm takes the lowest 8 bit, whereas java allows only 5 bits
 						createDataProcShiftReg(code, armLsr, condAlways, dReg, src1Reg, src2Reg);
@@ -1680,7 +1685,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createBranchImm(code, armB, condLT, 1);
 						createDataProcCmpReg(code, armCmp, condAlways, src1Reg, src2Reg, noShift, 0);
 						createBranchImm(code, armB, condHI, 0);
-						createBranchImm(code, armB, condAlways, 0x800000);
+						createBranchImm(code, armB, condAlways, 0x800000);	// mark unconditional branch to be treated like conditional branch at end of node
 					} else {
 						ErrorReporter.reporter.error(623);
 						assert false : "sCcompl or sCcompg is not followed by branch instruction";
@@ -2833,11 +2838,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 	
 	/*
-	 * loads the address of a method or a class field
+	 * loads the address of a method or a class field into a register
 	 * both instructions will later be fixed
 	 */
 	private void loadConstantAndFixup(Code32 code, int reg, Item item) {
-		if (code.lastFixup < 0 || code.lastFixup > 4096) {ErrorReporter.reporter.error(602); return;}
+		if (code.lastFixup < 0 || code.lastFixup > 0xffff) {ErrorReporter.reporter.error(602); return;}
 		createMovw(code, armMovw, condAlways, reg, code.lastFixup);
 		createMovw(code, armMovt, condAlways, reg, 0);
 		code.lastFixup = code.iCount - 2;
@@ -2857,7 +2862,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	 * it's offset will later be fixed
 	 */
 	private void insertBLAndFixup(Code32 code, Item item) {
-		if (code.lastFixup < 0 || code.lastFixup >= 4096) {ErrorReporter.reporter.error(602); return;}
+		if (code.lastFixup < 0 || code.lastFixup > 0xffff) {ErrorReporter.reporter.error(602); return;}
 		createBranchImm(code, armBl, condAlways, code.lastFixup);
 		code.lastFixup = code.iCount - 1;
 		code.fixups[code.fCount] = item;
@@ -2872,6 +2877,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 	
 	public void doFixups(Code32 code) {
+		if (dbg) StdStreams.vrb.println("\t\tlastFixup at instruction " + code.lastFixup);		
 		int currInstr = code.lastFixup;
 		int currFixup = code.fCount - 1;
 		while (currFixup >= 0) {
@@ -2883,23 +2889,26 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				addr = item.address;
 			if (dbg) { 
 				if (item == null) StdStreams.vrb.print("\tnull"); 
-				else StdStreams.vrb.println("\t" + item.name + " at 0x" + Integer.toHexString(addr) + " currInstr=" + currInstr);
+				else StdStreams.vrb.println("\t\t" + item.name + " at 0x" + Integer.toHexString(addr) + " currInstr=" + currInstr);
 			}
 			int[] instrs = code.instructions;
-			int nextInstr = instrs[currInstr] & 0xfff;
+			int nextInstr;
 			if (item instanceof Method) {
-				if (((instrs[currInstr] >> 24) & 0xe) == 0xa) { // must be a branch to a method
+				if (((instrs[currInstr] >> 24) & 0xe) == 0xa) { // must be a branch to a method (BL)
+					nextInstr = instrs[currInstr] & 0xffff;
 					int branchOffset = ((addr - code.ssa.cfg.method.address) >> 2) - currInstr - 2;	// -2: account for pipelining
 					assert (branchOffset < 0x1000000) && (branchOffset > 0xff000000);
 					if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
 					instrs[currInstr] = (instrs[currInstr] & 0xff000000) | (branchOffset & 0xffffff);
-				} else {
+				} else {	// load the address of a method into a register
+					nextInstr = (instrs[currInstr] & 0xfff) + ((instrs[currInstr] & 0xf0000) >> 4);
 					int val = item.address & 0xffff;
 					instrs[currInstr] = (instrs[currInstr] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
 					val = (item.address >> 16) & 0xffff;
 					instrs[currInstr+1] = (instrs[currInstr+1] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);				
 				}
 			} else {	// must be a load / store instruction
+				nextInstr = (instrs[currInstr] & 0xfff) + ((instrs[currInstr] & 0xf0000) >> 4);
 				int val = item.address & 0xffff;
 				instrs[currInstr] = (instrs[currInstr] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
 				val = (item.address >> 16) & 0xffff;
