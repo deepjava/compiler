@@ -402,7 +402,7 @@ public class Launcher implements ICclassFileConsts {
 					}
 					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R"+i, 0);
 
-					log.println("Downloading target image:");
+					log.println("Downloading target image");
 					Programmer programmer = Configuration.getProgrammer();
 					
 					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
