@@ -515,7 +515,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
 							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset+4);
 							createIrDrAd(code, ppcLfd, dReg, stackPtr, tempStorageOffset);
-						} else if (constant.valueH == 0x3ff00000) {	// 1.0{
+						} else if (constant.valueH == 0x3ff00000 && constant.valueL == 0) {	// 1.0
 							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0x3ff0);
 							createIrSrAd(code, ppcStw, gAux1, stackPtr, tempStorageOffset);
 							createIrDrAsimm(code, ppcAddis, gAux1, 0, 0);

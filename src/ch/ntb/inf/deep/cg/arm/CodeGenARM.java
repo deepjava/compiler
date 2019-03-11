@@ -574,7 +574,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							loadConstant(code, LR, 0);
 							loadConstant(code, scratchReg, 0);
 							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, LR, false, false);
-						} else if (constant.valueH == 0x3ff00000) {	// 1.0
+						} else if (constant.valueH == 0x3ff00000 && constant.valueL == 0) {	// 1.0
 							loadConstant(code, LR, 0x3ff00000);
 							loadConstant(code, scratchReg, 0);
 							createFPregMove(code, armVmovDouble, condAlways, dReg, scratchReg, LR, false, false);
