@@ -186,13 +186,14 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 					int instr = code.instructions[node.codeEndIndex];
 					CFGNode[] successors = node.successors;
 					switch (instr & 0xfc000000) {
-					case ppcB:			
+					case ppcB:		
 						if ((instr & 0xffff) != 0) {	// switch
 							int nofCases = (instr & 0xffff) >> 2;
 							int k;
 							for (k = 0; k < nofCases; k++) {
 								int branchOffset = ((SSANode)successors[k]).codeStartIndex - (node.codeEndIndex+1-(nofCases-k)*2);
-								code.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset << 2) & 0x3ffffff;
+								if (branchOffset > 0x1fff) {ErrorReporter.reporter.error(651); return;}
+								code.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset << 2) & 0xffff;
 							}
 							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
 							code.instructions[node.codeEndIndex] &= 0xfc000000;

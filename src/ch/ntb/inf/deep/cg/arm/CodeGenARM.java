@@ -188,12 +188,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (dbg) StdStreams.vrb.println("local branch at instruction: " + node.codeEndIndex);
 						if ((instr & 0xffff) != 0) {	// switch
 							int nofCases = instr & 0xffff;
-							int k;
-							for (k = 0; k < nofCases; k++) {
-								int branchOffset = ((SSANode)successors[k]).codeStartIndex - (node.codeEndIndex+1-(nofCases-k)*2);
-								code.instructions[node.codeEndIndex+1-(nofCases-k)*2] |= (branchOffset - 2) & 0xffffff;
+							int offset = node.codeEndIndex - 1;
+							int val = 1;
+							for (int k = nofCases-1; k >= 0; k--) {
+								int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex + val;
+								int diff = code.instructions[offset] & 0xffffff;
+								code.instructions[offset] = (code.instructions[offset] & 0xff000000) | ((branchOffset - 2) & 0xffffff);
+								offset -= diff;
+								val += diff;
 							}
-							int branchOffset = ((SSANode)successors[k]).codeStartIndex - node.codeEndIndex;
+							int branchOffset = ((SSANode)successors[nofCases]).codeStartIndex - node.codeEndIndex;
 							if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
 							code.instructions[node.codeEndIndex] &= 0xff000000;
 							code.instructions[node.codeEndIndex] |= (branchOffset - 2) & 0xffffff;
@@ -2172,8 +2176,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					int high = getInt(meth.ssa.cfg.code, addr + 4);
 					int nofCases = high - low + 1;
 					for (int k = 0; k < nofCases; k++) {
-						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, low + k);
-						createBranchImm(code, armB, condEQ, 0);
+						int val = low + k;
+						if (isPackable(Math.abs(val))) {
+							if (val > 0) createDataProcCmpImm(code, armCmp, condAlways, src1Reg, packImmediate(val));
+							else createDataProcCmpImm(code, armCmn, condAlways, src1Reg, packImmediate(-val));
+							createBranchImm(code, armB, condEQ, 2);
+						} else {
+							loadConstant(code, scratchReg, val);
+							createDataProcReg(code, armCmp, condAlways, 0, src1Reg, scratchReg, noShift, 0);
+							if (((val >> 16) & 0xffff) == 0) createBranchImm(code, armB, condEQ, 3);
+							else createBranchImm(code, armB, condEQ, 4);
+						}
 					}
 					createBranchImm(code, armB, condAlways, nofCases);
 					break;
@@ -2184,8 +2197,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					int nofPairs = getInt(meth.ssa.cfg.code, addr);
 					for (int k = 0; k < nofPairs; k++) {
 						int key = getInt(meth.ssa.cfg.code, addr + 4 + k * 8);
-						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, key);
-						createBranchImm(code, armB, condEQ, 0);
+						if (isPackable(Math.abs(key))) {
+							if (key > 0) createDataProcCmpImm(code, armCmp, condAlways, src1Reg, packImmediate(key));
+							else createDataProcCmpImm(code, armCmn, condAlways, src1Reg, packImmediate(-key));
+							createBranchImm(code, armB, condEQ, 2);
+						} else {
+							loadConstant(code, scratchReg, key);
+							createDataProcReg(code, armCmp, condAlways, 0, src1Reg, scratchReg, noShift, 0);	
+							if (((key >> 16) & 0xffff) == 0) createBranchImm(code, armB, condEQ, 3);
+							else createBranchImm(code, armB, condEQ, 4);
+						}
 					}
 					createBranchImm(code, armB, condAlways, nofPairs);
 					break;
@@ -2236,6 +2257,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 	}
 
+	private boolean isPackable(int val) {
+		int lead = Integer.numberOfLeadingZeros(val);
+		lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
+		return lead + Integer.numberOfTrailingZeros(val) >= 24;		
+	}
+	
 	private int packImmediate(int immVal) {
 		int val = Integer.numberOfLeadingZeros(immVal);
 		val -= val % 2;	// make even
