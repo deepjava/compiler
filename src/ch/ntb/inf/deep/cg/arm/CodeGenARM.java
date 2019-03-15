@@ -1328,8 +1328,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (immVal == 0) createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 						else createDataProcMovReg(code, armAsr, condAlways, dReg, src1Reg, noShift, immVal);
 					} else {
-						createDataProcImm(code, armAnd, condAlways, src2Reg, src2Reg, 0x1f);	// arm takes the lowest 8 bit, whereas java allows only 5 bits
-						createDataProcShiftReg(code, armAsr, condAlways, dReg, src1Reg, src2Reg);
+						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x1f);	// arm takes the lowest 8 bit, whereas java allows only 5 bits
+						createDataProcShiftReg(code, armAsr, condAlways, dReg, src1Reg, scratchReg);
 					}
 				} else if (type == tLong) {
 					if (src2Reg < 0) {	
@@ -1374,8 +1374,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (immVal == 0) createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 						else createDataProcMovReg(code, armLsr, condAlways, dReg, src1Reg, noShift, immVal);
 					} else {
-						createDataProcImm(code, armAnd, condAlways, src2Reg, src2Reg, 0x1f);	// arm takes the lowest 8 bit, whereas java allows only 5 bits
-						createDataProcShiftReg(code, armLsr, condAlways, dReg, src1Reg, src2Reg);
+						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x1f);	// arm takes the lowest 8 bit, whereas java allows only 5 bits
+						createDataProcShiftReg(code, armLsr, condAlways, dReg, src1Reg, scratchReg);
 					}
 				} else if (type == tLong) {
 					if (src2Reg < 0) {	
