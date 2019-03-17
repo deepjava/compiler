@@ -833,20 +833,25 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		if(dbg) vrb.println("2) Check and set the size for each used segment");
 		Device[] d = Configuration.getAllDevices();
 		for (int i = 0; i < d.length; i++) {
-			if(dbg) vrb.println("  Proceeding device " + d[i].name);
+			int sum = 0;
+			if(dbg) vrb.println("\tProceeding device " + d[i].name);
 			Segment seg = d[i].segments;
 			while (seg != null) {
 				setSegmentSize(seg);
+				if(dbg) vrb.println("\t\tProceeding segment " + seg.name + ", set size to " + seg.size);
+				sum += seg.size;
 				seg = (Segment) seg.next;
 			}
+			if(sum > d[i].size) {reporter.error(741, "device = " + d[i].name); return;}
 		}
 		
 		if (dbg) vrb.println("3) Set base addresses for each used segment (devices found: " + d.length + ")");
 		for (int i = 0; i < d.length; i++) {
-			if (dbg) vrb.println("  Proceeding device " + d[i].name);
+			if (dbg) vrb.println("\tProceeding device " + d[i].name);
 			Segment seg = d[i].segments;
 			int baseAddr = d[i].address;
 			while (seg != null) {
+				if(dbg) vrb.println("\t\tProceeding segment " + seg.name + ", set base address to " + baseAddr);
 				baseAddr = setBaseAddress(seg, baseAddr);
 				seg = (Segment) seg.next;
 			}

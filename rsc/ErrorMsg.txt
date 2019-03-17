@@ -94,9 +94,10 @@ ErrorNr;Description;Solution
 723;ID not set;
 724;base address not set;
 730;method not found;
-740;Configuration error;
-750;Machine code not generated;
-790;Runtime System error;
+740;configuration error;
+741;device has not enough space for requested segments;
+750;machine code not generated;
+790;runtime system error;
 
 800;target not found! (USB connection failed);
 801;an error occurs while downloading! (Try to reopen);
