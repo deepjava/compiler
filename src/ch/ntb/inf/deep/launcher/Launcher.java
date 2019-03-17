@@ -540,8 +540,9 @@ public class Launcher implements ICclassFileConsts {
 		try {
 			switch(format) {
 			case Configuration.BIN:
-				log.println("Writing target image in binary format to: " + fileName);
+				log.print("Writing target image in binary format to: " + fileName);
 				bytesWritten = Linker32.writeTargetImageToBinFile(fileName);
+				log.println(" (" + bytesWritten / 1024 + ("kB)"));
 				break;
 			case Configuration.HEX:
 				reporter.error(10, "Writing hex image");
@@ -551,14 +552,17 @@ public class Launcher implements ICclassFileConsts {
 				break;
 			case Configuration.DTIM:
 				bytesWritten = Linker32.writeTargetImageToDtimFile(fileName);
+				log.println(" (" + bytesWritten / 1024 + ("kB)"));
 				break;
 			case Configuration.ELF:
 				log.println("Writing target image in ELF format to " + fileName);
 				bytesWritten = Linker32.writeTargetImageToElfFile(fileName);
+				log.println(" (" + bytesWritten / 1024 + ("kB)"));
 				break;
 			default: 
 				reporter.error(10, "Writing " + Configuration.formatMnemonics[format] + " image");
 			}
+			log.println("Image file generated");
 		} catch(IOException e) {
 			e.printStackTrace();
 			bytesWritten = -1;

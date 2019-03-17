@@ -700,10 +700,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			}
 		}
 
+		if (dbg) vrb.println("\n  handle standard classes");
 		// handle std classes
 		for (int extLevel = 0; extLevel <= Class.maxExtensionLevelStdClasses; extLevel++) {
-			Class c;
-			c = Class.extLevelOrdClasses[extLevel];
+			Class c = Class.extLevelOrdClasses[extLevel];
 			while (c != null && reporter.nofErrors <= 0) {
 				if (dbg) vrb.println("  Proceeding Class " + c.name);
 				if ((c.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
@@ -1289,7 +1289,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			bytesWritten =  binFile.size();
 			if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
 			binFile.close();
-			log.println("Image file generated");
 		}
 		catch (Exception e) {
 			reporter.error(11, "Writing image file");

@@ -28,22 +28,7 @@ public class TargetMemorySegment {
 	public int[] data;
 	public TargetMemorySegment next;
 	public Segment segment;
-	
-	public TargetMemorySegment(int startAddress, int[] data) {
-		this(null, startAddress, data);
-	}
-	
-	public TargetMemorySegment(Segment segment, int startAddress, int[] data) {
-		this.id = tmsCounter++;
-		this.segment = segment;
-		this.startAddress = startAddress;
-		assert startAddress != -1;
-		this.data = data;
-	}
-	
-	public TargetMemorySegment(int startAddress, int[] data, int length) {
-		this(null, startAddress, data, length);
-	}
+	public int size;	// size of TMS in bytes
 	
 	public TargetMemorySegment(Segment segment, int startAddress, int[] data, int length) {
 		this.id = tmsCounter++;
@@ -54,6 +39,7 @@ public class TargetMemorySegment {
 		for(int i = 0; i < length; i++) {
 			this.data[i] = data[i];
 		}
+		this.size = length * 4;
 	}
 	
 	public TargetMemorySegment(Segment segment, int startAddress, ConstBlkEntry item) {
@@ -68,6 +54,7 @@ public class TargetMemorySegment {
 			offset += item.getItemSize();
 			item = (ConstBlkEntry)item.next;
 		}
+		this.size = offset;
 	}
 
 	public void addData(int addr, int[] d, int length) {
