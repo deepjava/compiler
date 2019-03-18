@@ -255,8 +255,15 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						} else {
 							findReg(res);
 						}
-					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && (type == tInteger) && (res == instr1.getOperands()[1])) {
-						// check if division by const which is a power of 2, const must be divisor and positive
+					} else if (((instr1.ssaOpcode == sCdiv)||(instr1.ssaOpcode == sCrem)) && ((type == tInteger)||(type == tLong)) && (res == instr1.getOperands()[1])) {
+						// if type == iTnteger and const is divisor -> use immediate
+						// if type == iLong and const is divisor and positive and a power of 2 -> use immediate
+						StdConstant constant = (StdConstant)res.constant;
+						if (type == tLong) {
+							long immVal = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+//							if (immVal < 0 || !isPowerOf2(immVal)) 
+								findReg(res);	// TODO, currently all divisions are done without shifting
+						} 					
 					} else if ((instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)

@@ -936,7 +936,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tByte: case tShort: case tInteger:
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	
-						if (immVal == 0) createSvc(code, armSvc, condEQ, 7);
+						if (immVal == 0) createSvc(code, armSvc, condAlways, 7);
 						else if (RegAllocatorARM.isPowerOf2(Math.abs(immVal))) {	// is power of 2
 							int shift = Integer.numberOfTrailingZeros(Math.abs(immVal));
 							if (shift == 0) {
@@ -988,79 +988,100 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 					break;
 				case tLong: 
-					// copy src1 and src2 into registers reserved for getting locals from the stack, if not already fetched from the stack
-					if (src1RegLong != volEndGPR - 1) createDataProcMovReg(code, armMov, condAlways, volEndGPR - 1, src1RegLong, noShift, 0);
-					if (src1Reg != nonVolStartGPR + 1) createDataProcMovReg(code, armMov, condAlways, nonVolStartGPR + 1, src1Reg, noShift, 0);
-					if (src2RegLong != volEndGPR - 2) createDataProcMovReg(code, armMov, condAlways, volEndGPR - 2, src2RegLong, noShift, 0);
-					if (src2Reg != nonVolStartGPR + 2) createDataProcMovReg(code, armMov, condAlways, nonVolStartGPR + 2, src2Reg, noShift, 0);
-					int src1RegLongCopy = volEndGPR - 1, src1RegCopy = nonVolStartGPR + 1, src2RegLongCopy = volEndGPR - 2, src2RegCopy = nonVolStartGPR + 2;
-					int gAux1Copy = nonVolStartGPR + 3;
-
-					// check for divide by zero
-					createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
-					createDataProcCmpImm(code, armCmp, condEQ, src2RegCopy, 0);
-					createSvc(code, armSvc, condEQ, 7);	
-					createDataProcReg(code, armEors, condAlways, gAux1Copy, src1RegLongCopy, src2RegLongCopy, noShift, 0);	// determine sign of result
-					// negate divisor
-					createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
-					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if divisor < 0
-					createDataProcImm(code, armRsbs, condAlways, src2RegCopy, src2RegCopy, 0);	
-					createDataProcImm(code, armRsc, condAlways, src2RegLongCopy, src2RegLongCopy, 0);	
-					// negate dividend
-					createDataProcCmpImm(code, armCmp, condAlways, src1RegLongCopy, 0);
-					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if dividend < 0
-					createDataProcImm(code, armRsbs, condAlways, src1RegCopy, src1RegCopy, 0);	
-					createDataProcImm(code, armRsc, condAlways, src1RegLongCopy, src1RegLongCopy, 0);	
-					// shift divisor until it is bigger than dividend
-					createClz(code, armClz, condAlways, LR, src1RegLongCopy);
-					createDataProcCmpImm(code, armCmp, condAlways, LR, 32);
-					createClz(code, armClz, condEQ, scratchReg, src1RegCopy);
-					createDataProcReg(code, armAdd, condEQ, LR, scratchReg, LR, noShift, 0);
-					createClz(code, armClz, condAlways, dReg, src2RegLongCopy);	// use dReg as temp reg
-					createDataProcCmpImm(code, armCmp, condAlways, dReg, 32);
-					createClz(code, armClz, condEQ, scratchReg, src2RegCopy);
-					createDataProcReg(code, armAdd, condEQ, dReg, scratchReg, dReg, noShift, 0);
-					createDataProcReg(code, armSubs, condAlways, dReg, dReg, LR, noShift, 0);	// dReg contains the shift amount, could be negative
-					createBranchImm(code, armB, condLT, 7);	// do not shift if negative shift amount				
-					createDataProcImm(code, armRsbs, condAlways, LR, dReg, 32);
-					createDataProcShiftReg(code, armLsr, condGE, LR, src2RegCopy, LR);
-					createDataProcShiftReg(code, armLsl, condGE, scratchReg, src2RegLongCopy, dReg);
-					createDataProcReg(code, armOrr, condGE, src2RegLongCopy, LR, scratchReg, noShift, 0);
-					createDataProcShiftReg(code, armLsl, condGE, src2RegCopy, src2RegCopy, dReg);
-					createDataProcImm(code, armSub, condLT, scratchReg, dReg, 32);
-					createDataProcShiftReg(code, armLsl, condLT, src2RegLongCopy, src2RegCopy, scratchReg);
-					createDataProcMovImm(code, armMov, condLT, src2RegCopy, 0);
-					
-					loadConstant(code, LR, 1); // set bit 0 in aux register (LR/scratch), which will be shifted left then right
-					loadConstant(code, scratchReg, 0);
-					createDataProcCmpImm(code, armCmp, condAlways, dReg, 0); // do not shift if negative shift amount
-					createBranchImm(code, armB, condLT, 3);	 				
-					createDataProcShiftReg(code, armLsl, condAlways, LR, LR, dReg);
-					createDataProcImm(code, armSubs, condAlways, dReg, dReg, 32);
-					createDataProcImm(code, armAdd, condGE, scratchReg, scratchReg, 1);
-					createDataProcShiftReg(code, armLsl, condGE, scratchReg, scratchReg, dReg);
-					loadConstant(code, dRegLong, 0);	// clear dReg to accumulate result
-					loadConstant(code, dReg, 0);	
-
-					// loop
-					createDataProcCmpReg(code, armCmp, condAlways, src1RegLongCopy, src2RegLongCopy, noShift, 0);	// compare dividend and divisor
-					createDataProcCmpReg(code, armCmp, condEQ, src1RegCopy, src2RegCopy, noShift, 0);
-					createBranchImm(code, armB, condCC, 3);	// omit next 4 instructions if dividend < divisor 				
-					createDataProcReg(code, armSubs, condAlways, src1RegCopy, src1RegCopy, src2RegCopy, noShift, 0);
-					createDataProcReg(code, armSbc, condAlways, src1RegLongCopy, src1RegLongCopy, src2RegLongCopy, noShift, 0);
-					createDataProcReg(code, armAdds, condAlways, dReg, dReg, LR, noShift, 0);
-					createDataProcReg(code, armAdc, condAlways, dRegLong, dRegLong, scratchReg, noShift, 0);
-					createDataProcMovReg(code, armMovs, condAlways, scratchReg, scratchReg, LSR, 1);	// shift aux register right
-					createDataProcRRX(code, armRrxs, condAlways, LR, LR);
-					createBranchImm(code, armB, condCS, 2);	// omit next 3 instructions if done 
-					createDataProcMovReg(code, armMovs, condAlways, src2RegLongCopy, src2RegLongCopy, LSR, 1);
-					createDataProcRRX(code, armRrx, condAlways, src2RegCopy, src2RegCopy);
-					createBranchImm(code, armB, condAlways, -14);
-					// negate if dividend and divisor have opposite sign
-					createDataProcCmpImm(code, armCmp, condAlways, gAux1Copy, 0);
-					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if same sign
-					createDataProcImm(code, armRsbs, condAlways, dReg, dReg, 0);	
-					createDataProcImm(code, armRsc, condAlways, dRegLong, dRegLong, 0);	
+					if (src2Reg < 0) {	// is power of 2
+						long immVal = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
+						int shift = Long.numberOfTrailingZeros(immVal);
+						if (immVal == 0) {
+							createSvc(code, armSvc, condAlways, 7);
+						} else if (shift == 0) {
+							createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
+							createDataProcMovReg(code, armMov, condAlways, dRegLong, src1RegLong, noShift, 0);
+						} else if (shift < 32) {
+							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, src1RegLong, 32 - shift);
+							createDataProcReg(code, armOrr, condAlways, dReg, scratchReg, src1Reg, ASR, shift);
+							createDataProcShiftImm(code, armAsr, condAlways, dRegLong, src1RegLong, shift);
+						} else if (shift == 32) {
+							createDataProcMovReg(code, armMov, condAlways, dReg, src1RegLong, noShift, 0);
+							createMedia(code, armSbfx, condAlways, dRegLong, dReg, 31, 1);							
+						} else {
+							createDataProcShiftImm(code, armAsr, condAlways, dReg, src1RegLong, shift - 32);
+							createMedia(code, armSbfx, condAlways, dRegLong, dReg, 31, 1);							
+						}
+					} else { // not a power of 2
+						// copy src1 and src2 into registers reserved for getting locals from the stack, if not already fetched from the stack
+						if (src1RegLong != volEndGPR - 1) createDataProcMovReg(code, armMov, condAlways, volEndGPR - 1, src1RegLong, noShift, 0);
+						if (src1Reg != nonVolStartGPR + 1) createDataProcMovReg(code, armMov, condAlways, nonVolStartGPR + 1, src1Reg, noShift, 0);
+						if (src2RegLong != volEndGPR - 2) createDataProcMovReg(code, armMov, condAlways, volEndGPR - 2, src2RegLong, noShift, 0);
+						if (src2Reg != nonVolStartGPR + 2) createDataProcMovReg(code, armMov, condAlways, nonVolStartGPR + 2, src2Reg, noShift, 0);
+						int src1RegLongCopy = volEndGPR - 1, src1RegCopy = nonVolStartGPR + 1, src2RegLongCopy = volEndGPR - 2, src2RegCopy = nonVolStartGPR + 2;
+						int gAux1Copy = nonVolStartGPR + 3;
+	
+						// check for divide by zero
+						createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
+						createDataProcCmpImm(code, armCmp, condEQ, src2RegCopy, 0);
+						createSvc(code, armSvc, condEQ, 7);	
+						createDataProcReg(code, armEors, condAlways, gAux1Copy, src1RegLongCopy, src2RegLongCopy, noShift, 0);	// determine sign of result
+						// negate divisor
+						createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
+						createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if divisor < 0
+						createDataProcImm(code, armRsbs, condAlways, src2RegCopy, src2RegCopy, 0);	
+						createDataProcImm(code, armRsc, condAlways, src2RegLongCopy, src2RegLongCopy, 0);	
+						// negate dividend
+						createDataProcCmpImm(code, armCmp, condAlways, src1RegLongCopy, 0);
+						createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if dividend < 0
+						createDataProcImm(code, armRsbs, condAlways, src1RegCopy, src1RegCopy, 0);	
+						createDataProcImm(code, armRsc, condAlways, src1RegLongCopy, src1RegLongCopy, 0);	
+						// shift divisor until it is bigger than dividend
+						createClz(code, armClz, condAlways, LR, src1RegLongCopy);
+						createDataProcCmpImm(code, armCmp, condAlways, LR, 32);
+						createClz(code, armClz, condEQ, scratchReg, src1RegCopy);
+						createDataProcReg(code, armAdd, condEQ, LR, scratchReg, LR, noShift, 0);
+						createClz(code, armClz, condAlways, dReg, src2RegLongCopy);	// use dReg as temp reg
+						createDataProcCmpImm(code, armCmp, condAlways, dReg, 32);
+						createClz(code, armClz, condEQ, scratchReg, src2RegCopy);
+						createDataProcReg(code, armAdd, condEQ, dReg, scratchReg, dReg, noShift, 0);
+						createDataProcReg(code, armSubs, condAlways, dReg, dReg, LR, noShift, 0);	// dReg contains the shift amount, could be negative
+						createBranchImm(code, armB, condLT, 7);	// do not shift if negative shift amount				
+						createDataProcImm(code, armRsbs, condAlways, LR, dReg, 32);
+						createDataProcShiftReg(code, armLsr, condGE, LR, src2RegCopy, LR);
+						createDataProcShiftReg(code, armLsl, condGE, scratchReg, src2RegLongCopy, dReg);
+						createDataProcReg(code, armOrr, condGE, src2RegLongCopy, LR, scratchReg, noShift, 0);
+						createDataProcShiftReg(code, armLsl, condGE, src2RegCopy, src2RegCopy, dReg);
+						createDataProcImm(code, armSub, condLT, scratchReg, dReg, 32);
+						createDataProcShiftReg(code, armLsl, condLT, src2RegLongCopy, src2RegCopy, scratchReg);
+						createDataProcMovImm(code, armMov, condLT, src2RegCopy, 0);
+						
+						loadConstant(code, LR, 1); // set bit 0 in aux register (LR/scratch), which will be shifted left then right
+						loadConstant(code, scratchReg, 0);
+						createDataProcCmpImm(code, armCmp, condAlways, dReg, 0); // do not shift if negative shift amount
+						createBranchImm(code, armB, condLT, 3);	 				
+						createDataProcShiftReg(code, armLsl, condAlways, LR, LR, dReg);
+						createDataProcImm(code, armSubs, condAlways, dReg, dReg, 32);
+						createDataProcImm(code, armAdd, condGE, scratchReg, scratchReg, 1);
+						createDataProcShiftReg(code, armLsl, condGE, scratchReg, scratchReg, dReg);
+						loadConstant(code, dRegLong, 0);	// clear dReg to accumulate result
+						loadConstant(code, dReg, 0);	
+	
+						// loop
+						createDataProcCmpReg(code, armCmp, condAlways, src1RegLongCopy, src2RegLongCopy, noShift, 0);	// compare dividend and divisor
+						createDataProcCmpReg(code, armCmp, condEQ, src1RegCopy, src2RegCopy, noShift, 0);
+						createBranchImm(code, armB, condCC, 3);	// omit next 4 instructions if dividend < divisor 				
+						createDataProcReg(code, armSubs, condAlways, src1RegCopy, src1RegCopy, src2RegCopy, noShift, 0);
+						createDataProcReg(code, armSbc, condAlways, src1RegLongCopy, src1RegLongCopy, src2RegLongCopy, noShift, 0);
+						createDataProcReg(code, armAdds, condAlways, dReg, dReg, LR, noShift, 0);
+						createDataProcReg(code, armAdc, condAlways, dRegLong, dRegLong, scratchReg, noShift, 0);
+						createDataProcMovReg(code, armMovs, condAlways, scratchReg, scratchReg, LSR, 1);	// shift aux register right
+						createDataProcRRX(code, armRrxs, condAlways, LR, LR);
+						createBranchImm(code, armB, condCS, 2);	// omit next 3 instructions if done 
+						createDataProcMovReg(code, armMovs, condAlways, src2RegLongCopy, src2RegLongCopy, LSR, 1);
+						createDataProcRRX(code, armRrx, condAlways, src2RegCopy, src2RegCopy);
+						createBranchImm(code, armB, condAlways, -14);
+						// negate if dividend and divisor have opposite sign
+						createDataProcCmpImm(code, armCmp, condAlways, gAux1Copy, 0);
+						createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if same sign
+						createDataProcImm(code, armRsbs, condAlways, dReg, dReg, 0);	
+						createDataProcImm(code, armRsc, condAlways, dRegLong, dRegLong, 0);	
+					}
 					break;
 				case tFloat:
 					createFPdataProc(code, armVdiv, condAlways, dReg, src1Reg, src2Reg, true);
@@ -1310,7 +1331,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armOrr, condGE, dRegLong, LR, scratchReg, noShift, 0);
 						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
 						createDataProcShiftReg(code, armLsl, condGE, dReg, src1Reg, scratchReg);
-						createDataProcImm(code, armSub, condLT, scratchReg, src2Reg, 32);
+						createDataProcImm(code, armSub, condLT, scratchReg, scratchReg, 32);
 						createDataProcShiftReg(code, armLsl, condLT, dRegLong, src1Reg, scratchReg);
 						createDataProcMovImm(code, armMov, condLT, dReg, 0);
 					}
@@ -1356,7 +1377,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armOrr, condGE, dReg, LR, scratchReg, noShift, 0);
 						createDataProcImm(code, armAnd, condAlways, scratchReg, src2Reg, 0x3f);
 						createDataProcShiftReg(code, armAsr, condGE, dRegLong, src1RegLong, scratchReg);
-						createDataProcImm(code, armSub, condLT, scratchReg, src2Reg, 32);
+						createDataProcImm(code, armSub, condLT, scratchReg, scratchReg, 32);
 						createDataProcShiftReg(code, armAsr, condLT, dReg, src1RegLong, scratchReg);
 						createMedia(code, armSbfx, condLT, dRegLong, dReg, 31, 1);
 					}
