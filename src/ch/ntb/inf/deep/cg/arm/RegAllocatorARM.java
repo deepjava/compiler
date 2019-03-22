@@ -261,9 +261,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						StdConstant constant = (StdConstant)res.constant;
 						if (type == tLong) {
 							long immVal = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
-//							if (immVal < 0 || !isPowerOf2(immVal)) 
-								findReg(res);	// TODO, currently all divisions are done without shifting
-						} 					
+							if (!isPowerOf2(immVal)) findReg(res);
+						} 		
 					} else if ((instr1.ssaOpcode == sCand)
 							|| (instr1.ssaOpcode == sCor)
 							|| (instr1.ssaOpcode == sCxor)

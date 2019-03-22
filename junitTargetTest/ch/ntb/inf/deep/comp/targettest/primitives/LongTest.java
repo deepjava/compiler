@@ -430,6 +430,19 @@ public class LongTest {
 		Assert.assertEquals("test73", 4021787, res);
 		
 		v1 = 34546890089234576L;
+		res =  (v1 / (1L<<32));	// 2 ^ 32
+		Assert.assertEquals("test74", 8043574, res);
+		v1 = -34546890089234576L;
+		res =  (v1 / (1L<<32));
+		Assert.assertEquals("test75", -8043574, res);
+		v1 = 34546890089234576L;
+		res =  (v1 / -(1L<<32));
+		Assert.assertEquals("test76", -8043574, res);
+		v1 = -34546890089234576L;
+		res =  (v1 / -(1L<<32));
+		Assert.assertEquals("test77", 8043574, res);
+		
+		v1 = 34546890089234576L;
 		Assert.assertEquals("test80", 16087149, v1 / ((1L<<31)+1));	// 2 ^ 31 + 1
 		Assert.assertEquals("test81", -16087149, v1 / -((1L<<31)+1));
 		v1 = -34546890089234576L;
@@ -477,10 +490,7 @@ public class LongTest {
 		Assert.assertEquals("imm33", -4131218151L, v1 / 128);
 		Assert.assertEquals("imm34", -492, v1 / (1L<<30)); 
 		Assert.assertEquals("imm35", -246, v1 / (1L<<31)); 
-		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
-			// this test gives lower result on host, as it is done without shift operations on the host
-			Assert.assertEquals("imm36", -124, v1 / (1L<<32)); 
-		}
+		Assert.assertEquals("imm36", -123, v1 / (1L<<32)); 
 		Assert.assertEquals("imm37", 0, v1 / (1L<<62)); 
 		Assert.assertEquals("imm38", 2246037, v1 / -235435); 
 
@@ -568,10 +578,7 @@ public class LongTest {
 		Assert.assertEquals("imm43", -83, v1 % 128);
 		Assert.assertEquals("imm44", -514946003, v1 % (1L<<30)); 
 		Assert.assertEquals("imm45", -514946003, v1 % (1L<<31)); 
-		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
-			// this test gives lower result on host, as it is done without shift operations on the host
-			Assert.assertEquals("imm46", 3780021293L, v1 % (1L<<32)); 
-		}
+		Assert.assertEquals("imm46", -514946003L, v1 % (1L<<32)); 
 		Assert.assertEquals("imm47", -528795923411L, v1 % (1L<<62)); 
 		Assert.assertEquals("imm48", -202316, v1 % -235435); 
 
