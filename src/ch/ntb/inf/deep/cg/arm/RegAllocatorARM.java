@@ -157,18 +157,39 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (nofAuxRegGPR == 4) {	// scDiv
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {nofAuxRegGPR = 1;}
 				else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
-					else nofAuxRegGPR = 0;
+					SSAInstruction instr1 = instr.getOperands()[1].owner;
+					if (instr1.ssaOpcode == sCloadConst) {
+						StdConstant constant = (StdConstant)(instr1.result).constant;
+						long immVal = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+						if (isPowerOf2(immVal)) nofAuxRegGPR = 0;
+						else {
+							if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+							else nofAuxRegGPR = 0;
+						}
+					} else {
+						if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+						else nofAuxRegGPR = 0;
+					}
 				}
 			} else if (nofAuxRegGPR == 5) {	// scRem
-				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger || (res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
-					else nofAuxRegGPR = 0;
+				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {
+					SSAInstruction instr1 = instr.getOperands()[1].owner;
+					if (instr1.ssaOpcode == sCloadConst) {
+						nofAuxRegGPR = 0;
+					} else {
+						if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+						else nofAuxRegGPR = 0;
+					}
+				} else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
+					SSAInstruction instr1 = instr.getOperands()[1].owner;
+					if (instr1.ssaOpcode == sCloadConst) {	// must be power of 2
+						nofAuxRegGPR = 1;
+					} else {
+						if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+						else nofAuxRegGPR = 0;
+					}
 				}
-			} else if (nofAuxRegGPR == 8) {	// modulo division
-				if (res.type == tLong) {nofAuxRegGPR = 2;}
-				else if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
-			}
+			} 
 			
 			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false, false);
 			else if (nofAuxRegGPR == 2) {

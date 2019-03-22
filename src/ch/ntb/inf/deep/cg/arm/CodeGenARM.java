@@ -1213,45 +1213,45 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 								createDataProcReg(code, armOrr, condAlways, scratchReg, scratchReg, src1Reg, ASR, sh1);
 								createDataProcShiftImm(code, armAsr, condAlways, LR, src1RegLong, sh1);								
 							}
-							createDataProcShiftImm(code, armLsr, condAlways, scratchReg, LR, 32 - shift);		// shift right immediate by 64-shift
+							createDataProcShiftImm(code, armLsr, condAlways, scratchReg, LR, 32 - shift);				// shift right immediate by 64-shift
 							createMovw(code, armMovw, condAlways, LR, 0);
 							createDataProcReg(code, armAdds, condAlways, scratchReg, src1Reg, scratchReg, noShift, 0);	// add
 							createDataProcReg(code, armAdc, condAlways, LR, src1RegLong, LR, noShift, 0);
-							createDataProcShiftImm(code, armLsl, condAlways, 8, LR, 32 - shift);	// shift right arithmetic immediate by shift
-							createDataProcReg(code, armOrr, condAlways, scratchReg, 8, scratchReg, ASR, shift); //TODO 8 muss weg
+							createDataProcShiftImm(code, armLsl, condAlways, gAux1, LR, 32 - shift);					// shift right arithmetic immediate by shift
+							createDataProcReg(code, armOrr, condAlways, scratchReg, gAux1, scratchReg, ASR, shift); 
 							createDataProcShiftImm(code, armAsr, condAlways, LR, LR, shift);							
-							createDataProcShiftImm(code, armLsr, condAlways, 8, scratchReg, 32 - shift);	// multiply
-							createDataProcReg(code, armOrr, condAlways, LR, 8, LR, LSL, shift);
+							createDataProcShiftImm(code, armLsr, condAlways, gAux1, scratchReg, 32 - shift);			// multiply
+							createDataProcReg(code, armOrr, condAlways, LR, gAux1, LR, LSL, shift);
 							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, scratchReg, shift);
-							createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, scratchReg, noShift, 0);	// subtract
+							createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, scratchReg, noShift, 0);		// subtract
 							createDataProcReg(code, armSbc, condAlways, dRegLong, src1RegLong, LR, noShift, 0);
 						} else if (shift == 32) {
-							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, src1RegLong, 1);	// shift right arithmetic immediate by shift-1
+							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, src1RegLong, 1);				// shift right arithmetic immediate by shift-1
 							createDataProcReg(code, armOrr, condAlways, scratchReg, scratchReg, src1Reg, ASR, 31);
 							createDataProcShiftImm(code, armAsr, condAlways, LR, src1RegLong, 31);								
-							createDataProcMovReg(code, armMov, condAlways, scratchReg, LR, noShift, 0);		// shift right immediate by 64-shift
+							createDataProcMovReg(code, armMov, condAlways, scratchReg, LR, noShift, 0);					// shift right immediate by 64-shift
 							createMovw(code, armMovw, condAlways, LR, 0);
 							createDataProcReg(code, armAdds, condAlways, scratchReg, src1Reg, scratchReg, noShift, 0);	// add
 							createDataProcReg(code, armAdc, condAlways, LR, src1RegLong, LR, noShift, 0);
-							createDataProcMovReg(code, armMov, condAlways, scratchReg, LR, noShift, 0);	// shift right arithmetic immediate by shift
+							createDataProcMovReg(code, armMov, condAlways, scratchReg, LR, noShift, 0);					// shift right arithmetic immediate by shift
 							createMedia(code, armSbfx, condAlways, LR, scratchReg, 31, 1);								
-							createDataProcMovReg(code, armMov, condAlways, LR, scratchReg, noShift, 0);	// multiply
+							createDataProcMovReg(code, armMov, condAlways, LR, scratchReg, noShift, 0);					// multiply
 							createMovw(code, armMovw, condAlways, scratchReg, 0);							
-							createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, scratchReg, noShift, 0);	// subtract
+							createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, scratchReg, noShift, 0);		// subtract
 							createDataProcReg(code, armSbc, condAlways, dRegLong, src1RegLong, LR, noShift, 0);
 						} else {
 							createDataProcShiftImm(code, armAsr, condAlways, scratchReg, src1RegLong, shift - 32 - 1);	// shift right arithmetic immediate by shift-1
 							createMedia(code, armSbfx, condAlways, LR, scratchReg, 31, 1);							
-							createDataProcShiftImm(code, armLsl, condAlways, 8, LR, 32 - (64 - shift));	// shift right immediate by 64-shift
-							createDataProcReg(code, armOrr, condAlways, scratchReg, 8, scratchReg, LSR, 64 - shift);	//TODO 8 muss weg
+							createDataProcShiftImm(code, armLsl, condAlways, gAux1, LR, 32 - (64 - shift));				// shift right immediate by 64-shift
+							createDataProcReg(code, armOrr, condAlways, scratchReg, gAux1, scratchReg, LSR, 64 - shift);
 							createDataProcShiftImm(code, armLsr, condAlways, LR, LR, 64 - shift);
 							createDataProcReg(code, armAdds, condAlways, scratchReg, src1Reg, scratchReg, noShift, 0);	// add
 							createDataProcReg(code, armAdc, condAlways, LR, src1RegLong, LR, noShift, 0);				
-							createDataProcShiftImm(code, armAsr, condAlways, scratchReg, LR, shift - 32);	// shift right arithmetic immediate by shift
+							createDataProcShiftImm(code, armAsr, condAlways, scratchReg, LR, shift - 32);				// shift right arithmetic immediate by shift
 							createMedia(code, armSbfx, condAlways, LR, scratchReg, 31, 1);							
-							createDataProcShiftImm(code, armLsl, condAlways, LR, scratchReg, shift - 32);	// multiply
+							createDataProcShiftImm(code, armLsl, condAlways, LR, scratchReg, shift - 32);				// multiply
 							createMovw(code, armMovw, condAlways, scratchReg, 0);
-							createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, scratchReg, noShift, 0);	// subtract
+							createDataProcReg(code, armSubs, condAlways, dReg, src1Reg, scratchReg, noShift, 0);		// subtract
 							createDataProcReg(code, armSbc, condAlways, dRegLong, src1RegLong, LR, noShift, 0);
 						}
 					} else { // not a power of 2
