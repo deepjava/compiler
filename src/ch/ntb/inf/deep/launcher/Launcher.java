@@ -390,11 +390,19 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("[Launcher] Reseting target");
 					tc.resetTarget();
 					if (dbg) vrb.println("[Launcher] Initializing registers");
-					RegisterInit r = b.regInits;
+					RegisterInit r = b.cpu.regInits;
+					if (dbg) vrb.println("[Launcher] Initializing cpu registers");
 					while (r != null) {
 						tc.setRegisterValue(r.reg, r.initValue);
 						r = (RegisterInit) r.next;
 					}
+					r = b.regInits;
+					if (dbg) vrb.println("[Launcher] Initializing board registers");
+					while (r != null) {
+						tc.setRegisterValue(r.reg, r.initValue);
+						r = (RegisterInit) r.next;
+					}
+					if (dbg) vrb.println("[Launcher] Initializing target configuration registers");
 					r = targetConfig.regInits;
 					while (r != null) {
 						tc.setRegisterValue(r.reg, r.initValue);
