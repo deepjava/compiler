@@ -1370,7 +1370,7 @@ public class Parser implements ICclassFileConsts {
 			if (r == null) {reporter.error(230, "definition missing for " + rName); return null;};
 			RegisterInit r1 = new RegisterInit(r, val);
 			if (regInit == null) regInit = r1;
-			else regInit = (RegisterInit) regInit.insertHead(r1);
+			else regInit.appendTail(r1);	// add registers in the same order as they are listed in the configuration file
 		}
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: reginit section done");
