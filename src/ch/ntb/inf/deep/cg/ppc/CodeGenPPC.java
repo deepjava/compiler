@@ -933,25 +933,35 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 							createIrArSrB(code, ppcOr, dRegLong, src1RegLong, src1RegLong);
 						} else if (shift < 32) {
 							int sh1 = shift - 1;																// shift right arithmetic immediate by shift-1
-							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, (32-sh1)%32, sh1, 31);				// sh1 can be 0!
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, (32-sh1)%32, sh1, 31);			// sh1 can be 0!
 							createIrArSSHMBME(code, ppcRlwimi, gAux1, src1RegLong, (32-sh1)%32, 0, (sh1-1+32)%32);			
 							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, sh1);																																				
-							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux2, shift, 32-shift, 31);		// shift right immediate by 64-shift	
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux2, shift, 32-shift, 31);				// shift right immediate by 64-shift	
 							createIrDrAsimm(code, ppcAddi, gAux2, 0, 0);
-							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);								// add
 							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
 							createIrArSSHMBME(code, ppcRlwinm, dReg, gAux1, 32-shift, shift, 31);				// shift right arithmetic immediate by shift
 							createIrArSSHMBME(code, ppcRlwimi, dReg, gAux2, 32-shift, 0, shift-1);				
 							createIrArSSH(code, ppcSrawi, dRegLong, gAux2, shift);															
+						} else if (shift == 32) {
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, 1, 31, 31);						// shift right arithmetic immediate by shift-1		
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, src1RegLong, 1, 0, 30);			
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);																																				
+							createIrArSrB(code, ppcOr, gAux1, gAux2, gAux2);									// shift right immediate by 64-shift	
+							createIrDrAsimm(code, ppcAddi, gAux2, 0, 0);
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);								// add
+							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
+							createIrArSSH(code, ppcSrawi, dReg, gAux2, 0);										// shift right arithmetic immediate by shift							
+							createIrArSSH(code, ppcSrawi, dRegLong, gAux2, 31);														
 						} else {
 							int sh1 = shift % 32;
-							createIrArSSH(code, ppcSrawi, gAux1, src1RegLong, (sh1-1+32)%32);				// shift right arithmetic immediate by shift-1
-							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);							// sh1 can be 0!							
+							createIrArSSH(code, ppcSrawi, gAux1, src1RegLong, (sh1-1+32)%32);					// shift right arithmetic immediate by shift-1
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);								// sh1 can be 0!							
 							sh1 = (64 - shift) % 32;															// shift right immediate by 64-shift
 							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, (32-sh1)%32, sh1, 31);		
 							createIrArSSHMBME(code, ppcRlwimi, gAux1, gAux2, (32-sh1)%32, 0, (sh1-1)&0x1f);			
 							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux2, (32-sh1)%32, sh1, 31);		
-							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);								// add
 							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					
 							sh1 = shift % 32;
 							createIrArSSH(code, ppcSrawi, dReg, gAux2, sh1);									// shift right arithmetic immediate by shift
@@ -1031,7 +1041,7 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 							loadConstant(code, dRegLong, 0);
 							loadConstant(code, dReg, 0);
 						} else if (shift < 32) {
-							int sh1 = shift - 1;																// shift right arithmetic immediate by shift-1
+							int sh1 = shift - 1;															// shift right arithmetic immediate by shift-1
 							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, (32-sh1)%32, sh1, 31);					
 							createIrArSSHMBME(code, ppcRlwimi, gAux1, src1RegLong, (32-sh1)%32, 0, (sh1-1+32)%32);			
 							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, sh1);																																				
@@ -1039,34 +1049,44 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 							createIrDrAsimm(code, ppcAddi, gAux2, 0, 0);
 							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
 							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
-							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, 32-shift, shift, 31);		// shift right arithmetic immediate by shift
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, 32-shift, shift, 31);			// shift right arithmetic immediate by shift
 							createIrArSSHMBME(code, ppcRlwimi, gAux1, gAux2, 32-shift, 0, shift-1);				
-							createIrArSSH(code, ppcSrawi, gAux2, gAux2, shift);															
-							
-							createIrArSSHMBME(code, ppcRlwinm, 0, gAux1, shift, 32-shift, 31);					// multiply
+							createIrArSSH(code, ppcSrawi, gAux2, gAux2, shift);																					
+							createIrArSSHMBME(code, ppcRlwinm, 0, gAux1, shift, 32-shift, 31);				// multiply
 							createIrArSSHMBME(code, ppcRlwimi, 0, gAux2, shift, 0, 31-shift);
-							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, shift, 0, 31-shift);
-							
-							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);									// subtract
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, shift, 0, 31-shift);						
+							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);							// subtract
 							createIrDrArB(code, ppcSubfe, dRegLong, 0, src1RegLong);
+						} else if (shift == 32) {
+							createIrArSSHMBME(code, ppcRlwinm, gAux1, src1Reg, 1, 31, 31);					// shift right arithmetic immediate by shift-1		
+							createIrArSSHMBME(code, ppcRlwimi, gAux1, src1RegLong, 1, 0, 30);			
+							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);																																				
+							createIrArSrB(code, ppcOr, gAux1, gAux2, gAux2);								// shift right immediate by 64-shift	
+							createIrDrAsimm(code, ppcAddi, gAux2, 0, 0);
+							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
+							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
+							createIrArSSH(code, ppcSrawi, gAux1, gAux2, 0);									// shift right arithmetic immediate by shift							
+							createIrArSSH(code, ppcSrawi, gAux2, gAux2, 31);														
+							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux1, 0, 0, 31);						// multiply
+							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);															
+							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);							// subtract
+							createIrDrArB(code, ppcSubfe, dRegLong, gAux2, src1RegLong);							
 						} else {
 							int sh1 = shift % 32;
 							createIrArSSH(code, ppcSrawi, gAux1, src1RegLong, (sh1-1+32)%32);				// shift right arithmetic immediate by shift-1
 							createIrArSSH(code, ppcSrawi, gAux2, src1RegLong, 31);															
-							sh1 = (64 - shift) % 32;															// shift right immediate by 64-shift
+							sh1 = (64 - shift) % 32;														// shift right immediate by 64-shift
 							createIrArSSHMBME(code, ppcRlwinm, gAux1, gAux1, (32-sh1)%32, sh1, 31);						
 							createIrArSSHMBME(code, ppcRlwimi, gAux1, gAux2, (32-sh1)%32, 0, (sh1-1)&0x1f);					
 							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux2, (32-sh1)%32, sh1, 31);		
 							createIrDrArB(code, ppcAddc, gAux1, gAux1, src1Reg);							// add
 							createIrDrArB(code, ppcAdde, gAux2, gAux2, src1RegLong);					 
-							sh1 = shift % 32;																	// shift right arithmetic immediate by shift
+							sh1 = shift % 32;																// shift right arithmetic immediate by shift
 							createIrArSSH(code, ppcSrawi, gAux1, gAux2, sh1);									
-							createIrArSSH(code, ppcSrawi, gAux2, gAux2, 31);									
-							
+							createIrArSSH(code, ppcSrawi, gAux2, gAux2, 31);														
 							createIrArSSHMBME(code, ppcRlwinm, gAux2, gAux1, shift-32, 0, 63-shift);		// multiply
-							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);									
-							
-							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);									// subtract
+							createIrDrAsimm(code, ppcAddi, gAux1, 0, 0);															
+							createIrDrArB(code, ppcSubfc, dReg, gAux1, src1Reg);							// subtract
 							createIrDrArB(code, ppcSubfe, dRegLong, gAux2, src1RegLong);
 						}
 					} else { // not a power of 2
