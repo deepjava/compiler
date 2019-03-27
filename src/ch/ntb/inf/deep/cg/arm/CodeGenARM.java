@@ -22,6 +22,7 @@ import ch.ntb.inf.deep.cfg.CFGNode;
 import ch.ntb.inf.deep.cg.Code32;
 import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.RegAllocator;
+import ch.ntb.inf.deep.cg.ppc.RegAllocatorPPC;
 import ch.ntb.inf.deep.cg.InstructionDecoder;
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
@@ -34,6 +35,9 @@ import ch.ntb.inf.deep.ssa.instruction.*;
 import ch.ntb.inf.deep.strings.HString;
 
 public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
+
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
+	public static int nofNonVolEXTRD, nofNonVolEXTRS, nofVolEXTRD, nofVolEXTRS;
 
 	private static final int arrayLenOffset = 8;	
 	// used for some floating point operations and compiler specific subroutines
@@ -74,6 +78,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	public void translateMethod(Method method) {
 		init(method);
+		nofNonVolEXTRD = 0; nofNonVolEXTRS = 0;
+		nofVolEXTRD = 0; nofVolEXTRS = 0;
 		SSA ssa = method.ssa;
 		Code32 code = method.machineCode;
 		
@@ -83,6 +89,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		RegAllocatorARM.regsGPR = regsGPRinitial;
 		RegAllocatorARM.regsEXTRD = regsEXTRDinitial;
 		RegAllocatorARM.regsEXTRS = regsEXTRSinitial;
+		RegAllocatorARM.nofNonVolEXTRD = 0;
+		RegAllocatorARM.nofNonVolEXTRS = 0;
+		RegAllocatorARM.nofVolEXTRD = 0;
+		RegAllocatorARM.nofVolEXTRS = 0;
 
 		RegAllocator.buildIntervals(ssa);
 		
@@ -141,7 +151,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 		if (dbg) {
 			StdStreams.vrb.print("register usage in method: nofNonVolGPR = " + nofNonVolGPR + ", nofVolGPR = " + nofVolGPR);
-			StdStreams.vrb.println(", nofNonVolFPR = " + nofNonVolFPR + ", nofVolFPR = " + nofVolFPR);
+			StdStreams.vrb.println(", nofNonVolEXTRD = " + nofNonVolEXTRD + ", nofNonVolEXTRS = " + nofNonVolEXTRS + ", nofVolEXTRD = " + nofVolEXTRD + ", nofVolEXTRS = " + nofVolEXTRS);
 			StdStreams.vrb.print("register usage for parameters: nofParamGPR = " + nofParamGPR + ", nofParamFPR = " + nofParamFPR);
 			StdStreams.vrb.println(", receive parameters slots on stack = " + recParamSlotsOnStack);
 			StdStreams.vrb.println("max. parameter slots for any call in this method = " + callParamSlotsOnStack);
@@ -386,7 +396,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	 * @return Nof bytes on the stack
 	 */
 	private static int calcStackSize(Code32 code) {
-		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolFPR * 8 + RegAllocator.maxLocVarStackSlots * 4;	// includes LR and SP for back trace
+		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4 + RegAllocator.maxLocVarStackSlots * 4;	// includes LR and SP for back trace
+		assert(nofNonVolEXTRD < 16);
+		if (nofNonVolEXTRD >= 16) ErrorReporter.reporter.error(1000);
 //		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
 //		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
 //		int padding = (16 - (size % 16)) % 16;
@@ -1350,7 +1362,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcReg(code, armSbc, condAlways, dRegLong, src1RegLongCopy, dRegLongCopy, noShift, 0);
 						break;
 					}
-				case tFloat: case tDouble:
+				case tFloat: 
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR, src1Reg, src2Reg, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0xd, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0x8, true);
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR, scratchRegEXTR, src2Reg, true);
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, scratchRegEXTR, true);
+					break;
+				case tDouble:
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR, src1Reg, src2Reg, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0xd, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0x8, false);
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR, scratchRegEXTR, src2Reg, false);
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, scratchRegEXTR, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -2858,8 +2882,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	
 	// block data transfer	(VPOP, VPUSH)
 	private void createBlockDataTransferExtr(Code32 code, int opCode, int cond, int Vd, int nof, boolean single) {
-		if (single) code.instructions[code.iCount] = (cond << 28) | opCode | (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | nof * 2;
-		else code.instructions[code.iCount] = (cond << 28) | opCode | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | nof * 2;
+		if (single) code.instructions[code.iCount] = (cond << 28) | opCode | (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | nof;
+		else code.instructions[code.iCount] = (cond << 28) | opCode | (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | nof * 2;
 		code.incInstructionNum();
 	}
 	
@@ -3099,12 +3123,20 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrS(code, ppcIsync, 0);	// must context synchronize after setting of FP bit
 //		}
 //		int offset = FPRoffset;
-		if (nofNonVolFPR > 0) {	// store nonvolatiles EXTR 
-			if (nofNonVolFPR <= 16)
-				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR, false);
+		if (nofNonVolEXTRD > 0) {	// store nonvolatiles EXTRD 
+			if (nofNonVolEXTRD <= 16)
+				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolEXTRD + 1), nofNonVolEXTRD, false);
 			else {
 				createBlockDataTransferExtr(code, armVpush, condAlways, 16, 16, false);
-				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR-16, false);			
+				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolEXTRD + 1), nofNonVolEXTRD - 16, false);			
+			}
+		}
+		if (nofNonVolEXTRS > 0) {	// store nonvolatiles EXTRS
+			if (nofNonVolEXTRS <= 16)
+				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolEXTRS + 1), nofNonVolEXTRS, true);
+			else {
+				createBlockDataTransferExtr(code, armVpush, condAlways, 16, 16, true);
+				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolEXTRS + 1), nofNonVolEXTRS - 16, true);			
 			}
 		}
 //		if (enFloatsInExc) {
@@ -3115,7 +3147,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrD(code, ppcMffs, 0);
 //			createIrSrAd(code, ppcStfd, 0, stackPtr, offset);
 //		}
-		int localStorage = stackSize - (8 + nofNonVolGPR * 4 + nofNonVolFPR * 8);
+		int localStorage = stackSize - (8 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4);
 		if (localStorage > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, localStorage);	// add space for locals and parameters
 		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store back trace
 		if (dbg) {
@@ -3189,7 +3221,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	private void insertEpilog(Code32 code, int stackSize) {
 		int epilogStart = code.iCount;
-		int localStorage = stackSize - (4 + nofNonVolGPR * 4 + nofNonVolFPR * 8);
+		int localStorage = stackSize - (4 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4);
 		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, localStorage);
 //		int offset = GPRoffset - 8;
 //		if (enFloatsInExc) {
@@ -3201,11 +3233,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				offset -= 8;
 //			}
 //		}
-		if (nofNonVolFPR > 0) {
-			if (nofNonVolFPR <= 16) 
-				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR, false);
+		if (nofNonVolEXTRS > 0) {
+			if (nofNonVolEXTRS <= 16)
+				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolEXTRS + 1), nofNonVolEXTRS, true);
 			else {
-				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolFPR + 1), nofNonVolFPR-16, false);			
+				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolEXTRS + 1), nofNonVolEXTRS - 16, true);			
+				createBlockDataTransferExtr(code, armVpop, condAlways, 16, 16, true);
+			}
+		}
+		if (nofNonVolEXTRD > 0) {
+			if (nofNonVolEXTRD <= 16)
+				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolEXTRD + 1), nofNonVolEXTRD, false);
+			else {
+				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolEXTRD + 1), nofNonVolEXTRD - 16, false);			
 				createBlockDataTransferExtr(code, armVpop, condAlways, 16, 16, false);
 			}
 		}

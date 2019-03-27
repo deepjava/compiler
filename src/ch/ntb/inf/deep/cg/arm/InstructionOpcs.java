@@ -226,8 +226,8 @@ public interface InstructionOpcs {
 	// extension register load / store
 	armVldr = (0xd1 << 20) | (0xa << 8),
 	armVstr = (0xd0 << 20) | (0xa << 8),
-	armVpop = (0xcbd << 16) | (0xb << 8),
-	armVpush = (0xd2d << 16) | (0xb << 8),
+	armVpop = (0xcbd << 16) | (0xa << 8),
+	armVpush = (0xd2d << 16) | (0xa << 8),
 
 	// floating point data processing
 	armVadd = (0xe3 << 20) | (0xa0 << 4),

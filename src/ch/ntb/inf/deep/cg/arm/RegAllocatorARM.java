@@ -39,6 +39,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 
 	// used to indicate used and free GPRs and EXTRs, the EXTRs must be differentiated between D0..D31 and S0..S31
 	public static int regsGPR, regsEXTRD, regsEXTRS;
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
+	protected static int nofNonVolEXTRD, nofNonVolEXTRS, nofVolEXTRD, nofVolEXTRS;
 
 	/**
 	 * Assign a register or memory location to all SSAValues
@@ -392,9 +394,11 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			}
 		}
 		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
-		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
+		CodeGenARM.nofNonVolEXTRD = nofNonVolEXTRD;
+		CodeGenARM.nofNonVolEXTRS = nofNonVolEXTRS;
 		CodeGenARM.nofVolGPR = nofVolGPR;
-		CodeGenARM.nofVolFPR = nofVolFPR;
+		CodeGenARM.nofVolEXTRD = nofVolEXTRD;
+		CodeGenARM.nofVolEXTRS = nofVolEXTRS;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof;
 		nof = maxNofParamEXTR - (paramEndEXTR - paramStartEXTR + 1);
@@ -469,7 +473,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						if ((regsEXTRS & (1 << i)) != 0) {
 							regsEXTRS &= ~(1 << i);	
 							regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
-							if (i - paramStartEXTR + 1 > nofVolFPR) nofVolFPR = i + 1 - paramStartEXTR;
+							if (i - paramStartEXTR + 1 > nofVolEXTRS) nofVolEXTRS = i + 1 - paramStartEXTR;
 							return i;
 						}
 						i++;						
@@ -480,20 +484,20 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						if ((regsEXTRD & (1 << i)) != 0) {
 							regsEXTRD &= ~(1 << i);	
 							regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
-							if (i - paramStartEXTR + 1 > nofVolFPR) nofVolFPR = i + 1 - paramStartEXTR;
+							if (i - paramStartEXTR + 1 > nofVolEXTRD) nofVolEXTRD = i + 1 - paramStartEXTR;
 							return i;
 						}
 						i++;
 					}				
 				}
 			} 
-			i = topEXTR;
-			if (single) {
+			i = topEXTR;	// is nonvolatile
+			if (single) {	
 				while (i >= nonVolStartEXTR * 2) {
 					if ((regsEXTRS & (1 << i)) != 0) {
 						regsEXTRS &= ~(1 << i);
 						regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
-						if (nofEXTR - i > nofNonVolFPR) nofNonVolFPR = nofEXTR - i;
+						if (nofEXTR - i > nofNonVolEXTRS) nofNonVolEXTRS = nofEXTR - i;
 						return i;
 					}
 					i--;
@@ -503,7 +507,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if ((regsEXTRD & (1 << i)) != 0) {
 						regsEXTRD &= ~(1 << i);
 						if (i < 16) regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
-						if (nofEXTR - i > nofNonVolFPR) nofNonVolFPR = nofEXTR - i;
+						if (nofEXTR - i > nofNonVolEXTRD) nofNonVolEXTRD = nofEXTR - i;
 						return i;
 					}
 					i--;

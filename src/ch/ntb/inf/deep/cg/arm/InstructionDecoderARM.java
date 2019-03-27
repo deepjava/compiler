@@ -1075,9 +1075,15 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 	
 	private static String list(int Vd, int imm8, boolean single) {	// Encoding of lists of EXTR registers  p.295	->	see in instructions
 		String registerStr = "";
-		int regs = imm8 / 2;
-		if (imm8 % 2 != 0) return "UNPREDICTABLE";
-		if (regs == 0 || regs > 16 || Vd + regs > 32) return "UNPREDICTABLE";
+		int regs;
+		if (single) {
+			regs = imm8;
+			if (regs == 0 || Vd + regs > 32) return "Vd = " + Vd + " regs = " + regs +  " UNPREDICTABLE";			
+		} else {
+			if (imm8 % 2 != 0) return "UNPREDICTABLE";
+			regs = imm8 / 2;
+			if (regs == 0 || regs > 16 || Vd + regs > 32) return "UNPREDICTABLE";
+		}
 		for (int i = 0; i < regs; i++) {
 			registerStr = registerStr + (single?"S":"D") + (Vd + i) + ", ";
 		}
@@ -2418,7 +2424,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, false);
 							}
 							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, true);
+								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(VdD, op0_8, true);
 							}							
 						}
 						if ((op20_5 & 0x13)==0x11) {	// Vector Load Register p.924

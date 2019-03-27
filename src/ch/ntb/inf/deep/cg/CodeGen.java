@@ -59,7 +59,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	// nofParamGPR + nofParamFPR = nofParam, set by last exit set of last node
 	protected static int nofParamGPR, nofParamFPR;	 
 	// maximum nof registers used by this method, used to calculate stack size and for debugging output
-	public static int nofNonVolGPR, nofNonVolFPR, nofVolGPR, nofVolFPR;
+	public static int nofNonVolGPR, nofVolGPR;
 	// gives required stack space for parameters of this method if not enough registers
 	protected static int recParamSlotsOnStack;
 	// gives required stack space for parameters of any call in this method if not enough registers
@@ -86,8 +86,7 @@ public abstract class CodeGen implements SSAInstructionOpcs, SSAInstructionMnemo
 	protected void init(Method m) {
 		SSA ssa = m.ssa;
 		nofParamGPR = 0; nofParamFPR = 0;
-		nofNonVolGPR = 0; nofNonVolFPR = 0;
-		nofVolGPR = 0; nofVolFPR = 0;
+		nofNonVolGPR = 0; nofVolGPR = 0;
 		nofMoveGPR = 0; nofMoveFPR = 0;
 		recParamSlotsOnStack = 0; callParamSlotsOnStack = 0;
 		if (dbg) StdStreams.vrb.println("\ngenerate code for " + m.owner.name + "." + m.name);
