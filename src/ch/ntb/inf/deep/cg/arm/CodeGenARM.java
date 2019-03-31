@@ -713,7 +713,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createLSWordReg(code, armLdr, condAlways, dReg, LR, indexReg, LSL, 3, 1, 1, 1);
 						createLSWordImm(code, armLdr, condAlways, dRegLong, LR, 4, 1, 1, 0);
 						break;
-					case tFloat: case tDouble:
+					case tFloat: 
+						createDataProcReg(code, armAdd, condAlways, LR, refReg, indexReg, LSL, 2);
+						createLSExtReg(code, armVldr, condAlways, dReg, LR, objectSize, true);
+						break;
+					case tDouble:
+						createDataProcReg(code, armAdd, condAlways, LR, refReg, indexReg, LSL, 3);
+						createLSExtReg(code, armVldr, condAlways, dReg, LR, objectSize, false);
 						break;
 					default:
 						ErrorReporter.reporter.error(610);
@@ -806,7 +812,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createLSWordReg(code, armStr, condAlways, valReg, LR, indexReg, LSL, 3, 1, 1, 1);
 						createLSWordImm(code, armStr, condAlways, src3RegLong, LR, 4, 1, 1, 0);
 						break;
-					case tAfloat: case tAdouble:
+					case tAfloat: 
+						createDataProcReg(code, armAdd, condAlways, LR, refReg, indexReg, LSL, 2);
+						createLSExtReg(code, armVstr, condAlways, valReg, LR, objectSize, true);
+						break;
+					case tAdouble:
+						createDataProcReg(code, armAdd, condAlways, LR, refReg, indexReg, LSL, 3);
+						createLSExtReg(code, armVstr, condAlways, valReg, LR, objectSize, false);
 						break;
 					default:
 						ErrorReporter.reporter.error(611);
