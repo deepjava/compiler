@@ -1,7 +1,7 @@
 deep compiler
 =============
 
-With the __deep compiler__ Java byte code can be cross compiled and linked for the PowerPC platform. Currently only compile time binding is supported and there are a few limitations:
+With the __deep compiler__ Java byte code can be crosscompiled and linked for the PowerPC and ARM architecture. Currently only compile time binding is supported and there are a few limitations:
 
  - arrays are supported up to three dimensions only
  - "synchronized" is not yet implemented
