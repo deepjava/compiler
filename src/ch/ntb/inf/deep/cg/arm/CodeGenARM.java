@@ -1891,8 +1891,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					} else if (m.id == idGET4) { // GET4
 						createLSWordImm(code, armLdr, condAlways, dReg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idGET8) { // GET8
-						createLSWordImm(code, armLdr, condAlways, dRegLong, src1Reg, 0, 0, 0, 0);
-						createLSWordImm(code, armLdr, condAlways, dReg, src1Reg, 4, 1, 1, 0);
+						createLSWordImm(code, armLdr, condAlways, dReg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armLdr, condAlways, dRegLong, src1Reg, 4, 1, 1, 0);
 					} else if (m.id == idPUT1) { // PUT1
 						createLSWordImm(code, armStrb, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idPUT2) { // PUT2
@@ -1900,12 +1900,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					} else if (m.id == idPUT4) { // PUT4
 						createLSWordImm(code, armStr, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idPUT8) { // PUT8
-						createLSWordImm(code, armStr, condAlways, src2RegLong, src1Reg, 0, 0, 0, 0);
-						createLSWordImm(code, armStr, condAlways, src2Reg, src1Reg, 4, 1, 1, 0);
-//					} else if (m.id == idBIT) { // BIT
-//						createIrDrAd(ppcLbz, res.reg, opds[0].reg, 0);
-//						createIrDrAsimm(ppcSubfic, 0, opds[1].reg, 32);
-//						createIrArSrBMBME(ppcRlwnm, res.reg, res.reg, 0, 31, 31);
+						createLSWordImm(code, armStr, condAlways, src2Reg, src1Reg, 0, 0, 0, 0);
+						createLSWordImm(code, armStr, condAlways, src2RegLong, src1Reg, 4, 1, 1, 0);
+					} else if (m.id == idBIT) { // BIT
+						createLSWordImm(code, armLdr, condAlways, dReg, src1Reg, 0, 0, 0, 0);
+						if (src2Reg < 0) {
+							int immVal = ((StdConstant)opds[1].constant).valueH;
+							if (immVal > 0) createDataProcMovReg(code, armLsr, condAlways, dReg, dReg, noShift, immVal);	
+						} else {
+							createDataProcShiftReg(code, armLsr, condAlways, dReg, dReg, src2Reg);
+						}
+						createDataProcImm(code, armAnd, condAlways, dReg, dReg, 1);
 					} else if (m.id == idGETGPR) { // GETGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
 						createDataProcMovReg(code, armMov, condAlways, dReg, gpr, noShift, 0);
@@ -1924,11 +1929,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createCoProc(code, armMrc, condAlways, coproc, opc1, dReg, CRn, CRm, opc2);
 					} else if (m.id == idPUTGPR) { // PUTGPR
 						int gpr = ((StdConstant)opds[0].constant).valueH;
-						if (src2Reg < 0) {
-							int immVal = ((StdConstant)opds[1].constant).valueH;
-							assert false; // when could this happen????
-//							createIrDrAsimm(code, ppcAddi, gpr, 0, immVal);
-						} else 
 						createDataProcMovReg(code, armMov, condAlways, gpr, src2Reg, noShift, 0);
 					} else if (m.id == idPUTEXTRD) { // PUTEXTRD
 						int fpr = ((StdConstant)opds[0].constant).valueH;
@@ -1936,17 +1936,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					} else if (m.id == idPUTEXTRS) { // PUTEXTRS
 						int fpr = ((StdConstant)opds[0].constant).valueH;
 						createFPdataProc(code, armVmov, condAlways, fpr, 0, src2Reg, true);
-//					} else if (m.id == idPUTSPR) { // PUTSPR
-//						createIrArSrB(ppcOr, 0, opds[1].reg, opds[1].reg);
-//						int spr = ((StdConstant)opds[0].constant).valueH;
-//						createIrSspr(ppcMtspr, spr, 0);
+					} else if (m.id == idPUTCPR) { // PUTCPR
+						int coproc = ((StdConstant)opds[0].constant).valueH;
+						int CRn = ((StdConstant)opds[1].constant).valueH;
+						int opc1 = ((StdConstant)opds[2].constant).valueH;
+						int CRm = ((StdConstant)opds[3].constant).valueH;
+						int opc2 = ((StdConstant)opds[4].constant).valueH;
+						createCoProc(code, armMcr, condAlways, coproc, opc1, dReg, CRn, CRm, opc2);
 //					} else if (m.id == idHALT) { // HALT	// TODO
 //						createItrap(ppcTw, TOalways, 0, 0);
 					} else if (m.id == idASM) { // ASM
 						code.instructions[code.iCount] = InstructionDecoder.dec.getCode(((StringLiteral)opds[0].constant).string.toString());
-//						System.out.println(((StringLiteral)opds[0].constant).string.toString());
-//						System.out.println(Integer.toHexString(InstructionDecoder.dec.getCode(((StringLiteral)opds[0].constant).string.toString())));
-//						System.out.println(InstructionDecoder.dec.getMnemonic((InstructionDecoder.dec.getCode(((StringLiteral)opds[0].constant).string.toString()))));
 						code.iCount++;
 						int len = code.instructions.length;
 						if (code.iCount == len) {

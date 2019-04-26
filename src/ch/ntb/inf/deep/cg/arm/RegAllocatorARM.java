@@ -302,6 +302,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTEXTRD) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTEXTRS) && (instr1.getOperands()[0] == res))
 //							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTCPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idBIT) && (instr1.getOperands()[1] == res))
 							// calls to some unsafe methods
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
 						// branches but not switches (the second operand of a switch is already constant)

@@ -27,12 +27,12 @@ import ch.ntb.inf.deep.comp.targettest.exceptions.ExceptionsSuite;
 import ch.ntb.inf.deep.comp.targettest.objects.ObjectsSuite;
 import ch.ntb.inf.deep.comp.targettest.primitives.PrimitivesSuite;
 import ch.ntb.inf.deep.comp.targettest.statements.StatementSuite;
-import ch.ntb.inf.deep.comp.targettest.unsafe.UnsafeSuite;
+import ch.ntb.inf.deep.comp.targettest.unsafe.UnsafeARMSuite;
 import ch.ntb.inf.deep.comp.targettest.various.VariousSuite;
 
-@Suite({ PrimitivesSuite.class, StatementSuite.class, ArraySuite.class, CastSuite.class, ConditionsSuite.class, ObjectsSuite.class, UnsafeSuite.class, VariousSuite.class, ExceptionsSuite.class })    
+@Suite({ PrimitivesSuite.class, StatementSuite.class, ArraySuite.class, CastSuite.class, ConditionsSuite.class, ObjectsSuite.class, UnsafeARMSuite.class, VariousSuite.class, ExceptionsSuite.class })    
 @MaxErrors(100)
 
-public class CompilerTestSuite {
+public class CompilerTestSuiteARM {
 
 }
