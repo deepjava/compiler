@@ -67,7 +67,7 @@ public class RegModel  {
 		while (regs != null) {
 			if (regs != null && regs.regType == Parser.sGPR) {
 				String name = regs.name.toString();
-				gprs[i++] = new Register(name, 0, 2);
+				gprs[i++] = new Register(name, 0, 1);
 			}
 			regs = (ch.ntb.inf.deep.config.Register) regs.next;
 		}

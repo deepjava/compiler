@@ -348,11 +348,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		if (vars.length > 1) {
 			for (int i = 0; i < vars.length && i < elements.length; i++) {
 				String[] obj = vars[i].split(",");
-				if (obj.length > 1) {
-					elements[i] = new TargetOpObject(Integer.decode(obj[0]),obj[1]);
-				} else {
-					elements[i] = new TargetOpObject();
-				}
+				if (obj.length == 3) elements[i] = new TargetOpObject(Integer.decode(obj[0]), obj[1], obj[2]);
+				else if (obj.length == 2) elements[i] = new TargetOpObject(Integer.decode(obj[0]), obj[1]);
+				else elements[i] = new TargetOpObject();
 			}
 			if (vars.length < elements.length) {
 				for (int i = vars.length; i < elements.length; i++) elements[i] = new TargetOpObject();
@@ -456,12 +454,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 		@Override
 		protected Object getValue(Object element) {
-			TargetOpObject op = (TargetOpObject)element;
-			if(op.operation != 0 && op.description != "" && op.addr != 0) {
-				return op.note;
-			}
-			
-			return "";
+			return ((TargetOpObject)element).note;
 		}
 		
 
@@ -470,9 +463,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			TargetOpObject op = (TargetOpObject) element;
 			if(op.operation != 0 && op.description != "") {
 				op.note = (String) value;
+				saveView();
 				viewer.refresh();
-			}else {
-				
 			}
 		}
 	}
@@ -1249,8 +1241,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void saveView(){
 		StringBuffer sb = new StringBuffer();
-		for(int i = 0; i < elements.length; i++){
-			sb.append(elements[i].operation + "," + elements[i].description + ";");
+		for (int i = 0; i < elements.length; i++) {
+			sb.append(elements[i].operation + "," + elements[i].description + "," + elements[i].note + ";");
 		}
 		prefs.put("storedTargetOperations", sb.toString());
 		try {
