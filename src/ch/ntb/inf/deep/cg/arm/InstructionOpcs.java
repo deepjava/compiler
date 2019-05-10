@@ -75,75 +75,82 @@ public interface InstructionOpcs {
 	};
 	
 	public static String[] bankedRegR0 = {
-		"R8_usr",	// SYSm<4:3> = 0b00
-		"R9_usr",	//		SYSm<2:0> = 0b001
-		"R10_usr",
-		"R11_usr",
-		"R12_usr",
-		"SP_usr",
-		"LR_usr",
+		"r8_usr",	// SYSm<4:3> = 0b00
+		"r9_usr",	//		SYSm<2:0> = 0b001
+		"r10_usr",
+		"r11_usr",
+		"r12_usr",
+		"sp_usr",
+		"lr_usr",
 		"UNPREDICTABLE",
-		"R8_fiq",	// SYSm<4:3> = 0b01
-		"R9_fiq",
-		"R10_fiq",
-		"R11_fiq",
-		"R12_fiq",
-		"SP_fiq",
-		"LR_fiq",
+		"r8_fiq",	// SYSm<4:3> = 0b01
+		"r9_fiq",
+		"r10_fiq",
+		"r11_fiq",
+		"r12_fiq",
+		"sp_fiq",
+		"lr_fiq",
 		"UNPREDICTABLE",
-		"LR_irq",	// SYSm<4:3> = 0b10
-		"SP_irq",
-		"LR_svc",
-		"SP_svc",
-		"LR_abt",
-		"SP_abt",
-		"LR_und",
-		"SP_und",
+		"lr_irq",	// SYSm<4:3> = 0b10
+		"sp_irq",
+		"lr_svc",
+		"sp_svc",
+		"lr_abt",
+		"sp_abt",
+		"lr_und",
+		"sp_und",
 		"UNPREDICTABLE",	// SYSm<4:3> = 0b11
 		"UNPREDICTABLE",
 		"UNPREDICTABLE",
 		"UNPREDICTABLE",
-		"LR_mon",
-		"SP_mon",
-		"ELR_hyp",
-		"SP_hyp"
+		"lr_mon",
+		"sp_mon",
+		"elr_hyp",
+		"sp_hyp"
 	};
 	
 	public static String[] bankedRegR1 = {
-	"UNPREDICTABLE",	// SYSm<4:3> = 0b00
-	"UNPREDICTABLE",	//		SYSm<2:0> = 0b001
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",	// SYSm<4:3> = 0b01
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"SPSR_fiq",
-	"UNPREDICTABLE",
-	"SPSR_irq",			// SYSm<4:3> = 0b10
-	"UNPREDICTABLE",
-	"SPSR_svc",
-	"UNPREDICTABLE",
-	"SPSR_abt",
-	"UNPREDICTABLE",
-	"SPSR_und",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",	// SYSm<4:3> = 0b11
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"UNPREDICTABLE",
-	"SPSR_mon",
-	"UNPREDICTABLE",
-	"SPSR_hyp",
-	"UNPREDICTABLE"		
+		"UNPREDICTABLE",	// SYSm<4:3> = 0b00
+		"UNPREDICTABLE",	// SYSm<2:0> = 0b001
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",	// SYSm<4:3> = 0b01
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"spsr_fiq",
+		"UNPREDICTABLE",
+		"spsr_irq",			// SYSm<4:3> = 0b10
+		"UNPREDICTABLE",
+		"spsr_svc",
+		"UNPREDICTABLE",
+		"spsr_abt",
+		"UNPREDICTABLE",
+		"spsr_und",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",	// SYSm<4:3> = 0b11
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"UNPREDICTABLE",
+		"spsr_mon",
+		"UNPREDICTABLE",
+		"spsr_hyp",
+		"UNPREDICTABLE"		
 	};
-	
+
+	public static String[] PSRfields = {
+		"cpsr_c",
+		"cpsr_x",
+		"cpsr_s",
+		"cpsr_f",
+	};
+
 	public static String updateAPSR = "s";
 	
 	public static String spec_reg = "APSR";
