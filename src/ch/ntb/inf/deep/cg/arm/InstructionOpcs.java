@@ -243,8 +243,10 @@ public interface InstructionOpcs {
 	armVdiv = (0xe8 << 20) | (0xa0 << 4),
 	armVneg = (0xeb << 20) | (1 << 16) | (0xa4 << 4),
 	armVmov = (0xeb << 20) | (0xa4 << 4),	// move between EXTR
-	armVcvt = (0xeb << 20) | (0xac << 4),
+	armVcvt = (0xeb8 << 16) | (0xa4 << 4),
+	armVcvtp = (0xeb7 << 16) | (0xac << 4),	/// convert between double and single precision
 	armVcmp = (0xeb4 << 16) | (0xa4 << 4),
+	armVmla = (0xe0 << 20) | (0xa0 << 4),
 
 	// floating point move between registers
 	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),	// move between EXTR and two GPR

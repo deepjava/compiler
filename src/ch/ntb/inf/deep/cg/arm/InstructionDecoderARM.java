@@ -1760,7 +1760,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					case 2: return "eor" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 3: return "eor" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 4:
-						if (d != 0xf) {	// Subtract p.710
+						if (n != 0xf) {	// Subtract p.710
 							return "sub" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A2
@@ -1768,7 +1768,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "adr" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", " + (add?"+":"-") + const32;							
 						}
 					case 5:
-						if (d != 0xf) {	// Subtract p.710
+						if (n != 0xf) {	// Subtract p.710
 							return "sub" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A2
@@ -1778,7 +1778,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					case 6: return "rsb" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 7: return "rsb" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 8:
-						if (d != 0xf) {	// Add p.308
+						if (n != 0xf) {	// Add p.308
 							return "add" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A1
@@ -1786,7 +1786,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "adr" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", " + (add?"+":"-") + const32;							
 						}
 					case 9:
-						if (d != 0xf) {	// Add p.308
+						if (n != 0xf) {	// Add p.308
 							return "add" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A1
