@@ -99,10 +99,11 @@ public class Parser implements ICclassFileConsts {
 			sMSR = g7 + 7,
 			sCR = g7 + 8,
 			sFPSCR = g7 + 9,
-			sExcHnd = g7 + 10;
+			sExcHnd = g7 + 10,
+			sCPR = g7 + 11;
 	
 	// -------- Register representation: 
-	public static final short g8 = g7 + 11,
+	public static final short g8 = g7 + 12,
 			sHex = g8,
 			sDez = g8 + 1,
 			sBin = g8 + 2;
@@ -429,6 +430,9 @@ public class Parser implements ICclassFileConsts {
 				return true;
 			} else if (temp.equals("cr")) {
 				sym = sCR;
+				return true;
+			} else if (temp.equals("cpr")) {
+				sym = sCPR;
 				return true;
 			}
 			break;
@@ -2136,7 +2140,7 @@ public class Parser implements ICclassFileConsts {
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return sUndef;}
 		next();
-		if (sym == sGPR || sym == sFPR || sym == sSPR || sym == sIOR || sym == sMSR || sym == sCR || sym == sFPSCR) s = sym;
+		if (sym == sGPR || sym == sFPR || sym == sSPR || sym == sIOR || sym == sMSR || sym == sCR || sym == sFPSCR || sym == sCPR) s = sym;
 		else {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " unexpected symbol: " + symToString()); return sUndef;}
 		next();
 		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}

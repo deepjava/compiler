@@ -71,6 +71,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (m != null) idPUTEXTRD = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "PUTEXTRS"); 
 		if (m != null) idPUTEXTRS = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "PUTCPR"); 
+		if (m != null) idPUTCPR = m.id; else {ErrorReporter.reporter.error(631); return;}
 		
 		super.init();
 	}
@@ -1958,7 +1960,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						int opc1 = ((StdConstant)opds[2].constant).valueH;
 						int CRm = ((StdConstant)opds[3].constant).valueH;
 						int opc2 = ((StdConstant)opds[4].constant).valueH;
-						createCoProc(code, armMcr, condAlways, coproc, opc1, dReg, CRn, CRm, opc2);
+						int Rt = ((StdConstant)opds[4].constant).valueH;
+						createCoProc(code, armMcr, condAlways, coproc, opc1, Rt, CRn, CRm, opc2);
 //					} else if (m.id == idHALT) { // HALT	// TODO
 //						createItrap(ppcTw, TOalways, 0, 0);
 					} else if (m.id == idASM) { // ASM
