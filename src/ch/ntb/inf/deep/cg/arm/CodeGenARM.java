@@ -39,8 +39,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public static int nofNonVolEXTRD, nofNonVolEXTRS, nofVolEXTRD, nofVolEXTRS;
 
 	private static final int arrayLenOffset = 8;	
-	// used for some floating point operations and compiler specific subroutines
-	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
 
 	public static int idHALT, idENABLE_FLOATS;
 	public static int idGETGPR, idGETEXTRD, idGETEXTRS, idGETCPR;
@@ -1727,36 +1725,56 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					createPacking(code, armSxtb, condAlways, dReg, dReg);
 					break;
 				case tChar: 
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSL, 16);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
 				case tInteger:
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					break;
 				case tLong:	
-//					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
-//					Method m = Method.getCompSpecSubroutine("doubleToLong");
-//					createIrDrB(code, ppcFmr, 0, src1Reg);
-//					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
-//					createIrSspr(code, ppcMtspr, LR, 29);
-//					createIBOBILK(code, ppcBclr, BOalways, 0, true);
-//					createIrDrAd(code, ppcLmw, 29, stackPtr, tempStorageOffset + 8 + 4); // restore
-//					createIrArSrB(code, ppcOr, dReg, 28, 28);
-//					if (dReg != 28) // restore last register if not destination register
-//						createIrDrAd(code, ppcLwz, 28, stackPtr, tempStorageOffset + 8);
-//					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
+					createFPdataProc(code, armVcmpe, condAlways, src1Reg, 0, true);
+					createCoProcFPU(code, armVmrs, condAlways, 15);	// get flags only
+					createFPdataProc(code, armVneg, condLT, scratchRegEXTR1, src1Reg, true);	// make positive
+					createFPdataProc(code, armVmov, condGE, scratchRegEXTR1, 0, src1Reg, true);	// copy if already positive		
+					createFPdataConvPrec(code, armVcvtp, condAlways, scratchRegEXTR1, scratchRegEXTR1, false);	// convert to double
+					
+					Item item = int2floatConst2;	// ref to 2^32;
+					loadConstantAndFixup(code, scratchReg, item);	// address of constant (in the const area) is loaded
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 5, 1, false);	// F64 -> S32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dRegLong, 0, true, true);
+				
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR1, scratchRegEXTR, 0, 1, false);	// S32 -> F64
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);	// load 2^32 again
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
+					createFPdataProc(code, armVneg, condLT, scratchRegEXTR, src1Reg, true);
+					createFPdataProc(code, armVmov, condGE, scratchRegEXTR, 0, src1Reg, true);
+					createFPdataConvPrec(code, armVcvtp, condAlways, scratchRegEXTR, scratchRegEXTR, false);	// convert to double
+
+					createFPdataProc(code, armVsub, condAlways, scratchRegEXTR1, scratchRegEXTR, scratchRegEXTR1, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 4, 1, false);	// F64 -> U32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+
+					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if source was positive
+					createDataProcImm(code, armRsbs, condAlways, dReg, dReg, 0);	// negate
+					createDataProcImm(code, armRsc, condAlways, dRegLong, dRegLong, 0);
+					// largest negative number is smaller than -number by 1
+					createDataProcCmpImm(code, armCmp, condAlways, dRegLong, packImmediate(1 << 31));
+					createDataProcCmpImm(code, armCmp, condEQ, dReg, packImmediate(1));
+					createDataProcImm(code, armSub, condEQ, dReg, dReg, 1);
 					break;
 				case tDouble:
 					createFPdataConvPrec(code, armVcvtp, condAlways, dReg, src1Reg, false);
@@ -1771,36 +1789,52 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					createPacking(code, armSxtb, condAlways, dReg, dReg);
 					break;
 				case tChar: 
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSL, 16);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
 				case tInteger:
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, false);
-					createFPregMove(code, armVmovSingle, condAlways, dReg, scratchRegEXTR, 0, true, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
 					break;
-				case tLong:	
-//					createIrSrAd(code, ppcStmw, 28, stackPtr, tempStorageOffset + 8);
-//					Method m = Method.getCompSpecSubroutine("doubleToLong");
-//					createIrDrB(code, ppcFmr, 0, src1Reg);
-//					loadConstantAndFixup(code, 29, m);	// use a register which contains no operand 
-//					createIrSspr(code, ppcMtspr, LR, 29);
-//					createIBOBILK(code, ppcBclr, BOalways, 0, true);
-//					createIrDrAd(code, ppcLmw, 29, stackPtr, tempStorageOffset + 8 + 4); // restore
-//					createIrArSrB(code, ppcOr, dReg, 28, 28);
-//					if (dReg != 28) // restore last register if not destination register
-//						createIrDrAd(code, ppcLwz, 28, stackPtr, tempStorageOffset + 8);
-//					createIrArSrB(code, ppcOr, dRegLong, 0, 0);
+				case tLong:					
+					createFPdataProc(code, armVcmpe, condAlways, src1Reg, 0, false);
+					createCoProcFPU(code, armVmrs, condAlways, 15);	// get flags only
+					createFPdataProc(code, armVneg, condLT, scratchRegEXTR1, src1Reg, false);	// make positive
+					createFPdataProc(code, armVmov, condGE, scratchRegEXTR1, 0, src1Reg, false);	// copy if already positive			
+					Item item = int2floatConst2;	// ref to 2^32;
+					loadConstantAndFixup(code, scratchReg, item);	// address of constant (in the const area) is loaded
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 5, 1, false);	// F64 -> S32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dRegLong, 0, true, true);
+				
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR1, scratchRegEXTR, 0, 1, false);	// S32 -> F64
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);	// load 2^32 again
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
+					createFPdataProc(code, armVneg, condLT, scratchRegEXTR, src1Reg, false);
+					createFPdataProc(code, armVmov, condGE, scratchRegEXTR, 0, src1Reg, false);	
+					createFPdataProc(code, armVsub, condAlways, scratchRegEXTR1, scratchRegEXTR, scratchRegEXTR1, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 4, 1, false);	// F64 -> U32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+
+					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if source was positive
+					createDataProcImm(code, armRsbs, condAlways, dReg, dReg, 0);	// negate
+					createDataProcImm(code, armRsc, condAlways, dRegLong, dRegLong, 0);
+					// largest negative number is smaller than -number by 1
+					createDataProcCmpImm(code, armCmp, condAlways, dRegLong, packImmediate(1 << 31));
+					createDataProcCmpImm(code, armCmp, condEQ, dReg, packImmediate(1));
+					createDataProcImm(code, armSub, condEQ, dReg, dReg, 1);
 					break;
 				case tFloat:
 					createFPdataConvPrec(code, armVcvtp, condAlways, dReg, src1Reg, true);
@@ -1855,7 +1889,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 				} else if (type == tFloat  || type == tDouble) {
 					createFPdataProc(code, armVcmp, condAlways, src1Reg, src2Reg, type == tFloat);
-					createCoProcFPU(code, armVmrs, condAlways, 15);	
+					createCoProcFPU(code, armVmrs, condAlways, 15);	// get flags only
 					SSAInstruction next = node.instructions[i+1];
 					assert next.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
 					int bci = meth.cfg.code[node.lastBCA] & 0xff;
@@ -2936,7 +2970,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
-	// floating point data processing (VNEG)
+	// floating point data processing (VNEG, VCMP, VCMPE)
 	private void createFPdataProc(Code32 code, int opCode, int cond, int Vd, int Vm, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
@@ -2947,8 +2981,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	// floating point data processing (VCVT, between floating point and integer)
 	private void createFPdataConv(Code32 code, int opCode, int cond, int Vd, int Vm, int opc, int op, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
-		if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (opc << 16) | (op << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
-		else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | (opc << 16) | (op << 7) | (Vm&0xf) | ((Vm>>4) << 5);
+		if ((opc & 4) != 0) {	// to integer
+			if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (opc << 16) | (op << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
+			else code.instructions[code.iCount] |= (1 << 8) | (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (opc << 16) | (op << 7) | (Vm&0xf) | ((Vm>>4) << 5);
+		} else {	// to floating point
+			if (single) code.instructions[code.iCount] |= (((Vd>>1)&0xf) << 12) | ((Vd&1) << 22) | (opc << 16) | (op << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
+			else code.instructions[code.iCount] |= (1 << 8) | ((Vd&0xf) << 12) | ((Vd>>4) << 22) | (opc << 16) | (op << 7) | ((Vm>>1)&0xf) | ((Vm&1) << 5);
+		}
 		code.incInstructionNum();
 	}
 
@@ -2961,6 +3000,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	// floating point register moving between arm and fp registers (VMOV)
+	// important: if toArm -> Vm is source register and Rt is destination register
 	private void createFPregMove(Code32 code, int opCode, int cond, int Vm, int Rt, int Rt2, boolean toArm, boolean single) {
 		code.instructions[code.iCount] = (cond << 28) | opCode;
 		if (single) code.instructions[code.iCount] |= (((Vm>>1)&0xf) << 16) | ((Vm&1) << 7) | (Rt << 12);
@@ -2975,7 +3015,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
-	// coprocessor FPU (VMRS)
+	// coprocessor FPU (VMRS, VMSR)
 	private void createCoProcFPU(Code32 code, int opCode, int cond, int Rt) {
 		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12);
 		code.incInstructionNum();
