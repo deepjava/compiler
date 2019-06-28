@@ -21,8 +21,10 @@ package ch.ntb.inf.deep.config;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 
 import ch.ntb.inf.deep.classItems.*;
 import ch.ntb.inf.deep.classItems.Class;
@@ -85,6 +87,7 @@ public class Configuration implements ICclassFileConsts {
 	private static OperatingSystem os;
 	private static Programmer programmer;
 	private static RunConfiguration activeRunConfig;
+	private static ArrayList<Map.Entry<String,Integer>> imgFile = new ArrayList<>();
 	
 	public static Project readProjectFile(String projectFile) {
 		reporter.clear();
@@ -294,6 +297,14 @@ public class Configuration implements ICclassFileConsts {
 		else reporter.error(223, "Targetconfiguration \"" + string + "\" not found");
 	}
 
+	public static ArrayList<Map.Entry<String,Integer>> getImgFile() {
+		return imgFile;
+	}
+
+	public static void addImgFile(String name, int addr) {
+		imgFile.add(new AbstractMap.SimpleEntry<>(name, addr));
+	}
+
 	public static void clear() { 
 		project = null;
 		rootClassNames = null;
@@ -301,6 +312,7 @@ public class Configuration implements ICclassFileConsts {
 		board = null;
 		os = null;
 		programmer = null;
+		imgFile.clear();
 	}
 	
 	public static Segment getCodeSegmentOf(Class cls) {
@@ -646,6 +658,21 @@ public class Configuration implements ICclassFileConsts {
 		indent(indentLevel); vrb.println("}");
 	}
 
+	public static void printImgFileNames(int indentLevel){
+		indent(indentLevel);
+		vrb.println("image files:");
+		if (!imgFile.isEmpty()) {
+			for (Map.Entry<String,Integer> file : imgFile) {
+				indent(indentLevel+1);
+				vrb.println(file.getKey() + ", addr = 0x" + Integer.toHexString(file.getValue()));
+			}
+			indent(indentLevel); vrb.println("}");
+		} else {
+				indent(indentLevel+1);
+				vrb.println("none");			
+		}
+	}
+
 	public static void print() {
 		vrb.println("project settings");
 		project.print(1);
@@ -654,6 +681,7 @@ public class Configuration implements ICclassFileConsts {
 		printCpuMemMap(1);
 		printBoardMemMap(1);
 		printTargetConfigurations(1);
+		printImgFileNames(1);
 		vrb.println("active target configuration = " + activeRunConfig.name);
 		vrb.println();
 	}

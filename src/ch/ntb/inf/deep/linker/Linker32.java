@@ -188,6 +188,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		
 		if(dbg) vrb.println("  Deleting old target image... ");
 		targetImage = null;
+		TargetMemorySegment.clearCounter();
 		
 		if(dbg) vrb.println("[LINKER] END: Initializing.\n");
 	}
@@ -1248,24 +1249,20 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 	
 	public static long writeTargetImageToBinFile(String fileName) throws IOException {
-		if (dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":");
+		if (dbg) vrb.println("\n[LINKER] START: Writing target image to file: \"" + fileName +"\":");
 		long bytesWritten = 0;
 		String fileExtension = "bin";
 		String pathAndFileName = fileName;
 		if (fileName.lastIndexOf('.') > 0) {
 			fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
 			pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
-		}
-		
-		String currentFileName;
-		
+		}		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
-//		currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
-		currentFileName = new String(pathAndFileName + "." + fileExtension);
+		String currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
+		Configuration.addImgFile(currentFileName, tms.startAddress);
 		try {
-			DataOutputStream binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));
-		
+			DataOutputStream binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));	
 			if (dbg) vrb.println("  Writing to file: " + currentFileName);
 			int currentAddress = dev.address;	// start with device start address
 			while (tms != null) {
@@ -1281,10 +1278,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				}
 				if (dbg) vrb.println(" end address = 0x" + Integer.toHexString(currentAddress));
 				
-				if (tms.next != null && tms.next.segment.owner != dev) {
+				if (tms.next != null && tms.next.segment.owner != dev) {	// next device file
 					binFile.close();
 					dev = tms.next.segment.owner;
-					currentFileName = new String(pathAndFileName + "." +dev.name + fileExtension);
+					currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
+					Configuration.addImgFile(currentFileName, tms.next.startAddress);
 					binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));
 					currentAddress = dev.address;
 					if (dbg) vrb.println("  Writing to file: " + currentFileName);
@@ -1292,7 +1290,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				tms = tms.next;
 			}
 			bytesWritten =  binFile.size();
-			if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
+			if (dbg) vrb.println("[LINKER] END: Writing target image to file.");
 			binFile.close();
 		}
 		catch (Exception e) {

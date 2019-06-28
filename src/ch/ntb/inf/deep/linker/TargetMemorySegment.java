@@ -73,6 +73,10 @@ public class TargetMemorySegment {
 		addData(addr, d, d.length);
 	}
 	
+	public static void clearCounter() {
+		tmsCounter = 0;
+	}
+	
 	public String toString() {
 		StringBuffer sb = new StringBuffer("Target Memory Segment #" + this.id + ":\n  Base Address: 0x" + Integer.toHexString(startAddress) + "\n  Size: " + data.length * 4 + " byte\n  Content:\n");
 		for(int i = 0; i < data.length; i++) {
