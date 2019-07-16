@@ -351,11 +351,21 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		if (clazz.intfTypeChkList != null) len = clazz.intfTypeChkList.length;
 		if (len > 0) {
 			for (int n = 0; n < len; n += 2) {
-				Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
-				int val = interf.chkId << 16;
-				if (n < len - 1) {
-					interf = clazz.intfTypeChkList.getInterfaceAt(n + 1);
-					val |= interf.chkId;
+				int val;
+				if (bigEndian) {	// interfaces id's will be read per two byte entry
+					Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
+					val = interf.chkId << 16;
+					if (n < len - 1) {
+						interf = clazz.intfTypeChkList.getInterfaceAt(n + 1);
+						val |= interf.chkId;
+					}
+				} else {
+					Class interf = clazz.intfTypeChkList.getInterfaceAt(n);
+					val = interf.chkId;
+					if (n < len - 1) {
+						interf = clazz.intfTypeChkList.getInterfaceAt(n + 1);
+						val |= interf.chkId  << 16;
+					}				
 				}
 				if (intfTypeChkTable == null)
 					intfTypeChkTable = new FixedValueEntry("intf id " + n, val);
@@ -1211,9 +1221,6 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			if (cssr.machineCode != null) {				
 				if (dbg) vrb.println("         > Method \"" + cssr.name + "\":" + Integer.toHexString(cssr.address));
 				addTargetMemorySegment(new TargetMemorySegment(compilerSpecSubroutinesSegment, cssr.address, cssr.machineCode.instructions, cssr.machineCode.iCount));
-			}
-			else {
-				reporter.error(750, "of compiler specific subroutine: " + cssr.name);
 			}
 			cssr = (Method)cssr.next;
 		}

@@ -121,14 +121,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			
 			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
 				Call call = (Call)instr;
-				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
-					CodeGenARM.enFloatsInExc = true;
+				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) CodeGenARM.enFloatsInExc = true;
 				}
-//				int id = ((Method)call.item).id;
-//				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-//					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
-//					CodeGenARM.tempStorage = true;
+				if ((call.item.accAndPropFlags & (1 << dpfInterfCall)) != 0) CodeGenARM.intfMethStorage = true;
 			}
 		}
 		

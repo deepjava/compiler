@@ -44,8 +44,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	public static int idGETGPR, idGETEXTRD, idGETEXTRS, idGETCPR;
 	public static int idPUTGPR, idPUTEXTRD, idPUTEXTRS, idPUTCPR;
 
-	private static int paramOffset;
+	private static int paramOffset;	// // stack offset (in bytes) to parameters stored on the stack
+	private static int intfMethStorageOffset;	// // stack offset (in bytes) to auxiliary registers for invokeinterface stored on the stack
 	static boolean enFloatsInExc;
+	static boolean intfMethStorage;	// used for methods which call "invokeinterface", allocates temporary storage on stack for auxiliary registers
 
 	private static boolean newString;
 
@@ -85,6 +87,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (dbg) StdStreams.vrb.println("build intervals");
 
 		enFloatsInExc = false;
+		intfMethStorage = false;
 		RegAllocatorARM.regsGPR = regsGPRinitial;
 		RegAllocatorARM.regsEXTRD = regsEXTRDinitial;
 		RegAllocatorARM.regsEXTRS = regsEXTRSinitial;
@@ -395,7 +398,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	 * @return Nof bytes on the stack
 	 */
 	private static int calcStackSize(Code32 code) {
-		int size = 8 + callParamSlotsOnStack * 4 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4 + RegAllocator.maxLocVarStackSlots * 4;	// includes LR and SP for back trace
+		int size = 8 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4;	// includes LR and SP for back trace
+		size += callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4 + (intfMethStorage? 12: 0);	
 		assert(nofNonVolEXTRD < 16);
 		if (nofNonVolEXTRD >= 16) ErrorReporter.reporter.error(1000);
 //		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
@@ -408,6 +412,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		paramOffset = 4;
 		code.localVarOffset = paramOffset + callParamSlotsOnStack * 4;
+		intfMethStorageOffset = paramOffset + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
 		return size;
 	}
 
@@ -1918,10 +1923,261 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				i++;	// following branch instruction is already handled
 				break;}
 			case sCinstanceof: {
-//				assert false;
+				MonadicRef ref = (MonadicRef)instr;
+				Type t = (Type)ref.item;
+				if (t.category == tcRef) {	// object (to test for) is regular class or interface
+					if ((t.accAndPropFlags & (1<<apfInterface)) != 0) {	// object is interface
+						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+						createMovw(code, armMovw, condEQ, dReg, 0);
+						createBranchImm(code, armB, condEQ, 12);	// jump to end
+						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is array?
+						createMovw(code, armMovw, condNOTEQ, dReg, 0);
+						createBranchImm(code, armB, condNOTEQ, 8);	// jump to end					
+						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+						createLSWordImm(code, armLdr, condAlways, LR, scratchReg, Linker32.tdIntfTypeChkTableOffset, 1, 1, 0);
+						createDataProcReg(code, armAdd, condAlways, scratchReg, LR, scratchReg, noShift, 0);
+						// label 1
+						createLSWordImm(code, armLdrh, condAlways, LR, scratchReg, 0, 1, 1, 0);
+						createDataProcCmpImm(code, armCmp, condAlways, LR, ((Class)t).chkId);	// is interface chkId?
+						createDataProcImm(code, armAdd, condGT, scratchReg, scratchReg, 2);
+						createBranchImm(code, armB, condGT, -5);	// jump to label 1
+						createMovw(code, armMovw, condLT, dReg, 0);
+						createMovw(code, armMovw, condGE, dReg, 1);
+					} else {	// regular class
+						int offset = ((Class)t).extensionLevel;
+						if (t.name.equals(HString.getHString("java/lang/Object"))) {
+							createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+							createMovw(code, armMovw, condEQ, dReg, 0);
+							createMovw(code, armMovw, condNOTEQ, dReg, 1);
+						} else { // regular class but not java/lang/Object
+							createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+							createMovw(code, armMovw, condEQ, dReg, 0);
+							createBranchImm(code, armB, condEQ, 10);	// jump to end
+							createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is array?
+							createMovw(code, armMovw, condNOTEQ, dReg, 0);
+							createBranchImm(code, armB, condNOTEQ, 6);	// jump to end
+							createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+							createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, Linker32.tdBaseClass0Offset + offset * 4, 1, 1, 0);
+							loadConstantAndFixup(code, LR, t);	// addr of type
+							createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);
+							createMovw(code, armMovw, condEQ, dReg, 1);
+							createMovw(code, armMovw, condNOTEQ, dReg, 0);
+						}
+					}
+				} else {	// object is an array
+					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
+						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+						createMovw(code, armMovw, condEQ, dReg, 0);
+						createBranchImm(code, armB, condEQ, 10);	// jump to end		
+						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+						createMovw(code, armMovw, condEQ, dReg, 0);
+						createBranchImm(code, armB, condEQ, 6);	// jump to end
+						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+						loadConstantAndFixup(code, LR, t);	// addr of type
+						createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);
+						createMovw(code, armMovw, condEQ, dReg, 1);
+						createMovw(code, armMovw, condNOTEQ, dReg, 0);
+					} else {	// array of regular classes or interfaces
+						int nofDim = ((Array)t).dimension;
+						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
+						int offset = ((Class)(((Array)t).componentType)).extensionLevel;
+						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
+							createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+							createMovw(code, armMovw, condEQ, dReg, 0);
+							createBranchImm(code, armB, condEQ, 16);	// jump to end		
+							createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+							createMovw(code, armMovw, condEQ, dReg, 0);
+							createBranchImm(code, armB, condEQ, 12);	// jump to end
+							createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+							createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
+							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, LR, 1);	// cut off P bit
+							createDataProcMovReg(code, armLsr, condAlways, scratchReg, scratchReg, noShift, 17);	// get dim
+							createDataProcCmpImm(code, armCmp, condAlways, LR, 0);	// check if array of primitive type
+							createBranchImm(code, armB, condLT, 3);	// jump to label 1
+							// array of regular classes
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, nofDim);	// actual dimension must be greater or equal than the dimension of type to test against
+							createMovw(code, armMovw, condGE, dReg, 1);
+							createMovw(code, armMovw, condLT, dReg, 0);
+							createBranchImm(code, armB, condAlways, 2);	// jump to end
+							// label 1, is array of primitive type
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, nofDim);	// actual dimension must be greater than the dimension of type to test against
+							createMovw(code, armMovw, condGT, dReg, 1);
+							createMovw(code, armMovw, condLE, dReg, 0);
+						} else {	// array of regular classes or interfaces but not java/lang/Object
+							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
+								createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+								createMovw(code, armMovw, condEQ, dReg, 0);
+								createBranchImm(code, armB, condEQ, 22);	// jump to end		
+								createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+								createMovw(code, armMovw, condEQ, dReg, 0);
+								createBranchImm(code, armB, condEQ, 18);	// jump to end
+								createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
+								createDataProcShiftImm(code, armLsl, condAlways, LR, LR, 1);	// cut off P bit
+								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 17);	// get dim
+								createDataProcCmpImm(code, armCmp, condAlways, LR, nofDim);	// actual dimension must be equal to dimension of type to test against
+								createMovw(code, armMovw, condNOTEQ, dReg, 0);
+								createBranchImm(code, armB, condNOTEQ, 11);	// jump to end		
+								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, 8 + nofDim * 4, 1, 1, 0);	// get component type
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is 0?
+								createMovw(code, armMovw, condEQ, dReg, 0);
+								createBranchImm(code, armB, condEQ, 7);	// jump to end		
+								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, Linker32.tdIntfTypeChkTableOffset, 1, 1, 0);	// get base class type descriptor
+								createDataProcReg(code, armAdd, condAlways, scratchReg, LR, scratchReg, noShift, 0);
+								// label 1
+								createLSWordImm(code, armLdrh, condAlways, LR, scratchReg, 0, 1, 1, 0);
+								createDataProcCmpImm(code, armCmp, condAlways, LR, ((Class)compType).chkId);	// is interface chkId?
+								createDataProcImm(code, armAdd, condGT, scratchReg, scratchReg, 2);
+								createBranchImm(code, armB, condGT, -5);	// jump to label 1
+								createMovw(code, armMovw, condLT, dReg, 0);
+								createMovw(code, armMovw, condGE, dReg, 1);
+							} else {	// array of regular classes
+								createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+								createMovw(code, armMovw, condEQ, dReg, 0);
+								createBranchImm(code, armB, condEQ, 20);	// jump to end		
+								createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+								createMovw(code, armMovw, condEQ, dReg, 0);
+								createBranchImm(code, armB, condEQ, 16);	// jump to end
+								createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
+								createDataProcShiftImm(code, armLsl, condAlways, LR, LR, 1);	// cut off P bit
+								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 17);	// get dim
+								createDataProcCmpImm(code, armCmp, condAlways, LR, nofDim);	// actual dimension must be equal to dimension of type to test against
+								createMovw(code, armMovw, condNOTEQ, dReg, 0);
+								createBranchImm(code, armB, condNOTEQ, 9);	// jump to end		
+								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, 8 + nofDim * 4, 1, 1, 0);	// get component type
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is 0?
+								createMovw(code, armMovw, condEQ, dReg, 0);
+								createBranchImm(code, armB, condEQ, 5);	// jump to end		
+								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, Linker32.tdBaseClass0Offset + offset * 4, 1, 1, 0);	// get base class type descriptor
+								loadConstantAndFixup(code, LR, compType);	// addr of component type
+								createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);	// is equal?
+								createMovw(code, armMovw, condEQ, dReg, 1);
+								createMovw(code, armMovw, condNOTEQ, dReg, 0);
+							}
+						}
+					}
+				}
 				break;}
 			case sCcheckcast: {
-//				assert false;
+				MonadicRef ref = (MonadicRef)instr;
+				Type t = (Type)ref.item;
+				if (t.category == tcRef) {	// object (to test for) is regular class or interface
+					if ((t.accAndPropFlags & (1<<apfInterface)) != 0) {	// object is interface
+						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+						createBranchImm(code, armB, condEQ, 10);	// jump to end
+						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is array?
+						createSvc(code, armSvc, condNOTEQ, 8);
+						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+						createLSWordImm(code, armLdr, condAlways, LR, scratchReg, Linker32.tdIntfTypeChkTableOffset, 1, 1, 0);
+						createDataProcReg(code, armAdd, condAlways, scratchReg, LR, scratchReg, noShift, 0);
+						// label 1
+						createLSWordImm(code, armLdrh, condAlways, LR, scratchReg, 0, 1, 1, 0);
+						createDataProcCmpImm(code, armCmp, condAlways, LR, ((Class)t).chkId);	// is interface chkId?
+						createDataProcImm(code, armAdd, condGT, scratchReg, scratchReg, 2);
+						createBranchImm(code, armB, condGT, -5);	// jump to label 1
+						createSvc(code, armSvc, condNOTEQ, 8);	// chkId is not equal
+					} else {	// regular class
+						int offset = ((Class)t).extensionLevel;
+						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+						createBranchImm(code, armB, condEQ, 8);	// jump to end
+						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is array?
+						createSvc(code, armSvc, condNOTEQ, 8);
+						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+						createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, Linker32.tdBaseClass0Offset + offset * 4, 1, 1, 0);
+						loadConstantAndFixup(code, LR, t);	// addr of type
+						createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);
+						createSvc(code, armSvc, condNOTEQ, 8);
+					}
+				} else {	// object is an array
+					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
+						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+						createBranchImm(code, armB, condEQ, 7);	// jump to end
+						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+						createSvc(code, armSvc, condEQ, 8);
+						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+						loadConstantAndFixup(code, LR, t);	// addr of type
+						createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);
+						createSvc(code, armSvc, condNOTEQ, 8);
+					} else {	// array of regular classes or interfaces
+						int nofDim = ((Array)t).dimension;
+						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
+						int offset = ((Class)(((Array)t).componentType)).extensionLevel;
+						if (((Array)t).componentType.name.equals(HString.getHString("java/lang/Object"))) {
+							createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+							createBranchImm(code, armB, condEQ, 13);	// jump to end		
+							createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+							createSvc(code, armSvc, condNOTEQ, 8);
+							createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+							createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
+							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, LR, 1);	// cut off P bit
+							createDataProcMovReg(code, armLsr, condAlways, scratchReg, scratchReg, noShift, 17);	// get dim
+							createDataProcCmpImm(code, armCmp, condAlways, LR, 0);	// check if array of primitive type
+							createBranchImm(code, armB, condLT, 2);	// jump to label 1
+							// array of regular classes
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, nofDim);	// actual dimension must be greater or equal than the dimension of type to test against
+							createSvc(code, armSvc, condLT, 8);
+							createBranchImm(code, armB, condAlways, 1);	// jump to end
+							// label 1, is array of primitive type
+							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, nofDim);	// actual dimension must be greater than the dimension of type to test against
+							createSvc(code, armSvc, condLE, 8);
+						} else {	// array of regular classes or interfaces but not java/lang/Object
+							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
+								createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+								createBranchImm(code, armB, condEQ, 18);	// jump to end		
+								createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+								createSvc(code, armSvc, condEQ, 8);
+								createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
+								createDataProcShiftImm(code, armLsl, condAlways, LR, LR, 1);	// cut off P bit
+								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 17);	// get dim
+								createDataProcCmpImm(code, armCmp, condAlways, LR, nofDim);	// actual dimension must be equal to dimension of type to test against
+								createSvc(code, armSvc, condNOTEQ, 8);		
+								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, 8 + nofDim * 4, 1, 1, 0);	// get component type
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is 0?
+								createSvc(code, armSvc, condEQ, 8);
+								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, Linker32.tdIntfTypeChkTableOffset, 1, 1, 0);	// get base class type descriptor
+								createDataProcReg(code, armAdd, condAlways, scratchReg, LR, scratchReg, noShift, 0);
+								// label 1
+								createLSWordImm(code, armLdrh, condAlways, LR, scratchReg, 0, 1, 1, 0);
+								createDataProcCmpImm(code, armCmp, condAlways, LR, ((Class)compType).chkId);	// is interface chkId?
+								createDataProcImm(code, armAdd, condGT, scratchReg, scratchReg, 2);
+								createBranchImm(code, armB, condGT, -5);	// jump to label 1
+								createSvc(code, armSvc, condLT, 8);	
+							} else {	// array of regular classes
+								createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
+								createBranchImm(code, armB, condEQ, 16);	// jump to end		
+								createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
+								createSvc(code, armSvc, condEQ, 8);
+								createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
+								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
+								createDataProcShiftImm(code, armLsl, condAlways, LR, LR, 1);	// cut off P bit
+								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 17);	// get dim
+								createDataProcCmpImm(code, armCmp, condAlways, LR, nofDim);	// actual dimension must be equal to dimension of type to test against
+								createSvc(code, armSvc, condNOTEQ, 8);
+								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, 8 + nofDim * 4, 1, 1, 0);	// get component type
+								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is 0?
+								createSvc(code, armSvc, condEQ, 8);
+								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, Linker32.tdBaseClass0Offset + offset * 4, 1, 1, 0);	// get base class type descriptor
+								loadConstantAndFixup(code, LR, compType);	// addr of component type
+								createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);	// is equal?
+								createSvc(code, armSvc, condNOTEQ, 8);
+							}
+						}
+					}
+				}
 				break;}
 			case sCthrow: {
 //				assert false;
@@ -2036,9 +2292,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						assert false : "not implemented " + m.name.toString();
 					}
 				} else {	// real method (not synthetic)
-					// copy parameters into registers and to stack if not enough registers
-//					if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
-//					copyParameters(code, opds);
 					if ((m.accAndPropFlags & (1<<apfStatic)) != 0 ||
 							m.name.equals(HString.getHString("newPrimTypeArray")) ||
 							m.name.equals(HString.getHString("newRefArray"))
@@ -2052,10 +2305,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					} else if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
 						int refReg = src1Reg;
 						int offset = (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset;
-//						createItrap(ppcTwi, TOifequal, refReg, 0);
-//						createIrDrAd(ppcLwz, res.regGPR1, refReg, -4);
-//						createIrDrAd(ppcLwz, res.regGPR1, res.regGPR1, offset);	// delegate method
-//						createIrSspr(ppcMtspr, LR, res.regGPR1);
+						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
+						createSvc(code, armSvc, condEQ, 7);
+						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
+						createLSWordImm(code, armLdr, condAlways, LR, LR, offset, 1, 1, 0);	// , offset is positive, delegate method
+						copyParameters(code, opds);
+						loadConstant(code, scratchReg, m.owner.index << 16 | m.index * 4);	// interface id and method offset	
+						createBranchReg(code, armBlxReg, condAlways, LR);
 					} else if (call.invokespecial) {	// invokespecial
 						if (newString) {	// special treatment for strings
 							if (m == strInitC) m = strAllocC;
@@ -2079,17 +2335,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
 						createSvc(code, armSvc, condEQ, 7);
 						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
-						createLSWordImm(code, armLdr, condAlways, LR, LR, -offset, 1, 0, 0);
+						createLSWordImm(code, armLdr, condAlways, LR, LR, -offset, 1, 0, 0);	// offset is negative
 						if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
 						copyParameters(code, opds);
 						createBranchReg(code, armBlxReg, condAlways, LR);
 					}
 
-//					if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
-//						// interface info goes into last parameter register
-//						loadConstant(paramEndGPR, m.owner.index << 16 | m.index * 4);	// interface id and method offset						// check if param = maxParam in reg -2
-//					}
-					
 					if (newString) {
 						int sizeOfObject = Type.wktObject.objectSize;
 						createDataProcImm(code, armMov, condAlways, paramStartGPR + opds.length, 0, sizeOfObject); // reg after last parameter
@@ -3219,7 +3470,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //			createIrSrAd(code, ppcStfd, 0, stackPtr, offset);
 //		}
 		int localStorage = stackSize - (8 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4);
-		if (localStorage > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, localStorage);	// add space for locals and parameters
+		// add space for locals, parameters, and storage for auxiliary registers for invokeinterface
+		if (localStorage > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, localStorage);
 		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store back trace
 		if (dbg) {
 			StdStreams.vrb.print("\tmoveGPRsrc = ");
@@ -3388,33 +3640,40 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		createDataProcImm(code, armSubs, condAlways, PC, LR, 4);
 	}
 
+	int regAux1 = paramEndGPR; // use parameter registers for interface delegation methods
+	int regAux2 = paramEndGPR - 1; // use parameter registers
+	int regAux3 = paramEndGPR - 2; // use parameter registers
+	
 	public void generateCompSpecSubroutines() {
-		Method m = Method.getCompSpecSubroutine("longToDouble");
-		// long is passed in r30/r31, r29 can be used for general purposes
-		// faux1 and faux2 are used as general purpose FPR's, result is passed in f0 
+		Method m = Method.getCompSpecSubroutine("imDelegIiMm");
 		if (m != null) { 
 			Code32 code = new Code32(null);
 			m.machineCode = code;
+			createLSWordImm(code, armStr, condAlways, regAux3, stackPtr, intfMethStorageOffset, 1, 0, 0);	// backup auxiliary registers onto stack
+			createLSWordImm(code, armStr, condAlways, regAux2, stackPtr, intfMethStorageOffset + 4, 1, 0, 0);
+			createLSWordImm(code, armStr, condAlways, regAux1, stackPtr, intfMethStorageOffset + 8, 1, 0, 0);
+			createDataProcImm(code, armOrr, condAlways, regAux3, scratchReg, 0xff);	// interface id
+			createDataProcImm(code, armOrr, condAlways, regAux3, regAux3, packImmediate(0xff00));
+			createLSWordImm(code, armLdr, condAlways, regAux2, paramStartGPR, 4, 1, 0, 0);	// get tag
+			int offset = (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset;
+			createDataProcImm(code, armAdd, condAlways, regAux2, regAux2, packImmediate(offset));	// set to address before first interface 
+			createLSWordImm(code, armLdr, condAlways, regAux1, regAux2, 4, 1, 1, 1);	// get interface
+			createDataProcReg(code, armCmp, condAlways, 0, regAux1, regAux3, noShift, 0);
+			createBranchImm(code, armB, condGT, -4);
+
+			createMedia(code, armSbfx, condAlways, regAux1, regAux1, 0, 16);	// contains method offset within its interface
+			createMovw(code, armMovw, condAlways, regAux3, 0xffff);
+			createDataProcReg(code, armAnd, condAlways, scratchReg, regAux3, scratchReg, noShift, 0);	// mask interface method offset
+			createDataProcReg(code, armAdd, condAlways, scratchReg, scratchReg, regAux1, noShift, 0);	// offset = interface method offset + method offset
+			createLSWordImm(code, armLdr, condAlways, regAux2, paramStartGPR, 4, 1, 0, 0);	// reload tag
+			createLSWordReg(code, armLdr, condAlways, scratchReg, regAux2, scratchReg, noShift, 0, 1, 1, 0);	// get method address
+			createLSWordImm(code, armLdr, condAlways, regAux1, stackPtr, intfMethStorageOffset + 8, 1, 0, 0);	// restore auxiliary registers from stack
+			createLSWordImm(code, armLdr, condAlways, regAux2, stackPtr, intfMethStorageOffset + 4, 1, 0, 0);
+			createLSWordImm(code, armLdr, condAlways, regAux3, stackPtr, intfMethStorageOffset, 1, 0, 0);
+			createDataProcMovReg(code, armMov, condAlways, PC, scratchReg, noShift, 0);	// jump to method 
+//			createBranchImm(code, armB, condAlways, -2);
 		}
-		
-		m = Method.getCompSpecSubroutine("remLong");
-		if (m != null) { 
-			Code32 code = new Code32(null);
-			m.machineCode = code;
-		}
-	
-		m = Method.getCompSpecSubroutine("doubleToLong");
-		if (m != null) { 
-			Code32 code = new Code32(null);
-			m.machineCode = code;
-		}
-	
-		m = Method.getCompSpecSubroutine("divLong");
-		if (m != null) { 
-			Code32 code = new Code32(null);
-			m.machineCode = code;
-		}
-	
+
 		m = Method.getCompSpecSubroutine("handleException");
 		if (m != null) { 
 			Code32 code = new Code32(null);
