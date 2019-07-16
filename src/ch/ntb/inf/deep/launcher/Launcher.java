@@ -336,7 +336,7 @@ public class Launcher implements ICclassFileConsts {
 		// handle compiler specific methods
 		if (dbg) vrb.println("[Launcher] (loop three) processing compiler specific subroutines:");
 		Method m = Method.compSpecSubroutines;	// Code generator: fix up
-		while (m != null) {
+		while (m != null && m.machineCode != null) {
 			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
 			if (dbg) vrb.println("      doing fixups");
 			cg.doFixups(m.machineCode);
