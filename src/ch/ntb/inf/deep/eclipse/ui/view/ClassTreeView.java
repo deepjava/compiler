@@ -98,7 +98,7 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				if(element instanceof Code32)return "MachineCode";
 				if(element instanceof String)return (String) element;
 				if(element instanceof SystemTableElement)return "System Table";
-				if(element instanceof SubroutineElement)return "Subroutines";
+				if(element instanceof SubroutineElement)return "Compiler Specific Subroutines";
 				if(element instanceof SubroutineEntry)return ((SubroutineEntry)element).name.toString();
 			}
 			
@@ -208,14 +208,16 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 				Method m = Method.compSpecSubroutines;
 				SubroutineEntry[] arrSE = new SubroutineEntry[32];
 				while(m != null) {
-					SubroutineEntry se;
-					String data = "";
-					data += "Name: "+m.name + "\tOffset: "+m.offset+"\tAddress: "+m.address+"\r\n";
-					data += m.machineCode.toString() + "\r\n";
-					se = new SubroutineEntry(m.name.toString(), data);
-					arrSE[index] = se;
+					if (m.machineCode != null) {
+						SubroutineEntry se;
+						String data = "";
+						data += "Name: " + m.name + "\tOffset: " + m.offset + "\tAddress: 0x" + Integer.toHexString(m.address) + "\r\n";
+						data += m.machineCode.toString() + "\r\n";
+						se = new SubroutineEntry(m.name.toString(), data);
+						arrSE[index] = se;
+						index++;
+					}
 					m = (Method)m.next;
-					index++;
 				}
 				item = new Object[index];
 				index = 0;
