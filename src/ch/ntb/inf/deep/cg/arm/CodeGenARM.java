@@ -483,13 +483,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (opds.length >= 2) {
 					src2Reg = opds[1].reg; 
 					src2RegLong = opds[1].regLong;
-					if (src2RegLong >= 0x100) {
+					if (src2RegLong >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
 						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						slot2L = src2RegLong & 0xff;
 						src2RegLong = volEndGPR - 2;
 						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, code.localVarOffset + 4 * slot2L, 1, 1, 0);	
 					}
-					if (src2Reg >= 0x100) {
+					if (src2Reg >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						slot2 = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
@@ -503,13 +503,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				src1Reg = opds[0].reg; 
 				src1RegLong = opds[0].regLong;
-				if (src1RegLong >= 0x100) {
+				if (src1RegLong >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
 					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					slot1L = src1RegLong & 0xff;
 					src1RegLong = volEndGPR - 1;
 					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, code.localVarOffset + 4 * slot1L, 1, 1, 0);	
 				}
-				if (src1Reg >= 0x100) {
+				if (src1Reg >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					slot1 = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
@@ -2411,90 +2411,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						return;
 					}
 				} else { // bCmultianewarray:
-					assert false;
-//					method = CFR.getNewMemoryMethod(bCmultianewarray);
-//					loadConstantAndFixup(res.regGPR1, method);	// addr of multianewarray
-//					createIrSspr(ppcMtspr, LR, res.regGPR1);
-//					// copy dimensions
-//					for (int k = 0; k < nofGPR; k++) {srcGPR[k] = 0; srcGPRcount[k] = 0;}
-//
-//					// get info about in which register parameters are located
-//					// the first two parameter registers are used for nofDim and ref
-//					// therefore start is at paramStartGPR + 2
-//					for (int k = 0, kGPR = 0; k < opds.length; k++) {
-//						int type = opds[k].type & ~(1<<ssaTaFitIntoInt);
-//						if (type == tLong) {
-//							srcGPR[kGPR + paramStartGPR + 2] = opds[k].regLong;	
-//							srcGPR[kGPR + 1 + paramStartGPR + 2] = opds[k].reg;
-//							kGPR += 2;
-//						} else {
-//							srcGPR[kGPR + paramStartGPR + 2] = opds[k].reg;
-//							kGPR++;
-//						}
-//					}
-//					
-//					// count register usage
-//					int cnt = paramStartGPR + 2;
-//					while (srcGPR[cnt] != 0) srcGPRcount[srcGPR[cnt++]]++;
-//					
-//					// handle move to itself
-//					cnt = paramStartGPR + 2;
-//					while (srcGPR[cnt] != 0) {
-//						if (srcGPR[cnt] == cnt) srcGPRcount[cnt]--;
-//						cnt++;
-//					}
-//
-//					// move registers 
-//					boolean done = false;
-//					while (!done) {
-//						cnt = paramStartGPR + 2; done = true;
-//						while (srcGPR[cnt] != 0) {
-//							if (srcGPRcount[cnt] == 0) { // check if register no longer used for parameter
-//								if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (cnt-paramStartGPR) + " from register " + srcGPR[cnt] + " to " + cnt);
-//								createIrArSrB(ppcOr, cnt, srcGPR[cnt], srcGPR[cnt]);
-//								srcGPRcount[cnt]--; srcGPRcount[srcGPR[cnt]]--; 
-//								done = false;
-//							}
-//							cnt++; 
-//						}
-//					}
-//					if (dbg) StdStreams.vrb.println();
-//
-//					// resolve cycles
-//					done = false;
-//					while (!done) {
-//						cnt = paramStartGPR + 2; done = true;
-//						while (srcGPR[cnt] != 0) {
-//							int src = 0;
-//							if (srcGPRcount[cnt] == 1) {
-//								src = cnt;
-//								createIrArSrB(ppcOr, 0, srcGPR[cnt], srcGPR[cnt]);
-//								srcGPRcount[srcGPR[cnt]]--;
-//								done = false;
-//							}
-//							boolean done1 = false;
-//							while (!done1) {
-//								int k = paramStartGPR + 2; done1 = true;
-//								while (srcGPR[k] != 0) {
-//									if (srcGPRcount[k] == 0 && k != src) {
-//										createIrArSrB(ppcOr, k, srcGPR[k], srcGPR[k]);
-//										srcGPRcount[k]--; srcGPRcount[srcGPR[k]]--; 
-//										done1 = false;
-//									}
-//									k++; 
-//								}
-//							}
-//							if (src != 0) {
-//								createIrArSrB(ppcOr, src, 0, 0);
-//								srcGPRcount[src]--;
-//							}
-//							cnt++;
-//						}
-//					}
-//					loadConstantAndFixup(paramStartGPR, item);	// ref to type descriptor
-//					createIrDrAsimm(ppcAddi, paramStartGPR+1, 0, opds.length);	// nofDimensions
-//					createIBOBILK(ppcBclr, BOalways, 0, true);
-//					createIrArSrB(ppcOr, res.reg, returnGPR1, returnGPR1);
+					method = CFR.getNewMemoryMethod(bCmultianewarray);
+					loadConstantAndFixup(code, LR, method);	// addr of multianewarray
+					copyParametersNewArray(code, opds);
+					loadConstantAndFixup(code, paramStartGPR, item);	// ref to type descriptor
+					createMovw(code, armMovw, condAlways, paramStartGPR + 1, opds.length);	// nofDimensions
+					createBranchReg(code, armBlxReg, condAlways, LR);
+					createDataProcMovReg(code, armMov, condAlways, dReg, returnGPR1, noShift, 0);
 				}
 				break;}
 			case sCreturn: {
@@ -2724,6 +2647,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 	// copy parameters for methods into parameter registers or onto stack
 	private void copyParameters(Code32 code, SSAValue[] opds) {
+//		boolean dbg = true;
 		// information about the src registers for parameters of a call to a method 
 		int[] srcGPR = new int[nofGPR];	
 		int[] srcGPRcount = new int[nofGPR];
@@ -3028,6 +2952,147 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					if (srcEXTRtype[i]) createFPdataProc(code, armVmov, condAlways, src*2, 0, 0, srcEXTRtype[i]);
 					else createFPdataProc(code, armVmov, condAlways, src, 0, 0, srcEXTRtype[i]);
 					srcEXTRcount[src]--;
+				}
+				i++;
+			}
+		}
+		if (dbg) StdStreams.vrb.println("\tdone");
+	}
+
+	// copy parameters for method "bCmultianewarray" into parameter registers or onto stack
+	private void copyParametersNewArray(Code32 code, SSAValue[] opds) {
+//		boolean dbg = true;
+		// information about the src registers for parameters of a call to a method 
+		int[] srcGPR = new int[nofGPR];	
+		int[] srcGPRcount = new int[nofGPR];
+
+		int offset = 0;
+		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = -1; srcGPRcount[k] = 0;}
+
+		// get info about in which register parameters are located
+		// parameters which go onto the stack are treated equally
+		for (int k = 0, kGPR = 0; k < opds.length; k++) {
+			int type = opds[k].type & ~(1<<ssaTaFitIntoInt);
+			if (type == tLong) {
+				srcGPR[kGPR + paramStartGPR + 2] = opds[k].regLong;
+				srcGPR[kGPR + 1 + paramStartGPR + 2] = opds[k].reg;
+				kGPR += 2;
+			} else {
+				srcGPR[kGPR + paramStartGPR + 2] = opds[k].reg;
+				kGPR++;
+			}
+		}
+
+		if (dbg) {
+			StdStreams.vrb.print("\tsrcGPR = ");
+			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
+			StdStreams.vrb.print("\tsrcGPRcount = ");
+			for (int k = 0; k < nofGPR; k++) StdStreams.vrb.print(srcGPRcount[k] + ","); 
+			StdStreams.vrb.println();
+		}
+
+		// count register usage
+		int i = paramStartGPR + 2;
+		while (srcGPR[i] != -1) {
+			if (srcGPR[i] <= topGPR) srcGPRcount[srcGPR[i]]++;
+			i++;
+		}
+		if (dbg) {
+			StdStreams.vrb.print("\tsrcGPR = ");
+			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
+			StdStreams.vrb.print("\tsrcGPRcount = ");
+			for (int k = 0; k < nofGPR; k++) StdStreams.vrb.print(srcGPRcount[k] + ","); 
+			StdStreams.vrb.println();
+		}
+		
+		// handle move to itself
+		i = paramStartGPR + 2;
+		while (srcGPR[i] != -1) {
+			if (srcGPR[i] == i) srcGPRcount[i]--;
+			i++;
+		}
+		if (dbg) {
+			StdStreams.vrb.print("\tsrcGPR = ");
+			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
+			StdStreams.vrb.print("\tsrcGPRcount = ");
+			for (int n = 0; n < nofGPR; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
+			StdStreams.vrb.println();
+		}
+
+		// move registers 
+		boolean done = false;
+		while (!done) {
+			i = paramStartGPR + 2; done = true;
+			while (srcGPR[i] != -1) {
+				if (i > paramEndGPR) {	// copy to stack
+					if (srcGPRcount[i] >= 0) { // check if not done yet
+						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to stack slot");
+						if (srcGPR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
+							createLSWordImm(code, armLdr, condAlways, scratchReg, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
+							createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, paramOffset + offset, 1, 1, 0);
+						} else {
+							createLSWordImm(code, armStr, condAlways, srcGPR[i], stackPtr, paramOffset + offset, 1, 1, 0);
+							srcGPRcount[srcGPR[i]]--; 
+						}
+						offset += 4;
+						srcGPRcount[i]--; 
+						done = false;
+					}
+				} else {	// copy to register
+					if (srcGPRcount[i] == 0) { // check if register no longer used for parameter
+						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to R" + i);
+						if (srcGPR[i] >= 0x100) {	// copy from stack
+							createLSWordImm(code, armLdr, condAlways, i, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
+						} else {
+							createDataProcMovReg(code, armMov, condAlways, i,  srcGPR[i], noShift, 0);
+							srcGPRcount[srcGPR[i]]--; 
+						}
+						srcGPRcount[i]--; 
+						done = false;
+					}
+				}
+				i++; 
+			}
+		}
+		if (dbg) {
+			StdStreams.vrb.print("\tsrcGPR = ");
+			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
+			StdStreams.vrb.print("\tsrcGPRcount = ");
+			for (int n = 0; n < nofGPR; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
+			StdStreams.vrb.println();
+		}
+
+		// resolve cycles
+		if (dbg) StdStreams.vrb.println("\tresolve cycles");
+		done = false;
+		while (!done) {
+			i = paramStartGPR + 2; done = true;
+			while (srcGPR[i] != -1) {
+				int src = -1;
+				if (srcGPRcount[i] == 1) {
+					src = i;
+					createDataProcMovReg(code, armMov, condAlways, scratchReg,  srcGPR[i], noShift, 0);
+					if (dbg) StdStreams.vrb.println("\tGPR: from register " + srcGPR[i] + " to " + scratchReg);
+					srcGPRcount[srcGPR[i]]--;
+					done = false;
+				}
+				boolean done1 = false;
+				while (!done1) {
+					int k = paramStartGPR + 2; done1 = true;
+					while (srcGPR[k] != -1) {
+						if (srcGPRcount[k] == 0 && k != src) {
+							createDataProcMovReg(code, armMov, condAlways, k,  srcGPR[k], noShift, 0);
+							if (dbg) StdStreams.vrb.println("\tGPR: from register " + srcGPR[k] + " to " + k);
+							srcGPRcount[k]--; srcGPRcount[srcGPR[k]]--; 
+							done1 = false;
+						}
+						k++; 
+					}
+				}
+				if (src != -1) {
+					createDataProcMovReg(code, armMov, condAlways, src,  scratchReg, noShift, 0);
+					if (dbg) StdStreams.vrb.println("\tGPR: from register " + scratchReg + " to " + src);
+					srcGPRcount[src]--;
 				}
 				i++;
 			}
