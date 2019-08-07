@@ -380,8 +380,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (dbg) StdStreams.vrb.print(reg);
 					}
 				}
-				nofParamGPR++;	// even if the parameter is not used, the calling method
-				// assigns a register and we have to account for this here
+				nofParamGPR++;	// even if the parameter is not used, the calling method assigns a register and we have to account for this here
 			}
 			if (i < nofParam - 1) if(dbg) StdStreams.vrb.print(", ");
 		}
@@ -483,13 +482,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (opds.length >= 2) {
 					src2Reg = opds[1].reg; 
 					src2RegLong = opds[1].regLong;
-					if (src2RegLong >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
+					if (src2RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
 						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						slot2L = src2RegLong & 0xff;
 						src2RegLong = volEndGPR - 2;
 						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, code.localVarOffset + 4 * slot2L, 1, 1, 0);	
 					}
-					if (src2Reg >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
+					if (src2Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						slot2 = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
@@ -503,13 +502,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				src1Reg = opds[0].reg; 
 				src1RegLong = opds[0].regLong;
-				if (src1RegLong >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
+				if (src1RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
 					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					slot1L = src1RegLong & 0xff;
 					src1RegLong = volEndGPR - 1;
 					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, code.localVarOffset + 4 * slot1L, 1, 1, 0);	
 				}
-				if (src1Reg >= 0x100 && instr.ssaOpcode != sCcall) {	// a call needs its parameters in parameter registers or on the stack
+				if (src1Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					slot1 = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
@@ -1224,7 +1223,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 					break;
 				case tLong: 
-					//					createBranchImm(code, armB, condAlways, -2);
 					if (src2Reg < 0) {	// is power of 2
 						long immVal = ((long)(((StdConstant)opds[1].constant).valueH)<<32) | (((StdConstant)opds[1].constant).valueL&0xFFFFFFFFL);
 						int shift = Long.numberOfTrailingZeros(immVal);
@@ -1698,7 +1696,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createDataProcMovReg(code, armMov, condAlways, dReg, src1Reg, noShift, 0);
 					break;
 				case tFloat:
-					// cannot use vmla as on long to double, not enough scratch registers
+					// cannot use vmla as in long -> double, not enough scratch registers
 					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1RegLong, 0, false, true);
 					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0, 1, false);
 					Item item = int2floatConst2;	// ref to 2^32;
@@ -2117,7 +2115,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createBranchImm(code, armB, condEQ, 13);	// jump to end		
 							createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
-							createSvc(code, armSvc, condNOTEQ, 8);
+							createSvc(code, armSvc, condEQ, 8);
 							createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 							createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
 							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, LR, 1);	// cut off P bit
@@ -2639,10 +2637,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			immVal = baseVal | ((16 - shift / 2) << 8);
 		}
 		return immVal;
-	}
-
-	private static void correctJmpAddr(int[] instructions, int count1, int count2) {
-		instructions[count1] |= ((count2 - count1) << 2) & 0xffff;
 	}
 
 	// copy parameters for methods into parameter registers or onto stack
