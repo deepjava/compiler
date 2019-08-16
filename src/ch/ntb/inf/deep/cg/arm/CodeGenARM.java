@@ -166,12 +166,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
 			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table has no prolog
-			} else if (method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
+			} else if (method.name == HString.getRegisteredHString("superVisorCall")) {	// special treatment for exception handling
 				code.iCount = 0;
 //				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
 //				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
 //				createIrSrAd(ppcStmw, 28, stackPtr, 4);
 //				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
+				createBlockDataTransfer(code, armPush, condAlways, 3 << 11);	// store nonvolatiles R11 and R12 which are used within this method
+				createDataProcMovReg(code, armMov, condAlways, topGPR, paramStartGPR, noShift, 0);	// copy exception into nonvolatile
+//				createBranchImm(code, armB, condAlways, -2);
 			} else {
 				stackSize = calcStackSizeException(code);
 				insertPrologException(code, stackSize);
@@ -242,7 +245,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
 			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table needs no epilog
-			} else if (method.name == HString.getRegisteredHString("programExc")) {	// special treatment for exception handling
+			} else if (method.name == HString.getRegisteredHString("superVisorCall")) {	// special treatment for exception handling
 				Method m = Method.getCompSpecSubroutine("handleException");
 				assert m != null;
 //				loadConstantAndFixup(code, 31, m);
@@ -250,6 +253,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				createIrDrAd(ppcLmw, 28, stackPtr, 4);
 //				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
 //				createIBOBILK(ppcBclr, BOalways, 0, false);
+				createBlockDataTransfer(code, armPop, condAlways, 3 << 11);	// restore nonvolatiles R11 and R12 which were used within this method
+				loadConstantAndFixup(code, scratchReg, m);
+				createDataProcMovReg(code, armMov, condAlways, PC, scratchReg, noShift, 0);	
 			} else {
 				insertEpilogException(code, stackSize);
 			}
@@ -405,10 +411,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
 //		int padding = (16 - (size % 16)) % 16;
 //		size = size + padding;
-//		LRoffset = size - 4;
-//		GPRoffset = LRoffset - nofNonVolGPR * 4;
-//		FPRoffset = GPRoffset - nofNonVolFPR * 8;
-//		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
 		paramOffset = 4;
 		code.localVarOffset = paramOffset + callParamSlotsOnStack * 4;
 		intfMethStorageOffset = paramOffset + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
@@ -482,13 +484,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (opds.length >= 2) {
 					src2Reg = opds[1].reg; 
 					src2RegLong = opds[1].regLong;
-					if (src2RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
+					if (src2RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	
+						// a call needs its parameters in parameter registers or on the stack, no copying for synthetic routines
 						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						slot2L = src2RegLong & 0xff;
 						src2RegLong = volEndGPR - 2;
 						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, code.localVarOffset + 4 * slot2L, 1, 1, 0);	
 					}
-					if (src2Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
+					if (src2Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	// a call needs its parameters in parameter registers or on the stack
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						slot2 = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
@@ -502,13 +505,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				src1Reg = opds[0].reg; 
 				src1RegLong = opds[0].regLong;
-				if (src1RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
+				if (src1RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	// a call needs its parameters in parameter registers or on the stack
 					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					slot1L = src1RegLong & 0xff;
 					src1RegLong = volEndGPR - 1;
 					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, code.localVarOffset + 4 * slot1L, 1, 1, 0);	
 				}
-				if (src1Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) != 0))) {	// a call needs its parameters in parameter registers or on the stack
+				if (src1Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	// a call needs its parameters in parameter registers or on the stack
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					slot1 = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
@@ -518,7 +521,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						src1Reg = nonVolStartGPR + 1;
 						createLSWordImm(code, armLdr, condAlways, src1Reg, stackPtr, code.localVarOffset + 4 * slot1, 1, 1, 0);	
 					}
-				}			
+				} 
 			}
 			dRegLong = res.regLong;
 			int dRegLongSlot = -1;
@@ -668,7 +671,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (meth.ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
 					createDataProcMovReg(code, armLsl, condAlways, scratchReg, refReg, noShift, objectSize);	// read field "count", must be first field
 					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
-					createSvc(code, armSvc, condCS, 7);
+					createSvc(code, armSvc, condCS, 20);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
@@ -690,7 +693,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createSvc(code, armSvc, condEQ, 7);
 					createLSWordImm(code, armLdrh, condAlways, scratchReg, refReg, arrayLenOffset, 1, 0, 0);
 					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
-					createSvc(code, armSvc, condCS, 7);
+					createSvc(code, armSvc, condCS, 20);
 					switch (res.type & ~(1<<ssaTaFitIntoInt)) {	// type to read
 					case tByte: case tBoolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -795,7 +798,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createSvc(code, armSvc, condEQ, 7);
 					createLSWordImm(code, armLdrh, condAlways, scratchReg, refReg, arrayLenOffset, 1, 0, 0);
 					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
-					createSvc(code, armSvc, condCS, 7);
+					createSvc(code, armSvc, condCS, 20);
 					switch (opds[0].type & ~(1<<ssaTaFitIntoInt)) {
 					case tAbyte: case tAboolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -2189,7 +2192,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			case sCcall: {
 				Call call = (Call)instr;
 				Method m = (Method)call.item;
+				if (dbg) StdStreams.vrb.println("is a call");
 				if ((m.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+					if (dbg) StdStreams.vrb.println("and synthetic");
 					if (m.id == idGET1) {	// GET1
 						createLSWordImm(code, armLdrsb, condAlways, dReg, src1Reg, 0, 0, 0, 0);
 					} else if (m.id == idGET2) { // GET2
@@ -3460,25 +3465,25 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		currInstr = code.excTabCount;
 		int count = 0;
 		while (code.instructions[currInstr] != 0xffffffff) {
-//			SSAInstruction ssaInstr = code.ssa.searchBca(code.instructions[currInstr]);	
-//			assert ssaInstr != null;
-//			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// start
-//			
-//			ssaInstr = code.ssa.searchBca(code.instructions[currInstr]);	
-//			assert ssaInstr != null;
-//			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// end
-//			
-//			ExceptionTabEntry[] tab = code.ssa.cfg.method.exceptionTab;
-//			assert tab != null;
-//			ExceptionTabEntry entry = tab[count];
-//			assert entry != null;
-//			if (entry.catchType != null) code.instructions[currInstr++] = entry.catchType.address;	// type 
-//			else code.instructions[currInstr++] = 0;	// finally 
-//			
-//			ssaInstr = code.ssa.searchBca(code.instructions[currInstr] + 1);	// add 1, as first store is ommitted	
-//			assert ssaInstr != null;
-//			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// handler
-			currInstr++; //muss wieder weg!!!!!!!!!!!!!!!!!!!!!
+			SSAInstruction ssaInstr = code.ssa.searchBca(code.instructions[currInstr]);	
+			assert ssaInstr != null;
+			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// start
+			
+			ssaInstr = code.ssa.searchBca(code.instructions[currInstr]);	
+			assert ssaInstr != null;
+			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// end
+			
+			ExceptionTabEntry[] tab = code.ssa.cfg.method.exceptionTab;
+			assert tab != null;
+			ExceptionTabEntry entry = tab[count];
+			assert entry != null;
+			if (entry.catchType != null) code.instructions[currInstr++] = entry.catchType.address;	// type 
+			else code.instructions[currInstr++] = 0;	// finally 
+			
+			ssaInstr = code.ssa.searchBca(code.instructions[currInstr] + 1);	// add 1, as first store is omitted	
+			assert ssaInstr != null;
+			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// handler
+//			currInstr++; //muss wieder weg!!!!!!!!!!!!!!!!!!!!! TODO
 			count++;
 		}
 		// fix addresses of variable and constant segment
@@ -3737,6 +3742,63 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (m != null) { 
 			Code32 code = new Code32(null);
 			m.machineCode = code;
+			createBranchImm(code, armB, condAlways, -2);
+			// r0 contains reference to exception, r3 holds LR
+			// r2 to r10 are used for auxiliary purposes
+
+//			// search end of method
+//			createIrArSrB(code, ppcOr, 4, 3, 3);
+//			createIrDrAd(code, ppcLwzu, 9, 4, 4);	
+//			createICRFrAsimm(code, ppcCmpli, CRF0, 9, 0xff);
+//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, -2);
+//			createIrArSrB(code, ppcOr, 10, 4, 4);	// keep for unwinding
+//			createIrDrAd(code, ppcLwzu, 5, 4, 4);	//  R4 now points to first entry of exception table
+//		
+//			// search catch, label 1
+//			int label1 = m.machineCode.iCount;
+//			createICRFrAsimm(code, ppcCmpi, CRF0, 5, -1);
+//			int label2 = m.machineCode.iCount;
+//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 2
+//			createIrDrAd(code, ppcLwz, 5, 4, 0);	// start 
+//			createICRFrArB(code, ppcCmp, CRF0, 3, 5);		
+//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+LT, 17);
+//			createIrDrAd(code, ppcLwz, 5, 4, 4);	// end 
+//			createICRFrArB(code, ppcCmp, CRF0, 3, 5);		
+//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, 14);
+//			createIrDrAd(code, ppcLwz, 5, 4, 8);	// type 
+//			
+//			createICRFrAsimm(code, ppcCmpi, CRF0, 5, 0);	// check if type "any", caused by finally
+//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 8);
+////			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);
+////			m.machineCode.createIrDrAsimm(ppcAddi, 18, 18, 0x1000);	
+////			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+EQ, 8);
+//			
+//			createIrDrAd(code, ppcLwz, 6, 5, -4);	// get extension level of exception 
+//			createIrArSSHMBME(code, ppcRlwinm, 6, 6, 2, 0, 31);	// *4
+//			createIrDrAsimm(code, ppcAddi, 6, 6, Linker32.tdBaseClass0Offset);	
+//			createIrDrAd(code, ppcLwz, 7, 2, -4);	// get tag 
+//			createIrDrArB(code, ppcLwzx, 8, 7, 6);	 
+//			createICRFrArB(code, ppcCmp, CRF0, 8, 5);		
+//			createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 4);		
+//			createIrDrAd(code, ppcLwz, 0, 4, 12);	// get handler address
+//			createIrSspr(code, ppcMtspr, SRR0, 0);
+//			createIrfi(code, ppcRfi);	// return to catch
+//			
+//			createIrDrAd(code, ppcLwzu, 5, 4, 16);	
+//			createIBOBIBD(code, ppcBc, BOalways, 0, 0);	// jump to label 1
+//			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label1);
+//			
+//			// catch not found, unwind, label 2
+//			correctJmpAddr(m.machineCode.instructions, label2, m.machineCode.iCount);
+//			createIrDrAd(code, ppcLwz, 5, stackPtr, 0);	// get back pointer
+//			createIrDrAd(code, ppcLwz, 3, 5, -4);	// get LR from stack
+//			loadConstantAndFixup(code, 6, m);
+//			createIrSrAd(code, ppcStw, 6, 5, -4);	// put addr of handleException
+//			createIrArS(code, ppcExtsb, 9, 9);
+//			createIrDrArB(code, ppcAdd, 9, 10, 9);
+//			createIrSspr(code, ppcMtspr, LR, 9);
+////			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
+//			createIBOBILK(code, ppcBclr, BOalways, 0, false); // branch to epilog
 		}
 	}
 
