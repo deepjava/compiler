@@ -484,14 +484,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (opds.length >= 2) {
 					src2Reg = opds[1].reg; 
 					src2RegLong = opds[1].regLong;
-					if (src2RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	
-						// a call needs its parameters in parameter registers or on the stack, no copying for synthetic routines
+					if (src2RegLong >= 0x100) {	
 						if (dbg) StdStreams.vrb.println("opd2 regLong on stack slot for instr: " + instr.toString());
 						slot2L = src2RegLong & 0xff;
 						src2RegLong = volEndGPR - 2;
 						createLSWordImm(code, armLdr, condAlways, src2RegLong, stackPtr, code.localVarOffset + 4 * slot2L, 1, 1, 0);	
 					}
-					if (src2Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	// a call needs its parameters in parameter registers or on the stack
+					if (src2Reg >= 0x100) {
 						if (dbg) StdStreams.vrb.println("opd2 reg on stack slot for instr: " + instr.toString());
 						slot2 = src2Reg & 0xff;
 						if ((opds[1].type == tFloat) || (opds[1].type == tDouble)) {
@@ -505,13 +504,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				}
 				src1Reg = opds[0].reg; 
 				src1RegLong = opds[0].regLong;
-				if (src1RegLong >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	// a call needs its parameters in parameter registers or on the stack
+				if (src1RegLong >= 0x100) {
 					if (dbg) StdStreams.vrb.println("opd1 regLong on stack slot for instr: " + instr.toString());
 					slot1L = src1RegLong & 0xff;
 					src1RegLong = volEndGPR - 1;
 					createLSWordImm(code, armLdr, condAlways, src1RegLong, stackPtr, code.localVarOffset + 4 * slot1L, 1, 1, 0);	
 				}
-				if (src1Reg >= 0x100 && (instr.ssaOpcode != sCcall || (instr.ssaOpcode == sCcall && (((Method)(((Call)instr).item)).accAndPropFlags & (1 << dpfSynthetic)) == 0))) {	// a call needs its parameters in parameter registers or on the stack
+				if (src1Reg >= 0x100) {
 					if (dbg) StdStreams.vrb.println("opd1 reg on stack slot for instr: " + instr.toString());
 					slot1 = src1Reg & 0xff;
 					if ((opds[0].type == tFloat) || (opds[0].type == tDouble)) {
@@ -521,7 +520,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						src1Reg = nonVolStartGPR + 1;
 						createLSWordImm(code, armLdr, condAlways, src1Reg, stackPtr, code.localVarOffset + 4 * slot1, 1, 1, 0);	
 					}
-				} 
+				}
 			}
 			dRegLong = res.regLong;
 			int dRegLongSlot = -1;
@@ -2306,13 +2305,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						copyParameters(code, opds);
 						insertBLAndFixup(code, m);	// addr of method
 					} else if ((m.accAndPropFlags & (1<<dpfInterfCall)) != 0) {	// invokeinterface
-						int refReg = src1Reg;
+						copyParameters(code, opds);
+						int refReg = paramStartGPR;
 						int offset = (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset;
 						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
 						createSvc(code, armSvc, condEQ, 7);
 						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
 						createLSWordImm(code, armLdr, condAlways, LR, LR, offset, 1, 1, 0);	// , offset is positive, delegate method
-						copyParameters(code, opds);
 						loadConstant(code, scratchReg, m.owner.index << 16 | m.index * 4);	// interface id and method offset	
 						createBranchReg(code, armBlxReg, condAlways, LR);
 					} else if (call.invokespecial) {	// invokespecial
@@ -2324,23 +2323,23 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							copyParameters(code, opds);
 							insertBLAndFixup(code, m);
 						} else {
-							int refReg = src1Reg;
 							if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
 							copyParameters(code, opds);
+							int refReg = paramStartGPR;
 							createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
 							createSvc(code, armSvc, condEQ, 7);
 							insertBLAndFixup(code, m);
 						}
 					} else {	// invokevirtual 
-						int refReg = src1Reg;
+						if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
+						copyParameters(code, opds);
+						int refReg = paramStartGPR;
 						int offset = Linker32.tdMethTabOffset;
 						offset -= m.index * Linker32.slotSize; 
 						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
 						createSvc(code, armSvc, condEQ, 7);
 						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
 						createLSWordImm(code, armLdr, condAlways, LR, LR, -offset, 1, 0, 0);	// offset is negative
-						if (dbg) StdStreams.vrb.println("call to " + m.name + ": copy parameters");
-						copyParameters(code, opds);
 						createBranchReg(code, armBlxReg, condAlways, LR);
 					}
 
@@ -2644,7 +2643,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		return immVal;
 	}
 
-	// copy parameters for methods into parameter registers or onto stack
+	// copy parameters for methods into parameter registers or onto stack, uses scratch register but not LR
 	private void copyParameters(Code32 code, SSAValue[] opds) {
 //		boolean dbg = true;
 		// information about the src registers for parameters of a call to a method 
