@@ -172,7 +172,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
 //				createIrSrAd(ppcStmw, 28, stackPtr, 4);
 //				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
-				createBlockDataTransfer(code, armPush, condAlways, 3 << 11);	// store nonvolatiles R11 and R12 which are used within this method
+				createBlockDataTransfer(code, armPush, condAlways, 7 << 10);	// store nonvolatiles R10, R11, R12 which are used within this method
 				createDataProcMovReg(code, armMov, condAlways, topGPR, paramStartGPR, noShift, 0);	// copy exception into nonvolatile
 //				createBranchImm(code, armB, condAlways, -2);
 			} else {
@@ -253,7 +253,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 //				createIrDrAd(ppcLmw, 28, stackPtr, 4);
 //				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
 //				createIBOBILK(ppcBclr, BOalways, 0, false);
-				createBlockDataTransfer(code, armPop, condAlways, 3 << 11);	// restore nonvolatiles R11 and R12 which were used within this method
+				createBlockDataTransfer(code, armPop, condAlways, 7 << 10);	// restore nonvolatiles R10, R11, R12 which were used within this method
 				loadConstantAndFixup(code, scratchReg, m);
 				createDataProcMovReg(code, armMov, condAlways, PC, scratchReg, noShift, 0);	
 			} else {
@@ -453,6 +453,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			if (node.isCatch && i == 0 && node.loadLocalExc > -1) {	
 				if (dbg) StdStreams.vrb.println("enter move register intruction for local 'exception' in catch clause: from R" + paramStartGPR + " to R" + node.instructions[node.loadLocalExc].result.reg);
 //				createIrArSrB(ppcOr, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, paramStartGPR);
+				createDataProcMovReg(code, armMov, condAlways, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, noShift, 0);
 			}
 			
 			if (dbg) StdStreams.vrb.println("handle instruction " + instr.toString());
@@ -629,7 +630,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					} else {
 						offset = ((MonadicRef)instr).item.offset;
 						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-						createSvc(code, armSvc, condEQ, 7);
+						createSvc(code, armSvc, condEQ, 20);
 					}
 				}
 				
@@ -670,7 +671,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (meth.ssa.cfg.method.owner == Type.wktString && opds[0].owner instanceof MonadicRef && ((MonadicRef)opds[0].owner).item == stringCharRef) {	// string access needs special treatment
 					createDataProcMovReg(code, armLsl, condAlways, scratchReg, refReg, noShift, objectSize);	// read field "count", must be first field
 					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
-					createSvc(code, armSvc, condCS, 20);
+					createSvc(code, armSvc, condCS, 10);
 					switch (res.type & 0x7fffffff) {	// type to read
 					case tByte:
 						createDataProcMovReg(code, armLsl, condAlways, LR, indexReg, noShift, 1);
@@ -689,10 +690,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 				} else {
 					createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-					createSvc(code, armSvc, condEQ, 7);
+					createSvc(code, armSvc, condEQ, 20);
 					createLSWordImm(code, armLdrh, condAlways, scratchReg, refReg, arrayLenOffset, 1, 0, 0);
 					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
-					createSvc(code, armSvc, condCS, 20);
+					createSvc(code, armSvc, condCS, 10);
 					switch (res.type & ~(1<<ssaTaFitIntoInt)) {	// type to read
 					case tByte: case tBoolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -754,7 +755,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					else type = tRef;//is a Array or a Object 
 					offset = ((DyadicRef)instr).field.offset;
 					createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-					createSvc(code, armSvc, condEQ, 7);
+					createSvc(code, armSvc, condEQ, 20);
 				}
 				switch (type) {
 				case tBoolean: case tByte: 
@@ -794,10 +795,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createLSWordImm(code, armStrh, condAlways, valReg, LR, 0, 1, 1, 0);
 				} else {
 					createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-					createSvc(code, armSvc, condEQ, 7);
+					createSvc(code, armSvc, condEQ, 20);
 					createLSWordImm(code, armLdrh, condAlways, scratchReg, refReg, arrayLenOffset, 1, 0, 0);
 					createDataProcCmpReg(code, armCmp, condAlways, indexReg, scratchReg, noShift, 0);
-					createSvc(code, armSvc, condCS, 20);
+					createSvc(code, armSvc, condCS, 10);
 					switch (opds[0].type & ~(1<<ssaTaFitIntoInt)) {
 					case tAbyte: case tAboolean:
 						createDataProcImm(code, armAdd, condAlways, LR, refReg, objectSize);
@@ -965,7 +966,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tByte: case tShort: case tInteger:
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	
-						if (immVal == 0) createSvc(code, armSvc, condAlways, 7);
+						if (immVal == 0) createSvc(code, armSvc, condAlways, 30);
 						else if (RegAllocatorARM.isPowerOf2(Math.abs(immVal))) {	// is power of 2
 							int shift = Integer.numberOfTrailingZeros(Math.abs(immVal));
 							if (shift == 0) {
@@ -993,7 +994,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						}
 					} else {
 						createDataProcMovReg(code, armMovs, condAlways, gAux1, src2Reg, noShift, 0);
-						createSvc(code, armSvc, condEQ, 7);	// check for divide by zero
+						createSvc(code, armSvc, condEQ, 30);	// check for divide by zero
 						createDataProcImm(code, armRsb, condLT, gAux1, gAux1, 0);	// negate divisor
 						createDataProcMovReg(code, armMovs, condAlways, scratchReg, src1Reg, noShift, 0);
 						createDataProcImm(code, armRsb, condLT, scratchReg, scratchReg, 0);	// negate dividend
@@ -1073,7 +1074,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						// check for divide by zero
 						createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
 						createDataProcCmpImm(code, armCmp, condEQ, src2RegCopy, 0);
-						createSvc(code, armSvc, condEQ, 7);	
+						createSvc(code, armSvc, condEQ, 30);	
 						createDataProcReg(code, armEors, condAlways, gAux1Copy, src1RegLongCopy, src2RegLongCopy, noShift, 0);	// determine sign of result
 						// negate divisor
 						createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
@@ -1154,7 +1155,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				case tByte: case tShort: case tInteger:
 					if (src2Reg < 0) {
 						int immVal = ((StdConstant)opds[1].constant).valueH;	
-						if (immVal == 0) createSvc(code, armSvc, condEQ, 7);
+						if (immVal == 0) createSvc(code, armSvc, condEQ, 30);
 						else if (RegAllocatorARM.isPowerOf2(Math.abs(immVal))) {	// is power of 2
 							int shift = Integer.numberOfTrailingZeros(Math.abs(immVal));
 							if (shift == 0) {
@@ -1193,7 +1194,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 
 						createDataProcReg(code, armEor, condAlways, scratchReg, src1RegCopy, src2RegCopy, noShift, 0);
 						createDataProcCmpImm(code, armCmp, condAlways, src2RegCopy, 0);
-						createSvc(code, armSvc, condEQ, 7);	// check for divide by zero
+						createSvc(code, armSvc, condEQ, 30);	// check for divide by zero
 						createDataProcImm(code, armRsb, condLT, src2RegCopy, src2RegCopy, 0);	// negate divisor
 						createDataProcCmpImm(code, armCmp, condAlways, src1RegCopy, 0);
 						createDataProcImm(code, armRsb, condLT, src1RegCopy, src1RegCopy, 0);	// negate dividend
@@ -1295,7 +1296,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						// check for divide by zero
 						createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
 						createDataProcCmpImm(code, armCmp, condEQ, src2RegCopy, 0);
-						createSvc(code, armSvc, condEQ, 7);	
+						createSvc(code, armSvc, condEQ, 30);	
 						createDataProcReg(code, armEors, condAlways, gAux1Copy, src1RegLongCopy, src2RegLongCopy, noShift, 0);	// determine sign of result
 						// negate divisor
 						createDataProcCmpImm(code, armCmp, condAlways, src2RegLongCopy, 0);
@@ -2074,7 +2075,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createBranchImm(code, armB, condEQ, 10);	// jump to end
 						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is array?
-						createSvc(code, armSvc, condNOTEQ, 8);
+						createSvc(code, armSvc, condNOTEQ, 40);
 						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 						createLSWordImm(code, armLdr, condAlways, LR, scratchReg, Linker32.tdIntfTypeChkTableOffset, 1, 1, 0);
 						createDataProcReg(code, armAdd, condAlways, scratchReg, LR, scratchReg, noShift, 0);
@@ -2083,19 +2084,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createDataProcCmpImm(code, armCmp, condAlways, LR, ((Class)t).chkId);	// is interface chkId?
 						createDataProcImm(code, armAdd, condGT, scratchReg, scratchReg, 2);
 						createBranchImm(code, armB, condGT, -5);	// jump to label 1
-						createSvc(code, armSvc, condNOTEQ, 8);	// chkId is not equal
+						createSvc(code, armSvc, condNOTEQ, 40);	// chkId is not equal
 					} else {	// regular class
 						int offset = ((Class)t).extensionLevel;
 						createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
 						createBranchImm(code, armB, condEQ, 8);	// jump to end
 						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is array?
-						createSvc(code, armSvc, condNOTEQ, 8);
+						createSvc(code, armSvc, condNOTEQ, 40);
 						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 						createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, Linker32.tdBaseClass0Offset + offset * 4, 1, 1, 0);
 						loadConstantAndFixup(code, LR, t);	// addr of type
 						createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);
-						createSvc(code, armSvc, condNOTEQ, 8);
+						createSvc(code, armSvc, condNOTEQ, 40);
 					}
 				} else {	// object is an array
 					if (((Array)t).componentType.category == tcPrimitive) {  // array of base type
@@ -2103,11 +2104,11 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						createBranchImm(code, armB, condEQ, 7);	// jump to end
 						createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 						createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
-						createSvc(code, armSvc, condEQ, 8);
+						createSvc(code, armSvc, condEQ, 40);
 						createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 						loadConstantAndFixup(code, LR, t);	// addr of type
 						createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);
-						createSvc(code, armSvc, condNOTEQ, 8);
+						createSvc(code, armSvc, condNOTEQ, 40);
 					} else {	// array of regular classes or interfaces
 						int nofDim = ((Array)t).dimension;
 						Item compType = RefType.refTypeList.getItemByName(((Array)t).componentType.name.toString());
@@ -2117,7 +2118,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createBranchImm(code, armB, condEQ, 13);	// jump to end		
 							createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
-							createSvc(code, armSvc, condEQ, 8);
+							createSvc(code, armSvc, condEQ, 40);
 							createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 							createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
 							createDataProcShiftImm(code, armLsl, condAlways, scratchReg, LR, 1);	// cut off P bit
@@ -2126,27 +2127,27 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							createBranchImm(code, armB, condLT, 2);	// jump to label 1
 							// array of regular classes
 							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, nofDim);	// actual dimension must be greater or equal than the dimension of type to test against
-							createSvc(code, armSvc, condLT, 8);
+							createSvc(code, armSvc, condLT, 40);
 							createBranchImm(code, armB, condAlways, 1);	// jump to end
 							// label 1, is array of primitive type
 							createDataProcCmpImm(code, armCmp, condAlways, scratchReg, nofDim);	// actual dimension must be greater than the dimension of type to test against
-							createSvc(code, armSvc, condLE, 8);
+							createSvc(code, armSvc, condLE, 40);
 						} else {	// array of regular classes or interfaces but not java/lang/Object
 							if ((compType.accAndPropFlags & (1<<apfInterface)) != 0) {	// array of interfaces
 								createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
 								createBranchImm(code, armB, condEQ, 18);	// jump to end		
 								createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
-								createSvc(code, armSvc, condEQ, 8);
+								createSvc(code, armSvc, condEQ, 40);
 								createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
 								createDataProcShiftImm(code, armLsl, condAlways, LR, LR, 1);	// cut off P bit
 								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 17);	// get dim
 								createDataProcCmpImm(code, armCmp, condAlways, LR, nofDim);	// actual dimension must be equal to dimension of type to test against
-								createSvc(code, armSvc, condNOTEQ, 8);		
+								createSvc(code, armSvc, condNOTEQ, 40);		
 								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, 8 + nofDim * 4, 1, 1, 0);	// get component type
 								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is 0?
-								createSvc(code, armSvc, condEQ, 8);
+								createSvc(code, armSvc, condEQ, 40);
 								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, Linker32.tdIntfTypeChkTableOffset, 1, 1, 0);	// get base class type descriptor
 								createDataProcReg(code, armAdd, condAlways, scratchReg, LR, scratchReg, noShift, 0);
 								// label 1
@@ -2154,38 +2155,39 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 								createDataProcCmpImm(code, armCmp, condAlways, LR, ((Class)compType).chkId);	// is interface chkId?
 								createDataProcImm(code, armAdd, condGT, scratchReg, scratchReg, 2);
 								createBranchImm(code, armB, condGT, -5);	// jump to label 1
-								createSvc(code, armSvc, condLT, 8);	
+								createSvc(code, armSvc, condLT, 40);	
 							} else {	// array of regular classes
 								createDataProcCmpImm(code, armCmp, condAlways, src1Reg, 0);	// is null?
 								createBranchImm(code, armB, condEQ, 16);	// jump to end		
 								createLSWordImm(code, armLdrb, condAlways, scratchReg, src1Reg, 6, 1, 0, 0);	// get array bit
 								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is not array?
-								createSvc(code, armSvc, condEQ, 8);
+								createSvc(code, armSvc, condEQ, 40);
 								createLSWordImm(code, armLdr, condAlways, scratchReg, src1Reg, 4, 1, 0, 0);	// get tag
 								createLSWordImm(code, armLdr, condAlways, LR, scratchReg, 0, 1, 0, 0);	// get first entry of array type descriptor
 								createDataProcShiftImm(code, armLsl, condAlways, LR, LR, 1);	// cut off P bit
 								createDataProcMovReg(code, armLsr, condAlways, LR, LR, noShift, 17);	// get dim
 								createDataProcCmpImm(code, armCmp, condAlways, LR, nofDim);	// actual dimension must be equal to dimension of type to test against
-								createSvc(code, armSvc, condNOTEQ, 8);
+								createSvc(code, armSvc, condNOTEQ, 40);
 								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, 8 + nofDim * 4, 1, 1, 0);	// get component type
 								createDataProcCmpImm(code, armCmp, condAlways, scratchReg, 0);	// is 0?
-								createSvc(code, armSvc, condEQ, 8);
+								createSvc(code, armSvc, condEQ, 40);
 								createLSWordImm(code, armLdr, condAlways, scratchReg, scratchReg, Linker32.tdBaseClass0Offset + offset * 4, 1, 1, 0);	// get base class type descriptor
 								loadConstantAndFixup(code, LR, compType);	// addr of component type
 								createDataProcCmpReg(code, armCmp, condAlways, LR, scratchReg, noShift, 0);	// is equal?
-								createSvc(code, armSvc, condNOTEQ, 8);
+								createSvc(code, armSvc, condNOTEQ, 40);
 							}
 						}
 					}
 				}
 				break;}
 			case sCthrow: {
-//				assert false;
+				createDataProcMovReg(code, armMov, condAlways, paramStartGPR, src1Reg, noShift, 0);	// put exception into parameter register
+				createSvc(code, armSvc, condAlways, 1);
 				break;}
 			case sCalength: {
 				int refReg = src1Reg;
 				createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-				createSvc(code, armSvc, condEQ, 7);
+				createSvc(code, armSvc, condEQ, 20);
 				createLSWordImm(code, armLdrsh, condAlways, dReg, refReg, arrayLenOffset, 1, 0, 0);
 				break;}
 			case sCcall: {
@@ -2309,7 +2311,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						int refReg = paramStartGPR;
 						int offset = (Class.maxExtensionLevelStdClasses + 1) * Linker32.slotSize + Linker32.tdBaseClass0Offset;
 						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-						createSvc(code, armSvc, condEQ, 7);
+						createSvc(code, armSvc, condEQ, 20);
 						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
 						createLSWordImm(code, armLdr, condAlways, LR, LR, offset, 1, 1, 0);	// , offset is positive, delegate method
 						loadConstant(code, scratchReg, m.owner.index << 16 | m.index * 4);	// interface id and method offset	
@@ -2327,7 +2329,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 							copyParameters(code, opds);
 							int refReg = paramStartGPR;
 							createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-							createSvc(code, armSvc, condEQ, 7);
+							createSvc(code, armSvc, condEQ, 20);
 							insertBLAndFixup(code, m);
 						}
 					} else {	// invokevirtual 
@@ -2337,7 +2339,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						int offset = Linker32.tdMethTabOffset;
 						offset -= m.index * Linker32.slotSize; 
 						createDataProcCmpImm(code, armCmp, condAlways, refReg, 0);
-						createSvc(code, armSvc, condEQ, 7);
+						createSvc(code, armSvc, condEQ, 20);
 						createLSWordImm(code, armLdr, condAlways, LR, refReg, 4, 1, 0, 0);
 						createLSWordImm(code, armLdr, condAlways, LR, LR, -offset, 1, 0, 0);	// offset is negative
 						createBranchReg(code, armBlxReg, condAlways, LR);
@@ -3734,70 +3736,58 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			createLSWordImm(code, armLdr, condAlways, regAux2, stackPtr, intfMethStorageOffset + 4, 1, 0, 0);
 			createLSWordImm(code, armLdr, condAlways, regAux3, stackPtr, intfMethStorageOffset, 1, 0, 0);
 			createDataProcMovReg(code, armMov, condAlways, PC, scratchReg, noShift, 0);	// jump to method 
-//			createBranchImm(code, armB, condAlways, -2);
 		}
 
 		m = Method.getCompSpecSubroutine("handleException");
 		if (m != null) { 
 			Code32 code = new Code32(null);
 			m.machineCode = code;
-			createBranchImm(code, armB, condAlways, -2);
-			// r0 contains reference to exception, r3 holds LR
-			// r2 to r10 are used for auxiliary purposes
+//			createBranchImm(code, armB, condAlways, -2);
+			
+			// r0 contains reference to exception, r1 holds LR
+			// r2 to r6 are used for auxiliary purposes
 
-//			// search end of method
-//			createIrArSrB(code, ppcOr, 4, 3, 3);
-//			createIrDrAd(code, ppcLwzu, 9, 4, 4);	
-//			createICRFrAsimm(code, ppcCmpli, CRF0, 9, 0xff);
-//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, -2);
-//			createIrArSrB(code, ppcOr, 10, 4, 4);	// keep for unwinding
-//			createIrDrAd(code, ppcLwzu, 5, 4, 4);	//  R4 now points to first entry of exception table
-//		
-//			// search catch, label 1
-//			int label1 = m.machineCode.iCount;
-//			createICRFrAsimm(code, ppcCmpi, CRF0, 5, -1);
-//			int label2 = m.machineCode.iCount;
-//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 0);	// catch not found, goto label 2
-//			createIrDrAd(code, ppcLwz, 5, 4, 0);	// start 
-//			createICRFrArB(code, ppcCmp, CRF0, 3, 5);		
-//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+LT, 17);
-//			createIrDrAd(code, ppcLwz, 5, 4, 4);	// end 
-//			createICRFrArB(code, ppcCmp, CRF0, 3, 5);		
-//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+GT, 14);
-//			createIrDrAd(code, ppcLwz, 5, 4, 8);	// type 
-//			
-//			createICRFrAsimm(code, ppcCmpi, CRF0, 5, 0);	// check if type "any", caused by finally
-//			createIBOBIBD(code, ppcBc, BOtrue, 4*CRF0+EQ, 8);
-////			m.machineCode.createIBOBIBD(ppcBc, BOfalse, 4*CRF0+EQ, 3);
-////			m.machineCode.createIrDrAsimm(ppcAddi, 18, 18, 0x1000);	
-////			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+EQ, 8);
-//			
-//			createIrDrAd(code, ppcLwz, 6, 5, -4);	// get extension level of exception 
-//			createIrArSSHMBME(code, ppcRlwinm, 6, 6, 2, 0, 31);	// *4
-//			createIrDrAsimm(code, ppcAddi, 6, 6, Linker32.tdBaseClass0Offset);	
-//			createIrDrAd(code, ppcLwz, 7, 2, -4);	// get tag 
-//			createIrDrArB(code, ppcLwzx, 8, 7, 6);	 
-//			createICRFrArB(code, ppcCmp, CRF0, 8, 5);		
-//			createIBOBIBD(code, ppcBc, BOfalse, 4*CRF0+EQ, 4);		
-//			createIrDrAd(code, ppcLwz, 0, 4, 12);	// get handler address
-//			createIrSspr(code, ppcMtspr, SRR0, 0);
-//			createIrfi(code, ppcRfi);	// return to catch
-//			
-//			createIrDrAd(code, ppcLwzu, 5, 4, 16);	
-//			createIBOBIBD(code, ppcBc, BOalways, 0, 0);	// jump to label 1
-//			correctJmpAddr(m.machineCode.instructions, m.machineCode.iCount-1, label1);
-//			
-//			// catch not found, unwind, label 2
-//			correctJmpAddr(m.machineCode.instructions, label2, m.machineCode.iCount);
-//			createIrDrAd(code, ppcLwz, 5, stackPtr, 0);	// get back pointer
-//			createIrDrAd(code, ppcLwz, 3, 5, -4);	// get LR from stack
-//			loadConstantAndFixup(code, 6, m);
-//			createIrSrAd(code, ppcStw, 6, 5, -4);	// put addr of handleException
-//			createIrArS(code, ppcExtsb, 9, 9);
-//			createIrDrArB(code, ppcAdd, 9, 10, 9);
-//			createIrSspr(code, ppcMtspr, LR, 9);
-////			m.machineCode.createIBOBIBD(ppcBc, BOalways, 4*CRF0+GT, 0);
-//			createIBOBILK(code, ppcBclr, BOalways, 0, false); // branch to epilog
+			// search end of method
+			createDataProcMovReg(code, armMov, condAlways, 2, 1, noShift, 0);
+			createLSWordImm(code, armLdr, condAlways, 3, 2, 4, 1, 1, 1);
+			createDataProcCmpImm(code, armCmp, condAlways, 3, 0xff);
+			createBranchImm(code, armB, condCS, -4);
+			createDataProcMovReg(code, armMov, condAlways, 4, 2, noShift, 0);	// keep position of end (0x000000yy) in r4 for unwinding
+			createLSWordImm(code, armLdr, condAlways, 3, 2, 4, 1, 1, 1);	//  r2 now points to first entry of exception table, r3 holds entry
+		
+			// search catch, label 1
+			createDataProcCmpImm(code, armCmp, condAlways, 3, packImmediate(0xff000000));
+			createBranchImm(code, armB, condHI, 17);	// end reached, catch not found, goto label 3
+			createLSWordImm(code, armLdr, condAlways, 3, 2, 0, 1, 1, 0);	//  get start
+			createDataProcCmpReg(code, armCmp, condAlways, 1, 3, noShift, 0);
+			createBranchImm(code, armB, condLT, 12);	// smaller that start, goto label 2
+			createLSWordImm(code, armLdr, condAlways, 3, 2, 4, 1, 1, 0);	//  get end
+			createDataProcCmpReg(code, armCmp, condAlways, 1, 3, noShift, 0);
+			createBranchImm(code, armB, condGT, 9);	// greater that end, goto label 2
+			createLSWordImm(code, armLdr, condAlways, 3, 2, 8, 1, 1, 0);	//  get type
+			
+			createDataProcCmpImm(code, armCmp, condAlways, 3, 0);	// check if type "any", caused by finally
+			createBranchImm(code, armB, condEQ, 5);
+			
+			createLSWordImm(code, armLdr, condAlways, 5, 3, 4, 1, 0, 0);	// get extension level of exception
+			createDataProcShiftImm(code, armLsl, condAlways, 5, 5, 2);	// *4
+			createDataProcImm(code, armAdd, condAlways, 5, 5, Linker32.tdBaseClass0Offset);
+			createLSWordImm(code, armLdr, condAlways, 6, 0, 4, 1, 0, 0);	// get tag of exception object
+			createLSWordReg(code, armLdr, condAlways, 6, 6, 5, noShift, 0, 1, 1, 0);
+			createDataProcCmpReg(code, armCmp, condAlways, 6, 3, noShift, 0);
+			createLSWordImm(code, armLdr, condEQ, PC, 2, 12, 1, 1, 0);	//  get handler address and return to catch
+	
+			// check next exception in same method, label 2
+			createLSWordImm(code, armLdr, condAlways, 3, 2, 16, 1, 1, 1);
+			createBranchImm(code, armB, condAlways, -21);	// jump to label 1
+
+			// catch not found, unwind, label 3
+			createLSWordImm(code, armLdr, condAlways, 5, stackPtr, 0, 1, 0, 0);	// get back pointer
+			createLSWordImm(code, armLdr, condAlways, 1, 5, 4, 1, 0, 0);	// get LR from stack
+			loadConstantAndFixup(code, 6, m);
+			createLSWordImm(code, armStr, condAlways, 6, 5, 4, 1, 0, 0);	// put addr of handleException
+			createLSWordImm(code, armLdrsb, condAlways, 6, 4, 0, 1, 0, 0);	// get offset to unwinding
+			createDataProcReg(code, armAdd, condAlways, PC, 6, 4, noShift, 0); // branch to epilog
 		}
 	}
 
