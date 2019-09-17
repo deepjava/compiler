@@ -41,13 +41,13 @@ public class TestLauncher {
 	public static void main(String[] args) {
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
-//		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
+		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
-		Launcher.buildAll("zybo7000ExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("zybo7000ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("zybo7000junitTarget.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
@@ -70,7 +70,7 @@ public class TestLauncher {
 					e.printStackTrace();
 				} catch (NoSuchMethodException e) {
 					e.printStackTrace();
-				} catch (IllegalArgumentException e) {
+				} catch (IllegalArgumentException e) { 
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();

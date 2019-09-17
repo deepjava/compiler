@@ -52,6 +52,10 @@ public class Project extends Item {
 		}
 	}
 	
+	public HString[] getLibPaths() {
+		return libPath;
+	}
+	
 	public void setProjectName(String projectName) {	
 		this.deepProjectName = HString.getHString(projectName);
 	}

@@ -19,12 +19,20 @@
 package ch.ntb.inf.deep.launcher;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Platform;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.Version;
 
 import ch.ntb.inf.deep.cfg.CFG;
 import ch.ntb.inf.deep.cg.Code32;
@@ -85,6 +93,10 @@ public class Launcher implements ICclassFileConsts {
 		reporter.clear();
 		CFR.initBuildSystem();
 		
+		Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
+		Version deepCompVersion = deepBundle.getVersion();
+				
+		
 		// Read configuration
 		if (dbgProflg) time = System.nanoTime();
 		if (dbg) vrb.println("[Launcher] Loading Configuration");
@@ -93,6 +105,40 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
+		
+		File deepLibVersionFile = null;
+		FileReader fr = null;
+		char[] deepLibVersion = {'0','.','0','.','0'};
+		
+		boolean identVersion = false;
+		
+		for(HString h : project.getLibPaths()) {
+			deepLibVersionFile = new File(h.toString()+"VERSION");
+			try {
+				fr = new FileReader(deepLibVersionFile);
+				fr.read(deepLibVersion, 0, 5);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			String libVersion = "";
+			for(char c : deepLibVersion) {
+				libVersion += c;
+			}			
+			if(deepCompVersion.compareTo(new Version(libVersion)) == 0) {
+				identVersion = true;
+				log.println("Version compiler / library ident.");
+			}
+		}
+		if(!identVersion) {
+			if(deepCompVersion.compareTo(new Version(libVersion)) == -1) {
+				reporter.error("Version mismatch Compiler / Library. Please update deep compiler");
+			}else if(deepCompVersion.compareTo(new Version(libVersion)) == 1) {
+				reporter.error("Version mismatch Compiler / Library. Please update deep runtime-library");
+			}
+		}
+		
 		HString[] rootClassNames = Configuration.getRootClasses();
 		if (reporter.nofErrors <= 0) {
 			int nof = rootClassNames.length;
