@@ -104,27 +104,31 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		return 0x0;
 	}
 	
-//	private static int bankedRegToSYSm(String bankedReg, int R) {	// p. 1975
-//		int SYSm = 0;
-//		if (R == 0) {
-//			for(int i = 0; i < bankedRegR0.length; i++) {
-//				if (bankedReg.contains(bankedRegR0[i])) SYSm = i;
-//			}
-//		}
-//		if (R == 1) {
-//			for(int i = 0; i < bankedRegR1.length; i++) {
-//				if (bankedReg.contains(bankedRegR1[i])) SYSm = i;
-//			}
-//		}
-//		return SYSm;
-//	}
+	private static int bankedRegToSYSm(String bankedReg, int R) {	// p. 1975
+		int SYSm = 0;
+		if (R == 0) {
+			for (int i = 0; i < bankedRegR0.length; i++) {
+				if (bankedReg.contains(bankedRegR0[i])) SYSm = i;
+			}
+		}
+		if (R == 1) {
+			for (int i = 0; i < bankedRegR1.length; i++) {
+				if (bankedReg.contains(bankedRegR1[i])) SYSm = i;
+			}
+		}
+		return SYSm;
+	}
 	
+	private static int regPSRtoMask(String reg) {	// p. 1997
+		int mask = 0;
+		for (int i = 0; i < PSRfields.length; i++) {
+			if (reg.contains(PSRfields[i])) mask = 1 << i;
+		}
+		return mask;
+	}
 	
-	
-	public int getCode(String mnemonic) {		
-		
-		int code=0;
-		
+	public int getCode(String mnemonic) {			
+		int code=0;	
 		mnemonic = mnemonic.toLowerCase();
 		mnemonic = mnemonic.trim();
 //		if (mnemonic.substring(mnemonic.length()-1) != ";")	return 0;	// Error: ';' is missing
@@ -315,7 +319,6 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				if (CTMnemonics[i].equals("tst"))	code |= (0x11 << 20);
 			}
 		}
-
 		
 		//  Rotate and Shift
 		String[] RSMnemonics = {
@@ -368,7 +371,6 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			}
 		}
 		
-		
 		// MOV / MOVW / MOVT	p.484 / p.484 / p.491
 		if (parts[0].startsWith("mov")) {
 			
@@ -395,7 +397,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				code |= (0xd << 21);
 				if (parts[2].substring(0,1).equals("#")) {	// (immediate) A1 p.484
 					code |= (1<<25);
-					int const32 = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// const				
+					int const32 = Integer.parseInt(parts[2].replaceAll("[^0-9]", ""), 16);	// const				
 					int imm12 = constToImm(const32);
 					code |= imm12;
 				}
@@ -405,7 +407,6 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 				}
 			}			
 		}
-		
 		
 		// LDREX / LDREXB / LDREXD / LDREXH: Synchronization primitives 1/3 p.205
 		if (parts[0].startsWith("ldrex")) {	// p.432 ... p.438
@@ -497,31 +498,41 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			code |= (n << 16);
 		}
 		
-		
 		//  DBG	p.377
 		if (parts[0].startsWith("dbg")) {
-
 			code |= 0x0320f0f0;
-
 			int option = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// option
 			code |= option;
 		}
 		
-		
-//		//  MSR
-//		if ((parts[0].length()>=3) ? parts[0].substring(0, 3).equals("msr") : false) {
-//
-//			code |= (0x320f << 12);
-//
-//			String specReg = parts[1];	// specReg
-////			bankedRegToSYSm(String bankedReg, int R) 
-//			
-//			int const32 = Integer.parseInt( parts[2].replaceAll("[^0-9]", "") );	// const
-//			code |= constToImm(const32);
-//
-//		}
-		
-		
+		//  MSR
+		if (parts[0].startsWith("msr")) {
+			if (parts[2].substring(0,1).equals("#")) {	// (immediate)
+				code |= (0x320f << 12);
+				String specReg = parts[1].substring(0, parts[1].indexOf(','));	// specReg
+				int R = 0;
+				if (specReg.startsWith("spsr")) {
+					R = 1;
+					code |= 1 << 22;
+				}
+				int m = regPSRtoMask(specReg);	
+				int val = Integer.parseInt(parts[2].substring(3), 16);	// const
+				code |= (m << 16) + val;	
+				code = 0xf1080080;
+			} else {	// banked
+				code |= 0x120f200;
+				String specReg = parts[1];	// specReg
+				int R = 0;
+				if (specReg.startsWith("spsr")) {
+					R = 1;
+					code |= 1 << 22;
+				}
+				int s = bankedRegToSYSm(specReg, R);		
+				int Rn = Integer.parseInt(parts[2].replaceAll("[^0-9]", ""));	// Rn
+				code |= (((s >> 4) & 1) << 8) + ((s & 0xf) << 16) + Rn;
+			}
+		}
+				
 		//  Hints
 		String[] hintsMnemonics = {
 			"nop",	// p.510
@@ -672,6 +683,24 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			int imm24 = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// #imm24
 			code |= imm24;	// imm24
 			code |= 0x0f000000;
+		}
+
+		// CPS	p.1978
+		if (parts[0].startsWith("cps")) {
+			code |= 0xf1000000;
+			int num = 1;
+			if (parts[0].contains("ie") || parts[0].contains("id")) {
+				if (parts[1].contains("a")) code |= 1 << 8;
+				if (parts[1].contains("i")) code |= 1 << 7;
+				if (parts[1].contains("f")) code |= 1 << 6;		
+				if (parts[0].contains("ie")) code |= 2 << 18; else code |= 3 << 18;
+				num++;
+			} 
+			if (num < parts.length && parts[num].startsWith("#")) {
+				String mode = parts[num].substring(1);
+				int val = encodeMode(mode);
+				code |= 0x20000 + val;
+			}
 		}
 
 		//  Load/store word and unsigned byte	p.208
@@ -1075,9 +1104,15 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 	
 	private static String list(int Vd, int imm8, boolean single) {	// Encoding of lists of EXTR registers  p.295	->	see in instructions
 		String registerStr = "";
-		int regs = imm8 / 2;
-		if (imm8 % 2 != 0) return "UNPREDICTABLE";
-		if (regs == 0 || regs > 16 || Vd + regs > 32) return "UNPREDICTABLE";
+		int regs;
+		if (single) {
+			regs = imm8;
+			if (regs == 0 || Vd + regs > 32) return "Vd = " + Vd + " regs = " + regs +  " UNPREDICTABLE";			
+		} else {
+			if (imm8 % 2 != 0) return "UNPREDICTABLE";
+			regs = imm8 / 2;
+			if (regs == 0 || regs > 16 || Vd + regs > 32) return "UNPREDICTABLE";
+		}
 		for (int i = 0; i < regs; i++) {
 			registerStr = registerStr + (single?"S":"D") + (Vd + i) + ", ";
 		}
@@ -1725,7 +1760,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					case 2: return "eor" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 3: return "eor" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 4:
-						if (d != 0xf) {	// Subtract p.710
+						if (n != 0xf) {	// Subtract p.710
 							return "sub" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A2
@@ -1733,7 +1768,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "adr" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", " + (add?"+":"-") + const32;							
 						}
 					case 5:
-						if (d != 0xf) {	// Subtract p.710
+						if (n != 0xf) {	// Subtract p.710
 							return "sub" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A2
@@ -1743,7 +1778,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					case 6: return "rsb" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 7: return "rsb" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 					case 8:
-						if (d != 0xf) {	// Add p.308
+						if (n != 0xf) {	// Add p.308
 							return "add" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A1
@@ -1751,7 +1786,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							return "adr" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", " + (add?"+":"-") + const32;							
 						}
 					case 9:
-						if (d != 0xf) {	// Add p.308
+						if (n != 0xf) {	// Add p.308
 							return "add" + updateAPSR + (cond!=condAlways?condString[cond]:"") + " R" + d + ", R" + n + ", #" + const32;
 						}
 						else {	//From PC-relative address p.322; ENCODING A1
@@ -2418,7 +2453,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, false);
 							}
 							else if (op8_1 == 0x0) {	// Encoding A2
-								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(DVd, op0_8, true);
+								return "vpop" + (cond!=condAlways?condString[cond]:"") + " " + list(VdD, op0_8, true);
 							}							
 						}
 						if ((op20_5 & 0x13)==0x11) {	// Vector Load Register p.924
@@ -2746,9 +2781,9 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 			if ((op20_8 & 0x80)==0x00) {	//	Memory hints, Advanced SIMD instructions, and miscellaneous instructions p.217/218
 				if ( (op20_7==0x10) && ((op4_4 & 0x2)==0x0) && ((op16_4 & 0x1)==0x0) ) {	// Change Processor State p.1980
 					String effect = "";
-					if ((op7_1==0x1) || (op6_1==0x1)) effect = "IE";
-					else effect = "ID";
-					return "cps" + effect + (op8_1==1?"a":"") + (op7_1==1?"i":"") + (op6_1==1?"f":"") + ", #" + decodeMode(op0_5);
+					if ((op16_4 & 0xa)==0x8) effect = "ie";
+					if ((op16_4 & 0xa)==0xa) effect = "id";
+					return "cps" + effect + " " + (op8_1==1?"a":"") + (op7_1==1?"i":"") + (op6_1==1?"f":"") + ((((instr >>> 17) & 1) == 1)?", #" + decodeMode(op0_5):"");
 				}	// End of: Change Processor State p.1980
 				
 				if ( (op20_7==0x10) && (op4_4==0x0) && ((op16_4 & 0x1)==0x1) ) {	// Set Endianness p.604

@@ -378,14 +378,15 @@ public class Launcher implements ICclassFileConsts {
 			}
 			intf = intf.nextInterface;
 		}
-
 		// handle compiler specific methods
 		if (dbg) vrb.println("[Launcher] (loop three) processing compiler specific subroutines:");
 		Method m = Method.compSpecSubroutines;	// Code generator: fix up
 		while (m != null) {
-			if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
-			if (dbg) vrb.println("      doing fixups");
-			cg.doFixups(m.machineCode);
+			if (m.machineCode != null) {
+				if (dbg) vrb.println("    > Method: " + m.name + m.methDescriptor + ", accAndPropFlags: " + Integer.toHexString(m.accAndPropFlags));
+				if (dbg) vrb.println("      doing fixups");
+				cg.doFixups(m.machineCode);
+			}
 			m = (Method)m.next;
 		}
 
@@ -436,11 +437,19 @@ public class Launcher implements ICclassFileConsts {
 					if (dbg) vrb.println("[Launcher] Reseting target");
 					tc.resetTarget();
 					if (dbg) vrb.println("[Launcher] Initializing registers");
-					RegisterInit r = b.regInits;
+					RegisterInit r = b.cpu.regInits;
+					if (dbg) vrb.println("[Launcher] Initializing cpu registers");
 					while (r != null) {
 						tc.setRegisterValue(r.reg, r.initValue);
 						r = (RegisterInit) r.next;
 					}
+					r = b.regInits;
+					if (dbg) vrb.println("[Launcher] Initializing board registers");
+					while (r != null) {
+						tc.setRegisterValue(r.reg, r.initValue);
+						r = (RegisterInit) r.next;
+					}
+					if (dbg) vrb.println("[Launcher] Initializing target configuration registers");
 					r = targetConfig.regInits;
 					while (r != null) {
 						tc.setRegisterValue(r.reg, r.initValue);

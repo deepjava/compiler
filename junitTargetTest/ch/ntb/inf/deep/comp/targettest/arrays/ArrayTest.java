@@ -89,6 +89,12 @@ public class ArrayTest {
 		float[] f = {0.5f, 1.5f, 2.5f, 3.5f, 4.5f};
 		float resf = f[0];
 		Assert.assertEquals("floatArrayValue1", 0.5f, resf, 0.0001f);
+		resf = f[1];
+		Assert.assertEquals("floatArrayValue1", 1.5f, resf, 0.0001f);
+		resf = f[2];
+		Assert.assertEquals("floatArrayValue1", 2.5f, resf, 0.0001f);
+		resf = f[3];
+		Assert.assertEquals("floatArrayValue1", 3.5f, resf, 0.0001f);
 		resf = f[4];
 		Assert.assertEquals("floatArrayValue2", 4.5f, resf, 0);
 		

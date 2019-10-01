@@ -29,7 +29,9 @@ import ch.ntb.inf.junitTarget.Test;
  *         Changes:
  */
 @MaxErrors(100)
-public class VariousTest1 {
+public class StackFrame {
+	
+	// check if passed parameters are properly ordered
 	static short led;
 	static void out(boolean a, int b, boolean c) {
 		if (c) led |= 1 << b;
@@ -71,58 +73,8 @@ public class VariousTest1 {
 		CmdTransmitter.sendDone();
 	}	
 	
-	// checks if parameters are passed correctly 
-	static int variousParams1(int a, int b, int c, int d) {
-		return a + b + c + d;
-	}
-	
-	@Test
-	public static void variousParamsTest1() {
-		Assert.assertEquals("Test1", 10, variousParams1(1, 2, 3, 4));
-		int a = 2;
-		Assert.assertEquals("Test2", 4, variousParams1(0, a, a, 0));
-		int b = 3;
-		Assert.assertEquals("Test3", 11, variousParams1(b, a, b, b));
-		Assert.assertEquals("Test4", 13, variousParams1(a, a, 4, 5));
-
-		CmdTransmitter.sendDone();
-	}	
-	
-	// checks if parameters are passed correctly 
-	static int variousParams2(int a, long b, byte c, float d, double e, long f, float g) {
-		return (int)(a + b + c + d + e + f + g);
-	}
-	
-	@Test
-	public static void variousParamsTest2() {
-		Assert.assertEquals("Test1", -1, variousParams2(-2, 8L, (byte)-6, 2.5f, -3.5, -4, 3.8f));
-		long b = -3;
-		int a = 5;
-		float c = 2.5f;
-		Assert.assertEquals("Test2", 3, variousParams2(a, b, (byte)b, c, c, b, c));
-		CmdTransmitter.sendDone();
-	}	
-	
-	// checks if parameters are passed correctly 
-	int variousParams3(int a, long b, byte c, float d, double e, long f, float g) {
-		return (int)(a + b + c + d + e + f + g);
-	}
-
-	@Test
-	public static void variousParamsTest3() {
-		VariousTest1 obj = new VariousTest1();
-		Assert.assertEquals("Test1", -1, obj.variousParams3(-2, 8L, (byte)-6, 2.5f, -3.5, -4, 3.8f));
-		long b = -3;
-		int a = 5;
-		float c = 2.5f;
-		Assert.assertEquals("Test2", 3, variousParams2(a, b, (byte)b, c, c, b, c));
-		Assert.assertEquals("Test3", 3, obj.variousParams3(a, b, (byte)b, c, c, b, c));
-		Assert.assertEquals("Test4", 10, obj.variousParams3((int)c, a, (byte)c, a, b, b, c));
-		CmdTransmitter.sendDone();
-	}	
 
 	// from the display project
-
 	public void copyBlock (int sl, int sb, int w, int h, int dl, int db, int mode){ 
 		int n, k, xStep, yStep, wStart, wStop, hStart, hStop;	 
 		if ((w <= 0) || (h <= 0) ) return;
@@ -164,7 +116,7 @@ public class VariousTest1 {
   	}
 
 	byte[] buf = new byte[2048];
-	static VariousTest1 obj = new VariousTest1();
+	static StackFrame obj = new StackFrame();
 	
 	void setDot (int col, int x, int y, int mode) {
 		int addr = (127-y) * 16 + x / 8;
@@ -218,7 +170,7 @@ public class VariousTest1 {
 
 	@Test
 	public static void copyBlockTest() {
-		VariousTest1 obj = new VariousTest1();
+		StackFrame obj = new StackFrame();
 		obj.replConst(0, 8, 125, 8, 2, 1);
 		Assert.assertEquals("Test1", 0, obj.buf[0]);
 		Assert.assertEquals("Test2", 0, obj.buf[16]);

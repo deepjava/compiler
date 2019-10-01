@@ -77,14 +77,23 @@ public class TargetOpObject {
 	
 	public TargetOpObject(){
 		description = "";
+		note = "";
 	}
 	
 	public TargetOpObject(int operation, String description){
 		this.operation = operation;
 		this.description = description;
-		this.errorMsg = "";
+		errorMsg = "";
 		representation = 1;
-		this.note = "";
+		note = "";
+	}
+	
+	public TargetOpObject(int operation, String description, String note){
+		this.operation = operation;
+		this.description = description;
+		errorMsg = "";
+		representation = 1;
+		this.note = note;
 	}
 	
 	public TargetOpObject(int operation, String description, long value, int type, int representation, int registerSize){
@@ -94,7 +103,7 @@ public class TargetOpObject {
 		this.valueType = type;
 		this.representation = representation;
 		this.registerSize = registerSize;
-		this.errorMsg = "";
-		this.note = "";
+		errorMsg = "";
+		note = "";
 	}
 }

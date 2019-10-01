@@ -26,7 +26,7 @@ interface Registers {
 	final int topEXTR = 31;	// highest numbered EXTR
 	
 	final int paramStartGPR = 0;	// GPR with first parameter
-	final int paramStartEXTR = 1;	// EXTR with first parameter
+	final int paramStartEXTR = 2;	// EXTR with first parameter
 	
 	final int paramEndGPR = 5;	// GPR with last parameter, must be < nonVolStartGPR
 	final int paramEndEXTR = 6;	// EXTR with last parameter, must be < nonVolStartEXTR
@@ -47,13 +47,14 @@ interface Registers {
 	final int PC = 15;			// register for program counter
 	
 	final int scratchRegEXTR = 0;		// scratch register
+	final int scratchRegEXTR1 = 1;		// scratch register 1
 
 	// initial mask for GPR's, '1' means register is free
 	final int regsGPRinitial = 0xffff & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);
 	// initial mask for EXTR's, double precision, '1' means register is free
-	final int regsEXTRDinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(1 << scratchRegEXTR);	
+	final int regsEXTRDinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(1 << scratchRegEXTR) & ~(1 << scratchRegEXTR1);	
 	// initial mask for EXTR's, single precision, '1' means register is free
-	final int regsEXTRSinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(3 << scratchRegEXTR);	
+	final int regsEXTRSinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(3 << scratchRegEXTR) & ~(3 << scratchRegEXTR1*2);	
 
 	final boolean gpr = true;
 	final boolean extr = false;

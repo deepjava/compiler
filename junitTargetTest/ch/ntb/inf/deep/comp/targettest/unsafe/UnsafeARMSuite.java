@@ -16,15 +16,14 @@
  * 
  */
 
-package ch.ntb.inf.deep.comp.targettest.various;
+package ch.ntb.inf.deep.comp.targettest.unsafe;
 
 import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Suite;
 
-//@Suite({ VariousTest1.class, VariousTest3.class })
-@Suite({ StackFrame.class, ParameterPassing.class, RegisterAllocation.class })
+@Suite({ UnsafeTestARM.class, LowLevelTest.class })
 
 @MaxErrors(500)
-public class VariousSuite {
+public class UnsafeARMSuite {
 
 }

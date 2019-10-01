@@ -37,6 +37,8 @@ public class RegAllocatorPPC extends RegAllocator implements SSAInstructionOpcs,
 
 	// used to indicate of used and free GPRs and FPRs
 	public static int regsGPR, regsFPR;	
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
+	protected static int nofNonVolFPR, nofVolFPR;
 
 	/**
 	 * Assign a register or memory location to all SSAValues

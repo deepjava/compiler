@@ -116,6 +116,7 @@ public class FloatCastTest {
 		Assert.assertEquals("test7", 5000000000L, (long)f);
 		f = -5000000000.7f;
 		Assert.assertEquals("test8", -5000000000L, (long)f);
+		// 0x7fffffffffffffff = 9223372036854775807
 		f = 9.2233720368547760e18f; // 7FFFFFFFFFFFFFFFH
 		Assert.assertEquals("test9", 9223372036854775807L, (long)f);
 		f = -9.2233720368547760e18f; // 8000000000000000H
@@ -150,7 +151,7 @@ public class FloatCastTest {
 	}
 
 	@Test
-	// Tests specifics of double to long subroutine
+	// Tests specifics of double to long subroutine on PPC
 	public static void testFloatToLongSub() {
 		float f1 = 100.0f;
 		long a = (long)f1;	// assigned registers r31/r30

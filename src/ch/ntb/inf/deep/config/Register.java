@@ -39,6 +39,7 @@ public class Register extends Item {
 		if (regType == Parser.sMSR) return HString.getRegisteredHString("MSR");
 		if (regType == Parser.sCR) return HString.getRegisteredHString("CR");
 		if (regType == Parser.sFPSCR) return HString.getRegisteredHString("FPSCR");
+		if (regType == Parser.sCPR) return HString.getRegisteredHString("CPR");
 		return HString.getRegisteredHString("Undefined Type");
 	}
 	

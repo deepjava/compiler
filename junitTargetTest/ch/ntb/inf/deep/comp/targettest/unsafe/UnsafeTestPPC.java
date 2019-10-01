@@ -28,7 +28,7 @@ import ch.ntb.inf.junitTarget.*;
  *         Changes:
  */
 @MaxErrors(100)
-public class UnsafeTest {
+public class UnsafeTestPPC {
 	static final int addr = 0x350; // choose an address in the exception vector space, which is unused
 	
 	@Test
@@ -125,13 +125,13 @@ class DecTest extends Decrementer {
 		int n = 11;
 		int m = 21;
 		this.decPeriodUs = -1;
-		UnsafeTest.res++;
+		UnsafeTestPPC.res++;
 		double a = 57.4, b = 10.9;
 		double c = a + b + 3;
 		@SuppressWarnings("unused")
 		double d = 1.0;
 		d += Math.sin(0.1);
-		UnsafeTest.l1 = (long)c + n + m;
+		UnsafeTestPPC.l1 = (long)c + n + m;
 	}
 	
 	// there are 2 dec exceptions, the first after decPeriodUs, then the second again after decPeriodUs. Though

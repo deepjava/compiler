@@ -85,7 +85,7 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 
 		viewer = new TableViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
 		
-		String[] titels = { "Classname", "nofActivations", "period(ms)","time(ms)" , "runtime(us)"};
+		String[] titels = { "Classname", "nofActivations", "period(ms)","time(ms)" , "runtime(ns)"};
 		int[] bounds = { 400, 100, 100, 100, 100 };
 
 		TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);

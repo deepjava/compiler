@@ -99,10 +99,11 @@ public class Parser implements ICclassFileConsts {
 			sMSR = g7 + 7,
 			sCR = g7 + 8,
 			sFPSCR = g7 + 9,
-			sExcHnd = g7 + 10;
+			sExcHnd = g7 + 10,
+			sCPR = g7 + 11;
 	
 	// -------- Register representation: 
-	public static final short g8 = g7 + 11,
+	public static final short g8 = g7 + 12,
 			sHex = g8,
 			sDez = g8 + 1,
 			sBin = g8 + 2;
@@ -429,6 +430,9 @@ public class Parser implements ICclassFileConsts {
 				return true;
 			} else if (temp.equals("cr")) {
 				sym = sCR;
+				return true;
+			} else if (temp.equals("cpr")) {
+				sym = sCPR;
 				return true;
 			}
 			break;
@@ -1370,7 +1374,7 @@ public class Parser implements ICclassFileConsts {
 			if (r == null) {reporter.error(230, "definition missing for " + rName); return null;};
 			RegisterInit r1 = new RegisterInit(r, val);
 			if (regInit == null) regInit = r1;
-			else regInit = (RegisterInit) regInit.insertHead(r1);
+			else regInit.appendTail(r1);	// add registers in the same order as they are listed in the configuration file
 		}
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: reginit section done");
@@ -2136,7 +2140,7 @@ public class Parser implements ICclassFileConsts {
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return sUndef;}
 		next();
-		if (sym == sGPR || sym == sFPR || sym == sSPR || sym == sIOR || sym == sMSR || sym == sCR || sym == sFPSCR) s = sym;
+		if (sym == sGPR || sym == sFPR || sym == sSPR || sym == sIOR || sym == sMSR || sym == sCR || sym == sFPSCR || sym == sCPR) s = sym;
 		else {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " unexpected symbol: " + symToString()); return sUndef;}
 		next();
 		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}

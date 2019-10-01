@@ -63,13 +63,38 @@ public class ArrayThreeDimTest {
 	@Test
 	// Main test method for array value test
 	public static void testUnbalancedArray() {
+		int res;
+		byte[][][] b = {{{0, 1, 2}, {3, 4}}, {{5}}};
+		Assert.assertEquals("byteArrayUnBal1", 2, b.length);
+		Assert.assertEquals("byteArrayUnBal2", 2, b[0].length);
+		Assert.assertEquals("byteArrayUnBal3", 1, b[1].length);
+		Assert.assertEquals("byteArrayUnBal4", 3, b[0][0].length);
+		Assert.assertEquals("byteArrayUnBal5", 2, b[0][1].length);
+		Assert.assertEquals("byteArrayUnBal6", 1, b[1][0].length);
+		res = b[0][0][2];
+		Assert.assertEquals("byteArrayUnBal10", 2, res);
+		res = b[1][0][0];
+		Assert.assertEquals("byteArrayUnBal11", 5, res);
+		
+		double[][][] d = {{{0.5, 1.5, 2.5, 3.5}, {4.5}}};
+		double resd = d[0][1][0];
+		Assert.assertEquals("doubleArrayUnBal20", 4.5, resd, 0.0);
 			
 		CmdTransmitter.sendDone();
 	}
 	
-	@Test
-	
+	@Test	
 	public static void testArrayVarious(){
+		byte[][] first = {{3, 1, 2, 3, 4} , {10, 11, 12, 13, 14}};
+		byte[][][] data = new byte[4][][];	
+		Assert.assertEquals("test1", 4, data.length);
+		data[0] = first;
+		Assert.assertEquals("test2", 2, data[0].length);
+		Assert.assertEquals("test3", 5, data[0][1].length);
+		data[1] = new byte[][] {{11, 12, 13} ,{}};
+		Assert.assertEquals("test4", 2, data[1].length);
+		Assert.assertEquals("test10", 13, data[0][1][3]);
+		Assert.assertEquals("test10", 13, data[1][0][2]);
 		
 		CmdTransmitter.sendDone();
 	}

@@ -39,6 +39,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 
 	// used to indicate used and free GPRs and EXTRs, the EXTRs must be differentiated between D0..D31 and S0..S31
 	public static int regsGPR, regsEXTRD, regsEXTRS;
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
+	protected static int nofNonVolEXTRD, nofNonVolEXTRS, nofVolEXTRD, nofVolEXTRS;
 
 	/**
 	 * Assign a register or memory location to all SSAValues
@@ -119,14 +121,10 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			
 			if (instr.ssaOpcode == sCcall) {	// check if floats in exceptions or special instruction which uses temporary storage on stack
 				Call call = (Call)instr;
-				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0)
-					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) {
-					CodeGenARM.enFloatsInExc = true;
+				if ((call.item.accAndPropFlags & (1 << dpfSynthetic)) != 0) {
+					if ((((Method)call.item).id) == CodeGenARM.idENABLE_FLOATS) CodeGenARM.enFloatsInExc = true;
 				}
-//				int id = ((Method)call.item).id;
-//				if (id == CodeGenARM.idDoubleToBits || (id == CodeGenARM.idBitsToDouble) ||  // DoubleToBits or BitsToDouble
-//					id == CodeGenARM.idFloatToBits || (id == CodeGenARM.idBitsToFloat))  // FloatToBits or BitsToFloat
-//					CodeGenARM.tempStorage = true;
+				if ((call.item.accAndPropFlags & (1 << dpfInterfCall)) != 0) CodeGenARM.intfMethStorage = true;
 			}
 		}
 		
@@ -157,18 +155,39 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			if (nofAuxRegGPR == 4) {	// scDiv
 				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {nofAuxRegGPR = 1;}
 				else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
-					else nofAuxRegGPR = 0;
+					SSAInstruction instr1 = instr.getOperands()[1].owner;
+					if (instr1.ssaOpcode == sCloadConst) {
+						StdConstant constant = (StdConstant)(instr1.result).constant;
+						long immVal = ((long)(constant.valueH)<<32) | (constant.valueL&0xFFFFFFFFL);
+						if (isPowerOf2(immVal)) nofAuxRegGPR = 0;
+						else {
+							if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+							else nofAuxRegGPR = 0;
+						}
+					} else {
+						if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+						else nofAuxRegGPR = 0;
+					}
 				}
 			} else if (nofAuxRegGPR == 5) {	// scRem
-				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger || (res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
-					if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
-					else nofAuxRegGPR = 0;
+				if ((res.type & ~(1<<ssaTaFitIntoInt)) == tInteger) {
+					SSAInstruction instr1 = instr.getOperands()[1].owner;
+					if (instr1.ssaOpcode == sCloadConst) {
+						nofAuxRegGPR = 0;
+					} else {
+						if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+						else nofAuxRegGPR = 0;
+					}
+				} else if ((res.type & ~(1<<ssaTaFitIntoInt)) == tLong) {
+					SSAInstruction instr1 = instr.getOperands()[1].owner;
+					if (instr1.ssaOpcode == sCloadConst) {	// must be power of 2
+						nofAuxRegGPR = 1;
+					} else {
+						if (fullRegSetGPR) {fullRegSetGPR = false; nofNonVolGPR = topGPR - nonVolStartGPR + 1;}
+						else nofAuxRegGPR = 0;
+					}
 				}
-			} else if (nofAuxRegGPR == 8) {	// modulo division
-				if (res.type == tLong) {nofAuxRegGPR = 2;}
-				else if (res.type == tFloat || res.type == tDouble) nofAuxRegGPR = 1;
-			}
+			} 
 			
 			if (nofAuxRegGPR == 1) res.regGPR1 = reserveReg(gpr, false, false);
 			else if (nofAuxRegGPR == 2) {
@@ -278,7 +297,8 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTGPR) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTEXTRD) && (instr1.getOperands()[0] == res))
 							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTEXTRS) && (instr1.getOperands()[0] == res))
-//							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTCPR) && (instr1.getOperands()[0] == res))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idPUTCPR))
+							|| ((instr1.ssaOpcode == sCcall) && (((Method)((Call)instr1).item).id == CodeGenARM.idBIT) && (instr1.getOperands()[1] == res))
 							// calls to some unsafe methods
 							|| ((instr1.ssaOpcode == sCbranch) && ((res.type & 0x7fffffff) == tInteger)))
 						// branches but not switches (the second operand of a switch is already constant)
@@ -371,11 +391,13 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 			}
 		}
 		CodeGenARM.nofNonVolGPR = nofNonVolGPR;
-		CodeGenARM.nofNonVolFPR = nofNonVolFPR;
+		CodeGenARM.nofNonVolEXTRD = nofNonVolEXTRD;
+		CodeGenARM.nofNonVolEXTRS = nofNonVolEXTRS;
 		CodeGenARM.nofVolGPR = nofVolGPR;
-		CodeGenARM.nofVolFPR = nofVolFPR;
+		CodeGenARM.nofVolEXTRD = nofVolEXTRD;
+		CodeGenARM.nofVolEXTRS = nofVolEXTRS;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof;
+		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
 		nof = maxNofParamEXTR - (paramEndEXTR - paramStartEXTR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;	// reserve 2 stack slots regardless if type is float or double
 		
@@ -448,7 +470,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						if ((regsEXTRS & (1 << i)) != 0) {
 							regsEXTRS &= ~(1 << i);	
 							regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
-							if (i - paramStartEXTR + 1 > nofVolFPR) nofVolFPR = i + 1 - paramStartEXTR;
+							if (i - paramStartEXTR + 1 > nofVolEXTRS) nofVolEXTRS = i + 1 - paramStartEXTR;
 							return i;
 						}
 						i++;						
@@ -459,20 +481,20 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 						if ((regsEXTRD & (1 << i)) != 0) {
 							regsEXTRD &= ~(1 << i);	
 							regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
-							if (i - paramStartEXTR + 1 > nofVolFPR) nofVolFPR = i + 1 - paramStartEXTR;
+							if (i - paramStartEXTR + 1 > nofVolEXTRD) nofVolEXTRD = i + 1 - paramStartEXTR;
 							return i;
 						}
 						i++;
 					}				
 				}
 			} 
-			i = topEXTR;
-			if (single) {
+			i = topEXTR;	// is nonvolatile
+			if (single) {	
 				while (i >= nonVolStartEXTR * 2) {
 					if ((regsEXTRS & (1 << i)) != 0) {
 						regsEXTRS &= ~(1 << i);
 						regsEXTRD &= ~(1 << (i/2));	// mark double precision register as well	
-						if (nofEXTR - i > nofNonVolFPR) nofNonVolFPR = nofEXTR - i;
+						if (nofEXTR - i > nofNonVolEXTRS) nofNonVolEXTRS = nofEXTR - i;
 						return i;
 					}
 					i--;
@@ -482,7 +504,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 					if ((regsEXTRD & (1 << i)) != 0) {
 						regsEXTRD &= ~(1 << i);
 						if (i < 16) regsEXTRS &= ~(3 << (i*2));	// mark single precision registers as well	
-						if (nofEXTR - i > nofNonVolFPR) nofNonVolFPR = nofEXTR - i;
+						if (nofEXTR - i > nofNonVolEXTRD) nofNonVolEXTRD = nofEXTR - i;
 						return i;
 					}
 					i--;

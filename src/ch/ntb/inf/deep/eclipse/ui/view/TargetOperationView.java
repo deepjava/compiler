@@ -132,6 +132,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 									}
 								case Parser.sSPR:
 								case Parser.sIOR:
+								case Parser.sCPR:
 									switch(op.registerSize){
 									case 1:
 										return String.format("0x%02X",(byte)op.value);
@@ -144,6 +145,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 									default:
 										return String.format("0x%08X",(int)op.value);
 									}
+								default:
+									throw new RuntimeException("no such register type");
 								}
 							case 2:	// variable
 								switch (op.valueType){
@@ -190,7 +193,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 									case tRef:
 										return String.format("0x%08X",(int)op.value);
 									default:
-										throw new RuntimeException("Should not happen, number 1"); //XXX number 1
+										throw new RuntimeException("no such variable type");
 								}
 							case 3:
 								return String.format("0x%08X",(int)op.value);
@@ -348,11 +351,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		if (vars.length > 1) {
 			for (int i = 0; i < vars.length && i < elements.length; i++) {
 				String[] obj = vars[i].split(",");
-				if (obj.length > 1) {
-					elements[i] = new TargetOpObject(Integer.decode(obj[0]),obj[1]);
-				} else {
-					elements[i] = new TargetOpObject();
-				}
+				if (obj.length == 3) elements[i] = new TargetOpObject(Integer.decode(obj[0]), obj[1], obj[2]);
+				else if (obj.length == 2) elements[i] = new TargetOpObject(Integer.decode(obj[0]), obj[1]);
+				else elements[i] = new TargetOpObject();
 			}
 			if (vars.length < elements.length) {
 				for (int i = vars.length; i < elements.length; i++) elements[i] = new TargetOpObject();
@@ -456,12 +457,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		
 		@Override
 		protected Object getValue(Object element) {
-			TargetOpObject op = (TargetOpObject)element;
-			if(op.operation != 0 && op.description != "" && op.addr != 0) {
-				return op.note;
-			}
-			
-			return "";
+			return ((TargetOpObject)element).note;
 		}
 		
 
@@ -470,9 +466,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			TargetOpObject op = (TargetOpObject) element;
 			if(op.operation != 0 && op.description != "") {
 				op.note = (String) value;
+				saveView();
 				viewer.refresh();
-			}else {
-				
 			}
 		}
 	}
@@ -528,6 +523,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 					}
 				case Parser.sSPR:
 				case Parser.sIOR:
+				case Parser.sCPR:
 					switch (op.registerSize) {
 					case 1:
 						return String.format("0x%02X", op.value);
@@ -1067,6 +1063,9 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				case Parser.sSPR:
 					op.value = tc.getRegisterValue(op.description);
 					break;
+				case Parser.sCPR:
+					op.value = tc.getRegisterValue(op.description);
+					break;
 				case Parser.sIOR:
 					switch (op.registerSize) {
 					case 1:
@@ -1222,7 +1221,16 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 			case Parser.sSPR:
 				tc.setRegisterValue(op.description, (int)op.value);
 				break;
+			case Parser.sCPR: 
+				if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+				else val = Integer.parseInt(value);
+				op.value = val;
+				tc.setRegisterValue(op.description, op.value);
+				break;
 			case Parser.sIOR:
+				if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+				else val = Integer.parseInt(value);
+				op.value = val;
 				switch (op.registerSize) {
 				case 1:
 					tc.writeByte(op.addr, (byte)op.value);
@@ -1249,8 +1257,8 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 	
 	private void saveView(){
 		StringBuffer sb = new StringBuffer();
-		for(int i = 0; i < elements.length; i++){
-			sb.append(elements[i].operation + "," + elements[i].description + ";");
+		for (int i = 0; i < elements.length; i++) {
+			sb.append(elements[i].operation + "," + elements[i].description + "," + elements[i].note + ";");
 		}
 		prefs.put("storedTargetOperations", sb.toString());
 		try {

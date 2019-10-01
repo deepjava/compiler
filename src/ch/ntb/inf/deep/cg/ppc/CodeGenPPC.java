@@ -35,6 +35,9 @@ import ch.ntb.inf.deep.strings.HString;
 
 public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 
+	// maximum nof registers used by this method, used to calculate stack size and for debugging output
+	public static int nofNonVolFPR, nofVolFPR;
+
 	private static final int arrayLenOffset = 6;	
 	// used for some floating point operations and compiler specific subroutines
 	private static final int tempStorageSize = 48;	// 1 FPR (temp) + 8 GPRs
@@ -92,6 +95,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 	
 	public void translateMethod(Method method) {
 		init(method);
+		nofNonVolFPR = 0; nofVolFPR = 0;
+
 		SSA ssa = method.ssa;
 		Code32 code = method.machineCode;
 		
@@ -100,6 +105,8 @@ public class CodeGenPPC extends CodeGen implements InstructionOpcs, Registers {
 		enFloatsInExc = false;
 		RegAllocatorPPC.regsGPR = regsGPRinitial;
 		RegAllocatorPPC.regsFPR = regsFPRinitial;
+		RegAllocatorPPC.nofNonVolFPR = 0;
+		RegAllocatorPPC.nofVolFPR = 0;
 
 		RegAllocator.buildIntervals(ssa);
 		

@@ -29,7 +29,7 @@ project junitTargetTestProject {
 #	rootclasses = "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest";
 
 #	Tests for all unsafes  
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTest","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest";
+#	rootclasses = "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTestPPC","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest";
 
 #	Tests for all casts  
 #	rootclasses = "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest";
@@ -52,7 +52,7 @@ project junitTargetTestProject {
 				  "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest",
 				  "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest",
 				  "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest",
-				  "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTest","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest",
+				  "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTestPPC","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest",
 				  "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest",
 				  "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest",
 				  "ch/ntb/inf/deep/comp/targettest/objects/EnumTest",
