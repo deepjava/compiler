@@ -93,10 +93,6 @@ public class Launcher implements ICclassFileConsts {
 		reporter.clear();
 		CFR.initBuildSystem();
 		
-		Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
-		Version deepCompVersion = deepBundle.getVersion();
-				
-		
 		// Read configuration
 		if (dbgProflg) time = System.nanoTime();
 		if (dbg) vrb.println("[Launcher] Loading Configuration");
@@ -105,37 +101,31 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
-		
+		Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
+		Version deepCompilerVersion = deepBundle.getVersion();
 		File deepLibVersionFile = null;
 		FileReader fr = null;
 		char[] deepLibVersion = {'0','.','0','.','0'};
-		
 		boolean identVersion = false;
-		
-		for(HString h : project.getLibPaths()) {
-			deepLibVersionFile = new File(h.toString()+"VERSION");
+		String libVersion = "";
+		for (HString h : project.getLibPaths()) {
+			deepLibVersionFile = new File(h.toString() + "VERSION");
 			try {
 				fr = new FileReader(deepLibVersionFile);
 				fr.read(deepLibVersion, 0, 5);
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				ErrorReporter.reporter.error(310, "failed to open file " + deepLibVersionFile);
 			} catch (IOException e) {
-				e.printStackTrace();
+				ErrorReporter.reporter.error(310, "could not read from " + deepLibVersionFile);
 			}
-			String libVersion = "";
-			for(char c : deepLibVersion) {
-				libVersion += c;
-			}			
-			if(deepCompVersion.compareTo(new Version(libVersion)) == 0) {
-				identVersion = true;
-				log.println("Version compiler / library ident.");
-			}
+			for (char c : deepLibVersion) libVersion += c;		
+			if (deepCompilerVersion.compareTo(new Version(libVersion)) == 0) identVersion = true;
 		}
-		if(!identVersion) {
-			if(deepCompVersion.compareTo(new Version(libVersion)) == -1) {
-				reporter.error("Version mismatch Compiler / Library. Please update deep compiler");
-			}else if(deepCompVersion.compareTo(new Version(libVersion)) == 1) {
-				reporter.error("Version mismatch Compiler / Library. Please update deep runtime-library");
+		if (reporter.nofErrors <= 0 && !identVersion) {
+			if (deepCompilerVersion.compareTo(new Version(libVersion)) == -1) {
+				ErrorReporter.reporter.error(311);
+			} else if(deepCompilerVersion.compareTo(new Version(libVersion)) == 1) {
+				ErrorReporter.reporter.error(312);
 			}
 		}
 		

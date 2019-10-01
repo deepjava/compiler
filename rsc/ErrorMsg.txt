@@ -51,6 +51,9 @@ ErrorNr;Description;Solution
 304;illegal parent directories of class files;
 305;no root classes defined;
 306;+ operator for strings not supported;
+310;no version file found in deep library;
+311;version mismatch compiler / library. Please update deep compiler;
+312;version mismatch compiler / library. Please update deep library;
 
 400;node in cfg not found;
 401;last bytecode instruction is not at end of method;
