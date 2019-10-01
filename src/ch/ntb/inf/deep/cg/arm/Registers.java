@@ -26,7 +26,7 @@ interface Registers {
 	final int topEXTR = 31;	// highest numbered EXTR
 	
 	final int paramStartGPR = 0;	// GPR with first parameter
-	final int paramStartEXTR = 1;	// EXTR with first parameter
+	final int paramStartEXTR = 2;	// EXTR with first parameter
 	
 	final int paramEndGPR = 5;	// GPR with last parameter, must be < nonVolStartGPR
 	final int paramEndEXTR = 6;	// EXTR with last parameter, must be < nonVolStartEXTR

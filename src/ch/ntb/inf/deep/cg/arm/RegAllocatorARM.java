@@ -397,7 +397,7 @@ public class RegAllocatorARM extends RegAllocator implements SSAInstructionOpcs,
 		CodeGenARM.nofVolEXTRD = nofVolEXTRD;
 		CodeGenARM.nofVolEXTRS = nofVolEXTRS;
 		int nof = maxNofParamGPR - (paramEndGPR - paramStartGPR + 1);
-		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof;
+		if (nof > 0) CodeGenARM.callParamSlotsOnStack = nof;
 		nof = maxNofParamEXTR - (paramEndEXTR - paramStartEXTR + 1);
 		if (nof > 0) CodeGenARM.callParamSlotsOnStack += nof*2;	// reserve 2 stack slots regardless if type is float or double
 		

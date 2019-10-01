@@ -2649,15 +2649,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private void copyParameters(Code32 code, SSAValue[] opds) {
 //		boolean dbg = true;
 		// information about the src registers for parameters of a call to a method 
-		int[] srcGPR = new int[nofGPR];	
-		int[] srcGPRcount = new int[nofGPR];
-		int[] srcEXTR = new int[nofEXTR];
-		boolean[] srcEXTRtype = new boolean[nofEXTR];
-		int[] srcEXTRcount = new int[nofEXTR];
+		int[] srcGPR = new int[maxNofParam];	
+		int[] srcGPRcount = new int[maxNofParam];
+		int[] srcEXTR = new int[maxNofParam];
+		boolean[] srcEXTRtype = new boolean[maxNofParam];
+		int[] srcEXTRcount = new int[maxNofParam];
 
-		int offset = 0;
-		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = -1; srcGPRcount[k] = 0;}
-		for (int k = 0; k < nofEXTR; k++) {srcEXTR[k] = -1; srcEXTRtype[k] = false; srcEXTRcount[k] = 0;}
+//		int offset = 0;
+		for (int k = 0; k < maxNofParam; k++) {srcGPR[k] = -1; srcGPRcount[k] = 0; srcEXTR[k] = -1; srcEXTRtype[k] = false; srcEXTRcount[k] = 0;}
 
 		// get info about in which register parameters are located
 		// parameters which go onto the stack are treated equally
@@ -2681,14 +2680,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			StdStreams.vrb.print("\tsrcGPR = ");
 			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
 			StdStreams.vrb.print("\tsrcGPRcount = ");
-			for (int k = 0; k < nofGPR; k++) StdStreams.vrb.print(srcGPRcount[k] + ","); 
+			for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcGPRcount[k] + ","); 
 			StdStreams.vrb.println();
 			StdStreams.vrb.print("\tsrcEXTR = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTR[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRtype = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTRtype[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRDcount = ");
-			for (int k = 0; k < nofEXTR; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
+			for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
 			StdStreams.vrb.println();
 		}
 
@@ -2710,14 +2709,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			StdStreams.vrb.print("\tsrcGPR = ");
 			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
 			StdStreams.vrb.print("\tsrcGPRcount = ");
-			for (int k = 0; k < nofGPR; k++) StdStreams.vrb.print(srcGPRcount[k] + ","); 
+			for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcGPRcount[k] + ","); 
 			StdStreams.vrb.println();
 			StdStreams.vrb.print("\tsrcEXTR = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTR[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRtype = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTRtype[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRDcount = ");
-			for (int k = 0; k < nofEXTR; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
+			for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
 			StdStreams.vrb.println();
 		}
 		
@@ -2740,14 +2739,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			StdStreams.vrb.print("\tsrcGPR = ");
 			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
 			StdStreams.vrb.print("\tsrcGPRcount = ");
-			for (int n = 0; n < nofGPR; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
+			for (int n = 0; n < maxNofParam; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
 			StdStreams.vrb.println();
 			StdStreams.vrb.print("\tsrcEXTR = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTR[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRtype = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTRtype[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRDcount = ");
-			for (int k = 0; k < nofEXTR; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
+			for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
 			StdStreams.vrb.println();
 		}
 
@@ -2757,21 +2756,20 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			i = paramStartGPR; done = true;
 			while (srcGPR[i] != -1) {
 				if (i > paramEndGPR) {	// copy to stack
-					if (srcGPRcount[i] >= 0) { // check if not done yet
-						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to stack slot");
+					if (srcGPRcount[i] == 0) { // check if not done yet
+						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to stack slot " + (i-paramEndGPR-1));
 						if (srcGPR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
 							createLSWordImm(code, armLdr, condAlways, scratchReg, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
-							createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, paramOffset + offset, 1, 1, 0);
+							createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, paramOffset + (i-paramEndGPR-1)*4, 1, 1, 0);
 						} else {
-							createLSWordImm(code, armStr, condAlways, srcGPR[i], stackPtr, paramOffset + offset, 1, 1, 0);
+							createLSWordImm(code, armStr, condAlways, srcGPR[i], stackPtr, paramOffset + (i-paramEndGPR-1)*4, 1, 1, 0);
 							srcGPRcount[srcGPR[i]]--; 
 						}
-						offset += 4;
 						srcGPRcount[i]--; 
 						done = false;
 					}
 				} else {	// copy to register
-					if (srcGPRcount[i] == 0) { // check if register no longer used for parameter
+					if (srcGPRcount[i] == 0 /*&& !paramDone[i]*/) { // check if register no longer used for parameter
 						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to R" + i);
 						if (srcGPR[i] >= 0x100) {	// copy from stack
 							createLSWordImm(code, armLdr, condAlways, i, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
@@ -2786,12 +2784,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				i++; 
 			}
 		}
+
 		done = false;
 		while (!done) {
 			if (dbg) {
-				StdStreams.vrb.print("\tround");
 				StdStreams.vrb.print("\tsrcEXTRDcount = ");
-				for (int k = 0; k < nofEXTR; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
+				for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
 				StdStreams.vrb.println();
 			}
 			i = paramStartEXTR; done = true;
@@ -2799,29 +2797,27 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (i > paramEndEXTR) {	// copy to stack
 					if (srcEXTRtype[i]) {	// floats
 						if (srcEXTRcount[i] >= 0) { // check if not done yet
-							if (dbg) StdStreams.vrb.println("\tEXTR: parameter " + (i-paramStartEXTR) + " from register S" + srcEXTR[i] + " to stack slot");
+							if (dbg) StdStreams.vrb.println("\tEXTR: parameter " + (i-paramStartEXTR) + " from register S" + srcEXTR[i] + " to stack slot " + (i-paramEndEXTR-1));
 							if (srcEXTR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
 								createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, stackPtr, code.localVarOffset + 4 * (srcEXTR[i] - 0x100), true);
-								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR, stackPtr, paramOffset + offset, true);
+								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR, stackPtr, paramOffset + (i-paramEndEXTR-1)*8, true);
 							} else {
-								createLSExtReg(code, armVstr, condAlways, srcEXTR[i], stackPtr, paramOffset + offset, true);
+								createLSExtReg(code, armVstr, condAlways, srcEXTR[i], stackPtr, paramOffset + (i-paramEndEXTR-1)*8, true);
 								srcEXTRcount[srcEXTR[i]/2]--;
 							}
-							offset += 8;
 							srcEXTRcount[i]--;  
 							done = false;
 						}
 					} else { // doubles
 						if (srcEXTRcount[i] >= 0) { // check if not done yet
-							if (dbg) StdStreams.vrb.println("\tEXTR: parameter " + (i-paramStartEXTR) + " from register D" + srcEXTR[i] + " to stack slot");
+							if (dbg) StdStreams.vrb.println("\tEXTR: parameter " + (i-paramStartEXTR) + " from register D" + srcEXTR[i] + " to stack slot " + (i-paramEndEXTR-1));
 							if (srcEXTR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
 								createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, stackPtr, code.localVarOffset + 4 * (srcEXTR[i] - 0x100), false);
-								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR, stackPtr, paramOffset + offset, false);
+								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR, stackPtr, paramOffset + (i-paramEndEXTR-1)*8, false);
 							} else {
-								createLSExtReg(code, armVstr, condAlways, srcEXTR[i], stackPtr, paramOffset + offset, false);
+								createLSExtReg(code, armVstr, condAlways, srcEXTR[i], stackPtr, paramOffset + (i-paramEndEXTR-1)*8, false);
 								srcEXTRcount[srcEXTR[i]]--;
 							}
-							offset += 8;
 							srcEXTRcount[i]--;  
 							done = false;
 						}
@@ -2860,14 +2856,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			StdStreams.vrb.print("\tsrcGPR = ");
 			for (int k = paramStartGPR; srcGPR[k] != -1; k++) StdStreams.vrb.print(srcGPR[k] + ","); 
 			StdStreams.vrb.print("\tsrcGPRcount = ");
-			for (int n = 0; n < nofGPR; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
+			for (int n = 0; n < maxNofParam; n++) StdStreams.vrb.print(srcGPRcount[n] + ","); 
 			StdStreams.vrb.println();
 			StdStreams.vrb.print("\tsrcEXTR = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTR[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRtype = ");
 			for (int k = paramStartEXTR; srcEXTR[k] != -1; k++) StdStreams.vrb.print(srcEXTRtype[k] + ","); 
 			StdStreams.vrb.print("\tsrcEXTRDcount = ");
-			for (int k = 0; k < nofEXTR; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
+			for (int k = 0; k < maxNofParam; k++) StdStreams.vrb.print(srcEXTRcount[k] + ","); 
 			StdStreams.vrb.println();
 		}
 
@@ -2966,7 +2962,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		int[] srcGPR = new int[nofGPR];	
 		int[] srcGPRcount = new int[nofGPR];
 
-		int offset = 0;
 		for (int k = 0; k < nofGPR; k++) {srcGPR[k] = -1; srcGPRcount[k] = 0;}
 
 		// get info about in which register parameters are located
@@ -3026,15 +3021,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			while (srcGPR[i] != -1) {
 				if (i > paramEndGPR) {	// copy to stack
 					if (srcGPRcount[i] >= 0) { // check if not done yet
-						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to stack slot");
+						if (dbg) StdStreams.vrb.println("\tGPR: parameter " + (i-paramStartGPR) + " from register R" + srcGPR[i] + " to stack slot " + (i-paramStartGPR-paramEndGPR-1));
 						if (srcGPR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
 							createLSWordImm(code, armLdr, condAlways, scratchReg, stackPtr, code.localVarOffset + 4 * (srcGPR[i] - 0x100), 1, 1, 0);
-							createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, paramOffset + offset, 1, 1, 0);
+							createLSWordImm(code, armStr, condAlways, scratchReg, stackPtr, paramOffset + (i-paramStartGPR-paramEndGPR-1)*4, 1, 1, 0);
 						} else {
-							createLSWordImm(code, armStr, condAlways, srcGPR[i], stackPtr, paramOffset + offset, 1, 1, 0);
+							createLSWordImm(code, armStr, condAlways, srcGPR[i], stackPtr, paramOffset + (i-paramStartGPR-paramEndGPR-1)*4, 1, 1, 0);
 							srcGPRcount[srcGPR[i]]--; 
 						}
-						offset += 4;
 						srcGPRcount[i]--; 
 						done = false;
 					}
@@ -3494,7 +3488,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private void insertProlog(Code32 code, int stackSize) {
-		if (dbg) StdStreams.vrb.println("prolog: nofMoveGPR=" + nofMoveGPR + " nofMoveFPR=" + nofMoveFPR);
+		if (dbg) StdStreams.vrb.println("prolog: nofMoveGPR=" + nofMoveGPR + " nofMoveFPR=" + nofMoveFPR + "   stackSize=" + stackSize);
 		code.iCount = 0;	
 		createDataProcMovReg(code, armMov, condAlways, scratchReg, stackPtr, noShift, 0);	// make copy for back trace
 		int regList = 1 << LR;

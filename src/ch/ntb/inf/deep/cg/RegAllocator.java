@@ -47,6 +47,7 @@ public class RegAllocator implements SSAInstructionOpcs, SSAValueType, SSAInstru
 	protected static int maxOpStackSlots;
 	
 	// maximum slots on stack for locals, long and doubles get two slots
+	// various calls within this might use more or less slots, this is the maximum for all calls
 	public static int maxLocVarStackSlots;
 	// used to assign stack slots for spilled registers
 	public static int stackSlotSpilledRegs;

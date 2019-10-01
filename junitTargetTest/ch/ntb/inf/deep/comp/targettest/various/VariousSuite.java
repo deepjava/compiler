@@ -22,7 +22,7 @@ import ch.ntb.inf.junitTarget.MaxErrors;
 import ch.ntb.inf.junitTarget.Suite;
 
 //@Suite({ VariousTest1.class, VariousTest3.class })
-@Suite({ VariousTest1.class, VariousTest2.class, VariousTest3.class })
+@Suite({ StackFrame.class, ParameterPassing.class, RegisterAllocation.class })
 
 @MaxErrors(500)
 public class VariousSuite {

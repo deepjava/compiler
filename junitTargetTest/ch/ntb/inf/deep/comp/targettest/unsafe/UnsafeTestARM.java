@@ -28,7 +28,7 @@ import ch.ntb.inf.junitTarget.*;
  */
 @MaxErrors(100)
 public class UnsafeTestARM {
-	static final int addr = 0x350; // choose an address in the exception vector space, which is unused
+	static final int addr = 0x3e0; // choose an address in the exception vector space, which is unused
 	
 	@Test
 	public static void testGetPut() {
@@ -79,8 +79,6 @@ public class UnsafeTestARM {
 			Assert.assertEquals("Test2", 3.67548E23, US.GETEXTRD(6), 0.0);
 			US.PUTEXTRS(6, 0.003456f);
 			Assert.assertEquals("Test3", 0.003456, US.GETEXTRS(6), 0.0001);
-//			US.PUTSPR(272, 0x3456789a);
-//			Assert.assertEquals("Test3", 0x3456789a, US.GETSPR(272));
 		}
 		CmdTransmitter.sendDone();
 	}

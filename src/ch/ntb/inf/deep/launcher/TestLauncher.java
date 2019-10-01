@@ -47,8 +47,8 @@ public class TestLauncher {
 //		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
-		Launcher.buildAll("zybo7000ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("zybo7000junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("zybo7000ExampleProject.deep", "BootFromRam");
+		Launcher.buildAll("zybo7000junitTarget.deep", "BootFromRam");
 
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();

@@ -30,7 +30,7 @@ import ch.ntb.inf.junitTarget.Test;
  *         Changes:
  */
 @MaxErrors(100)
-public class VariousTest3 {
+public class RegisterAllocation {
 
 	// checks if phi functions with same index are splitted correctly 
 	static int phiFunction1(int a) {
@@ -54,6 +54,8 @@ public class VariousTest3 {
 		CmdTransmitter.sendDone();
 	}	
 
+	// tests if nested for loops with condition in between
+	// sucessfully resolves necessary phi-functions
 	private static int forIfFor() {
 		int  offset, k; 
 		offset = 0; 
