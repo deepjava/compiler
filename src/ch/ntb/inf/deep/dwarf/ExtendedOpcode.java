@@ -2,8 +2,6 @@ package ch.ntb.inf.deep.dwarf;
 
 import java.nio.ByteBuffer;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 public class ExtendedOpcode extends Opcode {
 
 	public static final byte DW_LNE_end_sequence = 1;
@@ -49,7 +47,7 @@ public class ExtendedOpcode extends Opcode {
 			break;
 		case DW_LNE_define_file:
 			// TODO: add Implementation!
-			throw new NotImplementedException();
+			throw new UnsupportedOperationException ();
 		default:
 			throw new RuntimeException("Illegal operation type");
 		}
@@ -68,7 +66,7 @@ public class ExtendedOpcode extends Opcode {
 			break;
 		case DW_LNE_define_file:
 			// TODO: add Implementation!
-			throw new NotImplementedException();
+			throw new UnsupportedOperationException ();
 		default:
 			throw new RuntimeException("Illegal operation type");
 		}
