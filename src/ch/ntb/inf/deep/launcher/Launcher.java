@@ -88,11 +88,11 @@ public class Launcher implements ICclassFileConsts {
 		Class clazz;
 		Method method;
 		Array array;
-		
+
 		// Reset error reporter
 		reporter.clear();
 		CFR.initBuildSystem();
-		
+
 		// Read configuration
 		if (dbgProflg) time = System.nanoTime();
 		if (dbg) vrb.println("[Launcher] Loading Configuration");
@@ -102,30 +102,32 @@ public class Launcher implements ICclassFileConsts {
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
 		Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
-		Version deepCompilerVersion = deepBundle.getVersion();
-		File deepLibVersionFile = null;
-		FileReader fr = null;
-		char[] deepLibVersion = {'0','.','0','.','0'};
-		boolean identVersion = false;
-		String libVersion = "";
-		for (HString h : project.getLibPaths()) {
-			deepLibVersionFile = new File(h.toString() + "VERSION");
-			try {
-				fr = new FileReader(deepLibVersionFile);
-				fr.read(deepLibVersion, 0, 5);
-			} catch (FileNotFoundException e) {
-				ErrorReporter.reporter.error(310, "failed to open file " + deepLibVersionFile);
-			} catch (IOException e) {
-				ErrorReporter.reporter.error(310, "could not read from " + deepLibVersionFile);
+		if (deepBundle != null) {
+			Version deepCompilerVersion = deepBundle.getVersion();
+			File deepLibVersionFile = null;
+			FileReader fr = null;
+			char[] deepLibVersion = {'0','.','0','.','0'};
+			boolean identVersion = false;
+			String libVersion = "";
+			for (HString h : project.getLibPaths()) {
+				deepLibVersionFile = new File(h.toString() + "VERSION");
+				try {
+					fr = new FileReader(deepLibVersionFile);
+					fr.read(deepLibVersion, 0, 5);
+				} catch (FileNotFoundException e) {
+					ErrorReporter.reporter.error(310, "failed to open file " + deepLibVersionFile);
+				} catch (IOException e) {
+					ErrorReporter.reporter.error(310, "could not read from " + deepLibVersionFile);
+				}
+				for (char c : deepLibVersion) libVersion += c;		
+				if (deepCompilerVersion.compareTo(new Version(libVersion)) == 0) identVersion = true;
 			}
-			for (char c : deepLibVersion) libVersion += c;		
-			if (deepCompilerVersion.compareTo(new Version(libVersion)) == 0) identVersion = true;
-		}
-		if (reporter.nofErrors <= 0 && !identVersion) {
-			if (deepCompilerVersion.compareTo(new Version(libVersion)) == -1) {
-				ErrorReporter.reporter.error(311);
-			} else if(deepCompilerVersion.compareTo(new Version(libVersion)) == 1) {
-				ErrorReporter.reporter.error(312);
+			if (reporter.nofErrors <= 0 && !identVersion) {
+				if (deepCompilerVersion.compareTo(new Version(libVersion)) == -1) {
+					ErrorReporter.reporter.error(311);
+				} else if(deepCompilerVersion.compareTo(new Version(libVersion)) == 1) {
+					ErrorReporter.reporter.error(312);
+				}
 			}
 		}
 		
