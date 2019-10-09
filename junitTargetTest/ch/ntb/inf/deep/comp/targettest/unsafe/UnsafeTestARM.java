@@ -32,7 +32,7 @@ public class UnsafeTestARM {
 	
 	@Test
 	public static void testGetPut() {
-		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
+		if (CmdTransmitter.platform != CmdTransmitter.pHost) {
 			US.PUT1(addr, 0x11);
 			US.PUT1(addr + 1, 0x22);
 			US.PUT2(addr + 2, 0x3344);
@@ -50,7 +50,7 @@ public class UnsafeTestARM {
 	
 	@Test
 	public static void testBit() {
-		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
+		if (CmdTransmitter.platform != CmdTransmitter.pHost) {
 			US.PUT4(addr, 0xaaaaaaaa);
 			Assert.assertFalse("Test1", US.BIT(addr, 0));
 			Assert.assertTrue("Test2", US.BIT(addr, 1));
@@ -71,7 +71,7 @@ public class UnsafeTestARM {
 
 	@Test
 	public static void testRegisters() {
-		if (CmdTransmitter.plattform != CmdTransmitter.pHost) {
+		if (CmdTransmitter.platform != CmdTransmitter.pHost) {
 			// make sure register is not used by this method
 			US.PUTGPR(6, 0x3456789a);
 			Assert.assertEquals("Test1", 0x3456789a, US.GETGPR(6));
