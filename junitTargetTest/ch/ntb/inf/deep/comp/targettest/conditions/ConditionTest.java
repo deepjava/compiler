@@ -104,6 +104,28 @@ public class ConditionTest {
 	}
 	
 	@Test
+	//Test boolean expressions 3 (immediates)
+	public static void testBooleanExpr3(){
+		int a = 10;
+		Assert.assertTrue("test1", a == 10);
+		Assert.assertTrue("test2", 10 == a);
+		Assert.assertTrue("test3", a != 11);
+		Assert.assertTrue("test4", 11 != a);
+		Assert.assertFalse("test5", a > 10);
+		Assert.assertFalse("test6", 10 < a);
+		Assert.assertFalse("test7", a < 10);
+		Assert.assertFalse("test8", 10 > a);
+		Assert.assertTrue("test9", a >= 10);
+		Assert.assertTrue("test10", a <= 10);
+		Assert.assertTrue("test11", 10 <= a);
+		Assert.assertTrue("test12", 10 >= a);
+		Assert.assertTrue("test13", 11 >= a);
+		Assert.assertFalse("test14", 11 <= a);
+		
+		CmdTransmitter.sendDone();
+	}
+
+	@Test
 	//Test ternary variants
 	public static void testTernary(){
 		int	res, a, b;
@@ -212,4 +234,6 @@ public class ConditionTest {
 
 		CmdTransmitter.sendDone();
 	}
+	
+	
 }
