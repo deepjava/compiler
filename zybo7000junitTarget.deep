@@ -63,7 +63,6 @@ project junitTargetTestProject {
 				  "ch/ntb/inf/deep/comp/targettest/various/StackFrame","ch/ntb/inf/deep/comp/targettest/various/ParameterPassing","ch/ntb/inf/deep/comp/targettest/various/RegisterAllocation",
 				  "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
 
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/various/StackFrame","ch/ntb/inf/deep/comp/targettest/various/ParameterPassing","ch/ntb/inf/deep/comp/targettest/various/RegisterAllocation";
 
 #	Tests for target lib  
 #	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest";
@@ -74,9 +73,9 @@ project junitTargetTestProject {
 #	rootclasses = "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
 
 #	Tests for all target lib
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555",
-#				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTest","ch/ntb/inf/deep/trglib/targettest/UtilTest",
-#				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
+	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestZynq",
+				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTestARM","ch/ntb/inf/deep/trglib/targettest/UtilTest",
+				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
 
 # Target command table file
 	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
