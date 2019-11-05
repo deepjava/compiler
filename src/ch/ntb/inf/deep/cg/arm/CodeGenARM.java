@@ -2502,13 +2502,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						else if (bci == bCif_icmpne)
 							createBranchImm(code, armB, condNOTEQ, 0);
 						else if (bci == bCif_icmplt)
-							createBranchImm(code, armB, condGE, 0);
-						else if (bci == bCif_icmpge)
-							createBranchImm(code, armB, condLT, 0);
-						else if (bci == bCif_icmpgt)
-							createBranchImm(code, armB, condLE, 0);
-						else if (bci == bCif_icmple)
 							createBranchImm(code, armB, condGT, 0);
+						else if (bci == bCif_icmpge)
+							createBranchImm(code, armB, condLE, 0);
+						else if (bci == bCif_icmpgt)
+							createBranchImm(code, armB, condLT, 0);
+						else if (bci == bCif_icmple)
+							createBranchImm(code, armB, condGE, 0);
 					}
 					break; 
 				case bCifeq:
