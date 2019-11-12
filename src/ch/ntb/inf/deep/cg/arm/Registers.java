@@ -46,15 +46,15 @@ interface Registers {
 	final int LR = 14;			// register for link register
 	final int PC = 15;			// register for program counter
 	
-	final int scratchRegEXTR = 0;		// scratch register
+	final int scratchRegEXTR0 = 0;		// scratch register
 	final int scratchRegEXTR1 = 1;		// scratch register 1
 
 	// initial mask for GPR's, '1' means register is free
 	final int regsGPRinitial = 0xffff & (~((1 << nonVolStartGPR) - 1) | ((1 << (volEndGPR+1)) - 1)) & ~(1 << stackPtr) & ~(1 << LR) & ~(1 << PC);
 	// initial mask for EXTR's, double precision, '1' means register is free
-	final int regsEXTRDinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(1 << scratchRegEXTR) & ~(1 << scratchRegEXTR1);	
+	final int regsEXTRDinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(1 << scratchRegEXTR0) & ~(1 << scratchRegEXTR1);	
 	// initial mask for EXTR's, single precision, '1' means register is free
-	final int regsEXTRSinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(3 << scratchRegEXTR) & ~(3 << scratchRegEXTR1*2);	
+	final int regsEXTRSinitial = 0xffffffff & (~((1 << nonVolStartEXTR) - 1) | ((1 << (volEndEXTR + 1)) - 1)) & ~(3 << scratchRegEXTR0) & ~(3 << scratchRegEXTR1*2);	
 
 	final boolean gpr = true;
 	final boolean extr = false;

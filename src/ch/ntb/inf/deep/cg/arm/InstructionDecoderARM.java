@@ -1374,16 +1374,16 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							case 0:
 								switch (op21_2) {
 								case 0:	case 2: // Move from Special register p.496 / p.1990
-									return "mrs" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", " + spec_reg;
+									return "mrs" + (cond!=condAlways?condString[cond]:"") + " R" + d + ", " + specReg;
 								case 1:
 									if ((op16_4 & 0x3) == 0x0) {	// =(XX00) Move to Special register, Application level p.500
-										return "msr" + (cond!=condAlways?condString[cond]:"") + " " + spec_reg + ", R" + n2;
+										return "msr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", R" + n2;
 									}
 									if (((op16_4 & 0x3) == 0x1) || ((op16_4 & 0x2) == 0x2)) {	// =(XX01)||(XX1X) Move to Special register, System level p.1998
-										return "msr" + (cond!=condAlways?condString[cond]:"") + " " + spec_reg + ", R" + n2;
+										return "msr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", R" + n2;
 									}
 								case 3: // Move to Special register, System level p.1998
-									return "msr" + (cond!=condAlways?condString[cond]:"") + " " + spec_reg + ", R" + n2;
+									return "msr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", R" + n2;
 								default: break;
 								}
 							default: break;
@@ -1849,18 +1849,18 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 						}	// End of (op16_4 == 0)
 						
 						if ( (op16_4==4) || ((op16_4 & 0xb)==0x8) ) {	// Move to Special register, Application level p.498
-							return "msr" + (cond!=condAlways?condString[cond]:"") + " " + spec_reg + ", #" + immToConst(op0_12);
+							return "msr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", #" + immToConst(op0_12);
 						}	// End of ( (op16_4==4) || ((op16_4 & 0xb)==0x8) ): Move to Special register, Application level p.498
 
 						
 						if ( ((op16_4 & 0x3)==0x1) || ((op16_4 & 0x2)==0x2) ) {	// Move to Special register, System level p.1996
-							return "msr" + (cond!=condAlways?condString[cond]:"") + " " + spec_reg + ", #" + immToConst(op0_12);
+							return "msr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", #" + immToConst(op0_12);
 							
 						}	// End of ( ((op16_4 & 0x3)==0x1) || ((op16_4 & 0x2)==0x2) ): Move to Special register, System level p.1996
 						
 					}	// End of (op22_1 == 0)
 					else if (op22_1 == 1) {	// Move to special register, System level p.1996
-						return "msr" + (cond!=condAlways?condString[cond]:"") + " " + spec_reg + ", #" + immToConst(op0_12);
+						return "msr" + (cond!=condAlways?condString[cond]:"") + " " + specReg + ", #" + immToConst(op0_12);
 					}	// End of (op22_1 == 1): Move to special register, System level p.1996					
 					
 				}	// End of ((op1 == 0x12) || (op1 == 0x16)):MSR (immediate), and hints p.206

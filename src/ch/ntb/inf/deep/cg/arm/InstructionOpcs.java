@@ -153,8 +153,15 @@ public interface InstructionOpcs {
 
 	public static String updateAPSR = "s";
 	
-	public static String spec_reg = "APSR";
-	
+	public static String specReg = "APSR";
+
+	// Floating point extension system registers
+	final int FPSID = 0;
+	final int FPSCR = 1;
+	final int MVFR1 = 6;
+	final int MVFR0 = 7;
+	final int FPEXC = 8;
+
 	public static String[] amode = {
 		"DA",
 		"IA",
@@ -252,8 +259,8 @@ public interface InstructionOpcs {
 	// floating point move between registers
 	armVmovDouble = (0xc4 << 20) | (0xb1 << 4),	// move between EXTR and two GPR
 	armVmovSingle = (0xe0 << 20) | (0xa1 << 4),	// move between EXTR and one GPR
-	armVmrs = (0xef1 << 16) | (0xa10),	// move from FPSCR to GPR
-	armVmsr = (0xee1 << 16) | (0xa10),	// move from GPR to FPSCR
+	armVmrs = (0xef << 20) | (0xa10),	// move from FPSCR to GPR
+	armVmsr = (0xee << 20) | (0xa10),	// move from GPR to FPSCR
 				
 	// coprocessor
 	armMrc = (0xe1 << 20) | (0x1 << 4),

@@ -73,7 +73,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (m != null) idPUTEXTRS = m.id; else {ErrorReporter.reporter.error(631); return;}
 		m = Configuration.getOS().getSystemMethodByName(cls, "PUTCPR"); 
 		if (m != null) idPUTCPR = m.id; else {ErrorReporter.reporter.error(631); return;}
-		
+
+		m = Configuration.getOS().getSystemMethodByName(cls, "HALT"); 
+		if (m != null) idHALT = m.id; else {ErrorReporter.reporter.error(631); return;}
+		m = Configuration.getOS().getSystemMethodByName(cls, "ENABLE_FLOATS"); 
+		if (m != null) idENABLE_FLOATS = m.id; else {ErrorReporter.reporter.error(631); return;}
+
 		super.init();
 	}
 
@@ -168,16 +173,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table has no prolog
 			} else if (method.name == HString.getRegisteredHString("superVisorCall")) {	// special treatment for exception handling
 				code.iCount = 0;
-//				createIrSrAsimm(ppcStwu, stackPtr, stackPtr, -24);
-//				createIrSspr(ppcMtspr, EID, 0);	// must be set for further debugger exceptions
-//				createIrSrAd(ppcStmw, 28, stackPtr, 4);
-//				createIrArSrB(ppcOr, 31, paramStartGPR, paramStartGPR);	// copy exception into nonvolatile
 				createBlockDataTransfer(code, armPush, condAlways, 7 << 10);	// store nonvolatiles R10, R11, R12 which are used within this method
 				createDataProcMovReg(code, armMov, condAlways, topGPR, paramStartGPR, noShift, 0);	// copy exception into nonvolatile
-//				createBranchImm(code, armB, condAlways, -2);
 			} else {
-				stackSize = calcStackSizeException(code);
-				insertPrologException(code, stackSize);
+				insertPrologException(code, stackSize);	// all other exceptions
 			}
 		} else {
 			stackSize = calcStackSize(code);
@@ -248,11 +247,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			} else if (method.name == HString.getRegisteredHString("superVisorCall")) {	// special treatment for exception handling
 				Method m = Method.getCompSpecSubroutine("handleException");
 				assert m != null;
-//				loadConstantAndFixup(code, 31, m);
-//				createIrSspr(ppcMtspr, LR, 31);
-//				createIrDrAd(ppcLmw, 28, stackPtr, 4);
-//				createIrDrAsimm(ppcAddi, stackPtr, stackPtr, 24);
-//				createIBOBILK(ppcBclr, BOalways, 0, false);
 				createBlockDataTransfer(code, armPop, condAlways, 7 << 10);	// restore nonvolatiles R10, R11, R12 which were used within this method
 				loadConstantAndFixup(code, scratchReg, m);
 				createDataProcMovReg(code, armMov, condAlways, PC, scratchReg, noShift, 0);	
@@ -407,36 +401,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		size += callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4 + (intfMethStorage? 12: 0);	
 		assert(nofNonVolEXTRD < 16);
 		if (nofNonVolEXTRD >= 16) ErrorReporter.reporter.error(1000);
-//		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 8;	// save volatile FPR's and FPSCR
-//		int size = 4 + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
-//		int padding = (16 - (size % 16)) % 16;
-//		size = size + padding;
+		// enFloatsInExc could be true, even if this is no exception method
+		// such a case arises when this method is called from within an exception method
+		if (enFloatsInExc) size += nonVolStartEXTR * 8 + 4;	// save volatile FPR's and FPSCR
 		paramOffset = 4;
 		code.localVarOffset = paramOffset + callParamSlotsOnStack * 4;
 		intfMethStorageOffset = paramOffset + callParamSlotsOnStack * 4 + RegAllocator.maxLocVarStackSlots * 4;
-		return size;
-	}
-
-	private static int calcStackSizeException(Code32 code) {
-//		int size = 28 + nofGPR * 4 + RegAllocator.maxLocVarStackSlots * 4;
-//		if (enFloatsInExc) {
-//			size += nofNonVolFPR * 8;	// save used nonvolatile EXTR's
-//			size += nonVolStartEXTR * 8 + 8;	// save all volatile EXTR's and FPSCR
-//		}
-		int size = RegAllocator.maxLocVarStackSlots * 4;
-//		int padding = (16 - (size % 16)) % 16;
-//		size = size + padding;
-//		LRoffset = size - 4;
-//		XERoffset = LRoffset - 4;
-//		CRoffset = XERoffset - 4;
-//		CTRoffset = CRoffset - 4;
-//		SRR1offset = CTRoffset - 4;
-//		SRR0offset = SRR1offset - 4;
-//		GPRoffset = SRR0offset - nofGPR * 4;
-//		FPRoffset = GPRoffset - nofNonVolFPR * 8;
-//		if (enFloatsInExc) FPRoffset -= nonVolStartEXTR * 8 + 8;
-		paramOffset = 4;
-		code.localVarOffset = paramOffset;
 		return size;
 	}
 
@@ -452,7 +422,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			instr.machineCodeOffset = code.iCount;
 			if (node.isCatch && i == 0 && node.loadLocalExc > -1) {	
 				if (dbg) StdStreams.vrb.println("enter move register intruction for local 'exception' in catch clause: from R" + paramStartGPR + " to R" + node.instructions[node.loadLocalExc].result.reg);
-//				createIrArSrB(ppcOr, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, paramStartGPR);
 				createDataProcMovReg(code, armMov, condAlways, node.instructions[node.loadLocalExc].result.reg, paramStartGPR, noShift, 0);
 			}
 			
@@ -1380,18 +1349,18 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						break;
 					}
 				case tFloat: 
-					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR, src1Reg, src2Reg, true);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 5, 1, true);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0, 1, true);
-					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR, scratchRegEXTR, src2Reg, true);
-					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, scratchRegEXTR, true);
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR0, src1Reg, src2Reg, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 5, 1, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 0, 1, true);
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR0, scratchRegEXTR0, src2Reg, true);
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, scratchRegEXTR0, true);
 					break;
 				case tDouble:
-					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR, src1Reg, src2Reg, false);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 5, 1, false);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0, 1, false);
-					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR, scratchRegEXTR, src2Reg, false);
-					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, scratchRegEXTR, false);
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR0, src1Reg, src2Reg, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 5, 1, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 0, 1, false);
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR0, scratchRegEXTR0, src2Reg, false);
+					createFPdataProc(code, armVsub, condAlways, dReg, src1Reg, scratchRegEXTR0, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1670,12 +1639,12 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					createMedia(code, armSbfx, condAlways, dRegLong, src1Reg, 31, 1);
 					break;
 				case tFloat: 
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1Reg, 0, false, true);
-					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR, 0, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, src1Reg, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR0, 0, 1, true);
 					break;
 				case tDouble:
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1Reg, 0, false, true);
-					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR, 0, 1, false);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, src1Reg, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR0, 0, 1, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1700,26 +1669,26 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					break;
 				case tFloat:
 					// cannot use vmla as in long -> double, not enough scratch registers
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1RegLong, 0, false, true);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0, 1, false);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, src1RegLong, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 0, 1, false);
 					Item item = int2floatConst2;	// ref to 2^32;
 					loadConstantAndFixup(code, scratchReg, item);
 					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR1, scratchReg, 0, false);
-					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1Reg, 0, false, true);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0, 0, false);
-					createFPdataProc(code, armVadd, condAlways, scratchRegEXTR, scratchRegEXTR1, scratchRegEXTR, false);
-					createFPdataConvPrec(code, armVcvtp, condAlways, dReg, scratchRegEXTR, true);
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR0, false);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, src1Reg, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 0, 0, false);
+					createFPdataProc(code, armVadd, condAlways, scratchRegEXTR0, scratchRegEXTR1, scratchRegEXTR0, false);
+					createFPdataConvPrec(code, armVcvtp, condAlways, dReg, scratchRegEXTR0, true);
 					break;
 				case tDouble:
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1Reg, 0, false, true);
-					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR, 0, 0, false);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, src1RegLong, 0, false, true);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR, 0, 1, false);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, src1Reg, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, dReg, scratchRegEXTR0, 0, 0, false);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, src1RegLong, 0, false, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR0, 0, 1, false);
 					item = int2floatConst2;	// ref to 2^32;
 					loadConstantAndFixup(code, scratchReg, item);
 					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR1, scratchReg, 0, false);
-					createFPdataProc(code, armVmla, condAlways, dReg, scratchRegEXTR, scratchRegEXTR1, false);
+					createFPdataProc(code, armVmla, condAlways, dReg, scratchRegEXTR0, scratchRegEXTR1, false);
 					break;
 				default:
 					ErrorReporter.reporter.error(610);
@@ -1730,49 +1699,49 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			case sCconvFloat: {	// float -> other type
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					createPacking(code, armSxtb, condAlways, dReg, dReg);
 					break;
 				case tChar: 
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSL, 16);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
 				case tInteger:
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					break;
 				case tLong:	
 					createFPdataProc(code, armVcmpe, condAlways, src1Reg, 0, true);
-					createCoProcFPU(code, armVmrs, condAlways, 15);	// get flags only
+					createCoProcFPU(code, armVmrs, condAlways, 15, FPSCR);	// get flags only
 					createFPdataProc(code, armVneg, condLT, scratchRegEXTR1, src1Reg, true);	// make positive
 					createFPdataProc(code, armVmov, condGE, scratchRegEXTR1, 0, src1Reg, true);	// copy if already positive		
 					createFPdataConvPrec(code, armVcvtp, condAlways, scratchRegEXTR1, scratchRegEXTR1, false);	// convert to double
 					
 					Item item = int2floatConst2;	// ref to 2^32;
 					loadConstantAndFixup(code, scratchReg, item);	// address of constant (in the const area) is loaded
-					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);
-					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 5, 1, false);	// F64 -> S32
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dRegLong, 0, true, true);
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR0, scratchReg, 0, false);
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR0, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR1, 5, 1, false);	// F64 -> S32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dRegLong, 0, true, true);
 				
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR1, scratchRegEXTR, 0, 1, false);	// S32 -> F64
-					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);	// load 2^32 again
-					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
-					createFPdataProc(code, armVneg, condLT, scratchRegEXTR, src1Reg, true);
-					createFPdataProc(code, armVmov, condGE, scratchRegEXTR, 0, src1Reg, true);
-					createFPdataConvPrec(code, armVcvtp, condAlways, scratchRegEXTR, scratchRegEXTR, false);	// convert to double
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR1, scratchRegEXTR0, 0, 1, false);	// S32 -> F64
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR0, scratchReg, 0, false);	// load 2^32 again
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR0, false);
+					createFPdataProc(code, armVneg, condLT, scratchRegEXTR0, src1Reg, true);
+					createFPdataProc(code, armVmov, condGE, scratchRegEXTR0, 0, src1Reg, true);
+					createFPdataConvPrec(code, armVcvtp, condAlways, scratchRegEXTR0, scratchRegEXTR0, false);	// convert to double
 
-					createFPdataProc(code, armVsub, condAlways, scratchRegEXTR1, scratchRegEXTR, scratchRegEXTR1, false);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 4, 1, false);	// F64 -> U32
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataProc(code, armVsub, condAlways, scratchRegEXTR1, scratchRegEXTR0, scratchRegEXTR1, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR1, 4, 1, false);	// F64 -> U32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 
 					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if source was positive
 					createDataProcImm(code, armRsbs, condAlways, dReg, dReg, 0);	// negate
@@ -1794,45 +1763,45 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			case sCconvDouble: {	// double -> other type
 				switch (res.type & ~(1<<ssaTaFitIntoInt)) {
 				case tByte:
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					createPacking(code, armSxtb, condAlways, dReg, dReg);
 					break;
 				case tChar: 
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSL, 16);
 					createDataProcReg(code, armMov, condAlways, dReg, 0, dReg, LSR, 16);
 					break;
 				case tShort: 
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, true);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, true);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					createPacking(code, armSxth, condAlways, dReg, src1Reg);
 					break;
 				case tInteger:
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, src1Reg, 5, 1, false);
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, src1Reg, 5, 1, false);
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 					break;
 				case tLong:					
 					createFPdataProc(code, armVcmpe, condAlways, src1Reg, 0, false);
-					createCoProcFPU(code, armVmrs, condAlways, 15);	// get flags only
+					createCoProcFPU(code, armVmrs, condAlways, 15, FPSCR);	// get flags only
 					createFPdataProc(code, armVneg, condLT, scratchRegEXTR1, src1Reg, false);	// make positive
 					createFPdataProc(code, armVmov, condGE, scratchRegEXTR1, 0, src1Reg, false);	// copy if already positive			
 					Item item = int2floatConst2;	// ref to 2^32;
 					loadConstantAndFixup(code, scratchReg, item);	// address of constant (in the const area) is loaded
-					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);
-					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 5, 1, false);	// F64 -> S32
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dRegLong, 0, true, true);
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR0, scratchReg, 0, false);
+					createFPdataProc(code, armVdiv, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR0, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR1, 5, 1, false);	// F64 -> S32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dRegLong, 0, true, true);
 				
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR1, scratchRegEXTR, 0, 1, false);	// S32 -> F64
-					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, scratchReg, 0, false);	// load 2^32 again
-					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR, false);
-					createFPdataProc(code, armVneg, condLT, scratchRegEXTR, src1Reg, false);
-					createFPdataProc(code, armVmov, condGE, scratchRegEXTR, 0, src1Reg, false);	
-					createFPdataProc(code, armVsub, condAlways, scratchRegEXTR1, scratchRegEXTR, scratchRegEXTR1, false);
-					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR, scratchRegEXTR1, 4, 1, false);	// F64 -> U32
-					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR, dReg, 0, true, true);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR1, scratchRegEXTR0, 0, 1, false);	// S32 -> F64
+					createLSExtReg(code, armVldr, condAlways, scratchRegEXTR0, scratchReg, 0, false);	// load 2^32 again
+					createFPdataProc(code, armVmul, condAlways, scratchRegEXTR1, scratchRegEXTR1, scratchRegEXTR0, false);
+					createFPdataProc(code, armVneg, condLT, scratchRegEXTR0, src1Reg, false);
+					createFPdataProc(code, armVmov, condGE, scratchRegEXTR0, 0, src1Reg, false);	
+					createFPdataProc(code, armVsub, condAlways, scratchRegEXTR1, scratchRegEXTR0, scratchRegEXTR1, false);
+					createFPdataConv(code, armVcvt, condAlways, scratchRegEXTR0, scratchRegEXTR1, 4, 1, false);	// F64 -> U32
+					createFPregMove(code, armVmovSingle, condAlways, scratchRegEXTR0, dReg, 0, true, true);
 
 					createBranchImm(code, armB, condGE, 1);	// omit next 2 instructions if source was positive
 					createDataProcImm(code, armRsbs, condAlways, dReg, dReg, 0);	// negate
@@ -1895,7 +1864,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					}
 				} else if (type == tFloat  || type == tDouble) {
 					createFPdataProc(code, armVcmp, condAlways, src1Reg, src2Reg, type == tFloat);
-					createCoProcFPU(code, armVmrs, condAlways, 15);	// get flags only
+					createCoProcFPU(code, armVmrs, condAlways, 15, FPSCR);	// get flags only
 					SSAInstruction next = node.instructions[i+1];
 					assert next.ssaOpcode == sCbranch : "sCcompl or sCcompg is not followed by branch instruction";
 					int bci = meth.cfg.code[node.lastBCA] & 0xff;
@@ -2257,7 +2226,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						int Rt = ((StdConstant)opds[4].constant).valueH;
 						createCoProc(code, armMcr, condAlways, coproc, opc1, Rt, CRn, CRm, opc2);
 //					} else if (m.id == idHALT) { // HALT	// TODO
-//						createItrap(ppcTw, TOalways, 0, 0);
+//						
+					} else if (m.id == idENABLE_FLOATS) { // nothing to do
 					} else if (m.id == idASM) { // ASM
 						code.instructions[code.iCount] = InstructionDecoder.dec.getCode(((StringLiteral)opds[0].constant).string.toString());
 						code.iCount++;
@@ -2809,8 +2779,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (srcEXTRcount[i] == 0) { // check if not done yet
 							if (dbg) StdStreams.vrb.println("\tEXTR: parameter " + (i-paramStartEXTR) + " from register S" + srcEXTR[i] + " to stack slot " + (indexGPR + slotEXTR[i]));
 							if (srcEXTR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
-								createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, stackPtr, code.localVarOffset + 4 * (srcEXTR[i] - 0x100), true);
-								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR, stackPtr, paramOffset + (slotEXTR[i]+indexGPR)*4, true);
+								createLSExtReg(code, armVldr, condAlways, scratchRegEXTR0, stackPtr, code.localVarOffset + 4 * (srcEXTR[i] - 0x100), true);
+								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR0, stackPtr, paramOffset + (slotEXTR[i]+indexGPR)*4, true);
 							} else {
 								createLSExtReg(code, armVstr, condAlways, srcEXTR[i], stackPtr, paramOffset + (slotEXTR[i]+indexGPR)*4, true);
 								srcEXTRcount[srcEXTR[i]/2]--;
@@ -2822,8 +2792,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						if (srcEXTRcount[i] == 0) { // check if not done yet
 							if (dbg) StdStreams.vrb.println("\tEXTR: parameter " + (i-paramStartEXTR) + " from register D" + srcEXTR[i] + " to stack slot " + (indexGPR + slotEXTR[i]));
 							if (srcEXTR[i] >= 0x100) {	// copy from stack slot to stack (into parameter area)
-								createLSExtReg(code, armVldr, condAlways, scratchRegEXTR, stackPtr, code.localVarOffset + 4 * (srcEXTR[i] - 0x100), false);
-								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR, stackPtr, paramOffset + (slotEXTR[i]+indexGPR)*4, false);
+								createLSExtReg(code, armVldr, condAlways, scratchRegEXTR0, stackPtr, code.localVarOffset + 4 * (srcEXTR[i] - 0x100), false);
+								createLSExtReg(code, armVstr, condAlways, scratchRegEXTR0, stackPtr, paramOffset + (slotEXTR[i]+indexGPR)*4, false);
 							} else {
 								createLSExtReg(code, armVstr, condAlways, srcEXTR[i], stackPtr, paramOffset + (slotEXTR[i]+indexGPR)*4, false);
 								srcEXTRcount[srcEXTR[i]]--;
@@ -2921,10 +2891,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 					src = i;
 					if (dbg) {
 						StdStreams.vrb.println("prepare");
-						if (srcEXTRtype[i]) StdStreams.vrb.println("\tEXTR: from register S" + srcEXTR[i] + " to S" + scratchRegEXTR);
-						else StdStreams.vrb.println("\tEXTR: from register D" + srcEXTR[i] + " to D" + scratchRegEXTR);
+						if (srcEXTRtype[i]) StdStreams.vrb.println("\tEXTR: from register S" + srcEXTR[i] + " to S" + scratchRegEXTR0);
+						else StdStreams.vrb.println("\tEXTR: from register D" + srcEXTR[i] + " to D" + scratchRegEXTR0);
 					}
-					createFPdataProc(code, armVmov, condAlways, scratchRegEXTR, 0, srcEXTR[i], srcEXTRtype[i]);
+					createFPdataProc(code, armVmov, condAlways, scratchRegEXTR0, 0, srcEXTR[i], srcEXTRtype[i]);
 					if (srcEXTRtype[i]) srcEXTRcount[srcEXTR[i]/2]--;
 					else srcEXTRcount[srcEXTR[i]]--;
 					done = false;
@@ -2952,8 +2922,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				if (src >= 0) {
 					if (dbg) {
 						StdStreams.vrb.println("cleanup");
-						if (srcEXTRtype[i]) StdStreams.vrb.println("\tEXTR: from register S" + scratchRegEXTR + " to S" + src*2);
-						else StdStreams.vrb.println("\tEXTR: from register D" + scratchRegEXTR + " to D" + src);
+						if (srcEXTRtype[i]) StdStreams.vrb.println("\tEXTR: from register S" + scratchRegEXTR0 + " to S" + src*2);
+						else StdStreams.vrb.println("\tEXTR: from register D" + scratchRegEXTR0 + " to D" + src);
 					}
 					if (srcEXTRtype[i]) createFPdataProc(code, armVmov, condAlways, src*2, 0, 0, srcEXTRtype[i]);
 					else createFPdataProc(code, armVmov, condAlways, src, 0, 0, srcEXTRtype[i]);
@@ -3336,8 +3306,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	// coprocessor FPU (VMRS, VMSR)
-	private void createCoProcFPU(Code32 code, int opCode, int cond, int Rt) {
-		code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12);
+	private void createCoProcFPU(Code32 code, int opCode, int cond, int Rt, int extReg) {
+		code.instructions[code.iCount] = (cond << 28) | opCode | (extReg << 16) | (Rt << 12);
 		code.incInstructionNum();
 	}
 
@@ -3488,7 +3458,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			ssaInstr = code.ssa.searchBca(code.instructions[currInstr] + 1);	// add 1, as first store is omitted	
 			assert ssaInstr != null;
 			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// handler
-//			currInstr++; //muss wieder weg!!!!!!!!!!!!!!!!!!!!! TODO
 			count++;
 		}
 		// fix addresses of variable and constant segment
@@ -3505,15 +3474,6 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (nofNonVolGPR > 0) 
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
 		createBlockDataTransfer(code, armPush, condAlways, regList);	// store LR and nonvolatiles
-		// enFloatsInExc could be true, even if this is no exception method
-		// such a case arises when this method is called from within an exception method
-//		if (enFloatsInExc) {
-//			createIrD(code, ppcMfmsr, 0);
-//			createIrArSuimm(code, ppcOri, 0, 0, 0x2000);
-//			createIrS(code, ppcMtmsr, 0);
-//			createIrS(code, ppcIsync, 0);	// must context synchronize after setting of FP bit
-//		}
-//		int offset = FPRoffset;
 		if (nofNonVolEXTRD > 0) {	// store nonvolatiles EXTRD 
 			if (nofNonVolEXTRD <= 16)
 				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolEXTRD + 1), nofNonVolEXTRD, false);
@@ -3530,15 +3490,15 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 				createBlockDataTransferExtr(code, armVpush, condAlways, (topEXTR - nofNonVolEXTRS + 1), nofNonVolEXTRS - 16, true);			
 			}
 		}
-//		if (enFloatsInExc) {
-//			for (int i = 0; i < nonVolStartFPR; i++) {	// save volatiles
-//				createIrSrAd(code, ppcStfd, i, stackPtr, offset);
-//				offset += 8;
-//			}
-//			createIrD(code, ppcMffs, 0);
-//			createIrSrAd(code, ppcStfd, 0, stackPtr, offset);
-//		}
+		// enFloatsInExc could be true, even if this is no exception method
+		// such a case arises when this method is called from within an exception method
+		if (enFloatsInExc) {
+			createBlockDataTransferExtr(code, armVpush, condAlways, 0, nonVolStartEXTR, false);	// save volatiles
+			createCoProcFPU(code, armVmrs, condAlways, LR, FPSCR);	// get FPSCR
+			createBlockDataTransfer(code, armPushSingle, condAlways, LR << 12);
+		}
 		int localStorage = stackSize - (8 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4);
+		if (enFloatsInExc) localStorage -= (nonVolStartEXTR * 8) + 4;
 		// add space for locals, parameters, and storage for auxiliary registers for invokeinterface
 		if (localStorage > 0) createDataProcImm(code, armSub, condAlways, stackPtr, stackPtr, localStorage);
 		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store back trace
@@ -3614,17 +3574,13 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private void insertEpilog(Code32 code, int stackSize) {
 		int epilogStart = code.iCount;
 		int localStorage = stackSize - (4 + nofNonVolGPR * 4 + nofNonVolEXTRD * 8 + nofNonVolEXTRS * 4);
+		if (enFloatsInExc) localStorage -= (nonVolStartEXTR * 8) + 4;
 		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, localStorage);
-//		int offset = GPRoffset - 8;
-//		if (enFloatsInExc) {
-//			createIrDrAd(ppcLfd, 0, stackPtr, offset);
-//			createIFMrB(ppcMtfsf, 0xff, 0);
-//			offset -= 8;
-//			for (int i = nonVolStartFPR - 1; i >= 0; i--) {
-//				createIrDrAd(ppcLfd, i, stackPtr, offset);
-//				offset -= 8;
-//			}
-//		}
+		if (enFloatsInExc) {
+			createBlockDataTransfer(code, armPopSingle, condAlways, LR << 12);
+			createCoProcFPU(code, armVmsr, condAlways, LR, FPSCR);	// get FPSCR
+			createBlockDataTransferExtr(code, armVpop, condAlways, 0, nonVolStartEXTR, false);
+		}
 		if (nofNonVolEXTRS > 0) {
 			if (nofNonVolEXTRS <= 16)
 				createBlockDataTransferExtr(code, armVpop, condAlways, (topEXTR - nofNonVolEXTRS + 1), nofNonVolEXTRS, true);
@@ -3659,54 +3615,19 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			}
 		}
 		createIpat(code, 0xffffffff);	// end of exception information
-		createIpat(code, 0);	// address of variable segment 
-//		createIpat(code, 0);	// address of constant segment 		
 	}
 
 	private void insertPrologException(Code32 code, int stackSize) {
-		code.iCount = 0;
-		createBlockDataTransfer(code, armPush, condAlways, 0x5fff);
-//		if (enFloatsInExc) {
-//			createIrD(ppcMfmsr, 0);
-//			createIrArSuimm(ppcOri, 0, 0, 0x2000);
-//			createIrS(ppcMtmsr, 0);
-//			createIrS(ppcIsync, 0);	// must context synchronize after setting of FP bit
-//			int offset = FPRoffset;
-//			if (nofNonVolFPR > 0) {
-//				for (int i = 0; i < nofNonVolFPR; i++) {
-//					createIrSrAd(ppcStfd, topFPR-i, stackPtr, offset);
-//					offset += 8;
-//				}
-//			}
-//			for (int i = 0; i < nonVolStartFPR; i++) {
-//				createIrSrAd(ppcStfd, i, stackPtr, offset);
-//				offset += 8;
-//			}
-//			createIrD(ppcMffs, 0);
-//			createIrSrAd(ppcStfd, 0, stackPtr, offset);
-//		}
+		code.iCount = 0;	
+		createDataProcMovReg(code, armMov, condAlways, scratchReg, stackPtr, noShift, 0);	// make copy for back trace
+		createBlockDataTransfer(code, armPush, condAlways, 0x5fff);	// store all registers except pc and sp
+		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store back trace
 	}
 
 	private void insertEpilogException(Code32 code, int stackSize) {
-//		int offset = GPRoffset - 8;
-//		if (enFloatsInExc) {
-//			createIrDrAd(ppcLfd, 0, stackPtr, offset);
-//			createIFMrB(ppcMtfsf, 0xff, 0);
-//			offset -= 8;
-//			for (int i = nonVolStartFPR - 1; i >= 0; i--) {
-//				createIrDrAd(ppcLfd, i, stackPtr, offset);
-//				offset -= 8;
-//			}
-//		}
-//		if (nofNonVolFPR > 0) {
-//			for (int i = nofNonVolFPR - 1; i >= 0; i--) {
-//				createIrDrAd(ppcLfd, topFPR-i, stackPtr, offset);
-//				offset -= 8;
-//			}
-//		}
-		createBlockDataTransfer(code, armPop, condAlways, 0x5fff);
-//		createBranchImm(code, armB, condAlways, -2);
-		createDataProcImm(code, armSubs, condAlways, PC, LR, 4);
+		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, 4);
+		createBlockDataTransfer(code, armPop, condAlways, 0x5fff);	// load all registers except pc and sp
+		createDataProcImm(code, armSubs, condAlways, PC, LR, 4);	// load CPSR and PC atomically
 	}
 
 	int regAux1 = paramEndGPR; // use parameter registers for interface delegation methods
@@ -3761,17 +3682,17 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		
 			// search catch, label 1
 			createDataProcCmpImm(code, armCmp, condAlways, 3, packImmediate(0xff000000));
-			createBranchImm(code, armB, condHI, 17);	// end reached, catch not found, goto label 3
+			createBranchImm(code, armB, condHI, 18);	// end reached, catch not found, goto label 4
 			createLSWordImm(code, armLdr, condAlways, 3, 2, 0, 1, 1, 0);	//  get start
 			createDataProcCmpReg(code, armCmp, condAlways, 1, 3, noShift, 0);
-			createBranchImm(code, armB, condLT, 12);	// smaller that start, goto label 2
+			createBranchImm(code, armB, condLT, 13);	// smaller that start, goto label 3
 			createLSWordImm(code, armLdr, condAlways, 3, 2, 4, 1, 1, 0);	//  get end
 			createDataProcCmpReg(code, armCmp, condAlways, 1, 3, noShift, 0);
-			createBranchImm(code, armB, condGT, 9);	// greater that end, goto label 2
+			createBranchImm(code, armB, condGT, 10);	// greater that end, goto label 3
 			createLSWordImm(code, armLdr, condAlways, 3, 2, 8, 1, 1, 0);	//  get type
 			
 			createDataProcCmpImm(code, armCmp, condAlways, 3, 0);	// check if type "any", caused by finally
-			createBranchImm(code, armB, condEQ, 5);
+			createBranchImm(code, armB, condEQ, 5);	// jump to label 2
 			
 			createLSWordImm(code, armLdr, condAlways, 5, 3, 4, 1, 0, 0);	// get extension level of exception
 			createDataProcShiftImm(code, armLsl, condAlways, 5, 5, 2);	// *4
@@ -3779,13 +3700,16 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			createLSWordImm(code, armLdr, condAlways, 6, 0, 4, 1, 0, 0);	// get tag of exception object
 			createLSWordReg(code, armLdr, condAlways, 6, 6, 5, noShift, 0, 1, 1, 0);
 			createDataProcCmpReg(code, armCmp, condAlways, 6, 3, noShift, 0);
-			createLSWordImm(code, armLdr, condEQ, PC, 2, 12, 1, 1, 0);	//  get handler address and return to catch
+			
+			// label 2
+			createLSWordImm(code, armLdr, condEQ, 6, 2, 12, 1, 1, 0);	//  get handler address and return to catch
+			createDataProcImm(code, armSubs, condEQ, PC, 6, 0);	// load CPSR and PC atomically
 	
-			// check next exception in same method, label 2
+			// check next exception in same method, label 3
 			createLSWordImm(code, armLdr, condAlways, 3, 2, 16, 1, 1, 1);
-			createBranchImm(code, armB, condAlways, -21);	// jump to label 1
+			createBranchImm(code, armB, condAlways, -22);	// jump to label 1
 
-			// catch not found, unwind, label 3
+			// catch not found, unwind, label 4
 			createLSWordImm(code, armLdr, condAlways, 5, stackPtr, 0, 1, 0, 0);	// get back pointer
 			createLSWordImm(code, armLdr, condAlways, 1, 5, 4, 1, 0, 0);	// get LR from stack
 			loadConstantAndFixup(code, 6, m);
