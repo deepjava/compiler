@@ -3618,6 +3618,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	}
 
 	private void insertPrologException(Code32 code, int stackSize) {
+		if (!RegAllocator.fullRegSetGPR) ErrorReporter.reporter.error(606);
 		code.iCount = 0;	
 		createDataProcMovReg(code, armMov, condAlways, scratchReg, stackPtr, noShift, 0);	// make copy for back trace
 		createBlockDataTransfer(code, armPush, condAlways, 0x5fff);	// store all registers except pc and sp
