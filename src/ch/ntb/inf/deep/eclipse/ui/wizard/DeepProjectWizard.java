@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.GregorianCalendar;
 
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -40,7 +41,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -139,7 +139,11 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			} else return;
 			description = project.getDescription();		
 			description.setNatureIds(new String[] {"ch.ntb.inf.deep.nature.DeepNature",	"org.eclipse.jdt.core.javanature" });
-			project.setDescription(description, new SubProgressMonitor(monitor, 10));
+			ICommand[] commands = new ICommand[1];
+			commands[0] = description.newCommand();
+			commands[0].setBuilderName("org.eclipse.jdt.core.javabuilder");
+			description.setBuildSpec(commands);
+			project.setDescription(description, new NullProgressMonitor());
 		} catch (CoreException e) {e.printStackTrace();
 		} finally {
 			// create folders
