@@ -3621,13 +3621,21 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if (!RegAllocator.fullRegSetGPR) ErrorReporter.reporter.error(606);
 		code.iCount = 0;	
 		createDataProcMovReg(code, armMov, condAlways, scratchReg, stackPtr, noShift, 0);	// make copy for back trace
-		createBlockDataTransfer(code, armPush, condAlways, 0x5fff);	// store all registers except pc and sp
+		int regList = 1 << LR;
+		if (nofNonVolGPR > 0) 
+			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
+		regList |= ((1 << (volEndGPR + 1)) - 1);
+		createBlockDataTransfer(code, armPush, condAlways, regList);	// store all volatile GPSs, LR, nonvolatile GPRs used in the method
 		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store back trace
 	}
 
 	private void insertEpilogException(Code32 code, int stackSize) {
 		createDataProcImm(code, armAdd, condAlways, stackPtr, stackPtr, 4);
-		createBlockDataTransfer(code, armPop, condAlways, 0x5fff);	// load all registers except pc and sp
+		int regList = 1 << LR;
+		if (nofNonVolGPR > 0) 
+			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
+		regList |= ((1 << (volEndGPR + 1)) - 1);
+		createBlockDataTransfer(code, armPop, condAlways, regList);	// load all volatile GPSs, LR, nonvolatile GPRs used in the method
 		createDataProcImm(code, armSubs, condAlways, PC, LR, 4);	// load CPSR and PC atomically
 	}
 
