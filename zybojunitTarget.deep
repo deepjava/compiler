@@ -9,7 +9,7 @@ project junitTargetTestProject {
 	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 
-	boardtype = zybo7000;
+	boardtype = zybo;
 	ostype = ntbSTS_arm;
 	
 	programmertype = openOCD;

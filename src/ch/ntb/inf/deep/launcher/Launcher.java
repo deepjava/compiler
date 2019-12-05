@@ -745,7 +745,10 @@ public class Launcher implements ICclassFileConsts {
 		Date date = new Date();
 		String boardName = b.name.toString();
 		String cpuName = b.cpu.name.toString();
-		basePath = basePath + File.separatorChar + cpuName;
+		if (cpuName.equals("zynq7000"))
+			basePath = basePath + File.separatorChar + cpuName + File.separatorChar + boardName;
+		else 
+			basePath = basePath + File.separatorChar + cpuName;
 		String fileName = "I" + boardName + ".java";
 		try {
 			File dir = new File(basePath);
@@ -753,10 +756,13 @@ public class Launcher implements ICclassFileConsts {
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
-			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+			if (cpuName.equals("zynq7000")) {
+				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + "." + boardName + ";\n\n");
+				fw.write("import ch.ntb.inf.deep.runtime." + cpuName + ".I" + cpuName + ";\n\n");
+			} else 
+				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface I" + boardName + " extends I" + cpuName + " {\n");
-			
 			fw.write("\n\t// System constants of board " + boardName + "\n");
 			SystemConstant curr = b.sysConstants;
 			while (curr != null && curr != b.cpu.sysConstants) {
