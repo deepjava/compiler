@@ -86,7 +86,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		else 	// in other location
 			deepProjectFile = path.toString() + IPath.SEPARATOR + launchFileName;
 
-		Launcher.buildAll(deepProjectFile, targetConfig);			
+		Launcher.buildAll(deepProjectFile, targetConfig, true);			
 
 		monitor.worked(50);
 		if(monitor.isCanceled()) {

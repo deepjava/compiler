@@ -40,8 +40,6 @@ import ch.ntb.inf.deep.cg.CodeGen;
 import ch.ntb.inf.deep.cg.InstructionDecoder;
 import ch.ntb.inf.deep.cg.arm.CodeGenARM;
 import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
-//import ch.ntb.inf.deep.cg.arm.CodeGenARM;
-//import ch.ntb.inf.deep.cg.arm.InstructionDecoderARM;
 import ch.ntb.inf.deep.cg.ppc.CodeGenPPC;
 import ch.ntb.inf.deep.cg.ppc.InstructionDecoderPPC;
 import ch.ntb.inf.deep.classItems.Array;
@@ -81,7 +79,7 @@ public class Launcher implements ICclassFileConsts {
 	private static TargetConnection tc;
 	private static long time;
 
-	public static int buildAll(String deepProjectFileName, String targetConfigurationName) {
+	public static int buildAll(String deepProjectFileName, String targetConfigurationName, boolean checkVersion) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 
@@ -101,32 +99,34 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
-		Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
-		if (deepBundle != null) {
-			Version deepCompilerVersion = deepBundle.getVersion();
-			File deepLibVersionFile = null;
-			FileReader fr = null;
-			char[] deepLibVersion = {'0','.','0','.','0'};
-			boolean identVersion = false;
-			String libVersion = "";
-			for (HString h : project.getLibPaths()) {
-				deepLibVersionFile = new File(h.toString() + "VERSION");
-				try {
-					fr = new FileReader(deepLibVersionFile);
-					fr.read(deepLibVersion, 0, 5);
-				} catch (FileNotFoundException e) {
-					ErrorReporter.reporter.error(310, "failed to open file " + deepLibVersionFile);
-				} catch (IOException e) {
-					ErrorReporter.reporter.error(310, "could not read from " + deepLibVersionFile);
+		if (checkVersion) {
+			Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
+			if (deepBundle != null) {
+				Version deepCompilerVersion = deepBundle.getVersion();
+				File deepLibVersionFile = null;
+				FileReader fr = null;
+				char[] deepLibVersion = {'0','.','0','.','0'};
+				boolean identVersion = false;
+				String libVersion = "";
+				for (HString h : project.getLibPaths()) {
+					deepLibVersionFile = new File(h.toString() + "VERSION");
+					try {
+						fr = new FileReader(deepLibVersionFile);
+						fr.read(deepLibVersion, 0, 5);
+					} catch (FileNotFoundException e) {
+						ErrorReporter.reporter.error(310, "failed to open file " + deepLibVersionFile);
+					} catch (IOException e) {
+						ErrorReporter.reporter.error(310, "could not read from " + deepLibVersionFile);
+					}
+					for (char c : deepLibVersion) libVersion += c;		
+					if (deepCompilerVersion.compareTo(new Version(libVersion)) == 0) identVersion = true;
 				}
-				for (char c : deepLibVersion) libVersion += c;		
-				if (deepCompilerVersion.compareTo(new Version(libVersion)) == 0) identVersion = true;
-			}
-			if (reporter.nofErrors <= 0 && !identVersion) {
-				if (deepCompilerVersion.compareTo(new Version(libVersion)) == -1) {
-					ErrorReporter.reporter.error(311);
-				} else if(deepCompilerVersion.compareTo(new Version(libVersion)) == 1) {
-					ErrorReporter.reporter.error(312);
+				if (reporter.nofErrors <= 0 && !identVersion) {
+					if (deepCompilerVersion.compareTo(new Version(libVersion)) == -1) {
+						ErrorReporter.reporter.error(311);
+					} else if(deepCompilerVersion.compareTo(new Version(libVersion)) == 1) {
+						ErrorReporter.reporter.error(312);
+					}
 				}
 			}
 		}

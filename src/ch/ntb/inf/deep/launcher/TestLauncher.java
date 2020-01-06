@@ -47,8 +47,9 @@ public class TestLauncher {
 //		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
 //		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
 //		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
-		Launcher.buildAll("zybo7000ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("zybo7000junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam");
+//		Launcher.buildAll("zybojunitTarget.deep", "BootFromRam");
+		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {
@@ -79,7 +80,7 @@ public class TestLauncher {
 			} else System.out.println("no programmer defined");
 		} 
 
-//		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
+		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 
 		/* DEBUG OUTPRINTS */
 //		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);
