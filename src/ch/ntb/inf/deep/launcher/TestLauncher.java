@@ -39,17 +39,18 @@ import ch.ntb.inf.deep.classItems.Method;
 @SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
-//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
-//		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("zybojunitTarget.deep", "BootFromRam");
-		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash", false);
+//		Launcher.buildAll("555junitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("zybojunitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
+		Launcher.buildAll("microzedjunitTarget.deep", "BootFromRam", false);
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {
@@ -80,7 +81,7 @@ public class TestLauncher {
 			} else System.out.println("no programmer defined");
 		} 
 
-		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
+//		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 
 		/* DEBUG OUTPRINTS */
 //		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);
