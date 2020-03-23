@@ -59,154 +59,156 @@ public class CFR implements ICclassFileConsts, ICdescAndTypeConsts, ICjvmInstruc
 			if (dbg) vrb.println("\n\nRootClass["+rc +"] = "+ sname);
 			loadRootClass(sname, userReqAttributes);
 		}
-
-		// iterates through all classes and replaces all stubs in the constant pool of that class  
-		if (dbg) vrb.println(">replace constant pool stubs:");
-		Item type = RefType.refTypeList;
-		while (type != null) {
-			if (type instanceof Class) {
-				Class cls = (Class)type;
-				if (cls.constPool != null) {
-					Item[] cp = cls.constPool;
-					for (int cpx = cp.length-1; cpx >= 0; cpx--) cp[cpx] = cp[cpx].getReplacedStub();
+		
+		if (errRep.nofErrors <= 0) {
+			// iterates through all classes and replaces all stubs in the constant pool of that class  
+			if (dbg) vrb.println(">replace constant pool stubs:");
+			Item type = RefType.refTypeList;
+			while (type != null) {
+				if (type instanceof Class) {
+					Class cls = (Class)type;
+					if (cls.constPool != null) {
+						Item[] cp = cls.constPool;
+						for (int cpx = cp.length-1; cpx >= 0; cpx--) cp[cpx] = cp[cpx].getReplacedStub();
+					}
 				}
+				type = type.next;
 			}
-			type = type.next;
-		}
-		if (dbg) vrb.println("<replace constant pool stubs");
-
-		RefType.refTypeList = (RefType)RefType.refTypeList.next;	// delete front stub
-		
-		// iterates through all classes and fixup loaded classes  
-		if (dbg) vrb.println(">fixup loaded classes:");
-		type = RefType.refTypeList;
-		while (type != null) {	// handle stdClasses and interfaces (no arrays)
-			if (type instanceof Class) ((Class)type).fixupLoadedClasses();
-			type = type.next;
-		}
-		if (dbg) vrb.println("<fixup loaded classes");
-
-		// iterates through all classes assemble noninit class list  
-		if (dbg) vrb.println(">add loaded classes to noninit class list:");
-		type = RefType.refTypeList;
-		while (type != null) {	// handle stdClasses and interfaces (no arrays)
-			if (type instanceof Class) ((Class)type).assembleInitList();
-			type = type.next;
-		}
-		if (dbg) vrb.println("<add loaded classes to noninit class list");
-
-		// split class groups into std classes, interfaces and arrays
-		if (dbg) vrb.println(">split class groups");
-		Item refType = RefType.refTypeList;
-		Class.extLevelOrdClasses = new Class[Class.maxExtensionLevelStdClasses+1];
-		Class.extLevelOrdInterfaces = new Class[Class.maxExtensionLevelInterfaces+1];
-		Class.arrayClasses = null;
-		
-		while (refType != null){
-			refType.accAndPropFlags &= ~(1<<dpfClassMark); // clear mark
-			int propFlags = refType.accAndPropFlags;
-			if (refType instanceof Class){
-				Class cls = (Class)refType;
-				int extLevel = cls.extensionLevel;
-				if ((propFlags & (1<<apfInterface)) != 0 ) {	// is interface
-					if (cls.methTabLength > Class.maxInterfMethTabLen ) Class.maxInterfMethTabLen = cls.methTabLength;
-					cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
-					Class.extLevelOrdInterfaces[extLevel] = cls;
-					Class.nofInterfaceClasses++;
-				} else if ((propFlags & (1<<dpfSynthetic)) == 0 ) {	// is std-class or enum but no synthetic class
-					if (cls.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls.methTabLength;
-					cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
-					Class.extLevelOrdClasses[extLevel] = cls;
-					Class.nofStdClasses++;
-				}
-			} else {	
-				assert refType instanceof Array;
-				Array arr = (Array)refType;
-				arr.nextArray = Class.arrayClasses;
-				Class.arrayClasses = arr;
-				Class.nofArrays++;
-				if ((arr.accAndPropFlags & (1<<dpfTypeTest)) != 0) { // if array of interfaces whose type is tested for
-					if ((arr.componentType.accAndPropFlags & (1<<apfInterface)) != 0) { 	
-						Class compType = (Class)arr.componentType;
-						compType.accAndPropFlags |= (1<<dpfTypeTest);	// set flag in component type 
-						// add to list if not already present
-						Class intf = Class.constBlockInterfaces;
-						while (intf != null && intf != compType) intf = intf.nextInterface;
-						if (intf == null) {
-							compType.nextInterface = Class.constBlockInterfaces; 
-							Class.constBlockInterfaces = compType;
+			if (dbg) vrb.println("<replace constant pool stubs");
+	
+			RefType.refTypeList = (RefType)RefType.refTypeList.next;	// delete front stub
+			
+			// iterates through all classes and fixup loaded classes  
+			if (dbg) vrb.println(">fixup loaded classes:");
+			type = RefType.refTypeList;
+			while (type != null) {	// handle stdClasses and interfaces (no arrays)
+				if (type instanceof Class) ((Class)type).fixupLoadedClasses();
+				type = type.next;
+			}
+			if (dbg) vrb.println("<fixup loaded classes");
+	
+			// iterates through all classes assemble noninit class list  
+			if (dbg) vrb.println(">add loaded classes to noninit class list:");
+			type = RefType.refTypeList;
+			while (type != null) {	// handle stdClasses and interfaces (no arrays)
+				if (type instanceof Class) ((Class)type).assembleInitList();
+				type = type.next;
+			}
+			if (dbg) vrb.println("<add loaded classes to noninit class list");
+	
+			// split class groups into std classes, interfaces and arrays
+			if (dbg) vrb.println(">split class groups");
+			Item refType = RefType.refTypeList;
+			Class.extLevelOrdClasses = new Class[Class.maxExtensionLevelStdClasses+1];
+			Class.extLevelOrdInterfaces = new Class[Class.maxExtensionLevelInterfaces+1];
+			Class.arrayClasses = null;
+			
+			while (refType != null){
+				refType.accAndPropFlags &= ~(1<<dpfClassMark); // clear mark
+				int propFlags = refType.accAndPropFlags;
+				if (refType instanceof Class){
+					Class cls = (Class)refType;
+					int extLevel = cls.extensionLevel;
+					if ((propFlags & (1<<apfInterface)) != 0 ) {	// is interface
+						if (cls.methTabLength > Class.maxInterfMethTabLen ) Class.maxInterfMethTabLen = cls.methTabLength;
+						cls.nextExtLevelClass = Class.extLevelOrdInterfaces[extLevel];
+						Class.extLevelOrdInterfaces[extLevel] = cls;
+						Class.nofInterfaceClasses++;
+					} else if ((propFlags & (1<<dpfSynthetic)) == 0 ) {	// is std-class or enum but no synthetic class
+						if (cls.methTabLength > Class.maxMethTabLen ) Class.maxMethTabLen = cls.methTabLength;
+						cls.nextExtLevelClass = Class.extLevelOrdClasses[extLevel];
+						Class.extLevelOrdClasses[extLevel] = cls;
+						Class.nofStdClasses++;
+					}
+				} else {	
+					assert refType instanceof Array;
+					Array arr = (Array)refType;
+					arr.nextArray = Class.arrayClasses;
+					Class.arrayClasses = arr;
+					Class.nofArrays++;
+					if ((arr.accAndPropFlags & (1<<dpfTypeTest)) != 0) { // if array of interfaces whose type is tested for
+						if ((arr.componentType.accAndPropFlags & (1<<apfInterface)) != 0) { 	
+							Class compType = (Class)arr.componentType;
+							compType.accAndPropFlags |= (1<<dpfTypeTest);	// set flag in component type 
+							// add to list if not already present
+							Class intf = Class.constBlockInterfaces;
+							while (intf != null && intf != compType) intf = intf.nextInterface;
+							if (intf == null) {
+								compType.nextInterface = Class.constBlockInterfaces; 
+								Class.constBlockInterfaces = compType;
+							}
 						}
 					}
 				}
+				refType = refType.next;
 			}
-			refType = refType.next;
-		}
-		if (dbg) vrb.println("<split class groups");
-		
-		// set interface identifiers (from max. extension level to 0)
-		for (int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--) {
-			Class cls = Class.extLevelOrdInterfaces[exl];
-			while (cls != null) {
-				// set interface identifiers for interfaces with methods called by invokeinterface
-				if (cls.index < 0 && (cls.accAndPropFlags&(1<<dpfInterfCall)) != 0) {
-					cls.index = Class.currInterfaceId++;
-					cls.setIntfIdToRoot(cls.interfaces);	// set id's in superinterfaces
+			if (dbg) vrb.println("<split class groups");
+			
+			// set interface identifiers (from max. extension level to 0)
+			for (int exl = Class.maxExtensionLevelInterfaces; exl > 0; exl--) {
+				Class cls = Class.extLevelOrdInterfaces[exl];
+				while (cls != null) {
+					// set interface identifiers for interfaces with methods called by invokeinterface
+					if (cls.index < 0 && (cls.accAndPropFlags&(1<<dpfInterfCall)) != 0) {
+						cls.index = Class.currInterfaceId++;
+						cls.setIntfIdToRoot(cls.interfaces);	// set id's in superinterfaces
+					}
+					// set interface check identifiers for interfaces whose type is checked
+					if ((cls.accAndPropFlags & (1<<dpfTypeTest)) != 0) {
+						cls.chkId = Class.currInterfaceChkId++;
+					}
+					cls = cls.nextExtLevelClass;
 				}
-				// set interface check identifiers for interfaces whose type is checked
-				if ((cls.accAndPropFlags & (1<<dpfTypeTest)) != 0) {
-					cls.chkId = Class.currInterfaceChkId++;
+			}
+					
+			// generate instance method tables
+			if (dbg) vrb.println(">generating instance method tables");
+			for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
+				Class cls = Class.extLevelOrdClasses[exl];
+				while (cls != null) {
+					if (dbg) vrb.println(cls.name + ": method table length=" + cls.methTabLength);
+					cls.methTable = new Method[cls.methTabLength];
+					cls.insertMethods(cls.methTable);
+					cls.createIntfCallList();
+					InterfaceList list = cls.intfCallList;
+					if (list != null) {
+						list.sortId();
+						if (list.length != 1 || (list.length == 1) && list.getFront().methTabLength != 1) Method.createCompSpecSubroutine("imDelegIiMm"); //imDelegIiMm;
+					}
+					cls = cls.nextExtLevelClass;
 				}
-				cls = cls.nextExtLevelClass;
 			}
-		}
-				
-		// generate instance method tables
-		if (dbg) vrb.println(">generating instance method tables");
-		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
-			Class cls = Class.extLevelOrdClasses[exl];
-			while (cls != null) {
-				if (dbg) vrb.println(cls.name + ": method table length=" + cls.methTabLength);
-				cls.methTable = new Method[cls.methTabLength];
-				cls.insertMethods(cls.methTable);
-				cls.createIntfCallList();
-				InterfaceList list = cls.intfCallList;
-				if (list != null) {
-					list.sortId();
-					if (list.length != 1 || (list.length == 1) && list.getFront().methTabLength != 1) Method.createCompSpecSubroutine("imDelegIiMm"); //imDelegIiMm;
+			if (dbg) vrb.println("<generating instance method tables");
+	
+			// creates a list with all interfaces this class and its superclasses implement and whose type is checked for
+			for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
+				Class cls = Class.extLevelOrdClasses[exl];
+				while (cls != null) {
+					cls.createIntfTypeChkList();
+					cls = cls.nextExtLevelClass;
 				}
-				cls = cls.nextExtLevelClass;
 			}
-		}
-		if (dbg) vrb.println("<generating instance method tables");
-
-		// creates a list with all interfaces this class and its superclasses implement and whose type is checked for
-		for (int exl = 0; exl <= Class.maxExtensionLevelStdClasses; exl++) {
-			Class cls = Class.extLevelOrdClasses[exl];
-			while (cls != null) {
-				cls.createIntfTypeChkList();
-				cls = cls.nextExtLevelClass;
+			// the same for all interfaces
+			for (int exl = 0; exl <= Class.maxExtensionLevelInterfaces; exl++) {
+				Class intf = Class.extLevelOrdInterfaces[exl];
+				while (intf != null) {
+					intf.createIntfTypeChkList();
+					intf = intf.nextExtLevelClass;
+				}
 			}
+	
+			if (dbg) vrb.println("max ext level std classes = " + Class.maxExtensionLevelStdClasses);
+			if (dbg) vrb.println("max ext level interfaces = " + Class.maxExtensionLevelInterfaces);
+	//		if (dbg) Class.printIntfCallMethods();
+	//		if (dbg) Class.printInterfaces();
+	//		if (dbg) Class.printArrays();
+	//		if (dbg) Class.printConstBlockInterfaces();
+	//		Class.printClassList("");
+			
+			Class.releaseLoadingResources();
+			log.print("Loading class files ");
+			if (errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 		}
-		// the same for all interfaces
-		for (int exl = 0; exl <= Class.maxExtensionLevelInterfaces; exl++) {
-			Class intf = Class.extLevelOrdInterfaces[exl];
-			while (intf != null) {
-				intf.createIntfTypeChkList();
-				intf = intf.nextExtLevelClass;
-			}
-		}
-
-		if (dbg) vrb.println("max ext level std classes = " + Class.maxExtensionLevelStdClasses);
-		if (dbg) vrb.println("max ext level interfaces = " + Class.maxExtensionLevelInterfaces);
-//		if (dbg) Class.printIntfCallMethods();
-//		if (dbg) Class.printInterfaces();
-//		if (dbg) Class.printArrays();
-//		if (dbg) Class.printConstBlockInterfaces();
-//		Class.printClassList("");
-		
-		Class.releaseLoadingResources();
-		log.print("Loading class files ");
-		if (errRep.nofErrors == 0) log.println("successfully done"); else log.println("terminated with errors");
 	}
 
 	public static void initBuildSystem() {
