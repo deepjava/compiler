@@ -186,11 +186,13 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			sb.append("\tostype = ");
 			if (model != null && model.getOs() != null) sb.append(model.getOs()[0]);
 			sb.append(";\n");
-			if(model.getProgrammer() == null){
-				sb.append("#");
-			}
+			if (model != null && model.getProgrammer() == null)	sb.append("#");
 			sb.append("\tprogrammertype = "); 
 			if (model != null && model.getProgrammer() != null) sb.append(model.getProgrammer()[0]);
+			sb.append(";\n");
+			if (model != null && model.getProgrammerOptions() == null)	sb.append("#");
+			sb.append("\tprogrammeropts = "); 
+			if (model != null && model.getProgrammerOptions() != null) sb.append(model.getProgrammerOptions());
 			sb.append(";\n\n#\tenter names of rootclasses, e.g.");
 			sb.append("\n#\trootclasses = \"test.MyFirstTestClass\",\"other.MySecondTestClass\";");
 			sb.append("\n\trootclasses = \"\";\n\n");

@@ -26,6 +26,7 @@ public class DeepProjectModel {
 	private String[] board;
 	private String[] osName;
 	private String[] programmerName;
+	private String programmerOptions;
 	private File imgPath;
 	private String imgFormat; 
 	private boolean createImgFile;
@@ -52,6 +53,14 @@ public class DeepProjectModel {
 
 	public void setProgrammer(String[] prog) {
 		this.programmerName = prog;
+	}
+
+	public String getProgrammerOptions() {
+		return programmerOptions;
+	}
+
+	public void setProgrammerOptions(String opt) {
+		this.programmerOptions = opt;
 	}
 
 	public String[] getOs() {
