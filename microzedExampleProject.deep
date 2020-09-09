@@ -10,7 +10,7 @@ project microzedExampleProject {
 #	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	
-	boardtype = microzed;
+	boardtype = MicroZed;
 	ostype = ntbSTS_arm;
 
 	programmertype = openOCD;

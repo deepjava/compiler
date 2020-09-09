@@ -147,10 +147,11 @@ public class Parser implements ICclassFileConsts {
 			sImgFile = g9 + 34,
 			sImgFormat = g9 + 35,
 			sCondition = g9 + 36,
-			sHeapClass = g9 + 37;
+			sHeapClass = g9 + 37,
+			sPlFile = g9 + 38;
 	
 	// -------- Block keywords: 
-	private static final short g10 = g9 + 38,
+	private static final short g10 = g9 + 39,
 			sMeta = g10;
 
 	public static final short sBoard = g10 + 1;
@@ -191,7 +192,7 @@ public class Parser implements ICclassFileConsts {
 
 	public static final short sProgrammer = g10 + 19;
 
-	private static final short sProgrammerOpts = g10 + 20;
+	public static final short sProgrammerOpts = g10 + 20;
 
 	private static final short sCompiler = g10 + 21;
 
@@ -578,7 +579,10 @@ public class Parser implements ICclassFileConsts {
 				return true;
 			}
 		case 'p':
-			if (str.equals("project")) {
+			if (str.equals("pl_file")) {
+				sym = sPlFile;
+				return true;
+			} else if (str.equals("project")) {
 				sym = sProject;
 				return true;
 			} else if (str.equals("programmer")) {
@@ -1060,6 +1064,8 @@ public class Parser implements ICclassFileConsts {
 			return "imgfile";
 		case sImgFormat:
 			return "imgformat";
+		case sPlFile:
+			return "pl_file";
 		case sNone:
 			return "none";
 		default:
@@ -1594,7 +1600,7 @@ public class Parser implements ICclassFileConsts {
 			StdStreams.vrb.println("\"");
 		}
 		Configuration.getActiveProject().createLibs(libPath);
-		while (sym == sRootclasses || sym == sBoardType || sym == sOsType	|| sym == sProgrammerType || sym == sProgrammerOpts || sym == sTctFile || sym == sImgFile || sym == sImgFormat) {
+		while (sym == sRootclasses || sym == sBoardType || sym == sOsType	|| sym == sProgrammerType || sym == sProgrammerOpts || sym == sTctFile || sym == sImgFile || sym == sImgFormat || sym == sPlFile) {
 			if (sym == sRootclasses) {
 				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting rootclasses");
 				Configuration.setRootClasses(rootClassesAssignment());
@@ -1609,7 +1615,7 @@ public class Parser implements ICclassFileConsts {
 			} else if (sym == sProgrammerType) {
 				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting programmer type to: ");
 				Configuration.setProgrammer(programmerTypeAssignment());
-				if (dbg) if(Configuration.getProgrammer() != null) StdStreams.vrb.println(Configuration.getProgrammer().name);
+				if (dbg) if (Configuration.getProgrammer() != null) StdStreams.vrb.println(Configuration.getProgrammer().name);
 			} else if (sym == sProgrammerOpts) {
 				String opts = programmerOptsAssignment();
 				Programmer prog = Configuration.getProgrammer();
@@ -1628,6 +1634,11 @@ public class Parser implements ICclassFileConsts {
 						StdStreams.vrb.println("[CONF] Parser: Setting image file format failed " + currentProject.imgFileFormat);
 					}
 				}
+			} else if (sym == sPlFile) {
+				String name = imgFileAssignment();
+				currentProject.setPlFileName(name);
+				Configuration.setPlFile(name);
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting pl file " + currentProject.getPlFileName());
 			} else { // sym == sTctFile
 				currentProject.setTctFileName(tctFileAssignment());
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting target command file to " + currentProject.getTctFileName());
@@ -1933,11 +1944,12 @@ public class Parser implements ICclassFileConsts {
 	
 	private String imgFileAssignment() {
 		String s;
-		if (sym != sImgFile) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return "";}
+		if (sym != sImgFile && sym != sPlFile) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: description, received symbol: " + symToString()); return "";}
 		next();
 		if (sym != sEqualsSign) {reporter.error(210, "in " + currentFileName + " at Line "	+ lineNumber); return "";}
 		next();
 		s = readString();
+		s = s.replace('\\', '/');
 		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return s;}
 		next();
 		return s;

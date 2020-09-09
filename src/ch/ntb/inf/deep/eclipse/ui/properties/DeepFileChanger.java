@@ -37,7 +37,7 @@ public class DeepFileChanger {
 			BufferedReader reader = new BufferedReader(new FileReader(deepFile));
 			
 			int ch  = reader.read();
-			while(ch  != -1) {
+			while (ch  != -1) {
 				fileContent.append((char)ch);
 				ch = reader.read();
 			}
@@ -49,7 +49,9 @@ public class DeepFileChanger {
 		}
 	}
 	
-	public String getContent(String key) {
+	// with comment == true the method will return the content with a given key even if the
+	// line is commented out, the first char will be a '#'
+	public String getContent(String key, boolean comment) {
 		int start = 0;
 		int indexOfKey = fileContent.indexOf(key, start);
 		while (indexOfKey > -1) {
@@ -61,29 +63,37 @@ public class DeepFileChanger {
 				if (indexOfStartToken < 0 || indexOfEndToken < 0) return "not available";
 				String str = fileContent.substring(indexOfStartToken+1, indexOfEndToken);
 				return str.trim();	
-			} else { // its a comment
-				start = indexOfKey + 1;
-				indexOfKey = fileContent.indexOf(key, start);
+			} else {
+				if (comment) { // its a comment
+					int indexOfStartToken = fileContent.indexOf("=", indexOfKey);
+					int indexOfEndToken = fileContent.indexOf(";", indexOfKey);
+					if (indexOfStartToken < 0 || indexOfEndToken < 0) return "not available";
+					String str = fileContent.substring(indexOfStartToken+1, indexOfEndToken);
+					return '#' + str.trim();
+				} else {
+					start = indexOfKey + 1;
+					indexOfKey = fileContent.indexOf(key, start);
+				}
 			}
 		}
 		return "not available";
 	}
 
-	public void changeContent(String key, String value) {
+	public int changeContent(String key, String value) {
 		int start = 0;
 		int indexOfKey = fileContent.indexOf(key, start);
-		while (indexOfKey > -1) {
+		if (indexOfKey > -1) {
 			int indexOfComment = fileContent.lastIndexOf("#", indexOfKey);
 			int indexOfNewLine = fileContent.lastIndexOf("\n", indexOfKey);
 			int indexOfEndToken = fileContent.indexOf(";", indexOfKey);
 			if (indexOfComment < indexOfNewLine) {
 				fileContent.replace(indexOfKey, indexOfEndToken, key + " = " + value);
-				return;
-			} else { // its a comment
-				start = indexOfKey + 1;
-				indexOfKey = fileContent.indexOf(key, start);
+			} else { // key is commented out
+				fileContent.replace(indexOfNewLine + 1, indexOfEndToken, "\t" + key + " = " + value);
 			}
+			return 0;
 		}
+		return -1;
 	}
 	
 	public void changeProjectName(String newName) {

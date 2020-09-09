@@ -27,5 +27,6 @@ public class PreferenceConstants {
 	public static final String DEFAULT_BOARD = "defaultBoard";
 	public static final String DEFAULT_OS = "defaultOS";
 	public static final String DEFAULT_PROGRAMMER = "defaultProgrammer";
+	public static final String DEFAULT_PROGRAMMER_OPTIONS = "defaultProgrammerOptions";
 	public static final String DEFAULT_IMG_FORMAT = "BIN";
 }

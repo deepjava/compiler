@@ -99,7 +99,7 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
-		if (checkVersion) {
+		if ((reporter.nofErrors <= 0) && checkVersion) {
 			Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
 			if (deepBundle != null) {
 				Version deepCompilerVersion = deepBundle.getVersion();
@@ -507,8 +507,10 @@ public class Launcher implements ICclassFileConsts {
 				catch (TargetConnectionException e) {
 					if (e.getCause().getClass().getName() ==  "ch.ntb.inf.usbbdi.bdi.PacketWrongException") {
 						reporter.error(813);
-					} else if(e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException") {
+					} else if (e.getCause().getClass().getName() == "ch.ntb.inf.usbbdi.bdi.ReadyBitNotSetException") {
 						reporter.error(814);
+					} else if (e.getMessage().equals("no such file")) {
+						reporter.error(821);
 					} else {
 						reporter.error(801);
 					}

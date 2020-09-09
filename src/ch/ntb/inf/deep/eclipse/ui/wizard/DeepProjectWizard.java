@@ -78,14 +78,13 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			reportError(x);
 			return false;
 		}
-		saveProjectPreferences();
 		dispose();
 		return true;
 	}
 
 	@Override
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
-		setWindowTitle("NTB deep Project Wizard");
+		setWindowTitle("deep Project Wizard");
 		setDefaultPageImageDescriptor(getImageDescriptor("deep.gif"));
 		setNeedsProgressMonitor(true);
 	}
@@ -193,53 +192,40 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			if (model != null && model.getProgrammerOptions() == null)	sb.append("#");
 			sb.append("\tprogrammeropts = "); 
 			if (model != null && model.getProgrammerOptions() != null) sb.append(model.getProgrammerOptions());
-			sb.append(";\n\n#\tenter names of rootclasses, e.g.");
-			sb.append("\n#\trootclasses = \"test.MyFirstTestClass\",\"other.MySecondTestClass\";");
-			sb.append("\n\trootclasses = \"\";\n\n");
-			if (model != null && !model.createImgFile()){
-				sb.append("#");
-			}
+			sb.append(";\n");
+			if (model != null && !model.createImgFile()) sb.append("#");
 			sb.append("\timgfile = ");
-			if (model != null && model.getImgPath() == null){
+			if (model != null && model.getImgPath() == null) {
 				str = project.getLocation().toString();
 				str = str.replace('/', '\\');
 				sb.append("\"" + str);
-			}
-			else{
+			} else {
 				str = model.getImgPath().getAbsolutePath();
 				str = str.replace('/', '\\');
 				sb.append("\"" + str);
 			}
 			sb.append("\\" + project.getName() + "." + model.getImgFormat().toLowerCase() + "\";\n");
-			if(model != null && !model.createImgFile()){
-				sb.append("#");
-			}
+			if (model != null && !model.createImgFile()) sb.append("#");
 			sb.append("\timgformat = " + model.getImgFormat());
-			sb.append(";\n}\n");
+			sb.append(";\n");
+			if (model != null && !model.getLoadPlFile()) sb.append("#");
+			sb.append("\tpl_file = ");
+			if (model != null && model.getPlFilePath() == null) {
+				sb.append("none");
+			} else {
+				str = model.getPlFilePath().getAbsolutePath();
+				str = str.replace('/', '\\');
+				sb.append("\"" + str + "\"");
+			}
+			sb.append(";\n\n#\tenter names of rootclasses, e.g.");
+			sb.append("\n#\trootclasses = \"test.MyFirstTestClass\",\"other.MySecondTestClass\";");
+			sb.append("\n\trootclasses = \"\";\n}\n");
+			
 			in = new ByteArrayInputStream(sb.toString().getBytes());
 			try {
 				file.create(in, false, null);
 			} catch(CoreException e) {e.printStackTrace();}
 			monitor.done();
-		}
-	}
-	
-	private void saveProjectPreferences(){
-		ProjectScope scope = new ProjectScope(project);
-		IEclipsePreferences pref = scope.getNode("deepStart");
-		if (pref != null) {
-			String[] name = model.getBoard();
-			if (name != null) pref.put("board", name[0]);
-			name = model.getOs();
-			if (name != null) pref.put("os", name[0]);
-			name = model.getProgrammer();
-			if (name != null) pref.put("programmer", name[0]);
-			pref.put("libPath", model.getLibrary().getAbsolutePath());
-		}
-		try {
-			pref.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
 		}
 	}
 	
