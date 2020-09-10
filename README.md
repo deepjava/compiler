@@ -6,7 +6,7 @@ With the __deep compiler__ Java byte code can be crosscompiled and linked for th
  - arrays are supported up to three dimensions only
  - "synchronized" is not yet implemented
 
-The deep compiler is written in pure Java and can be integraded into Eclips as a plugin.
+The deep compiler is written in Java and can be integrated into eclips as a plugin.
 
 Documentation
 -------------
