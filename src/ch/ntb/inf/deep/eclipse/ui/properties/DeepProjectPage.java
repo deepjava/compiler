@@ -52,9 +52,9 @@ import ch.ntb.inf.deep.eclipse.ui.preferences.PreferenceConstants;
 public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyPage {
 	
 	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-	private Combo boardCombo, programmerCombo, programmerOptionsCombo, osCombo, imgFormatCombo;
+	private Combo boardCombo, programmerCombo, osCombo, imgFormatCombo;
 	private Button checkLib, browseLib, checkImg, browseImg, downloadPL, browsePL;
-	private Text pathLib, pathImg, pathPL;
+	private Text pathLib, programmerOpts, pathImg, pathPL;
 	private final String defaultImgPath = "$PROJECT_LOCATION";
 	private final String defaultImgFormat = "BIN";
 	private final String defaultPlPath = "$PROJECT_LOCATION";
@@ -68,7 +68,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 	String[][] boards, imgformats;
 	private String[][] operatingSystems;
 	private String[][] programmers;
-	private String[] programmerOptions;
 	private DeepFileChanger dfc;
 	
 	@Override
@@ -193,8 +192,13 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		programmerCombo.addSelectionListener(listener);
 		Label progOptLabel = new Label(groupBoard, SWT.NONE);
 		progOptLabel.setText("Select programmer options");
-		programmerOptionsCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
-		programmerOptionsCombo.addSelectionListener(listener);
+		programmerOpts = new Text(groupBoard, SWT.SINGLE | SWT.BORDER);
+		programmerOpts.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		programmerOpts.setEnabled(true);
+		programmerOpts.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+			}
+		});
 
 		Group groupOS = new Group(composite, SWT.NONE);
 		groupOS.setText("Runtime system");
@@ -347,10 +351,10 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 				if (programmerCombo.getSelectionIndex() != programmerCombo.getItemCount() - 1) programmer = programmers[programmerCombo.getSelectionIndex()][0];
 				else programmer = "";
 			}
-			if (e.widget.equals(programmerOptionsCombo)) {
-				if (programmerOptionsCombo.getSelectionIndex() != programmerOptionsCombo.getItemCount() - 1) programmerOpt = programmerOptions[programmerOptionsCombo.getSelectionIndex()];
-				else programmerOpt = "";
-			}
+//			if (e.widget.equals(programmerOptionsCombo)) {
+//				if (programmerOptionsCombo.getSelectionIndex() != programmerOptionsCombo.getItemCount() - 1) programmerOpt = programmerOptions[programmerOptionsCombo.getSelectionIndex()];
+//				else programmerOpt = "";
+//			}
 			if (e.widget.equals(imgFormatCombo)) {
 				if (imgFormatCombo.getSelectionIndex() != imgFormatCombo.getItemCount() - 1) lastChoiceImgFormat = Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()];
 				else lastChoiceImgFormat = "";
@@ -381,15 +385,8 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		programmerCombo.setItems(str);
 		programmerCombo.select(index);
 
-		programmerOptions = new String[2];
-		programmerOptions[0] = "localhost_4444";
-		programmerOptions[1] = "none";
-		programmerOptionsCombo.setItems(programmerOptions);
-		for (int i = 0; i < programmerOptions.length; i++) {
-			if (programmerOptions[i].contains(programmerOpt)) index = i;
-		}
-		programmerOptionsCombo.select(index);
-
+		programmerOpts.setText(programmerOpt);
+		
 		operatingSystems = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.osPath), Parser.sOperatingSystem);
 		str = new String[operatingSystems.length + 1];
 		index = operatingSystems.length;
@@ -456,11 +453,11 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			if (dfc.changeContent("programmertype", programmer) != 0)
 				dfc.changeContent("programmertype", programmer);
 		}
-		if (programmerOptionsCombo.getText().equals("none")) {
-			dfc.commentContent("programmeropts");
-		} else {
-			if (dfc.changeContent("programmeropts", programmerOpt) != 0)
+		if (programmerOpts.getText() != null && programmerOpts.getText().length() > 0) {
+			if (dfc.changeContent("programmeropts", programmerOpts.getText()) != 0)
 				dfc.addContent("programmeropts", programmerOpt);
+		} else {
+			dfc.commentContent("programmeropts");
 		}
 		if (createImgFile) {  
 			if (dfc.changeContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "." + lastChoiceImgFormat.toLowerCase() + "\"") != 0)

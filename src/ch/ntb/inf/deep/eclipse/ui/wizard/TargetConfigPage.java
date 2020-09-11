@@ -47,9 +47,9 @@ class TargetConfigPage extends WizardPage {
 	private final String defaultProgrammer = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_PROGRAMMER);
 	private final String defaultProgrammerOptions = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_PROGRAMMER_OPTIONS);
 	private final String defaultImgFormat = PreferenceConstants.DEFAULT_IMG_FORMAT;	 
-	private Combo boardCombo, programmerCombo, programmerOptionsCombo, osCombo, imgFormatCombo;
+	private Combo boardCombo, programmerCombo, osCombo, imgFormatCombo;
 	private Button checkImg, browseImg, downloadPL, browsePL;
-	private Text pathImg, pathPL;
+	private Text programmerOpts, pathImg, pathPL;
 	private final String defaultImgPath = "$PROJECT_LOCATION";
 	private final String defaultPlPath = "$PROJECT_LOCATION";
 	private String lastChoice = defaultImgPath;
@@ -57,7 +57,6 @@ class TargetConfigPage extends WizardPage {
 	private String[][] boards;
 	private String[][] operatingSystems;
 	private String[][] programmers;
-	private String[] programmerOptions;
 	
 	protected TargetConfigPage(String pageName) {
 		super(pageName);
@@ -84,8 +83,15 @@ class TargetConfigPage extends WizardPage {
 		programmerCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		Label progOptLabel = new Label(groupBoard, SWT.NONE);
 		progOptLabel.setText("Select programmer options");
-		programmerOptionsCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
-		programmerOptionsCombo.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		programmerOpts = new Text(groupBoard, SWT.SINGLE | SWT.BORDER);
+		programmerOpts.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		programmerOpts.setText(defaultProgrammerOptions);
+		programmerOpts.setEnabled(true);
+		programmerOpts.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				setPageComplete(validatePage());
+			}
+		});
 		
 		Group groupOS = new Group(composite, SWT.NONE);
 		groupOS.setText("Runtime system");
@@ -259,14 +265,6 @@ class TargetConfigPage extends WizardPage {
 			str[str.length - 1] = "none";
 			programmerCombo.setItems(str);
 			programmerCombo.select(index);
-			programmerOptions = new String[2];
-			programmerOptions[0] = "localhost_4444";
-			programmerOptions[1] = "none";
-			programmerOptionsCombo.setItems(programmerOptions);
-			for (int i = 0; i < programmerOptions.length; i++) {
-				if (programmerOptions[i].contains(defaultProgrammerOptions)) index = i;
-			}
-			programmerOptionsCombo.select(index);
 		}
 	}
 	
@@ -282,7 +280,7 @@ class TargetConfigPage extends WizardPage {
 	}
 	
 	private boolean validatePage() {
-		if (boardCombo.getSelectionIndex() == -1 || osCombo.getSelectionIndex() == -1 || programmerCombo.getSelectionIndex() == -1 || programmerOptionsCombo.getSelectionIndex() == -1) {
+		if (boardCombo.getSelectionIndex() == -1 || osCombo.getSelectionIndex() == -1 || programmerCombo.getSelectionIndex() == -1) {
 			return false;
 		}
 		DeepProjectWizard wiz = (DeepProjectWizard) getWizard();
@@ -292,7 +290,7 @@ class TargetConfigPage extends WizardPage {
 		else wiz.model.setOs(null);
 		if (programmerCombo.getSelectionIndex() != programmerCombo.getItemCount() - 1) wiz.model.setProgrammer(programmers[programmerCombo.getSelectionIndex()]);
 		else wiz.model.setProgrammer(null);
-		if (programmerOptionsCombo.getSelectionIndex() != programmerOptionsCombo.getItemCount() - 1) wiz.model.setProgrammerOptions(programmerOptions[programmerOptionsCombo.getSelectionIndex()]);
+		if (programmerOpts.getText() != null && programmerOpts.getText().length() > 0) wiz.model.setProgrammerOptions(programmerOpts.getText()); 
 		else wiz.model.setProgrammerOptions(null);
 		wiz.model.setCreateImgFile(checkImg.getSelection());
 		wiz.model.setImgFormat(Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()]);
