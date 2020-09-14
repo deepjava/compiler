@@ -8,11 +8,13 @@ meta {
 project junitTargetTestProject {
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
-	
 	boardtype = phyCoreMpc5200io;
-	ostype = ntbSTS_ppc;
+	ostype = sts_ppc;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf01;
+	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\mpc5200Test.bin";
+	imgformat = binary;
+	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
 	
 #	Tests for compiler test classes 
  
@@ -72,11 +74,4 @@ project junitTargetTestProject {
 	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc5200",
 				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTestPPC","ch/ntb/inf/deep/trglib/targettest/UtilTest",
 				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
-
-	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\mpc5200Test.bin";
-	imgformat = binary;
-
-# Target command table file
-	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
-
 }

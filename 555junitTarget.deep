@@ -8,10 +8,12 @@ meta {
 project junitTargetTestProject {
 	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
-
 	boardtype = ntbMpc555HB;
-	ostype = ntbSTS_ppc;
+	ostype = sts_ppc;
 	programmertype = ntbMpc555UsbBdi;
+	
+# 	Target command table file
+	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
 
 #	Tests for compiler test classes 
  
@@ -72,8 +74,4 @@ project junitTargetTestProject {
 	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555",
 				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTestPPC","ch/ntb/inf/deep/trglib/targettest/UtilTest",
 				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
-
-# Target command table file
-	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
-
 }

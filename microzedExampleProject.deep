@@ -9,22 +9,17 @@ project microzedExampleProject {
 	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
 #	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
-	
 	boardtype = MicroZed;
-	ostype = ntbSTS_arm;
-
+	ostype = sts_arm;
 	programmertype = openOCD;
 	programmeropts = localhost_4444;
-	
 	imgfile = "D:\Test1.bin";
 	imgformat = BIN;
+#	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java/lang/Object";
 #	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/Reset";
 	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/SystemOutDemo";
 	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/microzed/demo/Blinker";
 	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/SystemOutDemo","ch/ntb/inf/deep/runtime/zynq7000/microzed/demo/Blinker";
-
-#	tctfile = "tct/targetCommands.dtct";
-
 }

@@ -31,10 +31,11 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 
 /**
- * Launcher for tests only! Adapt this file to your configuration, but don't commit
- * those changes to the SVN! Please store your project file in the top folder of
- * the deep-Project. You can find an example project "ExampleProject.deep" in
- * this folder which you may use as base for your own test project.
+ * Launcher for tests only! Adapt this file to your configuration, but don't
+ * commit those changes to the SVN! Please store your project file in the top
+ * folder of the deep-Project. You can find an example project
+ * "ExampleProject.deep" in this folder which you may use as base for your own
+ * test project.
  */
 @SuppressWarnings("unused")
 public class TestLauncher {
@@ -71,15 +72,16 @@ public class TestLauncher {
 					e.printStackTrace();
 				} catch (NoSuchMethodException e) {
 					e.printStackTrace();
-				} catch (IllegalArgumentException e) { 
+				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();
 				} catch (InvocationTargetException e) {
 					e.printStackTrace();
 				}
-			} else System.out.println("no programmer defined");
-		} 
+			} else
+				System.out.println("no programmer defined");
+		}
 
 //		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 
