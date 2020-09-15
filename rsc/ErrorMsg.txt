@@ -67,6 +67,7 @@ ErrorNr;Description;Solution
 603;not enough GPR's for locals;
 604;not enough FPR's for locals;
 605;not enough stack slots for spilling;
+606;too many locals in exception method;
 610;result of SSA instruction has wrong type;
 611;operand of SSA instruction has wrong type;
 612;operand of SSA new instruction has wrong type;
@@ -119,5 +120,6 @@ ErrorNr;Description;Solution
 814;ready bit not set, try to reset BDI;
 815;Connection to target not possible! (port seems to be busy);
 820;no target image file found;
+821;no pl image file found;
 
 900;Connection lost;

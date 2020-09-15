@@ -30,6 +30,7 @@ public class DeepPreferenceInitializer extends AbstractPreferenceInitializer {
 		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_BOARD, DeepPlugin.BOARD);
 		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_OS, DeepPlugin.OS);
 		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_PROGRAMMER, DeepPlugin.PROGRAMMER);
+		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_PROGRAMMER_OPTIONS, DeepPlugin.PROGRAMMER_OPTIONS);
 	}
 
 }

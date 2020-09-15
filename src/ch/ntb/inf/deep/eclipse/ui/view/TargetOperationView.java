@@ -526,15 +526,15 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				case Parser.sCPR:
 					switch (op.registerSize) {
 					case 1:
-						return String.format("0x%02X", op.value);
+						return String.format("0x%02X", op.value & 0xff);
 					case 2:
-						return String.format("0x%04X", op.value);
+						return String.format("0x%04X", op.value & 0xffff);
 					case 4:
-						return String.format("0x%08X", op.value);
+						return String.format("0x%08X", op.value & 0xffffffffL);
 					case 8:
 						return String.format("0x%016X", op.value);
 					default:
-						return String.format("0x%08X", op.value);
+						return String.format("0x%08X", op.value & 0xffffffffL);
 					}
 				}
 			case 2:	// variable
@@ -615,7 +615,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 						op.value = Long.decode(String.valueOf(value));
 					}				
 				} catch(Exception e) {
-					e.printStackTrace();
+//					e.printStackTrace();
 				}
 			}
 			viewer.refresh();
@@ -1200,7 +1200,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				break;
 			case Parser.sGPR: {
 				long val;
-				if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+				if (value.startsWith("0x")) val = Long.parseLong(value.substring(2), 16);
 				else val = Integer.parseInt(value);
 				op.value = val;
 				tc.setRegisterValue(op.description, op.value);
@@ -1222,13 +1222,13 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 				tc.setRegisterValue(op.description, (int)op.value);
 				break;
 			case Parser.sCPR: 
-				if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+				if (value.startsWith("0x")) val = Long.parseLong(value.substring(2), 16);
 				else val = Integer.parseInt(value);
 				op.value = val;
 				tc.setRegisterValue(op.description, op.value);
 				break;
 			case Parser.sIOR:
-				if (value.startsWith("0x")) val = Integer.parseInt(value.substring(2), 16);
+				if (value.startsWith("0x")) val = Long.parseLong(value.substring(2), 16);
 				else val = Integer.parseInt(value);
 				op.value = val;
 				switch (op.registerSize) {

@@ -46,9 +46,10 @@ public class DeepPlugin extends AbstractUIPlugin {
 	 *  default entries for deep projects settings
 	 */
 	public static final String LIB_PATH = "I:\\deep\\lib";
-	public static final String BOARD = "ntbMpc555HB";
-	public static final String OS = "ntbSTS_ppc";
-	public static final String PROGRAMMER = "ntbMpc555UsbBdi";
+	public static final String BOARD = "MicroZed";
+	public static final String OS = "ntbSTS_arm";
+	public static final String PROGRAMMER = "OpenOCD";
+	public static final String PROGRAMMER_OPTIONS = "localhost_4444";
 	
 	/**
 	 * Unique identifier for the deep model (value 

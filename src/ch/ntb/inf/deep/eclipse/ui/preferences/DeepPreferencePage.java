@@ -59,6 +59,8 @@ public class DeepPreferencePage
 				"&Default operating system:", getFieldEditorParent()));
 		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_PROGRAMMER, 
 				"&Default programmer:", getFieldEditorParent()));
+		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_PROGRAMMER_OPTIONS, 
+				"&Default programmer options:", getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)

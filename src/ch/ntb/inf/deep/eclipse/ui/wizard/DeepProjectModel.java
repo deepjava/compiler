@@ -26,9 +26,10 @@ public class DeepProjectModel {
 	private String[] board;
 	private String[] osName;
 	private String[] programmerName;
-	private File imgPath;
+	private String programmerOptions;
+	private File imgPath, plFilePath;
 	private String imgFormat; 
-	private boolean createImgFile;
+	private boolean createImgFile, loadPlFile;
 
 	public void setLibrary(File lib) {
 		this.lib = lib;
@@ -52,6 +53,14 @@ public class DeepProjectModel {
 
 	public void setProgrammer(String[] prog) {
 		this.programmerName = prog;
+	}
+
+	public String getProgrammerOptions() {
+		return programmerOptions;
+	}
+
+	public void setProgrammerOptions(String opt) {
+		this.programmerOptions = opt;
 	}
 
 	public String[] getOs() {
@@ -85,4 +94,21 @@ public class DeepProjectModel {
 	public boolean createImgFile(){
 		return createImgFile;
 	}
+
+	public void setLoadPlFile(boolean load){
+		this.loadPlFile = load;
+	}
+	
+	public boolean getLoadPlFile(){
+		return loadPlFile;
+	}
+	
+	public void setPlFilePath(File file){
+		this.plFilePath = file;
+	}
+	
+	public File getPlFilePath(){
+		return plFilePath;
+	}
+
 }

@@ -31,24 +31,27 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.Method;
 
 /**
- * Launcher for tests only! Adapt this file to your configuration, but don't commit
- * those changes to the SVN! Please store your project file in the top folder of
- * the deep-Project. You can find an example project "ExampleProject.deep" in
- * this folder which you may use as base for your own test project.
+ * Launcher for tests only! Adapt this file to your configuration, but don't
+ * commit those changes to the SVN! Please store your project file in the top
+ * folder of the deep-Project. You can find an example project
+ * "ExampleProject.deep" in this folder which you may use as base for your own
+ * test project.
  */
 @SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
-//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash");
-//		Launcher.buildAll("555junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam");
-//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam");
-		Launcher.buildAll("zybo7000ExampleProject.deep", "BootFromRam");
-//		Launcher.buildAll("zybo7000junitTarget.deep", "BootFromRam");
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash", false);
+//		Launcher.buildAll("555junitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("iMX6junitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("zybojunitTarget.deep", "BootFromRam", false);
+//		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
+		Launcher.buildAll("microzedjunitTarget.deep", "BootFromRam", false);
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {
@@ -69,15 +72,16 @@ public class TestLauncher {
 					e.printStackTrace();
 				} catch (NoSuchMethodException e) {
 					e.printStackTrace();
-				} catch (IllegalArgumentException e) { 
+				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();
 				} catch (InvocationTargetException e) {
 					e.printStackTrace();
 				}
-			} else System.out.println("no programmer defined");
-		} 
+			} else
+				System.out.println("no programmer defined");
+		}
 
 //		Launcher.createInterfaceFiles("M:/EUser/JCC/ch.ntb.inf.deep.trglib");
 

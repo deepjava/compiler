@@ -31,12 +31,12 @@ public class ItemStub extends Item {
 		this.owner = owner;
 	}
 
-	ItemStub(RefType owner, HString methName, HString methDescriptor) {
+	ItemStub(HString clsName, RefType owner, HString methName, HString methDescriptor) {
 		super(methName, null);
 		this.owner = owner;
 		this.descriptor = methDescriptor;
 		if (owner.name.equals(HString.getRegisteredHString("java/lang/StringBuilder"))) {
-			String str = "in " + owner.name + "." + methName;
+			String str = "in class " + clsName;
 			ErrorReporter.reporter.error(306, str);
 		}
 	}

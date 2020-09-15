@@ -20,14 +20,11 @@ package ch.ntb.inf.deep.eclipse.ui.properties;
 
 import java.io.File;
 import java.util.GregorianCalendar;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -40,12 +37,12 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchPropertyPage;
 import org.eclipse.ui.dialogs.PropertyPage;
-import org.osgi.service.prefs.BackingStoreException;
 
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
@@ -56,17 +53,21 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 	
 	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
 	private Combo boardCombo, programmerCombo, osCombo, imgFormatCombo;
-	private Button check, browse, checkImg, browseImg;
-	private Text path, pathImg;
+	private Button checkLib, browseLib, checkImg, browseImg, downloadPL, browsePL;
+	private Text pathLib, programmerOpts, pathImg, pathPL;
+	private final String defaultImgPath = "$PROJECT_LOCATION";
+	private final String defaultImgFormat = "BIN";
+	private final String defaultPlPath = "$PROJECT_LOCATION";
+	private String lastChoiceImg = defaultImgPath;
+	private String lastChoiceImgFormat = defaultImgFormat;
+	private String lastChoicePl = defaultPlPath;
 	private int indexImgFormat;
-	private final String defaultImgPath = "";
-	private String lastImgPathChoice = defaultImgPath;
-	private boolean createImgFile = false;
-	private String lastChoice = "", lastImgFormatChoice = "";
-	private IEclipsePreferences pref;
+	private boolean createImgFile = false, loadPL = false;
 	private Label libState;
-	private String libPath, board, programmer, os, rootclasses, imglocation, imgformat;
-	String[][] boards, programmers, osys, imgformats;
+	private String libPath, board, programmer, programmerOpt, os, imglocation, imgformat, plfile;
+	String[][] boards, imgformats;
+	private String[][] operatingSystems;
+	private String[][] programmers;
 	private DeepFileChanger dfc;
 	
 	@Override
@@ -75,113 +76,112 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		IProject project = (IProject) getElement().getAdapter(IProject.class);
 		dfc = new DeepFileChanger(project.getLocation()	+ "/" + project.getName() + ".deep");
 
-		libPath = dfc.getContent("libpath");
+		libPath = dfc.getContent("libpath", false);
 		if (!libPath.equals("not available")) libPath = libPath.substring(1, libPath.length()-1);
-		board = dfc.getContent("boardtype");
-		programmer = dfc.getContent("programmertype");
-		os = dfc.getContent("ostype");
-		rootclasses = dfc.getContent("rootclasses");
-		imglocation = dfc.getContent("imgfile");
-		imgformat = dfc.getContent("imgformat");
-		if(imglocation.equalsIgnoreCase("not available") && imgformat.equalsIgnoreCase("not available")){
+		board = dfc.getContent("boardtype", false);
+		os = dfc.getContent("ostype", false);
+		programmer = dfc.getContent("programmertype", false);
+		programmerOpt = dfc.getContent("programmeropts", false);
+		imglocation = dfc.getContent("imgfile", true);
+		imgformat = dfc.getContent("imgformat", false);
+		if (imglocation.equalsIgnoreCase("not available")) {
 			createImgFile = false;
-			lastImgPathChoice = project.getLocation().toString();
-			lastImgPathChoice = lastImgPathChoice.replace('/', '\\');
-		}
-		else{
+		} else if (imglocation.startsWith("#")) {
+			lastChoiceImg = imglocation.replace('/', '\\');
+			lastChoiceImg = lastChoiceImg.substring(1, lastChoiceImg.length() - 1);
+			int indexOfProjectName = lastChoiceImg.lastIndexOf("\\");
+			lastChoiceImg = lastChoiceImg.substring(1, indexOfProjectName);
+		} else {
 			createImgFile = true;
-			lastImgPathChoice = imglocation.replace('/', '\\');
-			lastImgPathChoice = lastImgPathChoice.substring(1,lastImgPathChoice.length() -1 );
-			int indexOfProjectName = lastImgPathChoice.lastIndexOf("\\");
-			lastImgPathChoice = lastImgPathChoice.substring(0, indexOfProjectName);
-			lastImgFormatChoice = imgformat;
+			lastChoiceImg = imglocation.replace('/', '\\');
+			lastChoiceImg = lastChoiceImg.substring(1, lastChoiceImg.length() - 1);
+			int indexOfProjectName = lastChoiceImg.lastIndexOf("\\");
+			lastChoiceImg = lastChoiceImg.substring(0, indexOfProjectName);
+			lastChoiceImgFormat = imgformat;
 		}
-		
-//		System.out.println(dfc.fileContent.toString());		
-//		System.out.println(libPath);
-//		System.out.println(board);
-//		System.out.println(programmer);
-//		System.out.println(os);
-//		System.out.println(rootclasses);
-//		System.out.println(lastImgPathChoice);
-//		System.out.println(lastImgFormatChoice);
-//		System.out.println("");
-
-		// read project preferences
-		pref = getPref();
+		plfile = dfc.getContent("pl_file", true);
+		if (plfile.equalsIgnoreCase("not available")) loadPL = false;
+		else if (plfile.startsWith("#")) {
+			loadPL = false;
+			lastChoicePl = plfile.replace('/', '\\');
+			lastChoicePl = lastChoicePl.substring(2, lastChoicePl.length() - 1);
+		} else {
+			loadPL = true;
+			lastChoicePl = plfile.replace('/', '\\');
+			lastChoicePl = lastChoicePl.substring(1, lastChoicePl.length() - 1);
+		}
 		
 		// build control
 		Composite composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(new GridLayout(2, false));
+		composite.setLayout(new GridLayout(1, false));
+		composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
 	
 		Group groupLib = new Group(composite, SWT.NONE);
-		groupLib.setText("Target Library");
-		GridLayout gridLayout2 = new GridLayout(2, false);
-		groupLib.setLayout(gridLayout2);
-		GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		groupLib.setText("Target library");
+		groupLib.setLayout(new GridLayout(2, false));
+		groupLib.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, true);
 		gridData.horizontalSpan = 2;
-		groupLib.setLayoutData(gridData);
-		Label label1 = new Label(groupLib,SWT.NONE);
-		label1.setText("Pleace specify the target library you want to use for this project.");
-		label1.setLayoutData(gridData);
-		Label dummy = new Label(groupLib, SWT.NONE);
-		dummy.setLayoutData(gridData);
-		check = new Button(groupLib, SWT.CHECK);
-		check.setText("Use default library path");
-		check.setSelection(libPath.equals(defaultPath));
-		check.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				if (e.widget.equals(check)) {
-					if (check.getSelection()) {
-						path.setEnabled(false);
-						path.setText(defaultPath);
+		checkLib = new Button(groupLib, SWT.CHECK);
+		checkLib.setText("Use default library path");
+		checkLib.setSelection(libPath.equals(defaultPath));
+		checkLib.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) { // checkbox event
+				if (e.widget.equals(checkLib)) {
+					if (checkLib.getSelection()) {
+						pathLib.setEnabled(false);
+						browseLib.setEnabled(false);
+						pathLib.setText(defaultPath);
+					} else {
+						pathLib.setEnabled(true);
+						browseLib.setEnabled(true);
+						pathLib.setText(libPath);
 					}
-					else {
-						path.setEnabled(true);
-						path.setText(lastChoice);
-					}
-					libPath = path.getText();
-					if (checkLibPath()) readLib();
+					libPath = pathLib.getText();
+					if (checkLibPath()) readConfig();
 				}
 			}
 		});
-		check.setLayoutData(gridData);
-		path = new Text(groupLib, SWT.SINGLE | SWT.BORDER);
+		checkLib.setLayoutData(gridData);
+		pathLib = new Text(groupLib, SWT.SINGLE | SWT.BORDER);
 		GridData gridData2 = new GridData();
 		gridData2.horizontalAlignment = SWT.FILL;
 		gridData2.grabExcessHorizontalSpace = true;
-		path.setLayoutData(gridData2);
-		path.setText(libPath);
-		path.setEnabled(!libPath.equals(defaultPath));
-		path.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent e) {
-				libPath = path.getText();
-				if (checkLibPath()) readLib();
+		pathLib.setLayoutData(gridData2);
+		pathLib.setText(libPath);
+		pathLib.setEnabled(!checkLib.getSelection());
+		pathLib.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) { // path changed event
+				libPath = pathLib.getText();
+				if (checkLibPath()) readConfig();
 			}
 		});
-		browse = new Button(groupLib, SWT.PUSH);
-		browse.setText("Browse...");
-		browse.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent e) {
-				if (!check.getSelection()){	
-					openDirectoryDialog();
-					if (checkLibPath()) readLib();
+		browseLib = new Button(groupLib, SWT.PUSH);
+		browseLib.setText("Browse...");
+		browseLib.setEnabled(!checkLib.getSelection());
+		browseLib.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) { // browse event
+				if (!checkLib.getSelection()){	
+					DirectoryDialog dlg = new DirectoryDialog(getShell());        
+			        dlg.setFilterPath(pathLib.getText()); // Set the initial filter path according to anything they've selected or typed in
+			        dlg.setText("deep Library Path Selection");
+			        dlg.setMessage("Select a directory");
+			        String dir = dlg.open(); // Calling open() will open and run the dialog.
+			        if (dir != null) {
+			        	pathLib.setText(dir);
+			        	libPath = dir;
+			        }
+					if (checkLibPath()) readConfig();
 				}
 			}
 		});
 		libState = new Label(groupLib,SWT.NONE);
 		libState.setLayoutData(gridData);
 
-//		Group groupBoard = new Group(composite, SWT.BOTTOM);
 		Group groupBoard = new Group(composite, SWT.NONE);
 		groupBoard.setText("Board configuration");
-		GridLayout groupLayout1 = new GridLayout(2, false);
-		groupBoard.setLayout(groupLayout1);
-		GridData gridData3 = new GridData();
-		gridData3.horizontalAlignment = SWT.FILL;
-		gridData3.grabExcessHorizontalSpace = true;
-		gridData3.horizontalSpan = 2;
-		groupBoard.setLayoutData(gridData3);
+		groupBoard.setLayout(new GridLayout(1, false));
+		groupBoard.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		Label boardLabel = new Label(groupBoard, SWT.NONE);
 		boardLabel.setText("Select a board");
 		boardCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
@@ -190,81 +190,82 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		progLabel.setText("Select a programmer");
 		programmerCombo = new Combo(groupBoard, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		programmerCombo.addSelectionListener(listener);
+		Label progOptLabel = new Label(groupBoard, SWT.NONE);
+		progOptLabel.setText("Select programmer options");
+		programmerOpts = new Text(groupBoard, SWT.SINGLE | SWT.BORDER);
+		programmerOpts.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		programmerOpts.setEnabled(true);
+		programmerOpts.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+			}
+		});
 
-//		Group groupOS = new Group(composite, SWT.BOTTOM);
 		Group groupOS = new Group(composite, SWT.NONE);
 		groupOS.setText("Runtime system");
-		GridLayout groupLayout2 = new GridLayout(2, false);
-		groupOS.setLayout(groupLayout2);
-		GridData gridData4 = new GridData();
-		gridData4.horizontalAlignment = SWT.FILL;
-		gridData4.grabExcessHorizontalSpace = true;
-		gridData4.horizontalSpan = 2;
-		groupOS.setLayoutData(gridData4);
+		groupOS.setLayout(new GridLayout(1, false));
+		groupOS.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		Label osLabel = new Label(groupOS,SWT.NONE);
-		osLabel.setText("Select a operating system");
+		osLabel.setText("Select an operating system");
 		osCombo = new Combo(groupOS, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
 		osCombo.addSelectionListener(listener);
 
 		Group groupImg = new Group(composite, SWT.NONE);
 		groupImg.setText("Image file creation");
-		GridLayout gridLayoutImg = new GridLayout(2,false);
-		groupImg.setLayout(gridLayoutImg);
-		GridData gridDataImg = new GridData(SWT.FILL, SWT.CENTER, true, false);
-		gridDataImg.horizontalSpan = 2;		
+		groupImg.setLayout(new GridLayout(2, false));
+		groupImg.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));	
 		checkImg = new Button(groupImg, SWT.CHECK);
 		checkImg.setText("Create image file");
-		checkImg.setSelection(false);
+		checkImg.setSelection(createImgFile);
 		checkImg.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				if(e.widget.equals(checkImg)) {
-					if (checkLibPath()) readLib();
-					if(checkImg.getSelection()) {
+					if (checkImg.getSelection()) {
 						pathImg.setEnabled(true);
-						pathImg.setText(lastImgPathChoice);
 						browseImg.setEnabled(true);
 						imgFormatCombo.setEnabled(true);
-						indexImgFormat = 0;
-						for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-							if (lastImgFormatChoice.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
-						}
-						imgFormatCombo.select(indexImgFormat);
 						createImgFile = true;
 					} else {
 						pathImg.setEnabled(false);
-						pathImg.setText(lastImgPathChoice);
 						browseImg.setEnabled(false);
 						imgFormatCombo.setEnabled(false);
-						indexImgFormat = 0;
-						for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-							if (lastImgFormatChoice.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
-						}
-						imgFormatCombo.select(indexImgFormat);
 						createImgFile = false;
 					}
+					pathImg.setText(lastChoiceImg);
+					indexImgFormat = 0;
+					for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
+						if (lastChoiceImgFormat.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
+					}
+					imgFormatCombo.select(indexImgFormat);
 				}
 			}
 		});
-		checkImg.setLayoutData(gridDataImg);
+		checkImg.setLayoutData(gridData);
 		
-		GridData gridDataImg2 = new GridData(SWT.FILL, SWT.FILL, true, false);
 		pathImg = new Text(groupImg, SWT.SINGLE | SWT.BORDER);
-		pathImg.setLayoutData(gridDataImg2);
-		pathImg.setEnabled(false);
+		pathImg.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		pathImg.setText(lastChoiceImg);
+		pathImg.setEnabled(createImgFile);
 		pathImg.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				imglocation = pathImg.getText();
-				if (checkLibPath()) readLib();
+				if (checkLibPath()) readConfig();
 			}
 		});
 		browseImg = new Button(groupImg, SWT.PUSH);
 		browseImg.setText("Browse...");
-		browseImg.setEnabled(false);
+		browseImg.setEnabled(createImgFile);
 		browseImg.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e){
 				if (checkImg.getSelection()) {	
-					openImgDirectoryDialog();
-					if (checkLibPath()) readLib();
+					DirectoryDialog dlg = new DirectoryDialog(getShell());        
+			        dlg.setFilterPath(pathImg.getText()); // Set the initial filter path according to anything they've selected or typed in
+			        dlg.setText("Image File Save Location");
+			        dlg.setMessage("Select a directory");
+			        String dir = dlg.open(); // Calling open() will open and run the dialog.
+			        if (dir != null) {
+			        	pathImg.setText(dir);
+			        	lastChoiceImg = dir;
+			        }
 				}
 			}
 		});	
@@ -273,63 +274,100 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		Label imgFormatLabel = new Label(groupImg,SWT.NONE);
 		imgFormatLabel.setText("Select image file format");
 		imgFormatCombo = new Combo(groupImg, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
-		imgFormatCombo.setEnabled(false);
+		imgFormatCombo.setEnabled(createImgFile);
 		imgFormatCombo.setLayoutData(gridDataImg3);
 		imgFormatCombo.addSelectionListener(listener);
 		indexImgFormat = 0;
 		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-			if (lastImgFormatChoice.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
+			if (lastChoiceImgFormat.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
 		}
 		imgFormatCombo.select(indexImgFormat);
 		
-		//initial values of Image file creation
-		if(createImgFile){
-			checkImg.setSelection(true);
-			pathImg.setEnabled(true);
-			pathImg.setText(lastImgPathChoice);
-			browseImg.setEnabled(true);
-			imgFormatCombo.setEnabled(true);
-		}
-		else{
-			checkImg.setSelection(false);
-			pathImg.setEnabled(false);
-			pathImg.setText(lastImgPathChoice);
-			browseImg.setEnabled(false);
-			imgFormatCombo.setEnabled(false);
-		}
-		
-		if (checkLibPath()) readLib(); else libPath = "not available";
+		Group groupPL = new Group(composite, SWT.NONE);
+		groupPL.setText("Configuration file for PL");
+		groupPL.setLayout(new GridLayout(2, false));
+		groupPL.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		downloadPL = new Button(groupPL, SWT.CHECK);
+		downloadPL.setText("Download PL file");
+		downloadPL.setSelection(loadPL);
+		downloadPL.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				if(e.widget.equals(downloadPL)) {
+					if (downloadPL.getSelection()) {
+						pathPL.setEnabled(true);
+						browsePL.setEnabled(true);
+						loadPL = true;
+					} else {
+						pathPL.setEnabled(false);
+						browsePL.setEnabled(false);
+						loadPL = false;
+					}
+					pathPL.setText(lastChoicePl);
+				}
+			}
+		});
+		downloadPL.setLayoutData(gridData);
+		pathPL = new Text(groupPL, SWT.SINGLE | SWT.BORDER);
+		pathPL.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		pathPL.setText(lastChoicePl);
+		pathPL.setEnabled(loadPL);
+		pathPL.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+			}
+		});
+		browsePL = new Button(groupPL, SWT.PUSH);
+		browsePL.setText("Browse...");
+		browsePL.setEnabled(loadPL);
+		browsePL.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e){
+				if (downloadPL.getSelection()) {	
+					FileDialog dlg = new FileDialog(getShell());        
+			        dlg.setFilterPath(pathImg.getText()); // Set the initial filter path according to anything they've selected or typed in
+			        dlg.setText("Choose a bit-file for the PL");
+			        String dir = dlg.open(); // Calling open() will open and run the dialog.
+			        if (dir != null) {
+			        	pathPL.setText(dir);
+			        	lastChoicePl = dir;
+			        }
+				}
+			}
+		});	
+
+		if (checkLibPath()) readConfig(); else libPath = "not available";
 		return composite;
 	}
 	
 	private SelectionAdapter listener = new SelectionAdapter() {
-		public void widgetSelected(SelectionEvent e){
+		public void widgetSelected(SelectionEvent e) {
 			if (e.widget.equals(boardCombo)) {
 				if (boardCombo.getSelectionIndex() != boardCombo.getItemCount() - 1) board = boards[boardCombo.getSelectionIndex()][0];
 				else board = "";
 			}
 			if (e.widget.equals(osCombo)) {
-				if (osCombo.getSelectionIndex() != osCombo.getItemCount() - 1) os = osys[osCombo.getSelectionIndex()][0];
+				if (osCombo.getSelectionIndex() != osCombo.getItemCount() - 1) os = operatingSystems[osCombo.getSelectionIndex()][0];
 				else os = "";
 			}
 			if (e.widget.equals(programmerCombo)) {
 				if (programmerCombo.getSelectionIndex() != programmerCombo.getItemCount() - 1) programmer = programmers[programmerCombo.getSelectionIndex()][0];
 				else programmer = "";
 			}
+//			if (e.widget.equals(programmerOptionsCombo)) {
+//				if (programmerOptionsCombo.getSelectionIndex() != programmerOptionsCombo.getItemCount() - 1) programmerOpt = programmerOptions[programmerOptionsCombo.getSelectionIndex()];
+//				else programmerOpt = "";
+//			}
 			if (e.widget.equals(imgFormatCombo)) {
-				if (imgFormatCombo.getSelectionIndex() != imgFormatCombo.getItemCount() - 1) lastImgFormatChoice = Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()];
-				else lastImgFormatChoice = "";
+				if (imgFormatCombo.getSelectionIndex() != imgFormatCombo.getItemCount() - 1) lastChoiceImgFormat = Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()];
+				else lastChoiceImgFormat = "";
 			}
 		}
 	};
 
-	private void readLib() {
+	private void readConfig() {
 		boards = Configuration.searchDescInConfig(new File(libPath + Configuration.boardsPath), Parser.sBoard);
 		String[] str = new String[boards.length + 1];
 		int index = boards.length;
 		for (int i = 0; i < boards.length; i++) {
 			str[i] = boards[i][1];
-			//				if (pref.get("board", "").equals(boards[i][0])) index = i;
 			if (board.equals(boards[i][0])) index = i;
 		}
 		str[str.length - 1] = "none";
@@ -341,20 +379,20 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		index = programmers.length;
 		for (int i = 0; i < programmers.length; i++) {
 			str[i] = programmers[i][1];
-			//				if (pref.get("programmer", "").equals(programmers[i][0])) index = i;
 			if (programmer.equals(programmers[i][0])) index = i;
 		}
 		str[str.length - 1] = "none";
 		programmerCombo.setItems(str);
 		programmerCombo.select(index);
 
-		osys = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.osPath), Parser.sOperatingSystem);
-		str = new String[osys.length + 1];
-		index = osys.length;
-		for (int i = 0; i < osys.length; i++) {
-			str[i] = osys[i][1];
-			//				if (pref.get("os", "").equals(os[i][0])) index = i;
-			if (os.equals(osys[i][0])) index = i;
+		programmerOpts.setText(programmerOpt);
+		
+		operatingSystems = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.osPath), Parser.sOperatingSystem);
+		str = new String[operatingSystems.length + 1];
+		index = operatingSystems.length;
+		for (int i = 0; i < operatingSystems.length; i++) {
+			str[i] = operatingSystems[i][1];
+			if (os.equals(operatingSystems[i][0])) index = i;
 		}
 		str[str.length - 1] = "none";
 		osCombo.setItems(str);
@@ -368,37 +406,8 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		}
 		strImg[strImg.length - 1] = "none";
 		imgFormatCombo.setItems(strImg);
-		if(!lastImgFormatChoice.equalsIgnoreCase("not available")){
-			imgFormatCombo.select(indexImgFormat);
-		}
-		else{
-			imgFormatCombo.select(indexImg);
-		}
-	}
-
-	private void openDirectoryDialog() {
-		DirectoryDialog dlg = new DirectoryDialog(getShell());        
-        dlg.setFilterPath(path.getText()); // Set the initial filter path according to anything they've selected or typed in
-        dlg.setText("deep Library Path Selection");
-        dlg.setMessage("Select a directory");
-        String dir = dlg.open(); // Calling open() will open and run the dialog.
-        if (dir != null) {
-        	path.setText(dir);
-        	libPath = dir;
-        	lastChoice = dir;
-        }
-	}
-	
-	private void openImgDirectoryDialog() {
-		DirectoryDialog dlg = new DirectoryDialog(getShell());        
-        dlg.setFilterPath(pathImg.getText()); // Set the initial filter path according to anything they've selected or typed in
-        dlg.setText("Image File Save Location");
-        dlg.setMessage("Select a directory");
-        String dir = dlg.open(); // Calling open() will open and run the dialog.
-        if (dir != null) {
-        	pathImg.setText(dir);
-        	lastImgPathChoice = dir;
-        }
+		if (!lastChoiceImg.equalsIgnoreCase("not available")) imgFormatCombo.select(indexImgFormat);
+		else imgFormatCombo.select(indexImg);
 	}
 
 	private boolean checkLibPath() {
@@ -416,52 +425,18 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		return true;
 	}
 
-	private IEclipsePreferences getPref() {
-		IProject project =  (IProject) getElement().getAdapter(IProject.class);
-		ProjectScope scope = new ProjectScope(project);
-		return scope.getNode("deepStart");
-	}
-
 	protected void performApply() {
-		saveProjectPreferences();
 		saveFiles();
 		super.performApply();
 	}
 
 	public boolean performOk() {
-		saveProjectPreferences();
 		saveFiles();
 		return true;
 	}
 	
 	public boolean performCancel() {
 		return true;
-	}
-
-	private void saveProjectPreferences() {
-		pref.put("board", boardCombo.getText());
-		pref.put("programmer", programmerCombo.getText());
-		pref.put("os", osCombo.getText());
-		if (check.getSelection()) {
-			pref.putBoolean("useDefault", true);
-			pref.put("libPath", defaultPath);
-		} else {
-			pref.putBoolean("useDefault", false);
-			pref.put("libPath", path.getText());
-		}
-		if (checkImg.getSelection()){
-			pref.put("imgfile", "\"" + imglocation + "\"");
-			pref.put("imgformat", imgFormatCombo.getText());
-		}
-		else{
-			pref.put("imgfile", "TestSave");
-			pref.put("imgformat", "TestFormat");
-		}
-		try {
-			pref.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
 	}
 
 	private void saveFiles() {
@@ -472,40 +447,32 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		dfc.changeContent("libpath", "\"" + libPath + "\"");
 		dfc.changeContent("boardtype", board);
 		dfc.changeContent("ostype", os);
-		if(programmerCombo.getText().equals("none") && !dfc.getContent("programmertype").equalsIgnoreCase("not available")){
-			dfc.changeContent("programmertype", programmer);
+		if (programmerCombo.getText().equals("none")) {
 			dfc.commentContent("programmertype");
+		} else {
+			if (dfc.changeContent("programmertype", programmer) != 0)
+				dfc.changeContent("programmertype", programmer);
 		}
-		else if(programmerCombo.getText().equals("none") && dfc.getContent("programmertype").equalsIgnoreCase("not available")){
+		if (programmerOpts.getText() != null && programmerOpts.getText().length() > 0) {
+			if (dfc.changeContent("programmeropts", programmerOpts.getText()) != 0)
+				dfc.addContent("programmeropts", programmerOpt);
+		} else {
+			dfc.commentContent("programmeropts");
 		}
-		else if(dfc.getContent("programmertype").equalsIgnoreCase("not available")){
-			dfc.addContent("programmertype", programmer);
+		if (createImgFile) {  
+			if (dfc.changeContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "." + lastChoiceImgFormat.toLowerCase() + "\"") != 0)
+				dfc.addContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "." + lastChoiceImgFormat.toLowerCase() + "\"");
+			if (dfc.changeContent("imgformat", lastChoiceImgFormat) != 0)
+				dfc.addContent("imgformat", lastChoiceImgFormat);
+		} else {
+			dfc.commentContent("imgfile");
+			dfc.commentContent("imgformat");
 		}
-		else{
-			dfc.changeContent("programmertype", programmer);
-		}
-		dfc.changeContent("rootclasses", rootclasses);
-		if(createImgFile){  //add Line for imgfile
-			if(dfc.getContent("imgfile").equalsIgnoreCase("not available")){
-				dfc.addContent("imgfile", "\"" + lastImgPathChoice + "\\" + project.getName() + "." + lastImgFormatChoice.toLowerCase() + "\"");
-			}
-			else{
-				dfc.changeContent("imgfile", "\"" + lastImgPathChoice + "\\"+ project.getName() + "." + lastImgFormatChoice.toLowerCase() + "\"");
-			}
-			if(dfc.getContent("imgformat").equalsIgnoreCase("not available")){
-				dfc.addContent("imgformat", lastImgFormatChoice);
-			}
-			else{
-				dfc.changeContent("imgformat", lastImgFormatChoice);
-			}
-		}
-		else{ //comment imgfile lines
-			if(!dfc.getContent("imgfile").equalsIgnoreCase("not available")){
-				dfc.commentContent("imgfile");
-			}
-			if(!dfc.getContent("imgformat").equalsIgnoreCase("not available")){
-				dfc.commentContent("imgformat");
-			}
+		if (loadPL) {  
+			if (dfc.changeContent("pl_file", "\"" + lastChoicePl + "\"") != 0)
+				dfc.addContent("pl_file", "\"" + lastChoicePl + "\"");
+		} else {
+			dfc.commentContent("pl_file");
 		}
 		dfc.save();
 
@@ -514,10 +481,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		cfc.changeLibPath(libPath);
 		cfc.save();
 
-		lastChoice = path.getText();
-		lastImgPathChoice = pathImg.getText();
-		lastImgFormatChoice = imgFormatCombo.getText();
-		
 		try { // refresh the package explorer
 			ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
 		} catch (CoreException e) {

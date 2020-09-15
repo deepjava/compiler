@@ -93,7 +93,7 @@ public class StandAloneLauncher {
 			return;
 		}
 
-		Launcher.buildAll(params.get(PARAM_PROJECT), params.get(PARAM_CONFIG));
+		Launcher.buildAll(params.get(PARAM_PROJECT), params.get(PARAM_CONFIG), true);
 		
 		if (params.containsKey(PARAM_MAP)) {
 			System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);

@@ -112,9 +112,9 @@ public class RefType extends Type {
 		return m;
 	}
 
-	private Item getMethodOrStub(HString name, HString descriptor) {
+	private Item getMethodOrStub(HString clsName, HString name, HString descriptor) {
 		Item meth = getMethod(name, descriptor);
-		if (meth == null) meth = new ItemStub(this, name, descriptor);
+		if (meth == null) meth = new ItemStub(clsName, this, name, descriptor);
 		return meth;
 	}
 
@@ -128,7 +128,7 @@ public class RefType extends Type {
 			
 			HString methName = Class.cpStrings[sx>>>16];
 			HString methDesc  = Class.cpStrings[sx & 0xFFFF];
-			method = cls.getMethodOrStub(methName, methDesc);
+			method = cls.getMethodOrStub(name, methName, methDesc);
 		}
 		return method;
 	}

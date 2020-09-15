@@ -88,6 +88,7 @@ public class Configuration implements ICclassFileConsts {
 	private static Programmer programmer;
 	private static RunConfiguration activeRunConfig;
 	private static ArrayList<Map.Entry<String,Integer>> imgFile = new ArrayList<>();
+	private static String plFile;
 	
 	public static Project readProjectFile(String projectFile) {
 		reporter.clear();
@@ -124,6 +125,8 @@ public class Configuration implements ICclassFileConsts {
 //		printBoardMemMap(2);
 //		printCpuMemMap(2);
 //		printTargetConfigurations(2);
+		
+//		project.print(1);
 		return project;
 	}
 	
@@ -282,6 +285,14 @@ public class Configuration implements ICclassFileConsts {
 		return programmer;
 	}
 
+	public static void setPlFile(String name) {
+		plFile = name;
+	}
+
+	public static String getPlFile() {
+		return plFile;
+	}
+
 	public static Project getActiveProject() {
 		return Configuration.project;
 	}
@@ -313,6 +324,7 @@ public class Configuration implements ICclassFileConsts {
 		os = null;
 		programmer = null;
 		imgFile.clear();
+		plFile = null;
 	}
 	
 	public static Segment getCodeSegmentOf(Class cls) {

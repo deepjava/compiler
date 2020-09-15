@@ -7,11 +7,14 @@ meta {
 
 project ExampleProjectMpc5200B {
 	libpath = "../ch.ntb.inf.deep.trglib";
-	
 	boardtype = phyCoreMpc5200tiny;
-	ostype = ntbSTS_ppc;
+	ostype = sts_ppc;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf01;
+	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\testTiny.bin";
+	imgformat = binary;
+#	tctfile = "tct/targetCommands.dtct";
+	tctfile = default;
 	
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/Reset";
 	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/SimpleBlinkerDemo";
@@ -23,11 +26,4 @@ project ExampleProjectMpc5200B {
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/CAN1Test";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/SPIDemo";
 #	rootclasses = "ch/ntb/inf/deep/runtime/mpc5200/demo/ExceptionDemo";
-
-	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\testTiny.bin";
-	imgformat = binary;
-
-#	tctfile = "tct/targetCommands.dtct";
-	tctfile = default;
-
 }

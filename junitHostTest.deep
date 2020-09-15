@@ -8,7 +8,7 @@ meta {
 project junitTestProject {
 	libpath = "../ch.ntb.inf.deep.trglib";
 	boardtype = ntbMpc555HB;
-	ostype = ntbSTS_ppc;
+	ostype = sts_ppc;
 
 	rootclasses = "";
 }

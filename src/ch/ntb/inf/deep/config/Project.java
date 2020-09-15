@@ -33,7 +33,7 @@ public class Project extends Item {
 	HString tctFileName;			// target command file name
 	HString imgFileName;			// image file name
 	int imgFileFormat;				// image file format
-	
+	HString plFileName;				// pl file name (programmable logic)
 	
 	public Project(String deepFileName) {
 		Item.stab = StringTable.getInstance();
@@ -92,6 +92,14 @@ public class Project extends Item {
 		imgFileFormat = format;
 	}
 	
+	public HString getPlFileName() {
+		return plFileName;
+	}
+
+	public void setPlFileName(String name) {
+		plFileName = HString.getHString(name);
+	}
+	
 	public File getProjectDir() {
 		return projectFile.getParentFile();
 	}
@@ -106,6 +114,7 @@ public class Project extends Item {
 		vrb.println();
 		if (tctFileName != null) {indent(indentLevel+1); vrb.println("tctFile = " + tctFileName);}
 		if (imgFileName != null) {indent(indentLevel+1); vrb.println("imgFile = " + imgFileName);}
+		if (plFileName != null) {indent(indentLevel+1); vrb.println("pl_file = " + plFileName);}
 		indent(indentLevel+1);
 		vrb.println("board = " + Configuration.getBoard().name + " (" + Configuration.getBoard().description + ")");
 		indent(indentLevel+1);
