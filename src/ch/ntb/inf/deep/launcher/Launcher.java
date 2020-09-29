@@ -51,12 +51,14 @@ import ch.ntb.inf.deep.config.Arch;
 import ch.ntb.inf.deep.config.Board;
 import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
+import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Programmer;
 import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.config.RunConfiguration;
 import ch.ntb.inf.deep.config.SystemConstant;
+import ch.ntb.inf.deep.eclipse.ui.wizard.DeepProjectWizard;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
@@ -511,6 +513,8 @@ public class Launcher implements ICclassFileConsts {
 						reporter.error(814);
 					} else if (e.getMessage().equals("no such file")) {
 						reporter.error(821);
+					} else if (e.getMessage().equals("target not connected")) {
+						reporter.error(800);
 					} else {
 						reporter.error(801);
 					}
