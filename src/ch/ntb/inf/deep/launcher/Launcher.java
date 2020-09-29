@@ -80,6 +80,19 @@ public class Launcher implements ICclassFileConsts {
 	private static PrintStream vrb = StdStreams.vrb;
 	private static TargetConnection tc;
 	private static long time;
+	
+	public static int compareVersions(Version compilerVersion, int deepMajor, int deepMinor)
+	{
+		int compilerMajor = compilerVersion.getMajor();
+		int compilerMinor = compilerVersion.getMinor();
+		
+		if(compilerMajor > deepMajor) return 1;
+		if(compilerMajor < deepMajor) return -1;
+		// major versions must be equal from here on out
+		if(compilerMinor > deepMinor) return 1;
+		if(compilerMinor < deepMinor) return -1;
+		return 0;
+	}
 
 	public static int buildAll(String deepProjectFileName, String targetConfigurationName, boolean checkVersion) {
 		// choose the attributes which should be read from the class file
@@ -107,26 +120,29 @@ public class Launcher implements ICclassFileConsts {
 				Version deepCompilerVersion = deepBundle.getVersion();
 				File deepLibVersionFile = null;
 				FileReader fr = null;
-				char[] deepLibVersion = {'0','.','0','.','0'};
+				char[] deepLibVersion = {'0','.','0'};
 				boolean identVersion = false;
-				String libVersion = "";
+				int major = 0;
+				int minor = 0;
+				
 				for (HString h : project.getLibPaths()) {
 					deepLibVersionFile = new File(h.toString() + "VERSION");
 					try {
 						fr = new FileReader(deepLibVersionFile);
-						fr.read(deepLibVersion, 0, 5);
+						fr.read(deepLibVersion, 0, 3);
 					} catch (FileNotFoundException e) {
 						ErrorReporter.reporter.error(310, "failed to open file " + deepLibVersionFile);
 					} catch (IOException e) {
 						ErrorReporter.reporter.error(310, "could not read from " + deepLibVersionFile);
 					}
-					for (char c : deepLibVersion) libVersion += c;		
-					if (deepCompilerVersion.compareTo(new Version(libVersion)) == 0) identVersion = true;
+					major = deepLibVersion[0] - '0';
+					minor = deepLibVersion[2] - '0';
+					identVersion = deepCompilerVersion.getMajor() == major && deepCompilerVersion.getMinor() == minor;
 				}
 				if (reporter.nofErrors <= 0 && !identVersion) {
-					if (deepCompilerVersion.compareTo(new Version(libVersion)) == -1) {
+					if (compareVersions(deepCompilerVersion, major, minor) == -1) {
 						ErrorReporter.reporter.error(311);
-					} else if(deepCompilerVersion.compareTo(new Version(libVersion)) == 1) {
+					} else if(compareVersions(deepCompilerVersion, major, minor) == 1) {
 						ErrorReporter.reporter.error(312);
 					}
 				}
