@@ -10,5 +10,5 @@ The deep compiler is written in Java and can be integrated into eclips as a plug
 
 Documentation
 -------------
- - [Getting started](http://deepjava.org/getting_started)
- - [User manual](http://deepjava.org/user_manual/start)
+ - [Wiki](http://deepjava.org/)
+ - [Download](http://deepjava.org/download)
