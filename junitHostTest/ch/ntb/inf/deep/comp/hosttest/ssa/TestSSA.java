@@ -24,7 +24,6 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.classItems.ICclassFileConsts;
 import ch.ntb.inf.deep.comp.hosttest.cfg.TestCFG;
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.ssa.SSA;
 import ch.ntb.inf.deep.ssa.SSANode;
 import ch.ntb.inf.deep.strings.HString;
@@ -32,12 +31,11 @@ import ch.ntb.inf.deep.strings.HString;
 public class TestSSA implements ICclassFileConsts{
 	static int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 	static String workspace;
-	static Project project;
 
 	public static void readConfig() {
 		CFR.initBuildSystem();
 		workspace = System.getProperty("user.dir");
-		project = Configuration.readProjectFile(workspace + "/junitHostTest.deep");
+		Configuration.readProjectFile(workspace + "/junitHostTest.deep");
 	}
 
 	static public SSA[] ssa;

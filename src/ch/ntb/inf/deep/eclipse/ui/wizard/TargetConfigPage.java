@@ -223,7 +223,7 @@ class TargetConfigPage extends WizardPage {
 	private void insertBoards() {
 		if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
 			File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
-			boards = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.boardsPath), Parser.sBoard);
+			boards = Configuration.getDescInConfigDir(new File(lib.toString() + Configuration.boardsPath), Parser.sBoard);
 			String[] str = new String[boards.length + 1];
 			int index = str.length - 1;
 			for (int i = 0; i < boards.length; i++) {
@@ -239,7 +239,7 @@ class TargetConfigPage extends WizardPage {
 	private void insertOperatingSystems() {
 		if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
 			File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
-			operatingSystems = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.osPath), Parser.sOperatingSystem);
+			operatingSystems = Configuration.getDescInConfigDir(new File(lib.toString() + Configuration.osPath), Parser.sOperatingSystem);
 			String[] str = new String[operatingSystems.length + 1];
 			int index = str.length - 1;
 			for (int i = 0; i < operatingSystems.length; i++) {
@@ -255,7 +255,7 @@ class TargetConfigPage extends WizardPage {
 	private void insertProgrammers() {
 		if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
 			File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
-			programmers = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.progPath), Parser.sProgrammer);
+			programmers = Configuration.getDescInConfigDir(new File(lib.toString() + Configuration.progPath), Parser.sProgrammer);
 			String[] str = new String[programmers.length + 1];
 			int index = str.length - 1;
 			for (int i = 0; i < programmers.length; i++) {

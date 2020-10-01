@@ -57,10 +57,10 @@ public class Programmer extends Item {
 	}
 	
 	public void setOpts(String id) {
-		this.opts = HString.getRegisteredHString(id);
+		opts = HString.getRegisteredHString(id);
 	}
 	
 	public HString getOpts() {
-		return this.opts;
+		return opts;
 	}
 }

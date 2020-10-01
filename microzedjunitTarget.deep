@@ -10,7 +10,7 @@ project junitTargetTestProject {
 #	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 	boardtype = MicroZed;
 	ostype = sts_arm;
-	programmertype = openOCD;
+#	programmertype = openOCD;
 	programmeropts = localhost_4444;
 	imgfile = "D:\Test1.bin";
 	imgformat = BIN;

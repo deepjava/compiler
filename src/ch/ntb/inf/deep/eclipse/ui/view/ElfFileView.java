@@ -35,7 +35,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import ch.ntb.inf.deep.config.Configuration;
-import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.dwarf.DebugLineStateMachine;
 import ch.ntb.inf.deep.dwarf.LineMatrixEntry;
 import ch.ntb.inf.deep.dwarf.SymbolTableEntry;
@@ -129,10 +128,9 @@ public class ElfFileView extends ViewPart {
 	}
 
 	private void updateView() {
-		Project activeProject = Configuration.getActiveProject();
 		String filePath = "C:\\Users\\Martin\\Documents\\MSE\\VT1\\testfiles\\a.out";
-		if (activeProject != null) {
-			filePath = activeProject.getImgFileName().toString();
+		if (Configuration.getImgFileName() != null) {
+			filePath = Configuration.getImgFileName().toString();
 		}
 		try {
 			elf = new Elf(new File(filePath));

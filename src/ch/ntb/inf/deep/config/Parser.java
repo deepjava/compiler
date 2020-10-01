@@ -218,7 +218,6 @@ public class Parser implements ICclassFileConsts {
 	private int chBuffer;
 	private int intNumber;
 	private BufferedReader file;
-	private Project currentProject;
 	private SystemConstant currentConsts = null;
 	private BufferedInputStream bufStream = null;
 	private int lineNumber = 1;
@@ -239,14 +238,9 @@ public class Parser implements ICclassFileConsts {
 		else ErrorReporter.reporter.error(205, "failed to open file " + currentFileName);
 	}
 	
-	public Parser (Project project) {
-		this(project.projectFile);
-		currentProject = project;
-	}
-	
-	public void parse() {
+	public void parse(boolean proj) {
 		try {
-			if (currentProject != null) parseProjectFile();
+			if (proj) parseProjectFile();
 			else parseConfigFile();
 			bufStream.close();
 		} catch (IOException e) {
@@ -301,6 +295,7 @@ public class Parser implements ICclassFileConsts {
 	}
 	
 	protected int parseConfigFile() {
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: parsing config file");
 		next(); // read first symbol
 		if (reporter.nofErrors <= 0) meta();
 		while (sym != sEndOfFile) {
@@ -335,6 +330,7 @@ public class Parser implements ICclassFileConsts {
 	}
 
 	protected int parseProjectFile() {
+		if (dbg) StdStreams.vrb.println("[CONF] Parser: parsing project file");
 		next(); // read first symbol
 		if (reporter.nofErrors <= 0) meta();
 		while (sym != sEndOfFile && reporter.nofErrors <= 0) {
@@ -1135,15 +1131,17 @@ public class Parser implements ICclassFileConsts {
 				cpu.arch = arch;
 				Configuration.readConfigFile(Configuration.archPath, arch);
 			} else if (sym == sSysConst) {
-				if (dbg) StdStreams.vrb.println("[CONF] entering sysconst of cpu");
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: entering sysconst");
 				cpu.sysConstants = sysconst(Configuration.getCompilerConstants());
-				if (dbg) StdStreams.vrb.println("[CONF] sysconst of cpu done");
 			} else if (sym == sMemorymap) {
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: entering mem map");
 				cpu.memorymap = new MemMap("Cpu");
 				memorymap(cpu.memorymap);
 			} else if (sym == sRegistermap) {
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: entering reg map");
 				cpu.regs = registermap(cpu.arch.regs);
 			} else { //sym == sReginit
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: entering reg init");
 				cpu.regInits = reginit(cpu.regInits);
 			}
 		}
@@ -1584,7 +1582,7 @@ public class Parser implements ICclassFileConsts {
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering project section");
 		next();
 		if (sym != sDesignator) {reporter.error(206, "in " + currentFileName	+ " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return;}
-		currentProject.setProjectName(strBuffer);
+		Configuration.setProjectName(strBuffer);
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting project name to: " + strBuffer);
 		next();
 		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return;}
@@ -1599,11 +1597,16 @@ public class Parser implements ICclassFileConsts {
 			}
 			StdStreams.vrb.println("\"");
 		}
-		Configuration.getActiveProject().createLibs(libPath);
+		Configuration.createLibs(libPath);
 		while (sym == sRootclasses || sym == sBoardType || sym == sOsType	|| sym == sProgrammerType || sym == sProgrammerOpts || sym == sTctFile || sym == sImgFile || sym == sImgFormat || sym == sPlFile) {
 			if (sym == sRootclasses) {
-				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting rootclasses");
+				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting rootclasses to ");
 				Configuration.setRootClasses(rootClassesAssignment());
+				if (dbg) {
+					HString[] cls = Configuration.getRootClasses();
+					for (HString c : cls) StdStreams.vrb.print(c + ",");
+					StdStreams.vrb.println();
+				}
 			} else if (sym == sBoardType) {
 				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting board type to: ");
 				Configuration.setBoard(boardTypeAssignment());
@@ -1617,31 +1620,30 @@ public class Parser implements ICclassFileConsts {
 				Configuration.setProgrammer(programmerTypeAssignment());
 				if (dbg) if (Configuration.getProgrammer() != null) StdStreams.vrb.println(Configuration.getProgrammer().name);
 			} else if (sym == sProgrammerOpts) {
+				if (dbg) StdStreams.vrb.print("[CONF] Parser: Setting programmer options to: ");
 				String opts = programmerOptsAssignment();
 				Programmer prog = Configuration.getProgrammer();
 				if (prog != null) prog.setOpts(opts);
-				if (dbg) if(opts != null) StdStreams.vrb.println(opts);
+				if (dbg) if (opts != null) StdStreams.vrb.println(opts);
 			} else if (sym == sImgFile) {
-				currentProject.setImgFileName(imgFileAssignment());
-				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + currentProject.getImgFileName());
+				Configuration.setImgFileName(imgFileAssignment());
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + Configuration.getImgFileName());
 			} else if (sym == sImgFormat) {
-				currentProject.setImgFileFormat(imgFileFormatAssignment());
+				Configuration.setImgFileFormat(imgFileFormatAssignment());
 				if (dbg) {
-					if(currentProject.imgFileFormat != -1){
-						StdStreams.vrb.println("[CONF] Parser: Setting image file format to " + Configuration.formatMnemonics[currentProject.getImgFileFormat()]);
-					}
-					else{
-						StdStreams.vrb.println("[CONF] Parser: Setting image file format failed " + currentProject.imgFileFormat);
+					if (Configuration.getImgFileFormat() != -1){
+						StdStreams.vrb.println("[CONF] Parser: Setting image file format to " + Configuration.formatMnemonics[Configuration.getImgFileFormat()]);
+					} else {
+						StdStreams.vrb.println("[CONF] Parser: Setting image file format failed " + Configuration.getImgFileFormat());
 					}
 				}
 			} else if (sym == sPlFile) {
 				String name = imgFileAssignment();
-				currentProject.setPlFileName(name);
 				Configuration.setPlFile(name);
-				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting pl file " + currentProject.getPlFileName());
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting pl file " + Configuration.getPlFileName());
 			} else { // sym == sTctFile
-				currentProject.setTctFileName(tctFileAssignment());
-				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting target command file to " + currentProject.getTctFileName());
+				Configuration.setTctFileName(tctFileAssignment());
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting target command file to " + Configuration.getTctFileName());
 			}
 		}
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return;}
@@ -1964,20 +1966,15 @@ public class Parser implements ICclassFileConsts {
 		if (sym != sDesignator && (sym != sBin && sym!= sHex)) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: designator, received symbol: " + symToString()); return -1;}
 		if (sym == sDesignator){
 			s = strBuffer;
-		}
-		else{
-			if(sym == sBin){
-				s = Configuration.formatMnemonics[0]; // "bin"
-			}
-			else{
-				s = Configuration.formatMnemonics[1]; // "hex"
-			}
+		} else {
+			if (sym == sBin) s = Configuration.formatMnemonics[0]; // "bin"
+			else s = Configuration.formatMnemonics[1]; // "hex"
 		}
 		next();
 		if (sym != sSemicolon) {reporter.error(209, "in " + currentFileName	+ " before Line " + lineNumber); return -1;}
 		next();
-		for(int i = 0; i < Configuration.formatMnemonics.length; i++) {
-			if(Configuration.formatMnemonics[i].equalsIgnoreCase(s)) return i;
+		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
+			if (Configuration.formatMnemonics[i].equalsIgnoreCase(s)) return i;
 		}
 		// Legacy fallback
 		if (s.equals("binary")) return Configuration.BIN;

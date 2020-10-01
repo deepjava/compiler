@@ -31,6 +31,7 @@ import ch.ntb.inf.deep.classItems.Class;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
 import ch.ntb.inf.deep.strings.HString;
+import ch.ntb.inf.deep.strings.StringTable;
 
 public class Configuration implements ICclassFileConsts {
 		
@@ -80,7 +81,10 @@ public class Configuration implements ICclassFileConsts {
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 	private static PrintStream vrb = StdStreams.vrb;
 	
-	private static Project project; // active project
+	private static File projectFile;			// deep project file
+	private static HString deepProjectName;		// deep project name as specified in the project file
+	private static HString[] libPath;			// path for target libraries
+	private static File[] libs;					// target libraries
 	private static HString[] rootClassNames;
 	private static SystemConstant compilerConstants;
 	private static Board board;
@@ -89,35 +93,43 @@ public class Configuration implements ICclassFileConsts {
 	private static RunConfiguration activeRunConfig;
 	private static ArrayList<Map.Entry<String,Integer>> imgFile = new ArrayList<>();
 	private static String plFile;
+	private static HString tctFileName;			// target command file name
+	private static HString imgFileName;			// image file name
+	private static int imgFileFormat;			// image file format
+	private static HString plFileName;			// pl file name (programmable logic)
 	
-	public static Project readProjectFile(String projectFile) {
+	public static void readProjectFile(String projectFileName) {
 		reporter.clear();
 		clear();
 
-		if (dbg) vrb.println("[CONF] Configuration: reading project " + projectFile);
-		project = new Project(projectFile);
-		new Parser(project).parse();
-		if (reporter.nofErrors > 0) return null;
+		if (dbg) vrb.println("[CONF] Configuration: reading project " + projectFileName);
+		Item.stab = StringTable.getInstance();
+		File rel = new File(projectFileName);
+		String path = rel.getAbsolutePath();
+		File file = new File(path);
+		new Parser(file).parse(true);
+		projectFile = file;
+		if (reporter.nofErrors > 0) return;
 		
 		readConfigDir(basePath);
-		if (reporter.nofErrors > 0) return null;
+		if (reporter.nofErrors > 0) return;
 //		printCompilerConstants(1);
 		
 		readConfigFile(boardsPath, board);
-		if (reporter.nofErrors > 0) return null;
+		if (reporter.nofErrors > 0) return;
 //		printArchRegisters(1);
 //		printCpuRegisters(1);
 //		printCpuSysConstants(1);
 //		printBoardSysConstants(1);
 		
 		readConfigFile(osPath, os);
-		if (reporter.nofErrors > 0) return null;
+		if (reporter.nofErrors > 0) return;
 		os.addSysClassesAndMethods();
 //		printSystemClasses(2);
 //		printSystemMethods(2);
 		
 		if (programmer != null) readConfigFile(progPath, programmer);
-		if (reporter.nofErrors > 0) return null;
+		if (reporter.nofErrors > 0) return;
 //		printArchRegisters(2);
 //		printCpuRegisters(2);
 //		printCpuRegsInit(2);
@@ -126,24 +138,29 @@ public class Configuration implements ICclassFileConsts {
 //		printCpuMemMap(2);
 //		printTargetConfigurations(2);
 		
-//		project.print(1);
-		return project;
+//		printProject(1);
 	}
 	
-	public static void readProjectFileAndRunConfigs(String projectFile) {
+	public static void readProjectFileAndRunConfigs(String projectFileName) {
 		reporter.clear();
 		clear();
 		if (dbg) vrb.println("[CONF] Configuration: reading project " + projectFile);
-		project = new Project(projectFile);
-		new Parser(project).parse();
+		Item.stab = StringTable.getInstance();
+		File rel = new File(projectFileName);
+		String path = rel.getAbsolutePath();
+		File file = new File(path);
+		new Parser(file).parse(true);
+		projectFile = file;
+		
 		if (reporter.nofErrors > 0) return;
+		if (dbg) vrb.println("[CONF] Configuration: reading run configurations");
 		readRunConfigs(boardsPath, board);
 		if (reporter.nofErrors > 0) return;
 	}
 
 	public static void readConfigDir(String dir) {
-		File[] configDir = new File[project.libPath.length];
-		for (int i = 0; i < configDir.length; i++) configDir[i] = new File(project.libPath[i] + dir);
+		File[] configDir = new File[libPath.length];
+		for (int i = 0; i < configDir.length; i++) configDir[i] = new File(libPath[i] + dir);
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return !name.startsWith(".") && name.endsWith(".deep");
@@ -155,15 +172,15 @@ public class Configuration implements ICclassFileConsts {
 				for (int j = 0; j < configFileNames.length; j++) {
 					if (dbg) StdStreams.vrb.println("[CONF] Reading config file from " + configDir[i].toString() + "\\" + configFileNames[j]);
 					File cfgFile = new File(configDir[i] + "/" + configFileNames[j]);
-					new Parser(cfgFile).parse();
+					new Parser(cfgFile).parse(false);
 				}
 			}
 		}
 	}
 
 	public static void readConfigFile(String path, Item itm) {
-		File[] configDir = new File[project.libPath.length];
-		for (int i = 0; i < configDir.length; i++) configDir[i] = new File(project.libPath[i] + path);
+		File[] configDir = new File[libPath.length];
+		for (int i = 0; i < configDir.length; i++) configDir[i] = new File(libPath[i] + path);
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return !name.startsWith(".") && name.endsWith(".deep");
@@ -180,7 +197,7 @@ public class Configuration implements ICclassFileConsts {
 						if (dbg) StdStreams.vrb.println("[CONF] Reading config file from " + configDir[i].toString() + "\\" + configFileNames[j]);
 						found = true;
 						File cfgFile = new File(configDir[i] + "/" + configFileNames[j]);
-						new Parser(cfgFile).parse();
+						new Parser(cfgFile).parse(false);
 					}
 				}
 			}
@@ -189,8 +206,8 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static void readRunConfigs(String path, Item itm) {
-		File[] configDir = new File[project.libPath.length];
-		for (int i = 0; i < configDir.length; i++) configDir[i] = new File(project.libPath[i] + path);
+		File[] configDir = new File[libPath.length];
+		for (int i = 0; i < configDir.length; i++) configDir[i] = new File(libPath[i] + path);
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				return !name.startsWith(".") && name.endsWith(".deep");
@@ -215,7 +232,7 @@ public class Configuration implements ICclassFileConsts {
 		if (!found) reporter.error(250, "" + itm.name);
 	}
 
-	public static String[][] searchDescInConfig(File configDir, short symbol) {
+	public static String[][] getDescInConfigDir(File configDir, short symbol) {
 		reporter.clear();
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -240,6 +257,31 @@ public class Configuration implements ICclassFileConsts {
 		return new String[][] {{"not available", "not available"}};
 	}
 
+	public static File getProjectFile() {	
+		return projectFile;
+	}
+
+	public static void setProjectName(String projectName) {	
+		deepProjectName = HString.getHString(projectName);
+	}
+
+	public static HString getProjectName() {	
+		return deepProjectName;
+	}
+
+	public static void createLibs(HString[] path) {
+		libPath = path;
+		libs = new File[path.length];
+		for (int i = 0; i < path.length; i++) {			
+			libs[i] = new File(path[i].toString());
+			if (!libs[i].exists()) ErrorReporter.reporter.error(255, "path=" + libs[i].toString()); 
+		}
+	}
+
+	public static HString[] getLibPaths() {
+		return libPath;
+	}
+
 	public static void setCompilerConstants(SystemConstant constants) {
 		compilerConstants = constants;
 	}
@@ -258,6 +300,10 @@ public class Configuration implements ICclassFileConsts {
 	
 	public static void setBoard(String jname) {
 		board = new Board(jname);
+	}
+
+	public static void setBoard(Board b) {
+		board = b;
 	}
 
 	public static Board getBoard() {
@@ -285,16 +331,28 @@ public class Configuration implements ICclassFileConsts {
 		return programmer;
 	}
 
+	public static HString getImgFileName() {
+		return imgFileName;
+	}
+
+	public static void setImgFileName(String name) {
+		imgFileName = HString.getHString(name);
+	}
+	
+	public static int getImgFileFormat() {
+		return imgFileFormat;
+	}
+
+	public static void setImgFileFormat(int format) {
+		imgFileFormat = format;
+	}
+
 	public static void setPlFile(String name) {
 		plFile = name;
 	}
 
 	public static String getPlFile() {
 		return plFile;
-	}
-
-	public static Project getActiveProject() {
-		return Configuration.project;
 	}
 
 	public static RunConfiguration getActiveTargetConfiguration() {
@@ -316,8 +374,24 @@ public class Configuration implements ICclassFileConsts {
 		imgFile.add(new AbstractMap.SimpleEntry<>(name, addr));
 	}
 
+	public static void setTctFileName(String name) {
+		tctFileName = HString.getHString(name);
+	}
+
+	public static HString getTctFileName() {
+		return tctFileName;
+	}
+
+	public static HString getPlFileName() {
+		return plFileName;
+	}
+
+	public static void setPlFileName(String name) {
+		plFileName = HString.getHString(name);
+	}
+
 	public static void clear() { 
-		project = null;
+		projectFile = null;
 		rootClassNames = null;
 		compilerConstants = null;
 		board = null;
@@ -410,9 +484,9 @@ public class Configuration implements ICclassFileConsts {
 	}
 
 	public static File[] getSearchPaths() {
-		File[] libPaths = project.libs;
+		File[] libPaths = libs;
 		File[] javaSearchPaths = new File[libPaths.length + 1];
-		javaSearchPaths[0] = new File(project.getProjectDir().getAbsolutePath() + File.separator + "bin" + File.separator);
+		javaSearchPaths[0] = new File(projectFile.getParentFile().getAbsolutePath() + File.separator + "bin" + File.separator);
 		for (int i = 0; i < libPaths.length; i++) {
 			if (libPaths[i].isDirectory()) { // directory
 				javaSearchPaths[i + 1] = new File(libPaths[i].getAbsolutePath() + File.separator + "bin" + File.separator);
@@ -542,8 +616,34 @@ public class Configuration implements ICclassFileConsts {
 		StdStreams.vrbPrintIndent(indentLevel);
 	}
 
-	public static void printProject() {
-		project.print(0);
+	public static void printProject(int indentLevel) {
+		indent(indentLevel);
+		vrb.println("project " + deepProjectName + " {");
+		indent(indentLevel+1);
+		vrb.print("libpath = ");
+		for (HString path : libPath) vrb.print("\"" + path + "\"   ");
+		vrb.println();
+		indent(indentLevel+1);
+		vrb.println("board = " + board.name + " (" + board.description + ")");
+		indent(indentLevel+1);
+		vrb.println("cpu = " + board.cpu.name + " (" + board.cpu.description + ")");
+		indent(indentLevel+1);
+		vrb.println("architecture = " + board.cpu.arch.name);
+		indent(indentLevel+1);
+		vrb.println("operating system = " + os.name);
+		indent(indentLevel+1);
+		vrb.println("programmertype = " + (programmer != null? programmer.name : ""));		
+		indent(indentLevel+1);
+		vrb.println("programmeroptions = " + (programmer != null? programmer.getOpts() : ""));		
+		if (tctFileName != null) {indent(indentLevel+1); vrb.println("tctFile = " + tctFileName);}
+		if (imgFileName != null) {indent(indentLevel+1); vrb.println("imgFile = " + imgFileName);}
+		if (plFileName != null) {indent(indentLevel+1); vrb.println("pl_file = " + plFileName);}
+		indent(indentLevel+1);
+		vrb.println("root classes = {");
+		for (HString name : Configuration.getRootClasses()) {indent(indentLevel+2); vrb.println("\"" + name + "\"");}
+		indent(indentLevel+1);
+		vrb.println("}");
+		indent(indentLevel); vrb.println("}");
 	}
 
 	public static void printSystemClasses(int indentLevel){
@@ -687,7 +787,7 @@ public class Configuration implements ICclassFileConsts {
 
 	public static void print() {
 		vrb.println("project settings");
-		project.print(1);
+		printProject(1);
 		printCompilerConstants(1);
 		printCpuSysConstants(1);
 		printCpuMemMap(1);

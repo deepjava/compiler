@@ -23,13 +23,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Version;
@@ -53,12 +51,10 @@ import ch.ntb.inf.deep.config.CPU;
 import ch.ntb.inf.deep.config.Configuration;
 import ch.ntb.inf.deep.config.Parser;
 import ch.ntb.inf.deep.config.Programmer;
-import ch.ntb.inf.deep.config.Project;
 import ch.ntb.inf.deep.config.Register;
 import ch.ntb.inf.deep.config.RegisterInit;
 import ch.ntb.inf.deep.config.RunConfiguration;
 import ch.ntb.inf.deep.config.SystemConstant;
-import ch.ntb.inf.deep.eclipse.ui.wizard.DeepProjectWizard;
 import ch.ntb.inf.deep.host.Dbg;
 import ch.ntb.inf.deep.host.ErrorReporter;
 import ch.ntb.inf.deep.host.StdStreams;
@@ -81,19 +77,6 @@ public class Launcher implements ICclassFileConsts {
 	private static TargetConnection tc;
 	private static long time;
 	
-	public static int compareVersions(Version compilerVersion, int deepMajor, int deepMinor)
-	{
-		int compilerMajor = compilerVersion.getMajor();
-		int compilerMinor = compilerVersion.getMinor();
-		
-		if(compilerMajor > deepMajor) return 1;
-		if(compilerMajor < deepMajor) return -1;
-		// major versions must be equal from here on out
-		if(compilerMinor > deepMinor) return 1;
-		if(compilerMinor < deepMinor) return -1;
-		return 0;
-	}
-
 	public static int buildAll(String deepProjectFileName, String targetConfigurationName, boolean checkVersion) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
@@ -110,7 +93,7 @@ public class Launcher implements ICclassFileConsts {
 		if (dbgProflg) time = System.nanoTime();
 		if (dbg) vrb.println("[Launcher] Loading Configuration");
 		log.println("Loading deep project file \"" + deepProjectFileName + "\"");
-		Project project = Configuration.readProjectFile(deepProjectFileName);
+		Configuration.readProjectFile(deepProjectFileName);
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
@@ -125,7 +108,7 @@ public class Launcher implements ICclassFileConsts {
 				int major = 0;
 				int minor = 0;
 				
-				for (HString h : project.getLibPaths()) {
+				for (HString h : Configuration.getLibPaths()) {
 					deepLibVersionFile = new File(h.toString() + "VERSION");
 					try {
 						fr = new FileReader(deepLibVersionFile);
@@ -154,7 +137,7 @@ public class Launcher implements ICclassFileConsts {
 			int nof = rootClassNames.length;
 			if (nof == 0 || (nof == 1 && rootClassNames[0].equals(HString.getHString("")))) reporter.error(305);
 			if (rootClassNames != null && reporter.nofErrors <= 0) {
-				log.println("Root classes in project \"" + project.getProjectName() + "\":");
+				log.println("Root classes in project \"" + Configuration.getProjectName() + "\":");
 				for (int i = 0; i < rootClassNames.length; i++) {
 					log.println("   " + rootClassNames[i]);
 				}
@@ -414,7 +397,7 @@ public class Launcher implements ICclassFileConsts {
 
 		// Create target command table file if file name defined in the configuration
 		if (reporter.nofErrors <= 0) {
-			HString tctFileName = Configuration.getActiveProject().getTctFileName();
+			HString tctFileName = Configuration.getTctFileName();
 			if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
 			if (dbgProflg) {vrb.println("duration for generating target file = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 		}
@@ -429,9 +412,9 @@ public class Launcher implements ICclassFileConsts {
 		
 		// Create target image file if file name defined in the configuration
 		if (reporter.nofErrors <= 0) {
-			HString fname = Configuration.getActiveProject().getImgFileName();
+			HString fname = Configuration.getImgFileName();
 			if (fname != null && !fname.equals(HString.getHString(""))) 
-				saveTargetImageToFile(fname.toString(), Configuration.getActiveProject().getImgFileFormat());
+				saveTargetImageToFile(fname.toString(), Configuration.getImgFileFormat());
 		}	
 		
 		return reporter.nofErrors;
@@ -471,9 +454,9 @@ public class Launcher implements ICclassFileConsts {
 					Programmer programmer = Configuration.getProgrammer();
 					
 					if (programmer.name.equals(HString.getHString("abatronBDI"))) {
-						tc.downloadImageFile(Configuration.getActiveProject().getImgFileName().toString());
+						tc.downloadImageFile(Configuration.getImgFileName().toString());
 					} else if (programmer.name.equals(HString.getHString("openOCD"))) {
-						HString str = Configuration.getActiveProject().getImgFileName();
+						HString str = Configuration.getImgFileName();
 						if (str == null) reporter.error(820);
 						else tc.downloadImageFile(str.toString());
 					} else {
@@ -650,7 +633,19 @@ public class Launcher implements ICclassFileConsts {
 			}
 		}
 	}
-	
+
+	public static int compareVersions(Version compilerVersion, int deepMajor, int deepMinor) {
+		int compilerMajor = compilerVersion.getMajor();
+		int compilerMinor = compilerVersion.getMinor();
+		
+		if(compilerMajor > deepMajor) return 1;
+		if(compilerMajor < deepMajor) return -1;
+		// major versions must be equal from here on out
+		if(compilerMinor > deepMinor) return 1;
+		if(compilerMinor < deepMinor) return -1;
+		return 0;
+	}
+
 	protected static void createInterfaceFiles(String libraryPath) {
 		String basePath = libraryPath + File.separatorChar + "src" + File.separatorChar +
 				"ch"  + File.separatorChar + "ntb"  + File.separatorChar + "inf"  + 
@@ -658,10 +653,17 @@ public class Launcher implements ICclassFileConsts {
 		
 		createCompilerInterfaceFile(basePath);
 		
-		Board b = Configuration.getBoard();
-		createArchInterfaceFile(b.cpu.arch, basePath);
-		createProcInterfaceFile(b.cpu, basePath);
-		createBoardInterfaceFile(b, basePath);
+		Configuration.clear();
+		String[][] boards = Configuration.getDescInConfigDir(new File(libraryPath.toString() + Configuration.boardsPath), Parser.sBoard);
+		for (int i = 0; i < boards.length; i++) {
+			vrb.println("\nCreating interface files for board: " + boards[i][1]);
+			Board b = new Board(boards[i][0]);
+			Configuration.setBoard(b);
+			Configuration.readConfigFile(Configuration.boardsPath, b);
+			createArchInterfaceFile(b.cpu.arch, basePath);
+			createProcInterfaceFile(b.cpu, basePath);
+			createBoardInterfaceFile(b, basePath);
+		}
 	}
 		
 	private static void createCompilerInterfaceFile(String basePath) {
@@ -673,7 +675,7 @@ public class Launcher implements ICclassFileConsts {
 			if (!dir.exists()) dir.mkdirs();
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
-			vrb.println("Creating " + f.getAbsolutePath());
+			vrb.println("\nCreating " + f.getAbsolutePath());
 			fw.write("package ch.ntb.inf.deep.runtime;\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface IdeepCompilerConstants {\n");
@@ -779,7 +781,7 @@ public class Launcher implements ICclassFileConsts {
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
 			if (cpuName.equals("zynq7000")) {
-				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + "." + boardName + ";\n\n");
+				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + "." + boardName.toLowerCase() + ";\n\n");
 				fw.write("import ch.ntb.inf.deep.runtime." + cpuName + ".I" + cpuName + ";\n\n");
 			} else 
 				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");

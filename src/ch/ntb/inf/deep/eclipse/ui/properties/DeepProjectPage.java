@@ -363,7 +363,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 	};
 
 	private void readConfig() {
-		boards = Configuration.searchDescInConfig(new File(libPath + Configuration.boardsPath), Parser.sBoard);
+		boards = Configuration.getDescInConfigDir(new File(libPath + Configuration.boardsPath), Parser.sBoard);
 		String[] str = new String[boards.length + 1];
 		int index = boards.length;
 		for (int i = 0; i < boards.length; i++) {
@@ -374,7 +374,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		boardCombo.setItems(str);
 		boardCombo.select(index);
 
-		programmers = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.progPath), Parser.sProgrammer);
+		programmers = Configuration.getDescInConfigDir(new File(libPath.toString() + Configuration.progPath), Parser.sProgrammer);
 		str = new String[programmers.length + 1];
 		index = programmers.length;
 		for (int i = 0; i < programmers.length; i++) {
@@ -387,7 +387,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 
 		programmerOpts.setText(programmerOpt);
 		
-		operatingSystems = Configuration.searchDescInConfig(new File(libPath.toString() + Configuration.osPath), Parser.sOperatingSystem);
+		operatingSystems = Configuration.getDescInConfigDir(new File(libPath.toString() + Configuration.osPath), Parser.sOperatingSystem);
 		str = new String[operatingSystems.length + 1];
 		index = operatingSystems.length;
 		for (int i = 0; i < operatingSystems.length; i++) {
@@ -416,7 +416,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			libState.setText("Given library path is NOT valid target library.");
 			return false;		
 		}
-		String[][] boards = Configuration.searchDescInConfig(new File(lib.toString() + Configuration.boardsPath), Parser.sBoard);
+		String[][] boards = Configuration.getDescInConfigDir(new File(lib.toString() + Configuration.boardsPath), Parser.sBoard);
 		if (boards == null || boards[0][0].equals("not available")) {
 			libState.setText("Given library path is NOT valid target library.");
 			return false;			
