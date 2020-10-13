@@ -85,6 +85,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	// Error reporter and stdout:
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 	private static PrintStream vrb = StdStreams.vrb;
+	@SuppressWarnings("unused")
 	private static PrintStream log = StdStreams.log;
 
 	// Target image
@@ -1308,7 +1309,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	
 	public static long writeTargetImageToElfFile(String fileName) throws IOException {		
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");	
-		ByteBuffer buf = ByteBuffer.allocate(0xFFFFF);
+		ByteBuffer buf = ByteBuffer.allocate(0x200000);
 		buf.order(ByteOrder.LITTLE_ENDIAN);
 		
 		TargetMemorySegment tms = targetImage;

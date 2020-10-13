@@ -427,25 +427,32 @@ public class Launcher implements ICclassFileConsts {
 		if (b != null) {
 			if (tc != null) {
 				try {
+					log.println("Initializing target");
 					if (dbg) vrb.println("[Launcher] Reseting target");
 					tc.resetTarget();
 					if (dbg) vrb.println("[Launcher] Initializing registers");
 					RegisterInit r = b.cpu.regInits;
 					if (dbg) vrb.println("[Launcher] Initializing cpu registers");
 					while (r != null) {
-						tc.setRegisterValue(r.reg, r.initValue);
+						tc.setRegisterValue(r.reg, r.val);
 						r = (RegisterInit) r.next;
 					}
 					r = b.regInits;
 					if (dbg) vrb.println("[Launcher] Initializing board registers");
 					while (r != null) {
-						tc.setRegisterValue(r.reg, r.initValue);
+						tc.setRegisterValue(r.reg, r.val);
 						r = (RegisterInit) r.next;
 					}
 					if (dbg) vrb.println("[Launcher] Initializing target configuration registers");
 					r = targetConfig.regInits;
 					while (r != null) {
-						tc.setRegisterValue(r.reg, r.initValue);
+						if (r.poll) {
+							long val;
+							do {
+								val = tc.getRegisterValue(r.reg);
+								if (dbg) vrb.println("[Launcher] poll for target configuration register " + r.toString() + ", current value = " + val);
+							} while ((val & r.val) != r.val);
+						} else tc.setRegisterValue(r.reg, r.val);
 						r = (RegisterInit) r.next;
 					}
 					for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R"+i, 0);

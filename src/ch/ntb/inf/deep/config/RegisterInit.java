@@ -24,18 +24,23 @@ import ch.ntb.inf.deep.strings.HString;
 public class RegisterInit extends Item {
 	
 	public Register reg;
-	public int initValue;
+	public int val;
+	public boolean poll;
 	
-	public RegisterInit(Register register, int initValue){
+	public RegisterInit(Register register, int val) {
+		this(register, val, false);
+	}
+	
+	public RegisterInit(Register register, int val, boolean poll) {
 		this.name = HString.getRegisteredHString(register.name + "_init");
 		this.reg = register;
-		this.initValue = initValue;
-//		if (Configuration.dbg) vrb.println("[CONF] adding init register " + reg.name + " = 0x" + Integer.toHexString(initValue));
+		this.val = val;
+		this.poll = poll;
 	}
 	
 	@Override
 	public String toString(){
-		return reg.name.toString() + String.format(" = 0x%08X", initValue);
+		return reg.name.toString() + String.format(" = 0x%08X", val);
 	}
 
 }

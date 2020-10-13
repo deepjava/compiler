@@ -1370,15 +1370,22 @@ public class Parser implements ICclassFileConsts {
 		next();
 		if (sym != sLBrace) {reporter.error(207, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		next();
+		boolean poll = false;
 		while (sym == sDesignator) {
-			if(dbg) StdStreams.vrb.println("[CONF] Parser: New reginit for register " + strBuffer);
+			if (strBuffer.equals("POLL")) {
+				next();
+				poll = true;
+				continue;
+			}
+			if (dbg) StdStreams.vrb.println("[CONF] Parser: New reginit for register " + (poll?"polling ":"") + strBuffer);
 			String rName = strBuffer;
 			int val = varAssignment();
 			Register r = (Register) Configuration.getBoard().cpu.regs.getItemByName(rName);
 			if (r == null) {reporter.error(230, "definition missing for " + rName); return null;};
-			RegisterInit r1 = new RegisterInit(r, val);
+			RegisterInit r1 = new RegisterInit(r, val, poll);
 			if (regInit == null) regInit = r1;
 			else regInit.appendTail(r1);	// add registers in the same order as they are listed in the configuration file
+			poll = false;
 		}
 		if (sym != sRBrace) {reporter.error(202, "in " + currentFileName + " at Line "	+ lineNumber); return null;}
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: reginit section done");
@@ -1845,7 +1852,7 @@ public class Parser implements ICclassFileConsts {
 			assert currentConsts != null;
 			Item item = currentConsts.getItemByName(strBuffer);
 			if (item != null) value = ((SystemConstant)item).val;
-			else reporter.error(241, "in " + currentFileName + " at Line " + lineNumber);
+			else reporter.error(241, strBuffer + ": in " + currentFileName + " at Line " + lineNumber);
 			next();
 		} else reporter.error(200, "in " + currentFileName + " at Line " + lineNumber);
 		if (isNeg) return -value;

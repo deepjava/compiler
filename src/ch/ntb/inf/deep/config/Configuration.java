@@ -91,6 +91,7 @@ public class Configuration implements ICclassFileConsts {
 	private static OperatingSystem os;
 	private static Programmer programmer;
 	private static RunConfiguration activeRunConfig;
+	// image files with name and start address
 	private static ArrayList<Map.Entry<String,Integer>> imgFile = new ArrayList<>();
 	private static String plFile;
 	private static HString tctFileName;			// target command file name
