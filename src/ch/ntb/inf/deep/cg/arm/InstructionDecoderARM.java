@@ -625,7 +625,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					else {	// BL Encoding A1 / B
 						imm24 = Integer.parseInt( parts[1].replaceAll("[^0-9]", "") );	// label
 						if ( parts[1].contains("-") )	imm24 = imm24 * -1;
-						imm24 |= imm24 >> 2;
+						imm24 = imm24 >> 2;
 						if (parts[0].length() == 2) {	// BL
 							code |= (0x1 << 24);
 						}
