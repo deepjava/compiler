@@ -6,9 +6,9 @@ meta {
 }
 
 project ExampleProjectMpc555 {
-	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
-#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
-#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../org.deepjava.trglib";
+#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	boardtype = colibri_iMX6;
 	ostype = sts_arm;
 	programmertype = abatronBDI;
@@ -17,7 +17,7 @@ project ExampleProjectMpc555 {
 	imgformat = BIN;
 #	tctfile = "tct/targetCommands.dtct";
 	
-#	rootclasses = "java/lang/Object";
-#	rootclasses = "test/Test1";
-	rootclasses = "ch/ntb/inf/deep/runtime/iMX6/Reset";
+#	rootclasses = "java.lang/Object";
+#	rootclasses = "test.Test1";
+	rootclasses = "org.deepjava.runtime.iMX6.Reset";
 }

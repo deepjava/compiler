@@ -6,9 +6,9 @@ meta {
 }
 
 project ExampleProjectMpc555 {
-	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
-#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
-#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../org.deepjava.trglib";
+#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	boardtype = ntbMpc555HB;
 	ostype = sts_ppc;
 	programmertype = ntbMpc555UsbBdi;
@@ -16,16 +16,16 @@ project ExampleProjectMpc555 {
 #	imgformat = binary;
 #	tctfile = "tct/targetCommands.dtct";
 	
-#	rootclasses = "java/lang/Object";
-#	rootclasses = "test/Test1";
-	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication","ch/ntb/inf/deep/runtime/mpc555/test/OutTest1";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/demo/SystemOutDemo1";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/OutTest1";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/BlinkerApplication";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ActionableTest2";	
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/ExceptionTest2";	
-#	rootclasses = "ch.ntb.inf.deep.comp.targettest.various.VariousTest1";
-#	rootclasses = "ch.ntb.inf.deep.trglib.targettest.SystemTest";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/test/HeapTest3";
-#	rootclasses = "ch/ntb/inf/deep/runtime/mpc555/driver/ffs/FileTransfer";
+#	rootclasses = "java.lang.Object";
+#	rootclasses = "test.Test1";
+	rootclasses = "org.deepjava.runtime.mpc555.test.BlinkerApplication","org.deepjava.runtime.mpc555.test.OutTest1";
+#	rootclasses = "org.deepjava.runtime.mpc555.demo.SystemOutDemo1";
+#	rootclasses = "org.deepjava.runtime.mpc555.test.OutTest1";
+#	rootclasses = "org.deepjava.runtime.mpc555.test.BlinkerApplication";
+#	rootclasses = "org.deepjava.runtime.mpc555.test.ActionableTest2";	
+#	rootclasses = "org.deepjava.runtime.mpc555.test.ExceptionTest2";	
+#	rootclasses = "org.deepjava.comp.targettest.various.VariousTest1";
+#	rootclasses = "org.deepjava.trglib.targettest.SystemTest";
+#	rootclasses = "org.deepjava.runtime.mpc555.test.HeapTest3";
+#	rootclasses = "org.deepjava.runtime.mpc555.driver.ffs.FileTransfer";
 }

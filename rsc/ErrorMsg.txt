@@ -121,5 +121,8 @@ ErrorNr;Description;Solution
 815;Connection to target not possible! (port seems to be busy);
 820;no target image file found;
 821;no pl image file found;
+822;no bin file found;
+823;no pl file specified;
+824;no mcs file found;
 
 900;Connection lost;

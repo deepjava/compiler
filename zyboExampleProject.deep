@@ -6,9 +6,9 @@ meta {
 }
 
 project zyboExampleProject {
-	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
-#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../ch.ntb.inf.deep.trglib";
-#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../org.deepjava.trglib";
+#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	boardtype = Zybo;
 	ostype = sts_arm;
 	programmertype = openOCD;
@@ -17,9 +17,9 @@ project zyboExampleProject {
 	imgformat = BIN;
 #	tctfile = "tct/targetCommands.dtct";
 	
-#	rootclasses = "java/lang/Object";
-#	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/Reset";
-	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/SystemOutDemo";
-	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/zybo/demo/Blinker";
-	rootclasses = "ch/ntb/inf/deep/runtime/zynq7000/demo/SystemOutDemo","ch/ntb/inf/deep/runtime/zynq7000/zybo/demo/Blinker";
+#	rootclasses = "java.lang.Object";
+#	rootclasses = "org.deepjava.runtime.zynq7000.Reset";
+	rootclasses = "org.deepjava.runtime.zynq7000.demo.SystemOutDemo";
+	rootclasses = "org.deepjava.runtime.zynq7000.zybo.demo.Blinker";
+	rootclasses = "org.deepjava.runtime.zynq7000.demo.SystemOutDemo","org.deepjava.runtime.zynq7000.zybo.demo.Blinker";
 }

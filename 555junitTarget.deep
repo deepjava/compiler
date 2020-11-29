@@ -6,8 +6,8 @@ meta {
 }
 
 project junitTargetTestProject {
-	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget";
-#	libpath = "../ch.ntb.inf.deep.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
+	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 	boardtype = ntbMpc555HB;
 	ostype = sts_ppc;
 	programmertype = ntbMpc555UsbBdi;
@@ -18,60 +18,60 @@ project junitTargetTestProject {
 #	Tests for compiler test classes 
  
 #	Tests for all primitives
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/ByteTest","ch/ntb/inf/deep/comp/targettest/primitives/ShortTest","ch/ntb/inf/deep/comp/targettest/primitives/CharTest", "ch/ntb/inf/deep/comp/targettest/primitives/IntTest",
-#				  "ch/ntb/inf/deep/comp/targettest/primitives/LongTest","ch/ntb/inf/deep/comp/targettest/primitives/FloatTest","ch/ntb/inf/deep/comp/targettest/primitives/DoubleTest";
+#	rootclasses = "org.deepjava.comp.targettest.primitives.ByteTest","org.deepjava.comp.targettest.primitives.ShortTest","org.deepjava.comp.targettest.primitives.CharTest", "org.deepjava.comp.targettest.primitives.IntTest",
+#				  "org.deepjava.comp.targettest.primitives.LongTest","org.deepjava.comp.targettest.primitives.FloatTest","org.deepjava.comp.targettest.primitives.DoubleTest";
 				  
 #	Tests for all statements 
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest";
+#	rootclasses = "org.deepjava.comp.targettest.statements.DoWhileTest","org.deepjava.comp.targettest.statements.ForTest","org.deepjava.comp.targettest.statements.IfTest","org.deepjava.comp.targettest.statements.SwitchTest","org.deepjava.comp.targettest.statements.WhileTest";
 
 #	Tests for all conditions  
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest";
+#	rootclasses = "org.deepjava.comp.targettest.conditions.ConditionTest","org.deepjava.comp.targettest.conditions.LongCompTest","org.deepjava.comp.targettest.conditions.FloatDoubleCompTest";
 
 #	Tests for all arrays   
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest";
+#	rootclasses = "org.deepjava.comp.targettest.arrays.ArrayTest","org.deepjava.comp.targettest.arrays.ArrayTwoDimTest","org.deepjava.comp.targettest.arrays.ArrayThreeDimTest","org.deepjava.comp.targettest.arrays.ArrayInstanceTest","org.deepjava.comp.targettest.arrays.StringTest";
 
 #	Tests for all unsafes  
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTestPPC","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest";
+#	rootclasses = "org.deepjava.comp.targettest.unsafe.UnsafeTestPPC","org.deepjava.comp.targettest.unsafe.LowLevelTest";
 
 #	Tests for all casts  
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest";
+#	rootclasses = "org.deepjava.comp.targettest.casts.ByteCastTest","org.deepjava.comp.targettest.casts.ShortCastTest","org.deepjava.comp.targettest.casts.CharCastTest","org.deepjava.comp.targettest.casts.IntCastTest","org.deepjava.comp.targettest.casts.LongCastTest","org.deepjava.comp.targettest.casts.FloatCastTest","org.deepjava.comp.targettest.casts.DoubleCastTest";
 
 #	Tests for all objects  
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest","ch/ntb/inf/deep/comp/targettest/objects/EnumTest";
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest";
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest";
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest";
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/objects/EnumTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InterfaceTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.InterfaceTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.EnumTest";
 
 #	Tests for all various  
-#	rootclasses = "ch/ntb/inf/deep/comp/targettest/various/StackFrame","ch/ntb/inf/deep/comp/targettest/various/ParameterPassing","ch/ntb/inf/deep/comp/targettest/various/RegisterAllocation";
+#	rootclasses = "org.deepjava.comp.targettest.various.StackFrame","org.deepjava.comp.targettest.various.ParameterPassing","org.deepjava.comp.targettest.various.RegisterAllocation";
 
 #	Tests for all exceptions  
-	rootclasses = "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
+	rootclasses = "org.deepjava.comp.targettest.exceptions.UncheckedExceptionTest","org.deepjava.comp.targettest.exceptions.CheckedExceptionTest","org.deepjava.comp.targettest.exceptions.FinallyExceptionTest";
 
 #	Tests for all compiler tests  
-	rootclasses = "ch/ntb/inf/deep/comp/targettest/primitives/ByteTest","ch/ntb/inf/deep/comp/targettest/primitives/ShortTest","ch/ntb/inf/deep/comp/targettest/primitives/CharTest", "ch/ntb/inf/deep/comp/targettest/primitives/IntTest", "ch/ntb/inf/deep/comp/targettest/primitives/LongTest", "ch/ntb/inf/deep/comp/targettest/primitives/FloatTest","ch/ntb/inf/deep/comp/targettest/primitives/DoubleTest",
-				  "ch/ntb/inf/deep/comp/targettest/statements/DoWhileTest","ch/ntb/inf/deep/comp/targettest/statements/ForTest","ch/ntb/inf/deep/comp/targettest/statements/IfTest","ch/ntb/inf/deep/comp/targettest/statements/SwitchTest","ch/ntb/inf/deep/comp/targettest/statements/WhileTest",
-				  "ch/ntb/inf/deep/comp/targettest/conditions/ConditionTest","ch/ntb/inf/deep/comp/targettest/conditions/LongCompTest","ch/ntb/inf/deep/comp/targettest/conditions/FloatDoubleCompTest",
-				  "ch/ntb/inf/deep/comp/targettest/arrays/ArrayTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayTwoDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayThreeDimTest","ch/ntb/inf/deep/comp/targettest/arrays/ArrayInstanceTest","ch/ntb/inf/deep/comp/targettest/arrays/StringTest",
-				  "ch/ntb/inf/deep/comp/targettest/unsafe/UnsafeTestPPC","ch/ntb/inf/deep/comp/targettest/unsafe/LowLevelTest",
-				  "ch/ntb/inf/deep/comp/targettest/casts/ByteCastTest","ch/ntb/inf/deep/comp/targettest/casts/ShortCastTest","ch/ntb/inf/deep/comp/targettest/casts/CharCastTest","ch/ntb/inf/deep/comp/targettest/casts/IntCastTest","ch/ntb/inf/deep/comp/targettest/casts/LongCastTest","ch/ntb/inf/deep/comp/targettest/casts/FloatCastTest","ch/ntb/inf/deep/comp/targettest/casts/DoubleCastTest",
-				  "ch/ntb/inf/deep/comp/targettest/objects/InstanceTest","ch/ntb/inf/deep/comp/targettest/objects/InheritanceTest","ch/ntb/inf/deep/comp/targettest/objects/InterfaceTest",
-				  "ch/ntb/inf/deep/comp/targettest/objects/EnumTest",
-				  "ch/ntb/inf/deep/comp/targettest/various/StackFrame","ch/ntb/inf/deep/comp/targettest/various/ParameterPassing","ch/ntb/inf/deep/comp/targettest/various/RegisterAllocation",
-				  "ch/ntb/inf/deep/comp/targettest/exceptions/UncheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/CheckedExceptionTest","ch/ntb/inf/deep/comp/targettest/exceptions/FinallyExceptionTest";
+	rootclasses = "org.deepjava.comp.targettest.primitives.ByteTest","org.deepjava.comp.targettest.primitives.ShortTest","org.deepjava.comp.targettest.primitives.CharTest", "org.deepjava.comp.targettest.primitives.IntTest", "org.deepjava.comp.targettest.primitives.LongTest", "org.deepjava.comp.targettest.primitives.FloatTest","org.deepjava.comp.targettest.primitives.DoubleTest",
+				  "org.deepjava.comp.targettest.statements.DoWhileTest","org.deepjava.comp.targettest.statements.ForTest","org.deepjava.comp.targettest.statements.IfTest","org.deepjava.comp.targettest.statements.SwitchTest","org.deepjava.comp.targettest.statements.WhileTest",
+				  "org.deepjava.comp.targettest.conditions.ConditionTest","org.deepjava.comp.targettest.conditions.LongCompTest","org.deepjava.comp.targettest.conditions.FloatDoubleCompTest",
+				  "org.deepjava.comp.targettest.arrays.ArrayTest","org.deepjava.comp.targettest.arrays.ArrayTwoDimTest","org.deepjava.comp.targettest.arrays.ArrayThreeDimTest","org.deepjava.comp.targettest.arrays.ArrayInstanceTest","org.deepjava.comp.targettest.arrays.StringTest",
+				  "org.deepjava.comp.targettest.unsafe.UnsafeTestPPC","org.deepjava.comp.targettest.unsafe.LowLevelTest",
+				  "org.deepjava.comp.targettest.casts.ByteCastTest","org.deepjava.comp.targettest.casts.ShortCastTest","org.deepjava.comp.targettest.casts.CharCastTest","org.deepjava.comp.targettest.casts.IntCastTest","org.deepjava.comp.targettest.casts.LongCastTest","org.deepjava.comp.targettest.casts.FloatCastTest","org.deepjava.comp.targettest.casts.DoubleCastTest",
+				  "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest",
+				  "org.deepjava.comp.targettest.objects.EnumTest",
+				  "org.deepjava.comp.targettest.various.StackFrame","org.deepjava.comp.targettest.various.ParameterPassing","org.deepjava.comp.targettest.various.RegisterAllocation",
+				  "org.deepjava.comp.targettest.exceptions.UncheckedExceptionTest","org.deepjava.comp.targettest.exceptions.CheckedExceptionTest","org.deepjava.comp.targettest.exceptions.FinallyExceptionTest";
 
 
 #	Tests for trgtlib tests  
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest";
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/GenericsTest";
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555";
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/SystemTest";
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/UtilTest";
-#	rootclasses = "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
+#	rootclasses = "org.deepjava.trglib.targettest.MathTest";
+#	rootclasses = "org.deepjava.trglib.targettest.GenericsTest";
+#	rootclasses = "org.deepjava.trglib.targettest.TaskTestMpc555";
+#	rootclasses = "org.deepjava.trglib.targettest.SystemTest";
+#	rootclasses = "org.deepjava.trglib.targettest.UtilTest";
+#	rootclasses = "org.deepjava.trglib.targettest.BaseClassTest";
 
 #	Tests for all target lib tests
-	rootclasses = "ch/ntb/inf/deep/trglib/targettest/MathTest","ch/ntb/inf/deep/trglib/targettest/GenericsTest","ch/ntb/inf/deep/trglib/targettest/TaskTestMpc555",
-				  "ch/ntb/inf/deep/trglib/targettest/SystemTest","ch/ntb/inf/deep/trglib/targettest/HeapTestPPC","ch/ntb/inf/deep/trglib/targettest/UtilTest",
-				  "ch/ntb/inf/deep/trglib/targettest/BaseClassTest";
+	rootclasses = "org.deepjava.trglib.targettest.MathTest","org.deepjava.trglib.targettest.GenericsTest","org.deepjava.trglib.targettest.TaskTestMpc555",
+				  "org.deepjava.trglib.targettest.SystemTest","org.deepjava.trglib.targettest.HeapTestPPC","org.deepjava.trglib.targettest.UtilTest",
+				  "org.deepjava.trglib.targettest.BaseClassTest";
 }

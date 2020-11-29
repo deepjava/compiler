@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: deep plugin for eclipse
-Bundle-SymbolicName: ch.ntb.inf.deep;singleton:=true
+Bundle-SymbolicName: org.deepjava.compiler;singleton:=true
 Bundle-Version: 1.6.1
-Bundle-Activator: ch.ntb.inf.deep.eclipse.DeepPlugin
+Bundle-Activator: org.deepjava.eclipse.DeepPlugin
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.5.0",
  org.eclipse.jdt.launching;bundle-version="3.5.1",
  org.eclipse.ui;bundle-version="3.5.2",
@@ -17,29 +17,29 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.5.0",
  org.eclipse.jdt.debug.ui;bundle-version="3.4.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Export-Package: ch.ntb.inf.deep.cg,
- ch.ntb.inf.deep.cg.ppc,
- ch.ntb.inf.deep.classItems,
- ch.ntb.inf.deep.config,
- ch.ntb.inf.deep.eclipse,
- ch.ntb.inf.deep.eclipse.nature,
- ch.ntb.inf.deep.eclipse.ui.actions,
- ch.ntb.inf.deep.eclipse.ui.perspective,
- ch.ntb.inf.deep.eclipse.ui.properties,
- ch.ntb.inf.deep.eclipse.ui.tabs,
- ch.ntb.inf.deep.eclipse.ui.view,
- ch.ntb.inf.deep.eclipse.ui.wizard,
- ch.ntb.inf.deep.host,
- ch.ntb.inf.deep.launcher,
- ch.ntb.inf.deep.linker,
- ch.ntb.inf.deep.target,
- ch.ntb.inf.deep.ssa,
- ch.ntb.inf.deep.ssa.instruction,
- ch.ntb.inf.deep.strings
+Export-Package: org.deepjava.cg,
+ org.deepjava.cg.ppc,
+ org.deepjava.classItems,
+ org.deepjava.config,
+ org.deepjava.eclipse,
+ org.deepjava.eclipse.nature,
+ org.deepjava.eclipse.ui.actions,
+ org.deepjava.eclipse.ui.perspective,
+ org.deepjava.eclipse.ui.properties,
+ org.deepjava.eclipse.ui.tabs,
+ org.deepjava.eclipse.ui.view,
+ org.deepjava.eclipse.ui.wizard,
+ org.deepjava.host,
+ org.deepjava.launcher,
+ org.deepjava.linker,
+ org.deepjava.ssa,
+ org.deepjava.ssa.instruction,
+ org.deepjava.strings,
+ org.deepjava.target
 Bundle-ClassPath: .,
  tempLibs/java-binutils-0.1.0.jar
-Bundle-Vendor: www.ntb.ch/inf
+Bundle-Vendor: https://www.ost.ch/en/research-and-consulting-services/technology/system-technology/inf/
 Import-Package: 
  org.eclipse.ltk.core.refactoring,
  org.eclipse.ltk.core.refactoring.participants
-Automatic-Module-Name: ch.ntb.inf.deep
+Automatic-Module-Name: org.deepjava
