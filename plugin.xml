@@ -4,19 +4,19 @@
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
-            delegate="ch.ntb.inf.deep.eclipse.launcher.DeepLaunchDelegate"
+            delegate="org.deepjava.eclipse.launcher.DeepLaunchDelegate"
             id="deep.launchType"
             modes="run"
             name="Deep Application">
       </launchConfigurationType>
    </extension>
    <extension
-         id="ch.ntb.inf.deep.nature.DeepNature"
+         id="org.deepjava.nature.DeepNature"
          name="Deep Nature"
          point="org.eclipse.core.resources.natures">
       <runtime>
          <run
-               class="ch.ntb.inf.deep.eclipse.nature.DeepNature">
+               class="org.deepjava.eclipse.nature.DeepNature">
          </run>
       </runtime>
       <requires-nature
@@ -34,7 +34,7 @@
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
-            class="ch.ntb.inf.deep.eclipse.ui.tabs.DeepTabGroup"
+            class="org.deepjava.eclipse.ui.tabs.DeepTabGroup"
             description="Specify and launch a programm"
             id="deep.tabGroup"
             type="deep.launchType">
@@ -43,10 +43,10 @@
    <extension
          point="org.eclipse.ui.perspectives">
       <perspective
-            class="ch.ntb.inf.deep.eclipse.ui.perspective.DeepPerspective"
+            class="org.deepjava.eclipse.ui.perspective.DeepPerspective"
             fixed="false"
             icon="icons/full/elcl16/deepActiv.gif"
-            id="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            id="org.deepjava.ui.perspective.DeepPerspective"
             name="Deep">
       </perspective>
    </extension>
@@ -59,19 +59,19 @@
    <extension
          point="org.eclipse.ui.newWizards">
       <category
-            id="ch.ntb.inf.deep.ui.wizard.category"
+            id="org.deepjava.ui.wizard.category"
             name="Deep">
       </category>
       <wizard
             canFinishEarly="false"
-            category="ch.ntb.inf.deep.ui.wizard.category"
-            class="ch.ntb.inf.deep.eclipse.ui.wizard.DeepProjectWizard"
-            finalPerspective="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            category="org.deepjava.ui.wizard.category"
+            class="org.deepjava.eclipse.ui.wizard.DeepProjectWizard"
+            finalPerspective="org.deepjava.ui.perspective.DeepPerspective"
             hasPages="true"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.wizard.DeepProjectWizard"
+            id="org.deepjava.ui.wizard.DeepProjectWizard"
             name="Deep Project"
-            preferredPerspectives="ch.ntb.inf.deep.ui.perspective.DeepPerspective"
+            preferredPerspectives="org.deepjava.ui.perspective.DeepPerspective"
             project="true">
          <description>
             Generate a deep project
@@ -81,9 +81,9 @@
    <extension
          point="org.eclipse.ui.propertyPages">
       <page
-            class="ch.ntb.inf.deep.eclipse.ui.properties.DeepProjectPage"
+            class="org.deepjava.eclipse.ui.properties.DeepProjectPage"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.ui.properties.DeepProjectPage"
+            id="org.deepjava.ui.properties.DeepProjectPage"
             name="Deep Project Settings">
          <enabledWhen>
             <adapt
@@ -110,9 +110,9 @@
       </category>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
+            class="org.deepjava.eclipse.ui.view.ClassTreeView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView"
+            id="org.deepjava.eclipse.ui.view.ClassTreeView"
             name="Class Tree View"
             restorable="true">
          	<description>
@@ -121,9 +121,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
+            class="org.deepjava.eclipse.ui.view.TaskView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.TaskView"
+            id="org.deepjava.eclipse.ui.view.TaskView"
             name="Task View"
             restorable="true">
          	<description>
@@ -132,9 +132,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
+            class="org.deepjava.eclipse.ui.view.TargetOperationView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView"
+            id="org.deepjava.eclipse.ui.view.TargetOperationView"
             name="Target Operation"
             restorable="true">
          	<description>
@@ -145,9 +145,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
+            class="org.deepjava.eclipse.ui.view.MemoryView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.MemoryView"
+            id="org.deepjava.eclipse.ui.view.MemoryView"
             name="Memory View"
             restorable="true">
          	<description>
@@ -156,9 +156,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
+            class="org.deepjava.eclipse.ui.view.GPRView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.GPRView"
+            id="org.deepjava.eclipse.ui.view.GPRView"
             name="General Purpose Register View"
             restorable="true">
          	<description>
@@ -167,9 +167,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
+            class="org.deepjava.eclipse.ui.view.FPRView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.FPRView"
+            id="org.deepjava.eclipse.ui.view.FPRView"
             name="Floating Point Register View"
             restorable="true">
          	<description>
@@ -178,9 +178,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.SPRView"
+            class="org.deepjava.eclipse.ui.view.SPRView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.SPRView"
+            id="org.deepjava.eclipse.ui.view.SPRView"
             name="Special Purpose Register View (on PPC)"
             restorable="true">
          	<description>
@@ -189,9 +189,9 @@
       </view>
       <view
             category="deep"
-            class="ch.ntb.inf.deep.eclipse.ui.view.ElfFileView"
+            class="org.deepjava.eclipse.ui.view.ElfFileView"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.eclipse.ui.view.ElfFileView"
+            id="org.deepjava.eclipse.ui.view.ElfFileView"
             name="ELF File View"
             restorable="true">
          	<description>
@@ -202,9 +202,9 @@
    <extension
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
-            class="ch.ntb.inf.deep.eclipse.launcher.DeepLaunchShortcut"
+            class="org.deepjava.eclipse.launcher.DeepLaunchShortcut"
             icon="icons/full/obj16/deep.gif"
-            id="ch.ntb.inf.deep.launcher.DeepLaunchShortcut"
+            id="org.deepjava.launcher.DeepLaunchShortcut"
             label="Deep Application"
             modes="run">
          <contextualLaunch>
@@ -231,11 +231,11 @@
 	  point="org.eclipse.ui.actionSets">
       <actionSet
             description="This is a action set from the deep plugin"
-            id="ch.ntb.inf.deep.eclipse.workbenchActionSet"
+            id="org.deepjava.eclipse.workbenchActionSet"
             label="Deep ActionSet"
             visible="true">
          <menu
-               id="ch.ntb.inf.deep.eclipse.workbenchMenu"
+               id="org.deepjava.eclipse.workbenchMenu"
                label="deep"
                path="additions">
             <groupMarker
@@ -246,31 +246,31 @@
             </separator>
          </menu>
          <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction"
+               class="org.deepjava.eclipse.ui.actions.ReopenAction"
                icon="icons/full/obj16/ReopenConnection.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction"
+               id="org.deepjava.eclipse.ui.actions.ReopenAction"
                label="Reopen USB"
-               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               menubarPath="org.deepjava.eclipse.workbenchMenu/content"
                style="push"
                toolbarPath="Normal/additions"
                tooltip="reopen the USB connection">
          </action>
          <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
+               class="org.deepjava.eclipse.ui.actions.SuspendAction"
                icon="icons/full/obj16/TargetSuspend.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction"
+               id="org.deepjava.eclipse.ui.actions.SuspendAction"
                label="Suspend Target"
-               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               menubarPath="org.deepjava.eclipse.workbenchMenu/content"
                style="push"
                toolbarPath="Normal/additions"
                tooltip="suspend the target">
          </action>
          <action
-               class="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
+               class="org.deepjava.eclipse.ui.actions.ResumeAction"
                icon="icons/full/obj16/TargetResume.gif"
-               id="ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction"
+               id="org.deepjava.eclipse.ui.actions.ResumeAction"
                label="Resume Target"
-               menubarPath="ch.ntb.inf.deep.eclipse.workbenchMenu/content"
+               menubarPath="org.deepjava.eclipse.workbenchMenu/content"
                style="push"
                toolbarPath="Normal/additions"
                tooltip="resume the target">
@@ -280,24 +280,24 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            class="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferencePage"
-            id="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferencePage"
+            class="org.deepjava.eclipse.ui.preferences.DeepPreferencePage"
+            id="org.deepjava.eclipse.ui.preferences.DeepPreferencePage"
             name="Deep Preferences">
       </page>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="ch.ntb.inf.deep.eclipse.ui.preferences.DeepPreferenceInitializer">
+            class="org.deepjava.eclipse.ui.preferences.DeepPreferenceInitializer">
       </initializer>
    </extension>
  
   <extension point="org.eclipse.ltk.core.refactoring.renameParticipants">
-  	<renameParticipant class="ch.ntb.inf.deep.eclipse.ui.refactoring.RenameDeepProject" id="ch.ntb.inf.deep.eclipse.ui.refactoring.RenameDeepProject" name="renaming deep projects">
+  	<renameParticipant class="org.deepjava.eclipse.ui.refactoring.RenameDeepProject" id="org.deepjava.eclipse.ui.refactoring.RenameDeepProject" name="renaming deep projects">
       <enablement>
 	    <with variable="affectedNatures">
           <iterate operator="or">
-            <equals value="ch.ntb.inf.deep.nature.DeepNature"/>
+            <equals value="org.deepjava.nature.DeepNature"/>
           </iterate>
         </with>
         <with variable="element">

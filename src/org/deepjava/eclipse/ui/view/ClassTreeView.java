@@ -68,7 +68,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 public class ClassTreeView extends ViewPart implements ISelectionChangedListener, ICclassFileConsts {
-	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.ClassTreeView";
+	public static final String ID = "org.deepjava.eclipse.ui.view.ClassTreeView";
 	private TreeViewer classTreeViewer;
 	private TextViewer textViewer;
 	private Action refresh;

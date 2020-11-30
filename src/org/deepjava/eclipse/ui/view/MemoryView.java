@@ -49,7 +49,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
 
 public class MemoryView extends ViewPart implements Listener {
-	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.MemoryView";
+	public static final String ID = "org.deepjava.eclipse.ui.view.MemoryView";
 	private TableViewer viewer;
 	private Text addr;
 	private Text count;

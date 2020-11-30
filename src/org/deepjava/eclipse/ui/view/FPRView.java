@@ -66,7 +66,7 @@ public class FPRView extends ViewPart implements ISelectionListener {
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.FPRView";
+	public static final String ID = "org.deepjava.eclipse.ui.view.FPRView";
 
 	private TableViewer viewer;
 	private Action toHex, toDouble, toFloat, toBin;
@@ -74,7 +74,7 @@ public class FPRView extends ViewPart implements ISelectionListener {
 	private Action suspend;
 	private Action resume;
 	private RegModel model;
-	private final String helpContextId = "ch.ntb.inf.deep.ui.register.viewer";
+	private final String helpContextId = "org.deepjava.ui.register.viewer";
 
 	/*
 	 * The content provider class is responsible for providing objects to the

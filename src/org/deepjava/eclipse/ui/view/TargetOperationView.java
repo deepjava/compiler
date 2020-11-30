@@ -71,7 +71,7 @@ import org.eclipse.ui.part.ViewPart;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts, ICclassFileConsts {
-	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TargetOperationView";
+	public static final String ID = "org.deepjava.eclipse.ui.view.TargetOperationView";
 	private TableViewer viewer;
 	private TargetOpObject[] elements;
 	//private Action toChar;

@@ -87,7 +87,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	/**
 	 * Plug-in identifier.
 	 */
-	public static final String PLUGIN_ID = "ch.ntb.inf.deep";
+	public static final String PLUGIN_ID = "org.deepjava.deep";
 	
 	/**
 	 * The constructor.
@@ -150,7 +150,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	public ResourceBundle getResourceBundle() {
 		try {
 			if (resourceBundle == null)
-				resourceBundle = ResourceBundle.getBundle("ch.ntb.inf.debug.core.mpc555.DebugCorePluginResources");
+				resourceBundle = ResourceBundle.getBundle("org.deepjava.debug.core.mpc555.DebugCorePluginResources");
 		} catch (MissingResourceException x) {
 			resourceBundle = null;
 		}

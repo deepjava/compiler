@@ -32,7 +32,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 
 public class DeepLaunchShortcut implements ILaunchShortcut2 {
-	public static final String ID = "ch.ntb.inf.deep.launcher.DeepLaunchShortcut";
+	public static final String ID = "org.deepjava.launcher.DeepLaunchShortcut";
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.debug.ui.ILaunchShortcut2#getLaunchConfigurations(org.eclipse.jface.viewers.ISelection)

@@ -31,7 +31,7 @@ public class ResumeAction implements IWorkbenchWindowActionDelegate {
 
 	@SuppressWarnings("unused")
 	private IWorkbenchWindow window;
-    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.ResumeAction";
+    public static final String ID = "org.deepjava.eclipse.ui.actions.ResumeAction";
 	
 	@Override
 	public void dispose() {}

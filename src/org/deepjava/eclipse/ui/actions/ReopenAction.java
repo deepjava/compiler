@@ -32,7 +32,7 @@ public class ReopenAction implements IWorkbenchWindowActionDelegate {
 
 	@SuppressWarnings("unused")
 	private IWorkbenchWindow window;
-    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.ReopenAction";
+    public static final String ID = "org.deepjava.eclipse.ui.actions.ReopenAction";
 	
 	@Override
 	public void dispose() {}

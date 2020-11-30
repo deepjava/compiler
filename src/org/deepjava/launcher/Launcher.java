@@ -102,7 +102,7 @@ public class Launcher implements ICclassFileConsts {
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
 		if ((reporter.nofErrors <= 0) && checkVersion) {
-			Bundle deepBundle = Platform.getBundle("ch.ntb.inf.deep");
+			Bundle deepBundle = Platform.getBundle("org.deepjava");
 			if (deepBundle != null) {
 				Version deepCompilerVersion = deepBundle.getVersion();
 				File deepLibVersionFile = null;
@@ -872,7 +872,7 @@ public class Launcher implements ICclassFileConsts {
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
 			vrb.println("\nCreating " + f.getAbsolutePath());
-			fw.write("package ch.ntb.inf.deep.runtime;\n\n");
+			fw.write("package org.deepjava.runtime;\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface IdeepCompilerConstants {\n");
 			fw.write("\n\t// Compiler constants\n");
@@ -900,7 +900,7 @@ public class Launcher implements ICclassFileConsts {
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
-			fw.write("package ch.ntb.inf.deep.runtime." + archName + ";\n\n");
+			fw.write("package org.deepjava.runtime." + archName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface I" + archName + " {\n");
 			Register reg;
@@ -932,8 +932,8 @@ public class Launcher implements ICclassFileConsts {
 			File f = new File(dir.getAbsolutePath() + File.separatorChar + fileName);
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
-			fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
-			fw.write("import ch.ntb.inf.deep.runtime." + archName + ".I" + archName + ";\n\n");
+			fw.write("package org.deepjava.runtime." + cpuName + ";\n\n");
+			fw.write("import org.deepjava.runtime." + archName + ".I" + archName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface I" + cpuName + " extends I" + archName + " {\n");
 			
@@ -977,10 +977,10 @@ public class Launcher implements ICclassFileConsts {
 			FileWriter fw = new FileWriter(f);
 			vrb.println("Creating " + f.getAbsolutePath());
 			if (cpuName.equals("zynq7000")) {
-				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + "." + boardName.toLowerCase() + ";\n\n");
-				fw.write("import ch.ntb.inf.deep.runtime." + cpuName + ".I" + cpuName + ";\n\n");
+				fw.write("package org.deepjava.runtime." + cpuName + "." + boardName.toLowerCase() + ";\n\n");
+				fw.write("import org.deepjava.runtime." + cpuName + ".I" + cpuName + ";\n\n");
 			} else 
-				fw.write("package ch.ntb.inf.deep.runtime." + cpuName + ";\n\n");
+				fw.write("package org.deepjava.runtime." + cpuName + ";\n\n");
 			fw.write("// Auto generated file (" + dateFormat.format(date) + ")\n\n");
 			fw.write("public interface I" + boardName + " extends I" + cpuName + " {\n");
 			fw.write("\n\t// System constants of board " + boardName + "\n");

@@ -63,7 +63,7 @@ public class SPRView extends ViewPart implements ISelectionListener {
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.SPRView";
+	public static final String ID = "org.deepjava.eclipse.ui.view.SPRView";
 
 	private TableViewer viewer;
 	private Action toHex;
@@ -73,7 +73,7 @@ public class SPRView extends ViewPart implements ISelectionListener {
 	private Action suspend;
 	private Action resume;
 	private org.deepjava.eclipse.ui.model.RegModel model;
-	private final String helpContextId = "ch.ntb.inf.deep.ui.register.viewer";
+	private final String helpContextId = "org.deepjava.ui.register.viewer";
 
 	/*
 	 * The content provider class is responsible for providing objects to the

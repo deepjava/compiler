@@ -37,7 +37,7 @@ import org.eclipse.swt.widgets.Table;
 
 public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFileConsts{
 
-	public static final String ID = "ch.ntb.inf.deep.eclipse.ui.view.TaskView";
+	public static final String ID = "org.deepjava.eclipse.ui.view.TaskView";
 	private TableViewer viewer;
 	private Action refresh;
 	

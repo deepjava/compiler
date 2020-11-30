@@ -133,7 +133,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			} else return;
 			description = project.getDescription();		
-			description.setNatureIds(new String[] {"ch.ntb.inf.deep.nature.DeepNature",	"org.eclipse.jdt.core.javanature" });
+			description.setNatureIds(new String[] {"org.deepjava.nature.DeepNature", "org.eclipse.jdt.core.javanature" });
 			ICommand[] commands = new ICommand[1];
 			commands[0] = description.newCommand();
 			commands[0].setBuilderName("org.eclipse.jdt.core.javabuilder");
@@ -236,7 +236,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 		if (x instanceof CoreException) {
 			return ((CoreException) x).getStatus();
 		} else {
-			return new Status(IStatus.ERROR, "ch.ntb.inf.deep", IStatus.ERROR, x.getMessage() != null ? x.getMessage() : x.toString(), x);
+			return new Status(IStatus.ERROR, "org.deepjava", IStatus.ERROR, x.getMessage() != null ? x.getMessage() : x.toString(), x);
 		}
 	}
 }

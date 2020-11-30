@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.CoreException;
 
 public class DeepNature implements IProjectNature {
 
-	public static final String NATURE_ID = "ch.ntb.inf.deep.nature.DeepNature";
+	public static final String NATURE_ID = "org.deepjava.nature.DeepNature";
 	
 	/**
 	 * Associated Project to this Nature.

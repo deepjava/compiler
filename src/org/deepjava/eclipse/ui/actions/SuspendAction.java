@@ -31,7 +31,7 @@ public class SuspendAction implements IWorkbenchWindowActionDelegate {
 
 	@SuppressWarnings("unused")
 	private IWorkbenchWindow window;
-    public static final String ID = "ch.ntb.inf.deep.eclipse.ui.actions.SuspendAction";
+    public static final String ID = "org.deepjava.eclipse.ui.actions.SuspendAction";
 	
 	@Override
 	public void dispose() {}
