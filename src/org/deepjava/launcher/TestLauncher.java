@@ -49,7 +49,7 @@ public class TestLauncher {
 //		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam", false);
 //		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam", false);
 		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
-//		Launcher.buildAll("microzedjunitTarget.deep", "BootFromJTAG", false);
+//		Launcher.buildAll("microzedjunitTarget.deep", "BootFromRam", false);
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {
@@ -63,7 +63,7 @@ public class TestLauncher {
 					Launcher.openTargetConnection();
 					Launcher.downloadTargetImage();
 					Launcher.startTarget(0x100);
-					Launcher.closeTargetConnection();
+//					Launcher.closeTargetConnection();
 				} catch (ClassNotFoundException e) {
 					ErrorReporter.reporter.error(811, programmer.getClassName().toString());
 				} catch (SecurityException e) {

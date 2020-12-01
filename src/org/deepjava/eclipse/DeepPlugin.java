@@ -44,9 +44,9 @@ public class DeepPlugin extends AbstractUIPlugin {
 	/**
 	 *  default entries for deep projects settings
 	 */
-	public static final String LIB_PATH = "I:\\deep\\lib";
+	public static final String LIB_PATH = "X:\\public-programme\\deep\\lib";
 	public static final String BOARD = "MicroZed";
-	public static final String OS = "ntbSTS_arm";
+	public static final String OS = "sts_arm";
 	public static final String PROGRAMMER = "OpenOCD";
 	public static final String PROGRAMMER_OPTIONS = "localhost_4444";
 	

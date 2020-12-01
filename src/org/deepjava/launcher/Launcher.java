@@ -449,7 +449,7 @@ public class Launcher implements ICclassFileConsts {
 					TargetMemorySegment tms = Linker32.targetImage;
 					if (tms != null && reporter.nofErrors <= 0) {
 						if (tms.segment.owner.technology == 1) {	// flash device
-							log.println("Creating flash file");
+							log.print("Creating flash file: ");
 							createZynqFlashFile(tms);
 						} else {	// ram device
 							try {
@@ -542,10 +542,8 @@ public class Launcher implements ICclassFileConsts {
 		}
 		try {
 			String fname = Configuration.getImgFileName().toString();
-			System.out.println(fname);
 			// open bin file for reading
 			File binFile = new File(fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + fname.substring(fname.lastIndexOf('.'), fname.length()));
-			System.out.println(binFile.getName());
 			System.out.println(fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + fname.substring(fname.lastIndexOf('.'), fname.length()));
 			if (!binFile.exists()) {
 				ErrorReporter.reporter.error(822, "check if proper target file format used");
@@ -553,7 +551,10 @@ public class Launcher implements ICclassFileConsts {
 			}
 			BufferedInputStream readerBin = new BufferedInputStream(new FileInputStream(binFile));
 			// open mcs file for writing
-			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + ".mcs"));
+			fname = fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + ".mcs";
+			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
+			System.out.println(fname);
+			log.println(fname);
 			// open predefined Xilinx mcs file 
 			String plFile = Configuration.getPlFile();
 			if (plFile == null) {
@@ -565,7 +566,7 @@ public class Launcher implements ICclassFileConsts {
 			HString[] libs = Configuration.getLibPaths();
 			boolean found = false;
 			for (HString lib : libs) {
-				fname = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 3) + "mcs";
+				fname = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 4) + "App.mcs";
 				File f = new File(fname);
 				if (f.exists()) {
 					found = true;
@@ -578,6 +579,7 @@ public class Launcher implements ICclassFileConsts {
 				writerMcs.close();
 				return;
 			}
+			System.out.println(fname);
 			BufferedReader readerMcs = new BufferedReader(new FileReader(fname));
 			StringBuffer buf = new StringBuffer();
 			String lineMcs;
@@ -739,7 +741,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static void openTargetConnection() {
-		if (true) vrb.println("[Launcher] Opening target connection");
+		if (dbg) vrb.println("[Launcher] Opening target connection");
 		if (tc != null) {
 			try {
 				if (!tc.isConnected()) tc.openConnection();
@@ -750,7 +752,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static void reopenTargetConnection() {
-		if (true) vrb.println("[Launcher] Reopening target connection");
+		if (dbg) vrb.println("[Launcher] Reopening target connection");
 		if (tc != null) {
 			try {
 				tc.closeConnection();
@@ -771,7 +773,7 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static void setTargetConnection(TargetConnection targConn) {
-		if (true) vrb.println("[Launcher] set target connection");
+		if (dbg) vrb.println("[Launcher] set target connection");
 		tc = targConn;
 		Programmer programmer = Configuration.getProgrammer();
 		if (programmer != null) {
