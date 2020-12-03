@@ -451,6 +451,7 @@ public class Launcher implements ICclassFileConsts {
 						if (tms.segment.owner.technology == 1) {	// flash device
 							log.print("Creating flash file: ");
 							createZynqFlashFile(tms);
+							// change driver and load mcs file
 						} else {	// ram device
 							try {
 								log.println("Downloading target image");
@@ -595,7 +596,8 @@ public class Launcher implements ICclassFileConsts {
 //			StdStreams.vrb.println("nof bytes in bin file = 0x" + Integer.toHexString(size));
 			
 			readerBin = new BufferedInputStream(new FileInputStream(binFile));
-			while (line < 160 && ((lineMcs = readerMcs.readLine()) != null)) {
+			// copy
+			while (line < 159 && ((lineMcs = readerMcs.readLine()) != null)) {
 				buf.append(lineMcs);
 				buf.append('\n');
 				line++;
@@ -635,11 +637,14 @@ public class Launcher implements ICclassFileConsts {
 			buf.append('\n');
 			line++;
 
-			while (line < 137604 && ((lineMcs = readerMcs.readLine()) != null)) {
+			// copy
+			while (line < 137603 && ((lineMcs = readerMcs.readLine()) != null)) {
 				buf.append(lineMcs);
 				buf.append('\n');
 				line++;
 			}
+			
+			// replace with content of target image bin file
 			int offset = 0xa300;
 			int highAddr = 0x22;
 			while ((k = readerBin.read(lineBin, 0, len)) == len) {
