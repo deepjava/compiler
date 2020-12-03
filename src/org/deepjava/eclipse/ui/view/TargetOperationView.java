@@ -18,8 +18,6 @@
 
 package org.deepjava.eclipse.ui.view;
 
-
-
 import org.deepjava.classItems.Class;
 import org.deepjava.classItems.ConstField;
 import org.deepjava.classItems.Field;

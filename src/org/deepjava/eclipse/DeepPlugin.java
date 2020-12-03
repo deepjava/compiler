@@ -87,7 +87,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	/**
 	 * Plug-in identifier.
 	 */
-	public static final String PLUGIN_ID = "org.deepjava.deep";
+	public static final String PLUGIN_ID = "org.deepjava.compiler";
 	
 	/**
 	 * The constructor.
