@@ -2225,8 +2225,8 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 						int opc2 = ((StdConstant)opds[4].constant).valueH;
 						int Rt = ((StdConstant)opds[4].constant).valueH;
 						createCoProc(code, armMcr, condAlways, coproc, opc1, Rt, CRn, CRm, opc2);
-//					} else if (m.id == idHALT) { // HALT	// TODO
-//						
+					} else if (m.id == idHALT) { // HALT
+						createBranchImm(code, armB, condAlways, -2);
 					} else if (m.id == idENABLE_FLOATS) { // nothing to do
 					} else if (m.id == idASM) { // ASM
 						code.instructions[code.iCount] = InstructionDecoder.dec.getCode(((StringLiteral)opds[0].constant).string.toString());
