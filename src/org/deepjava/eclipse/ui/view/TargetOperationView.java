@@ -297,7 +297,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[3]);
 		column.getColumn().setWidth(bounds[3]);
-		column.getColumn().setResizable(false);
+		column.getColumn().setResizable(true);
 		column.getColumn().setMoveable(false);
 		column.setEditingSupport(new AddressEditingSupport(viewer));
 
@@ -318,7 +318,7 @@ public class TargetOperationView extends ViewPart implements ICdescAndTypeConsts
 		column = new TableViewerColumn(viewer, SWT.NONE);
 		column.getColumn().setText(titels[6]);
 		column.getColumn().setWidth(bounds[6]);
-		column.getColumn().setResizable(false);
+		column.getColumn().setResizable(true);
 		column.getColumn().setMoveable(false);
 		
 		column = new TableViewerColumn(viewer, SWT.NONE);

@@ -545,7 +545,6 @@ public class Launcher implements ICclassFileConsts {
 			String fname = Configuration.getImgFileName().toString();
 			// open bin file for reading
 			File binFile = new File(fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + fname.substring(fname.lastIndexOf('.'), fname.length()));
-			System.out.println(fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + fname.substring(fname.lastIndexOf('.'), fname.length()));
 			if (!binFile.exists()) {
 				ErrorReporter.reporter.error(822, "check if proper target file format used");
 				return;
@@ -554,7 +553,6 @@ public class Launcher implements ICclassFileConsts {
 			// open mcs file for writing
 			fname = fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + ".mcs";
 			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
-			System.out.println(fname);
 			log.println(fname);
 			// open predefined Xilinx mcs file 
 			String plFile = Configuration.getPlFile();
@@ -580,7 +578,6 @@ public class Launcher implements ICclassFileConsts {
 				writerMcs.close();
 				return;
 			}
-			System.out.println(fname);
 			BufferedReader readerMcs = new BufferedReader(new FileReader(fname));
 			StringBuffer buf = new StringBuffer();
 			String lineMcs;
