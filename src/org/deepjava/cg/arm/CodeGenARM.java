@@ -171,6 +171,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset has no prolog
 			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table has no prolog
+			} else if (method.name == HString.getRegisteredHString("vectorTableCopy")) {	// vector table has no prolog
 			} else if (method.name == HString.getRegisteredHString("superVisorCall")) {	// special treatment for exception handling
 				code.iCount = 0;
 				createBlockDataTransfer(code, armPush, condAlways, 7 << 10);	// store nonvolatiles R10, R11, R12 which are used within this method
@@ -244,6 +245,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		if ((method.accAndPropFlags & (1 << dpfExcHnd)) != 0) {	// exception
 			if (method.name == HString.getRegisteredHString("reset")) {	// reset needs no epilog
 			} else if (method.name == HString.getRegisteredHString("vectorTable")) {	// vector table needs no epilog
+			} else if (method.name == HString.getRegisteredHString("vectorTableCopy")) {	// vector table needs no epilog
 			} else if (method.name == HString.getRegisteredHString("superVisorCall")) {	// special treatment for exception handling
 				Method m = Method.getCompSpecSubroutine("handleException");
 				assert m != null;
