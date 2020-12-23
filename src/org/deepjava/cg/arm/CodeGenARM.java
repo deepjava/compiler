@@ -3622,6 +3622,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	private void insertPrologException(Code32 code, int stackSize) {
 		if (!RegAllocator.fullRegSetGPR) ErrorReporter.reporter.error(606);
 		code.iCount = 0;	
+		createBlockDataTransfer(code, armPushSingle, condAlways, scratchReg << 12);	// store scratch register
 		createDataProcMovReg(code, armMov, condAlways, scratchReg, stackPtr, noShift, 0);	// make copy for back trace
 		int regList = 1 << LR;
 		if (nofNonVolGPR > 0) 
@@ -3638,6 +3639,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			for (int i = 0; i < nofNonVolGPR; i++) regList += 1 << (topGPR - i); 
 		regList |= ((1 << (volEndGPR + 1)) - 1);
 		createBlockDataTransfer(code, armPop, condAlways, regList);	// load all volatile GPSs, LR, nonvolatile GPRs used in the method
+		createBlockDataTransfer(code, armPopSingle, condAlways, scratchReg << 12);	// load scratch register
 		createDataProcImm(code, armSubs, condAlways, PC, LR, 4);	// load CPSR and PC atomically
 	}
 
