@@ -848,8 +848,7 @@ public class Launcher implements ICclassFileConsts {
 
 	protected static void createInterfaceFiles(String libraryPath) {
 		String basePath = libraryPath + File.separatorChar + "src" + File.separatorChar +
-				"ch"  + File.separatorChar + "ntb"  + File.separatorChar + "inf"  + 
-				File.separatorChar + "deep"  + File.separatorChar + "runtime";
+				"org"  + File.separatorChar + "deepjava" + File.separatorChar + "runtime";
 		
 		createCompilerInterfaceFile(basePath);
 		
