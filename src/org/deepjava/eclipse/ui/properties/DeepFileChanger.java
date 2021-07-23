@@ -60,14 +60,14 @@ public class DeepFileChanger {
 			if (indexOfComment < indexOfNewLine) {
 				int indexOfStartToken = fileContent.indexOf("=", indexOfKey);
 				int indexOfEndToken = fileContent.indexOf(";", indexOfKey);
-				if (indexOfStartToken < 0 || indexOfEndToken < 0) return "not available";
+				if (indexOfStartToken < 0 || indexOfEndToken < 0) return "none";
 				String str = fileContent.substring(indexOfStartToken+1, indexOfEndToken);
 				return str.trim();	
 			} else {
 				if (comment) { // its a comment
 					int indexOfStartToken = fileContent.indexOf("=", indexOfKey);
 					int indexOfEndToken = fileContent.indexOf(";", indexOfKey);
-					if (indexOfStartToken < 0 || indexOfEndToken < 0) return "not available";
+					if (indexOfStartToken < 0 || indexOfEndToken < 0) return "none";
 					String str = fileContent.substring(indexOfStartToken+1, indexOfEndToken);
 					return '#' + str.trim();
 				} else {
@@ -76,7 +76,7 @@ public class DeepFileChanger {
 				}
 			}
 		}
-		return "not available";
+		return "none";
 	}
 
 	public int changeContent(String key, String value) {

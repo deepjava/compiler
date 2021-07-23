@@ -54,12 +54,14 @@ public class Configuration implements ICclassFileConsts {
 	public static final int BIN = 0;
 	public static final int HEX = 1;
 	public static final int SREC = 2;
-	public static final int DTIM = 3;
-	public static final int ELF = 4;
+	public static final int MCS = 3;
+	public static final int DTIM = 4;
+	public static final int ELF = 5;
 	public static String[] formatMnemonics = {
 		"BIN",
 		"HEX",
 		"sREC",
+		"MCS",
 		"dtim",
 		"ELF"
 	};	

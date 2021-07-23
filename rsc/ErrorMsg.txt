@@ -124,5 +124,8 @@ ErrorNr;Description;Solution
 822;no bin file found;
 823;no pl file specified;
 824;no mcs file found;
+825;no flash segment found;
+830;no reset class found;
+831;no reset method found;
 
 900;Connection lost;

@@ -81,10 +81,11 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		board = dfc.getContent("boardtype", false);
 		os = dfc.getContent("ostype", false);
 		programmer = dfc.getContent("programmertype", false);
-		programmerOpt = dfc.getContent("programmeropts", false);
+		programmerOpt = dfc.getContent("programmeropts", true);
+		if (programmerOpt.startsWith("#")) programmerOpt = programmerOpt.substring(1);
 		imglocation = dfc.getContent("imgfile", true);
 		imgformat = dfc.getContent("imgformat", false);
-		if (imglocation.equalsIgnoreCase("not available")) {
+		if (imglocation.equalsIgnoreCase("none")) {
 			createImgFile = false;
 		} else if (imglocation.startsWith("#")) {
 			lastChoiceImg = imglocation.replace('/', '\\');
@@ -100,7 +101,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			lastChoiceImgFormat = imgformat;
 		}
 		plfile = dfc.getContent("pl_file", true);
-		if (plfile.equalsIgnoreCase("not available")) loadPL = false;
+		if (plfile.equalsIgnoreCase("none")) loadPL = false;
 		else if (plfile.startsWith("#")) {
 			loadPL = false;
 			lastChoicePl = plfile.replace('/', '\\');
@@ -406,7 +407,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		}
 		strImg[strImg.length - 1] = "none";
 		imgFormatCombo.setItems(strImg);
-		if (!lastChoiceImg.equalsIgnoreCase("not available")) imgFormatCombo.select(indexImgFormat);
+		if (!lastChoiceImg.equalsIgnoreCase("none")) imgFormatCombo.select(indexImgFormat);
 		else imgFormatCombo.select(indexImg);
 	}
 
@@ -417,7 +418,7 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			return false;		
 		}
 		String[][] boards = Configuration.getDescInConfigDir(new File(lib.toString() + Configuration.boardsPath), Parser.sBoard);
-		if (boards == null || boards[0][0].equals("not available")) {
+		if (boards == null || boards[0][0].equals("none")) {
 			libState.setText("Given library path is NOT valid target library.");
 			return false;			
 		}
