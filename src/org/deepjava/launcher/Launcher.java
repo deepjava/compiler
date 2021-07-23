@@ -454,7 +454,10 @@ public class Launcher implements ICclassFileConsts {
 								log.println("Downloading target image");
 								initTarget(b, targetConfig);
 								HString str = Configuration.getImgFileName();
-								if (str == null) reporter.error(820);
+								if (str == null) {
+									reporter.error(820); 
+									return;
+								}
 								tc.downloadImageFile(str.toString());
 							} catch (TargetConnectionException e) {
 								if (e.getMessage().equals("no such file")) {
