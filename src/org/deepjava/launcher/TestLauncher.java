@@ -62,7 +62,7 @@ public class TestLauncher {
 					Launcher.setTargetConnection(tc);
 					Launcher.openTargetConnection();
 					Launcher.downloadTargetImage();
-					Launcher.startTarget(0x100);
+					Launcher.startTarget(Launcher.getResetAddr());
 //					Launcher.closeTargetConnection();
 				} catch (ClassNotFoundException e) {
 					ErrorReporter.reporter.error(811, programmer.getClassName().toString());

@@ -18,10 +18,15 @@
 
 package org.deepjava.linker;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -49,6 +54,7 @@ import org.deepjava.config.Segment;
 import org.deepjava.dwarf.DebugSymbols;
 import org.deepjava.host.ErrorReporter;
 import org.deepjava.host.StdStreams;
+import org.deepjava.strings.HString;
 
 import nl.lxtreme.binutils.elf.AbiType;
 import nl.lxtreme.binutils.elf.Elf;
@@ -1301,13 +1307,164 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			bytesWritten =  binFile.size();
 			if (dbg) vrb.println("[LINKER] END: Writing target image to file.");
 			binFile.close();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			reporter.error(11, "Writing image file");
 		}
 		return bytesWritten;
 	}
 	
+	public static long writeTargetImageToMcsFile(String fname) throws IOException {
+		if (dbg) vrb.println("\n[LINKER] START: Writing target image to file: \"" + fname +"\":");
+		long bytesWritten = 0;
+		TargetMemorySegment tms = targetImage;
+		boolean flash = true;
+		while (tms != null && reporter.nofErrors <= 0) {
+			if (tms.segment.owner.technology != 1) flash = false;
+			tms = tms.next;
+		}
+		if (!flash) {
+			reporter.error(825, "all segments must go into flash");
+			return 0;
+		}
+		try {
+			// open bin file for reading
+			File binFile = new File(fname + '.' + Linker32.targetImage.segment.owner.name + ".bin");
+			if (!binFile.exists()) {
+				ErrorReporter.reporter.error(822, "check if proper target file format used");
+				return 0;
+			}
+			BufferedInputStream readerBin = new BufferedInputStream(new FileInputStream(binFile));
+			// open mcs file for writing
+			fname = fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + ".mcs";
+			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
+			// open predefined Xilinx mcs file 
+			String plFile = Configuration.getPlFile();
+			if (plFile == null) {
+				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
+				readerBin.close();
+				writerMcs.close();
+				return 0;
+			}
+			HString[] libs = Configuration.getLibPaths();
+			boolean found = false;
+			for (HString lib : libs) {
+				fname = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 4) + "App.mcs";
+				File f = new File(fname);
+				if (f.exists()) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				ErrorReporter.reporter.error(824, "check if library path set correctly");
+				readerBin.close();
+				writerMcs.close();
+				return 0;
+			}
+			BufferedReader readerMcs = new BufferedReader(new FileReader(fname));
+			StringBuffer buf = new StringBuffer();
+			String lineMcs;
+			byte[] lineBin = new byte[128];
+			int line = 1;
+			
+			// determine application size in bytes, this size must be written into header file info section (see below)
+			int size = 0, k;
+			final int len = 16;
+			while ((k = readerBin.read(lineBin, 0, len)) == len) size += 16;
+			if (k > 0) size += k;
+			readerBin.close();
+//			StdStreams.vrb.println("nof bytes in bin file = 0x" + Integer.toHexString(size));
+			
+			readerBin = new BufferedInputStream(new FileInputStream(binFile));
+			// copy
+			while (line < 159 && ((lineMcs = readerMcs.readLine()) != null)) {
+				buf.append(lineMcs);
+				buf.append('\n');
+				line++;
+			}
+			int checksum = 3 * size;
+			// change header file info for application
+			lineMcs = readerMcs.readLine();
+			String newLine = lineMcs.substring(0, 9) + String.format("%08X", Integer.reverseBytes(size)) + String.format("%08X", Integer.reverseBytes(size)) + String.format("%08X", Integer.reverseBytes(size)) + lineMcs.substring(33);
+			checksum += getHeaderInfoEntry(lineMcs.substring(33, 41));
+			buf.append(newLine);
+			buf.append('\n');
+			line++;
+			lineMcs = readerMcs.readLine();
+			checksum += getHeaderInfoEntry(lineMcs.substring(9, 17));
+			checksum += getHeaderInfoEntry(lineMcs.substring(17, 25));
+			checksum += getHeaderInfoEntry(lineMcs.substring(25, 33));
+			checksum += getHeaderInfoEntry(lineMcs.substring(33, 41));
+			buf.append(lineMcs);
+			buf.append('\n');
+			line++;
+			lineMcs = readerMcs.readLine();
+			checksum += getHeaderInfoEntry(lineMcs.substring(9, 17));
+			checksum += getHeaderInfoEntry(lineMcs.substring(17, 25));
+			checksum += getHeaderInfoEntry(lineMcs.substring(25, 33));
+			checksum += getHeaderInfoEntry(lineMcs.substring(33, 41));
+			buf.append(lineMcs);
+			buf.append('\n');
+			line++;
+			lineMcs = readerMcs.readLine();
+			checksum += getHeaderInfoEntry(lineMcs.substring(9, 17));
+			checksum += getHeaderInfoEntry(lineMcs.substring(17, 25));
+			checksum += getHeaderInfoEntry(lineMcs.substring(25, 33));
+			checksum = ~checksum;
+//			StdStreams.vrb.println("checksum = 0x" + Integer.toHexString(checksum));
+			newLine = lineMcs.substring(0, 33) + String.format("%08X", Integer.reverseBytes(checksum)) + lineMcs.substring(41);
+			buf.append(newLine);
+			buf.append('\n');
+			line++;
+
+			// copy
+			while (line < 137603 && ((lineMcs = readerMcs.readLine()) != null)) {
+				buf.append(lineMcs);
+				buf.append('\n');
+				line++;
+			}
+			
+			// replace with content of target image bin file
+			int offset = 0xa300;
+			int highAddr = 0x22;
+			while ((k = readerBin.read(lineBin, 0, len)) == len) {
+//				StdStreams.vrb.print("reading bin = " + count + ": ");
+//				for (int i = 0; i < len; i++) StdStreams.vrb.print(String.format("%02X", lineBin[i]));        
+//				StdStreams.vrb.println();
+				buf.append(":10" + String.format("%04X", offset) + "00");
+				for (int i = 0; i < len; i++) {
+					buf.append(String.format("%02X", lineBin[i]));
+				}
+				buf.append("AB\n");
+				if (offset == 0xfff0) {	// high address tag, MCS files need such tags every 64k block
+					buf.append(":02" + String.format("%04X", 0) + "04" + String.format("%04X", highAddr) + "AB\n");
+					highAddr++;
+					offset = 0;
+				} else offset += 0x10;
+			} 
+			if (k > 0) {	// end unfinished lines
+//				StdStreams.vrb.print("reading bin = " + count + ": ");
+//				for (int i = 0; i < k; i++) StdStreams.vrb.print(String.format("%02X", lineBin[i]));        
+//				StdStreams.vrb.println();
+				buf.append(":" + String.format("%02X", k) + String.format("%04X", offset) + "00");
+				for (int i = 0; i < k; i++) {
+					buf.append(String.format("%02X", (byte)lineBin[i]));
+				}
+				buf.append("AB\n");
+			}
+			buf.append(":00000001FF\n");	// eof tag
+			readerMcs.close();
+			readerBin.close();
+			writerMcs.write(buf.toString());
+			bytesWritten = buf.length();
+			writerMcs.close();
+		} catch (IOException e) {
+			ErrorReporter.reporter.error(822, "check if proper target file format used");
+			return 0;
+		}
+		return bytesWritten;
+	}
+
 	public static long writeTargetImageToElfFile(String fileName) throws IOException {		
 		if(dbg) vrb.println("[LINKER] START: Writing target image to file: \"" + fileName +"\":\n");	
 		ByteBuffer buf = ByteBuffer.allocate(0x200000);
@@ -1483,6 +1640,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				targetImage = tms;
 			}
 		}
+	}
+
+	private static int getHeaderInfoEntry(String str) {
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i <= str.length() - 2; i += 2) {
+			result.append(new StringBuilder(str.substring(i, i + 2)).reverse());
+		}
+		return (int)Long.parseLong(result.reverse().toString(), 16);   
 	}
 
 	private static boolean checkConstantPoolType(Item item) {

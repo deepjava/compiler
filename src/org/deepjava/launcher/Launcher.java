@@ -45,6 +45,7 @@ import org.deepjava.classItems.Array;
 import org.deepjava.classItems.CFR;
 import org.deepjava.classItems.Class;
 import org.deepjava.classItems.ICclassFileConsts;
+import org.deepjava.classItems.Item;
 import org.deepjava.classItems.Method;
 import org.deepjava.config.Arch;
 import org.deepjava.config.Board;
@@ -448,11 +449,7 @@ public class Launcher implements ICclassFileConsts {
 				} else if (programmer.name.equals(HString.getHString("openOCD"))) {
 					TargetMemorySegment tms = Linker32.targetImage;
 					if (tms != null && reporter.nofErrors <= 0) {
-						if (tms.segment.owner.technology == 1) {	// flash device
-							log.print("Creating flash file: ");
-							createZynqFlashFile(tms);
-							// change driver and load mcs file
-						} else {	// ram device
+						if (tms.segment.owner.technology != 1) {	// ram device
 							try {
 								log.println("Downloading target image");
 								initTarget(b, targetConfig);
@@ -534,152 +531,6 @@ public class Launcher implements ICclassFileConsts {
 		} else	reporter.error(238);
 	}
 	
-	private static void createZynqFlashFile(TargetMemorySegment tms) {
-		while (tms != null && reporter.nofErrors <= 0) {
-			if (tms.segment.owner.technology != 1) {
-				StdStreams.vrb.println("other than flash segment found");
-			}
-			tms = tms.next;
-		}
-		try {
-			String fname = Configuration.getImgFileName().toString();
-			// open bin file for reading
-			File binFile = new File(fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + fname.substring(fname.lastIndexOf('.'), fname.length()));
-			if (!binFile.exists()) {
-				ErrorReporter.reporter.error(822, "check if proper target file format used");
-				return;
-			}
-			BufferedInputStream readerBin = new BufferedInputStream(new FileInputStream(binFile));
-			// open mcs file for writing
-			fname = fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + ".mcs";
-			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
-			log.println(fname);
-			// open predefined Xilinx mcs file 
-			String plFile = Configuration.getPlFile();
-			if (plFile == null) {
-				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
-				readerBin.close();
-				writerMcs.close();
-				return;
-			}
-			HString[] libs = Configuration.getLibPaths();
-			boolean found = false;
-			for (HString lib : libs) {
-				fname = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 4) + "App.mcs";
-				File f = new File(fname);
-				if (f.exists()) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				ErrorReporter.reporter.error(824, "check if library path set correctly");
-				readerBin.close();
-				writerMcs.close();
-				return;
-			}
-			BufferedReader readerMcs = new BufferedReader(new FileReader(fname));
-			StringBuffer buf = new StringBuffer();
-			String lineMcs;
-			byte[] lineBin = new byte[128];
-			int line = 1;
-			
-			// determine application size in bytes, this size must be written into header file info section (see below)
-			int size = 0, k;
-			final int len = 16;
-			while ((k = readerBin.read(lineBin, 0, len)) == len) size += 16;
-			if (k > 0) size += k;
-			readerBin.close();
-//			StdStreams.vrb.println("nof bytes in bin file = 0x" + Integer.toHexString(size));
-			
-			readerBin = new BufferedInputStream(new FileInputStream(binFile));
-			// copy
-			while (line < 159 && ((lineMcs = readerMcs.readLine()) != null)) {
-				buf.append(lineMcs);
-				buf.append('\n');
-				line++;
-			}
-			int checksum = 3 * size;
-			// change header file info for application
-			lineMcs = readerMcs.readLine();
-			String newLine = lineMcs.substring(0, 9) + String.format("%08X", Integer.reverseBytes(size)) + String.format("%08X", Integer.reverseBytes(size)) + String.format("%08X", Integer.reverseBytes(size)) + lineMcs.substring(33);
-			checksum += getHeaderInfoEntry(lineMcs.substring(33, 41));
-			buf.append(newLine);
-			buf.append('\n');
-			line++;
-			lineMcs = readerMcs.readLine();
-			checksum += getHeaderInfoEntry(lineMcs.substring(9, 17));
-			checksum += getHeaderInfoEntry(lineMcs.substring(17, 25));
-			checksum += getHeaderInfoEntry(lineMcs.substring(25, 33));
-			checksum += getHeaderInfoEntry(lineMcs.substring(33, 41));
-			buf.append(lineMcs);
-			buf.append('\n');
-			line++;
-			lineMcs = readerMcs.readLine();
-			checksum += getHeaderInfoEntry(lineMcs.substring(9, 17));
-			checksum += getHeaderInfoEntry(lineMcs.substring(17, 25));
-			checksum += getHeaderInfoEntry(lineMcs.substring(25, 33));
-			checksum += getHeaderInfoEntry(lineMcs.substring(33, 41));
-			buf.append(lineMcs);
-			buf.append('\n');
-			line++;
-			lineMcs = readerMcs.readLine();
-			checksum += getHeaderInfoEntry(lineMcs.substring(9, 17));
-			checksum += getHeaderInfoEntry(lineMcs.substring(17, 25));
-			checksum += getHeaderInfoEntry(lineMcs.substring(25, 33));
-			checksum = ~checksum;
-//			StdStreams.vrb.println("checksum = 0x" + Integer.toHexString(checksum));
-			newLine = lineMcs.substring(0, 33) + String.format("%08X", Integer.reverseBytes(checksum)) + lineMcs.substring(41);
-			buf.append(newLine);
-			buf.append('\n');
-			line++;
-
-			// copy
-			while (line < 137603 && ((lineMcs = readerMcs.readLine()) != null)) {
-				buf.append(lineMcs);
-				buf.append('\n');
-				line++;
-			}
-			
-			// replace with content of target image bin file
-			int offset = 0xa300;
-			int highAddr = 0x22;
-			while ((k = readerBin.read(lineBin, 0, len)) == len) {
-//				StdStreams.vrb.print("reading bin = " + count + ": ");
-//				for (int i = 0; i < len; i++) StdStreams.vrb.print(String.format("%02X", lineBin[i]));        
-//				StdStreams.vrb.println();
-				buf.append(":10" + String.format("%04X", offset) + "00");
-				for (int i = 0; i < len; i++) {
-					buf.append(String.format("%02X", lineBin[i]));
-				}
-				buf.append("AB\n");
-				if (offset == 0xfff0) {	// high address tag, MCS files need such tags every 64k block
-					buf.append(":02" + String.format("%04X", 0) + "04" + String.format("%04X", highAddr) + "AB\n");
-					highAddr++;
-					offset = 0;
-				} else offset += 0x10;
-			} 
-			if (k > 0) {	// end unfinished lines
-//				StdStreams.vrb.print("reading bin = " + count + ": ");
-//				for (int i = 0; i < k; i++) StdStreams.vrb.print(String.format("%02X", lineBin[i]));        
-//				StdStreams.vrb.println();
-				buf.append(":" + String.format("%02X", k) + String.format("%04X", offset) + "00");
-				for (int i = 0; i < k; i++) {
-					buf.append(String.format("%02X", (byte)lineBin[i]));
-				}
-				buf.append("AB\n");
-			}
-			buf.append(":00000001FF\n");	// eof tag
-			readerMcs.close();
-			readerBin.close();
-			writerMcs.write(buf.toString());
-			writerMcs.close();
-		} catch (IOException e) {
-			ErrorReporter.reporter.error(822, "check if proper target file format used");
-			return;
-		}
-	}
-
 	private static void initTarget(Board b, RunConfiguration targetConfig) throws TargetConnectionException {
 		log.println("Initializing target");
 		if (dbg) vrb.println("[Launcher] Reseting target");
@@ -712,12 +563,27 @@ public class Launcher implements ICclassFileConsts {
 		for (int i = 0; i < b.cpu.arch.getNofGPRs(); i++) tc.setRegisterValue("R" + i, 0);
 	}
 
-	private static int getHeaderInfoEntry(String str) {
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i <= str.length() - 2; i += 2) {
-			result.append(new StringBuilder(str.substring(i, i + 2)).reverse());
+	public static int getResetAddr() {
+		Class[] sysCls = Configuration.getSystemClasses();
+		Class resetCls = null;
+		for (Class cls : sysCls) {
+			if (cls.name.toString().contains("Reset")) resetCls = cls;
 		}
-		return (int)Long.parseLong(result.reverse().toString(), 16);   
+		if (resetCls == null) {
+			reporter.error(830, "the operating system configuration must define a Reset class");
+			return -1;
+		}
+		Item res = resetCls.methods;
+		Method resetMethod = null;
+		while (res != null) {
+			if (res.name.toString().contains("reset")) resetMethod = (Method) res;
+			res = res.next;
+		}
+		if (resetMethod == null) {
+			reporter.error(831, "the Reset class must contain a static reset method");
+			return -1;
+		}
+		return resetMethod.address;
 	}
 
 	public static void startTarget(int address) {
@@ -801,6 +667,12 @@ public class Launcher implements ICclassFileConsts {
 				break;
 			case Configuration.SREC:
 				reporter.error(10, "Writing srec image");
+				break;
+			case Configuration.MCS:
+				Linker32.writeTargetImageToBinFile(fileName + ".bin");
+				log.print("Writing target image in binary format to: " + fileName);
+				bytesWritten = Linker32.writeTargetImageToMcsFile(fileName);
+				log.println(" (" + bytesWritten / 1024 + ("kB)"));
 				break;
 			case Configuration.DTIM:
 				bytesWritten = Linker32.writeTargetImageToDtimFile(fileName);
