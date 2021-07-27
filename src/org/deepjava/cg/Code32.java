@@ -111,7 +111,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 			sb.append("(end of method)\n"); i++;
 			sb.append("\t" + String.format("%08X", instructions[i]));
 			sb.append("\t   [0x");	sb.append(Integer.toHexString(i * 4)); sb.append("]\t");
-			sb.append(instructions[i++]); sb.append("  (address of class variables)\n");
+			sb.append("(address of class variables)\n");
 		}
 		return sb.toString();
 	}

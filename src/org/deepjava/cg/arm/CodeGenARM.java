@@ -3465,7 +3465,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		// fix addresses of variable and constant segment
 		currInstr++;
 		Class clazz = code.ssa.cfg.method.owner;
-		code.instructions[currInstr] = clazz.varSegment.address + clazz.varOffset;
+		code.instructions[currInstr] = clazz.varSegment.address + clazz.varOffset;	// this entry is currently not used
 	}
 
 	private void insertProlog(Code32 code, int stackSize) {
