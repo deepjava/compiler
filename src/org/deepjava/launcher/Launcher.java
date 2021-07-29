@@ -40,12 +40,12 @@ import org.deepjava.classItems.Array;
 import org.deepjava.classItems.CFR;
 import org.deepjava.classItems.Class;
 import org.deepjava.classItems.ICclassFileConsts;
-import org.deepjava.classItems.Item;
 import org.deepjava.classItems.Method;
 import org.deepjava.config.Arch;
 import org.deepjava.config.Board;
 import org.deepjava.config.CPU;
 import org.deepjava.config.Configuration;
+import org.deepjava.config.OperatingSystem;
 import org.deepjava.config.Parser;
 import org.deepjava.config.Programmer;
 import org.deepjava.config.Register;
@@ -562,26 +562,17 @@ public class Launcher implements ICclassFileConsts {
 	}
 
 	public static int getResetAddr() {
-		Class[] sysCls = Configuration.getSystemClasses();
-		Class resetCls = null;
-		for (Class cls : sysCls) {
-			if (cls.name.toString().contains("Reset")) resetCls = cls;
-		}
-		if (resetCls == null) {
+		OperatingSystem os = Configuration.getOS();
+		if (os.resetClass == null) {
 			reporter.error(830, "the operating system configuration must define a Reset class");
 			return -1;
 		}
-		Item res = resetCls.methods;
-		Method resetMethod = null;
-		while (res != null) {
-			if (res.name.toString().contains("reset")) resetMethod = (Method) res;
-			res = res.next;
-		}
-		if (resetMethod == null) {
+		Method m = os.getSystemMethodByName(os.resetClass, Configuration.RESET);
+		if (m == null) {
 			reporter.error(831, "the Reset class must contain a static reset method");
 			return -1;
 		}
-		return resetMethod.address;
+		return m.address;
 	}
 
 	public static void startTarget(int address) {

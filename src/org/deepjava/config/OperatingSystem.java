@@ -34,7 +34,7 @@ public class OperatingSystem extends Item implements ICclassFileConsts {
 	public Class llClass;
 	public Class kernelClass;
 	public Class heapClass;
-	Class resetClass;
+	public Class resetClass;
 	Class exceptionBaseClass;
 	Class[] exceptions = new Class[maxNofExceptionClasses];
 	int nofExcClasses;
