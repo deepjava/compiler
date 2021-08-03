@@ -34,9 +34,13 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 	public SSA ssa;	// reference to the SSA of a method
 	public int[] instructions;	// contains machine instructions for the ssa of a method
 	public int iCount;	// nof instructions for this method, including exception information
+	// all bl instructions are counted, they may have to be converted to far jumps, which occupy two more instructions
+	// when allocating code memory, these potential jumps must be included
+	public int nofBlInstrs;
 	public int excTabCount;	// start of exception information in instruction array
 	public int localVarOffset;	// stack offset (in bytes) to locals stored on the stack
 	public Item[] fixups;	// contains all references whose address has to be fixed by the linker
+	public int[] fixIndex;	// contains all instruction indexes which have to be fixed by the linker
 	public int fCount;	// nof fixups
 	public int lastFixup;	// instr number where the last fixup is found
 
@@ -44,6 +48,7 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 		this.ssa = ssa;
 		instructions = new int[defaultNofInstr];
 		fixups = new Item[defaultNofFixup];
+		fixIndex = new int[defaultNofFixup];
 	}
 
 	public void incInstructionNum() {
@@ -54,6 +59,18 @@ public class Code32 implements ICclassFileConsts, InstructionOpcs {
 			System.arraycopy(instructions, 0, newInstructions, 0, len);
 			instructions = newInstructions;
 		}
+	}
+
+	public void insertInstructions(int curr, int nof) {
+		iCount += nof;
+		excTabCount += nof;
+		int len = instructions.length;
+		int[] newInstructions;
+		if (iCount >= len) newInstructions = new int[2 * len];
+		else newInstructions = new int[len];
+		System.arraycopy(instructions, 0, newInstructions, 0, curr);
+		System.arraycopy(instructions, curr + 1, newInstructions, curr + 1 + nof, iCount - curr - 2);
+		instructions = newInstructions;
 	}
 
 	public String toString() {

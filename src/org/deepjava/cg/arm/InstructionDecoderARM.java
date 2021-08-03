@@ -1400,8 +1400,9 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 							}
 						case 2: return "bxj" + (cond!=condAlways?condString[cond]:"") + " R" + m;
 						case 3:
-							if (cond == 0xf) return "blx" + " R" + m;
-							else return "bl" + (cond!=condAlways?condString[cond]:"") + " R" + m;
+//							if (cond == 0xf) return "blx" + " R" + m;
+//							else 
+							return "blx" + (cond!=condAlways?condString[cond]:"") + " R" + m;
 						case 4: return "undefined";
 						case 5:	// Saturating addition and subtraction p.202
 							switch(op21_2) {
@@ -2310,7 +2311,7 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					return "b" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
 				}
 				if ((op20_6 & 0x30) == 0x30) {	// Branch with Link p.348
-					// Encoxding A1 (cond != 0xf)
+					// Encoding A1 (cond != 0xf)
 					return "bl" + (cond!=condAlways?condString[cond]:"") + " " + (((op0_24<<8)>>6)+8);	// SignExtend(imm24:'00', 32); Multiplied by 4, correct for pipeline stage
 				}	
 				break;

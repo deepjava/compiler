@@ -602,8 +602,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		while (m != null) {
 			if (m.machineCode != null) {
 				m.offset = codeSize;
-				codeSize += m.machineCode.iCount * 4; // iCount = number of instructions!
-				if(dbg) vrb.println("    > " + m.name + ": codeSize = " + m.machineCode.iCount * 4 + " byte");
+				codeSize += (m.machineCode.iCount + m.machineCode.nofBlInstrs * 2) * 4; // iCount = number of instructions!
+				if(dbg) vrb.println("    > " + m.name + ": codeSize = " + (m.machineCode.iCount + m.machineCode.nofBlInstrs * 2) * 4 + " byte");
 			}
 			m = (Method)m.next;
 		}
@@ -1275,11 +1275,11 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
 		String currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
-		Configuration.addImgFile(currentFileName, tms.startAddress);
 		try {
 			DataOutputStream binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));	
 			if (dbg) vrb.println("  Writing to file: " + currentFileName);
 			int currentAddress = dev.address;	// start with device start address
+			Configuration.addImgFile(currentFileName, currentAddress);
 			while (tms != null) {
 				while (currentAddress < tms.startAddress) { // fill with 0 from end of last tms to address of actual tms
 					binFile.write(0);
@@ -1297,9 +1297,9 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 					binFile.close();
 					dev = tms.next.segment.owner;
 					currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
-					Configuration.addImgFile(currentFileName, tms.next.startAddress);
 					binFile = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(currentFileName)));
 					currentAddress = dev.address;
+					Configuration.addImgFile(currentFileName, currentAddress);
 					if (dbg) vrb.println("  Writing to file: " + currentFileName);
 				}
 				tms = tms.next;

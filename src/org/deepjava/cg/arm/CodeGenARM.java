@@ -3360,10 +3360,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	 * both instructions will later be fixed
 	 */
 	private void loadConstantAndFixup(Code32 code, int reg, Item item) {
-		if (code.lastFixup < 0 || code.lastFixup > 0xffff) {ErrorReporter.reporter.error(602); return;}
-		createMovw(code, armMovw, condAlways, reg, code.lastFixup);
+		createMovw(code, armMovw, condAlways, reg, 0);
 		createMovw(code, armMovt, condAlways, reg, 0);
-		code.lastFixup = code.iCount - 2;
+		code.fixIndex[code.fCount] = code.iCount - 2;
 		code.fixups[code.fCount] = item;
 		code.fCount++;
 		int len = code.fixups.length;
@@ -3372,6 +3371,10 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			for (int k = 0; k < len; k++)
 				newFixups[k] = code.fixups[k];
 			code.fixups = newFixups;
+			int[] newFixIndex = new int[2 * len];
+			for (int k = 0; k < len; k++)
+				newFixIndex[k] = code.fixIndex[k];
+			code.fixIndex = newFixIndex;
 		}		
 	}
 	
@@ -3380,9 +3383,9 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	 * it's offset will later be fixed
 	 */
 	private void insertBLAndFixup(Code32 code, Item item) {
-		if (code.lastFixup < 0 || code.lastFixup > 0xffff) {ErrorReporter.reporter.error(602); return;}
-		createBranchImm(code, armBl, condAlways, code.lastFixup);
-		code.lastFixup = code.iCount - 1;
+		createBranchImm(code, armBl, condAlways, 0);
+		code.nofBlInstrs++;
+		code.fixIndex[code.fCount] = code.iCount - 1;
 		code.fixups[code.fCount] = item;
 		code.fCount++;
 		int len = code.fixups.length;
@@ -3391,81 +3394,115 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 			for (int k = 0; k < len; k++)
 				newFixups[k] = code.fixups[k];
 			code.fixups = newFixups;
+			int[] newFixIndex = new int[2 * len];
+			for (int k = 0; k < len; k++)
+				newFixIndex[k] = code.fixIndex[k];
+			code.fixIndex = newFixIndex;
 		}		
 	}
 	
 	public void doFixups(Code32 code) {
-		if (dbg) StdStreams.vrb.println("\t\tlastFixup at instruction " + code.lastFixup);		
-		int currInstr = code.lastFixup;
-		int currFixup = code.fCount - 1;
-		while (currFixup >= 0) {
-			Item item = code.fixups[currFixup];
-			int addr;
-			if (item == null) // item is null, if constant null is loaded (aconst_null) 
-				addr = 0;
-			else 
-				addr = item.address;
-			if (dbg) { 
-				if (item == null) StdStreams.vrb.print("\tnull"); 
-				else StdStreams.vrb.println("\t\t" + item.name + " at 0x" + Integer.toHexString(addr) + " currInstr=" + currInstr);
-			}
+		for (int i = 0; i < code.fCount; i++) {
+			int currIndex = code.fixIndex[i];
 			int[] instrs = code.instructions;
-			int nextInstr;
-			if (item instanceof Method) {
-				if (((instrs[currInstr] >> 24) & 0xe) == 0xa) { // must be a branch to a method (BL)
-					nextInstr = instrs[currInstr] & 0xffff;
-					int branchOffset = ((addr - code.ssa.cfg.method.address) >> 2) - currInstr - 2;	// -2: account for pipelining
-					assert (branchOffset < 0x1000000) && (branchOffset > 0xff000000);
-					if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {ErrorReporter.reporter.error(650); return;}
-					instrs[currInstr] = (instrs[currInstr] & 0xff000000) | (branchOffset & 0xffffff);
-				} else {	// load the address of a method into a register
-					nextInstr = (instrs[currInstr] & 0xfff) + ((instrs[currInstr] & 0xf0000) >> 4);
-					int val = item.address & 0xffff;
-					instrs[currInstr] = (instrs[currInstr] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
-					val = (item.address >> 16) & 0xffff;
-					instrs[currInstr+1] = (instrs[currInstr+1] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);				
-				}
-			} else {	// must be a load / store instruction
-				nextInstr = (instrs[currInstr] & 0xfff) + ((instrs[currInstr] & 0xf0000) >> 4);
-				int val = item.address & 0xffff;
-				instrs[currInstr] = (instrs[currInstr] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
-				val = (item.address >> 16) & 0xffff;
-				instrs[currInstr+1] = (instrs[currInstr+1] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
+			Item item = code.fixups[i];
+			int addr;
+			if (item == null) addr = 0; // item is null, if constant null is loaded (aconst_null) 
+			else addr = item.address;
+			if (dbg) { 
+				if (item == null) StdStreams.vrb.println("        fix item null, currInstr at index " + currIndex);// +" = 0x" + Integer.toHexString(instrs[currInstr])); 
+				else StdStreams.vrb.println("        fix item " + item.name + " at addr 0x" + Integer.toHexString(addr) + ", currInstr at index " + currIndex +" = 0x" + Integer.toHexString(instrs[currIndex]));
 			}
-			currInstr = nextInstr;
-			currFixup--;
+			if (item instanceof Method) {
+				if (((instrs[currIndex] >> 24) & 0xe) == 0xa) { // must be a branch to a method (BL)
+					if (dbg) StdStreams.vrb.println("          is a bl instruction: ");		
+					int branchOffset = ((addr - code.ssa.cfg.method.address) >> 2) - currIndex - 2;	// -2: account for pipelining
+					if ((branchOffset >= 0x1000000) || (branchOffset <= 0xff000000)) {
+//						if (true) StdStreams.vrb.println("          large offset, change to blx in method: " + code.ssa.cfg.method.owner.name + "." + code.ssa.cfg.method.name + code.ssa.cfg.method.methDescriptor + " at " + currIndex);		
+						if (dbg) StdStreams.vrb.println("          large offset, change to blx");		
+						code.insertInstructions(currIndex, 2);
+						instrs = code.instructions;
+						// correct all later fixIndexes
+						for (int k = i + 1; k < code.fCount; k++) code.fixIndex[k] += 2;
+						// correct local branch targets
+						for (int k = 0; k < currIndex; k++) {
+							if (((instrs[k] >> 24) & 0xf) == 0xa) {	// is a b instruction
+								if (dbg) StdStreams.vrb.println("            branch at " + k);
+								if ((instrs[k] & 0x800000) == 0) {	// only forward branches have to be corrected
+									int offset = instrs[k] & 0xffffff;
+									if (k + offset + 2 > currIndex) {
+										if (dbg) StdStreams.vrb.println("            correct forward branch");
+										instrs[k] = (instrs[k] & 0xff000000) | ((offset + 2) & 0xffffff);
+									}
+								}
+							}
+						}
+						for (int k = currIndex + 1; k < code.iCount; k++) {
+							if (((instrs[k] >> 24) & 0xf) == 0xa) {	// is a b instruction
+								if (dbg) StdStreams.vrb.println("            branch at " + k);
+								if ((instrs[k] & 0x800000) != 0) {	// only backward branches have to be corrected
+									int offset = (instrs[k] & 0xffffff) | 0xff000000;
+									if (k + offset <= currIndex) {
+										if (dbg) StdStreams.vrb.println("            correct backward branch");
+										instrs[k] = (instrs[k] & 0xff000000) | ((offset - 2) & 0xffffff);
+									}
+								}
+							}
+						}
+						
+						int val = item.address & 0xffff;
+						instrs[currIndex] = (condAlways << 28) | (1 << 25) | armMovw | (scratchReg << 12) | ((val & 0xf000) << 4) | (val & 0xfff);
+						val = (item.address >> 16) & 0xffff;
+						instrs[currIndex + 1] = (condAlways << 28) | (1 << 25) | armMovt | (scratchReg << 12) | ((val & 0xf000) << 4) | (val & 0xfff);
+						instrs[currIndex + 2] = (condAlways << 28) | armBlxReg | (scratchReg << 0);
+					} else 
+						instrs[currIndex] = (instrs[currIndex] & 0xff000000) | (branchOffset & 0xffffff);
+				} else {	// // must be two subsequent instructions loading an address of a method
+					if (dbg) StdStreams.vrb.println("          is a method addr");		
+					int val = item.address & 0xffff;
+					instrs[currIndex] = (instrs[currIndex] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
+					val = (item.address >> 16) & 0xffff;
+					instrs[currIndex+1] = (instrs[currIndex+1] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);				
+				}
+			} else {	// must be two subsequent instructions loading an address of a class field
+				if (dbg) StdStreams.vrb.println("          is a field addr");		
+				int val = item.address & 0xffff;
+				instrs[currIndex] = (instrs[currIndex] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
+				val = (item.address >> 16) & 0xffff;
+				instrs[currIndex+1] = (instrs[currIndex+1] & 0xfff0f000) | ((val & 0xf000) << 4) | (val & 0xfff);
+			}
 		}
 		// fix addresses of exception information
 		if (code.ssa == null) return;	// compiler specific subroutines have no unwinding or exception table
 		if ((code.ssa.cfg.method.accAndPropFlags & (1 << dpfExcHnd)) != 0) return;	// exception methods have no unwinding or exception table
-		if (dbg) StdStreams.vrb.print("\n\tFixup of exception table for method: " + code.ssa.cfg.method.owner.name + "." + code.ssa.cfg.method.name +  code.ssa.cfg.method.methDescriptor + "\n");		
-		currInstr = code.excTabCount;
+		if (dbg) StdStreams.vrb.println("          Fixup of exception table for method: " + code.ssa.cfg.method.owner.name + "." + code.ssa.cfg.method.name +  code.ssa.cfg.method.methDescriptor);		
+		int currIndex = code.excTabCount;
 		int count = 0;
-		while (code.instructions[currInstr] != 0xffffffff) {
-			SSAInstruction ssaInstr = code.ssa.searchBca(code.instructions[currInstr]);	
+		while (code.instructions[currIndex] != 0xffffffff) {
+			SSAInstruction ssaInstr = code.ssa.searchBca(code.instructions[currIndex]);	
 			assert ssaInstr != null;
-			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// start
+			code.instructions[currIndex++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// start
 			
-			ssaInstr = code.ssa.searchBca(code.instructions[currInstr]);	
+			ssaInstr = code.ssa.searchBca(code.instructions[currIndex]);	
 			assert ssaInstr != null;
-			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// end
+			code.instructions[currIndex++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// end
 			
 			ExceptionTabEntry[] tab = code.ssa.cfg.method.exceptionTab;
 			assert tab != null;
 			ExceptionTabEntry entry = tab[count];
 			assert entry != null;
-			if (entry.catchType != null) code.instructions[currInstr++] = entry.catchType.address;	// type 
-			else code.instructions[currInstr++] = 0;	// finally 
+			if (entry.catchType != null) code.instructions[currIndex++] = entry.catchType.address;	// type 
+			else code.instructions[currIndex++] = 0;	// finally 
 			
-			ssaInstr = code.ssa.searchBca(code.instructions[currInstr] + 1);	// add 1, as first store is omitted	
+			ssaInstr = code.ssa.searchBca(code.instructions[currIndex] + 1);	// add 1, as first store is omitted	
 			assert ssaInstr != null;
-			code.instructions[currInstr++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// handler
+			code.instructions[currIndex++] = code.ssa.cfg.method.address + ssaInstr.machineCodeOffset * 4;	// handler
 			count++;
 		}
 		// fix addresses of variable and constant segment
-		currInstr++;
+		currIndex++;
 		Class clazz = code.ssa.cfg.method.owner;
-		code.instructions[currInstr] = clazz.varSegment.address + clazz.varOffset;	// this entry is currently not used
+		code.instructions[currIndex] = clazz.varSegment.address + clazz.varOffset;	// this entry is currently not used
 	}
 
 	private void insertProlog(Code32 code, int stackSize) {

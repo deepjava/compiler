@@ -87,10 +87,8 @@ public class Method extends ClassMember {
 	}
 
 	public int getCodeSizeInBytes() {
-		if (machineCode == null) {
-			return 0;
-		}
-		return machineCode.iCount * 4;
+		if (machineCode == null) return 0;
+		return (machineCode.iCount + machineCode.nofBlInstrs * 2) * 4;	// add two instructions for each potential long jump
 	}
 	
 	static int nofParameters(HString methDescriptor){
