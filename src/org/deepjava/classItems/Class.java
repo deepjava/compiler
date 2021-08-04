@@ -26,6 +26,7 @@ import org.deepjava.config.Configuration;
 import org.deepjava.config.Segment;
 import org.deepjava.host.ClassFileAdmin;
 import org.deepjava.host.Dbg;
+import org.deepjava.host.StdStreams;
 import org.deepjava.linker.FixedValueEntry;
 import org.deepjava.strings.HString;
 
@@ -123,7 +124,17 @@ public class Class extends RefType implements ICclassFileConsts, ICdescAndTypeCo
 	 * all imported classes in the constant pool are loaded as well
 	 */
 	protected void loadClass(int userReqAttributes) {
-//				boolean dbg = true;
+		{	// check if this class has a similar name as an already loaded class (differing in small / capital letters only)
+			// this is important under Windows, as e.g. test/Test and test/TEst would load the same class file
+			Item item = RefType.refTypeList;
+			while (item != null) {
+				if (item.name.toString().toLowerCase().equals(name.toString().toLowerCase()) && !item.name.equals(name)) {
+					StdStreams.err.println("class " + item.name + " loaded: loads the same class file as " + name.toString() + ", please check name of root class");
+				}
+				item = item.next;
+			}
+		}
+				
 		if (CFR.clsDbg) vrb.println("load class: " + name);
 		if (dbg) vrb.println(">loadClass: " + name);
 		if ((accAndPropFlags & (1<<dpfClassLoaded)) == 0 ) {	// if not yet loaded and not synthetic
