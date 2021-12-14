@@ -44,11 +44,12 @@ public class DeepPlugin extends AbstractUIPlugin {
 	/**
 	 *  default entries for deep projects settings
 	 */
-	public static final String LIB_PATH = "X:\\public-programme\\deep\\lib";
+	public static final String LIB_PATH = "\\\\ost.ch\\dfs\\bsc.sys\\public-programme\\deep\\lib";
 	public static final String BOARD = "MicroZed";
 	public static final String OS = "sts_arm";
 	public static final String PROGRAMMER = "OpenOCD";
 	public static final String PROGRAMMER_OPTIONS = "localhost_4444";
+	public static final String OPENOCD_PATH = "E:\\openocd-0.10.0";
 	
 	/**
 	 * Unique identifier for the deep model (value 

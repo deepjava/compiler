@@ -61,6 +61,8 @@ public class DeepPreferencePage
 				"&Default programmer:", getFieldEditorParent()));
 		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_PROGRAMMER_OPTIONS, 
 				"&Default programmer options:", getFieldEditorParent()));
+		addField(new StringFieldEditor(PreferenceConstants.DEFAULT_OPENOCD_PATH, 
+				"&Default OpenOCD path:", getFieldEditorParent()));
 	}
 
 	/* (non-Javadoc)
