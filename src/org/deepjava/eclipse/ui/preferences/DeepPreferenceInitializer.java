@@ -31,6 +31,7 @@ public class DeepPreferenceInitializer extends AbstractPreferenceInitializer {
 		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_PROGRAMMER, DeepPlugin.PROGRAMMER);
 		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_PROGRAMMER_OPTIONS, DeepPlugin.PROGRAMMER_OPTIONS);
 		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_OPENOCD_PATH, DeepPlugin.OPENOCD_PATH);
+		DeepPlugin.getDefault().getPreferenceStore().setDefault(PreferenceConstants.DEFAULT_OPENOCD_CMD, DeepPlugin.OPENOCD_CMD);
 	}
 
 }
