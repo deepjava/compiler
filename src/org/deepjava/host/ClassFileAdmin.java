@@ -103,7 +103,6 @@ public class ClassFileAdmin {
 //					while (e.hasMoreElements()) {
 //					      JarEntry je = (JarEntry) e.nextElement();
 //					      String name = je.getName();
-//					      System.out.println(name);
 //					}
 					entry = jar.getEntry(clsFileName);
 				} catch (IOException e1) { }

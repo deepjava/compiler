@@ -399,7 +399,6 @@ public class Launcher implements ICclassFileConsts {
 		if (reporter.nofErrors <= 0) {
 			HString tctFileName = Configuration.getTctFileName();
 			if (tctFileName != null) saveCommandTableToFile(tctFileName.toString());
-			if (dbgProflg) {vrb.println("duration for generating target file = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 		}
 
 		if (reporter.nofErrors > 0) {
@@ -413,24 +412,47 @@ public class Launcher implements ICclassFileConsts {
 		// Create target image file if file name defined in the configuration
 		if (reporter.nofErrors <= 0) {
 			HString fname = Configuration.getImgFileName();
-			if (fname != null && !fname.equals(HString.getHString(""))) 
-				saveTargetImageToFile(fname.toString(), Configuration.getImgFileFormat());
+			if (fname != null && !fname.equals(HString.getHString(""))) {
+				try {
+					String name = fname.toString();
+					log.println("Writing target image to: " + name);
+					long bytesWritten = Linker32.writeTargetImageToBinFile(name);
+					log.print("binary (" + bytesWritten / 1024 + ("kB)"));
+					TargetMemorySegment tms = Linker32.targetImage;
+					boolean flash = true;
+					while (tms != null && reporter.nofErrors <= 0) {
+						if (tms.segment.owner.technology != 1) flash = false;
+						tms = tms.next;
+					}
+					if (flash) {
+						bytesWritten = Linker32.writeTargetImageToMcsFile(name);
+						log.print(", intel hex (" + bytesWritten / 1024 + ("kB)"));
+						bytesWritten = Linker32.writeTargetImageToBootBinFile(name);
+						log.print(", BOOT.bin (" + bytesWritten / 1024 + ("kB)"));
+					}
+					bytesWritten = Linker32.writeTargetImageToElfFile(name);
+					log.println(", elf (" + bytesWritten / 1024 + ("kB)"));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 		}	
-		
+		if (dbgProflg) {vrb.println("duration for generating target files = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 		return reporter.nofErrors;
 	}
 
 	public static void downloadTargetImage() {
 		boolean flashErased = false;
 		Board b = Configuration.getBoard();
-		RunConfiguration targetConfig = Configuration.getActiveTargetConfiguration();
+		RunConfiguration runConfig = Configuration.getActiveRunConfiguration();
 		if (b != null) {
 			if (tc != null) {
 				Programmer programmer = Configuration.getProgrammer();
 				if (programmer.name.equals(HString.getHString("abatronBDI"))) {
 					try {
 						log.println("Downloading target image");
-						initTarget(b, targetConfig);
+						initTarget(b, runConfig);
 						tc.downloadImageFile(Configuration.getImgFileName().toString());
 					} catch (TargetConnectionException e) {
 						if (e.getMessage().equals("no such file")) {
@@ -447,7 +469,7 @@ public class Launcher implements ICclassFileConsts {
 						if (tms.segment.owner.technology != 1) {	// ram device
 							try {
 								log.println("Downloading target image");
-								initTarget(b, targetConfig);
+								initTarget(b, runConfig);
 								HString str = Configuration.getImgFileName();
 								if (str == null) {
 									reporter.error(820); 
@@ -468,7 +490,7 @@ public class Launcher implements ICclassFileConsts {
 				} else {	// USB BDI
 					try {
 						TargetMemorySegment tms = Linker32.targetImage;
-						initTarget(b, targetConfig);
+						initTarget(b, runConfig);
 						while (tms != null && reporter.nofErrors <= 0) {
 							if (tms.segment.owner.technology == 1) { // flash device
 								if (tms.segment.owner.memorytype == Configuration.AM29LV160D) {
@@ -529,7 +551,7 @@ public class Launcher implements ICclassFileConsts {
 		} else	reporter.error(238);
 	}
 	
-	private static void initTarget(Board b, RunConfiguration targetConfig) throws TargetConnectionException {
+	private static void initTarget(Board b, RunConfiguration runConfig) throws TargetConnectionException {
 		log.println("Initializing target");
 		if (dbg) vrb.println("[Launcher] Reseting target");
 		tc.resetTarget();
@@ -547,7 +569,7 @@ public class Launcher implements ICclassFileConsts {
 			r = (RegisterInit) r.next;
 		}
 		if (dbg) vrb.println("[Launcher] Initializing target configuration registers");
-		r = targetConfig.regInits;
+		r = runConfig.regInits;
 		while (r != null) {
 			if (r.poll) {
 				long val;
@@ -642,47 +664,6 @@ public class Launcher implements ICclassFileConsts {
 		}
 	}
 
-	protected static long saveTargetImageToFile(String fileName, int format) {
-		long bytesWritten = -1;
-		try {
-			switch(format) {
-			case Configuration.BIN:
-				log.print("Writing target image in binary format to: " + fileName);
-				bytesWritten = Linker32.writeTargetImageToBinFile(fileName);
-				log.println(" (" + bytesWritten / 1024 + ("kB)"));
-				break;
-			case Configuration.HEX:
-				reporter.error(10, "Writing hex image");
-				break;
-			case Configuration.SREC:
-				reporter.error(10, "Writing srec image");
-				break;
-			case Configuration.MCS:
-				Linker32.writeTargetImageToBinFile(fileName + ".bin");
-				log.print("Writing target image in binary format to: " + fileName);
-				bytesWritten = Linker32.writeTargetImageToMcsFile(fileName);
-				log.println(" (" + bytesWritten / 1024 + ("kB)"));
-				break;
-			case Configuration.DTIM:
-				bytesWritten = Linker32.writeTargetImageToDtimFile(fileName);
-				log.println(" (" + bytesWritten / 1024 + ("kB)"));
-				break;
-			case Configuration.ELF:
-				log.println("Writing target image in ELF format to " + fileName);
-				bytesWritten = Linker32.writeTargetImageToElfFile(fileName);
-				log.println(" (" + bytesWritten / 1024 + ("kB)"));
-				break;
-			default: 
-				reporter.error(10, "Writing " + Configuration.formatMnemonics[format] + " image");
-			}
-			log.println("Image file generated");
-		} catch(IOException e) {
-			e.printStackTrace();
-			bytesWritten = -1;
-		}
-		return bytesWritten;	
-	}
-	
 	protected static void saveCommandTableToFile(String fileName) {
 		if (reporter.nofErrors <= 0) {
 			File path = new File(fileName.substring(0, fileName.lastIndexOf('/')));

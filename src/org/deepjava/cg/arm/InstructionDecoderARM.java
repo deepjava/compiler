@@ -148,10 +148,6 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 		
 		
 		String[] parts =  mnemonic.split(" ");	// Split mnemonic by spaces
-//		System.out.print("Number of parts:   ");
-//		System.out.println(parts.length);
-//		System.out.println(parts[0]);
-//		System.out.println(parts[1]);
 		
 		// Instructions
 		// ///////////////
@@ -190,8 +186,6 @@ public class InstructionDecoderARM extends InstructionDecoder implements Instruc
 					else
 						const32 = Integer.parseInt( parts[3].replaceAll("[^0-9]", "") );	// const				
 					int imm12 = constToImm(const32);
-//					System.out.println(Integer.toHexString(const32));
-//					System.out.println(Integer.toHexString(imm12));
 					code |= imm12;
 				}
 

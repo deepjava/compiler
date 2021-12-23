@@ -1268,10 +1268,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		long bytesWritten = 0;
 		String fileExtension = "bin";
 		String pathAndFileName = fileName;
-		if (fileName.lastIndexOf('.') > 0) {
-			fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
-			pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
-		}		
+//		if (fileName.lastIndexOf('.') > 0) {
+//			fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+//			pathAndFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+//		}		
 		TargetMemorySegment tms = targetImage;
 		Device dev = tms.segment.owner;
 		String currentFileName = new String(pathAndFileName + "." + dev.name + "." + fileExtension);
@@ -1314,20 +1314,10 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 	}
 	
 	public static long writeTargetImageToMcsFile(String fname) throws IOException {
-		if (dbg) vrb.println("\n[LINKER] START: Writing target image to file: \"" + fname +"\":");
+		if (dbg) vrb.println("\n[LINKER] START: Writing target image to mcs file: \"" + fname +"\":");
 		long bytesWritten = 0;
-		TargetMemorySegment tms = targetImage;
-		boolean flash = true;
-		while (tms != null && reporter.nofErrors <= 0) {
-			if (tms.segment.owner.technology != 1) flash = false;
-			tms = tms.next;
-		}
-		if (!flash) {
-			reporter.error(825, "all segments must go into flash");
-			return 0;
-		}
 		try {
-			// open bin file for reading
+			// open deep bin file for reading
 			File binFile = new File(fname + '.' + Linker32.targetImage.segment.owner.name + ".bin");
 			if (!binFile.exists()) {
 				ErrorReporter.reporter.error(822, "check if proper target file format used");
@@ -1335,9 +1325,8 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			}
 			BufferedInputStream readerBin = new BufferedInputStream(new FileInputStream(binFile));
 			// open mcs file for writing
-			fname = fname.substring(0, fname.lastIndexOf('.') + 1) + Linker32.targetImage.segment.owner.name + ".mcs";
+			fname = fname + '.' + Linker32.targetImage.segment.owner.name + ".mcs";
 			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
-			// open predefined Xilinx mcs file 
 			String plFile = Configuration.getPlFile();
 			if (plFile == null) {
 				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
@@ -1347,6 +1336,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			}
 			HString[] libs = Configuration.getLibPaths();
 			boolean found = false;
+			// open predefined Xilinx mcs file 
 			for (HString lib : libs) {
 				fname = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 4) + "App.mcs";
 				File f = new File(fname);
@@ -1459,6 +1449,144 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			bytesWritten = buf.length();
 			writerMcs.close();
 		} catch (IOException e) {
+			ErrorReporter.reporter.error(822, "check if proper target file format use");
+			return 0;
+		}
+		return bytesWritten;
+	}
+
+	public static long writeTargetImageToBootBinFile(String fname) throws IOException {
+		if (dbg) vrb.println("\n[LINKER] START: Writing target image to boot bin file: \"" + fname +"\":");
+		long bytesWritten = 0;
+		try {
+			// open deep bin file for reading
+			File deepBinFile = new File(fname + '.' + Linker32.targetImage.segment.owner.name + ".bin");
+			if (!deepBinFile.exists()) {
+				ErrorReporter.reporter.error(822, "check if proper target file format use");
+				return 0;
+			}
+			BufferedInputStream readerBin = new BufferedInputStream(new FileInputStream(deepBinFile));
+			// open bin file for writing
+			fname = fname.substring(0, fname.lastIndexOf('/') + 1) + "BOOT.bin";
+			BufferedOutputStream writerBin = new BufferedOutputStream(new FileOutputStream(fname));
+			String plFile = Configuration.getPlFile();
+			if (plFile == null) {
+				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
+				readerBin.close();
+				writerBin.close();
+				return 0;
+			}
+			HString[] libs = Configuration.getLibPaths();
+			boolean found = false;
+			// open predefined Xilinx bin file 
+			String bootBinFile = "";
+			for (HString lib : libs) {
+				bootBinFile = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 4) + "App.bin";
+				File f = new File(bootBinFile);
+				if (f.exists()) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				ErrorReporter.reporter.error(824, "check if library path set correctly");
+				readerBin.close();
+				writerBin.close();
+				return 0;
+			}
+			readerBin.close();
+			
+			// determine deep application size in bytes, this size must be written into header file info section (see below)
+			readerBin = new BufferedInputStream(new FileInputStream(deepBinFile));
+			byte[] lineBin = new byte[128];
+			int size = 0, k;
+			final int len = 16;
+			while ((k = readerBin.read(lineBin, 0, len)) == len) size += 16;
+			if (k > 0) size += k;
+			readerBin.close();
+//			StdStreams.vrb.println("nof bytes in bin file = 0x" + Integer.toHexString(size));
+			
+			readerBin = new BufferedInputStream(new FileInputStream(deepBinFile));
+			BufferedInputStream readerBootBin = new BufferedInputStream(new FileInputStream(bootBinFile));
+			ByteBuffer buf = ByteBuffer.allocate(0x400000);
+			
+			// copy header
+			for (int i = 0; i < 0xd00; i++) buf.put((byte) readerBootBin.read());
+			int checksum = 3 * size;
+	
+			// change header file info for application
+			for (int i = 0; i < 12; i++) readerBootBin.read();	// read over size information, now at 0xd0c
+			buf.putInt(Integer.reverseBytes(size));
+			buf.putInt(Integer.reverseBytes(size));
+			buf.putInt(Integer.reverseBytes(size));
+			ByteBuffer b1 = ByteBuffer.allocate(4);
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd10
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd14
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd18
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd1c
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd20
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd24
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd28
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd2c
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd30
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd34
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd38
+			checksum += getHeaderInfoEntryBin(b1);
+			b1.rewind();
+			for (int i = 0; i < 4; i++) b1.put((byte) readerBootBin.read());
+			buf.put(b1.array());	// now at 0xd3c
+			checksum += getHeaderInfoEntryBin(b1);
+			checksum = ~checksum;
+			buf.putInt(Integer.reverseBytes(checksum));
+			for (int i = 0; i < 4; i++) readerBootBin.read();	// read over checksum, now at 0xd40
+
+			// copy rest of header and bit file
+			for (int i = 0xd40; i < 0x21a300; i++) buf.put((byte) readerBootBin.read());	// now at 0x21a300
+			
+			// replace with content of target image bin file
+			int val = readerBin.read();
+			while (val != -1) {
+				buf.put((byte)val);
+				val = readerBin.read();
+			}
+
+			readerBin.close();
+			readerBootBin.close();
+			writerBin.write(buf.array());
+			bytesWritten = buf.array().length;
+			writerBin.close();
+		} catch (IOException e) {
 			ErrorReporter.reporter.error(822, "check if proper target file format used");
 			return 0;
 		}
@@ -1508,7 +1636,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 		buf.flip();
 		elf.AddSection(buf, ".debug_loc", SectionType.PROGBITS, 0, 0, 0, 1, 0);
 		
-		elf.saveToFile(fileName);
+		elf.saveToFile(fileName + ".elf");
 		elf.close();
 		if (dbg) vrb.println("[LINKER] END: Writing target image to file.\n");
 		return 0;
@@ -1648,6 +1776,12 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			result.append(new StringBuilder(str.substring(i, i + 2)).reverse());
 		}
 		return (int)Long.parseLong(result.reverse().toString(), 16);   
+	}
+
+	private static int getHeaderInfoEntryBin(ByteBuffer buf) {
+		buf.rewind();
+		Integer val = buf.getInt();
+		return Integer.reverseBytes(val);   
 	}
 
 	private static boolean checkConstantPoolType(Item item) {

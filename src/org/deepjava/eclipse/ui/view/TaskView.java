@@ -182,7 +182,6 @@ public class TaskView extends ViewPart implements ICdescAndTypeConsts, ICclassFi
 							nextTime = (long)tc.readWord(taskAddr + f.offset) << (8 * slotSize) | (tc.readWord(taskAddr + f.offset + slotSize) & 0xffffffffL);
 						else 
 							nextTime = (long)tc.readWord(taskAddr + f.offset + slotSize) << (8 * slotSize) | (tc.readWord(taskAddr + f.offset) & 0xffffffffL);
-//						System.out.println(Long.toHexString(nextTime));
 						if (((nextTime != 0x8000000000000000L) && (nextTime != 0x7fffffffffffffffL))) { 	// not high priority task nor low priority task
 							taskObj[index].name = ref.name.toString();
 							f = (Field)cls.getField(HString.getRegisteredHString("nofActivations"));

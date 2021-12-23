@@ -27,12 +27,10 @@ public class ClassTypeDIE extends TypeDIE {
 	}
 
 	public void InsertMembers() {
-		System.out.println("Class: " + clazz.name);
 		Field field = (Field) clazz.instFields;
 		byteSize = 0;
 		while (field != null && field != clazz.classFields) {
 			// Instance Fields
-			System.out.println("\tInstance Field: " + field.name + " offset: " + field.offset);
 			new InstanceMemberDIE(field, this);
 			// To get Object Size take the offset of the Last Element and ad its Size
 			byteSize = (byte) (field.offset + ((Type) field.type).getTypeSize());
@@ -48,7 +46,6 @@ public class ClassTypeDIE extends TypeDIE {
 
 		ConstField constant = (ConstField) clazz.constFields;
 		while (constant != null) {
-			System.out.println("\tConstant Field: " + field.name);
 			if (constant.getConstantItem() instanceof StdConstant) {
 				new ConstantDIE((StdConstant) constant.getConstantItem(), constant.name, this);
 			} else if (constant.getConstantItem() instanceof StringLiteral) {

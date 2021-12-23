@@ -52,17 +52,13 @@ public class Configuration implements ICclassFileConsts {
 	public static final String progPath = "/config/programmers";
 	
 	public static final int BIN = 0;
-	public static final int HEX = 1;
-	public static final int SREC = 2;
-	public static final int MCS = 3;
-	public static final int DTIM = 4;
-	public static final int ELF = 5;
+	public static final int MCS = 1;
+	public static final int DTIM = 2;
+	public static final int ELF = 3;
 	public static String[] formatMnemonics = {
 		"BIN",
-		"HEX",
-		"sREC",
 		"MCS",
-		"dtim",
+		"DTIM",
 		"ELF"
 	};	
 	
@@ -358,7 +354,7 @@ public class Configuration implements ICclassFileConsts {
 		return plFile;
 	}
 
-	public static RunConfiguration getActiveTargetConfiguration() {
+	public static RunConfiguration getActiveRunConfiguration() {
 		return activeRunConfig;
 	}
 

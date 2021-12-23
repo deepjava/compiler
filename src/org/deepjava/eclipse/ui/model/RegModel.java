@@ -215,7 +215,6 @@ public class RegModel  {
 			boolean wasFreezeAsserted = tc.getTargetState() == TargetConnection.stateDebug;
 			if (!wasFreezeAsserted)	tc.stopTarget();
 			
-			if (sprs == null) System.out.println("sprs is null");
 			for (int i = 0; i < sprs.length; i++) {
 				sprs[i].value = (int) tc.getRegisterValue(sprs[i].name);
 			}
@@ -288,7 +287,6 @@ public class RegModel  {
 			fpscr = null;
 			break;
 		case 2:
-			System.out.println("clear model");
 			sprs = null;
 			msr = null;
 			break;

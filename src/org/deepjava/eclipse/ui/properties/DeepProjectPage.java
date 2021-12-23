@@ -52,20 +52,17 @@ import org.eclipse.ui.dialogs.PropertyPage;
 public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyPage {
 	
 	private final String defaultPath = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_LIBRARY_PATH);
-	private Combo boardCombo, programmerCombo, osCombo, imgFormatCombo;
+	private Combo boardCombo, programmerCombo, osCombo;
 	private Button checkLib, browseLib, checkImg, browseImg, downloadPL, browsePL;
 	private Text pathLib, programmerOpts, pathImg, pathPL;
 	private final String defaultImgPath = "$PROJECT_LOCATION";
-	private final String defaultImgFormat = "BIN";
 	private final String defaultPlPath = "$PROJECT_LOCATION";
 	private String lastChoiceImg = defaultImgPath;
-	private String lastChoiceImgFormat = defaultImgFormat;
 	private String lastChoicePl = defaultPlPath;
-	private int indexImgFormat;
 	private boolean createImgFile = false, loadPL = false;
 	private Label libState;
-	private String libPath, board, programmer, programmerOpt, os, imglocation, imgformat, plfile;
-	String[][] boards, imgformats;
+	private String libPath, board, programmer, programmerOpt, os, imglocation, plfile;
+	String[][] boards;
 	private String[][] operatingSystems;
 	private String[][] programmers;
 	private DeepFileChanger dfc;
@@ -84,7 +81,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		programmerOpt = dfc.getContent("programmeropts", true);
 		if (programmerOpt.startsWith("#")) programmerOpt = programmerOpt.substring(1);
 		imglocation = dfc.getContent("imgfile", true);
-		imgformat = dfc.getContent("imgformat", false);
 		if (imglocation.equalsIgnoreCase("none")) {
 			createImgFile = false;
 		} else if (imglocation.startsWith("#")) {
@@ -98,7 +94,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			lastChoiceImg = lastChoiceImg.substring(1, lastChoiceImg.length() - 1);
 			int indexOfProjectName = lastChoiceImg.lastIndexOf("\\");
 			lastChoiceImg = lastChoiceImg.substring(0, indexOfProjectName);
-			lastChoiceImgFormat = imgformat;
 		}
 		plfile = dfc.getContent("pl_file", true);
 		if (plfile.equalsIgnoreCase("none")) loadPL = false;
@@ -223,20 +218,13 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 					if (checkImg.getSelection()) {
 						pathImg.setEnabled(true);
 						browseImg.setEnabled(true);
-						imgFormatCombo.setEnabled(true);
 						createImgFile = true;
 					} else {
 						pathImg.setEnabled(false);
 						browseImg.setEnabled(false);
-						imgFormatCombo.setEnabled(false);
 						createImgFile = false;
 					}
 					pathImg.setText(lastChoiceImg);
-					indexImgFormat = 0;
-					for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-						if (lastChoiceImgFormat.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
-					}
-					imgFormatCombo.select(indexImgFormat);
 				}
 			}
 		});
@@ -272,17 +260,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		});	
 		GridData gridDataImg3 = new GridData(SWT.FILL, SWT.FILL, true, false);
 		gridDataImg3.horizontalSpan = 2;
-		Label imgFormatLabel = new Label(groupImg,SWT.NONE);
-		imgFormatLabel.setText("Select image file format");
-		imgFormatCombo = new Combo(groupImg, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
-		imgFormatCombo.setEnabled(createImgFile);
-		imgFormatCombo.setLayoutData(gridDataImg3);
-		imgFormatCombo.addSelectionListener(listener);
-		indexImgFormat = 0;
-		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-			if (lastChoiceImgFormat.equalsIgnoreCase(Configuration.formatMnemonics[i])) indexImgFormat = i;
-		}
-		imgFormatCombo.select(indexImgFormat);
 		
 		Group groupPL = new Group(composite, SWT.NONE);
 		groupPL.setText("Configuration file for PL");
@@ -356,10 +333,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 //				if (programmerOptionsCombo.getSelectionIndex() != programmerOptionsCombo.getItemCount() - 1) programmerOpt = programmerOptions[programmerOptionsCombo.getSelectionIndex()];
 //				else programmerOpt = "";
 //			}
-			if (e.widget.equals(imgFormatCombo)) {
-				if (imgFormatCombo.getSelectionIndex() != imgFormatCombo.getItemCount() - 1) lastChoiceImgFormat = Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()];
-				else lastChoiceImgFormat = "";
-			}
 		}
 	};
 
@@ -398,17 +371,6 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 		str[str.length - 1] = "none";
 		osCombo.setItems(str);
 		osCombo.select(index);
-		
-		String[] strImg = new String[Configuration.formatMnemonics.length + 1];
-		int indexImg = strImg.length - 1;
-		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-			strImg[i] = Configuration.formatMnemonics[i];
-			if (strImg[i].equalsIgnoreCase(imgFormatCombo.getText())) indexImg = i;
-		}
-		strImg[strImg.length - 1] = "none";
-		imgFormatCombo.setItems(strImg);
-		if (!lastChoiceImg.equalsIgnoreCase("none")) imgFormatCombo.select(indexImgFormat);
-		else imgFormatCombo.select(indexImg);
 	}
 
 	private boolean checkLibPath() {
@@ -461,13 +423,10 @@ public class DeepProjectPage extends PropertyPage implements IWorkbenchPropertyP
 			dfc.commentContent("programmeropts");
 		}
 		if (createImgFile) {  
-			if (dfc.changeContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "." + lastChoiceImgFormat.toLowerCase() + "\"") != 0)
-				dfc.addContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "." + lastChoiceImgFormat.toLowerCase() + "\"");
-			if (dfc.changeContent("imgformat", lastChoiceImgFormat) != 0)
-				dfc.addContent("imgformat", lastChoiceImgFormat);
+			if (dfc.changeContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "\"") != 0)
+				dfc.addContent("imgfile", "\"" + lastChoiceImg + "\\"+ project.getName() + "\"");
 		} else {
 			dfc.commentContent("imgfile");
-			dfc.commentContent("imgformat");
 		}
 		if (loadPL) {  
 			if (dfc.changeContent("pl_file", "\"" + lastChoicePl + "\"") != 0)

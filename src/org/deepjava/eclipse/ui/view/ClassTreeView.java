@@ -111,10 +111,6 @@ public class ClassTreeView extends ViewPart implements ISelectionChangedListener
 	class ClassTreeContentProvider implements ITreeContentProvider {
 
 		public Object[] getChildren(Object parent) {
-			if (parent instanceof TreeInput) {
-				System.out.println("treeinput");
-			}
-			
 			if (parent instanceof Board) {
 				Board b = (Board)parent;
 				if (b.memorymap == null || b.cpu.memorymap == null) return new Object[]{"No memory map loaded"};

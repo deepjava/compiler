@@ -203,10 +203,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 				str = str.replace('/', '\\');
 				sb.append("\"" + str);
 			}
-			sb.append("\\" + project.getName() + "." + model.getImgFormat().toLowerCase() + "\";\n");
-			if (model != null && !model.createImgFile()) sb.append("#");
-			sb.append("\timgformat = " + model.getImgFormat());
-			sb.append(";\n");
+			sb.append("\\" + project.getName() + "\";\n");
 			if (model != null && !model.getLoadPlFile()) sb.append("#");
 			sb.append("\tpl_file = ");
 			if (model != null && model.getPlFilePath() == null) {

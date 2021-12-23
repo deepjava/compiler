@@ -47,8 +47,7 @@ class TargetConfigPage extends WizardPage {
 	private final String defaultOs = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_OS);
 	private final String defaultProgrammer = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_PROGRAMMER);
 	private final String defaultProgrammerOptions = DeepPlugin.getDefault().getPreferenceStore().getString(PreferenceConstants.DEFAULT_PROGRAMMER_OPTIONS);
-	private final String defaultImgFormat = PreferenceConstants.DEFAULT_IMG_FORMAT;	 
-	private Combo boardCombo, programmerCombo, osCombo, imgFormatCombo;
+	private Combo boardCombo, programmerCombo, osCombo;
 	private Button checkImg, browseImg, downloadPL, browsePL;
 	private Text programmerOpts, pathImg, pathPL;
 	private final String defaultImgPath = "$PROJECT_LOCATION";
@@ -117,12 +116,10 @@ class TargetConfigPage extends WizardPage {
 						pathImg.setEnabled(true);
 						pathImg.setText(defaultImgPath);
 						browseImg.setEnabled(true);
-						imgFormatCombo.setEnabled(true);
 					} else {
 						pathImg.setEnabled(false);
 						pathImg.setText(lastChoice);
 						browseImg.setEnabled(false);
-						imgFormatCombo.setEnabled(false);
 					}
 				}
 				setPageComplete(validatePage());
@@ -160,12 +157,6 @@ class TargetConfigPage extends WizardPage {
 				}
 			}
 		});	
-		Label imgFormatLabel = new Label(groupImg,SWT.NONE);
-		imgFormatLabel.setText("Select image file format");
-		imgFormatCombo = new Combo(groupImg, SWT.VERTICAL | SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
-		imgFormatCombo.setEnabled(false);
-		imgFormatCombo.setLayoutData(gridData);
-	
 		Group groupPL = new Group(composite, SWT.NONE);
 		groupPL.setText("Configuration file for PL");
 		groupPL.setLayout(new GridLayout(2, false));
@@ -269,17 +260,6 @@ class TargetConfigPage extends WizardPage {
 		}
 	}
 	
-	private void insertImgFormats(){
-		String[] str = new String[Configuration.formatMnemonics.length];
-		int index = str.length - 1;
-		for (int i = 0; i < Configuration.formatMnemonics.length; i++) {
-			str[i] = Configuration.formatMnemonics[i];
-			if (str[i].equalsIgnoreCase(defaultImgFormat)) index = i;
-		}
-		imgFormatCombo.setItems(str);
-		imgFormatCombo.select(index);
-	}
-	
 	private boolean validatePage() {
 		if (boardCombo.getSelectionIndex() == -1 || osCombo.getSelectionIndex() == -1 || programmerCombo.getSelectionIndex() == -1) {
 			return false;
@@ -294,7 +274,6 @@ class TargetConfigPage extends WizardPage {
 		if (programmerOpts.getText() != null && programmerOpts.getText().length() > 0) wiz.model.setProgrammerOptions(programmerOpts.getText()); 
 		else wiz.model.setProgrammerOptions(null);
 		wiz.model.setCreateImgFile(checkImg.getSelection());
-		wiz.model.setImgFormat(Configuration.formatMnemonics[imgFormatCombo.getSelectionIndex()]);
 		if (lastChoice != defaultImgPath) wiz.model.setImgPath(new File(lastChoice));
 		else wiz.model.setImgPath(null);
 		wiz.model.setLoadPlFile(downloadPL.getSelection());
@@ -309,7 +288,6 @@ class TargetConfigPage extends WizardPage {
 			insertBoards();
 			insertOperatingSystems();
 			insertProgrammers();
-			insertImgFormats();
 		}
         getControl().setVisible(visible);
         validatePage();	// must happen to store settings to model in case that no combo is changed

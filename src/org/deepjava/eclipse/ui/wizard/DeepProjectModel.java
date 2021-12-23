@@ -28,7 +28,6 @@ public class DeepProjectModel {
 	private String[] programmerName;
 	private String programmerOptions;
 	private File imgPath, plFilePath;
-	private String imgFormat; 
 	private boolean createImgFile, loadPlFile;
 
 	public void setLibrary(File lib) {
@@ -77,14 +76,6 @@ public class DeepProjectModel {
 	
 	public File getImgPath(){
 		return imgPath;
-	}
-	
-	public void setImgFormat(String imgFormat){
-		this.imgFormat = imgFormat;
-	}
-	
-	public String getImgFormat(){
-		return imgFormat;
 	}
 	
 	public void setCreateImgFile(boolean createImgFile){

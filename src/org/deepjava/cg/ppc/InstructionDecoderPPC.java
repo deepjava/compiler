@@ -2351,8 +2351,6 @@ public class InstructionDecoderPPC extends InstructionDecoder implements Instruc
 		} else {
 			assert false : "no such instruction";
 		}
-
-		//		System.out.println(Integer.toBinaryString(res));
 		return res;
 	}
 
