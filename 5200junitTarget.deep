@@ -12,8 +12,7 @@ project junitTargetTestProject {
 	ostype = sts_ppc;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf01;
-	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\mpc5200Test.bin";
-	imgformat = binary;
+	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\mpc5200Test";
 	tctfile = "...org.deepjava.junitTarget.tct.targetCommands.dtct";
 	
 #	Tests for compiler test classes 

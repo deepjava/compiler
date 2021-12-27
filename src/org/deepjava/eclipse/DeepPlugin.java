@@ -49,7 +49,7 @@ public class DeepPlugin extends AbstractUIPlugin {
 	public static final String OS = "sts_arm";
 	public static final String PROGRAMMER = "openOCD";
 	public static final String PROGRAMMER_OPTIONS = "localhost_4444";
-	public static final String OPENOCD_PATH = "E:\\openocd-0.10.0\\";
+	public static final String OPENOCD_PATH = "C:\\OpenOCD";
 	public static final String OPENOCD_CMD = "bin-x64\\openocd -f microzedboard.cfg";
 	
 	/**

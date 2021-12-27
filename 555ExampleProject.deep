@@ -12,8 +12,8 @@ project ExampleProjectMpc555 {
 	boardtype = ntbMpc555HB;
 	ostype = sts_ppc;
 	programmertype = ntbMpc555UsbBdi;
-#	imgfile = "out/exampleProject.bin"
-#	imgformat = binary;
+#	programmeropts = ;	
+#	imgfile = "out/exampleProject"
 #	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java.lang.Object";

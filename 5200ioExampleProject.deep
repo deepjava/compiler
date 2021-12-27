@@ -12,7 +12,6 @@ project ExampleProjectMpc5200B {
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf01;
 	imgfile = "\\inf004\ftp\phycore_mpc5200b\deep\testIO.bin";
-	imgformat = binary;
 
 #	tctfile = "tct/targetCommands.dtct";
 	tctfile = default;

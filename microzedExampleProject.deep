@@ -13,8 +13,7 @@ project microzedExampleProject {
 	ostype = sts_arm;
 	programmertype = openOCD;
 	programmeropts = localhost_4444;
-	imgfile = "D:\Test1.bin";
-	imgformat = BIN;
+	imgfile = "C:\temp\Test1";
 #	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java.lang.Object";

@@ -13,8 +13,7 @@ project ExampleProjectMpc555 {
 	ostype = sts_arm;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf02;
-	imgfile = "\\inf004\ftp\pub\graf\ArmTest1.bin";
-	imgformat = BIN;
+	imgfile = "\\inf004\ftp\pub\graf\ArmTest1";
 #	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java.lang/Object";

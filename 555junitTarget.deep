@@ -11,6 +11,7 @@ project junitTargetTestProject {
 	boardtype = ntbMpc555HB;
 	ostype = sts_ppc;
 	programmertype = ntbMpc555UsbBdi;
+#	programmeropts = ;
 	
 # 	Target command table file
 	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
