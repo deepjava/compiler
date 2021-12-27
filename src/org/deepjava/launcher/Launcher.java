@@ -430,8 +430,9 @@ public class Launcher implements ICclassFileConsts {
 						bytesWritten = Linker32.writeTargetImageToBootBinFile(name);
 						log.print(", BOOT.bin (" + bytesWritten / 1024 + ("kB)"));
 					}
-					bytesWritten = Linker32.writeTargetImageToElfFile(name);
-					log.println(", elf (" + bytesWritten / 1024 + ("kB)"));
+//					bytesWritten = Linker32.writeTargetImageToElfFile(name);
+//					log.print(", elf (" + bytesWritten / 1024 + ("kB)"));
+					log.println();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
