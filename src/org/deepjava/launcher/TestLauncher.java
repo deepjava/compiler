@@ -61,6 +61,8 @@ public class TestLauncher {
 					TargetConnection tc = (TargetConnection) m.invoke(cls);
 					Launcher.setTargetConnection(tc);
 					Launcher.openTargetConnection();
+					long time = System.currentTimeMillis();
+					while (System.currentTimeMillis() - time < 100);
 					Launcher.downloadTargetImage();
 					Launcher.startTarget(Launcher.getResetAddr());
 //					Launcher.closeTargetConnection();
