@@ -180,7 +180,7 @@ public class DeepMainTab extends AbstractLaunchConfigurationTab {
 		configuration.setAttribute(DeepPlugin.ATTR_DEEP_PROGRAM, program);
 		configuration.setAttribute(DeepPlugin.ATTR_DEEP_LOCATION, locationPath);
 		configuration.setAttribute(DeepPlugin.ATTR_TARGET_CONFIG , runConf);
-		Configuration.setActiveTargetConfig(runConf);
+		if (runConf != null) Configuration.setActiveTargetConfig(runConf);
 		
 		// perform resource mapping for contextual launch
 		IResource[] resources = null;
