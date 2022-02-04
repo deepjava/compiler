@@ -42,13 +42,13 @@ public class TestLauncher {
 	public static void main(String[] args) {
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromRam", false);
 //		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash", false);
-//		Launcher.buildAll("555junitTarget.deep", "BootFromRam", false);
+		Launcher.buildAll("555junitTarget.deep", "BootFromRam", false);
 //		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam", false);
 //		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam", false);
 //		Launcher.buildAll("5200junitTarget.deep", "BootFromRam", false);
 //		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam", false);
 //		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam", false);
-		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
+//		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
 //		Launcher.buildAll("microzedjunitTarget.deep", "BootFromRam", false);
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();

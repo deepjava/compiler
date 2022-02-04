@@ -6,16 +6,16 @@ meta {
 }
 
 project junitTargetTestProject {
-	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+	libpath = "C:/Users/moritz/Documents/deep/repos/runtime-library", "C:/Users/moritz/Documents/deep/repos/deep-junit-target";
 #	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
 	boardtype = MicroZed;
 	ostype = sts_arm;
 	programmertype = openOCD;
 	programmeropts = localhost_4444;
-	imgfile = "C:\temp\Test1";
+	imgfile = "C:/Users/moritz/Documents/deep/repos/compiler/microzedjunitTarget.bin";
 
 # 	Target command table file
-	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";
+	tctfile = "C:/Users/moritz/Documents/deep/repos/deep-junit-target/tct/targetCommands.dtct";
 
 #	Tests for compiler test classes 
  
@@ -52,15 +52,15 @@ project junitTargetTestProject {
 #	rootclasses = "org.deepjava.comp.targettest.exceptions.UncheckedExceptionTest","org.deepjava.comp.targettest.exceptions.CheckedExceptionTest","org.deepjava.comp.targettest.exceptions.FinallyExceptionTest";
 
 #	Tests for all compiler tests  
-	rootclasses = "org.deepjava.comp.targettest.primitives.ByteTest","org.deepjava.comp.targettest.primitives.ShortTest","org.deepjava.comp.targettest.primitives.CharTest", "org.deepjava.comp.targettest.primitives.IntTest", "org.deepjava.comp.targettest.primitives.LongTest", "org.deepjava.comp.targettest.primitives.FloatTest","org.deepjava.comp.targettest.primitives.DoubleTest",
-				  "org.deepjava.comp.targettest.statements.DoWhileTest","org.deepjava.comp.targettest.statements.ForTest","org.deepjava.comp.targettest.statements.IfTest","org.deepjava.comp.targettest.statements.SwitchTest","org.deepjava.comp.targettest.statements.WhileTest",
-				  "org.deepjava.comp.targettest.conditions.ConditionTest","org.deepjava.comp.targettest.conditions.LongCompTest","org.deepjava.comp.targettest.conditions.FloatDoubleCompTest",
-				  "org.deepjava.comp.targettest.arrays.ArrayTest","org.deepjava.comp.targettest.arrays.ArrayTwoDimTest","org.deepjava.comp.targettest.arrays.ArrayThreeDimTest","org.deepjava.comp.targettest.arrays.ArrayInstanceTest","org.deepjava.comp.targettest.arrays.StringTest",
-				  "org.deepjava.comp.targettest.unsafe.UnsafeTestARM","org.deepjava.comp.targettest.unsafe.LowLevelTest",
-				  "org.deepjava.comp.targettest.casts.ByteCastTest","org.deepjava.comp.targettest.casts.ShortCastTest","org.deepjava.comp.targettest.casts.CharCastTest","org.deepjava.comp.targettest.casts.IntCastTest","org.deepjava.comp.targettest.casts.LongCastTest","org.deepjava.comp.targettest.casts.FloatCastTest","org.deepjava.comp.targettest.casts.DoubleCastTest",
-				  "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest",
-				  "org.deepjava.comp.targettest.various.StackFrame","org.deepjava.comp.targettest.various.ParameterPassing","org.deepjava.comp.targettest.various.RegisterAllocation",
-				  "org.deepjava.comp.targettest.exceptions.UncheckedExceptionTest","org.deepjava.comp.targettest.exceptions.CheckedExceptionTest","org.deepjava.comp.targettest.exceptions.FinallyExceptionTest";
+#	rootclasses = "org.deepjava.comp.targettest.primitives.ByteTest","org.deepjava.comp.targettest.primitives.ShortTest","org.deepjava.comp.targettest.primitives.CharTest", "org.deepjava.comp.targettest.primitives.IntTest", "org.deepjava.comp.targettest.primitives.LongTest", "org.deepjava.comp.targettest.primitives.FloatTest","org.deepjava.comp.targettest.primitives.DoubleTest",
+#				  "org.deepjava.comp.targettest.statements.DoWhileTest","org.deepjava.comp.targettest.statements.ForTest","org.deepjava.comp.targettest.statements.IfTest","org.deepjava.comp.targettest.statements.SwitchTest","org.deepjava.comp.targettest.statements.WhileTest",
+#				  "org.deepjava.comp.targettest.conditions.ConditionTest","org.deepjava.comp.targettest.conditions.LongCompTest","org.deepjava.comp.targettest.conditions.FloatDoubleCompTest",
+#				  "org.deepjava.comp.targettest.arrays.ArrayTest","org.deepjava.comp.targettest.arrays.ArrayTwoDimTest","org.deepjava.comp.targettest.arrays.ArrayThreeDimTest","org.deepjava.comp.targettest.arrays.ArrayInstanceTest","org.deepjava.comp.targettest.arrays.StringTest",
+#				  "org.deepjava.comp.targettest.unsafe.UnsafeTestARM","org.deepjava.comp.targettest.unsafe.LowLevelTest",
+#				  "org.deepjava.comp.targettest.casts.ByteCastTest","org.deepjava.comp.targettest.casts.ShortCastTest","org.deepjava.comp.targettest.casts.CharCastTest","org.deepjava.comp.targettest.casts.IntCastTest","org.deepjava.comp.targettest.casts.LongCastTest","org.deepjava.comp.targettest.casts.FloatCastTest","org.deepjava.comp.targettest.casts.DoubleCastTest",
+#				  "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest",
+#				  "org.deepjava.comp.targettest.various.StackFrame","org.deepjava.comp.targettest.various.ParameterPassing","org.deepjava.comp.targettest.various.RegisterAllocation",
+#				  "org.deepjava.comp.targettest.exceptions.UncheckedExceptionTest","org.deepjava.comp.targettest.exceptions.CheckedExceptionTest","org.deepjava.comp.targettest.exceptions.FinallyExceptionTest";
 
 
 #	Tests for target lib  
@@ -72,7 +72,7 @@ project junitTargetTestProject {
 #	rootclasses = "org.deepjava.trglib.targettest.BaseClassTest";
 
 #	Tests for all target lib
-#	rootclasses = "org.deepjava.trglib.targettest.MathTest","org.deepjava.trglib.targettest.GenericsTest","org.deepjava.trglib.targettest.TaskTestZynq",
-#				  "org.deepjava.trglib.targettest.SystemTest","org.deepjava.trglib.targettest.HeapTestARM","org.deepjava.trglib.targettest.UtilTest",
-#				  "org.deepjava.trglib.targettest.BaseClassTest";
+	rootclasses = "org.deepjava.trglib.targettest.MathTest","org.deepjava.trglib.targettest.GenericsTest","org.deepjava.trglib.targettest.TaskTestZynq",
+				  "org.deepjava.trglib.targettest.SystemTest","org.deepjava.trglib.targettest.HeapTestARM","org.deepjava.trglib.targettest.UtilTest",
+				  "org.deepjava.trglib.targettest.BaseClassTest";
 }

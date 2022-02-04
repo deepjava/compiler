@@ -6,7 +6,7 @@ meta {
 }
 
 project junitTestProject {
-	libpath = "../org.deepjava.trglib";
+	libpath = "../runtime-library";
 	boardtype = ntbMpc555HB;
 	ostype = sts_ppc;
 

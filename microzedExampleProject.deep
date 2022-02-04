@@ -6,14 +6,14 @@ meta {
 }
 
 project microzedExampleProject {
-	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+	libpath = "C:/Users/moritz/Documents/deep/repos/runtime-library", "C:/Users/moritz/Documents/deep/repos/deep-junit-target";
 #	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../org.deepjava.trglib";
 #	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	boardtype = MicroZed;
 	ostype = sts_arm;
 	programmertype = openOCD;
 	programmeropts = localhost_4444;
-	imgfile = "C:\temp\Test1";
+	imgfile = "C:/Users/moritz/Documents/deep/repos/compiler/ZynqExample";
 #	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java.lang.Object";
