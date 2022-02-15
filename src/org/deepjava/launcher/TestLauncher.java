@@ -40,16 +40,13 @@ import org.deepjava.target.TargetConnection;
 @SuppressWarnings("unused")
 public class TestLauncher {
 	public static void main(String[] args) {
-//		Launcher.buildAll("555ExampleProject.deep", "BootFromRam", false);
-//		Launcher.buildAll("555ExampleProject.deep", "BootFromFlash", false);
-//		Launcher.buildAll("555junitTarget.deep", "BootFromRam", false);
-//		Launcher.buildAll("5200tinyExampleProject.deep", "BootFromRam", false);
-//		Launcher.buildAll("5200ioExampleProject.deep", "BootFromRam", false);
-//		Launcher.buildAll("5200junitTarget.deep", "BootFromRam", false);
-//		Launcher.buildAll("iMX6ExampleProject.deep", "BootFromRam", false);
-//		Launcher.buildAll("zyboExampleProject.deep", "BootFromRam", false);
-		Launcher.buildAll("microzedExampleProject.deep", "BootFromRam", false);
-//		Launcher.buildAll("microzedjunitTarget.deep", "BootFromRam", false);
+		CommandLineParser p = new CommandLineParser();
+		p.parse(args);
+		if (!p.checkRequiredOptions("deepfile", "targetconfig")) return;
+		String deepFile = p.getFirstParameterFor("deepfile");
+		String targetConfig = p.getFirstParameterFor("targetconfig");
+		Launcher.buildAll(deepFile, targetConfig, false);
+		
 		if (ErrorReporter.reporter.nofErrors == 0) {
 			Programmer programmer = Configuration.getProgrammer();
 			if (programmer != null) {
@@ -82,8 +79,13 @@ public class TestLauncher {
 			} else
 				System.out.println("no programmer defined");
 		}
+		
+		if (p.isPresent("interface-files-path")) {
+			System.out.println("generating interface files");
+			String targetPath = p.getFirstParameterFor("interface-files-path");
+			Launcher.createInterfaceFiles(targetPath);
+		}
 
-//		Launcher.createInterfaceFiles("M:/EUser/JCC/org.deepjava.trglib");
 
 		/* DEBUG OUTPRINTS */
 //		System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);
