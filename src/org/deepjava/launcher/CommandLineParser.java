@@ -44,15 +44,15 @@ public class CommandLineParser {
 		return (String[]) Arrays.stream(requiredOptions).filter(requiredOption -> !parsedArguments.containsKey(requiredOption)).toArray(String[]::new);
 	}
 	
-public boolean checkRequiredOptions(String ... requiredOptions) {
-	String[] missingArgs = getMissingOptions(requiredOptions);
-	if (missingArgs.length == 0)
-		return true;
-	
-		for (String arg : missingArgs)
-			System.err.println("missing required command line argument: --" + arg);
-		return false;
-}
+	public boolean checkRequiredOptions(String ... requiredOptions) {
+		String[] missingArgs = getMissingOptions(requiredOptions);
+		if (missingArgs.length == 0)
+			return true;
+		
+			for (String arg : missingArgs)
+				System.err.println("missing required command line argument: --" + arg);
+			return false;
+	}
 	
 	// Nur zum testen/demo
 	public static void main(String[] argv) {

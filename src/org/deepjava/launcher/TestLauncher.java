@@ -31,11 +31,7 @@ import org.deepjava.strings.HString;
 import org.deepjava.target.TargetConnection;
 
 /**
- * Launcher for tests only! Adapt this file to your configuration, but don't
- * commit those changes to the SVN! Please store your project file in the top
- * folder of the deep-Project. You can find an example project
- * "ExampleProject.deep" in this folder which you may use as base for your own
- * test project.
+ * Launcher for tests only! 
  */
 @SuppressWarnings("unused")
 public class TestLauncher {
