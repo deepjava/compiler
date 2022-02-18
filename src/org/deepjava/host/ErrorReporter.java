@@ -78,13 +78,7 @@ public class ErrorReporter {
 					e.printStackTrace(errPrStream);
 				}
 			
-		} else {
-			if(home.endsWith("bin/")) { // used when started directly in eclipse (e.g. with the Testlauncher)
-				home = home.substring(0, home.length() - 4);
-			}
-			errorMsgFilePath = home + errorMsgFilePath;
-		}
-						
+		}						
 		this.maxNofErrors = Integer.MAX_VALUE;
 	}
 
@@ -115,7 +109,7 @@ public class ErrorReporter {
 		BufferedReader br = null;
 		boolean found = false;
 		String[] elements = new String[0];
-		if(jar != null){
+		if (jar != null) {
 			ZipEntry entry = jar.getEntry(errorMsgFilePath);
 			InputStreamReader isr = null;
 			try {
@@ -140,9 +134,9 @@ public class ErrorReporter {
 					e.printStackTrace(errPrStream);
 				}
 			}
-		}else{
+		} else {
 			File file = new File(errorMsgFilePath);
-			if(file.exists()){
+			if (file.exists()) {
 				FileReader fr = null;
 				try {
 					//search error message in the message file
@@ -172,18 +166,11 @@ public class ErrorReporter {
 			}
 		}
 
-		if(found){
-			if(elements.length > 1){
-				msg += elements[1];
-			}
-			if(additionalInfo != null){
-				msg += " (" + additionalInfo + ").";
-			}
-			if(elements.length > 2){
-				msg += " Possible solution: " + elements[2] + ".";
-			}
-			
-		}else{
+		if (found) {
+			if (elements.length > 1) msg += elements[1];
+			if (additionalInfo != null) msg += " (" + additionalInfo + ").";
+			if (elements.length > 2) msg += " Possible solution: " + elements[2] + ".";
+		} else {
 			if(additionalInfo != null)
 				msg = additionalInfo;
 		}
