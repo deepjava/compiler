@@ -207,7 +207,9 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			if (model != null && !model.getLoadPlFile()) sb.append("#");
 			sb.append("\tpl_file = ");
 			if (model != null && model.getPlFilePath() == null) {
-				sb.append("none");
+				str = model.getLibrary().getAbsolutePath();
+				str = str.replace('/', '\\');
+				sb.append(str);
 			} else {
 				str = model.getPlFilePath().getAbsolutePath();
 				str = str.replace('/', '\\');

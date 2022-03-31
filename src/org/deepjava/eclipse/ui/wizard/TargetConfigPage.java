@@ -51,7 +51,7 @@ class TargetConfigPage extends WizardPage {
 	private Button checkImg, browseImg, downloadPL, browsePL;
 	private Text programmerOpts, pathImg, pathPL;
 	private final String defaultImgPath = "$PROJECT_LOCATION";
-	private final String defaultPlPath = "$PROJECT_LOCATION";
+	private final String defaultPlPath = "\\rsc\\flink2.bit";
 	private String lastChoice = defaultImgPath;
 	private String lastChoicePl = defaultPlPath;
 	private String[][] boards;
@@ -169,7 +169,10 @@ class TargetConfigPage extends WizardPage {
 				if(e.widget.equals(downloadPL)) {
 					if(downloadPL.getSelection()) {
 						pathPL.setEnabled(true);
-						pathPL.setText(defaultPlPath);
+						if (((DeepProjectWizard)getWizard()).model.getLibrary() != null) {
+							File lib = ((DeepProjectWizard)getWizard()).model.getLibrary();
+							pathPL.setText(lib.getAbsolutePath() + defaultPlPath);
+						} else pathPL.setText(defaultPlPath);
 						browsePL.setEnabled(true);
 					} else {
 						pathPL.setEnabled(false);
@@ -276,9 +279,9 @@ class TargetConfigPage extends WizardPage {
 		wiz.model.setCreateImgFile(checkImg.getSelection());
 		if (lastChoice != defaultImgPath) wiz.model.setImgPath(new File(lastChoice));
 		else wiz.model.setImgPath(null);
+		if (wiz.model.getImgPath() != null) System.out.println(wiz.model.getImgPath().getPath());
 		wiz.model.setLoadPlFile(downloadPL.getSelection());
-		if (lastChoicePl != defaultPlPath) wiz.model.setPlFilePath(new File(lastChoicePl));
-		else wiz.model.setPlFilePath(null);
+		wiz.model.setPlFilePath(new File(wiz.model.getLibrary().getAbsolutePath() + lastChoicePl));
 		return true;
 	}
 	

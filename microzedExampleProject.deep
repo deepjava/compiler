@@ -13,12 +13,13 @@ project microzedExampleProject {
 	ostype = sts_arm;
 	programmertype = openOCD;
 	programmeropts = localhost_4444;
-	imgfile = "C:\temp\Test1";
+	imgfile = "C:\Users\urs.graf\OneDrive - OST\Desktop/Base";
+	pl_file = "C:\Users\urs.graf\OneDrive - OST\Dokumente\OST\Software\EUser\JCC\org.deepjava.trglib\rsc\flink4.bit";
 #	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java.lang.Object";
 #	rootclasses = "org.deepjava.runtime.zynq7000.Reset";
 	rootclasses = "org.deepjava.runtime.zynq7000.demo.SystemOutDemo";
-	rootclasses = "org.deepjava.runtime.zynq7000.microzed.demo.Blinker";
-	rootclasses = "org.deepjava.runtime.zynq7000.demo.SystemOutDemo","org.deepjava.runtime.zynq7000.microzed.demo.Blinker";
+	rootclasses = "org.deepjava.runtime.zynq7000.microzed.test.RTBoardTest";
+#	rootclasses = "org.deepjava.runtime.zynq7000.demo.SystemOutDemo","org.deepjava.runtime.zynq7000.microzed.demo.Blinker";
 }
