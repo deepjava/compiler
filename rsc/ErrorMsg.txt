@@ -4,6 +4,7 @@ ErrorNr;Description;Solution
 11;file not found;
 
 100;no target connection (build project first)
+101;error message file could not be loaded
 
 200;wrong number format;
 201;missing right parenthesis;
@@ -119,6 +120,8 @@ ErrorNr;Description;Solution
 813;BDI packet wrong, try to reset BDI;
 814;ready bit not set, try to reset BDI;
 815;Connection to target not possible! (port seems to be busy);
+816;Connection to target not possible! (Cannot connect to OpenOCD server);
+817;Connection to target not possible! (Target not answering);
 820;no target image file found;
 821;no pl image file found;
 822;no bin file found;

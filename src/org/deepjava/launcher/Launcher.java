@@ -483,7 +483,7 @@ public class Launcher implements ICclassFileConsts {
 								} else if (e.getMessage().equals("target not connected")) {
 									reporter.error(800);
 								} else {
-									reporter.error(801);
+									reporter.error(801, e.getMessage());
 								}
 							}
 						}
@@ -626,7 +626,10 @@ public class Launcher implements ICclassFileConsts {
 			try {
 				if (!tc.isConnected()) tc.openConnection();
 			} catch (TargetConnectionException e) {
-				reporter.error(815);
+				if (dbg) vrb.println(e.getMessage());
+				if (e.getMessage().equals("Cannot connect to OpenOCD server")) reporter.error(816);
+				if (e.getMessage().equals("Target not answering")) reporter.error(817);
+				else reporter.error(815, e.getMessage());
 			}
 		} else reporter.error(803);
 	}

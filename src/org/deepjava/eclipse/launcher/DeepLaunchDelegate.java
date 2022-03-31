@@ -108,8 +108,6 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 						TargetConnection tc = (TargetConnection) m.invoke(cls);
 						Launcher.setTargetConnection(tc);
 						Launcher.openTargetConnection();
-						long time = System.currentTimeMillis();
-						while (System.currentTimeMillis() - time < 100);
 						if (ErrorReporter.reporter.nofErrors == 0) {
 							Launcher.downloadTargetImage();
 							Launcher.startTarget(Launcher.getResetAddr());

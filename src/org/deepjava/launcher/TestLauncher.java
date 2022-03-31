@@ -32,6 +32,7 @@ import org.deepjava.target.TargetConnection;
 
 /**
  * Launcher for tests only! 
+ * When using OpenOCD -> starts OpenOCD manually!
  */
 @SuppressWarnings("unused")
 public class TestLauncher {
@@ -54,8 +55,6 @@ public class TestLauncher {
 					TargetConnection tc = (TargetConnection) m.invoke(cls);
 					Launcher.setTargetConnection(tc);
 					Launcher.openTargetConnection();
-					long time = System.currentTimeMillis();
-					while (System.currentTimeMillis() - time < 100);
 					Launcher.downloadTargetImage();
 					Launcher.startTarget(Launcher.getResetAddr());
 //					Launcher.closeTargetConnection();
