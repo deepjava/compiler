@@ -19,6 +19,7 @@
 package org.deepjava.host;
 /**
 changes:
+<br>2022-03-25, OST/GRAU	error file must be found in all use cases
 <br>11-09-12, NTB/MILR	error(int errNr, String additionalInfo): printing errNr, errMsg and additional informations, handling if class is into a jar
 <br>09-04-22, NTB/ED	error(int errNr, String errMsg): printing errNr, errMsg
 <br>09-03-23, NTB/ED	extension of error(int errNr, String errMsg)
@@ -31,6 +32,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -40,6 +43,7 @@ import java.util.zip.ZipEntry;
  */
 public class ErrorReporter {
 	public static final  ErrorReporter  reporter;
+	private static PrintStream vrb = StdStreams.vrb;
 	private PrintStream  errPrStream;
 	private String  errorMsgFilePath = "rsc/ErrorMsg.txt";
 	private JarFile jar;
@@ -57,29 +61,36 @@ public class ErrorReporter {
 	private  ErrorReporter() {
 		clear();
 		errPrStream = StdStreams.err;
-		String home = "";
-		
-		if(System.getProperty("os.name").contains("Windows")){ // Running on Microsoft Windows
-			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(6); // get jar name
-			// we have to remove the first 6 characters of the returned _absolute_ path to the JAR file,
-			// because the string starts with "file:/" which is not a valid file name!
-			// Example: file:/I:\eclipse\..
-		} else { // Running on Linux, Mac OS X or another UNIX system
-			home = getClass().getProtectionDomain().getCodeSource().getLocation().toString().substring(5); // get jar name
-			// we have to remove the first 5 characters of the returned _absolute_ path to the JAR file,
-			// because the string starts with "file:" which is not a valid file name!
-			// Example: file:/opt/eclipse/..
+		String path = getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+		String url = null;
+		try {
+			url = URLDecoder.decode(path, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			vrb.println("Error message file cannot be loaded, URL syntax error ");
 		}
-		
-		if(home.endsWith("jar")) { // used when running as an eclipse plugin 
-				try {
-					jar = new JarFile(home);
-				} catch (IOException e) {
-					e.printStackTrace(errPrStream);
-				}
-			
+//		errPrStream.println(url);
+		while (url.contains("..")) {	// used when eclipse launched from within eclipse workspace
+			int index = url.indexOf("..");
+			char ch = url.charAt(index - 1);
+			int index1 = url.lastIndexOf(ch, index - 2);
+			String p1 = url.substring(0, index1);
+			String p2 = url.substring(index + 2);
+			url = p1 + p2;
+		}
+		if (url.endsWith("jar")) { // used when running as an eclipse plugin 
+			try {
+				jar = new JarFile(url);
+			} catch (IOException e) {
+				vrb.println("Error message file cannot be loaded");
+			}
+		} else {
+			if (url.endsWith("bin/")) { // used when started directly in eclipse (e.g. with the Testlauncher)
+				url = url.substring(0, url.length() - 4);
+			}
+			errorMsgFilePath = url + errorMsgFilePath;
 		}						
 		this.maxNofErrors = Integer.MAX_VALUE;
+//		errPrStream.println(errorMsgFilePath);
 	}
 
 	public void setMaxNrOfErrors(int maxNofErrors) {
