@@ -98,7 +98,7 @@ public class Launcher implements ICclassFileConsts {
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
 
 		if ((reporter.nofErrors <= 0) && checkVersion) {
-			Bundle deepBundle = Platform.getBundle("org.deepjava");
+			Bundle deepBundle = Platform.getBundle("org.deepjava.compiler");
 			if (deepBundle != null) {
 				Version deepCompilerVersion = deepBundle.getVersion();
 				File deepLibVersionFile = null;
