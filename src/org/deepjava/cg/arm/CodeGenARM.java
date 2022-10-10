@@ -2600,12 +2600,14 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		}
 	}
 
+	// checks if a value can be packed into ARM's 12 bit packed format
 	private boolean isPackable(int val) {
 		int lead = Integer.numberOfLeadingZeros(val);
 		lead -= lead % 2;	// make even, immediate operands can be shifted by an even number only
 		return lead + Integer.numberOfTrailingZeros(val) >= 24;		
 	}
 	
+	// packs a value into ARM's 12 bit packed format
 	private int packImmediate(int immVal) {
 		int val = Integer.numberOfLeadingZeros(immVal);
 		val -= val % 2;	// make even
@@ -3202,12 +3204,30 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 	
 	// load/store word and unsigned byte (immediate)	(LDR, LDRB, STR, STRB, LDRH, LDRSH, LDRSB, STRH)
 	// P = 1 -> preindexed, U = 1 -> add offset, W = 1 -> write back
-	private void createLSWordImm(Code32 code, int opCode, int cond, int Rt, int Rn, int imm12, int P, int U, int W) {
-		if (opCode == armLdr || opCode == armLdrb || opCode == armStr || opCode == armStrb)
-			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm12 << 0) | (P << 24) | (U << 23) | (W << 21);
-		else	// extra load / store
-			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | ((imm12 & 0xf0) << 4) | (imm12 & 0xf) | (P << 24) | (U << 23) | (W << 21) | (1 << 22);
-		code.incInstructionNum();
+	private void createLSWordImm(Code32 code, int opCode, int cond, int Rt, int Rn, int imm, int P, int U, int W) {
+		switch (opCode) {
+		case armLdr: case armLdrb: case armStr: case armStrb:
+			if (imm > 0xfff) ErrorReporter.reporter.error(651); 
+			code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | (imm << 0) | (P << 24) | (U << 23) | (W << 21);
+			code.incInstructionNum();
+			break;
+		case armLdrsb: case armLdrsh: case armLdrh: case armStrh: // extra load / store
+			if (imm > 0xff) {
+				if (imm > 0xfff) ErrorReporter.reporter.error(651);
+				int baseOffset = imm / 256;
+				int off = imm % 256;
+				createDataProcImm(code, armAdd, cond, Rn, Rn, packImmediate(baseOffset * 256));
+				code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | ((off & 0xf0) << 4) | (off & 0xf) | (P << 24) | (U << 23) | (W << 21) | (1 << 22);
+				code.incInstructionNum();
+				createDataProcImm(code, armSub, cond, Rn, Rn, packImmediate(baseOffset * 256));
+			} else {
+				code.instructions[code.iCount] = (cond << 28) | opCode | (Rt << 12) | (Rn << 16) | ((imm & 0xf0) << 4) | (imm & 0xf) | (P << 24) | (U << 23) | (W << 21) | (1 << 22);
+				code.incInstructionNum();
+			}
+			break;
+		default:		
+			ErrorReporter.reporter.error(652); 
+		}
 	}
 
 	// ...(LDR, LDRB	:	(literal))
@@ -3333,6 +3353,7 @@ public class CodeGenARM extends CodeGen implements InstructionOpcs, Registers {
 		code.incInstructionNum();
 	}
 
+	// creates a pattern within the instruction stream, used for exception epilogue
 	private void createIpat(Code32 code, int pat) {
 		code.instructions[code.iCount] = pat;
 		code.incInstructionNum();

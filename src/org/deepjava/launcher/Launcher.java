@@ -39,6 +39,7 @@ import org.deepjava.cg.ppc.InstructionDecoderPPC;
 import org.deepjava.classItems.Array;
 import org.deepjava.classItems.CFR;
 import org.deepjava.classItems.Class;
+import org.deepjava.classItems.Item;
 import org.deepjava.classItems.ICclassFileConsts;
 import org.deepjava.classItems.Method;
 import org.deepjava.config.Arch;
@@ -206,6 +207,15 @@ public class Launcher implements ICclassFileConsts {
 						if (dbg) vrb.println("   is synthetic, omit");
 					} else {
 
+						if (dbg) {
+							vrb.println("\t\t\tclass fields");
+							Item it = clazz.instFields;
+							while (it != null && it != clazz.classFields) {
+								vrb.println("\t\t\t\t" + it.name + " " + it.offset);
+								it = it.next;
+							}
+						}
+						
 						// Create constant block
 						if (reporter.nofErrors <= 0) {
 							if(dbg) vrb.println("[LAUNCHER] creating constant block for " + clazz.name);

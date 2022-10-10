@@ -39,11 +39,12 @@ project junitTargetTestProject {
 #	rootclasses = "org.deepjava.comp.targettest.casts.ByteCastTest","org.deepjava.comp.targettest.casts.ShortCastTest","org.deepjava.comp.targettest.casts.CharCastTest","org.deepjava.comp.targettest.casts.IntCastTest","org.deepjava.comp.targettest.casts.LongCastTest","org.deepjava.comp.targettest.casts.FloatCastTest","org.deepjava.comp.targettest.casts.DoubleCastTest";
 
 #	Tests for all objects  
-#	rootclasses = "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest","org.deepjava.comp.targettest.objects.FieldTest";
 #	rootclasses = "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InterfaceTest";
 #	rootclasses = "org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest";
 #	rootclasses = "org.deepjava.comp.targettest.objects.InterfaceTest";
 #	rootclasses = "org.deepjava.comp.targettest.objects.EnumTest";
+#	rootclasses = "org.deepjava.comp.targettest.objects.FieldTest";
 
 #	Tests for all various  
 #	rootclasses = "org.deepjava.comp.targettest.various.StackFrame","org.deepjava.comp.targettest.various.ParameterPassing","org.deepjava.comp.targettest.various.RegisterAllocation";
@@ -58,7 +59,7 @@ project junitTargetTestProject {
 				  "org.deepjava.comp.targettest.arrays.ArrayTest","org.deepjava.comp.targettest.arrays.ArrayTwoDimTest","org.deepjava.comp.targettest.arrays.ArrayThreeDimTest","org.deepjava.comp.targettest.arrays.ArrayInstanceTest","org.deepjava.comp.targettest.arrays.StringTest",
 				  "org.deepjava.comp.targettest.unsafe.UnsafeTestARM","org.deepjava.comp.targettest.unsafe.LowLevelTest",
 				  "org.deepjava.comp.targettest.casts.ByteCastTest","org.deepjava.comp.targettest.casts.ShortCastTest","org.deepjava.comp.targettest.casts.CharCastTest","org.deepjava.comp.targettest.casts.IntCastTest","org.deepjava.comp.targettest.casts.LongCastTest","org.deepjava.comp.targettest.casts.FloatCastTest","org.deepjava.comp.targettest.casts.DoubleCastTest",
-				  "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest",
+				  "org.deepjava.comp.targettest.objects.InstanceTest","org.deepjava.comp.targettest.objects.InheritanceTest","org.deepjava.comp.targettest.objects.InterfaceTest","org.deepjava.comp.targettest.objects.EnumTest","org.deepjava.comp.targettest.objects.FieldTest",
 				  "org.deepjava.comp.targettest.various.StackFrame","org.deepjava.comp.targettest.various.ParameterPassing","org.deepjava.comp.targettest.various.RegisterAllocation",
 				  "org.deepjava.comp.targettest.exceptions.UncheckedExceptionTest","org.deepjava.comp.targettest.exceptions.CheckedExceptionTest","org.deepjava.comp.targettest.exceptions.FinallyExceptionTest";
 
