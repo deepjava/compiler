@@ -78,7 +78,7 @@ public class Launcher implements ICclassFileConsts {
 	private static TargetConnection tc;
 	private static long time;
 	
-	public static int buildAll(String deepProjectFileName, String targetConfigurationName, boolean checkVersion) {
+	public static int buildAll(String launchFileName, String targetConfigurationName, boolean checkVersion) {
 		// choose the attributes which should be read from the class file
 		int attributes = (1 << atxCode) | (1 << atxLocalVariableTable) | (1 << atxExceptions) | (1 << atxLineNumberTable);
 
@@ -93,11 +93,11 @@ public class Launcher implements ICclassFileConsts {
 		// Read configuration
 		if (dbgProflg) time = System.nanoTime();
 		if (dbg) vrb.println("[Launcher] Loading Configuration");
-		log.println("Loading deep project file \"" + deepProjectFileName + "\"");
-		Configuration.readProjectFile(deepProjectFileName);
+		log.println("Loading deep project file \"" + launchFileName + "\"");
+		Configuration.readProjectFile(launchFileName);
 		if (reporter.nofErrors <= 0) Configuration.setActiveTargetConfig(targetConfigurationName);
 		if (dbgProflg) {vrb.println("duration for reading configuration = " + ((System.nanoTime() - time) / 1000) + "us"); time = System.nanoTime();}
-
+		
 		if ((reporter.nofErrors <= 0) && checkVersion) {
 			Bundle deepBundle = Platform.getBundle("org.deepjava.compiler");
 			if (deepBundle != null) {
@@ -424,7 +424,7 @@ public class Launcher implements ICclassFileConsts {
 			HString fname = Configuration.getImgFileName();
 			if (fname != null && !fname.equals(HString.getHString(""))) {
 				try {
-					String name = fname.toString();
+					String name = (fname.toString() + Configuration.getProjectName()).replace('\\', '/');
 					log.println("Writing target image to: " + name);
 					long bytesWritten = Linker32.writeTargetImageToBinFile(name);
 					log.print("binary (" + bytesWritten / 1024 + ("kB)"));
@@ -435,9 +435,11 @@ public class Launcher implements ICclassFileConsts {
 						tms = tms.next;
 					}
 					if (flash) {
-						bytesWritten = Linker32.writeTargetImageToMcsFile(name);
+						bytesWritten = Linker32.writeTargetImageToMcsFile(name);	// mcs is used for booting from QSPI flash
+						if (reporter.nofErrors > 0) return reporter.nofErrors;
 						log.print(", intel hex (" + bytesWritten / 1024 + ("kB)"));
-						bytesWritten = Linker32.writeTargetImageToBootBinFile(name);
+						bytesWritten = Linker32.writeTargetImageToBootBinFile(name);	// BOOT.bin is used for sd card
+						if (reporter.nofErrors > 0) return reporter.nofErrors;
 						log.print(", BOOT.bin (" + bytesWritten / 1024 + ("kB)"));
 					}
 //					bytesWritten = Linker32.writeTargetImageToElfFile(name);

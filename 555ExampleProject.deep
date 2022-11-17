@@ -6,9 +6,9 @@ meta {
 }
 
 project ExampleProjectMpc555 {
-	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+	libpath = "../org.deepjava.trglib","../ch.ntb.inf.junitTarget";
 #	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../org.deepjava.trglib";
-#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+#	libpath = "../org.deepjava.trglib","../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	boardtype = ntbMpc555HB;
 	ostype = sts_ppc;
 	programmertype = ntbMpc555UsbBdi;

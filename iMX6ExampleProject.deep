@@ -6,14 +6,14 @@ meta {
 }
 
 project ExampleProjectMpc555 {
-	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
+	libpath = "../org.deepjava.trglib","../ch.ntb.inf.junitTarget";
 #	libpath = "C:/Program Files/Java/jre6/lib/rt.jar","../org.deepjava.trglib";
-#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
+#	libpath = "../org.deepjava.trglib","../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre6/lib/rt.jar";
 	boardtype = colibri_iMX6;
 	ostype = sts_arm;
 	programmertype = abatronBDI;
 	programmeropts = bdi3000inf02;
-	imgfile = "\\inf004\ftp\pub\graf\ArmTest1";
+	imgfile = "//inf004/ftp/pub/graf/ArmTest1";
 #	tctfile = "tct/targetCommands.dtct";
 	
 #	rootclasses = "java.lang/Object";

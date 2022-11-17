@@ -12,18 +12,18 @@ ErrorNr;Description;Solution
 203;missing right bracket;
 204;missing quotation mark;
 205;IO-Exception;
-206;Unexpected Symbol;
-207;Missing left brace;
+206;unexpected Symbol;
+207;missing left brace;
 208;missing left bracket;
 209;missing semicolon;
 210;missing assignment sign;
-220;Device not found;
-221;Device not found; Make sure, to define the device first, before adding segments
+220;device not found;
+221;device not found; Make sure, to define the device first, before adding segments
 222;syntax error;
 223;inconsistent attributes;
 224;invalid type;
 225;invalid parameter;
-226;Overwrite protected constant;
+226;overwrite protected constant;
 227;undefined constant;
 228;max number of reached;
 229;missing tag;
@@ -33,17 +33,19 @@ ErrorNr;Description;Solution
 233;to set an init value is not supported;
 234;fix addresses for methods are only in exception methods supported;
 235;no such segment;
-236;Module not found;
-237;System module not found;
-238;Board not found;
-239;Operating system not found;
-241;System constant not found;
+236;module not found;
+237;system module not found;
+238;board not found;
+239;operating system not found;
+241;system constant not found;
 250;configuration file not found;
 251;wrong attribute for device;
 252;too many exception classes;
 253;run configuration defined twice;
 254;segment not found;
 255;no valid library path;
+256;wrong path for image file;
+257;wrong path for pl file;
 
 300;class file not found;
 301;system method not found;
@@ -129,6 +131,7 @@ ErrorNr;Description;Solution
 823;no pl file specified;
 824;no mcs file found;
 825;no flash segment found;
+826;bit file must start with the name "flink";
 830;no reset class found;
 831;no reset method found;
 

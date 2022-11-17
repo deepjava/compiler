@@ -70,9 +70,7 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		IPath path = project.getRawLocation();
 
 		monitor.beginTask("Download Target Image", 100);
-
-		//clear Console
-		if (cdm != null) cdm.clear();
+		if (cdm != null) cdm.clear(); // clear console
 	
 		monitor.worked(10);
 		if(monitor.isCanceled()) {
@@ -81,11 +79,11 @@ public class DeepLaunchDelegate extends JavaLaunchDelegate{
 		}
 		
 		String deepProjectFile;
-		if(path == null) // default project location (in workspace)
+		if(path == null) { // default project location (project directly in workspace)
 			deepProjectFile = ResourcesPlugin.getWorkspace().getRoot().getLocation().toString() + projectName + IPath.SEPARATOR + launchFileName;
-		else 	// in other location
+		} else { 	// in other location
 			deepProjectFile = path.toString() + IPath.SEPARATOR + launchFileName;
-
+		}
 		Launcher.buildAll(deepProjectFile, targetConfig, true);			
 
 		monitor.worked(50);

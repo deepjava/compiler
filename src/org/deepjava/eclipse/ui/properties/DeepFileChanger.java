@@ -21,7 +21,6 @@ package org.deepjava.eclipse.ui.properties;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,23 +29,16 @@ public class DeepFileChanger {
 	StringBuffer fileContent;
 	String deepFile;
 	
-	public DeepFileChanger(String name) {
+	public DeepFileChanger(String name) throws Exception {
 		deepFile = name;
-		try {
 			fileContent = new StringBuffer();
 			BufferedReader reader = new BufferedReader(new FileReader(deepFile));
-			
 			int ch  = reader.read();
 			while (ch  != -1) {
 				fileContent.append((char)ch);
 				ch = reader.read();
 			}
 			reader.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	// with comment == true the method will return the content with a given key even if the

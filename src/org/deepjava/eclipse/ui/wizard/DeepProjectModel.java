@@ -27,7 +27,7 @@ public class DeepProjectModel {
 	private String[] osName;
 	private String[] programmerName;
 	private String programmerOptions;
-	private File imgPath, plFilePath;
+	private String imgPath, plFilePath;
 	private boolean createImgFile, loadPlFile;
 
 	public void setLibrary(File lib) {
@@ -70,11 +70,11 @@ public class DeepProjectModel {
 		this.osName = os;
 	}
 	
-	public void setImgPath(File imgPath){
+	public void setImgPath(String imgPath){
 		this.imgPath = imgPath;
 	}
 	
-	public File getImgPath(){
+	public String getImgPath(){
 		return imgPath;
 	}
 	
@@ -94,11 +94,11 @@ public class DeepProjectModel {
 		return loadPlFile;
 	}
 	
-	public void setPlFilePath(File file){
-		this.plFilePath = file;
+	public void setPlFilePath(String plFilePath){
+		this.plFilePath = plFilePath;
 	}
 	
-	public File getPlFilePath(){
+	public String getPlFilePath(){
 		return plFilePath;
 	}
 

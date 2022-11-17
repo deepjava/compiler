@@ -20,6 +20,7 @@ package org.deepjava.config;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.deepjava.host.ErrorReporter;
 import org.deepjava.host.StdStreams;
 import org.deepjava.strings.HString;
 import org.deepjava.strings.StringTable;
+import org.eclipse.core.runtime.IPath;
 
 public class Configuration implements ICclassFileConsts {
 		
@@ -79,8 +81,8 @@ public class Configuration implements ICclassFileConsts {
 	private static final ErrorReporter reporter = ErrorReporter.reporter;
 	private static PrintStream vrb = StdStreams.vrb;
 	
-	private static File projectFile;			// deep project file
 	private static HString deepProjectName;		// deep project name as specified in the project file
+	private static File projectFile;			// deep project file
 	private static HString[] libPath;			// path for target libraries
 	private static File[] libs;					// target libraries
 	private static HString[] rootClassNames;
@@ -91,7 +93,6 @@ public class Configuration implements ICclassFileConsts {
 	private static RunConfiguration activeRunConfig;
 	// image files with name and start address
 	private static ArrayList<Map.Entry<String,Integer>> imgFile = new ArrayList<>();
-	private static String plFile;
 	private static HString tctFileName;			// target command file name
 	private static HString imgFileName;			// image file name
 	private static int imgFileFormat;			// image file format
@@ -106,8 +107,8 @@ public class Configuration implements ICclassFileConsts {
 		File rel = new File(projectFileName);
 		String path = rel.getAbsolutePath();
 		File file = new File(path);
-		new Parser(file).parse(true);
 		projectFile = file;
+		new Parser(file).parse(true);
 		if (reporter.nofErrors > 0) return;
 		
 		readConfigDir(basePath);
@@ -169,7 +170,7 @@ public class Configuration implements ICclassFileConsts {
 			String[] configFileNames = configDir[i].list(filter);
 			if (configFileNames != null) {
 				for (int j = 0; j < configFileNames.length; j++) {
-					if (dbg) StdStreams.vrb.println("[CONF] Reading config file from " + configDir[i].toString() + "\\" + configFileNames[j]);
+					if (dbg) vrb.println("[CONF] Reading config file from " + configDir[i].toString() + "\\" + configFileNames[j]);
 					File cfgFile = new File(configDir[i] + "/" + configFileNames[j]);
 					new Parser(cfgFile).parse(false);
 				}
@@ -193,7 +194,7 @@ public class Configuration implements ICclassFileConsts {
 					int index = configFileNames[j].lastIndexOf('.');
 					String name = configFileNames[j].substring(0, index);
 					if (itm.name.equals(HString.getHString(name))) {
-						if (dbg) StdStreams.vrb.println("[CONF] Reading config file from " + configDir[i].toString() + "\\" + configFileNames[j]);
+						if (dbg) vrb.println("[CONF] Reading config file from " + configDir[i].toString() + "\\" + configFileNames[j]);
 						found = true;
 						File cfgFile = new File(configDir[i] + "/" + configFileNames[j]);
 						new Parser(cfgFile).parse(false);
@@ -201,7 +202,7 @@ public class Configuration implements ICclassFileConsts {
 				}
 			}
 		}
-		if (!found) reporter.error(250, "" + itm.name);
+		if (!found) reporter.error(250, "" + path + itm.name);
 	}
 
 	public static void readRunConfigs(String path, Item itm) {
@@ -228,7 +229,7 @@ public class Configuration implements ICclassFileConsts {
 				}
 			}
 		}
-		if (!found) reporter.error(250, "" + itm.name);
+		if (!found) reporter.error(250, "" + path + itm.name);
 	}
 
 	public static String[][] getDescInConfigDir(File configDir, short symbol) {
@@ -268,11 +269,30 @@ public class Configuration implements ICclassFileConsts {
 		return deepProjectName;
 	}
 
+	/**
+	 * Takes array with absolute or relative path names to target libraries.
+	 * Converts them into absolute paths and creates files from these paths.
+	 */
 	public static void createLibs(HString[] path) {
 		libPath = path;
 		libs = new File[path.length];
-		for (int i = 0; i < path.length; i++) {			
-			libs[i] = new File(path[i].toString());
+		if (dbg) vrb.println("library paths:");
+		for (int i = 0; i < path.length; i++) {	
+			if (!(new File(path[i].toString()).isAbsolute())) {
+				if (dbg) vrb.println("\t relative: " + path[i]);
+				String s = projectFile.getParent() + IPath.SEPARATOR + path[i].toString();
+				libPath[i] = HString.getHString(s);
+				try {
+					libs[i] = new File(new File(s).getCanonicalPath());
+				} catch (IOException e) {
+					ErrorReporter.reporter.error(255, "path=" + libs[i].toString());
+					return;
+				}
+			} else {
+				libPath[i] = path[i];
+				libs[i] = new File(path[i].toString());
+			}
+			if (dbg) vrb.println("\t absolute: " + libs[i]);
 			if (!libs[i].exists()) ErrorReporter.reporter.error(255, "path=" + libs[i].toString()); 
 		}
 	}
@@ -346,14 +366,6 @@ public class Configuration implements ICclassFileConsts {
 		imgFileFormat = format;
 	}
 
-	public static void setPlFile(String name) {
-		plFile = name;
-	}
-
-	public static String getPlFile() {
-		return plFile;
-	}
-
 	public static RunConfiguration getActiveRunConfiguration() {
 		return activeRunConfig;
 	}
@@ -397,7 +409,7 @@ public class Configuration implements ICclassFileConsts {
 		os = null;
 		programmer = null;
 		imgFile.clear();
-		plFile = null;
+		plFileName = null;
 	}
 	
 	public static Segment getCodeSegmentOf(Class cls) {
@@ -482,6 +494,9 @@ public class Configuration implements ICclassFileConsts {
 			return seg;
 	}
 
+	/**
+	 * Returns an Array containing the current projects bin directory and the bin directories of all libraries 
+	 */
 	public static File[] getSearchPaths() {
 		File[] libPaths = libs;
 		File[] javaSearchPaths = new File[libPaths.length + 1];

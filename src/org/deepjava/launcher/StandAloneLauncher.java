@@ -19,8 +19,6 @@
 package org.deepjava.launcher;
 
 import java.util.HashMap;
-
-import org.deepjava.classItems.Method;
 import org.deepjava.linker.Linker32;
 
 public class StandAloneLauncher {
@@ -43,12 +41,12 @@ public class StandAloneLauncher {
 	}
 
 	protected static void UsagePrint() {
-		System.out.println("Usage: java " + getBaseCommand() + " [/config ConfigName] deepfile");
+		System.out.println("Usage: java " + getBaseCommand() + " [-map] [-config ConfigName] deepfile");
 		System.out.println();
-		System.out.println("  /config     By default the project is compiled for \"BootFromRam\".");
+		System.out.println("  -config     By default the project is compiled for \"BootFromRam\".");
 		System.out.println("              By specifying this switch, you can set a different");
 		System.out.println("              configuration to compile for.");
-		System.out.println("  /map        Dumps a mapfile");
+		System.out.println("  -map        Dumps compiler and linker information");
 		System.out.println("  deepfile    Project file you want to compile");
 	}
 
@@ -94,13 +92,13 @@ public class StandAloneLauncher {
 			return;
 		}
 
-		Launcher.buildAll(params.get(PARAM_PROJECT), params.get(PARAM_CONFIG), true);
+		Launcher.buildAll(params.get(PARAM_PROJECT), params.get(PARAM_CONFIG), false);
 		
 		if (params.containsKey(PARAM_MAP)) {
 			System.out.println("%%%%%%%%%%%%%%% Class List %%%%%%%%%%%%%%%"); Linker32.printClassList(false, false, false, true);
 			System.out.println("%%%%%%%%%%%%%%% System Table %%%%%%%%%%%%%%%"); Linker32.printSystemTable();
 			System.out.println("%%%%%%%%%%%%%%% Global Constants %%%%%%%%%%%%%%%"); Linker32.printGlobalConstantTable();		
-			System.out.println("%%%%%%%%%%%%%%% Compiler specific subroutines %%%%%%%%%%%%%%%"); Method.printCompSpecificSubroutines();
+//			System.out.println("%%%%%%%%%%%%%%% Compiler specific subroutines %%%%%%%%%%%%%%%"); Method.printCompSpecificSubroutines();
 		}
 
 	}

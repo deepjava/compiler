@@ -176,7 +176,7 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			sb.append("}\n\n");
 			sb.append("project " + project.getName() + " {\n\tlibpath = ");
 			String str = model.getLibrary().getAbsolutePath();
-			str = str.replace('/', '\\');			
+			str = str.replace('\\', '/');			
 			sb.append("\"" + str + "\";\n");
 			sb.append("\tboardtype = ");
 			if (model != null && model.getBoard() != null) sb.append(model.getBoard()[0]);
@@ -196,23 +196,24 @@ public class DeepProjectWizard extends Wizard implements INewWizard{
 			sb.append("\timgfile = ");
 			if (model != null && model.getImgPath() == null) {
 				str = project.getLocation().toString();
-				str = str.replace('/', '\\');
+				str = str.replace('\\', '/');
 				sb.append("\"" + str);
 			} else {
-				str = model.getImgPath().getAbsolutePath();
-				str = str.replace('/', '\\');
+				str = model.getImgPath();
+				str = str.replace('\\', '/');
 				sb.append("\"" + str);
 			}
-			sb.append("\\" + project.getName() + "\";\n");
+			sb.append(str.endsWith("/")?"":"/");
+			sb.append("\";\n");
 			if (model != null && !model.getLoadPlFile()) sb.append("#");
 			sb.append("\tpl_file = ");
 			if (model != null && model.getPlFilePath() == null) {
 				str = model.getLibrary().getAbsolutePath();
-				str = str.replace('/', '\\');
+				str = str.replace('\\', '/');
 				sb.append(str);
 			} else {
-				str = model.getPlFilePath().getAbsolutePath();
-				str = str.replace('/', '\\');
+				str = model.getPlFilePath();
+				str = str.replace('\\', '/');
 				sb.append("\"" + str + "\"");
 			}
 			sb.append(";\n\n#\tenter names of rootclasses, e.g.");

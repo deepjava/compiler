@@ -34,6 +34,7 @@ import org.deepjava.classItems.RefType;
 import org.deepjava.host.ErrorReporter;
 import org.deepjava.host.StdStreams;
 import org.deepjava.strings.HString;
+import org.eclipse.core.runtime.IPath;
 
 public class Parser implements ICclassFileConsts {
 
@@ -152,51 +153,28 @@ public class Parser implements ICclassFileConsts {
 			sPlFile = g9 + 38;
 	
 	// -------- Block keywords: 
-	private static final short g10 = g9 + 39,
-			sMeta = g10;
-
+	private static final short g10 = g9 + 39, sMeta = g10;
 	public static final short sBoard = g10 + 1;
-
 	private static final short sCpu = g10 + 2;
-
 	private static final short sDevice = g10 + 3;
-
 	private static final short sReginit = g10 + 4;
-
 	private static final short sSegment = g10 + 5;
-
 	private static final short sMemorymap = g10 + 6;
-
 	private static final short sModules = g10 + 7;
-
 	private static final short sRunConf = g10 + 8;
-
 	private static final short sProject = g10 + 9;
-
 	private static final short sSegmentarray = g10 + 10;
-
 	private static final short sRegistermap = g10 + 11;
-
 	private static final short sRegister = g10 + 12;
-
 	public static final short sOperatingSystem = g10 + 13;
-
 	private static final short sSysConst = g10 + 14;
-
 	private static final short sMethod = g10 + 15;
-
 	private static final short sMemorysector = g10 + 16;
-
 	private static final short sMemorysectorArray = g10 + 17;
-
 	private static final short sSystem = g10 + 18;
-
 	public static final short sProgrammer = g10 + 19;
-
 	public static final short sProgrammerOpts = g10 + 20;
-
 	private static final short sCompiler = g10 + 21;
-
 	private static final short sArch = g10 + 22;
 	
 	// -------- Designator, IntNumber,
@@ -223,7 +201,6 @@ public class Parser implements ICclassFileConsts {
 	private BufferedInputStream bufStream = null;
 	private int lineNumber = 1;
 	private String currentFileName;
-
 	
 	public Parser(File configFile) {
 		currentFileName = configFile.getAbsolutePath();
@@ -1586,6 +1563,7 @@ public class Parser implements ICclassFileConsts {
 	}
 
 	private void project() {
+//		boolean dbg = true;
 		if (sym != sProject) {reporter.error(206, "in " + currentFileName + " at Line " + lineNumber + " expected symbol: project, received symbol: " + symToString()); return;}
 		if (dbg) StdStreams.vrb.println("[CONF] Parser: Entering project section");
 		next();
@@ -1634,20 +1612,45 @@ public class Parser implements ICclassFileConsts {
 				if (prog != null) prog.setOpts(opts);
 				if (dbg) if (opts != null) StdStreams.vrb.println(opts);
 			} else if (sym == sImgFile) {
-				Configuration.setImgFileName(imgFileAssignment());
-				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image file to " + Configuration.getImgFileName());
+				String img = imgFileAssignment();
+				if (dbg) StdStreams.vrb.println("[CONF] image file location:");
+				if (!(new File(img).isAbsolute())) {
+					if (dbg) StdStreams.vrb.println("\t relative: " + img);
+					String s = Configuration.getProjectFile().getParent() + IPath.SEPARATOR + img.toString();
+					try {
+						img = new File(s).getCanonicalPath() + IPath.SEPARATOR;
+					} catch (IOException e) {
+						ErrorReporter.reporter.error(256, "path=" + s);
+						return;
+					}
+				} 
+				if (dbg) StdStreams.vrb.println("\t absolute: " + img);
+				Configuration.setImgFileName(img);
+				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting image location file to " + Configuration.getImgFileName());
 			} else if (sym == sImgFormat) {
 				Configuration.setImgFileFormat(imgFileFormatAssignment());
 				if (dbg) {
-					if (Configuration.getImgFileFormat() != -1){
+					if (Configuration.getImgFileFormat() != -1) {
 						StdStreams.vrb.println("[CONF] Parser: Setting image file format to " + Configuration.formatMnemonics[Configuration.getImgFileFormat()]);
 					} else {
 						StdStreams.vrb.println("[CONF] Parser: Setting image file format failed " + Configuration.getImgFileFormat());
 					}
 				}
 			} else if (sym == sPlFile) {
-				String name = imgFileAssignment();
-				Configuration.setPlFile(name);
+				String pl = imgFileAssignment();
+				if (dbg) StdStreams.vrb.println("[CONF] pl file:");
+				if (!(new File(pl).isAbsolute())) {
+					if (dbg) StdStreams.vrb.println("\t relative: " + pl);
+					String s = Configuration.getProjectFile().getParent() + IPath.SEPARATOR + pl.toString();
+					try {
+						pl = new File(s).getCanonicalPath();
+					} catch (IOException e) {
+						ErrorReporter.reporter.error(257, "path=" + s);
+						return;
+					}
+				} 
+				if (dbg) StdStreams.vrb.println("\t absolute: " + pl);
+				Configuration.setPlFileName(pl);
 				if (dbg) StdStreams.vrb.println("[CONF] Parser: Setting pl file " + Configuration.getPlFileName());
 			} else { // sym == sTctFile
 				Configuration.setTctFileName(tctFileAssignment());

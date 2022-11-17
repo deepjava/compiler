@@ -55,10 +55,14 @@ public class RenameDeepProject extends RenameParticipant {
 	protected boolean initialize(Object element) {
 		String newName = getArguments().getNewName();
 		p = (IProject) element;
-		dfc = new DeepFileChanger(p.getLocation()	+ "/" + p.getName() + ".deep");
-		dfc.changeContent("description", "\"deep project file for " + newName + "\"");
-		dfc.changeProjectName(newName);
-		dfc.save();
+		try {
+			dfc = new DeepFileChanger(p.getLocation()	+ "/" + p.getName() + ".deep");
+			dfc.changeContent("description", "\"deep project file for " + newName + "\"");
+			dfc.changeProjectName(newName);
+			dfc.save();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		File oldFile = new File(p.getLocation()	+ "/" + p.getName() + ".deep"); 
 		oldFile.renameTo(new File(p.getLocation()	+ "/" + newName + ".deep"));
 		return true;

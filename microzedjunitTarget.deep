@@ -6,13 +6,13 @@ meta {
 }
 
 project junitTargetTestProject {
-	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget";
-#	libpath = "../org.deepjava.trglib", "../ch.ntb.inf.junitTarget", "C:/Program Files/Java/jre7/lib/rt.jar";
+	libpath = "../org.deepjava.trglib","../ch.ntb.inf.junitTarget";
+#	libpath = "../org.deepjava.trglib","../ch.ntb.inf.junitTarget","C:/Program Files/Java/jre7/lib/rt.jar";
 	boardtype = MicroZed;
 	ostype = sts_arm;
 	programmertype = openOCD;
 	programmeropts = localhost_4444;
-	imgfile = "C:\temp\Test1";
+	imgfile = "C:/temp/";
 
 # 	Target command table file
 	tctfile = "../ch.ntb.inf.junitTarget/tct/targetCommands.dtct";

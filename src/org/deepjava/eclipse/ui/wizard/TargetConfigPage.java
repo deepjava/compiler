@@ -50,9 +50,9 @@ class TargetConfigPage extends WizardPage {
 	private Combo boardCombo, programmerCombo, osCombo;
 	private Button checkImg, browseImg, downloadPL, browsePL;
 	private Text programmerOpts, pathImg, pathPL;
-	private final String defaultImgPath = "$PROJECT_LOCATION";
-	private final String defaultPlPath = "\\rsc\\flink2.bit";
-	private String lastChoice = defaultImgPath;
+	private final String defaultImgPath = "./";
+	private final String defaultPlPath = "";
+	private String lastChoiceImg = defaultImgPath;
 	private String lastChoicePl = defaultPlPath;
 	private String[][] boards;
 	private String[][] operatingSystems;
@@ -107,7 +107,7 @@ class TargetConfigPage extends WizardPage {
 		groupImg.setLayout(new GridLayout(2, false));
 		groupImg.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		checkImg = new Button(groupImg, SWT.CHECK);
-		checkImg.setText("Create image file");
+		checkImg.setText("Create image file in directory");
 		checkImg.setSelection(false);
 		checkImg.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
@@ -118,7 +118,7 @@ class TargetConfigPage extends WizardPage {
 						browseImg.setEnabled(true);
 					} else {
 						pathImg.setEnabled(false);
-						pathImg.setText(lastChoice);
+						pathImg.setText(lastChoiceImg);
 						browseImg.setEnabled(false);
 					}
 				}
@@ -135,6 +135,7 @@ class TargetConfigPage extends WizardPage {
 		pathImg.setEnabled(false);
 		pathImg.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
+				lastChoiceImg = pathImg.getText().replace('\\', '/');
 				setPageComplete(validatePage());
 			}
 		});
@@ -151,7 +152,7 @@ class TargetConfigPage extends WizardPage {
 			        String dir = dlg.open(); // Calling open() will open and run the dialog.
 			        if (dir != null) {
 			        	pathImg.setText(dir);
-			        	lastChoice = dir;
+			        	lastChoiceImg = dir;
 			        }
 					setPageComplete(validatePage());
 				}
@@ -190,6 +191,7 @@ class TargetConfigPage extends WizardPage {
 		pathPL.setEnabled(false);
 		pathPL.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
+				lastChoicePl = pathPL.getText().replace('\\', '/');
 				setPageComplete(validatePage());
 			}
 		});
@@ -277,11 +279,9 @@ class TargetConfigPage extends WizardPage {
 		if (programmerOpts.getText() != null && programmerOpts.getText().length() > 0) wiz.model.setProgrammerOptions(programmerOpts.getText()); 
 		else wiz.model.setProgrammerOptions(null);
 		wiz.model.setCreateImgFile(checkImg.getSelection());
-		if (lastChoice != defaultImgPath) wiz.model.setImgPath(new File(lastChoice));
-		else wiz.model.setImgPath(null);
-		if (wiz.model.getImgPath() != null) System.out.println(wiz.model.getImgPath().getPath());
+		wiz.model.setImgPath(lastChoiceImg);
 		wiz.model.setLoadPlFile(downloadPL.getSelection());
-		wiz.model.setPlFilePath(new File(wiz.model.getLibrary().getAbsolutePath() + lastChoicePl));
+		wiz.model.setPlFilePath(lastChoicePl);
 		return true;
 	}
 	

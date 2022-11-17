@@ -1327,7 +1327,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			// open mcs file for writing
 			fname = fname + '.' + Linker32.targetImage.segment.owner.name + ".mcs";
 			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
-			String plFile = Configuration.getPlFile();
+			String plFile = Configuration.getPlFileName().toString();
 			if (plFile == null) {
 				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
 				readerBin.close();
@@ -1337,6 +1337,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			HString[] libs = Configuration.getLibPaths();
 			boolean found = false;
 			// open predefined Xilinx mcs file 
+			plFile = plFile.substring(plFile.lastIndexOf('/') + 1, plFile.length());
+			if (plFile.indexOf("flink") < 0 || plFile.indexOf("flink") > 0) {
+				ErrorReporter.reporter.error(826, plFile);
+				readerBin.close();
+				writerMcs.close();
+				return 0;
+			}
+			if (dbg) StdStreams.vrb.println("pl file name: " + plFile);
 			for (HString lib : libs) {
 				fname = lib + "rsc/BOOT" + plFile.substring(plFile.indexOf("flink"), plFile.length() - 4) + "App.mcs";
 				File f = new File(fname);
@@ -1346,7 +1354,7 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 				}
 			}
 			if (!found) {
-				ErrorReporter.reporter.error(824, "check if library path set correctly");
+				ErrorReporter.reporter.error(824, fname);
 				readerBin.close();
 				writerMcs.close();
 				return 0;
@@ -1469,9 +1477,17 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			// open bin file for writing
 			fname = fname.substring(0, fname.lastIndexOf('/') + 1) + "BOOT.bin";
 			BufferedOutputStream writerBin = new BufferedOutputStream(new FileOutputStream(fname));
-			String plFile = Configuration.getPlFile();
+			String plFile = Configuration.getPlFileName().toString();
 			if (plFile == null) {
 				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
+				readerBin.close();
+				writerBin.close();
+				return 0;
+			}
+			plFile = plFile.substring(plFile.lastIndexOf('/') + 1, plFile.length());
+			if (dbg) StdStreams.vrb.println("pl file name: " + plFile);
+			if (plFile.indexOf("flink") < 0 || plFile.indexOf("flink") > 0) {
+				ErrorReporter.reporter.error(826, plFile);
 				readerBin.close();
 				writerBin.close();
 				return 0;
