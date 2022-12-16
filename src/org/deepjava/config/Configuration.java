@@ -149,8 +149,8 @@ public class Configuration implements ICclassFileConsts {
 		File rel = new File(projectFileName);
 		String path = rel.getAbsolutePath();
 		File file = new File(path);
-		new Parser(file).parse(true);
 		projectFile = file;
+		new Parser(file).parse(true);
 		
 		if (reporter.nofErrors > 0) return;
 		if (dbg) vrb.println("[CONF] Configuration: reading run configurations");
