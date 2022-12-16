@@ -31,16 +31,16 @@ public class DeepFileChanger {
 	
 	public DeepFileChanger(String name) throws Exception {
 		deepFile = name;
-			fileContent = new StringBuffer();
-			BufferedReader reader = new BufferedReader(new FileReader(deepFile));
-			int ch  = reader.read();
-			while (ch  != -1) {
-				fileContent.append((char)ch);
-				ch = reader.read();
-			}
-			reader.close();
+		fileContent = new StringBuffer();
+		BufferedReader reader = new BufferedReader(new FileReader(deepFile));
+		int ch = reader.read();
+		while (ch  != -1) {
+			fileContent.append((char)ch);
+			ch = reader.read();
+		}
+		reader.close();
 	}
-	
+
 	// with comment == true the method will return the content with a given key even if the
 	// line is commented out, the first char will be a '#'
 	public String getContent(String key, boolean comment) {
