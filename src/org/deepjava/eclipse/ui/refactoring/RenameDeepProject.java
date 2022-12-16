@@ -19,8 +19,8 @@
 package org.deepjava.eclipse.ui.refactoring;
 
 import java.io.File;
-
 import org.deepjava.eclipse.ui.properties.DeepFileChanger;
+import org.deepjava.host.ErrorReporter;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -61,7 +61,8 @@ public class RenameDeepProject extends RenameParticipant {
 			dfc.changeProjectName(newName);
 			dfc.save();
 		} catch (Exception e) {
-			e.printStackTrace();
+			ErrorReporter.reporter.error(313, "Project name must be identical to project directory name");
+			return false;
 		}
 		File oldFile = new File(p.getLocation()	+ "/" + p.getName() + ".deep"); 
 		oldFile.renameTo(new File(p.getLocation()	+ "/" + newName + ".deep"));
