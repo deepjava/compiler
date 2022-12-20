@@ -35,7 +35,7 @@ public class ItemStub extends Item {
 		super(methName, null);
 		this.owner = owner;
 		this.descriptor = methDescriptor;
-		if (owner.name.equals(HString.getRegisteredHString("java/lang/StringBuilder"))) {
+		if (owner.name.equals(HString.getRegisteredHString("java/lang/StringBuilder")) || owner.name.equals(HString.getRegisteredHString("java/lang/StringBuffer"))) {
 			String str = "in class " + clsName;
 			ErrorReporter.reporter.error(306, str);
 		}
