@@ -1327,13 +1327,14 @@ public class Linker32 implements ICclassFileConsts, ICdescAndTypeConsts {
 			// open mcs file for writing
 			fname = fname + '.' + Linker32.targetImage.segment.owner.name + ".mcs";
 			BufferedWriter writerMcs = new BufferedWriter(new FileWriter(fname));
-			String plFile = Configuration.getPlFileName().toString();
-			if (plFile == null) {
+			HString pl = Configuration.getPlFileName();
+			if (pl == null) {
 				ErrorReporter.reporter.error(823, "add PL file to deep configuration");
 				readerBin.close();
 				writerMcs.close();
 				return 0;
 			}
+			String plFile = pl.toString();
 			HString[] libs = Configuration.getLibPaths();
 			boolean found = false;
 			// open predefined Xilinx mcs file 
