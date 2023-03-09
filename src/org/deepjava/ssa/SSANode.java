@@ -191,10 +191,7 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 										result.owner = phi;
 										phi.result = result;
 										entrySet[j] = result;
-										// generate for all already proceed
-										// predecessors a loadParameter
-										// and add their results to the phi
-										// function
+										// generate a loadParameter instruction for all already processed predecessors and add their results to the phi function
 										for (int x = 0; x < i; x++) {
 											phi.addOperand(generateLoadParameter((SSANode) predecessors[x],j, firstBCA));
 										}
@@ -433,22 +430,21 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					// check if a loadParam instruction is necessary
 					if (owner.isParam[j] && (phiFunctions[j].nofOperands == 0 || param == null)) {
 						if (dbg) StdStreams.vrb.println("load parameter");
-						if (idom != null) 	// dominator could be null if root is loop header
-							param = generateLoadParameter((SSANode) idom, j, firstBCA);
-					}
+						param = generateLoadParameter((SSANode) idom, j, firstBCA); // dominator could be null if root is loop header
+						}
 					if (temp != null && temp != param) {
 						phiFunctions[j].result.type = temp.type;
 						SSAValue opd = temp;
 						opd = insertRegMoves((SSANode) predecessors[i], j, opd, firstBCA);
 						phiFunctions[j].addOperand(opd);
-						if (dbg) StdStreams.vrb.println("   add opd at index " + opd.index + "\n");
+						if (dbg) StdStreams.vrb.println("   add opd at index " + opd.index);
 					}
 					if (param != null) {// stack could be empty
 						phiFunctions[j].result.type = param.type;
 						SSAValue opd = param;
 						opd = insertRegMoves((SSANode) predecessors[i], j, opd, firstBCA);
 						phiFunctions[j].addOperand(opd);
-						if (dbg) StdStreams.vrb.println("   add opd at index " + opd.index + "\n");
+						if (dbg) StdStreams.vrb.println("   add opd at index " + opd.index);
 					}
 				}
 			}
@@ -2789,19 +2785,22 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	}
 
 	/**
-	 * Insert a loadLocal instruction for a parameter
+	 * Insert a loadLocal instruction for a parameter.
 	 */
 	private SSAValue generateLoadParameter(SSANode predecessor, int index, int bca) {
+		if (dbg) StdStreams.vrb.println("generate loadLocal instruction for a parameter at index " + index);
 		boolean needsNewNode = false;
 		SSANode node = predecessor;
 		for (int i = 0; i < this.nofPredecessors; i++) {
 			if (!this.predecessors[i].equals(predecessor) && !needsNewNode) {
-				needsNewNode = this.idom.equals(predecessor)
-						&& !(this.equals(this.predecessors[i].idom))
-						&& !isLoopHeader();
+				if (idom != null) 
+					needsNewNode = idom.equals(predecessor) && !(this.equals(predecessors[i].idom)) && !isLoopHeader();
+				else // dominator could be null if root is loop header
+					needsNewNode = true;
 			}
 		}
 		if (needsNewNode) {
+			if (dbg) StdStreams.vrb.println("\tadd a new node");
 			node = this.insertNode(predecessor);
 		}
 
@@ -2818,37 +2817,32 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 	}
 
 	/**
-	 * 
-	 * @param base
-	 *            SSANode that immediate follow of predecessor
+	 * Creates and inserts a new node between this node and one of its predecessors given in the parameter.
 	 * @param predecessor
-	 *            SSANode that is immediate for the base node
-	 * @return on success the inserted SSANode, otherwise null
+	 *            SSANode which precedes this node
+	 * @return on success, the inserted SSANode, otherwise null
 	 */
 	private SSANode insertNode(SSANode predecessor) {
+		if (dbg) StdStreams.vrb.println("insert new node");
 		int index = -1;
-		SSANode node = null;
-		// check if base follows predecessor immediately a save index
 		for (int i = 0; i < nofPredecessors; i++) {
 			if (predecessors[i].equals(predecessor)) {
 				index = i;
 				break;
 			}
 		}
+		SSANode node = null;
+		node = new SSANode();
+		node.firstBCA = -1;
+		node.lastBCA = -1;
+		node.maxLocals = this.maxLocals;
+		node.maxStack = this.maxStack;
+		node.idom = idom;
 		if (index >= 0) {
-			node = new SSANode();
-
-			node.firstBCA = -1;
-			node.lastBCA = -1;
-			node.maxLocals = this.maxLocals;
-			node.maxStack = this.maxStack;
-			node.idom = idom;
 			node.entrySet = predecessor.exitSet.clone();
 			node.exitSet = node.entrySet.clone();
-
 			node.addSuccessor(this);
 			predecessors[index] = node;
-
 			node.addPredecessor(predecessor);
 			for (int i = 0; i < predecessor.successors.length; i++) {
 				if (predecessor.successors[i].equals(this)) {
@@ -2856,15 +2850,21 @@ public class SSANode extends CFGNode implements ICjvmInstructionOpcs, SSAInstruc
 					break;
 				}
 			}
+		} else {
+			if (dbg) StdStreams.vrb.println("predecessor not found in predecessor list, must have been null -> no idom");
+			node.entrySet = new SSAValue[maxStack + maxLocals];;
+			node.exitSet = node.entrySet.clone();
+			node.addSuccessor(this);
+			this.addPredecessor(node);
+			owner.cfg.rootNode = node;
 		}
-		// insert node
+		// insert node in list of nodes
 		SSANode lastNode = (SSANode) owner.cfg.rootNode;
 		while ((lastNode.next != null) && (lastNode.next != this)) {
 			lastNode = (SSANode) lastNode.next;
 		}
 		lastNode.next = node;
 		node.next = this;
-
 		return node;
 	}
 

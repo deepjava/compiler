@@ -64,6 +64,7 @@ ErrorNr;Description;Solution
 
 500;generation of line number table failed;
 510;Translation of finally block in exceptions failed, use Java6 or later;
+520;Insertion of new SSA node failed;
 
 600;no code generated;
 601;method has too many parameters;

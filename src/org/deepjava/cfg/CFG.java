@@ -35,7 +35,7 @@ public class CFG implements ICjvmInstructionMnemonics {
 	/**
 	 * Start-node of the CFG.
 	 */
-	public final CFGNode rootNode;
+	public CFGNode rootNode;
 	
 	/**
 	 * Method for which the CFG is build. Used in the toString-Methods, SSA and

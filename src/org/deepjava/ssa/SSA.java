@@ -77,10 +77,11 @@ public class SSA implements ICclassFileConsts, SSAInstructionOpcs {
 			node.merge();
 			node.traversCode();	// translate bytecode into ssa instructions
 		}
-		if (dbg) StdStreams.vrb.print(toString());
+		if (dbg) StdStreams.vrb.print("\n" + toString());
 
 		// visit loop headers again
 		for (int i = 0; i < nofLoopheaders; i++) {
+			if (dbg) StdStreams.vrb.println("visit loop header");
 			SSANode node = loopHeaders[i];
 			node.addOpdsToPhiFunctions();
 		}
